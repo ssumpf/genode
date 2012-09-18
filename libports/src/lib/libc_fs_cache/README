@@ -1,0 +1,5 @@
+This plugin features a subset of the 'libc_fs' plugin and additionally provides
+a small file cache. It supports read-only access only and is meant to be used
+with 'open', 'close', 'mmap', 'munmap' and 'stat' calls only. Currently the only
+client is 'lighttpd' for which it has been written.
+
