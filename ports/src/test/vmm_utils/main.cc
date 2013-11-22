@@ -30,7 +30,7 @@ class Vcpu_dispatcher : public Vmm::Vcpu_dispatcher
 
 		typedef Vcpu_dispatcher This;
 
-		Vmm::Vcpu_thread _vcpu_thread;
+		Vmm::Vcpu_same_pd _vcpu_thread;
 
 		/**
 		 * Shortcut for calling 'Vmm::Vcpu_dispatcher::register_handler'
