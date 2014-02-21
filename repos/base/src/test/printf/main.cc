@@ -14,8 +14,12 @@
 
 #include <base/printf.h>
 
+#include <nova/syscalls.h>
+
 int main(int argc, char **argv)
 {
+	Nova::debug(reinterpret_cast<Nova::mword_t>(__builtin_return_address(0)));
+
 	Genode::printf("-1 = %d = %ld\n", -1, -1L);
 
 	return 0;
