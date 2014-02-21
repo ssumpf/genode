@@ -300,5 +300,12 @@ namespace Nova {
 
 		return syscall_5(NOVA_ASSIGN_GSI, 0, sm, msi_addr, msi_data);
 	}
+
+
+	ALWAYS_INLINE
+	inline uint8_t debug(mword_t value)
+	{
+		return syscall_1(NOVA_DEBUG, 0, 0, value);
+	}
 }
 #endif /* _PLATFORM__NOVA_SYSCALLS_H_ */

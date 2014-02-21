@@ -1,0 +1,53 @@
+diff --git a/include/ec.hpp b/include/ec.hpp
+index 6b256a4..811a226 100644
+--- a/include/ec.hpp
++++ b/include/ec.hpp
+@@ -356,6 +356,9 @@ class Ec : public Kobject, public Refcount, public Queue<Sc>
+         static void xcpu_return();
+ 
+         NORETURN
++        static void sys_debug();
++
++        NORETURN
+         static void root_invoke();
+ 
+         template <bool>
+diff --git a/include/syscall.hpp b/include/syscall.hpp
+index 59e4489..8e1732d 100644
+--- a/include/syscall.hpp
++++ b/include/syscall.hpp
+@@ -209,3 +209,10 @@ class Sys_assign_gsi : public Sys_regs
+             ARG_3 = static_cast<mword>(val);
+         }
+ };
++
++class Sys_debug : public Sys_regs
++{
++    public:
++        ALWAYS_INLINE
++        inline unsigned long value() const { return ARG_2; }
++};
+diff --git a/src/syscall.cpp b/src/syscall.cpp
+index 2af937b..44340bb 100644
+--- a/src/syscall.cpp
++++ b/src/syscall.cpp
+@@ -603,9 +603,18 @@ void (*const syscall[])() =
+     &Ec::sys_sm_ctrl,
+     &Ec::sys_assign_pci,
+     &Ec::sys_assign_gsi,
+-    &Ec::sys_finish<Sys_regs::BAD_HYP>,
++    &Ec::sys_debug,
+ };
+ 
++void Ec::sys_debug()
++{
++    Sys_debug *s = static_cast<Sys_debug *>(current->sys_regs());
++
++    trace(0, "debug call, value %lx", s->value());
++
++    sys_finish<Sys_regs::SUCCESS>();
++}
++
+ template void Ec::sys_finish<Sys_regs::COM_ABT>();
+ template void Ec::send_msg<Ec::ret_user_vmresume>();
+ template void Ec::send_msg<Ec::ret_user_vmrun>();

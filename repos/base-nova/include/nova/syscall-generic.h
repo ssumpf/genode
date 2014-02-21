@@ -63,6 +63,7 @@ namespace Nova {
 		NOVA_SM_CTRL    = 0xc,
 		NOVA_ASSIGN_PCI = 0xd,
 		NOVA_ASSIGN_GSI = 0xe,
+		NOVA_DEBUG      = 0xf,
 	};
 
 	/**
