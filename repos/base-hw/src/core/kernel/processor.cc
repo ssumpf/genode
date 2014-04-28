@@ -19,6 +19,9 @@
 #include <kernel/irq.h>
 #include <pic.h>
 #include <timer.h>
+#include <kernel/thread.h>
+#include <platform_console.h>
+
 
 using namespace Kernel;
 
@@ -57,7 +60,14 @@ void Kernel::Processor_client::_interrupt(unsigned const processor_id)
 
 			_processor->ip_interrupt();
 
+			} else if (Genode::Serial_log::IRQ == irq_id) {
+
+					enum { ESC_KEY = 27 };
+					Kernel::Thread *thread = dynamic_cast<Kernel::Thread*>(this);
+					if (thread && (Genode::platform_console()->get_char() == ESC_KEY))
+						thread->print_activity_table();
 		/* after all it must be a user interrupt */
+
 		} else {
 
 			/* try to inform the user interrupt-handler */

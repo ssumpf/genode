@@ -171,15 +171,8 @@ namespace Genode
 				 */
 				write<Uart_fcr::Fifo_enable>(1);
 
-				/* disable interrupts and sleep mode */
-				write<Uart_ier>(Uart_ier::Rhr_it::bits(0)
-				              | Uart_ier::Thr_it::bits(0)
-				              | Uart_ier::Line_sts_it::bits(0)
-				              | Uart_ier::Modem_sts_it::bits(0)
-				              | Uart_ier::Sleep_mode::bits(0)
-				              | Uart_ier::Xoff_it::bits(0)
-				              | Uart_ier::Rts_it::bits(0)
-				              | Uart_ier::Cts_it::bits(0));
+				/* enable receive interrupt, disable sleep mode */
+				write<Uart_ier>(Uart_ier::Rhr_it::bits(1));
 
 				/* enable access to 'Uart_dlh' and 'Uart_dll' */
 				write<Uart_lcr::Reg_mode>(Uart_lcr::Reg_mode::CONFIG_B);
@@ -239,6 +232,16 @@ namespace Genode
 
 				/* transmit character */
 				write<Uart_thr::Thr>(c);
+			}
+
+			/**
+			 * Return character received via UART
+			 */
+			char get_char()
+			{
+				while(!read<Uart_lsr::Rx_fifo_empty>()) ;
+			
+				return read<Uart_rhr::Rhr>();
 			}
 	};
 }

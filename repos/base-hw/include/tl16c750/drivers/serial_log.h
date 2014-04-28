@@ -27,6 +27,8 @@ namespace Genode
 	{
 		public:
 
+			static constexpr size_t IRQ = Board_base::TL16C750_3_IRQ;
+
 			/**
 			 * Constructor
 			 *

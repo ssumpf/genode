@@ -72,17 +72,7 @@ namespace Genode
 			{
 				return Receive_mode::bits(Receive_mode::IRQ_POLL)   |
 				       Transmit_mode::bits(Transmit_mode::IRQ_POLL) |
-				       Send_brk_signal::bits(0)                     |
-				       Loop_back_mode::bits(0)                      |
-				       Rx_err_irq::bits(1)                          |
-				       Rx_timeout::bits(0)                          |
-				       Rx_irq_type::bits(Rx_irq_type::LEVEL)        |
-				       Tx_irq_type::bits(Tx_irq_type::LEVEL)        |
-				       Rx_to_dma_susp::bits(0)                      |
-				       Rx_to_empty_rx::bits(0)                      |
-				       Rx_to_interval::bits(3)                      |
-				       Rx_dma_bst_size::bits(0)                     |
-				       Tx_dma_bst_size::bits(0);
+				       Rx_timeout::bits(1);
 			}
 		};
 
@@ -96,18 +86,6 @@ namespace Genode
 			struct Tx_fifo_rst     : Bitfield<2, 1> { };
 			struct Rx_fifo_trigger : Bitfield<4, 3> { };
 			struct Tx_fifo_trigger : Bitfield<8, 3> { };
-
-			/**
-			 * Initialization value
-			 */
-			static access_t init_value()
-			{
-				return Fifo_en::bits(1)         |
-				       Rx_fifo_rst::bits(0)     |
-				       Tx_fifo_rst::bits(0)     |
-				       Rx_fifo_trigger::bits(0) |
-				       Tx_fifo_trigger::bits(0);
-			}
 		};
 
 		/**
@@ -137,7 +115,9 @@ namespace Genode
 		 */
 		struct Ufstat : Register<0x18, 32>
 		{
-			struct Tx_fifo_full : Bitfield<24, 1> { };
+			struct Rx_fifo_count : Bitfield<0,  8> { };
+			struct Rx_fifo_full  : Bitfield<8,  1> { };
+			struct Tx_fifo_full  : Bitfield<24, 1> { };
 		};
 
 		/**
@@ -146,6 +126,14 @@ namespace Genode
 		struct Utxh : Register<0x20, 32>
 		{
 			struct Transmit_data : Bitfield<0, 8> { };
+		};
+
+		/**
+		 * Receive buffer
+		 */
+		struct Urxh : Register<0x24, 32>
+		{
+			struct Receive_data : Bitfield<0, 8> { };
 		};
 
 		/**
@@ -164,6 +152,21 @@ namespace Genode
 			struct Baud_rate_frac : Bitfield<0, 4> { };
 		};
 
+		/**
+		 * Interrupt mask register
+		 */
+		template <unsigned OFF>
+		struct Uintx : Register<OFF, 32>
+		{
+			struct Rxd   : Register<OFF, 32>::template Bitfield<0, 1> { };
+			struct Error : Register<OFF, 32>::template Bitfield<1, 1> { };
+			struct Txd   : Register<OFF, 32>::template Bitfield<2, 1> { };
+			struct Modem : Register<OFF, 32>::template Bitfield<3, 1> { };
+		};
+
+		using Uintp = Uintx<0x30>;
+		using Uintm = Uintx<0x38>;
+
 		public:
 
 			/**
@@ -176,11 +179,27 @@ namespace Genode
 			Exynos_uart_base(addr_t const base, unsigned const clock,
 			                  unsigned const baud_rate) : Mmio(base)
 			{
+				/* RX and TX FIFO reset */
+				write<Ufcon::Rx_fifo_rst>(1);
+				write<Ufcon::Tx_fifo_rst>(1);
+				while (read<Ufcon::Rx_fifo_rst>() || read<Ufcon::Tx_fifo_rst>()) ;
+
 				/* init control registers */
 				write<Ulcon>(Ulcon::init_value());
 				write<Ucon>(Ucon::init_value());
-				write<Ufcon>(Ufcon::init_value());
+				write<Ufcon::Fifo_en>(1);
 				write<Umcon>(Umcon::init_value());
+
+				/* mask all IRQs except receive IRQ */
+				write<Uintm>(Uintm::Error::bits(1) |
+				             Uintm::Txd::bits(1)   |
+				             Uintm::Modem::bits(1));
+
+				/* clear pending IRQs */
+				write<Uintp>(Uintp::Rxd::bits(1)   |
+				             Uintp::Error::bits(1) |
+				             Uintp::Txd::bits(1)   |
+				             Uintp::Modem::bits(1));
 
 				/* apply baud rate */
 				float const div_val = ((float)clock / (baud_rate * 16)) - 1;
@@ -191,7 +210,7 @@ namespace Genode
 				write<Ufracval::Baud_rate_frac>(ufracval);
 			}
 
-			/**
+		/**
 			 * Print character 'c' through the UART
 			 */
 			void put_char(char const c)
@@ -199,6 +218,23 @@ namespace Genode
 				while (read<Ufstat::Tx_fifo_full>()) ;
 				write<Utxh::Transmit_data>(c);
 			}
+
+			/**
+			 * Return character received via UART
+			 */
+			char get_char()
+			{
+				while (!(read<Ufstat>() & (Ufstat::Rx_fifo_count::bits(0xff)
+				                           | Ufstat::Rx_fifo_full::bits(1)))) ;
+
+				read<Ufcon>();
+				char c = read<Urxh::Receive_data>();
+
+				/* clear pending RX IRQ */
+				write<Uintp>(Uintp::Rxd::bits(1));
+				return c;
+			}
+
 	};
 }
 

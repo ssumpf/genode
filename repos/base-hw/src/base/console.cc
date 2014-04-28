@@ -1,5 +1,5 @@
 /*
- * \brief  Genode-console backend
+ * \brief  core console backend
  * \author Martin Stein
  * \date   2011-10-17
  */
@@ -11,61 +11,19 @@
  * under the terms of the GNU General Public License version 2.
  */
 
-/* Genode includes */
-#include <base/console.h>
-#include <base/printf.h>
-#include <drivers/serial_log.h>
+/* core includes */
+#include <platform_console.h>
 
 /* base includes */
 #include <unmanaged_singleton.h>
 
-namespace Genode
-{
-	/**
-	 * Platform specific Genode console
-	 */
-	class Platform_console : public Console,
-	                         public Serial_log
-	{
-		enum { BAUD_RATE = 115200 };
-
-		protected:
-
-			/**
-			 * Print a char to the console
-			 */
-			void _out_char(char c)
-			{
-				enum {
-					ASCII_LINE_FEED = 10,
-					ASCII_CARRIAGE_RETURN = 13,
-				};
-
-				/* auto complete new line commands */
-				if (c == ASCII_LINE_FEED)
-					Serial_log::put_char(ASCII_CARRIAGE_RETURN);
-
-				/* print char */
-				Serial_log::put_char(c);
-			}
-
-		public:
-
-			/**
-			 * Constructor
-			 */
-			Platform_console() : Serial_log(BAUD_RATE) { }
-	};
-}
-
-using namespace Genode;
-
-
 /**
  * Static object to print log output
  */
-static Platform_console * platform_console()
+Genode::Platform_console * Genode::platform_console()
 {
+	using namespace Genode;
+
 	return unmanaged_singleton<Platform_console>();
 }
 
@@ -76,6 +34,8 @@ static Platform_console * platform_console()
 
 void Genode::printf(const char *format, ...)
 {
+	using namespace Genode;
+
 	va_list list;
 	va_start(list, format);
 	platform_console()->vprintf(format, list);
@@ -83,6 +43,6 @@ void Genode::printf(const char *format, ...)
 }
 
 
-void Genode::vprintf(const char *format, va_list list)
-{ platform_console()->vprintf(format, list); }
+void Genode::vprintf(const char *format, va_list list) {
+	Genode::platform_console()->vprintf(format, list); }
 

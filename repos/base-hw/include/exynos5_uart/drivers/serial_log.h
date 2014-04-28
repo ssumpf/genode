@@ -28,6 +28,8 @@ namespace Genode
 	{
 		public:
 
+			static constexpr size_t IRQ = Board::UART_2_IRQ;
+
 			/**
 			 * Constructor
 			 *

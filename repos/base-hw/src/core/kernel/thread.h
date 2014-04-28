@@ -201,11 +201,6 @@ class Kernel::Thread
 		addr_t Thread::* _reg(addr_t const id) const;
 
 		/**
-		 * Print table of all threads and their current activity
-		 */
-		void _print_activity_table();
-
-		/**
 		 * Print the activity of the thread
 		 *
 		 * \param printing_thread  wether this thread caused the debugging
@@ -295,6 +290,11 @@ class Kernel::Thread
 		 * \param label     debugging label
 		 */
 		Thread(unsigned const priority, char const * const label);
+
+		/**
+		 * Print table of all threads and their current activity
+		 */
+		void print_activity_table();
 
 		/**
 		 * Prepare thread to get scheduled the first time
