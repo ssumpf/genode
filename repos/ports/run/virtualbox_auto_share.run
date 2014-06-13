@@ -81,7 +81,8 @@ GOTO check
 :start
 
 copy D:\test.bin E:\test.bin
-copy D:\template.bat E:\done.txt}
+copy D:\template.bat E:\done.txt
+shutdown /s /t 00}
 
 close $template_bat_fd
 
@@ -201,7 +202,7 @@ set config_of_app {
 
 	<start name="ram_fs_to">
 		<binary name="ram_fs" />
-		<resource name="RAM" quantum="32M"/>
+		<resource name="RAM" quantum="64M"/>
 		<provides><service name="File_system"/></provides>
 		<config>
 			<policy label="" root="/" writeable="yes" />
@@ -210,7 +211,7 @@ set config_of_app {
 
 	<start name="vbox">
 		<binary name="virtualbox" />
-		<resource name="RAM" quantum="2G"/>
+		<resource name="RAM" quantum="1536M"/>
 		<config>
 			<share host="/from" guest="from" />
 			<share host="/to" guest="to" />
@@ -253,14 +254,11 @@ regexp {[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+} $serial_ip_addr serial_ip_addr
 #
 # Step 3: Wait until Windows is up for sure
 #
-run_genode_until "ignore resize request to 720x400" 20 $serial_id 
-run_genode_until "ignore resize request to 640x480" 25 $serial_id
-run_genode_until "ignore resize request to 800x600" 55 $serial_id
-run_genode_until "ignore resize request to 800x600" 90 $serial_id
-run_genode_until "ignore resize request to 720x400" 10 $serial_id
+run_genode_until {\[init -\> vbox\].*Guest Additions capability report:.*seamless: yes, hostWindowMapping: no, graphics: yes} 300 $serial_id
+
 
 #
-# Step 3 : connect to Noux of the running Genode target and issue bash commands
+# Step 4 : connect to Noux of the running Genode target and issue bash commands
 #          via netcat
 #
 puts "\nTest shared folder\n"
@@ -268,10 +266,10 @@ puts "\nTest shared folder\n"
 spawn netcat $serial_ip_addr 8888
 set noux_id $spawn_id
 
-run_genode_until {\[init -> tcp_terminal\] connection established} 10 $serial_id
+run_genode_until {\[init -> tcp_terminal\] connection established} 20 $serial_id
 
 #
-# Step 4 : interact with netcat -> ... -> tcp_terminal -> Noux -> bash
+# Step 5 : interact with netcat -> ... -> tcp_terminal -> Noux -> bash
 #
 
 # Windows does not like trailing zeros introduced by our ROM service.
@@ -291,11 +289,14 @@ puts $noux_id "do"
 puts $noux_id "sleep 5"
 puts $noux_id "done"
 
+# Wait until VM signaled shutdown state
+run_genode_until {\[init -\> vbox\].*Changing the VM state from 'POWERING_OFF' to 'OFF'} 120 $serial_id
+
 # SHA1 of copied file
 puts $noux_id "sha1sum to/test.bin"
 
 # Wait for output of bash shell until last SHA1 sum is calculated
-run_genode_until {[[:xdigit:]]+  to/test\.bin} 150 $noux_id
+run_genode_until {[[:xdigit:]]+  to/test\.bin} 50 $noux_id
 
 
 # cleanup created files
