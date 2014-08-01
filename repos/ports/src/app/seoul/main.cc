@@ -747,9 +747,9 @@ class Vcpu_dispatcher : public Vcpu_handler,
 				_register_handler<30, &This::_vmx_ioio>
 					(exc_base, MTD_RIP_LEN | MTD_QUAL | MTD_GPR_ACDB | MTD_STATE | MTD_RFLAGS);
 				_register_handler<31, &This::_vmx_msr_read>
-					(exc_base, MTD_RIP_LEN | MTD_GPR_ACDB | MTD_TSC | MTD_SYSENTER | MTD_STATE);
+					(exc_base, MTD_RIP_LEN | MTD_GPR_ACDB | MTD_TSC | MTD_SYSENTER | MTD_STATE | MTD_EFER);
 				_register_handler<32, &This::_vmx_msr_write>
-					(exc_base, MTD_RIP_LEN | MTD_GPR_ACDB | MTD_TSC | MTD_SYSENTER | MTD_STATE);
+					(exc_base, MTD_RIP_LEN | MTD_GPR_ACDB | MTD_TSC | MTD_SYSENTER | MTD_STATE | MTD_EFER);
 				_register_handler<33, &This::_vmx_invalid>
 					(exc_base, MTD_ALL);
 				_register_handler<40, &This::_vmx_pause>
@@ -1340,8 +1340,11 @@ class Machine : public StaticReceiver<Machine>
 				/* +SSE3,+SSSE3 */
 				vcpu->set_cpuid(1, 2, ecx_1, 0x00000201);
 
-				/* -PAE,-PSE36, -MTRR,+MMX,+SSE,+SSE2,+CLFLUSH,+SEP */
-				vcpu->set_cpuid(1, 3, edx_1, 0x0f88a9bf | (1 << 28));
+				/* +PAE,+PSE36, +PAT,-MTRR,+MMX,+SSE,+SSE2,+CLFLUSH,+SEP */
+				vcpu->set_cpuid(1, 3, edx_1, 0x0f8ba9ff | (1 << 28));
+
+				/* set XD bit */
+				vcpu->set_cpuid(0x80000001, 3, 1 << 20U);
 			}
 
 			Logging::printf("RESET device state\n");
