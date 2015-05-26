@@ -277,7 +277,12 @@ BINUTILS_INSTALLED_BINARIES = $(LOCAL_INSTALL_LOCATION)/bin/genode-$(PLATFORM)-o
 GCC_BINARIES                = build/$(PLATFORM)/gcc/gcc/g++
 GCC_INSTALLED_BINARIES      = $(LOCAL_INSTALL_LOCATION)/bin/genode-$(PLATFORM)-g++
 GDB_BINARIES                = build/$(PLATFORM)/gdb/gdb/gdb
+
+ifeq ($(PLATFORM),riscv)
+GDB_INSTALLED_BINARIES      =
+else
 GDB_INSTALLED_BINARIES      = $(LOCAL_INSTALL_LOCATION)/bin/genode-$(PLATFORM)-gdb
+endif
 
 build_all: $(GCC_INSTALLED_BINARIES) $(GDB_INSTALLED_BINARIES)
 
