@@ -37,6 +37,7 @@ usage:
 	@echo "                  'hw_odroid_xu'"
 	@echo "                  'hw_rpi'"
 	@echo "                  'hw_x86_64'"
+	@echo "                  'hw_riscv'"
 	@echo "                  'foc_x86_32'"
 	@echo "                  'foc_x86_64'"
 	@echo "                  'foc_pbxa9'"
@@ -261,6 +262,9 @@ hw_odroid_xu::
 hw_x86_64::
 	@echo "SPECS = genode hw_x86_64" > $(BUILD_DIR)/etc/specs.conf
 	@echo "SPECS += acpi" >> $(BUILD_DIR)/etc/specs.conf
+
+hw_riscv::
+	@echo "SPECS = genode hw_riscv" > $(BUILD_DIR)/etc/specs.conf
 
 lx_hybrid_x86::
 	@echo "CROSS_DEV_PREFIX =" > $(BUILD_DIR)/etc/tools.conf
