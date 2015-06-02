@@ -68,6 +68,7 @@ extern "C" void init_kernel_up()
 	 * we must avoid the use of 'cmpxchg' by now (includes not using any
 	 * local static objects.
 	 */
+	PINF("base-hw barely running");
 
 	/* calculate in advance as needed later when data writes aren't allowed */
 	core_pd();
