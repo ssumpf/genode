@@ -45,8 +45,8 @@ using namespace Kernel;
 
 extern void * _start_secondary_cpus;
 
-static_assert(sizeof(Genode::sizet_arithm_t) >= 2 * sizeof(size_t),
-	"Bad result type for size_t arithmetics.");
+//static_assert(sizeof(Genode::sizet_arithm_t) >= 2 * sizeof(size_t),
+//	"Bad result type for size_t arithmetics.");
 
 Lock & Kernel::data_lock() { return *unmanaged_singleton<Kernel::Lock>(); }
 
