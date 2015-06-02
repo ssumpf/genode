@@ -14,6 +14,8 @@
 #ifndef _SERIAL_H_
 #define _SERIAL_H_
 
+#include <base/stdint.h>
+
 namespace Genode
 {
 	/**
@@ -32,9 +34,15 @@ namespace Genode
 			{
 				unsigned err = 1;
 
+				enum {
+					STDOUT      = 1UL << 56,
+					WRITE_CMD   = 1UL << 48,
+				};
+
+				addr_t packet = STDOUT | WRITE_CMD | c;
 				while (err)
 					asm volatile ("csrrw %0, tohost, %1\n"
-					              : "=r" (err) : "r" (c));
+					              : "=r" (err) : "r" (packet));
 			}
 	};
 }
