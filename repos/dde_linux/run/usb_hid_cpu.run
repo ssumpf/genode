@@ -8,6 +8,9 @@ set build_components {
 	drivers/usb
 	test/input
 	test/cpu_burner
+	drivers/nic
+	drivers/audio_out
+	drivers/ahci
 }
 
 lappend_if [have_spec gpio] build_components drivers/gpio
@@ -64,10 +67,6 @@ append config {
 		<binary name="cpu_burner" />
 		<resource name="RAM" quantum="1M"/>
 	</start>
-	<start name="cpu_burner3">
-		<binary name="cpu_burner" />
-		<resource name="RAM" quantum="1M"/>
-	</start>
 	<start name="cpu_burner4">
 		<binary name="cpu_burner" />
 		<resource name="RAM" quantum="1M"/>
@@ -75,6 +74,18 @@ append config {
 	<start name="cpu_burner5">
 		<binary name="cpu_burner" />
 		<resource name="RAM" quantum="1M"/>
+	</start>
+	<start name="ahci_drv">
+		<resource name="RAM" quantum="8M"/>
+		<provides><service name="Block"/></provides>
+	</start>
+	<start name="audio_out_drv">
+		<resource name="RAM" quantum="8M"/>
+		<provides><service name="Audio_out"/></provides>
+	</start>
+	<start name="nic_drv">
+		<resource name="RAM" quantum="8M"/>
+		<provides><service name="Nic"/></provides>
 	</start>
 	<start name="usb_drv">
 		<resource name="RAM" quantum="10M"/>
@@ -96,7 +107,7 @@ install_config $config
 
 # generic modules
 set boot_modules {
-	core init timer usb_drv test-input cpu_burner
+	core init timer usb_drv test-input cpu_burner nic_drv audio_out_drv ahci_drv
 }
 
 lappend_if [have_spec gpio]             boot_modules gpio_drv
