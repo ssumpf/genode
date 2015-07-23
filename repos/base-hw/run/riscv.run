@@ -1,0 +1,9 @@
+build "core"
+
+create_boot_directory
+
+build_boot_image "core"
+
+append spike_args "-m128"
+
+run_genode_until forever
