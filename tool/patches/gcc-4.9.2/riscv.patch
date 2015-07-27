@@ -1,9 +1,3 @@
-commit 98af04b15bc0bfbe85cd1ab5231d53661b9e8947
-Author: Sebastian Sumpf <sebastian.sumpf@genode-labs.com>
-Date:   Fri May 22 21:41:24 2015 +0200
-
-    gcc patch
-
 diff --git a/config.sub b/config.sub
 index 61cb4bc..d6e23cb 100755
 --- a/config.sub

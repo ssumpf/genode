@@ -1,9 +1,3 @@
-commit bc5c0893d18a60bdcc84084f35bba339b09032bd
-Author: Sebastian Sumpf <sebastian.sumpf@genode-labs.com>
-Date:   Sat May 23 21:22:14 2015 +0200
-
-    patch
-
 diff --git a/bfd/Makefile.am b/bfd/Makefile.am
 index 6f64f06..eb01c09 100644
 --- a/bfd/Makefile.am
@@ -28,10 +22,26 @@ index 6f64f06..eb01c09 100644
  	rm -f peigen.c
  	sed -e s/XX/pe/g < $(srcdir)/peXXigen.c > peigen.new
 diff --git a/bfd/Makefile.in b/bfd/Makefile.in
-index 2c385d5..1f3ec87 100644
+index 2c385d5..abc26f7 100644
 --- a/bfd/Makefile.in
 +++ b/bfd/Makefile.in
-@@ -2009,6 +2009,18 @@ elf64-ia64.c : elfnn-ia64.c
+@@ -442,6 +442,7 @@ ALL_MACHINES = \
+ 	cpu-pj.lo \
+ 	cpu-plugin.lo \
+ 	cpu-powerpc.lo \
++	cpu-riscv.lo \
+ 	cpu-rs6000.lo \
+ 	cpu-rl78.lo \
+ 	cpu-rx.lo \
+@@ -526,6 +527,7 @@ ALL_MACHINES_CFILES = \
+ 	cpu-pj.c \
+ 	cpu-plugin.c \
+ 	cpu-powerpc.c \
++	cpu-riscv.c \
+ 	cpu-rs6000.c \
+ 	cpu-rl78.c \
+ 	cpu-rx.c \
+@@ -2009,6 +2011,18 @@ elf64-ia64.c : elfnn-ia64.c
  	sed -e s/NN/64/g < $(srcdir)/elfnn-ia64.c > elf64-ia64.new
  	mv -f elf64-ia64.new elf64-ia64.c
  
@@ -71,7 +81,7 @@ index c9fd6c8..8cbc157 100644
      &bfd_rl78_arch,
      &bfd_rx_arch,
 diff --git a/bfd/bfd-in2.h b/bfd/bfd-in2.h
-index c7a2bb5..65f05ec 100644
+index c7a2bb5..f56e4a4 100644
 --- a/bfd/bfd-in2.h
 +++ b/bfd/bfd-in2.h
 @@ -2043,6 +2043,9 @@ enum bfd_architecture
@@ -84,7 +94,7 @@ index c7a2bb5..65f05ec 100644
    bfd_arch_rs6000,    /* IBM RS/6000 */
  #define bfd_mach_rs6k          6000
  #define bfd_mach_rs6k_rs1      6001
-@@ -5531,6 +5534,41 @@ relative offset from _GLOBAL_OFFSET_TABLE_  */
+@@ -5531,6 +5534,43 @@ relative offset from _GLOBAL_OFFSET_TABLE_  */
  value in a word.  The relocation is relative offset from  */
    BFD_RELOC_MICROBLAZE_32_GOTOFF,
  
@@ -122,6 +132,8 @@ index c7a2bb5..65f05ec 100644
 +  BFD_RELOC_RISCV_TLS_TPREL32,
 +  BFD_RELOC_RISCV_TLS_TPREL64,
 +  BFD_RELOC_RISCV_ALIGN,
++  BFD_RELOC_RISCV_RVC_BRANCH,
++  BFD_RELOC_RISCV_RVC_JUMP,
 +
  /* This is used to tell the dynamic linker to copy the value out of
  the dynamic object into the runtime process image.  */
