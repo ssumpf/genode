@@ -73,14 +73,22 @@ extern "C" void init_kernel_up()
 	/* calculate in advance as needed later when data writes aren't allowed */
 	core_pd();
 
+	PINF("core_pd done");
+
 	/* initialize all CPU objects */
 	cpu_pool();
+
+	PINF("cpu pool done");
 
 	/* initialize PIC */
 	pic();
 
+	PINF("PIC inializaed");
+
 	/* go multiprocessor mode */
 	Cpu::start_secondary_cpus(&_start_secondary_cpus);
+
+	PINF("Secondary CPUs started");
 }
 
 

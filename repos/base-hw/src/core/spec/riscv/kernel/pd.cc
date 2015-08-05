@@ -12,6 +12,7 @@
  */
 
 /* core includes */
+#include <assert.h>
 #include <platform_pd.h>
 #include <kernel/pd.h>
 

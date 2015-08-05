@@ -55,6 +55,8 @@ void Platform::_init_io_mem_alloc()
 	PDBG("not impl");
 }
 
+void Platform::setup_irq_mode(unsigned, unsigned, unsigned) { PDBG("not impl");}
+
 
 long Platform::irq(long const user_irq)
 {
