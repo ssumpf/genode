@@ -41,7 +41,7 @@ namespace Genode
 
 				addr_t packet = STDOUT | WRITE_CMD | c;
 				while (err)
-					asm volatile ("csrrw %0, tohost, %1\n"
+					asm volatile ("csrrw %0, mtohost, %1\n"
 					              : "=r" (err) : "r" (packet));
 			}
 	};

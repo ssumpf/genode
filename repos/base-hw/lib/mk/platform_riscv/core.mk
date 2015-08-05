@@ -6,6 +6,8 @@
 
 INC_DIR += $(REP_DIR)/src/core/include/spec/riscv
 
+CC_OPT += -fno-delete-null-pointer-checks
+
 # add C++ sources
 SRC_CC += platform_services.cc
 SRC_CC += kernel/vm_thread.cc
