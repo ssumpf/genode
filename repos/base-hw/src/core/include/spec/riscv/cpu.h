@@ -19,8 +19,7 @@
 
 namespace Genode
 {
-	/**
-	 * Part of CPU state that is not switched on every mode transition
+	/** * Part of CPU state that is not switched on every mode transition
 	 */
 	class Cpu_lazy_state { };
 
@@ -29,8 +28,7 @@ namespace Genode
 	 */
 	class Cpu;
 
-#warning size_arithm_t should be 128 bit
-	typedef uint64_t sizet_arithm_t;
+	typedef __uint128_t sizet_arithm_t;
 }
 
 namespace Kernel 
@@ -44,30 +42,26 @@ class Genode::Cpu
 	public:
 
 		static constexpr addr_t mtc_size = 0x1000;
-		static constexpr addr_t exception_entry = 0xffffffffffffff00;
-
+		static constexpr addr_t exception_entry = 0x100;
 
 		/**
 		 * Extend basic CPU state by members relevant for 'base-hw' only
 		 */
 		struct Context : Cpu_state
 		{
+			addr_t sptbr = 0; /* supervisor page table register */
+
 			/**
 			 * Return base of assigned translation table
 			 */
-			addr_t translation_table() const
-			{
-				PDBG("not impl");
-				return 0;
-			}
+			addr_t translation_table() const {
+				return sptbr; }
 
 			/**
 			 * Assign translation-table base 'table'
 			 */
-			void translation_table(addr_t const table)
-			{
-				PDBG("not impl");
-			}
+			void translation_table(addr_t const table) {
+				sptbr = table; }
 
 			/**
 			 * Assign protection domain
@@ -173,6 +167,13 @@ class Genode::Cpu
 		{
 			PDBG("not impl");
 		}
+
+		/**
+		 * Set page table
+		 */
+		static void init_virt_kernel(Kernel::Pd * pd);
+		static void init_phys_kernel();
+
 		/*************
 		 ** Dummies **
 		 *************/
@@ -195,8 +196,6 @@ class Genode::Cpu
 			asm volatile ("fence\n" : : : "memory");
 		}
 
-		static void init_phys_kernel() { PDBG("not impl"); }
-		static void init_virt_kernel(Kernel::Pd * pd) { PDBG("not impl"); }
 };
 
 #endif /* _CPU_H_ */

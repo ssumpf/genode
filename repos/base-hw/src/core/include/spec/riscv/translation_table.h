@@ -8,6 +8,7 @@
 #ifndef _TRANSLATION_TABLE_H_
 #define _TRANSLATION_TABLE_H_
 
+#include <util/misc_math.h>
 #include <util/register.h>
 
 #include <page_flags.h>
@@ -53,6 +54,7 @@ class Genode::Level_x_translation_table
 		static constexpr size_t MAX_ENTRIES        = 1 << (SIZE_LOG2 - BLOCK_SIZE_LOG2);
 		static constexpr size_t BLOCK_SIZE         = 1 << BLOCK_SIZE_LOG2;
 		static constexpr size_t BLOCK_MASK         = ~(BLOCK_SIZE - 1);
+		static constexpr size_t VM_MASK            = (1UL<< SIZE_LOG2_512G) - 1;
 
 		class Misaligned { };
 		class Invalid_range { };
@@ -73,7 +75,7 @@ class Genode::Level_x_translation_table
 				};
 			};
 
-			template <access_t BASE> 
+			template <access_t BASE>
 			static access_t rwx(Page_flags const &f)
 			{
 				if (f.writeable && f.executable)
@@ -140,14 +142,32 @@ class Genode::Level_x_translation_table
 
 		typename Descriptor::access_t _entries[MAX_ENTRIES];
 
+		/*
+		 * Return how many entries of an alignment fit into region
+		 */
+		static constexpr size_t _count(size_t region, size_t alignment) {
+			return align_addr<size_t>(region, alignment) / (1UL << alignment); }
+
+
 		template <typename FUNC>
 		void _range_op(addr_t vo, addr_t pa, size_t size, FUNC &&func)
 		{
+			/* sanity check vo bits 38 to 63 must be equal */
+			addr_t sanity = vo >> 38;
+			if (sanity != 0 && sanity != 0x3ffffff) {
+				PERR("Invalid virtual address: %lx", vo);
+				throw Invalid_range();
+			}
+
+			/* clear bits 39 - 63 */
+			vo &= VM_MASK;
+
 			for (size_t i = vo >> BLOCK_SIZE_LOG2; size > 0;
 			     i = vo >> BLOCK_SIZE_LOG2) {
 				addr_t end = (vo + BLOCK_SIZE) & BLOCK_MASK;
 				size_t sz  = min(size, end-vo);
 
+				PINF("range: %zu vo: %lx pa: %lx bl: %u", i, vo, pa, BLOCK_SIZE_LOG2);
 				func(vo, pa, sz, _entries[i]);
 
 				/* check whether we wrap */
@@ -157,6 +177,14 @@ class Genode::Level_x_translation_table
 				vo  += sz;
 				pa  += sz;
 			}
+		}
+
+		/**
+		 * Signal update to memory-management data structures
+		 */
+		void _memory_management_fence()
+		{
+			asm volatile ("sfence.vm");
 		}
 
 		template <typename E>
@@ -179,8 +207,10 @@ class Genode::Level_x_translation_table
 					typename Descriptor::access_t blk_desc =
 						Block_descriptor::create(flags, pa);
 
-					if (Descriptor::valid(desc) && desc != blk_desc)
+					if (Descriptor::valid(desc) && desc != blk_desc) {
+						PDBG("double insert %d", __LINE__);
 						throw Double_insertion();
+					}
 
 					desc = blk_desc;
 					return;
@@ -192,10 +222,12 @@ class Genode::Level_x_translation_table
 
 				case Descriptor::INVALID: /* no entry */
 					{
-						if (!alloc) throw Allocator::Out_of_memory();
+						PINF("Insert_func: alloc %p", alloc);
+						if (!alloc) { PDBG("allocator out of memory"); throw Allocator::Out_of_memory(); }
 
 						/* create and link next level table */
 						table = new (alloc) ENTRY();
+						PINF("Insert_func: table %p", table);
 						ENTRY * phys_addr = (ENTRY*) alloc->phys_addr(table);
 						desc = Table_descriptor::create(phys_addr ?
 						                                phys_addr : table);
@@ -203,6 +235,7 @@ class Genode::Level_x_translation_table
 
 				case Descriptor::TABLE: /* table already available */
 					{
+						PINF("Insert_func: TABLE");
 						/* use allocator to retrieve virt address of table */
 						ENTRY * phys_addr = (ENTRY*)
 							Table_descriptor::Next_table::masked(desc);
@@ -213,6 +246,7 @@ class Genode::Level_x_translation_table
 
 				case Descriptor::BLOCK: /* there is already a block */
 					{
+						PINF("Insert_func: DOUBLE");
 						throw Double_insertion();
 					}
 				};
@@ -260,8 +294,10 @@ class Genode::Level_x_translation_table
 
 		Level_x_translation_table()
 		{
-			if (!_aligned((addr_t)this, ALIGNM_LOG2))
+			if (!_aligned((addr_t)this, ALIGNM_LOG2)) {
+				PDBG("misaligned address");
 				throw Misaligned();
+			}
 
 			memset(&_entries, 0, sizeof(_entries));
 		}
@@ -289,8 +325,10 @@ class Genode::Level_x_translation_table
 		                        Page_flags const & flags,
 		                        Translation_table_allocator * alloc )
 		{
-			PDBG("called");
+
+			PWRN("insert (%p): vo %lx pa %lx size %zx from %p", this, vo, pa, size, __builtin_return_address(0));
 			_range_op(vo, pa, size, Insert_func<ENTRY>(flags, alloc));
+			_memory_management_fence();
 		}
 
 		/**
@@ -305,6 +343,7 @@ class Genode::Level_x_translation_table
 		{
 			PDBG("calledl");
 			_range_op(vo, 0, size, Remove_func<ENTRY>(alloc));
+			_memory_management_fence();
 		}
 }  __attribute__((aligned(1 << ALIGNM_LOG2)));
 
@@ -330,14 +369,18 @@ namespace Genode {
 			                  Descriptor::access_t &desc)
 			{
 				if ((vo & ~BLOCK_MASK) || (pa & ~BLOCK_MASK) ||
-				    size < BLOCK_SIZE)
+				    size < BLOCK_SIZE) {
+				 PDBG("invalid range");
 					throw Invalid_range();
+				}
 
 				Descriptor::access_t blk_desc =
 					Block_descriptor::create(flags, pa);
 
-				if (Descriptor::valid(desc) && desc != blk_desc)
+				if (Descriptor::valid(desc) && desc != blk_desc) {
+					PDBG("double insertion %d d: %llx b: %llx", __LINE__, desc, blk_desc);
 					throw Double_insertion();
+				}
 
 				desc = blk_desc;
 			}
@@ -355,7 +398,19 @@ namespace Genode {
 			desc = 0; }
 	};
 
-	class Translation_table : public Level_1_translation_table { };
+	class Translation_table : public Level_1_translation_table
+	{
+		public:
+
+			enum {
+				TABLE_LEVEL_X_SIZE_LOG2 = SIZE_LOG2_4K,
+				CORE_VM_AREA_SIZE  = 128 * 1024 * 1024,
+				CORE_TRANS_TABLE_COUNT  =
+				_count(CORE_VM_AREA_SIZE, SIZE_LOG2_1G)
+				+ _count(CORE_VM_AREA_SIZE, SIZE_LOG2_2M),
+			};
+	};
+
 
 } /* namespace Genode */
 

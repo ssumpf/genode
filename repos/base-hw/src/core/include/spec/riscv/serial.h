@@ -43,6 +43,12 @@ namespace Genode
 				while (err)
 					asm volatile ("csrrw %0, mtohost, %1\n"
 					              : "=r" (err) : "r" (packet));
+
+				err = 1;
+				packet = 0;
+				while (err != 0)
+					asm volatile("csrrw %0, mfromhost, %1\n"
+					              : "=r" (err) : "r" (packet));
 			}
 	};
 }
