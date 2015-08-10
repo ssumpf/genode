@@ -34,5 +34,6 @@ Kernel::Pd::~Pd()
 
 void Kernel::Pd::admit(Kernel::Cpu::Context * const c)
 {
-	PDBG("not impl");
+	PDBG("translation_table: %p", translation_table());
+	c->translation_table((addr_t)translation_table());
 }

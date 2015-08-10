@@ -15,6 +15,7 @@
 /* core includes */
 #include <kernel/lock.h>
 #include <kernel/pd.h>
+#include <util.h>
 
 /* Genode includes */
 #include <assert.h>
@@ -57,7 +58,7 @@ void Mode_transition_control::map(Genode::Translation_table * tt,
 {
 	try {
 		addr_t const phys_base = (addr_t)&_mt_begin;
-		tt->insert_translation(VIRT_BASE, phys_base, SIZE,
+		tt->insert_translation(Genode::trunc_page(VIRT_BASE), phys_base, SIZE,
 		                       Genode::Page_flags::mode_transition(), alloc);
 	} catch(...) {
 		PERR("Inserting exception vector in page table failed!"); }

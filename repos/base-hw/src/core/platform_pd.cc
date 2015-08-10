@@ -219,7 +219,7 @@ Core_platform_pd::Core_platform_pd()
 	Kernel::mtc()->map(_table(), _table_alloc());
 
 	/* map core's program image */
-	_map((addr_t)&_prog_img_beg, (addr_t)&_prog_img_end, false);
+	_map((addr_t)&_prog_img_beg + 0x1000, (addr_t)&_prog_img_end, false);
 
 	/* map core's page table allocator */
 	_map(Platform::core_translation_tables(),

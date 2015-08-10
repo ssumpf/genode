@@ -73,7 +73,7 @@ extern "C" void init_kernel_up()
 	/* calculate in advance as needed later when data writes aren't allowed */
 	core_pd();
 
-	PINF("core_pd done");
+	PWRN("core_pd done");
 
 	/* initialize all CPU objects */
 	cpu_pool();
@@ -88,7 +88,6 @@ extern "C" void init_kernel_up()
 	/* go multiprocessor mode */
 	Cpu::start_secondary_cpus(&_start_secondary_cpus);
 
-	PINF("Secondary CPUs started");
 }
 
 
@@ -114,6 +113,7 @@ extern "C" void init_kernel_mp()
 	 * caches. Hence we must avoid write access to kernel data by now.
 	 */
 
+	PINF("Secondary CPUs started");
 	/* synchronize data view of all CPUs */
 	Cpu::invalidate_data_caches();
 	Cpu::invalidate_instr_caches();
