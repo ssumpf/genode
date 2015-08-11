@@ -32,12 +32,17 @@ namespace Genode
 		
 			void put_char(char const c)
 			{
-				unsigned err = 1;
-
 				enum {
 					STDOUT      = 1UL << 56,
 					WRITE_CMD   = 1UL << 48,
 				};
+
+				register unsigned  syscall   asm("a0") = 1;
+				register addr_t    character asm("a1") = c | STDOUT | WRITE_CMD;
+				asm volatile ("ecall\n" : : "r"(syscall), "r"(character));
+#if 0
+				unsigned err = 1;
+
 
 				addr_t packet = STDOUT | WRITE_CMD | c;
 				while (err)
@@ -49,6 +54,7 @@ namespace Genode
 				while (err != 0)
 					asm volatile("csrrw %0, mfromhost, %1\n"
 					              : "=r" (err) : "r" (packet));
+#endif
 			}
 	};
 }

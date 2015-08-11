@@ -16,6 +16,7 @@ SRC_CC += spec/riscv/kernel/thread_base.cc
 SRC_CC += spec/riscv/kernel/thread.cc
 SRC_CC += spec/riscv/kernel/pd.cc
 SRC_CC += spec/riscv/kernel/cpu.cc
+SRC_CC += spec/riscv/kernel/exception_vector.cc
 SRC_CC += spec/riscv/platform_support.cc
 
 #add assembly sources

@@ -114,11 +114,11 @@ class Genode::Level_x_translation_table
 
 		struct Table_descriptor : Descriptor
 		{
-			struct Next_table : Descriptor::template Bitfield<10, 38> { };
+			struct Next_table : Descriptor::template Bitfield<10, 28> { };
 
 			static typename Descriptor::access_t create(void * const pa)
 			{
-				typename Descriptor::access_t oa = (addr_t)pa;
+				typename Descriptor::access_t oa = (addr_t)pa >> 2;
 				return Next_table::masked(oa)
 				| Descriptor::Type::bits(Descriptor::Type::POINTER)
 				| Descriptor::V::bits(1);
@@ -127,11 +127,11 @@ class Genode::Level_x_translation_table
 
 		struct Block_descriptor : Descriptor
 		{
-			struct Output_address : Descriptor::template Bitfield<10, 38> { };
+			struct Output_address : Descriptor::template Bitfield<10, 28> { };
 			static typename Descriptor::access_t create(Page_flags const &f,
 			                                            addr_t const pa)
 			{
-				typename Descriptor::access_t oa = (addr_t)pa;
+				typename Descriptor::access_t oa = (addr_t)pa >> 2;
 				return Output_address::masked(oa)
 					| Descriptor::Type::bits(Descriptor::permission_bits(f))
 					| Descriptor::V::bits(1);
@@ -238,7 +238,7 @@ class Genode::Level_x_translation_table
 						PINF("Insert_func: TABLE");
 						/* use allocator to retrieve virt address of table */
 						ENTRY * phys_addr = (ENTRY*)
-							Table_descriptor::Next_table::masked(desc);
+							(Table_descriptor::Next_table::masked(desc) << 2);
 						table = (ENTRY*) alloc->virt_addr(phys_addr);
 						table = table ? table : (ENTRY*)phys_addr;
 						break;
@@ -274,7 +274,7 @@ class Genode::Level_x_translation_table
 					{
 						/* use allocator to retrieve virt address of table */
 						ENTRY * phys_addr = (ENTRY*)
-							Table_descriptor::Next_table::masked(desc);
+							(Table_descriptor::Next_table::masked(desc) << 2);
 						ENTRY * table = (ENTRY*) alloc->virt_addr(phys_addr);
 						table = table ? table : (ENTRY*)phys_addr;
 						table->remove_translation(vo - (vo & BLOCK_MASK),
