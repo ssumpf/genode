@@ -18,7 +18,6 @@
 
 using namespace Kernel;
 
-extern int _mt_begin, _mt_end;
 
 struct Mstatus : Genode::Register<64>
 {
@@ -43,8 +42,6 @@ void Genode::Cpu::init_virt_kernel(Kernel::Pd * pd)
 	Mstatus::access_t mstatus;
 	asm volatile ("csrr %0, mstatus\n" : "=r"(mstatus));
 
-	Mstatus::Ie::set(mstatus, 0);                     /* disable interrupts  */
-	Mstatus::Priv::set(mstatus, Mstatus::SUPERVISOR); /* set supervisor mode */
 	Mstatus::Vm::set(mstatus, Mstatus::Sv39);         /* enable Sv39 paging  */
 	Mstatus::Ie1::set(mstatus, 1);
 	Mstatus::Priv1::set(mstatus, Mstatus::USER);      /* set user mode */
@@ -55,23 +52,23 @@ void Genode::Cpu::init_virt_kernel(Kernel::Pd * pd)
 	              : "r" (pd->translation_table()), "r"(mstatus)
 	              : "memory");
 
+	Mstatus::Ie::set(mstatus, 0);                     /* disable interrupts  */
+	Mstatus::Priv::set(mstatus, Mstatus::SUPERVISOR); /* set supervisor mode */
+	asm volatile ("csrw mstatus, %0\n" : : "r"(mstatus));
+
 	PINF("MMU and supervisor mode enabled");
 }
 
 
 void Genode::Cpu::init_phys_kernel()
 {
-	/* set exception vector */
-	asm volatile ("csrw mtvec, %0\n" : : "r"(exception_entry));
-
-	/* copy mode-transition page to exception vector address */
-	memcpy((void *)exception_entry, &_mt_begin, (addr_t)&_mt_end - (addr_t)&_mt_begin);
+	PDBG("called");
 }
 
 
 Cpu_idle::Cpu_idle(Cpu * const cpu) : Cpu_job(Cpu_priority::MIN, 0)
 {
-	PDBG("not impl");
+		PDBG("not impl");
 }
 
 

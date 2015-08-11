@@ -24,12 +24,43 @@
 .p2align 12
 .global _mt_begin
 _mt_begin:
-j _machine_mode_trap
-.rept 64
-1: j 1b
-.endr
 
-_machine_mode_trap:
+/* 0x100 user mode */
+1: j 1b
+.space 0x3c
+/* 0x140 supervisor */
+j machine_exception
+.space 0x3c
+/* 0x180 hypervisor */
+1: j 1b
+.space 0x3c
+/* 0x1c0 machine */
+j machine_exception
+.space 0x38
+/* 0x1fc non-maksable interrupt */
+1: j 1b
+
+machine_exception:
+csrw mscratch, t0
+csrw sscratch, t1
+csrr t0, mcause
+li   t1, 8
+bltu t0, t1, machine_leave
+li   t1, 1
+bne t1, a0, machine_leave
+csrw mtohost, a1
+
+1:
+csrrw t0, mfromhost, x0
+bne t0, x0, 1b
+
+machine_leave:
+csrr  t0, mepc
+addi t0, t0, 4
+csrw mepc, t0
+csrr t0, mscratch
+csrr t1, sscratch
+eret
 
 /* space for a copy of the kernel context */
 .p2align 2

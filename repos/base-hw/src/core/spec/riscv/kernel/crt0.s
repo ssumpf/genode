@@ -21,6 +21,7 @@ la   sp, kernel_stack
 la   a0, kernel_stack_size
 ld   a0, (a0)
 mv   sp, a0
+jal  setup_riscv_exception_vector
 jal  init_kernel_up
 
 
