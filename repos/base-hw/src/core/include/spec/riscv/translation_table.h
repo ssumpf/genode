@@ -14,8 +14,10 @@
 #include <page_flags.h>
 #include <translation_table_allocator.h>
 
-namespace Genode
+namespace Sv39
 {
+	using namespace Genode;
+
 	enum {
 		SIZE_LOG2_4K   = 12,
 		SIZE_LOG2_2M   = 21,
@@ -36,11 +38,98 @@ namespace Genode
 
 	using Level_1_translation_table =
 		Level_x_translation_table<Level_2_translation_table, SIZE_LOG2_1G, SIZE_LOG2_512G>;
+
+	struct Descriptor;
+	struct Table_descriptor;
+	struct Block_descriptor;
 }
 
+struct Sv39::Descriptor : Register<64>
+{
+	enum Descriptor_type { INVALID, TABLE, BLOCK };
+	struct V    : Bitfield<0, 1>   { }; /* present */
+	struct Type : Bitfield<1, 4>        /* type and access rights */
+	{
+		enum {
+			POINTER        = 0,
+			POINTER_GLOBAL = 1,
+			USER           = 4, /* R + 0, RW + 1, RX + 2, RWX + 3 */
+			KERNEL         = 8,
+			GLOBAL         = 12,
+		};
+	};
+	struct Ppn  : Bitfield<10, 38> { }; /* physical address 10 bit aligned */
+	struct Base : Bitfield<12, 38> { }; /* physical address page aligned */
+
+	template <access_t BASE>
+	static access_t rwx(Page_flags const &f)
+	{
+		if (f.writeable && f.executable)
+			return BASE + 3;
+		else if (f.writeable)
+			return BASE + 1;
+		else if (f.executable)
+			return BASE + 2;
+		else
+			return BASE;
+	}
+
+	static access_t permission_bits(Page_flags const &f)
+	{
+		if (f.global)
+			return rwx<Type::GLOBAL>(f);
+
+		if (f.privileged)
+			return rwx<Type::KERNEL>(f);
+
+		return rwx<Type::USER>(f);
+	}
+
+	static Descriptor_type type(access_t const v)
+	{
+		if (!V::get(v)) return INVALID;
+		if (Type::get(v) == Type::POINTER || Type::get(v) == Type::POINTER_GLOBAL)
+			return TABLE;
+
+		return BLOCK;
+	}
+
+	static bool valid(access_t const v) {
+		return V::get(v); }
+};
+
+struct Sv39::Table_descriptor : Descriptor
+{
+	static access_t create(void * const pa)
+	{
+		access_t base = Base::get((access_t)pa);
+		access_t desc = 0;
+
+		Ppn::set(desc, base);
+		Type::set(desc, Type::POINTER);
+		V::set(desc, 1);
+
+		return desc;
+	}
+};
+
+struct Sv39::Block_descriptor : Descriptor
+{
+	static access_t create(Page_flags const &f, addr_t const pa)
+	{
+		access_t base = Base::get(pa);
+		access_t desc = 0;
+
+		Ppn::set(desc, base);
+		Type::set(desc, permission_bits(f));
+		V::set(desc, 1);
+
+		return desc;
+	}
+};
 
 template <typename ENTRY, unsigned BLOCK_SIZE_LOG2, unsigned SIZE_LOG2>
-class Genode::Level_x_translation_table
+class Sv39::Level_x_translation_table
 {
 	private:
 
@@ -59,84 +148,6 @@ class Genode::Level_x_translation_table
 		class Misaligned { };
 		class Invalid_range { };
 		class Double_insertion { };
-
-		struct Descriptor : Register<64>
-		{
-			enum Descriptor_type { INVALID, TABLE, BLOCK };
-			struct V    : Bitfield<0, 1>     { }; /* present */
-			struct Type : Bitfield<1, 4>          /* type and access rights */
-			{
-				enum {
-					POINTER        = 0,
-					POINTER_GLOBAL = 1,
-					USER           = 4, /* R + 0, RW + 1, RX + 2, RWX + 3 */
-					KERNEL         = 8,
-					GLOBAL         = 12,
-				};
-			};
-
-			template <access_t BASE>
-			static access_t rwx(Page_flags const &f)
-			{
-				if (f.writeable && f.executable)
-					return BASE + 3;
-				else if (f.writeable)
-					return BASE + 1;
-				else if (f.executable)
-					return BASE + 2;
-				else
-					return BASE;
-			}
-
-			static access_t permission_bits(Page_flags const &f)
-			{
-				if (f.global)
-					return rwx<Type::GLOBAL>(f);
-
-				if (f.privileged)
-					return rwx<Type::KERNEL>(f);
-
-				return rwx<Type::USER>(f);
-			}
-
-			static Descriptor_type type(access_t const v)
-			{
-				if (!V::get(v)) return INVALID;
-				if (Type::get(v) == Type::POINTER || Type::get(v) == Type::POINTER_GLOBAL)
-					return TABLE;
-
-				return BLOCK;
-			}
-
-			static bool valid(access_t const v) {
-				return V::get(v); }
-		};
-
-		struct Table_descriptor : Descriptor
-		{
-			struct Next_table : Descriptor::template Bitfield<10, 28> { };
-
-			static typename Descriptor::access_t create(void * const pa)
-			{
-				typename Descriptor::access_t oa = (addr_t)pa >> 2;
-				return Next_table::masked(oa)
-				| Descriptor::Type::bits(Descriptor::Type::POINTER)
-				| Descriptor::V::bits(1);
-			}
-		};
-
-		struct Block_descriptor : Descriptor
-		{
-			struct Output_address : Descriptor::template Bitfield<10, 28> { };
-			static typename Descriptor::access_t create(Page_flags const &f,
-			                                            addr_t const pa)
-			{
-				typename Descriptor::access_t oa = (addr_t)pa >> 2;
-				return Output_address::masked(oa)
-					| Descriptor::Type::bits(Descriptor::permission_bits(f))
-					| Descriptor::V::bits(1);
-			}
-		};
 
 	protected:
 
@@ -238,7 +249,7 @@ class Genode::Level_x_translation_table
 						PINF("Insert_func: TABLE");
 						/* use allocator to retrieve virt address of table */
 						ENTRY * phys_addr = (ENTRY*)
-							(Table_descriptor::Next_table::masked(desc) << 2);
+							Table_descriptor::Base::bits(Table_descriptor::Ppn::get(desc));
 						table = (ENTRY*) alloc->virt_addr(phys_addr);
 						table = table ? table : (ENTRY*)phys_addr;
 						break;
@@ -274,7 +285,7 @@ class Genode::Level_x_translation_table
 					{
 						/* use allocator to retrieve virt address of table */
 						ENTRY * phys_addr = (ENTRY*)
-							(Table_descriptor::Next_table::masked(desc) << 2);
+							Table_descriptor::Base::bits(Table_descriptor::Ppn::get(desc));
 						ENTRY * table = (ENTRY*) alloc->virt_addr(phys_addr);
 						table = table ? table : (ENTRY*)phys_addr;
 						table->remove_translation(vo - (vo & BLOCK_MASK),
@@ -347,8 +358,7 @@ class Genode::Level_x_translation_table
 		}
 }  __attribute__((aligned(1 << ALIGNM_LOG2)));
 
-
-namespace Genode {
+namespace Sv39 {
 
 	/**
 	 * Insert/Remove functor specialization for level 3
@@ -397,21 +407,22 @@ namespace Genode {
 		                  Descriptor::access_t &desc) {
 			desc = 0; }
 	};
+}
 
-	class Translation_table : public Level_1_translation_table
+namespace Genode {
+
+	class Translation_table : public Sv39::Level_1_translation_table
 	{
 		public:
 
 			enum {
-				TABLE_LEVEL_X_SIZE_LOG2 = SIZE_LOG2_4K,
+				TABLE_LEVEL_X_SIZE_LOG2 = Sv39::SIZE_LOG2_4K,
 				CORE_VM_AREA_SIZE  = 128 * 1024 * 1024,
 				CORE_TRANS_TABLE_COUNT  =
-				_count(CORE_VM_AREA_SIZE, SIZE_LOG2_1G)
-				+ _count(CORE_VM_AREA_SIZE, SIZE_LOG2_2M),
+				_count(CORE_VM_AREA_SIZE, Sv39::SIZE_LOG2_1G)
+				+ _count(CORE_VM_AREA_SIZE, Sv39::SIZE_LOG2_2M),
 			};
 	};
-
-
 } /* namespace Genode */
 
 #endif /* _TRANSLATION_TABLE_H_ */
