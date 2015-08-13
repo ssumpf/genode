@@ -42,7 +42,7 @@ class Genode::Cpu
 	public:
 
 		static constexpr addr_t mtc_size = 0x1000;
-		static constexpr addr_t exception_entry = 0x100;
+		static constexpr addr_t exception_entry = (~0ULL) & ~(0xfff);
 
 		/**
 		 * Extend basic CPU state by members relevant for 'base-hw' only
