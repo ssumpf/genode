@@ -36,7 +36,6 @@ Native_region * Platform::_ram_regions(unsigned const i)
 
 Native_region * Platform::_core_only_mmio_regions(unsigned const i)
 {
-	PDBG("not impl");
 	static Native_region _regions[] =
 	{
 	};
@@ -45,15 +44,11 @@ Native_region * Platform::_core_only_mmio_regions(unsigned const i)
 
 
 void Platform::_init_io_port_alloc()
-{
-	PDBG("not impl");
-}
+{ }
 
 
 void Platform::_init_io_mem_alloc()
-{
-	PDBG("not impl");
-}
+{ }
 
 void Platform::setup_irq_mode(unsigned, unsigned, unsigned) { PDBG("not impl");}
 

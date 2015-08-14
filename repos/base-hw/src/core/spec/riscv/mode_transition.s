@@ -47,17 +47,33 @@ user_trap:
 	li    t2, 0
 	j     put_char
 
+
 supervisor_trap:
 
 	sd    t2, -8(sp)
+
+	/* put char */
 	li    t2, 1
-	j     put_char
+	beq   t2, a0, put_char
+
+	/* pgrogram timer */
+	li    t2, 2
+	beq   t2, a0, program_timer
+
+	j fault
 
 machine_trap:
 
 	sd    t2, -8(sp)
 	li    t2, 3
 	j     put_char
+
+
+program_timer:
+
+	csrw mtimecmp, a1
+	ld  t2, -8(sp)
+	eret
 
 put_char:
 
@@ -78,7 +94,8 @@ put_char:
 	/* output character */
 	csrw mtohost, a1
 
-1:li t0, 0
+1:
+	li t0, 0
 	csrrw t0, mfromhost, t0
 	beqz t0, 1b
 
@@ -97,7 +114,7 @@ put_char:
 	eret
 
 2:
-	ld t2,  -8(sp)
+	ld t2, -8(sp)
 	eret
 
 trap_return:
@@ -113,7 +130,7 @@ trap_return:
 	mrts
 
 1: csrrw t0, mfromhost, x0
-2:j 2b /* TODO: handle trap from supervisor or machine mode */
+fault:j fault /* TODO: handle trap from supervisor or machine mode */
 
 .global _machine_end
 _machine_end:

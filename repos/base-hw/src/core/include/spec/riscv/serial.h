@@ -16,6 +16,8 @@
 
 #include <base/stdint.h>
 
+#include <machine_call.h>
+
 namespace Genode
 {
 	/**
@@ -37,24 +39,7 @@ namespace Genode
 					WRITE_CMD   = 1UL << 48,
 				};
 
-				register unsigned  syscall   asm("a0") = 1;
-				register addr_t    character asm("a1") = c | STDOUT | WRITE_CMD;
-				asm volatile ("ecall\n" : : "r"(syscall), "r"(character));
-#if 0
-				unsigned err = 1;
-
-
-				addr_t packet = STDOUT | WRITE_CMD | c;
-				while (err)
-					asm volatile ("csrrw %0, mtohost, %1\n"
-					              : "=r" (err) : "r" (packet));
-
-				err = 1;
-				packet = 0;
-				while (err != 0)
-					asm volatile("csrrw %0, mfromhost, %1\n"
-					              : "=r" (err) : "r" (packet));
-#endif
+				Machine::call(Machine::PUT_CHAR,  c | STDOUT | WRITE_CMD);
 			}
 	};
 }
