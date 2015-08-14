@@ -52,6 +52,9 @@ void Genode::Cpu::init_virt_kernel(Kernel::Pd * pd)
 	              : "r" (pd->translation_table()), "r"(mstatus)
 	              : "memory");
 
+	/* set exception vector */
+	asm volatile ("csrw stvec, %0" : : "r"(exception_entry));
+
 	Mstatus::Ie::set(mstatus, 0);                     /* disable interrupts  */
 	Mstatus::Priv::set(mstatus, Mstatus::SUPERVISOR); /* set supervisor mode */
 	asm volatile ("csrw mstatus, %0\n" : : "r"(mstatus));
