@@ -9,6 +9,108 @@
  * This file is part of the Genode OS framework, which is distributed
  * under the terms of the GNU General Public License version 2.
  */
+.set USER_MODE,       0
+.set SUPERVISOR_MODE, 1
+.set MACHINE_MODE,    3
+
+.set CALL_PUT_CHAR,      1
+.set CALL_PROGRAM_TIMER, 2
+
+
+.macro _save_scratch_registers mode
+
+	.if \mode == USER_MODE
+		csrrw sp, mscratch, sp
+	.endif
+
+	addi sp, sp, -24
+	sd t0, 0(sp)
+	sd t1, 8(sp)
+	sd t2, 16(sp)
+.endm
+
+.macro  _restore_scratch_registers mode
+	ld t0, 0(sp)
+	ld t1, 8(sp)
+	ld t2, 16(sp)
+	addi sp, sp, 24
+
+	.if \mode == USER_MODE
+		csrrw sp, mscratch, sp
+	.endif
+.endm
+
+.macro _put_char mode
+
+	/* check if ecall (8 - 11) */
+	csrr t0, mcause
+	li   t1, 8
+	bltu t0, t1, 9f
+	li   t1, 12
+	bgtu t0, t1, 9f
+
+	/* check for put char ecall number */
+	li t1, CALL_PUT_CHAR
+	bne t1, a0, 9f
+
+	/* output character */
+	csrw mtohost, a1
+
+1:
+	li t0, 0
+	csrrw t0, mfromhost, t0
+	beqz t0, 1b
+
+	/* advance epc */
+	csrr t0, mepc
+	addi t0, t0, 4
+	csrw mepc, t0
+
+	_restore_scratch_registers \mode
+	eret
+9:
+.endm
+
+.macro _interrupt mode
+
+	/* check for interrupt trap */
+	csrr  t0, mcause
+	srli  t0, t0, 63
+	beqz  t0, 9f
+	csrr  t0, mtime
+	addi t0, t0, 100
+	csrw  mtimecmp, t0
+
+	_restore_scratch_registers \mode
+
+	mrts
+9:
+.endm
+
+.macro _program_timer
+	/* check for trap from user mode */
+	csrr t0, mcause
+	li   t1, 9
+	bne  t0, t1, 9f
+
+	li t0, CALL_PROGRAM_TIMER
+	bne t0, a0, 9f
+
+	csrw mtimecmp, a1
+
+	/* enable timer interrrupt */
+	li t0, 0x80
+	csrs mie, t0
+
+	/* advance epc */
+	csrr t0, mepc
+	addi t0, t0, 4
+	csrw mepc, t0
+
+	_restore_scratch_registers SUPERVISOR_MODE
+	eret
+9:
+.endm
 
 .section .text
 
@@ -21,6 +123,9 @@
  * To enable such switching, the kernel context must be stored within this
  * region, thus one should map it solely accessable for privileged modes.
  */
+
+
+
 .p2align 8
 .global _machine_begin
 _machine_begin:
@@ -42,94 +147,27 @@ j machine_trap
 
 user_trap:
 
-	csrrw sp, mscratch, sp
-	sd    t2, -8(sp)
-	li    t2, 0
-	j     put_char
-
+	_save_scratch_registers USER_MODE
+	_put_char USER_MODE
+	_restore_scratch_registers USER_MODE
+	mrts
 
 supervisor_trap:
 
-	sd    t2, -8(sp)
-
-	/* put char */
-	li    t2, 1
-	beq   t2, a0, put_char
-
-	/* pgrogram timer */
-	li    t2, 2
-	beq   t2, a0, program_timer
-
+	_save_scratch_registers SUPERVISOR_MODE
+	_put_char SUPERVISOR_MODE
+	_program_timer
+	_interrupt SUPERVISOR_MODE
 	j fault
 
 machine_trap:
 
-	sd    t2, -8(sp)
-	li    t2, 3
-	j     put_char
+	_save_scratch_registers MACHINE_MODE
+	_put_char MACHINE_MODE
+	_interrupt MACHINE_MODE
+	j fault
 
 
-program_timer:
-
-	csrw mtimecmp, a1
-	ld  t2, -8(sp)
-	eret
-
-put_char:
-
-	sd  t0, -16(sp)
-	sd  t1, -24(sp)
-
-	/* check if ecall (8 - 11) */
-	csrr t0, mcause
-	li   t1, 8
-	bltu t0, t1, trap_return
-	li   t1, 12
-	bgtu t0, t1, trap_return
-
-	/* check for put char ecall number */
-	li t1, 1
-	bne t1, a0, trap_return
-
-	/* output character */
-	csrw mtohost, a1
-
-1:
-	li t0, 0
-	csrrw t0, mfromhost, t0
-	beqz t0, 1b
-
-	/* advance epc */
-	csrr t0, mepc
-	addi t0, t0, 4
-	csrw mepc, t0
-
-	ld t0, -16(sp)
-	ld t1, -24(sp)
-
-	bnez t2, 2f
-	ld t2,  -8(sp)
-
-	csrrw sp, mscratch, sp
-	eret
-
-2:
-	ld t2, -8(sp)
-	eret
-
-trap_return:
-
-	/* trap from user mode */
-	bne t2, x0, 1f
-	ld t2,  -8(sp)
-	ld t0, -16(sp)
-	ld t1, -24(sp)
-	csrrw sp, mscratch, sp
-
-	/* handle in supervisor */
-	mrts
-
-1: csrrw t0, mfromhost, x0
 fault:j fault /* TODO: handle trap from supervisor or machine mode */
 
 .global _machine_end
