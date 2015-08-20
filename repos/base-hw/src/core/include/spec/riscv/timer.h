@@ -42,6 +42,13 @@ struct Genode::Timer
 
 	public:
 
+		Timer()
+		{
+			/* enable timer interrupt */
+			enum { STIE = 0x20 };
+			asm volatile ("csrs sie, %0" : : "r"(STIE));
+		}
+
 		enum {
 			SPIKE_TIMER_HZ = 500000,
 			MS_TICS        = SPIKE_TIMER_HZ / 1000,
@@ -55,7 +62,7 @@ struct Genode::Timer
 		void start_one_shot(unsigned const tics, unsigned /* cpu */)
 		{
 			_timeout = _stime() + tics;
-			Machine::call(Machine::PROGRAM_TIMER, _timeout);
+			asm volatile ("csrw stimecmp, %0" : : "r"(_timeout));
 		}
 
 		/**
