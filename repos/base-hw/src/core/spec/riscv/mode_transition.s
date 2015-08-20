@@ -71,47 +71,6 @@
 9:
 .endm
 
-.macro _interrupt mode
-
-	/* check for interrupt trap */
-	csrr  t0, mcause
-	srli  t0, t0, 63
-	beqz  t0, 9f
-	csrr  t0, mtime
-	addi t0, t0, 100
-	csrw  mtimecmp, t0
-
-	_restore_scratch_registers \mode
-
-	mrts
-9:
-.endm
-
-.macro _program_timer
-	/* check for trap from user mode */
-	csrr t0, mcause
-	li   t1, 9
-	bne  t0, t1, 9f
-
-	li t0, CALL_PROGRAM_TIMER
-	bne t0, a0, 9f
-
-	csrw mtimecmp, a1
-
-	/* enable timer interrrupt */
-	li t0, 0x80
-	csrs mie, t0
-
-	/* advance epc */
-	csrr t0, mepc
-	addi t0, t0, 4
-	csrw mepc, t0
-
-	_restore_scratch_registers SUPERVISOR_MODE
-	eret
-9:
-.endm
-
 .section .text
 
 /*
@@ -156,15 +115,12 @@ supervisor_trap:
 
 	_save_scratch_registers SUPERVISOR_MODE
 	_put_char SUPERVISOR_MODE
-	_program_timer
-	_interrupt SUPERVISOR_MODE
 	j fault
 
 machine_trap:
 
 	_save_scratch_registers MACHINE_MODE
 	_put_char MACHINE_MODE
-	_interrupt MACHINE_MODE
 	j fault
 
 
