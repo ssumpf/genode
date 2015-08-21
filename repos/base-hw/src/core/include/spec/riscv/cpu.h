@@ -68,11 +68,16 @@ class Genode::Cpu
 			 */
 			void protection_domain(Genode::uint8_t const id)
 			{
-				PDBG("not impl");
+				asm volatile("csrw sasid, %0" : : "r"(id));
 			}
 		};
 
-		struct Pd { };
+		struct Pd
+		{
+			Genode::uint8_t asid; /* address space id */
+
+			Pd(Genode::uint8_t id) : asid(id) {}
+		};
 
 		/**
 		 * An usermode execution state
@@ -129,7 +134,7 @@ class Genode::Cpu
 			}
 		};
 
-		static void wait_for_interrupt() { };
+		static void wait_for_interrupt() { asm volatile ("wfi"); };
 
 
 		/**

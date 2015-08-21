@@ -13,6 +13,7 @@
  */
 
 /* core includes */
+#include <assert.h>
 #include <kernel/cpu.h>
 #include <kernel/pd.h>
 
@@ -71,11 +72,20 @@ void Genode::Cpu::init_phys_kernel()
 
 Cpu_idle::Cpu_idle(Cpu * const cpu) : Cpu_job(Cpu_priority::MIN, 0)
 {
-		PDBG("not impl");
+	Cpu_job::cpu(cpu);
+	cpu_exception = RESET;
+	ip = (addr_t)&_main;
+	sp = (addr_t)&_stack[stack_size];
+	init_thread((addr_t)core_pd()->translation_table(), core_pd()->asid);
 }
 
 
 void Cpu_idle::exception(unsigned const cpu)
 {
-	PDBG("not impl");
+	if (is_irq()) {
+		_interrupt(cpu);
+		return;
+	} else if (cpu_exception == RESET) return;
+
+		assert(0);
 }
