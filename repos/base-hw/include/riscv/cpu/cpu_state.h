@@ -15,6 +15,19 @@ namespace Genode {
 
 struct Genode::Cpu_state
 {
+	enum Cpu_exception {
+		INSTRUCTION_UNALIGNED = 0,
+		INSTRUCTION_PAGEFAULT = 1,
+		INSTRUCTION_ILLEGAL   = 2,
+		LOAD_UNALIGNED        = 4,
+		LOAD_PAGEFAULT        = 5,
+		STORE_UNALIGNED       = 6,
+		STORE_PAGEFAULT       = 7,
+		SUPERVISOR_CALL       = 8,
+		RESET                 = 16,
+		IRQ_FLAG              = 1UL << 63,
+	};
+
 	addr_t sp            = 0;
 	addr_t cpu_exception = 0;
 	addr_t ip            = 0;
@@ -48,6 +61,9 @@ struct Genode::Cpu_state
 	addr_t t3            = 0;
 	addr_t t4            = 0;
 	addr_t gp            = 0;
+
+	bool      is_irq() { return cpu_exception & IRQ_FLAG; }
+	unsigned  irq()    { return cpu_exception ^ IRQ_FLAG; }
 };
 
 #endif /* _INCLUDE__RISCV__CPU__CPU_STATE_H_ */

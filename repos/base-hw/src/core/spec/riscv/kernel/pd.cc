@@ -16,9 +16,16 @@
 #include <platform_pd.h>
 #include <kernel/pd.h>
 
+using Asid_allocator = Genode::Bit_allocator<256>;
+
+static Asid_allocator &alloc() {
+	return *unmanaged_singleton<Asid_allocator>(); }
+
+
 Kernel::Pd::Pd(Kernel::Pd::Table   * const table,
                Genode::Platform_pd * const platform_pd)
-: _table(table), _platform_pd(platform_pd)
+: Kernel::Cpu::Pd((Genode::uint8_t)alloc().alloc()),
+  _table(table), _platform_pd(platform_pd)
 {
 	capid_t invalid = _capid_alloc.alloc();
 	assert(invalid == cap_id_invalid());
@@ -29,11 +36,16 @@ Kernel::Pd::~Pd()
 {
 	while (Object_identity_reference *oir = _cap_tree.first())
 		oir->~Object_identity_reference();
+
+	/* clean up buffers of memory management */
+	Cpu::flush_tlb_by_pid(asid);
+	alloc().free(asid);
 }
 
 
 void Kernel::Pd::admit(Kernel::Cpu::Context * const c)
 {
 	PDBG("translation_table: %p", translation_table());
+	c->protection_domain(asid);
 	c->translation_table((addr_t)translation_table());
 }
