@@ -612,32 +612,6 @@ void Thread::_call_delete_cap()
 }
 
 
-int Thread::_read_reg(addr_t const id, addr_t & value) const
-{
-	addr_t Thread::* const reg = _reg(id);
-	if (reg) {
-		value = this->*reg;
-		return 0;
-	}
-	PWRN("%s -> %s: cannot read unknown thread register %p",
-	     pd_label(), label(), (void*)id);
-	return -1;
-}
-
-
-int Thread::_write_reg(addr_t const id, addr_t const value)
-{
-	addr_t Thread::* const reg = _reg(id);
-	if (reg) {
-		this->*reg = value;
-		return 0;
-	}
-	PWRN("%s -> %s: cannot write unknown thread register %p",
-	     pd_label(), label(), (void*)id);
-	return -1;
-}
-
-
 void Thread::_call()
 {
 	try {

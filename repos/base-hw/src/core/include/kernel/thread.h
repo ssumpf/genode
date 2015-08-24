@@ -142,41 +142,9 @@ class Kernel::Thread
 		void _call();
 
 		/**
-		 * Read a thread register
-		 *
-		 * \param id     kernel name of targeted thread register
-		 * \param value  read-value buffer
-		 *
-		 * \retval  0  succeeded
-		 * \retval -1  failed
-		 */
-		int _read_reg(addr_t const id, addr_t & value) const;
-
-		/**
 		 * Return amount of timer tics that 'quota' is worth 
 		 */
 		size_t _core_to_kernel_quota(size_t const quota) const;
-
-		/**
-		 * Override a thread register
-		 *
-		 * \param id     kernel name of targeted thread register
-		 * \param value  write-value buffer
-		 *
-		 * \retval  0  succeeded
-		 * \retval -1  failed
-		 */
-		int _write_reg(addr_t const id, addr_t const value);
-
-		/**
-		 * Map kernel names of thread registers to the corresponding data
-		 *
-		 * \param id  kernel name of thread register
-		 *
-		 * \retval  0  failed
-		 * \retval >0  pointer to register content
-		 */
-		addr_t Thread::* _reg(addr_t const id) const;
 
 		/**
 		 * Print the activity of the thread
