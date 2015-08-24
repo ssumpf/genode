@@ -194,12 +194,13 @@ Genode::Pager_object * Platform_thread::pager() { return _pager; }
 
 Thread_state Platform_thread::state()
 {
-	PDBG("unimplemented");
-	return Thread_state();
+	Thread_state_base bstate(*kernel_object());
+	return Thread_state(bstate);
 }
 
 
 void Platform_thread::state(Thread_state thread_state)
 {
-	PDBG("unimplemented");
+	Cpu_state * cstate = static_cast<Cpu_state *>(kernel_object());
+	*cstate = static_cast<Cpu_state>(thread_state);
 }
