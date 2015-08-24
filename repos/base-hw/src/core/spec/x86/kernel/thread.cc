@@ -17,10 +17,7 @@
 
 using namespace Kernel;
 
-Thread::Thread(unsigned const priority, unsigned const quota,
-               char const * const label)
-: Thread_base(this), Cpu_job(priority, quota), _state(AWAITS_START),
-  _signal_receiver(0), _label(label) { }
+void Kernel::Thread::_init() { }
 
 
 void Thread::exception(unsigned const cpu)
