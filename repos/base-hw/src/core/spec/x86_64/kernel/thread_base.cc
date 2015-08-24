@@ -95,20 +95,3 @@ void Kernel::Cpu_context::_init(size_t const stack_size, addr_t const table)
 	 */
 	sp = sp + stack_size;
 }
-
-
-/*************************
- ** CPU-state utilities **
- *************************/
-
-typedef Thread_reg_id Reg_id;
-
-static addr_t const _cpu_state_regs[] = { };
-
-addr_t const * cpu_state_regs() { return _cpu_state_regs; }
-
-
-size_t cpu_state_regs_length()
-{
-	return sizeof(_cpu_state_regs)/sizeof(_cpu_state_regs[0]);
-}

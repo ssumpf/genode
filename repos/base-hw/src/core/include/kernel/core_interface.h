@@ -37,7 +37,6 @@ namespace Kernel
 	constexpr Call_arg call_id_start_thread()           { return 17; }
 	constexpr Call_arg call_id_pause_thread()           { return 18; }
 	constexpr Call_arg call_id_resume_thread()          { return 19; }
-	constexpr Call_arg call_id_access_thread_regs()     { return 20; }
 	constexpr Call_arg call_id_route_thread_event()     { return 21; }
 	constexpr Call_arg call_id_thread_quota()           { return 22; }
 	constexpr Call_arg call_id_update_pd()              { return 23; }
@@ -143,48 +142,6 @@ namespace Kernel
 	{
 		return call(call_id_route_thread_event(), (Call_arg)thread,
 		            event_id, signal_context_id);
-	}
-
-
-	/**
-	 * Access plain member variables of a kernel thread-object
-	 *
-	 * \param thread     pointer to thread kernel object
-	 * \param reads      amount of read operations
-	 * \param writes     amount of write operations
-	 * \param values     base of the value buffer for all operations
-	 *
-	 * \return  amount of undone operations according to the execution order
-	 *
-	 * Operations are executed in order of the appearance of the register names
-	 * in the callers UTCB. If reads = 0, read_values is of no relevance. If
-	 * writes = 0, write_values is of no relevance.
-	 *
-	 * Expected structure at the callers UTCB base:
-	 *
-	 *                    0 * sizeof(addr_t): read register name #1
-	 *                  ...                   ...
-	 *          (reads - 1) * sizeof(addr_t): read register name #reads
-	 *          (reads - 0) * sizeof(addr_t): write register name #1
-	 *                  ...                   ...
-	 * (reads + writes - 1) * sizeof(addr_t): write register name #writes
-	 *
-	 * Expected structure at values:
-	 *
-	 *                    0 * sizeof(addr_t): read destination #1
-	 *                  ...                   ...
-	 *          (reads - 1) * sizeof(addr_t): read destination #reads
-	 *          (reads - 0) * sizeof(addr_t): write value #1
-	 *                  ...                   ...
-	 * (reads + writes - 1) * sizeof(addr_t): write value #writes
-	 */
-	inline unsigned access_thread_regs(Thread * const thread,
-	                                   unsigned const reads,
-	                                   unsigned const writes,
-	                                   addr_t * const values)
-	{
-		return call(call_id_access_thread_regs(), (Call_arg)thread,
-		            reads, writes, (Call_arg)values);
 	}
 
 
