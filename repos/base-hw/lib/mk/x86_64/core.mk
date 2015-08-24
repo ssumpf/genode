@@ -20,6 +20,7 @@ SRC_CC += spec/x86_64/kernel/thread.cc
 SRC_CC += spec/x86_64/platform_support.cc
 SRC_CC += spec/x86_64/idt.cc
 SRC_CC += spec/x86_64/tss.cc
+SRC_CC += spec/x86_64/kernel/cpu_context.cc
 
 # include less specific configuration
 include $(REP_DIR)/lib/mk/x86/core.inc
