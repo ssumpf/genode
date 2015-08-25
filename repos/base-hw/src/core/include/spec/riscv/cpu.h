@@ -49,6 +49,7 @@ class Genode::Cpu
 		 */
 		struct Context : Cpu_state
 		{
+			addr_t sasid = 0;
 			addr_t sptbr = 0; /* supervisor page table register */
 
 			/**
@@ -66,10 +67,8 @@ class Genode::Cpu
 			/**
 			 * Assign protection domain
 			 */
-			void protection_domain(Genode::uint8_t const id)
-			{
-				asm volatile("csrw sasid, %0" : : "r"(id));
-			}
+			void protection_domain(Genode::uint8_t const id) {
+				sasid = id; }
 		};
 
 		struct Pd

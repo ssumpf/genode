@@ -19,6 +19,7 @@
 
 using namespace Kernel;
 
+extern Genode::addr_t _mt_client_context_ptr;
 
 struct Mstatus : Genode::Register<64>
 {
@@ -56,6 +57,11 @@ void Genode::Cpu::init_virt_kernel(Kernel::Pd * pd)
 	/* set exception vector */
 	asm volatile ("csrw stvec, %0" : : "r"(exception_entry));
 
+	/* set _mt_client_context_ptr address */
+	addr_t context_addr = (addr_t)&_mt_client_context_ptr;
+	context_addr = exception_entry | (context_addr & 0xfff);
+	asm volatile ("csrw sscratch, %0" : : "r"(context_addr));
+
 	Mstatus::Ie::set(mstatus, 0);                     /* disable interrupts  */
 	Mstatus::Priv::set(mstatus, Mstatus::SUPERVISOR); /* set supervisor mode */
 	asm volatile ("csrw mstatus, %0\n" : : "r"(mstatus));
@@ -87,5 +93,5 @@ void Cpu_idle::exception(unsigned const cpu)
 		return;
 	} else if (cpu_exception == RESET) return;
 
-		assert(0);
+	assert(0);
 }

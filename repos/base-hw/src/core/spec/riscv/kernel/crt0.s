@@ -38,13 +38,8 @@ _start_secondary_cpus:
 
 jal init_kernel_mp
 
-/*********************************
- ** .bss (non-initialized data) **
- *********************************/
+/* kernel main routine */
+jal kernel
 
-.bss
+1: j 1b
 
-	/* stack of the temporary initial environment */
-	.p2align 8
-	.space 32 * 1024
-	_stack_high:
