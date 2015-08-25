@@ -28,9 +28,8 @@ struct Genode::Cpu_state
 		IRQ_FLAG              = 1UL << 63,
 	};
 
-	addr_t sp            = 0;
-	addr_t cpu_exception = 0;
 	addr_t ip            = 0;
+	addr_t cpu_exception = 0;
 	addr_t ra            = 0;
 	addr_t s0            = 0;
 	addr_t s1            = 0;
@@ -44,6 +43,7 @@ struct Genode::Cpu_state
 	addr_t s9            = 0;
 	addr_t s10           = 0;
 	addr_t s11           = 0;
+	addr_t sp            = 0;
 	addr_t tp            = 0;
 	addr_t v0            = 0;
 	addr_t v1            = 0;

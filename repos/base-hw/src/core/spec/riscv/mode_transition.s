@@ -16,6 +16,11 @@
 .set CALL_PUT_CHAR,      1
 .set CALL_PROGRAM_TIMER, 2
 
+.set CPU_IP,        0
+.set CPU_EXCEPTION, 8
+.set CPU_X1,        2 *8
+.set CPU_SASID,     33*8
+.set CPU_SPTBR,     34*8
 
 .macro _save_scratch_registers mode
 
@@ -129,8 +134,6 @@ fault:j fault /* TODO: handle trap from supervisor or machine mode */
 .global _machine_end
 _machine_end:
 
-
-
 .p2align 12
 .global _mt_begin
 _mt_begin:
@@ -152,23 +155,22 @@ j exception
 
 exception:
 
-
-/* space for a copy of the kernel context */
-.p2align 2
-.global _mt_master_context_begin
-_mt_master_context_begin:
-
-/* space must be at least as large as 'Cpu_state' */
-.space 34*8
-
-.global _mt_master_context_end
-_mt_master_context_end:
-
 /* space for a client context-pointer per CPU */
 .p2align 2
 .global _mt_client_context_ptr
 _mt_client_context_ptr:
 .space 8
+
+/* space for a copy of the kernel context */
+.global _mt_master_context_begin
+_mt_master_context_begin:
+
+/* space must be at least as large as 'Context' */
+.space 35*8
+
+.global _mt_master_context_end
+_mt_master_context_end:
+
 
 .global _mt_kernel_entry_pic
 _mt_kernel_entry_pic:
@@ -176,6 +178,41 @@ _mt_kernel_entry_pic:
 .global _mt_user_entry_pic
 _mt_user_entry_pic:
 
+	/* client context pointer */
+	csrr x30, sscratch
+	ld   x30, (x30)
+
+	/* set return IP */
+	ld x31, CPU_IP(x30)
+	csrw sepc, x31
+
+	/* restore x1-x28 */
+	.irp reg,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28
+		ld x\reg, CPU_X1 + 8 * (\reg - 1)(x30)
+	.endr
+
+	/* save x29, x30, x31 to master context */
+	csrr x29, sscratch
+	addi x29, x29, 8 /* master context */
+
+	.irp reg,29,30,31
+		ld x31, CPU_X1 + 8 * (\reg - 1)(x30)
+		sd x31, CPU_X1 + 8 * (\reg - 1)(x29)
+	.endr
+
+	/* switch page table */
+	ld x31, CPU_SASID(x30)
+	ld x30, CPU_SPTBR(x30)
+
+	csrw sasid, x31
+	csrw sptbr, x30
+
+	/* restore x29 - x31 from master context */
+	.irp reg,31,30,29
+		ld x\reg, CPU_X1 + 8 * (\reg - 1)(x29)
+	.endr
+
+	eret
 
 /* end of the mode transition code */
 .global _mt_end
