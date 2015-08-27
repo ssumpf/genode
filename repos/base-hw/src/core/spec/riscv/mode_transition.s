@@ -18,7 +18,8 @@
 
 .set CPU_IP,        0
 .set CPU_EXCEPTION, 8
-.set CPU_X1,        2 *8
+.set CPU_X1,        2*8
+.set CPU_SP,        3*8
 .set CPU_SASID,     33*8
 .set CPU_SPTBR,     34*8
 
@@ -139,21 +140,19 @@ _machine_end:
 _mt_begin:
 
 /* 0x100 user mode */
-1: j 1b
+	j  _mt_kernel_entry_pic
 .space 0x3c
 /* 0x140 supervisor */
-j exception
+1: j 1b
 .space 0x3c
 /* 0x180 hypervisor */
 1: j 1b
 .space 0x3c
 /* 0x1c0 machine */
-j exception
+1: j 1b
 .space 0x38
 /* 0x1fc non-maksable interrupt */
 1: j 1b
-
-exception:
 
 /* space for a client context-pointer per CPU */
 .p2align 2
@@ -171,9 +170,60 @@ _mt_master_context_begin:
 .global _mt_master_context_end
 _mt_master_context_end:
 
-
 .global _mt_kernel_entry_pic
 _mt_kernel_entry_pic:
+
+	/* master context */
+	csrrw x31, sscratch, x31
+	addi  x31, x31, 8
+
+	/* save x29, x30 in master */
+	sd x29, CPU_X1 + 8 * 28(x31)
+	sd x30, CPU_X1 + 8 * 29(x31)
+
+	/* load kernel page table */
+	ld x29, CPU_SASID(x31)
+	ld x30, CPU_SPTBR(x31)
+
+	csrw sasid, x29
+	csrw sptbr, x30
+
+	/* save x29 - x31 in user context */
+	mv   x29, x31
+	addi x29, x29, -8
+	ld   x29, (x29)
+
+	.irp reg,29,30
+		ld x30, CPU_X1 + 8 * (\reg - 1)(x31)
+		sd x30, CPU_X1 + 8 * (\reg - 1)(x29)
+	.endr
+
+	csrr x30, sscratch /* x31 */
+	sd x30, CPU_X1 + 8 * 30(x29)
+
+	/* save x1 - x28 */
+	.irp reg,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28
+		sd x\reg, CPU_X1 + 8 * (\reg - 1)(x29)
+	.endr
+
+	/* trap reason */
+	csrr x30, scause
+	sd   x30, CPU_EXCEPTION(x29)
+
+	/* ip */
+	csrr x30, sepc
+	sd   x30, CPU_IP(x29)
+
+	/* load kernel stack and ip */
+	ld sp,  CPU_SP(x31)
+	ld x30, CPU_IP(x31)
+
+	/* restore scratch */
+	addi x31, x31, -8
+	csrw sscratch, x31
+
+	jalr x30
+
 
 .global _mt_user_entry_pic
 _mt_user_entry_pic:
