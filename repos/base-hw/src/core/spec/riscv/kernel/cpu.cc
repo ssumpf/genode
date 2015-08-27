@@ -29,12 +29,12 @@ struct Mstatus : Genode::Register<64>
 		MACHINE    = 3,
 		Sv39       = 9,
 	};
-	struct Ie   : Bitfield<0, 1> { };
-	struct Priv : Bitfield<1, 2> { };
-	struct Ie1  : Bitfield<3, 1> { };
+	struct Ie    : Bitfield<0, 1> { };
+	struct Priv  : Bitfield<1, 2> { };
+	struct Ie1   : Bitfield<3, 1> { };
 	struct Priv1 : Bitfield<4, 2> { };
-	struct Vm   : Bitfield<17, 5> { };
-	struct Mprv : Bitfield<16, 1> { };
+	struct Vm    : Bitfield<17, 5> { };
+	struct Mprv  : Bitfield<16, 1> { };
 };
 
 
@@ -48,10 +48,11 @@ void Genode::Cpu::init_virt_kernel(Kernel::Pd * pd)
 	Mstatus::Ie1::set(mstatus, 1);
 	Mstatus::Priv1::set(mstatus, Mstatus::USER);      /* set user mode */
 
-	asm volatile ("csrw sptbr, %0  \n" /* set page table */
-	              "csrw mstatus, %1\n" /* change mode */
+	asm volatile ("csrw sasid,   %0\n" /* address space id */
+	              "csrw sptbr,   %1\n" /* set page table */
+	              "csrw mstatus, %2\n" /* change mode */
 	              :
-	              : "r" (pd->translation_table()), "r"(mstatus)
+	              : "r" (pd->asid), "r" (pd->translation_table()), "r"(mstatus)
 	              : "memory");
 
 	/* set exception vector */
