@@ -195,7 +195,8 @@ class Sv39::Level_x_translation_table
 		 */
 		void _memory_management_fence()
 		{
-			asm volatile ("sfence.vm");
+			//XXX: implement machine
+			//asm volatile ("sfence.vm");
 		}
 
 		template <typename E>

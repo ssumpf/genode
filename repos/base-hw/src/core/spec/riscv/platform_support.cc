@@ -26,9 +26,9 @@ Cpu::User_context::User_context() { PDBG("not impl"); }
 
 Native_region * Platform::_ram_regions(unsigned const i)
 {
-	PDBG("not impl");
 	static Native_region _regions[] =
 	{
+		{ 0, 128 * 1024 * 1024 }
 	};
 	return i < sizeof(_regions)/sizeof(_regions[0]) ? &_regions[i] : 0;
 }

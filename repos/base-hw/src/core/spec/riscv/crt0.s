@@ -10,5 +10,5 @@ _core_start:
 	la sp, init_main_thread_result
 	ld sp, (sp)
 
-	/* jump into init C-code
+	/* jump into init C-code */
 	j _main
