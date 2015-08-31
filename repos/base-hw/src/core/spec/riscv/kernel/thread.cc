@@ -29,7 +29,31 @@ Thread::Thread(unsigned const priority, unsigned const quota,
 
 void Thread::exception(unsigned const cpu)
 {
-	PDBG("not impl");
+	if (is_irq()) {
+		PDBG("IRQ %u", irq());
+		return;
+	}
+
+	switch(cpu_exception) {
+	case INSTRUCTION_UNALIGNED:
+		PWRN("%s -> %s: unaligned instruction at ip=%lx", pd_label(), label(), ip);
+		break;
+	case INSTRUCTION_ILLEGAL:
+		PWRN("%s -> %s: illigal instruction at ip=%lx", pd_label(), label(), ip);
+		break;
+	case LOAD_UNALIGNED:
+		PWRN("%s -> %s: unaligned load at ip=%lx", pd_label(), label(), ip);
+		break;
+	case STORE_UNALIGNED:
+		PWRN("%s -> %s: unaligned store at ip=%lx", pd_label(), label(), ip);
+		break;
+	case SUPERVISOR_CALL:
+		_call();
+		ip += 4;
+		break;
+	default:
+		PDBG("%lx", cpu_exception);
+	}
 }
 
 

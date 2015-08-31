@@ -91,22 +91,22 @@ class Genode::Cpu
 			/**
 			 * Support for kernel calls
 			 */
-			void user_arg_0(unsigned const arg) { PDBG("not impl"); }
-			void user_arg_1(unsigned const arg) { PDBG("not impl"); }
-			void user_arg_2(unsigned const arg) { PDBG("not impl"); }
-			void user_arg_3(unsigned const arg) { PDBG("not impl"); }
-			void user_arg_4(unsigned const arg) { PDBG("not impl"); }
-			void user_arg_5(unsigned const arg) { PDBG("not impl"); }
-			void user_arg_6(unsigned const arg) { PDBG("not impl"); }
-			void user_arg_7(unsigned const arg) { PDBG("not impl"); }
-			addr_t user_arg_0() const { PDBG("not impl"); return 0; }
-			addr_t user_arg_1() const { PDBG("not impl"); return 0; }
-			addr_t user_arg_2() const { PDBG("not impl"); return 0; }
-			addr_t user_arg_3() const { PDBG("not impl"); return 0; }
-			addr_t user_arg_4() const { PDBG("not impl"); return 0; }
-			addr_t user_arg_5() const { PDBG("not impl"); return 0; }
-			addr_t user_arg_6() const { PDBG("not impl"); return 0; }
-			addr_t user_arg_7() const { PDBG("not impl"); return 0; }
+			void user_arg_0(unsigned const arg) { a0  = arg; }
+			void user_arg_1(unsigned const arg) { a1  = arg; }
+			void user_arg_2(unsigned const arg) { a2  = arg; }
+			void user_arg_3(unsigned const arg) { a3  = arg; }
+			void user_arg_4(unsigned const arg) { a4  = arg; }
+			void user_arg_5(unsigned const arg) { a5  = arg; }
+			void user_arg_6(unsigned const arg) { a6  = arg; }
+			void user_arg_7(unsigned const arg) { a7  = arg; }
+			addr_t user_arg_0() const { return a0; }
+			addr_t user_arg_1() const { return a1; }
+			addr_t user_arg_2() const { return a2; }
+			addr_t user_arg_3() const { return a3; }
+			addr_t user_arg_4() const { return a4; }
+			addr_t user_arg_5() const { return a5; }
+			addr_t user_arg_6() const { return a6; }
+			addr_t user_arg_7() const { return a7; }
 
 			/**
 			 * Initialize thread context
