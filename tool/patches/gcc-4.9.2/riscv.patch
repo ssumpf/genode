@@ -348,20 +348,21 @@ index ac56f33..8e1ec46 100644
  #endif
  
 diff --git a/libsanitizer/sanitizer_common/sanitizer_platform_limits_posix.h b/libsanitizer/sanitizer_common/sanitizer_platform_limits_posix.h
-index aec9504..00ff088 100644
+index aec9504..c063107 100644
 --- a/libsanitizer/sanitizer_common/sanitizer_platform_limits_posix.h
 +++ b/libsanitizer/sanitizer_common/sanitizer_platform_limits_posix.h
-@@ -67,6 +67,9 @@ namespace __sanitizer {
+@@ -67,6 +67,10 @@ namespace __sanitizer {
    const unsigned struct___old_kernel_stat_sz = 0;
    const unsigned struct_kernel_stat_sz = 144;
    const unsigned struct_kernel_stat64_sz = 104;
 +#elif defined(__riscv__)
++  const unsigned struct___old_kernel_stat_sz = 0;
 +  const unsigned struct_kernel_stat_sz = 128;
 +  const unsigned struct_kernel_stat64_sz = 128;
  #elif defined(__sparc__) && defined(__arch64__)
    const unsigned struct___old_kernel_stat_sz = 0;
    const unsigned struct_kernel_stat_sz = 104;
-@@ -367,7 +370,7 @@ namespace __sanitizer {
+@@ -367,7 +371,7 @@ namespace __sanitizer {
    typedef long __sanitizer___kernel_off_t;
  #endif
  
@@ -370,3 +371,29 @@ index aec9504..00ff088 100644
    typedef unsigned int __sanitizer___kernel_old_uid_t;
    typedef unsigned int __sanitizer___kernel_old_gid_t;
  #else
+diff --git a/libstdc++-v3/configure b/libstdc++-v3/configure
+index 16e09f0..acd62fc 100755
+--- a/libstdc++-v3/configure
++++ b/libstdc++-v3/configure
+@@ -16550,7 +16550,7 @@ ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
+   # Long term, -std=c++0x could be even better, could manage to explicitly
+   # request C99 facilities to the underlying C headers.
+   ac_save_CXXFLAGS="$CXXFLAGS"
+-  CXXFLAGS="$CXXFLAGS -std=c++98"
++  CXXFLAGS="$CXXFLAGS -std=gnu++98"
+   ac_save_LIBS="$LIBS"
+   ac_save_gcc_no_link="$gcc_no_link"
+ 
+@@ -17170,9 +17170,11 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+ $as_echo "$glibcxx_cv_c99_wchar" >&6; }
+   fi
+ 
++  # For newlib, don't check complex since missing c99 functions, but
++  #   rest of c99 stuff is there so don't loose it
+   # Option parsed, now set things appropriately.
+   if test x"$glibcxx_cv_c99_math" = x"no" ||
+-     test x"$glibcxx_cv_c99_complex" = x"no" ||
++     # test x"$glibcxx_cv_c99_complex" = x"no" ||
+      test x"$glibcxx_cv_c99_stdio" = x"no" ||
+      test x"$glibcxx_cv_c99_stdlib" = x"no" ||
+      test x"$glibcxx_cv_c99_wchar" = x"no"; then

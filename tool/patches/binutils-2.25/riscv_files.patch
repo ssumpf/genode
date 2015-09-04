@@ -1,11 +1,11 @@
 diff --git a/bfd/cpu-riscv.c b/bfd/cpu-riscv.c
 new file mode 100644
-index 0000000..4dbc1a3
+index 0000000..1e5c50a
 --- /dev/null
 +++ b/bfd/cpu-riscv.c
-@@ -0,0 +1,80 @@
+@@ -0,0 +1,79 @@
 +/* BFD backend for RISC-V
-+   Copyright 2011-2014 Free Software Foundation, Inc.
++   Copyright 2011-2015 Free Software Foundation, Inc.
 +
 +   Contributed by Andrew Waterman (waterman@cs.berkeley.edu) at UC Berkeley.
 +   Based on MIPS target.
@@ -23,9 +23,8 @@ index 0000000..4dbc1a3
 +   GNU General Public License for more details.
 +
 +   You should have received a copy of the GNU General Public License
-+   along with this program; if not, write to the Free Software
-+   Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston,
-+   MA 02110-1301, USA.  */
++   along with this program; see the file COPYING3. If not,
++   see <http://www.gnu.org/licenses/>.  */
 +
 +#include "sysdep.h"
 +#include "bfd.h"
@@ -76,22 +75,22 @@ index 0000000..4dbc1a3
 +
 +static const bfd_arch_info_type arch_info_struct[] =
 +{
-+  N (64, 64, bfd_mach_riscv64, "riscv:rv64", FALSE, NN(I_riscv64)),
++  N (64, 64, bfd_mach_riscv64, "riscv:rv64", FALSE, NN (I_riscv64)),
 +  N (32, 32, bfd_mach_riscv32, "riscv:rv32", FALSE, 0)
 +};
 +
-+/* The default architecture is riscv:rv64. */
++/* The default architecture is riscv:rv64.  */
 +
 +const bfd_arch_info_type bfd_riscv_arch =
 +N (64, 64, 0, "riscv", TRUE, &arch_info_struct[0]);
 diff --git a/bfd/elfnn-riscv.c b/bfd/elfnn-riscv.c
 new file mode 100644
-index 0000000..b6ef1cc
+index 0000000..a0a5ef3
 --- /dev/null
 +++ b/bfd/elfnn-riscv.c
 @@ -0,0 +1,3006 @@
 +/* RISC-V-specific support for NN-bit ELF.
-+   Copyright 2011-2014 Free Software Foundation, Inc.
++   Copyright 2011-2015 Free Software Foundation, Inc.
 +
 +   Contributed by Andrew Waterman (waterman@cs.berkeley.edu) at UC Berkeley.
 +   Based on TILE-Gx and MIPS targets.
@@ -109,10 +108,8 @@ index 0000000..b6ef1cc
 +   GNU General Public License for more details.
 +
 +   You should have received a copy of the GNU General Public License
-+   along with this program; if not, write to the Free Software
-+   Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston,
-+   MA 02110-1301, USA.  */
-+
++   along with this program; see the file COPYING3. If not,
++   see <http://www.gnu.org/licenses/>.  */
 +
 +/* This file handles RISC-V ELF targets.  */
 +
@@ -201,7 +198,7 @@ index 0000000..b6ef1cc
 +  (_bfd_riscv_elf_tdata (abfd)->local_got_tls_type)
 +
 +#define _bfd_riscv_elf_tls_type(abfd, h, symndx)		\
-+  (*((h) != NULL ? &riscv_elf_hash_entry(h)->tls_type		\
++  (*((h) != NULL ? &riscv_elf_hash_entry (h)->tls_type		\
 +     : &_bfd_riscv_elf_local_got_tls_type (abfd) [symndx]))
 +
 +#define is_riscv_elf(bfd)				\
@@ -279,7 +276,7 @@ index 0000000..b6ef1cc
 +/* The format of the first PLT entry.  */
 +
 +static void
-+riscv_make_plt0_entry(bfd_vma gotplt_addr, bfd_vma addr, uint32_t *entry)
++riscv_make_plt0_entry (bfd_vma gotplt_addr, bfd_vma addr, uint32_t *entry)
 +{
 +  /* auipc  t2, %hi(.got.plt)
 +     sub    t1, t1, t3               # shifted .got.plt offset + hdr size + 12
@@ -303,7 +300,7 @@ index 0000000..b6ef1cc
 +/* The format of subsequent PLT entries.  */
 +
 +static void
-+riscv_make_plt_entry(bfd_vma got_address, bfd_vma addr, uint32_t *entry)
++riscv_make_plt_entry (bfd_vma got_address, bfd_vma addr, uint32_t *entry)
 +{
 +  /* auipc  t3, %hi(.got.plt entry)
 +     l[w|d] t3, %lo(.got.plt entry)(t3)
@@ -549,7 +546,7 @@ index 0000000..b6ef1cc
 +  if (htab->elf.sgot == NULL)
 +    {
 +      if (!riscv_elf_create_got_section (htab->elf.dynobj, info))
-+        return FALSE;
++	return FALSE;
 +    }
 +
 +  if (h != NULL)
@@ -576,7 +573,8 @@ index 0000000..b6ef1cc
 +bad_static_reloc (bfd *abfd, unsigned r_type, struct elf_link_hash_entry *h)
 +{
 +  (*_bfd_error_handler)
-+    (_("%B: relocation %s against `%s' can not be used when making a shared object; recompile with -fPIC"),
++    (_("%B: relocation %s against `%s' can not be used when making a shared "
++       "object; recompile with -fPIC"),
 +      abfd, riscv_elf_rtype_to_howto (r_type)->name,
 +      h != NULL ? h->root.root.string : "a local symbol");
 +  bfd_set_error (bfd_error_bad_value);
@@ -1143,7 +1141,7 @@ index 0000000..b6ef1cc
 +    {
 +      asection *s;
 +      bfd_boolean dyn;
-+      int tls_type = riscv_elf_hash_entry(h)->tls_type;
++      int tls_type = riscv_elf_hash_entry (h)->tls_type;
 +
 +      /* Make sure this symbol is output as a dynamic symbol.
 +	 Undefined weak syms won't yet be marked as dynamic.  */
@@ -2157,17 +2155,17 @@ index 0000000..b6ef1cc
 +		abort ();
 +
 +	      if (h != NULL)
-+	      {
-+	        bfd_boolean dyn;
-+	        dyn = htab->elf.dynamic_sections_created;
++		{
++		  bfd_boolean dyn;
++		  dyn = htab->elf.dynamic_sections_created;
 +
-+		if (WILL_CALL_FINISH_DYNAMIC_SYMBOL (dyn, info->shared, h)
-+		    && (!info->shared
-+			|| !SYMBOL_REFERENCES_LOCAL (info, h)))
++		  if (WILL_CALL_FINISH_DYNAMIC_SYMBOL (dyn, info->shared, h)
++		      && (!info->shared
++			  || !SYMBOL_REFERENCES_LOCAL (info, h)))
 +		  {
 +		    indx = h->dynindx;
 +		  }
-+	      }
++		}
 +
 +	      /* The GOT entries have not been initialized yet.  Do it
 +	         now, and emit any relocations.  */
@@ -2188,30 +2186,30 @@ index 0000000..b6ef1cc
 +				  htab->elf.sgot->contents + off);
 +		      riscv_elf_append_rela (output_bfd, htab->elf.srelgot, &outrel);
 +		      if (indx == 0)
-+		        {
++			{
 +			  BFD_ASSERT (! unresolved_reloc);
 +			  bfd_put_NN (output_bfd,
 +				      dtpoff (info, relocation),
 +				      (htab->elf.sgot->contents + off +
 +				       RISCV_ELF_WORD_BYTES));
-+		        }
++			}
 +		      else
-+		        {
++			{
 +			  bfd_put_NN (output_bfd, 0,
 +				      (htab->elf.sgot->contents + off +
 +				       RISCV_ELF_WORD_BYTES));
-+		          outrel.r_info = ELFNN_R_INFO (indx, R_RISCV_TLS_DTPRELNN);
-+		          outrel.r_offset += RISCV_ELF_WORD_BYTES;
-+		          riscv_elf_append_rela (output_bfd, htab->elf.srelgot, &outrel);
-+		        }
++			  outrel.r_info = ELFNN_R_INFO (indx, R_RISCV_TLS_DTPRELNN);
++			  outrel.r_offset += RISCV_ELF_WORD_BYTES;
++			  riscv_elf_append_rela (output_bfd, htab->elf.srelgot, &outrel);
++			}
 +		    }
 +		  else
 +		    {
 +		      /* If we are not emitting relocations for a
-+		         general dynamic reference, then we must be in a
-+		         static link or an executable link with the
-+		         symbol binding locally.  Mark it as belonging
-+		         to module 1, the executable.  */
++			 general dynamic reference, then we must be in a
++			 static link or an executable link with the
++			 symbol binding locally.  Mark it as belonging
++			 to module 1, the executable.  */
 +		      bfd_put_NN (output_bfd, 1,
 +				  htab->elf.sgot->contents + off);
 +		      bfd_put_NN (output_bfd,
@@ -2231,7 +2229,7 @@ index 0000000..b6ef1cc
 +				       + off + ie_off;
 +		      outrel.r_addend = 0;
 +		      if (indx == 0)
-+		        outrel.r_addend = tpoff (info, relocation);
++			outrel.r_addend = tpoff (info, relocation);
 +		      outrel.r_info = ELFNN_R_INFO (indx, R_RISCV_TLS_TPRELNN);
 +		      riscv_elf_append_rela (output_bfd, htab->elf.srelgot, &outrel);
 +		    }
@@ -2281,36 +2279,36 @@ index 0000000..b6ef1cc
 +	{
 +	case bfd_reloc_ok:
 +	  continue;
-+      
++
 +	case bfd_reloc_overflow:
 +	  r = info->callbacks->reloc_overflow
 +	    (info, (h ? &h->root : NULL), name, howto->name,
 +	     (bfd_vma) 0, input_bfd, input_section, rel->r_offset);
 +	  break;
-+      
++
 +	case bfd_reloc_undefined:
 +	  r = info->callbacks->undefined_symbol
 +	    (info, name, input_bfd, input_section, rel->r_offset,
 +	     TRUE);
 +	  break;
-+      
++
 +	case bfd_reloc_outofrange:
 +	  msg = _("internal error: out of range error");
 +	  break;
-+      
++
 +	case bfd_reloc_notsupported:
 +	  msg = _("internal error: unsupported relocation error");
 +	  break;
-+      
++
 +	case bfd_reloc_dangerous:
 +	  msg = _("internal error: dangerous relocation");
 +	  break;
-+      
++
 +	default:
 +	  msg = _("internal error: unknown error");
 +	  break;
 +	}
-+      
++
 +      if (msg)
 +	r = info->callbacks->warning
 +	  (info, msg, name, input_bfd, input_section, rel->r_offset);
@@ -2648,7 +2646,7 @@ index 0000000..b6ef1cc
 +
 +      if (bfd_get_arch (obfd) == bfd_get_arch (ibfd)
 +	  && (bfd_get_arch_info (obfd)->the_default
-+	      || riscv_mach_extends_p (bfd_get_mach (obfd), 
++	      || riscv_mach_extends_p (bfd_get_mach (obfd),
 +				       bfd_get_mach (ibfd))))
 +	{
 +	  if (! bfd_set_arch_mach (obfd, bfd_get_arch (ibfd),
@@ -2680,12 +2678,13 @@ index 0000000..b6ef1cc
 +	  !EF_IS_RISCV_EXT_Xcustom (old_flags))
 +	{
 +	  (*_bfd_error_handler)
-+	    (_("%B: uses different e_flags (0x%lx) fields than previous modules (0x%lx)"),
-+	    ibfd, (unsigned long) new_flags,
-+	    (unsigned long) old_flags);
++	    (_("%B: uses different e_flags (0x%lx) fields than previous "
++	       "modules (0x%lx)"),
++	     ibfd, (unsigned long) new_flags,
++	     (unsigned long) old_flags);
 +	  goto fail;
 +	}
-+      else if (EF_IS_RISCV_EXT_Xcustom(new_flags))
++      else if (EF_IS_RISCV_EXT_Xcustom (new_flags))
 +	EF_SET_RISCV_EXT (elf_elfheader (obfd)->e_flags,
 +			  EF_GET_RISCV_EXT (old_flags));
 +    }
@@ -2743,7 +2742,7 @@ index 0000000..b6ef1cc
 +    }
 +
 +  /* Now adjust the global symbols defined in this section.  */
-+  symcount = ((symtab_hdr->sh_size / sizeof(ElfNN_External_Sym))
++  symcount = ((symtab_hdr->sh_size / sizeof (ElfNN_External_Sym))
 +	      - symtab_hdr->sh_info);
 +
 +  for (i = 0; i < symcount; i++)
@@ -2963,7 +2962,7 @@ index 0000000..b6ef1cc
 +    {
 +      asection *sym_sec;
 +      Elf_Internal_Rela *rel = relocs + i;
-+      typeof(&_bfd_riscv_relax_call) relax_func = NULL;
++      typeof (&_bfd_riscv_relax_call) relax_func = NULL;
 +      int type = ELFNN_R_TYPE (rel->r_info);
 +      bfd_vma symval;
 +
@@ -3062,7 +3061,7 @@ index 0000000..b6ef1cc
 +
 +#define elf_backend_reloc_type_class	     riscv_reloc_type_class
 +
-+#define bfd_elfNN_bfd_reloc_name_lookup      riscv_reloc_name_lookup
++#define bfd_elfNN_bfd_reloc_name_lookup	     riscv_reloc_name_lookup
 +#define bfd_elfNN_bfd_link_hash_table_create riscv_elf_link_hash_table_create
 +#define bfd_elfNN_bfd_reloc_type_lookup	     riscv_reloc_type_lookup
 +#define bfd_elfNN_bfd_merge_private_bfd_data \
@@ -3077,33 +3076,33 @@ index 0000000..b6ef1cc
 +#define elf_backend_finish_dynamic_symbol    riscv_elf_finish_dynamic_symbol
 +#define elf_backend_finish_dynamic_sections  riscv_elf_finish_dynamic_sections
 +#define elf_backend_gc_mark_hook	     riscv_elf_gc_mark_hook
-+#define elf_backend_gc_sweep_hook            riscv_elf_gc_sweep_hook
++#define elf_backend_gc_sweep_hook	     riscv_elf_gc_sweep_hook
 +#define elf_backend_plt_sym_val		     riscv_elf_plt_sym_val
-+#define elf_info_to_howto_rel                NULL
-+#define elf_info_to_howto                    riscv_info_to_howto_rela
-+#define bfd_elfNN_bfd_relax_section          _bfd_riscv_relax_section
++#define elf_info_to_howto_rel		     NULL
++#define elf_info_to_howto		     riscv_info_to_howto_rela
++#define bfd_elfNN_bfd_relax_section	     _bfd_riscv_relax_section
 +
-+#define elf_backend_init_index_section	_bfd_elf_init_1_index_section
++#define elf_backend_init_index_section	     _bfd_elf_init_1_index_section
 +
-+#define elf_backend_can_gc_sections 1
-+#define elf_backend_can_refcount 1
-+#define elf_backend_want_got_plt 1
-+#define elf_backend_plt_readonly 1
-+#define elf_backend_plt_alignment 4
-+#define elf_backend_want_plt_sym 1
-+#define elf_backend_got_header_size (ARCH_SIZE / 8)
-+#define elf_backend_rela_normal 1
-+#define elf_backend_default_execstack 0
++#define elf_backend_can_gc_sections	1
++#define elf_backend_can_refcount	1
++#define elf_backend_want_got_plt	1
++#define elf_backend_plt_readonly	1
++#define elf_backend_plt_alignment	4
++#define elf_backend_want_plt_sym	1
++#define elf_backend_got_header_size	(ARCH_SIZE / 8)
++#define elf_backend_rela_normal		1
++#define elf_backend_default_execstack	0
 +
 +#include "elfNN-target.h"
 diff --git a/bfd/elfxx-riscv.c b/bfd/elfxx-riscv.c
 new file mode 100644
-index 0000000..32738a9
+index 0000000..948362f
 --- /dev/null
 +++ b/bfd/elfxx-riscv.c
-@@ -0,0 +1,765 @@
+@@ -0,0 +1,764 @@
 +/* RISC-V-specific support for ELF.
-+   Copyright 2011-2014 Free Software Foundation, Inc.
++   Copyright 2011-2015 Free Software Foundation, Inc.
 +
 +   Contributed by Andrew Waterman (waterman@cs.berkeley.edu) at UC Berkeley.
 +   Based on TILE-Gx and MIPS targets.
@@ -3121,9 +3120,8 @@ index 0000000..32738a9
 +   GNU General Public License for more details.
 +
 +   You should have received a copy of the GNU General Public License
-+   along with this program; if not, write to the Free Software
-+   Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston,
-+   MA 02110-1301, USA.  */
++   along with this program; see the file COPYING3. If not,
++   see <http://www.gnu.org/licenses/>.  */
 +
 +#include "sysdep.h"
 +#include "bfd.h"
@@ -3331,7 +3329,7 @@ index 0000000..32738a9
 +	 "R_RISCV_BRANCH",	/* name */
 +	 FALSE,			/* partial_inplace */
 +	 0,			/* src_mask */
-+	 ENCODE_SBTYPE_IMM(-1U),/* dst_mask */
++	 ENCODE_SBTYPE_IMM (-1U),/* dst_mask */
 +	 TRUE),			/* pcrel_offset */
 +
 +  /* 20-bit PC-relative jump offset.  */
@@ -3349,7 +3347,7 @@ index 0000000..32738a9
 +	 "R_RISCV_JAL",		/* name */
 +	 FALSE,			/* partial_inplace */
 +	 0,			/* src_mask */
-+	 ENCODE_UJTYPE_IMM(-1U),	/* dst_mask */
++	 ENCODE_UJTYPE_IMM (-1U),	/* dst_mask */
 +	 TRUE),		/* pcrel_offset */
 +
 +  /* 32-bit PC-relative function call (AUIPC/JALR).  */
@@ -3364,7 +3362,7 @@ index 0000000..32738a9
 +	 "R_RISCV_CALL",	/* name */
 +	 FALSE,			/* partial_inplace */
 +	 0,			/* src_mask */
-+	 ENCODE_UTYPE_IMM(-1U) | ((bfd_vma) ENCODE_ITYPE_IMM(-1U) << 32),	/* dst_mask */
++	 ENCODE_UTYPE_IMM (-1U) | ((bfd_vma) ENCODE_ITYPE_IMM (-1U) << 32),	/* dst_mask */
 +	 TRUE),			/* pcrel_offset */
 +
 +  /* 32-bit PC-relative function call (AUIPC/JALR).  */
@@ -3379,7 +3377,7 @@ index 0000000..32738a9
 +	 "R_RISCV_CALL_PLT",	/* name */
 +	 FALSE,			/* partial_inplace */
 +	 0,			/* src_mask */
-+	 ENCODE_UTYPE_IMM(-1U) | ((bfd_vma) ENCODE_ITYPE_IMM(-1U) << 32),	/* dst_mask */
++	 ENCODE_UTYPE_IMM (-1U) | ((bfd_vma) ENCODE_ITYPE_IMM (-1U) << 32),	/* dst_mask */
 +	 TRUE),			/* pcrel_offset */
 +
 +  /* High 20 bits of 32-bit PC-relative GOT access.  */
@@ -3394,7 +3392,7 @@ index 0000000..32738a9
 +	 "R_RISCV_GOT_HI20",	/* name */
 +	 FALSE,			/* partial_inplace */
 +	 0,			/* src_mask */
-+	 ENCODE_UTYPE_IMM(-1U),	/* dst_mask */
++	 ENCODE_UTYPE_IMM (-1U),	/* dst_mask */
 +	 FALSE),		/* pcrel_offset */
 +
 +  /* High 20 bits of 32-bit PC-relative TLS IE GOT access.  */
@@ -3409,7 +3407,7 @@ index 0000000..32738a9
 +	 "R_RISCV_TLS_GOT_HI20",	/* name */
 +	 FALSE,			/* partial_inplace */
 +	 0,			/* src_mask */
-+	 ENCODE_UTYPE_IMM(-1U),	/* dst_mask */
++	 ENCODE_UTYPE_IMM (-1U),	/* dst_mask */
 +	 FALSE),		/* pcrel_offset */
 +
 +  /* High 20 bits of 32-bit PC-relative TLS GD GOT reference.  */
@@ -3424,7 +3422,7 @@ index 0000000..32738a9
 +	 "R_RISCV_TLS_GD_HI20",	/* name */
 +	 FALSE,			/* partial_inplace */
 +	 0,			/* src_mask */
-+	 ENCODE_UTYPE_IMM(-1U),	/* dst_mask */
++	 ENCODE_UTYPE_IMM (-1U),	/* dst_mask */
 +	 FALSE),		/* pcrel_offset */
 +
 +  /* High 20 bits of 32-bit PC-relative reference.  */
@@ -3439,7 +3437,7 @@ index 0000000..32738a9
 +	 "R_RISCV_PCREL_HI20",	/* name */
 +	 FALSE,			/* partial_inplace */
 +	 0,			/* src_mask */
-+	 ENCODE_UTYPE_IMM(-1U),	/* dst_mask */
++	 ENCODE_UTYPE_IMM (-1U),	/* dst_mask */
 +	 TRUE),			/* pcrel_offset */
 +
 +  /* Low 12 bits of a 32-bit PC-relative load or add.  */
@@ -3454,7 +3452,7 @@ index 0000000..32738a9
 +	 "R_RISCV_PCREL_LO12_I",/* name */
 +	 FALSE,			/* partial_inplace */
 +	 0,			/* src_mask */
-+	 ENCODE_ITYPE_IMM(-1U),	/* dst_mask */
++	 ENCODE_ITYPE_IMM (-1U),	/* dst_mask */
 +	 FALSE),		/* pcrel_offset */
 +
 +  /* Low 12 bits of a 32-bit PC-relative store.  */
@@ -3469,7 +3467,7 @@ index 0000000..32738a9
 +	 "R_RISCV_PCREL_LO12_S",/* name */
 +	 FALSE,			/* partial_inplace */
 +	 0,			/* src_mask */
-+	 ENCODE_STYPE_IMM(-1U),	/* dst_mask */
++	 ENCODE_STYPE_IMM (-1U),	/* dst_mask */
 +	 FALSE),		/* pcrel_offset */
 +
 +  /* High 20 bits of 32-bit absolute address.  */
@@ -3484,7 +3482,7 @@ index 0000000..32738a9
 +	 "R_RISCV_HI20",		/* name */
 +	 FALSE,			/* partial_inplace */
 +	 0,			/* src_mask */
-+	 ENCODE_UTYPE_IMM(-1U),	/* dst_mask */
++	 ENCODE_UTYPE_IMM (-1U),	/* dst_mask */
 +	 FALSE),		/* pcrel_offset */
 +
 +  /* High 12 bits of 32-bit load or add.  */
@@ -3499,7 +3497,7 @@ index 0000000..32738a9
 +	 "R_RISCV_LO12_I",	/* name */
 +	 FALSE,			/* partial_inplace */
 +	 0,			/* src_mask */
-+	 ENCODE_ITYPE_IMM(-1U),	/* dst_mask */
++	 ENCODE_ITYPE_IMM (-1U),	/* dst_mask */
 +	 FALSE),		/* pcrel_offset */
 +
 +  /* High 12 bits of 32-bit store.  */
@@ -3514,7 +3512,7 @@ index 0000000..32738a9
 +	 "R_RISCV_LO12_S",	/* name */
 +	 FALSE,			/* partial_inplace */
 +	 0,			/* src_mask */
-+	 ENCODE_STYPE_IMM(-1U),	/* dst_mask */
++	 ENCODE_STYPE_IMM (-1U),	/* dst_mask */
 +	 FALSE),		/* pcrel_offset */
 +
 +  /* High 20 bits of TLS LE thread pointer offset.  */
@@ -3529,7 +3527,7 @@ index 0000000..32738a9
 +	 "R_RISCV_TPREL_HI20",	/* name */
 +	 TRUE,			/* partial_inplace */
 +	 0,			/* src_mask */
-+	 ENCODE_UTYPE_IMM(-1U),	/* dst_mask */
++	 ENCODE_UTYPE_IMM (-1U),	/* dst_mask */
 +	 FALSE),		/* pcrel_offset */
 +
 +  /* Low 12 bits of TLS LE thread pointer offset for loads and adds.  */
@@ -3544,7 +3542,7 @@ index 0000000..32738a9
 +	 "R_RISCV_TPREL_LO12_I",/* name */
 +	 FALSE,			/* partial_inplace */
 +	 0,			/* src_mask */
-+	 ENCODE_ITYPE_IMM(-1U),	/* dst_mask */
++	 ENCODE_ITYPE_IMM (-1U),	/* dst_mask */
 +	 FALSE),		/* pcrel_offset */
 +
 +  /* Low 12 bits of TLS LE thread pointer offset for stores.  */
@@ -3559,7 +3557,7 @@ index 0000000..32738a9
 +	 "R_RISCV_TPREL_LO12_S",/* name */
 +	 FALSE,			/* partial_inplace */
 +	 0,			/* src_mask */
-+	 ENCODE_STYPE_IMM(-1U),	/* dst_mask */
++	 ENCODE_STYPE_IMM (-1U),	/* dst_mask */
 +	 FALSE),		/* pcrel_offset */
 +
 +  /* TLS LE thread pointer usage.  */
@@ -3756,7 +3754,7 @@ index 0000000..32738a9
 +	 "R_RISCV_RVC_BRANCH",	/* name */
 +	 FALSE,			/* partial_inplace */
 +	 0,			/* src_mask */
-+	 ENCODE_RVC_B_IMM(-1U),	/* dst_mask */
++	 ENCODE_RVC_B_IMM (-1U),	/* dst_mask */
 +	 TRUE),			/* pcrel_offset */
 +
 +  /* 11-bit PC-relative jump offset.  */
@@ -3774,7 +3772,7 @@ index 0000000..32738a9
 +	 "R_RISCV_RVC_JUMP",	/* name */
 +	 FALSE,			/* partial_inplace */
 +	 0,			/* src_mask */
-+	 ENCODE_RVC_J_IMM(-1U),	/* dst_mask */
++	 ENCODE_RVC_J_IMM (-1U),	/* dst_mask */
 +	 TRUE),		/* pcrel_offset */
 +};
 +
@@ -3831,7 +3829,7 @@ index 0000000..32738a9
 +
 +reloc_howto_type *
 +riscv_reloc_type_lookup (bfd *abfd ATTRIBUTE_UNUSED,
-+				 bfd_reloc_code_real_type code)
++			 bfd_reloc_code_real_type code)
 +{
 +  unsigned int i;
 +
@@ -3845,7 +3843,7 @@ index 0000000..32738a9
 +
 +reloc_howto_type *
 +riscv_reloc_name_lookup (bfd *abfd ATTRIBUTE_UNUSED,
-+				 const char *r_name)
++			 const char *r_name)
 +{
 +  unsigned int i;
 +
@@ -3859,9 +3857,9 @@ index 0000000..32738a9
 +reloc_howto_type *
 +riscv_elf_rtype_to_howto (unsigned int r_type)
 +{
-+  if ((unsigned int)r_type >= ARRAY_SIZE (howto_table))
++  if (r_type >= ARRAY_SIZE (howto_table))
 +    {
-+      (*_bfd_error_handler)(_("unrecognized relocation (0x%x)"), r_type);
++      (*_bfd_error_handler) (_("unrecognized relocation (0x%x)"), r_type);
 +      bfd_set_error (bfd_error_bad_value);
 +      return NULL;
 +    }
@@ -3869,12 +3867,12 @@ index 0000000..32738a9
 +}
 diff --git a/bfd/elfxx-riscv.h b/bfd/elfxx-riscv.h
 new file mode 100644
-index 0000000..3ede022
+index 0000000..1e5d91f
 --- /dev/null
 +++ b/bfd/elfxx-riscv.h
-@@ -0,0 +1,34 @@
+@@ -0,0 +1,33 @@
 +/* RISC-V ELF specific backend routines.
-+   Copyright 2011-2014 Free Software Foundation, Inc.
++   Copyright 2011-2015 Free Software Foundation, Inc.
 +
 +   Contributed by Andrew Waterman (waterman@cs.berkeley.edu) at UC Berkeley.
 +   Based on MIPS target.
@@ -3892,9 +3890,8 @@ index 0000000..3ede022
 +   GNU General Public License for more details.
 +
 +   You should have received a copy of the GNU General Public License
-+   along with this program; if not, write to the Free Software
-+   Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston,
-+   MA 02110-1301, USA.  */
++   along with this program; see the file COPYING3. If not,
++   see <http://www.gnu.org/licenses/>.  */
 +
 +#include "elf/common.h"
 +#include "elf/internal.h"
@@ -3909,12 +3906,12 @@ index 0000000..3ede022
 +riscv_elf_rtype_to_howto (unsigned int r_type);
 diff --git a/gas/config/tc-riscv.c b/gas/config/tc-riscv.c
 new file mode 100644
-index 0000000..171c167
+index 0000000..fa1dd5d
 --- /dev/null
 +++ b/gas/config/tc-riscv.c
-@@ -0,0 +1,2484 @@
+@@ -0,0 +1,2485 @@
 +/* tc-riscv.c -- RISC-V assembler
-+   Copyright 2011-2014 Free Software Foundation, Inc.
++   Copyright 2011-2015 Free Software Foundation, Inc.
 +
 +   Contributed by Andrew Waterman (waterman@cs.berkeley.edu) at UC Berkeley.
 +   Based on MIPS target.
@@ -3932,9 +3929,8 @@ index 0000000..171c167
 +   GNU General Public License for more details.
 +
 +   You should have received a copy of the GNU General Public License
-+   along with GAS; see the file COPYING.  If not, write to the Free
-+   Software Foundation, 51 Franklin Street - Fifth Floor, Boston, MA
-+   02110-1301, USA.  */
++   along with this program; see the file COPYING3. If not,
++   see <http://www.gnu.org/licenses/>.  */
 +
 +#include "as.h"
 +#include "config.h"
@@ -3999,42 +3995,42 @@ index 0000000..171c167
 +
 +struct riscv_subset
 +{
-+  const char* name;
++  const char *name;
 +  int version_major;
 +  int version_minor;
 +
-+  struct riscv_subset* next;
++  struct riscv_subset *next;
 +};
 +
-+static struct riscv_subset* riscv_subsets;
++static struct riscv_subset *riscv_subsets;
 +
 +static int
-+riscv_subset_supports(const char* feature)
++riscv_subset_supports (const char *feature)
 +{
-+  struct riscv_subset* s;
-+  bfd_boolean rv64_insn;
++  struct riscv_subset *s;
++  bfd_boolean rv64_insn = !strncmp (feature, "64", 2);
 +
-+  if ((rv64_insn = !strncmp(feature, "64", 2)) || !strncmp(feature, "32", 2))
++  if (rv64_insn || !strncmp (feature, "32", 2))
 +    {
 +      if ((xlen == 64) != rv64_insn)
-+        return 0;
++	return 0;
 +      feature += 2;
 +    }
 +
 +  for (s = riscv_subsets; s != NULL; s = s->next)
-+    if (strcmp(s->name, feature) == 0)
++    if (strcmp (s->name, feature) == 0)
 +      /* FIXME: once we support version numbers:
-+         return major == s->version_major && minor <= s->version_minor; */
++	 return major == s->version_major && minor <= s->version_minor; */
 +      return 1;
 +
 +  return 0;
 +}
 +
 +static void
-+riscv_add_subset (const char* subset)
++riscv_add_subset (const char *subset)
 +{
-+  struct riscv_subset* s = xmalloc(sizeof(struct riscv_subset));
-+  s->name = xstrdup(subset);
++  struct riscv_subset *s = xmalloc (sizeof *s);
++  s->name = xstrdup (subset);
 +  s->version_major = 1;
 +  s->version_minor = 0;
 +  s->next = riscv_subsets;
@@ -4042,59 +4038,59 @@ index 0000000..171c167
 +}
 +
 +static void
-+riscv_set_arch (const char* arg)
++riscv_set_arch (const char *arg)
 +{
 +  /* Formally, ISA subset names begin with RV, RV32, or RV64, but we allow the
 +     prefix to be omitted.  We also allow all-lowercase names if version
 +     numbers and eXtensions are omitted (i.e. only some combination of imafd
 +     is supported in this case).
-+     
-+     FIXME: Version numbers are not supported yet. */
-+  const char* subsets = "IMAFDC";
-+  const char* extension = NULL;
-+  const char* p;
++
++     FIXME: Version numbers are not supported yet.  */
++  const char *subsets = "IMAFDC";
++  const char *extension = NULL;
++  const char *p;
 +  int rvc = 0;
-+  
++
 +  for (p = arg; *p; p++)
-+    if (!ISLOWER(*p) || strchr(subsets, TOUPPER(*p)) == NULL)
++    if (!ISLOWER (*p) || strchr (subsets, TOUPPER (*p)) == NULL)
 +      break;
 +
 +  if (!*p)
 +    {
-+      /* Legal all-lowercase name. */
++      /* Legal all-lowercase name.  */
 +      for (p = arg; *p; p++)
 +	{
-+	  char subset[2] = {TOUPPER(*p), 0};
-+	  riscv_add_subset(subset);
++	  char subset[2] = {TOUPPER (*p), 0};
++	  riscv_add_subset (subset);
 +	}
 +      return;
 +    }
 +
-+  if (strncmp(arg, "RV32", 4) == 0)
++  if (strncmp (arg, "RV32", 4) == 0)
 +    {
 +      xlen = 32;
 +      arg += 4;
 +    }
-+  else if (strncmp(arg, "RV64", 4) == 0)
++  else if (strncmp (arg, "RV64", 4) == 0)
 +    {
 +      xlen = 64;
 +      arg += 4;
 +    }
-+  else if (strncmp(arg, "RV", 2) == 0)
++  else if (strncmp (arg, "RV", 2) == 0)
 +    arg += 2;
 +
 +  if (*arg && *arg != 'I')
-+    as_fatal("`I' must be the first ISA subset name specified (got %c)", *arg);
++    as_fatal ("`I' must be the first ISA subset name specified (got %c)", *arg);
 +
 +  for (p = arg; *p; )
 +    {
 +      if (*p == 'X')
 +	{
-+	  char *subset = xstrdup(p), *q = subset;
++	  char *subset = xstrdup (p), *q = subset;
 +
 +	  do
 +	    q++;
-+	  while (ISLOWER(*q));
++	  while (ISLOWER (*q));
 +	  *q = 0;
 +
 +	  if (extension)
@@ -4107,7 +4103,7 @@ index 0000000..171c167
 +	  p += strlen (subset);
 +	  free (subset);
 +	}
-+      else if (strchr(subsets, *p) != NULL)
++      else if (strchr (subsets, *p) != NULL)
 +	{
 +	  char subset[2] = {*p, 0};
 +	  riscv_add_subset (subset);
@@ -4116,7 +4112,7 @@ index 0000000..171c167
 +	  p++;
 +	}
 +      else
-+	as_fatal("unsupported ISA subset %c", *p);
++	as_fatal ("unsupported ISA subset %c", *p);
 +    }
 +
 +  if (rvc)
@@ -4172,7 +4168,7 @@ index 0000000..171c167
 +
 +#define IS_SEXT_NBIT_NUM(x,n) \
 +  ({ int64_t __tmp = (x); \
-+     __tmp = (__tmp << (64-(n))) >> (64-(n)); \
++     __tmp = (__tmp << (64 - (n))) >> (64 - (n)); \
 +     __tmp == (x); })
 +
 +/* Is the given value a zero-extended 32-bit value?  Or a negated one?  */
@@ -4192,7 +4188,7 @@ index 0000000..171c167
 +  (((STRUCT) >> (SHIFT)) & (MASK))
 +
 +/* Change INSN's opcode so that the operand given by FIELD has value VALUE.
-+   INSN is a riscv_cl_insn structure and VALUE is evaluated exactly once. */
++   INSN is a riscv_cl_insn structure and VALUE is evaluated exactly once.  */
 +#define INSERT_OPERAND(FIELD, INSN, VALUE) \
 +  INSERT_BITS ((INSN).insn_opcode, VALUE, OP_MASK_##FIELD, OP_SH_##FIELD)
 +
@@ -4200,7 +4196,7 @@ index 0000000..171c167
 +#define EXTRACT_OPERAND(FIELD, INSN) \
 +  EXTRACT_BITS ((INSN).insn_opcode, OP_MASK_##FIELD, OP_SH_##FIELD)
 +
-+/* Determine if an instruction matches an opcode. */
++/* Determine if an instruction matches an opcode.  */
 +#define OPCODE_MATCHES(OPCODE, OP) \
 +  (((OPCODE) & MASK_##OP) == MATCH_##OP)
 +
@@ -4248,7 +4244,7 @@ index 0000000..171c167
 +install_insn (const struct riscv_cl_insn *insn)
 +{
 +  char *f = insn->frag->fr_literal + insn->where;
-+  md_number_to_chars (f, insn->insn_opcode, insn_length(insn));
++  md_number_to_chars (f, insn->insn_opcode, insn_length (insn));
 +}
 +
 +/* Move INSN to offset WHERE in FRAG.  Adjust the fixups accordingly
@@ -4287,7 +4283,7 @@ index 0000000..171c167
 +}
 +
 +/* Compute the length of a branch sequence, and adjust the stored length
-+   accordingly.  If FRAGP is NULL, the worst-case length is returned. */
++   accordingly.  If FRAGP is NULL, the worst-case length is returned.  */
 +
 +static int
 +relaxed_branch_length (fragS *fragp, asection *sec, int update)
@@ -4340,7 +4336,7 @@ index 0000000..171c167
 +
 +static struct hash_control *reg_names_hash = NULL;
 +
-+#define ENCODE_REG_HASH(cls, n) (void*)(uintptr_t)((n)*RCLASS_MAX + (cls) + 1)
++#define ENCODE_REG_HASH(cls, n) (void *)(uintptr_t)((n) * RCLASS_MAX + (cls) + 1)
 +#define DECODE_REG_CLASS(hash) (((uintptr_t)(hash) - 1) % RCLASS_MAX)
 +#define DECODE_REG_NUM(hash) (((uintptr_t)(hash) - 1) / RCLASS_MAX)
 +
@@ -4349,6 +4345,7 @@ index 0000000..171c167
 +{
 +  void *hash = ENCODE_REG_HASH (class, n);
 +  const char *retval = hash_insert (reg_names_hash, name, hash);
++
 +  if (retval != NULL)
 +    as_fatal (_("internal error: can't hash `%s': %s"), name, retval);
 +}
@@ -4357,6 +4354,7 @@ index 0000000..171c167
 +hash_reg_names (enum reg_class class, const char * const names[], unsigned n)
 +{
 +  unsigned i;
++
 +  for (i = 0; i < n; i++)
 +    hash_reg_name (class, names[i], i);
 +}
@@ -4399,17 +4397,17 @@ index 0000000..171c167
 +}
 +
 +static int
-+arg_lookup(char **s, const char* const* array, size_t size, unsigned *regnop)
++arg_lookup (char **s, const char *const *array, size_t size, unsigned *regnop)
 +{
-+  const char *p = strchr(*s, ',');
-+  size_t i, len = p ? (size_t)(p - *s) : strlen(*s);
-+  
++  const char *p = strchr (*s, ',');
++  size_t i, len = p ? (size_t)(p - *s) : strlen (*s);
++
 +  for (i = 0; i < size; i++)
-+    if (array[i] != NULL && strncmp(array[i], *s, len) == 0)
++    if (array[i] != NULL && strncmp (array[i], *s, len) == 0)
 +      {
-+        *regnop = i;
-+        *s += len;
-+        return 1;
++	*regnop = i;
++	*s += len;
++	return 1;
 +      }
 +
 +  return 0;
@@ -4440,34 +4438,35 @@ index 0000000..171c167
 +      /* Xcustom */
 +      case '^':
 +      switch (c = *p++)
-+        {
-+        case 'd': USE_BITS (OP_MASK_RD, OP_SH_RD); break;
-+        case 's': USE_BITS (OP_MASK_RS1, OP_SH_RS1); break;
-+        case 't': USE_BITS (OP_MASK_RS2, OP_SH_RS2); break;
-+        case 'j': USE_BITS (OP_MASK_CUSTOM_IMM, OP_SH_CUSTOM_IMM); break;
-+        }
++	{
++	case 'd': USE_BITS (OP_MASK_RD, OP_SH_RD); break;
++	case 's': USE_BITS (OP_MASK_RS1, OP_SH_RS1); break;
++	case 't': USE_BITS (OP_MASK_RS2, OP_SH_RS2); break;
++	case 'j': USE_BITS (OP_MASK_CUSTOM_IMM, OP_SH_CUSTOM_IMM); break;
++	}
 +      break;
 +      /* Xhwacha */
 +      case '#':
 +      switch (c = *p++)
-+        {
-+        case 'g': USE_BITS (OP_MASK_IMMNGPR, OP_SH_IMMNGPR); break;
-+        case 'f': USE_BITS (OP_MASK_IMMNFPR, OP_SH_IMMNFPR); break;
-+        case 'n': USE_BITS (OP_MASK_IMMSEGNELM, OP_SH_IMMSEGNELM); break;
-+        case 'd': USE_BITS (OP_MASK_VRD, OP_SH_VRD); break;
-+        case 's': USE_BITS (OP_MASK_VRS, OP_SH_VRS); break;
-+        case 't': USE_BITS (OP_MASK_VRT, OP_SH_VRT); break;
-+        case 'r': USE_BITS (OP_MASK_VRR, OP_SH_VRR); break;
-+        case 'D': USE_BITS (OP_MASK_VFD, OP_SH_VFD); break;
-+        case 'S': USE_BITS (OP_MASK_VFS, OP_SH_VFS); break;
-+        case 'T': USE_BITS (OP_MASK_VFT, OP_SH_VFT); break;
-+        case 'R': USE_BITS (OP_MASK_VFR, OP_SH_VFR); break;
++	{
++	case 'g': USE_BITS (OP_MASK_IMMNGPR, OP_SH_IMMNGPR); break;
++	case 'f': USE_BITS (OP_MASK_IMMNFPR, OP_SH_IMMNFPR); break;
++	case 'n': USE_BITS (OP_MASK_IMMSEGNELM, OP_SH_IMMSEGNELM); break;
++	case 'd': USE_BITS (OP_MASK_VRD, OP_SH_VRD); break;
++	case 's': USE_BITS (OP_MASK_VRS, OP_SH_VRS); break;
++	case 't': USE_BITS (OP_MASK_VRT, OP_SH_VRT); break;
++	case 'r': USE_BITS (OP_MASK_VRR, OP_SH_VRR); break;
++	case 'D': USE_BITS (OP_MASK_VFD, OP_SH_VFD); break;
++	case 'S': USE_BITS (OP_MASK_VFS, OP_SH_VFS); break;
++	case 'T': USE_BITS (OP_MASK_VFT, OP_SH_VFT); break;
++	case 'R': USE_BITS (OP_MASK_VFR, OP_SH_VFR); break;
 +
-+        default:
-+          as_bad (_("internal: bad RISC-V opcode (unknown extension operand type `#%c'): %s %s"),
-+                  c, opc->name, opc->args);
-+          return 0;
-+        }
++	default:
++	  as_bad (_("internal: bad RISC-V opcode (unknown extension operand "
++		    "type `#%c'): %s %s"),
++		  c, opc->name, opc->args);
++	  return 0;
++	}
 +      break;
 +      case 'C': /* RVC */
 +	switch (c = *p++)
@@ -4757,10 +4756,8 @@ index 0000000..171c167
 +  append_insn (&insn, ep, r);
 +}
 +
-+/*
-+ * Sign-extend 32-bit mode constants that have bit 31 set and all
-+ * higher bits unset.
-+ */
++/* Sign-extend 32-bit mode constants that have bit 31 set and all higher bits
++   unset.  */
 +static void
 +normalize_constant_expr (expressionS *ex)
 +{
@@ -4779,10 +4776,10 @@ index 0000000..171c167
 +					(valueT) frag_now_fix(), frag_now);
 +}
 +
-+/* Load an entry from the GOT. */
++/* Load an entry from the GOT.  */
 +static void
 +pcrel_access (int destreg, int tempreg, expressionS *ep,
-+	      const char* lo_insn, const char* lo_pattern,
++	      const char *lo_insn, const char *lo_pattern,
 +	      bfd_reloc_code_real_type hi_reloc,
 +	      bfd_reloc_code_real_type lo_reloc)
 +{
@@ -4796,7 +4793,7 @@ index 0000000..171c167
 +}
 +
 +static void
-+pcrel_load (int destreg, int tempreg, expressionS *ep, const char* lo_insn,
++pcrel_load (int destreg, int tempreg, expressionS *ep, const char *lo_insn,
 +	    bfd_reloc_code_real_type hi_reloc,
 +	    bfd_reloc_code_real_type lo_reloc)
 +{
@@ -4804,14 +4801,14 @@ index 0000000..171c167
 +}
 +
 +static void
-+pcrel_store (int srcreg, int tempreg, expressionS *ep, const char* lo_insn,
++pcrel_store (int srcreg, int tempreg, expressionS *ep, const char *lo_insn,
 +	     bfd_reloc_code_real_type hi_reloc,
 +	     bfd_reloc_code_real_type lo_reloc)
 +{
 +  pcrel_access (srcreg, tempreg, ep, lo_insn, "t,s,q", hi_reloc, lo_reloc);
 +}
 +
-+/* PC-relative function call using AUIPC/JALR, relaxed to JAL. */
++/* PC-relative function call using AUIPC/JALR, relaxed to JAL.  */
 +static void
 +riscv_call (int destreg, int tempreg, expressionS *ep,
 +	    bfd_reloc_code_real_type reloc)
@@ -4870,12 +4867,12 @@ index 0000000..171c167
 +	}
 +
 +      if (lower.X_add_number != 0 || hi_reg == 0)
-+        macro_build (ep, ADD32_INSN, "d,s,j", reg, hi_reg,
++	macro_build (ep, ADD32_INSN, "d,s,j", reg, hi_reg,
 +		     BFD_RELOC_RISCV_LO12_I);
 +    }
 +}
 +
-+/* Expand RISC-V assembly macros into one or more instructions. */
++/* Expand RISC-V assembly macros into one or more instructions.  */
 +static void
 +macro (struct riscv_cl_insn *ip, expressionS *imm_expr,
 +       bfd_reloc_code_real_type *imm_reloc)
@@ -4893,7 +4890,7 @@ index 0000000..171c167
 +
 +    case M_LA:
 +    case M_LLA:
-+      /* Load the address of a symbol into a register. */
++      /* Load the address of a symbol into a register.  */
 +      if (!IS_SEXT_32BIT_NUM (imm_expr->X_add_number))
 +	as_bad(_("offset too large"));
 +
@@ -4907,12 +4904,12 @@ index 0000000..171c167
 +		    BFD_RELOC_RISCV_PCREL_HI20, BFD_RELOC_RISCV_PCREL_LO12_I);
 +      break;
 +
-+    case M_LA_TLS_GD: 
++    case M_LA_TLS_GD:
 +      pcrel_load (rd, rd, imm_expr, "addi",
 +		  BFD_RELOC_RISCV_TLS_GD_HI20, BFD_RELOC_RISCV_PCREL_LO12_I);
 +      break;
 +
-+    case M_LA_TLS_IE: 
++    case M_LA_TLS_IE:
 +      pcrel_load (rd, rd, imm_expr, LOAD_ADDRESS_INSN,
 +		  BFD_RELOC_RISCV_TLS_GOT_HI20, BFD_RELOC_RISCV_PCREL_LO12_I);
 +      break;
@@ -5203,112 +5200,112 @@ index 0000000..171c167
 +		  goto out;
 +		}
 +	      break;
-+            /* Xcustom */
-+            case '^':
-+            {
-+              unsigned long max = OP_MASK_RD;
-+              my_getExpression (imm_expr, s);
-+              check_absolute_expr (ip, imm_expr);
-+              switch (*++args)
-+                {
-+                case 'j':
-+                  max = OP_MASK_CUSTOM_IMM;
-+                  INSERT_OPERAND (CUSTOM_IMM, *ip, imm_expr->X_add_number);
-+                  break;
-+                case 'd':
-+                  INSERT_OPERAND (RD, *ip, imm_expr->X_add_number);
-+                  break;
-+                case 's':
-+                  INSERT_OPERAND (RS1, *ip, imm_expr->X_add_number);
-+                  break;
-+                case 't':
-+                  INSERT_OPERAND (RS2, *ip, imm_expr->X_add_number);
-+                  break;
-+                }
-+              imm_expr->X_op = O_absent;
-+              s = expr_end;
-+              if ((unsigned long) imm_expr->X_add_number > max)
-+                  as_warn ("Bad custom immediate (%lu), must be at most %lu",
-+                           (unsigned long)imm_expr->X_add_number, max);
-+              continue;
-+            }
++	    /* Xcustom */
++	    case '^':
++	    {
++	      unsigned long max = OP_MASK_RD;
++	      my_getExpression (imm_expr, s);
++	      check_absolute_expr (ip, imm_expr);
++	      switch (*++args)
++		{
++		case 'j':
++		  max = OP_MASK_CUSTOM_IMM;
++		  INSERT_OPERAND (CUSTOM_IMM, *ip, imm_expr->X_add_number);
++		  break;
++		case 'd':
++		  INSERT_OPERAND (RD, *ip, imm_expr->X_add_number);
++		  break;
++		case 's':
++		  INSERT_OPERAND (RS1, *ip, imm_expr->X_add_number);
++		  break;
++		case 't':
++		  INSERT_OPERAND (RS2, *ip, imm_expr->X_add_number);
++		  break;
++		}
++	      imm_expr->X_op = O_absent;
++	      s = expr_end;
++	      if ((unsigned long) imm_expr->X_add_number > max)
++		  as_warn ("Bad custom immediate (%lu), must be at most %lu",
++			   (unsigned long)imm_expr->X_add_number, max);
++	      continue;
++	    }
 +
-+            /* Xhwacha */
-+            case '#':
-+              switch ( *++args )
-+                {
-+                case 'g':
-+                  my_getExpression( imm_expr, s );
-+                  /* check_absolute_expr( ip, &imm_expr ); */
-+                  if ((unsigned long) imm_expr->X_add_number > 32 )
-+                    as_warn( _( "Improper ngpr amount (%lu)" ),
-+                             (unsigned long) imm_expr->X_add_number );
-+                  INSERT_OPERAND( IMMNGPR, *ip, imm_expr->X_add_number );
-+                  imm_expr->X_op = O_absent;
-+                  s = expr_end;
-+                  continue;
-+                case 'f':
-+                  my_getExpression( imm_expr, s );
-+                  /* check_absolute_expr( ip, &imm_expr ); */
-+                  if ((unsigned long) imm_expr->X_add_number > 32 )
-+                    as_warn( _( "Improper nfpr amount (%lu)" ),
-+                             (unsigned long) imm_expr->X_add_number );
-+                  INSERT_OPERAND( IMMNFPR, *ip, imm_expr->X_add_number );
-+                  imm_expr->X_op = O_absent;
-+                  s = expr_end;
-+                  continue;
-+                case 'n':
-+                  my_getExpression( imm_expr, s );
-+                  /* check_absolute_expr( ip, &imm_expr ); */
-+                  if ((unsigned long) imm_expr->X_add_number > 8 )
-+                    as_warn( _( "Improper nelm amount (%lu)" ),
-+                             (unsigned long) imm_expr->X_add_number );
-+                  INSERT_OPERAND( IMMSEGNELM, *ip, imm_expr->X_add_number - 1 );
-+                  imm_expr->X_op = O_absent;
-+                  s = expr_end;
-+                  continue;
-+                case 'd':
-+                  if (!reg_lookup( &s, RCLASS_VEC_GPR, &regno ))
-+                    as_bad( _( "Invalid vector register" ) );
-+                  INSERT_OPERAND( VRD, *ip, regno );
-+                  continue;
-+                case 's':
-+                  if (!reg_lookup( &s, RCLASS_VEC_GPR, &regno ))
-+                    as_bad( _( "Invalid vector register" ) );
-+                  INSERT_OPERAND( VRS, *ip, regno );
-+                  continue;
-+                case 't':
-+                  if (!reg_lookup( &s, RCLASS_VEC_GPR, &regno ))
-+                    as_bad( _( "Invalid vector register" ) );
-+                  INSERT_OPERAND( VRT, *ip, regno );
-+                  continue;
-+                case 'r':
-+                  if (!reg_lookup( &s, RCLASS_VEC_GPR, &regno ))
-+                    as_bad( _( "Invalid vector register" ) );
-+                  INSERT_OPERAND( VRR, *ip, regno );
-+                  continue;
-+                case 'D':
-+                  if (!reg_lookup( &s, RCLASS_VEC_FPR, &regno ))
-+                    as_bad( _( "Invalid vector register" ) );
-+                  INSERT_OPERAND( VFD, *ip, regno );
-+                  continue;
-+                case 'S':
-+                  if (!reg_lookup( &s, RCLASS_VEC_FPR, &regno ))
-+                    as_bad( _( "Invalid vector register" ) );
-+                  INSERT_OPERAND( VFS, *ip, regno );
-+                  continue;
-+                case 'T':
-+                  if (!reg_lookup( &s, RCLASS_VEC_FPR, &regno ))
-+                    as_bad( _( "Invalid vector register" ) );
-+                  INSERT_OPERAND( VFT, *ip, regno );
-+                  continue;
-+                case 'R':
-+                  if (!reg_lookup( &s, RCLASS_VEC_FPR, &regno ))
-+                    as_bad( _( "Invalid vector register" ) );
-+                  INSERT_OPERAND( VFR, *ip, regno );
-+                  continue;
-+                }
-+              break;
++	    /* Xhwacha */
++	    case '#':
++	      switch (*++args)
++		{
++		case 'g':
++		  my_getExpression (imm_expr, s);
++		  /* check_absolute_expr (ip, &imm_expr); */
++		  if ((unsigned long) imm_expr->X_add_number > 32)
++		    as_warn (_("Improper ngpr amount (%lu)"),
++			     (unsigned long) imm_expr->X_add_number);
++		  INSERT_OPERAND (IMMNGPR, *ip, imm_expr->X_add_number);
++		  imm_expr->X_op = O_absent;
++		  s = expr_end;
++		  continue;
++		case 'f':
++		  my_getExpression (imm_expr, s);
++		  /* check_absolute_expr (ip, &imm_expr); */
++		  if ((unsigned long) imm_expr->X_add_number > 32)
++		    as_warn (_("Improper nfpr amount (%lu)"),
++			     (unsigned long) imm_expr->X_add_number);
++		  INSERT_OPERAND (IMMNFPR, *ip, imm_expr->X_add_number);
++		  imm_expr->X_op = O_absent;
++		  s = expr_end;
++		  continue;
++		case 'n':
++		  my_getExpression (imm_expr, s);
++		  /* check_absolute_expr (ip, &imm_expr); */
++		  if ((unsigned long) imm_expr->X_add_number > 8)
++		    as_warn (_("Improper nelm amount (%lu)"),
++			     (unsigned long) imm_expr->X_add_number);
++		  INSERT_OPERAND (IMMSEGNELM, *ip, imm_expr->X_add_number - 1);
++		  imm_expr->X_op = O_absent;
++		  s = expr_end;
++		  continue;
++		case 'd':
++		  if (!reg_lookup (&s, RCLASS_VEC_GPR, &regno))
++		    as_bad (_("Invalid vector register"));
++		  INSERT_OPERAND (VRD, *ip, regno);
++		  continue;
++		case 's':
++		  if (!reg_lookup (&s, RCLASS_VEC_GPR, &regno))
++		    as_bad (_("Invalid vector register"));
++		  INSERT_OPERAND (VRS, *ip, regno);
++		  continue;
++		case 't':
++		  if (!reg_lookup (&s, RCLASS_VEC_GPR, &regno))
++		    as_bad (_("Invalid vector register"));
++		  INSERT_OPERAND (VRT, *ip, regno);
++		  continue;
++		case 'r':
++		  if (!reg_lookup (&s, RCLASS_VEC_GPR, &regno))
++		    as_bad (_("Invalid vector register"));
++		  INSERT_OPERAND (VRR, *ip, regno);
++		  continue;
++		case 'D':
++		  if (!reg_lookup (&s, RCLASS_VEC_FPR, &regno))
++		    as_bad (_("Invalid vector register"));
++		  INSERT_OPERAND (VFD, *ip, regno);
++		  continue;
++		case 'S':
++		  if (!reg_lookup (&s, RCLASS_VEC_FPR, &regno))
++		    as_bad (_("Invalid vector register"));
++		  INSERT_OPERAND (VFS, *ip, regno);
++		  continue;
++		case 'T':
++		  if (!reg_lookup (&s, RCLASS_VEC_FPR, &regno))
++		    as_bad (_("Invalid vector register"));
++		  INSERT_OPERAND (VFT, *ip, regno);
++		  continue;
++		case 'R':
++		  if (!reg_lookup (&s, RCLASS_VEC_FPR, &regno))
++		    as_bad (_("Invalid vector register"));
++		  INSERT_OPERAND (VFR, *ip, regno);
++		  continue;
++		}
++	      break;
 +
 +	    case 'C': /* RVC */
 +	      switch (*++args)
@@ -5375,7 +5372,7 @@ index 0000000..171c167
 +		  ip->insn_opcode |= ENCODE_RVC_IMM (imm_expr->X_add_number);
 +rvc_imm_done:
 +		  s = expr_end;
-+                  imm_expr->X_op = O_absent;
++		  imm_expr->X_op = O_absent;
 +		  continue;
 +		case '<':
 +		  if (my_getSmallExpression (imm_expr, imm_reloc, s, p)
@@ -5466,15 +5463,15 @@ index 0000000..171c167
 +		  if (imm_expr->X_op != O_constant
 +		      || imm_expr->X_add_number <= 0
 +		      || imm_expr->X_add_number >= RISCV_BIGIMM_REACH
-+		      || (imm_expr->X_add_number >= RISCV_RVC_IMM_REACH/2
++		      || (imm_expr->X_add_number >= RISCV_RVC_IMM_REACH / 2
 +			  && imm_expr->X_add_number <
-+			      RISCV_BIGIMM_REACH - RISCV_RVC_IMM_REACH/2))
++			      RISCV_BIGIMM_REACH - RISCV_RVC_IMM_REACH / 2))
 +		    break;
 +		  ip->insn_opcode |= ENCODE_RVC_IMM (imm_expr->X_add_number);
 +		  goto rvc_imm_done;
 +		case 'v':
 +		  if (my_getSmallExpression (imm_expr, imm_reloc, s, p)
-+		      || (imm_expr->X_add_number & (RISCV_IMM_REACH-1))
++		      || (imm_expr->X_add_number & (RISCV_IMM_REACH - 1))
 +		      || (int32_t)imm_expr->X_add_number
 +			  != imm_expr->X_add_number)
 +		    break;
@@ -5540,39 +5537,40 @@ index 0000000..171c167
 +
 +	    case 'E':		/* Control register.  */
 +	      if (reg_lookup (&s, RCLASS_CSR, &regno))
-+	        INSERT_OPERAND (CSR, *ip, regno);
++		INSERT_OPERAND (CSR, *ip, regno);
 +	      else
 +		{
-+	          my_getExpression (imm_expr, s);
-+	          check_absolute_expr (ip, imm_expr);
++		  my_getExpression (imm_expr, s);
++		  check_absolute_expr (ip, imm_expr);
 +		  if ((unsigned long) imm_expr->X_add_number > 0xfff)
-+	            as_warn(_("Improper CSR address (%lu)"),
-+	                    (unsigned long) imm_expr->X_add_number);
-+	          INSERT_OPERAND (CSR, *ip, imm_expr->X_add_number);
++		    as_warn(_("Improper CSR address (%lu)"),
++			    (unsigned long) imm_expr->X_add_number);
++		  INSERT_OPERAND (CSR, *ip, imm_expr->X_add_number);
 +		  imm_expr->X_op = O_absent;
 +		  s = expr_end;
-+	        }
++		}
 +	      continue;
 +
-+            case 'm':		/* rounding mode */
-+              if (arg_lookup (&s, riscv_rm, ARRAY_SIZE(riscv_rm), &regno))
-+                {
-+                  INSERT_OPERAND (RM, *ip, regno);
-+                  continue;
-+                }
-+              break;
++	    case 'm':		/* rounding mode */
++	      if (arg_lookup (&s, riscv_rm, ARRAY_SIZE (riscv_rm), &regno))
++		{
++		  INSERT_OPERAND (RM, *ip, regno);
++		  continue;
++		}
++	      break;
 +
 +	    case 'P':
 +	    case 'Q':		/* fence predecessor/successor */
-+              if (arg_lookup (&s, riscv_pred_succ, ARRAY_SIZE(riscv_pred_succ), &regno))
-+                {
-+	          if (*args == 'P')
-+	            INSERT_OPERAND(PRED, *ip, regno);
-+	          else
-+	            INSERT_OPERAND(SUCC, *ip, regno);
-+	          continue;
-+                }
-+              break;
++	      if (arg_lookup (&s, riscv_pred_succ, ARRAY_SIZE (riscv_pred_succ),
++			      &regno))
++		{
++		  if (*args == 'P')
++		    INSERT_OPERAND (PRED, *ip, regno);
++		  else
++		    INSERT_OPERAND (SUCC, *ip, regno);
++		  continue;
++		}
++	      break;
 +
 +	    case 'd':		/* destination register */
 +	    case 's':		/* source register */
@@ -5583,8 +5581,8 @@ index 0000000..171c167
 +		  if (*s == ' ')
 +		    ++s;
 +
-+	/* Now that we have assembled one operand, we use the args string
-+	 * to figure out where it goes in the instruction.  */
++		  /* Now that we have assembled one operand, we use the args
++		     string to figure out where it goes in the instruction.  */
 +		  switch (c)
 +		    {
 +		    case 's':
@@ -5667,23 +5665,23 @@ index 0000000..171c167
 +	      *imm_reloc = BFD_RELOC_UNUSED;
 +load_store:
 +	      /* Check whether there is only a single bracketed expression
-+	         left.  If so, it must be the base register and the
-+	         constant must be zero.  */
++		 left.  If so, it must be the base register and the
++		 constant must be zero.  */
 +	      imm_expr->X_op = O_constant;
 +	      imm_expr->X_add_number = 0;
 +	      if (*s == '(' && strchr (s + 1, '(') == 0)
 +		continue;
 +alu_op:
 +	      /* If this value won't fit into a 16 bit offset, then go
-+	         find a macro that will generate the 32 bit offset
-+	         code pattern.  */
++		 find a macro that will generate the 32 bit offset
++		 code pattern.  */
 +	      if (!my_getSmallExpression (imm_expr, imm_reloc, s, p))
 +		{
 +		  normalize_constant_expr (imm_expr);
 +		  if (imm_expr->X_op != O_constant
 +		      || (*args == '0' && imm_expr->X_add_number != 0)
-+	              || imm_expr->X_add_number >= (signed)RISCV_IMM_REACH/2
-+	              || imm_expr->X_add_number < -(signed)RISCV_IMM_REACH/2)
++		      || imm_expr->X_add_number >= (signed)RISCV_IMM_REACH/2
++		      || imm_expr->X_add_number < -(signed)RISCV_IMM_REACH/2)
 +		    break;
 +		}
 +
@@ -5705,7 +5703,7 @@ index 0000000..171c167
 +		  if (imm_expr->X_add_number < 0
 +		      || imm_expr->X_add_number >= (signed)RISCV_BIGIMM_REACH)
 +		    as_bad (_("lui expression not in range 0..1048575"));
-+	      
++
 +		  *imm_reloc = BFD_RELOC_RISCV_HI20;
 +		  imm_expr->X_add_number <<= RISCV_IMM_BITS;
 +		}
@@ -5789,9 +5787,9 @@ index 0000000..171c167
 +    OPTION_NO_PIC,
 +    OPTION_MRVC,
 +    OPTION_MNO_RVC,
-+    OPTION_END_OF_ENUM    
++    OPTION_END_OF_ENUM
 +  };
-+  
++
 +struct option md_longopts[] =
 +{
 +  {"m32", no_argument, NULL, OPTION_M32},
@@ -6140,8 +6138,8 @@ index 0000000..171c167
 +      && bytes > min_text_alignment)
 +    {
 +      /* Emit the worst-case NOP string.  The linker will delete any
-+         unnecessary NOPs.  This allows us to support code alignment
-+         in spite of linker relaxations.  */
++	 unnecessary NOPs.  This allows us to support code alignment
++	 in spite of linker relaxations.  */
 +      bfd_vma i, worst_case_bytes = bytes - min_text_alignment;
 +      char *nops = frag_more (worst_case_bytes);
 +      for (i = 0; i < worst_case_bytes - 2; i += 4)
@@ -6187,9 +6185,9 @@ index 0000000..171c167
 +  if (reloc->howto == NULL)
 +    {
 +      if ((fixp->fx_r_type == BFD_RELOC_16 || fixp->fx_r_type == BFD_RELOC_8)
-+          && fixp->fx_addsy != NULL && fixp->fx_subsy != NULL)
++	  && fixp->fx_addsy != NULL && fixp->fx_subsy != NULL)
 +	{
-+          /* We don't have R_RISCV_8/16, but for this special case,
++	  /* We don't have R_RISCV_8/16, but for this special case,
 +	     we can use R_RISCV_ADD8/16 with R_RISCV_SUB8/16.  */
 +	  return reloc;
 +	}
@@ -6279,15 +6277,15 @@ index 0000000..171c167
 +    {
 +    case 8:
 +      gas_assert (!RELAX_BRANCH_UNCOND (fragp->fr_subtype));
-+      
-+      /* Invert the branch condition.  Branch over the jump. */
++
++      /* Invert the branch condition.  Branch over the jump.  */
 +      insn = bfd_getl32 (buf);
 +      insn ^= MATCH_BEQ ^ MATCH_BNE;
 +      insn |= ENCODE_SBTYPE_IMM (8);
 +      md_number_to_chars ((char *) buf, insn, 4);
 +      buf += 4;
-+      
-+      /* Jump to the target. */
++
++      /* Jump to the target.  */
 +      fixp = fix_new_exp (fragp, buf - (bfd_byte *)fragp->fr_literal,
 +			  4, &exp, FALSE, BFD_RELOC_RISCV_JMP);
 +      md_number_to_chars ((char *) buf, MATCH_JAL, 4);
@@ -6399,12 +6397,12 @@ index 0000000..171c167
 +}
 diff --git a/gas/config/tc-riscv.h b/gas/config/tc-riscv.h
 new file mode 100644
-index 0000000..470c6be
+index 0000000..683e364
 --- /dev/null
 +++ b/gas/config/tc-riscv.h
-@@ -0,0 +1,102 @@
+@@ -0,0 +1,101 @@
 +/* tc-riscv.h -- header file for tc-riscv.c.
-+   Copyright 2011-2014 Free Software Foundation, Inc.
++   Copyright 2011-2015 Free Software Foundation, Inc.
 +
 +   Contributed by Andrew Waterman (waterman@cs.berkeley.edu) at UC Berkeley.
 +   Based on MIPS target.
@@ -6422,9 +6420,8 @@ index 0000000..470c6be
 +   GNU General Public License for more details.
 +
 +   You should have received a copy of the GNU General Public License
-+   along with GAS; see the file COPYING.  If not, write to the Free
-+   Software Foundation, 51 Franklin Street - Fifth Floor, Boston, MA
-+   02110-1301, USA.  */
++   along with this program; see the file COPYING3. If not,
++   see <http://www.gnu.org/licenses/>.  */
 +
 +#ifndef TC_RISCV
 +#define TC_RISCV
@@ -6469,7 +6466,7 @@ index 0000000..470c6be
 +#define md_parse_long_option(arg) riscv_parse_long_option (arg)
 +extern int riscv_parse_long_option (const char *);
 +
-+/* Let the linker resolve all the relocs due to relaxation. */
++/* Let the linker resolve all the relocs due to relaxation.  */
 +#define tc_fix_adjustable(fixp) 0
 +#define md_allow_local_subtract(l,r,s) 0
 +
@@ -6507,12 +6504,12 @@ index 0000000..470c6be
 +#endif /* TC_RISCV */
 diff --git a/include/elf/riscv.h b/include/elf/riscv.h
 new file mode 100644
-index 0000000..bb99554
+index 0000000..cb9ebea
 --- /dev/null
 +++ b/include/elf/riscv.h
 @@ -0,0 +1,143 @@
 +/* RISC-V ELF support for BFD.
-+   Copyright 2011-2014 Free Software Foundation, Inc.
++   Copyright 2011-2015 Free Software Foundation, Inc.
 +
 +   Contributed by Andrw Waterman <waterman@cs.berkeley.edu> at UC Berkeley.
 +   Based on MIPS ELF support for BFD, by Ian Lance Taylor.
@@ -6530,9 +6527,8 @@ index 0000000..bb99554
 +   GNU General Public License for more details.
 +
 +   You should have received a copy of the GNU General Public License
-+   along with this program; if not, write to the Free Software
-+   Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston,
-+   MA 02110-1301, USA.  */
++   along with this program; see the file COPYING3. If not,
++   see <http://www.gnu.org/licenses/>.  */
 +
 +/* This file holds definitions specific to the RISCV ELF ABI.  Note
 +   that most of this is not actually implemented by BFD.  */
@@ -6541,6 +6537,7 @@ index 0000000..bb99554
 +#define _ELF_RISCV_H
 +
 +#include "elf/reloc-macros.h"
++#include "libiberty.h"
 +
 +/* Relocation types.  */
 +START_RELOC_NUMBERS (elf_riscv_reloc_type)
@@ -6596,7 +6593,7 @@ index 0000000..bb99554
 +/* File may contain compressed instructions.  */
 +#define EF_RISCV_RVC 0x0001
 +
-+/* Custom flag definitions. */
++/* Custom flag definitions.  */
 +
 +#define EF_RISCV_EXT_MASK 0xffff
 +#define EF_RISCV_EXT_SH 16
@@ -6627,27 +6624,27 @@ index 0000000..bb99554
 +  {"Xhwacha", E_RISCV_EXT_Xhwacha},
 +};
 +
-+/* Given an extension name, return an elf flag. */
++/* Given an extension name, return an elf flag.  */
 +
-+static inline const char* riscv_elf_flag_to_name(unsigned int flag)
++static inline const char *riscv_elf_flag_to_name (unsigned int flag)
 +{
 +  unsigned int i;
 +
-+  for (i=0; i<sizeof(riscv_extension_map)/sizeof(riscv_extension_map[0]); i++)
++  for (i = 0; i < ARRAY_SIZE (riscv_extension_map); ++i)
 +    if (riscv_extension_map[i].flag == flag)
 +      return riscv_extension_map[i].name;
 +
 +  return NULL;
 +}
 +
-+/* Given an elf flag, return an extension name. */
++/* Given an elf flag, return an extension name.  */
 +
-+static inline unsigned int riscv_elf_name_to_flag(const char* name)
++static inline unsigned int riscv_elf_name_to_flag (const char *name)
 +{
 +  unsigned int i;
 +
-+  for (i=0; i<sizeof(riscv_extension_map)/sizeof(riscv_extension_map[0]); i++)
-+    if (strcmp(riscv_extension_map[i].name, name) == 0)
++  for (i = 0; i < ARRAY_SIZE (riscv_extension_map); ++i)
++    if (strcmp (riscv_extension_map[i].name, name) == 0)
 +      return riscv_extension_map[i].flag;
 +
 +  return E_RISCV_EXT_Xcustom;
@@ -8010,14 +8007,14 @@ index 0000000..a479406
 +#endif
 diff --git a/include/opcode/riscv.h b/include/opcode/riscv.h
 new file mode 100644
-index 0000000..25fa7cd
+index 0000000..198d939
 --- /dev/null
 +++ b/include/opcode/riscv.h
 @@ -0,0 +1,366 @@
 +/* riscv.h.  RISC-V opcode list for GDB, the GNU debugger.
 +   Copyright 2011
 +   Free Software Foundation, Inc.
-+   Contributed by Andrew Waterman 
++   Contributed by Andrew Waterman
 +
 +This file is part of GDB, GAS, and the GNU binutils.
 +
@@ -8042,7 +8039,7 @@ index 0000000..25fa7cd
 +#include <stdlib.h>
 +#include <stdint.h>
 +
-+/* RVC fields */
++/* RVC fields. */
 +
 +#define OP_MASK_CRS2 0x1f
 +#define OP_SH_CRS2 2
@@ -8062,33 +8059,33 @@ index 0000000..25fa7cd
 +
 +static inline unsigned int riscv_insn_length (insn_t insn)
 +{
-+  if ((insn & 0x3) != 3) /* RVC */
++  if ((insn & 0x3) != 3) /* RVC.  */
 +    return 2;
-+  if ((insn & 0x1f) != 0x1f) /* base ISA and extensions in 32-bit space */
++  if ((insn & 0x1f) != 0x1f) /* Base ISA and extensions in 32-bit space.  */
 +    return 4;
-+  if ((insn & 0x3f) == 0x1f) /* 48-bit extensions */
++  if ((insn & 0x3f) == 0x1f) /* 48-bit extensions.  */
 +    return 6;
-+  if ((insn & 0x7f) == 0x3f) /* 64-bit extensions */
++  if ((insn & 0x7f) == 0x3f) /* 64-bit extensions.  */
 +    return 8;
-+  /* longer instructions not supported at the moment */
++  /* Longer instructions not supported at the moment.  */
 +  return 2;
 +}
 +
 +static const char * const riscv_rm[8] = {
 +  "rne", "rtz", "rdn", "rup", "rmm", 0, 0, "dyn"
 +};
-+static const char* const riscv_pred_succ[16] = {
++static const char * const riscv_pred_succ[16] = {
 +  0,   "w",  "r",  "rw",  "o",  "ow",  "or",  "orw",
 +  "i", "iw", "ir", "irw", "io", "iow", "ior", "iorw",
 +};
 +
 +#define RVC_JUMP_BITS 11
-+#define RVC_JUMP_REACH ((1ULL<<RVC_JUMP_BITS)*RISCV_JUMP_ALIGN)
++#define RVC_JUMP_REACH ((1ULL << RVC_JUMP_BITS) * RISCV_JUMP_ALIGN)
 +
 +#define RVC_BRANCH_BITS 8
-+#define RVC_BRANCH_REACH ((1ULL<<RVC_BRANCH_BITS)*RISCV_BRANCH_ALIGN)
++#define RVC_BRANCH_REACH ((1ULL << RVC_BRANCH_BITS) * RISCV_BRANCH_ALIGN)
 +
-+#define RV_X(x, s, n) (((x) >> (s)) & ((1<<(n))-1))
++#define RV_X(x, s, n) (((x) >> (s)) & ((1 << (n)) - 1))
 +#define RV_IMM_SIGN(x) (-(((x) >> 31) & 1))
 +
 +#define EXTRACT_ITYPE_IMM(x) \
@@ -8246,16 +8243,16 @@ index 0000000..25fa7cd
 +#define OP_MASK_VFR		0x1f
 +#define OP_SH_VFR		27
 +
-+#define OP_MASK_IMMNGPR         0x3f
-+#define OP_SH_IMMNGPR           20
-+#define OP_MASK_IMMNFPR         0x3f
-+#define OP_SH_IMMNFPR           26
-+#define OP_MASK_IMMSEGNELM      0x7
-+#define OP_SH_IMMSEGNELM        29
-+#define OP_MASK_CUSTOM_IMM      0x7f
-+#define OP_SH_CUSTOM_IMM        25
-+#define OP_MASK_CSR             0xfff
-+#define OP_SH_CSR               20
++#define OP_MASK_IMMNGPR		0x3f
++#define OP_SH_IMMNGPR		20
++#define OP_MASK_IMMNFPR		0x3f
++#define OP_SH_IMMNFPR		26
++#define OP_MASK_IMMSEGNELM	0x7
++#define OP_SH_IMMSEGNELM	29
++#define OP_MASK_CUSTOM_IMM	0x7f
++#define OP_SH_CUSTOM_IMM	25
++#define OP_MASK_CSR		0xfff
++#define OP_SH_CSR		20
 +
 +#define X_RA 1
 +#define X_SP 2
@@ -8274,17 +8271,17 @@ index 0000000..25fa7cd
 +#define RISCV_JUMP_BITS RISCV_BIGIMM_BITS
 +#define RISCV_JUMP_ALIGN_BITS 1
 +#define RISCV_JUMP_ALIGN (1 << RISCV_JUMP_ALIGN_BITS)
-+#define RISCV_JUMP_REACH ((1ULL<<RISCV_JUMP_BITS)*RISCV_JUMP_ALIGN)
++#define RISCV_JUMP_REACH ((1ULL << RISCV_JUMP_BITS) * RISCV_JUMP_ALIGN)
 +
 +#define RISCV_IMM_BITS 12
-+#define RISCV_BIGIMM_BITS (32-RISCV_IMM_BITS)
-+#define RISCV_IMM_REACH (1LL<<RISCV_IMM_BITS)
-+#define RISCV_BIGIMM_REACH (1LL<<RISCV_BIGIMM_BITS)
-+#define RISCV_RVC_IMM_REACH (1LL<<6)
++#define RISCV_BIGIMM_BITS (32 - RISCV_IMM_BITS)
++#define RISCV_IMM_REACH (1LL << RISCV_IMM_BITS)
++#define RISCV_BIGIMM_REACH (1LL << RISCV_BIGIMM_BITS)
++#define RISCV_RVC_IMM_REACH (1LL << 6)
 +#define RISCV_BRANCH_BITS RISCV_IMM_BITS
 +#define RISCV_BRANCH_ALIGN_BITS RISCV_JUMP_ALIGN_BITS
 +#define RISCV_BRANCH_ALIGN (1 << RISCV_BRANCH_ALIGN_BITS)
-+#define RISCV_BRANCH_REACH (RISCV_IMM_REACH*RISCV_BRANCH_ALIGN)
++#define RISCV_BRANCH_REACH (RISCV_IMM_REACH * RISCV_BRANCH_ALIGN)
 +
 +/* This structure holds information for a particular instruction.  */
 +
@@ -8292,7 +8289,7 @@ index 0000000..25fa7cd
 +{
 +  /* The name of the instruction.  */
 +  const char *name;
-+  /* The ISA subset name (I, M, A, F, D, Xextension). */
++  /* The ISA subset name (I, M, A, F, D, Xextension).  */
 +  const char *subset;
 +  /* A string describing the arguments for this instruction.  */
 +  const char *args;
@@ -8307,27 +8304,27 @@ index 0000000..25fa7cd
 +     INSN_MACRO, then this field is the macro identifier.  */
 +  insn_t mask;
 +  /* A function to determine if a word corresponds to this instruction.
-+     Usually, this computes ((word & mask) == match). */
-+  int (*match_func)(const struct riscv_opcode *op, insn_t word);
++     Usually, this computes ((word & mask) == match).  */
++  int (*match_func) (const struct riscv_opcode *op, insn_t word);
 +  /* For a macro, this is INSN_MACRO.  Otherwise, it is a collection
 +     of bits describing the instruction, notably any relevant hazard
 +     information.  */
 +  unsigned long pinfo;
 +};
 +
-+#define INSN_WRITE_GPR_D            0x00000001
-+#define INSN_WRITE_GPR_RA           0x00000004
-+#define INSN_WRITE_FPR_D            0x00000008
-+#define INSN_READ_GPR_S             0x00000040
-+#define INSN_READ_GPR_T             0x00000080
-+#define INSN_READ_FPR_S             0x00000100
-+#define INSN_READ_FPR_T             0x00000200
-+#define INSN_READ_FPR_R        	    0x00000400
-+/* Instruction is a simple alias (I.E. "move" for daddu/addu/or) */
-+#define	INSN_ALIAS		    0x00001000
++#define INSN_WRITE_GPR_D	0x00000001
++#define INSN_WRITE_GPR_RA	0x00000004
++#define INSN_WRITE_FPR_D	0x00000008
++#define INSN_READ_GPR_S		0x00000040
++#define INSN_READ_GPR_T		0x00000080
++#define INSN_READ_FPR_S		0x00000100
++#define INSN_READ_FPR_T		0x00000200
++#define INSN_READ_FPR_R		0x00000400
++/* Instruction is a simple alias (I.E. "move" for daddu/addu/or).  */
++#define	INSN_ALIAS		0x00001000
 +/* Instruction is actually a macro.  It should be ignored by the
 +   disassembler, and requires special treatment by the assembler.  */
-+#define INSN_MACRO                  0xffffffff
++#define INSN_MACRO		0xffffffff
 +
 +/* This is a list of macro expanded instructions.
 +
@@ -8524,12 +8521,12 @@ index 0000000..2f49837
 +LDEMUL_AFTER_ALLOCATION=gld${EMULATION_NAME}_after_allocation
 diff --git a/opcodes/riscv-dis.c b/opcodes/riscv-dis.c
 new file mode 100644
-index 0000000..def809d
+index 0000000..c8d873e
 --- /dev/null
 +++ b/opcodes/riscv-dis.c
-@@ -0,0 +1,590 @@
+@@ -0,0 +1,589 @@
 +/* RISC-V disassembler
-+   Copyright 2011-2014 Free Software Foundation, Inc.
++   Copyright 2011-2015 Free Software Foundation, Inc.
 +
 +   Contributed by Andrew Waterman (waterman@cs.berkeley.edu) at UC Berkeley.
 +   Based on MIPS target.
@@ -8547,9 +8544,8 @@ index 0000000..def809d
 +   License for more details.
 +
 +   You should have received a copy of the GNU General Public License
-+   along with this program; if not, write to the Free Software
-+   Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston,
-+   MA 02110-1301, USA.  */
++   along with this program; see the file COPYING3. If not,
++   see <http://www.gnu.org/licenses/>.  */
 +
 +#include "sysdep.h"
 +#include "dis-asm.h"
@@ -8617,7 +8613,7 @@ index 0000000..def809d
 +  free (opts);
 +}
 +
-+/* Print one argument from an array. */
++/* Print one argument from an array.  */
 +
 +static void
 +arg_print (struct disassemble_info *info, unsigned long val,
@@ -8658,92 +8654,92 @@ index 0000000..def809d
 +    {
 +      switch (*d)
 +	{
-+        /* Xcustom */
-+        case '^':
-+          switch (*++d)
-+            {
-+            case 'd':
-+              (*info->fprintf_func) (info->stream, "%d", rd);
-+              break;
-+            case 's':
-+              (*info->fprintf_func) (info->stream, "%d", rs1);
-+              break;
-+            case 't':
-+              (*info->fprintf_func)
-+                ( info->stream, "%d", (int)((l >> OP_SH_RS2) & OP_MASK_RS2));
-+              break;
-+            case 'j':
-+              (*info->fprintf_func)
-+                ( info->stream, "%d", (int)((l >> OP_SH_CUSTOM_IMM) & OP_MASK_CUSTOM_IMM));
-+              break;
-+            }
-+          break;
++	/* Xcustom */
++	case '^':
++	  switch (*++d)
++	    {
++	    case 'd':
++	      (*info->fprintf_func) (info->stream, "%d", rd);
++	      break;
++	    case 's':
++	      (*info->fprintf_func) (info->stream, "%d", rs1);
++	      break;
++	    case 't':
++	      (*info->fprintf_func)
++		( info->stream, "%d", (int)((l >> OP_SH_RS2) & OP_MASK_RS2));
++	      break;
++	    case 'j':
++	      (*info->fprintf_func)
++		( info->stream, "%d", (int)((l >> OP_SH_CUSTOM_IMM) & OP_MASK_CUSTOM_IMM));
++	      break;
++	    }
++	  break;
 +
-+        /* Xhwacha */
-+        case '#':
-+          switch ( *++d ) {
-+            case 'g':
-+              (*info->fprintf_func)
-+                ( info->stream, "%d",
-+                  (int)((l >> OP_SH_IMMNGPR) & OP_MASK_IMMNGPR));
-+              break;
-+            case 'f':
-+              (*info->fprintf_func)
-+                ( info->stream, "%d",
-+                  (int)((l >> OP_SH_IMMNFPR) & OP_MASK_IMMNFPR));
-+              break;
-+            case 'p':
-+              (*info->fprintf_func)
-+                ( info->stream, "%d",
-+                 (int)((l >> OP_SH_CUSTOM_IMM) & OP_MASK_CUSTOM_IMM));
-+              break;
-+            case 'n':
-+              (*info->fprintf_func)
-+                ( info->stream, "%d",
-+                  (int)(((l >> OP_SH_IMMSEGNELM) & OP_MASK_IMMSEGNELM) + 1));
-+              break;
-+            case 'd':
-+              (*info->fprintf_func)
-+                ( info->stream, "%s",
-+                  riscv_vec_gpr_names[(l >> OP_SH_VRD) & OP_MASK_VRD]);
-+              break;
-+            case 's':
-+              (*info->fprintf_func)
-+                ( info->stream, "%s",
-+                  riscv_vec_gpr_names[(l >> OP_SH_VRS) & OP_MASK_VRS]);
-+              break;
-+            case 't':
-+              (*info->fprintf_func)
-+                ( info->stream, "%s",
-+                  riscv_vec_gpr_names[(l >> OP_SH_VRT) & OP_MASK_VRT]);
-+              break;
-+            case 'r':
-+              (*info->fprintf_func)
-+                ( info->stream, "%s",
-+                  riscv_vec_gpr_names[(l >> OP_SH_VRR) & OP_MASK_VRR]);
-+              break;
-+            case 'D':
-+              (*info->fprintf_func)
-+                ( info->stream, "%s",
-+                  riscv_vec_fpr_names[(l >> OP_SH_VFD) & OP_MASK_VFD]);
-+              break;
-+            case 'S':
-+              (*info->fprintf_func)
-+                ( info->stream, "%s",
-+                  riscv_vec_fpr_names[(l >> OP_SH_VFS) & OP_MASK_VFS]);
-+              break;
-+            case 'T':
-+              (*info->fprintf_func)
-+                ( info->stream, "%s",
-+                  riscv_vec_fpr_names[(l >> OP_SH_VFT) & OP_MASK_VFT]);
-+              break;
-+            case 'R':
-+              (*info->fprintf_func)
-+                ( info->stream, "%s",
-+                  riscv_vec_fpr_names[(l >> OP_SH_VFR) & OP_MASK_VFR]);
-+              break;
-+          }
-+          break;
++	/* Xhwacha */
++	case '#':
++	  switch ( *++d ) {
++	    case 'g':
++	      (*info->fprintf_func)
++		( info->stream, "%d",
++		  (int)((l >> OP_SH_IMMNGPR) & OP_MASK_IMMNGPR));
++	      break;
++	    case 'f':
++	      (*info->fprintf_func)
++		( info->stream, "%d",
++		  (int)((l >> OP_SH_IMMNFPR) & OP_MASK_IMMNFPR));
++	      break;
++	    case 'p':
++	      (*info->fprintf_func)
++		( info->stream, "%d",
++		 (int)((l >> OP_SH_CUSTOM_IMM) & OP_MASK_CUSTOM_IMM));
++	      break;
++	    case 'n':
++	      (*info->fprintf_func)
++		( info->stream, "%d",
++		  (int)(((l >> OP_SH_IMMSEGNELM) & OP_MASK_IMMSEGNELM) + 1));
++	      break;
++	    case 'd':
++	      (*info->fprintf_func)
++		( info->stream, "%s",
++		  riscv_vec_gpr_names[(l >> OP_SH_VRD) & OP_MASK_VRD]);
++	      break;
++	    case 's':
++	      (*info->fprintf_func)
++		( info->stream, "%s",
++		  riscv_vec_gpr_names[(l >> OP_SH_VRS) & OP_MASK_VRS]);
++	      break;
++	    case 't':
++	      (*info->fprintf_func)
++		( info->stream, "%s",
++		  riscv_vec_gpr_names[(l >> OP_SH_VRT) & OP_MASK_VRT]);
++	      break;
++	    case 'r':
++	      (*info->fprintf_func)
++		( info->stream, "%s",
++		  riscv_vec_gpr_names[(l >> OP_SH_VRR) & OP_MASK_VRR]);
++	      break;
++	    case 'D':
++	      (*info->fprintf_func)
++		( info->stream, "%s",
++		  riscv_vec_fpr_names[(l >> OP_SH_VFD) & OP_MASK_VFD]);
++	      break;
++	    case 'S':
++	      (*info->fprintf_func)
++		( info->stream, "%s",
++		  riscv_vec_fpr_names[(l >> OP_SH_VFS) & OP_MASK_VFS]);
++	      break;
++	    case 'T':
++	      (*info->fprintf_func)
++		( info->stream, "%s",
++		  riscv_vec_fpr_names[(l >> OP_SH_VFT) & OP_MASK_VFT]);
++	      break;
++	    case 'R':
++	      (*info->fprintf_func)
++		( info->stream, "%s",
++		  riscv_vec_fpr_names[(l >> OP_SH_VFR) & OP_MASK_VFR]);
++	      break;
++	  }
++	  break;
 +
 +	case 'C': /* RVC */
 +	  switch (*++d)
@@ -8850,22 +8846,23 @@ index 0000000..def809d
 +	  break;
 +
 +	case 'u':
-+	  (*info->fprintf_func) (info->stream, "0x%x", (unsigned)EXTRACT_UTYPE_IMM (l) >> RISCV_IMM_BITS);
++	  (*info->fprintf_func) (info->stream, "0x%x",
++				 (unsigned)EXTRACT_UTYPE_IMM (l) >> RISCV_IMM_BITS);
 +	  break;
 +
 +	case 'm':
 +	  arg_print(info, (l >> OP_SH_RM) & OP_MASK_RM,
-+		    riscv_rm, ARRAY_SIZE(riscv_rm));
++		    riscv_rm, ARRAY_SIZE (riscv_rm));
 +	  break;
 +
 +	case 'P':
 +	  arg_print(info, (l >> OP_SH_PRED) & OP_MASK_PRED,
-+	            riscv_pred_succ, ARRAY_SIZE(riscv_pred_succ));
++		    riscv_pred_succ, ARRAY_SIZE (riscv_pred_succ));
 +	  break;
 +
 +	case 'Q':
 +	  arg_print(info, (l >> OP_SH_SUCC) & OP_MASK_SUCC,
-+	            riscv_pred_succ, ARRAY_SIZE(riscv_pred_succ));
++		    riscv_pred_succ, ARRAY_SIZE (riscv_pred_succ));
 +	  break;
 +
 +	case 'o':
@@ -8938,9 +8935,9 @@ index 0000000..def809d
 +	    unsigned int csr = (l >> OP_SH_CSR) & OP_MASK_CSR;
 +	    switch (csr)
 +	      {
-+		#define DECLARE_CSR(name, num) case num: csr_name = #name; break;
-+		#include "opcode/riscv-opc.h"
-+		#undef DECLARE_CSR
++	      #define DECLARE_CSR(name, num) case num: csr_name = #name; break;
++	      #include "opcode/riscv-opc.h"
++	      #undef DECLARE_CSR
 +	      }
 +	    if (csr_name)
 +	      (*info->fprintf_func) (info->stream, "%s", csr_name);
@@ -8983,10 +8980,8 @@ index 0000000..def809d
 +  if (! init)
 +    {
 +      for (op = riscv_opcodes; op < &riscv_opcodes[NUMOPCODES]; op++)
-+        {
-+	  if (!riscv_hash[OP_HASH_IDX (op->match)])
-+	    riscv_hash[OP_HASH_IDX (op->match)] = op;
-+        }
++	if (!riscv_hash[OP_HASH_IDX (op->match)])
++	  riscv_hash[OP_HASH_IDX (op->match)] = op;
 +
 +      init = 1;
 +    }
@@ -8998,7 +8993,7 @@ index 0000000..def809d
 +      pd = info->private_data = xcalloc (1, sizeof (struct riscv_private_data));
 +      pd->gp = -1;
 +      pd->print_addr = -1;
-+      for (i = 0; i < (int) ARRAY_SIZE(pd->hi_addr); i++)
++      for (i = 0; i < (int) ARRAY_SIZE (pd->hi_addr); i++)
 +	pd->hi_addr[i] = -1;
 +
 +      for (i = 0; i < info->symtab_size; i++)
@@ -9084,19 +9079,20 @@ index 0000000..def809d
 +    set_default_riscv_dis_options ();
 +
 +  /* Instructions are a sequence of 2-byte packets in little-endian order.  */
-+  for (n = 0; n < sizeof(insn) && n < riscv_insn_length (insn); n += 2)
++  for (n = 0; n < sizeof (insn) && n < riscv_insn_length (insn); n += 2)
 +    {
 +      status = (*info->read_memory_func) (memaddr + n, (bfd_byte*)&i2, 2, info);
 +      if (status != 0)
 +	{
-+	  if (n > 0) /* Don't fail just because we fell off the end. */
++	  /* Don't fail just because we fell off the end.  */
++	  if (n > 0)
 +	    break;
 +	  (*info->memory_error_func) (status, memaddr, info);
 +	  return status;
 +	}
 +
 +      i2 = bfd_getl16 (&i2);
-+      insn |= (insn_t)i2 << (8*n);
++      insn |= (insn_t)i2 << (8 * n);
 +    }
 +
 +  return riscv_disassemble_insn (memaddr, insn, info);
@@ -9120,12 +9116,12 @@ index 0000000..def809d
 +}
 diff --git a/opcodes/riscv-opc.c b/opcodes/riscv-opc.c
 new file mode 100644
-index 0000000..362d9e1
+index 0000000..e52b12a
 --- /dev/null
 +++ b/opcodes/riscv-opc.c
-@@ -0,0 +1,867 @@
+@@ -0,0 +1,866 @@
 +/* RISC-V opcode list
-+   Copyright 2011-2014 Free Software Foundation, Inc.
++   Copyright 2011-2015 Free Software Foundation, Inc.
 +
 +   Contributed by Andrew Waterman (waterman@cs.berkeley.edu) at UC Berkeley.
 +   Based on MIPS target.
@@ -9143,9 +9139,8 @@ index 0000000..362d9e1
 +   License for more details.
 +
 +   You should have received a copy of the GNU General Public License
-+   along with this file; see the file COPYING.  If not, write to the
-+   Free Software Foundation, 51 Franklin Street - Fifth Floor, Boston,
-+   MA 02110-1301, USA.  */
++   along with this program; see the file COPYING3. If not,
++   see <http://www.gnu.org/licenses/>.  */
 +
 +#include "sysdep.h"
 +#include "opcode/riscv.h"
@@ -9207,7 +9202,7 @@ index 0000000..362d9e1
 +   registers.
 +
 +   Because of the lookup algorithm used, entries with the same opcode
-+   name must be contiguous. */
++   name must be contiguous.  */
 +
 +#define WR_xd INSN_WRITE_GPR_D
 +#define WR_fd INSN_WRITE_FPR_D
@@ -9985,8 +9980,8 @@ index 0000000..362d9e1
 +  ((sizeof riscv_builtin_opcodes) / (sizeof (riscv_builtin_opcodes[0])))
 +const int bfd_riscv_num_builtin_opcodes = RISCV_NUM_OPCODES;
 +
-+/* const removed from the following to allow for dynamic extensions to the
-+ * built-in instruction set. */
++/* Removed const from the following to allow for dynamic extensions to the
++   built-in instruction set.  */
 +struct riscv_opcode *riscv_opcodes =
 +  (struct riscv_opcode *) riscv_builtin_opcodes;
 +int bfd_riscv_num_opcodes = RISCV_NUM_OPCODES;
