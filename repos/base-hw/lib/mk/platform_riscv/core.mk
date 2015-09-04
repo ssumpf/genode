@@ -6,7 +6,7 @@
 
 INC_DIR += $(REP_DIR)/src/core/include/spec/riscv
 
-CC_OPT += -fno-delete-null-pointer-checks
+CC_OPT += -fno-delete-null-pointer-checks -msoft-float
 
 # add C++ sources
 SRC_CC += platform_services.cc

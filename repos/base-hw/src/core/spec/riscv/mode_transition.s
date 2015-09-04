@@ -13,8 +13,7 @@
 .set SUPERVISOR_MODE, 1
 .set MACHINE_MODE,    3
 
-.set CALL_PUT_CHAR,      1
-.set CALL_PROGRAM_TIMER, 2
+.set CALL_PUT_CHAR,      0xff
 
 .set CPU_IP,        0
 .set CPU_EXCEPTION, 8

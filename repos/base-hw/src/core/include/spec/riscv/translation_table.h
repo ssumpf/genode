@@ -190,15 +190,6 @@ class Sv39::Level_x_translation_table
 			}
 		}
 
-		/**
-		 * Signal update to memory-management data structures
-		 */
-		void _memory_management_fence()
-		{
-			//XXX: implement machine
-			//asm volatile ("sfence.vm");
-		}
-
 		template <typename E>
 		struct Insert_func
 		{
@@ -340,7 +331,6 @@ class Sv39::Level_x_translation_table
 
 			PWRN("insert (%p): vo %lx pa %lx size %zx from %p", this, vo, pa, size, __builtin_return_address(0));
 			_range_op(vo, pa, size, Insert_func<ENTRY>(flags, alloc));
-			_memory_management_fence();
 		}
 
 		/**
@@ -355,7 +345,6 @@ class Sv39::Level_x_translation_table
 		{
 			PDBG("calledl");
 			_range_op(vo, 0, size, Remove_func<ENTRY>(alloc));
-			_memory_management_fence();
 		}
 }  __attribute__((aligned(1 << ALIGNM_LOG2)));
 

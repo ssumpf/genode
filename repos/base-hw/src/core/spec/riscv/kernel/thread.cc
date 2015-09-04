@@ -13,19 +13,12 @@
  */
 
 /* core includes */
-#include <kernel/thread.h>
 #include <kernel/pd.h>
-#include <kernel/kernel.h>
+#include <kernel/thread.h>
 
 using namespace Kernel;
 
-
-Thread::Thread(unsigned const priority, unsigned const quota,
-               char const * const label)
-: Thread_base(this), Cpu_job(priority, quota),
-  _state(AWAITS_START), _signal_receiver(0),
-  _label(label) { }
-
+void Kernel::Thread::_init() { }
 
 void Thread::exception(unsigned const cpu)
 {
@@ -39,7 +32,7 @@ void Thread::exception(unsigned const cpu)
 		PWRN("%s -> %s: unaligned instruction at ip=%lx", pd_label(), label(), ip);
 		break;
 	case INSTRUCTION_ILLEGAL:
-		PWRN("%s -> %s: illigal instruction at ip=%lx", pd_label(), label(), ip);
+		PWRN("%s -> %s: illigal instruction at ip=%lx ra=%lx", pd_label(), label(), ip, ra);
 		break;
 	case LOAD_UNALIGNED:
 		PWRN("%s -> %s: unaligned load at ip=%lx", pd_label(), label(), ip);
@@ -48,6 +41,7 @@ void Thread::exception(unsigned const cpu)
 		PWRN("%s -> %s: unaligned store at ip=%lx", pd_label(), label(), ip);
 		break;
 	case SUPERVISOR_CALL:
+		PWRN("system call %lu", a0);
 		_call();
 		ip += 4;
 		break;
@@ -55,21 +49,6 @@ void Thread::exception(unsigned const cpu)
 		PDBG("%lx", cpu_exception);
 	}
 }
-
-
-addr_t Thread::* Thread::_reg(addr_t const id) const
-{
-	static addr_t Thread::* const _regs[] = {
-		/* [13] */ (addr_t Thread::*)&Thread::sp,
-		/* [15] */ (addr_t Thread::*)&Thread::ip,
-		/* [18] */ (addr_t Thread::*)&Thread::_fault_pd,
-		/* [19] */ (addr_t Thread::*)&Thread::_fault_addr,
-		/* [20] */ (addr_t Thread::*)&Thread::_fault_writes,
-		/* [21] */ (addr_t Thread::*)&Thread::_fault_signal
-	};
-	return id < sizeof(_regs)/sizeof(_regs[0]) ? _regs[id] : 0;
-}
-
 
 void Thread::_mmu_exception()
 {
@@ -93,18 +72,8 @@ void Thread::_mmu_exception()
 }
 
 
-Thread_event Thread::* Thread::_event(unsigned const id) const
-{
-	static Thread_event Thread::* _events[] = {
-		/* [0] */ &Thread::_fault
-	};
-	return id < sizeof(_events)/sizeof(_events[0]) ? _events[id] : 0;
-}
-
-
-
 void Thread::_call_update_pd()
 {
-	PDBG("not impl");
+	asm volatile ("sfence.vm");
 }
 
