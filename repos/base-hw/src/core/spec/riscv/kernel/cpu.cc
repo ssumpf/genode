@@ -33,6 +33,7 @@ struct Mstatus : Genode::Register<64>
 	struct Priv  : Bitfield<1, 2> { };
 	struct Ie1   : Bitfield<3, 1> { };
 	struct Priv1 : Bitfield<4, 2> { };
+	struct Fs    : Bitfield<12, 2> { enum { INITIAL = 1 }; };
 	struct Vm    : Bitfield<17, 5> { };
 	struct Mprv  : Bitfield<16, 1> { };
 };
@@ -45,6 +46,7 @@ void Genode::Cpu::init_virt_kernel(Kernel::Pd * pd)
 	asm volatile ("csrr %0, mstatus\n" : "=r"(mstatus));
 
 	Mstatus::Vm::set(mstatus, Mstatus::Sv39);         /* enable Sv39 paging  */
+	Mstatus::Fs::set(mstatus, Mstatus::Fs::INITIAL);  /* enable FPU */
 	Mstatus::Ie1::set(mstatus, 1);
 	Mstatus::Priv1::set(mstatus, Mstatus::USER);      /* set user mode */
 
