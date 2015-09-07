@@ -21,7 +21,7 @@
 
 using namespace Genode;
 
-Cpu::User_context::User_context() { PDBG("not impl"); }
+Cpu::User_context::User_context() { }
 
 
 Native_region * Platform::_ram_regions(unsigned const i)

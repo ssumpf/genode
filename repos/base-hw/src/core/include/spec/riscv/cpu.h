@@ -139,7 +139,10 @@ class Genode::Cpu
 		/**
 		 * Ensure that TLB insertions get applied
 		 */
-		static void tlb_insertions() { PDBG("not impl"); }
+		static void tlb_insertions()
+		{
+			asm volatile ("sfence.vm");
+		}
 
 		/**
 		 * Return wether to retry an undefined user instruction after this call

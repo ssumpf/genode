@@ -178,7 +178,6 @@ class Sv39::Level_x_translation_table
 				addr_t end = (vo + BLOCK_SIZE) & BLOCK_MASK;
 				size_t sz  = min(size, end-vo);
 
-				PINF("range: %zu vo: %lx pa: %lx bl: %u", i, vo, pa, BLOCK_SIZE_LOG2);
 				func(vo, pa, sz, _entries[i]);
 
 				/* check whether we wrap */
@@ -210,10 +209,8 @@ class Sv39::Level_x_translation_table
 					typename Descriptor::access_t blk_desc =
 						Block_descriptor::create(flags, pa);
 
-					if (Descriptor::valid(desc) && desc != blk_desc) {
-						PDBG("double insert %d", __LINE__);
+					if (Descriptor::valid(desc) && desc != blk_desc)
 						throw Double_insertion();
-					}
 
 					desc = blk_desc;
 					return;
@@ -225,12 +222,11 @@ class Sv39::Level_x_translation_table
 
 				case Descriptor::INVALID: /* no entry */
 					{
-						PINF("Insert_func: alloc %p", alloc);
-						if (!alloc) { PDBG("allocator out of memory"); throw Allocator::Out_of_memory(); }
+						if (!alloc)
+							throw Allocator::Out_of_memory();
 
 						/* create and link next level table */
 						table = new (alloc) ENTRY();
-						PINF("Insert_func: table %p", table);
 						ENTRY * phys_addr = (ENTRY*) alloc->phys_addr(table);
 						desc = Table_descriptor::create(phys_addr ?
 						                                phys_addr : table);
@@ -238,7 +234,6 @@ class Sv39::Level_x_translation_table
 
 				case Descriptor::TABLE: /* table already available */
 					{
-						PINF("Insert_func: TABLE");
 						/* use allocator to retrieve virt address of table */
 						ENTRY * phys_addr = (ENTRY*)
 							Table_descriptor::Base::bits(Table_descriptor::Ppn::get(desc));
@@ -248,10 +243,7 @@ class Sv39::Level_x_translation_table
 					}
 
 				case Descriptor::BLOCK: /* there is already a block */
-					{
-						PINF("Insert_func: DOUBLE");
 						throw Double_insertion();
-					}
 				};
 
 				/* insert translation */
@@ -298,7 +290,7 @@ class Sv39::Level_x_translation_table
 		Level_x_translation_table()
 		{
 			if (!_aligned((addr_t)this, ALIGNM_LOG2)) {
-				PDBG("misaligned address");
+				PWRN("misaligned address");
 				throw Misaligned();
 			}
 
@@ -328,8 +320,6 @@ class Sv39::Level_x_translation_table
 		                        Page_flags const & flags,
 		                        Translation_table_allocator * alloc )
 		{
-
-			PWRN("insert (%p): vo %lx pa %lx size %zx from %p", this, vo, pa, size, __builtin_return_address(0));
 			_range_op(vo, pa, size, Insert_func<ENTRY>(flags, alloc));
 		}
 
@@ -343,7 +333,6 @@ class Sv39::Level_x_translation_table
 		void remove_translation(addr_t vo, size_t size,
 		                        Translation_table_allocator * alloc)
 		{
-			PDBG("calledl");
 			_range_op(vo, 0, size, Remove_func<ENTRY>(alloc));
 		}
 }  __attribute__((aligned(1 << ALIGNM_LOG2)));
@@ -370,17 +359,15 @@ namespace Sv39 {
 			{
 				if ((vo & ~BLOCK_MASK) || (pa & ~BLOCK_MASK) ||
 				    size < BLOCK_SIZE) {
-				 PDBG("invalid range");
+					PWRN("invalid range");
 					throw Invalid_range();
 				}
 
 				Descriptor::access_t blk_desc =
 					Block_descriptor::create(flags, pa);
 
-				if (Descriptor::valid(desc) && desc != blk_desc) {
-					PDBG("double insertion %d d: %llx b: %llx", __LINE__, desc, blk_desc);
+				if (Descriptor::valid(desc) && desc != blk_desc)
 					throw Double_insertion();
-				}
 
 				desc = blk_desc;
 			}

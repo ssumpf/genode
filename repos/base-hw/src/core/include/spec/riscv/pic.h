@@ -57,14 +57,12 @@ class Genode::Pic
 		/**
 		 * Unmask interrupt 'i'
 		 */
-		void unmask(unsigned const i, unsigned) {
-			PDBG("not impl"); }
+		void unmask(unsigned const i, unsigned) { }
 
 		/**
 		 * Mask interrupt 'i'
 		 */
-		void mask(unsigned const i) {
-			PDBG("not impl"); }
+		void mask(unsigned const i) { }
 
 		/*************
 		 ** Dummies **
