@@ -201,6 +201,13 @@ void Core_platform_pd::_map(addr_t start, addr_t end, bool io_mem)
 	start        = trunc_page(start);
 	size_t size  = round_page(end) - start;
 
+	/* omitt regions before vm_start */
+	if (start < platform()->vm_start())
+		start = platform()->vm_start();
+
+	if (end > platform()->vm_start() + platform()->vm_size())
+		end = platform()->vm_start() + platform()->vm_size();
+
 	try {
 		_table()->insert_translation(start, start, size, flags, _table_alloc());
 	} catch(Allocator::Out_of_memory) {
@@ -219,7 +226,7 @@ Core_platform_pd::Core_platform_pd()
 	Kernel::mtc()->map(_table(), _table_alloc());
 
 	/* map core's program image */
-	_map((addr_t)&_prog_img_beg + 0x1000, (addr_t)&_prog_img_end, false);
+	_map((addr_t)&_prog_img_beg , (addr_t)&_prog_img_end, false);
 
 	/* map core's page table allocator */
 	_map(Platform::core_translation_tables(),
