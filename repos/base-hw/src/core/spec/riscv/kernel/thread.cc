@@ -45,6 +45,11 @@ void Thread::exception(unsigned const cpu)
 		_call();
 		ip += 4;
 		break;
+	case INSTRUCTION_PAGE_FAULT:
+	case STORE_PAGE_FAULT:
+	case LOAD_PAGE_FAULT:
+		_mmu_exception();
+		break;
 	default:
 		PDBG("%lx", cpu_exception);
 	}
@@ -55,20 +60,9 @@ void Thread::_mmu_exception()
 	_become_inactive(AWAITS_RESUME);
 	_fault_pd     = (addr_t)_pd->platform_pd();
 	_fault_signal = (addr_t)_fault.signal_context();
-	
-	PDBG("not impl");
-	//_fault_addr   = Cpu::Cr2::read();
-
-	/**
-	 * core should never raise a page-fault,
-	 * if this happens print out an error message with debug information
-	 */
-	if (_pd == Kernel::core_pd())
-		PERR("Pagefault in core thread (%s): ip=%p fault=%p",
-		     label(), (void*)ip, (void*)_fault_addr);
+	_fault_addr   = Cpu::sbadaddr();
 
 	_fault.submit();
-	return;
 }
 
 

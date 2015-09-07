@@ -18,3 +18,4 @@
 
 /* alignment constraints */
 .set DATA_ACCESS_ALIGNM_LOG2, 2
+.set MIN_PAGE_SIZE_LOG2, 12

@@ -40,15 +40,13 @@ class Genode::Pic
 		/**
 		 * Constructor
 		 */
-		Pic() { PDBG("not impl"); }
+		Pic() { }
 
 		/**
 		 * Receive a pending request number 'i'
 		 */
-		bool take_request(unsigned & i)
-		{
-			PDBG("not impl");
-			return false;
+		bool take_request(unsigned & i) {
+			return true;
 		}
 
 		/**
