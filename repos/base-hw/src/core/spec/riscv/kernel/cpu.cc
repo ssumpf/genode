@@ -63,16 +63,10 @@ void Genode::Cpu::init_virt_kernel(Kernel::Pd * pd)
 	                "r" (exception_entry),
 	                "r" (exception_entry | ((addr_t)&_mt_client_context_ptr & 0xfff))
 	              : "memory");
-
-
-	PINF("MMU and supervisor mode enabled");
 }
 
 
-void Genode::Cpu::init_phys_kernel()
-{
-	PDBG("called");
-}
+void Genode::Cpu::init_phys_kernel() { }
 
 
 Cpu_idle::Cpu_idle(Cpu * const cpu) : Cpu_job(Cpu_priority::MIN, 0)

@@ -68,22 +68,15 @@ extern "C" void init_kernel_up()
 	 * we must avoid the use of 'cmpxchg' by now (includes not using any
 	 * local static objects.
 	 */
-	PINF("base-hw barely running");
 
 	/* calculate in advance as needed later when data writes aren't allowed */
 	core_pd();
 
-	PWRN("core_pd done");
-
 	/* initialize all CPU objects */
 	cpu_pool();
 
-	PINF("cpu pool done");
-
 	/* initialize PIC */
 	pic();
-
-	PINF("PIC inializaed");
 
 	/* go multiprocessor mode */
 	Cpu::start_secondary_cpus(&_start_secondary_cpus);
@@ -97,7 +90,6 @@ extern "C" void init_kernel_up()
 void init_kernel_mp_primary()
 {
 	Core_thread::singleton();
-	Genode::printf("kernel initialized\n");
 	test();
 }
 
@@ -113,7 +105,6 @@ extern "C" void init_kernel_mp()
 	 * caches. Hence we must avoid write access to kernel data by now.
 	 */
 
-	PINF("Secondary CPUs started");
 	/* synchronize data view of all CPUs */
 	Cpu::invalidate_data_caches();
 	Cpu::invalidate_instr_caches();

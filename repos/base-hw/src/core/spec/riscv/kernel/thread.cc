@@ -22,28 +22,13 @@ void Kernel::Thread::_init() { }
 
 void Thread::exception(unsigned const cpu)
 {
-	if (is_irq()) {
-		PDBG("IRQ %u", irq());
+	if (is_irq())
 		return;
-	}
 
 	switch(cpu_exception) {
-	case INSTRUCTION_UNALIGNED:
-		PWRN("%s -> %s: unaligned instruction at ip=%lx", pd_label(), label(), ip);
-		break;
-	case INSTRUCTION_ILLEGAL:
-		PWRN("%s -> %s: illigal instruction at ip=%lx ra=%lx", pd_label(), label(), ip, ra);
-		break;
-	case LOAD_UNALIGNED:
-		PWRN("%s -> %s: unaligned load at ip=%lx", pd_label(), label(), ip);
-		break;
-	case STORE_UNALIGNED:
-		PWRN("%s -> %s: unaligned store at ip=%lx", pd_label(), label(), ip);
-		break;
 	case SUPERVISOR_CALL:
-		PWRN("system call %lu", a0);
 		_call();
-		ip += 4;
+		ip += 4; /* set to next instruction */
 		break;
 	case INSTRUCTION_PAGE_FAULT:
 	case STORE_PAGE_FAULT:
@@ -51,9 +36,12 @@ void Thread::exception(unsigned const cpu)
 		_mmu_exception();
 		break;
 	default:
-		PDBG("%lx", cpu_exception);
+		PWRN("%s -> %s: unhandled exception %lu at ip=%lx",
+		     pd_label(), label(), cpu_exception, ip);
+		_stop();
 	}
 }
+
 
 void Thread::_mmu_exception()
 {
