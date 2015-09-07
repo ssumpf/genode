@@ -42,32 +42,28 @@ struct Mstatus : Genode::Register<64>
 void Genode::Cpu::init_virt_kernel(Kernel::Pd * pd)
 {
 	/* read status register */
-	Mstatus::access_t mstatus;
-	asm volatile ("csrr %0, mstatus\n" : "=r"(mstatus));
+	Mstatus::access_t mstatus = 0;
 
 	Mstatus::Vm::set(mstatus, Mstatus::Sv39);         /* enable Sv39 paging  */
-	Mstatus::Fs::set(mstatus, Mstatus::Fs::INITIAL);  /* enable FPU */
-	Mstatus::Ie1::set(mstatus, 1);
-	Mstatus::Priv1::set(mstatus, Mstatus::USER);      /* set user mode */
-
-	asm volatile ("csrw sasid,   %0\n" /* address space id */
-	              "csrw sptbr,   %1\n" /* set page table */
-	              "csrw mstatus, %2\n" /* change mode */
-	              :
-	              : "r" (pd->asid), "r" (pd->translation_table()), "r"(mstatus)
-	              : "memory");
-
-	/* set exception vector */
-	asm volatile ("csrw stvec, %0" : : "r"(exception_entry));
-
-	/* set _mt_client_context_ptr address */
-	addr_t context_addr = (addr_t)&_mt_client_context_ptr;
-	context_addr = exception_entry | (context_addr & 0xfff);
-	asm volatile ("csrw sscratch, %0" : : "r"(context_addr));
-
+	Mstatus::Fs::set(mstatus, Mstatus::Fs::INITIAL);  /* enable FPU          */
+	Mstatus::Ie1::set(mstatus, 1);                    /* user mode interrupt */
+	Mstatus::Priv1::set(mstatus, Mstatus::USER);      /* set user mode       */
 	Mstatus::Ie::set(mstatus, 0);                     /* disable interrupts  */
 	Mstatus::Priv::set(mstatus, Mstatus::SUPERVISOR); /* set supervisor mode */
-	asm volatile ("csrw mstatus, %0\n" : : "r"(mstatus));
+
+	asm volatile ("csrw sasid,   %0\n" /* address space id  */
+	              "csrw sptbr,   %1\n" /* set page table    */
+	              "csrw mstatus, %2\n" /* change mode       */
+	              "csrw stvec,   %3\n" /* exception vector  */
+	              "csrw sscratch,%4\n" /* master conext ptr */
+	              :
+	              : "r" (pd->asid),
+	                "r" (pd->translation_table()),
+	                "r" (mstatus),
+	                "r" (exception_entry),
+	                "r" (exception_entry | ((addr_t)&_mt_client_context_ptr & 0xfff))
+	              : "memory");
+
 
 	PINF("MMU and supervisor mode enabled");
 }

@@ -178,6 +178,13 @@ class Genode::Cpu
 		static void init_virt_kernel(Kernel::Pd * pd);
 		static void init_phys_kernel();
 
+		static addr_t sbadaddr()
+		{
+			addr_t addr;
+			asm volatile ("csrr %0, sbadaddr\n" : "=r"(addr));
+			return addr;
+		}
+
 		/*************
 		 ** Dummies **
 		 *************/

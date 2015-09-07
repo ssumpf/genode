@@ -16,16 +16,16 @@ namespace Genode {
 struct Genode::Cpu_state
 {
 	enum Cpu_exception {
-		INSTRUCTION_UNALIGNED = 0,
-		INSTRUCTION_PAGEFAULT = 1,
-		INSTRUCTION_ILLEGAL   = 2,
-		LOAD_UNALIGNED        = 4,
-		LOAD_PAGEFAULT        = 5,
-		STORE_UNALIGNED       = 6,
-		STORE_PAGEFAULT       = 7,
-		SUPERVISOR_CALL       = 8,
-		RESET                 = 16,
-		IRQ_FLAG              = 1UL << 63,
+		INSTRUCTION_UNALIGNED  = 0,
+		INSTRUCTION_PAGE_FAULT = 1,
+		INSTRUCTION_ILLEGAL    = 2,
+		LOAD_UNALIGNED         = 4,
+		LOAD_PAGE_FAULT        = 5,
+		STORE_UNALIGNED        = 6,
+		STORE_PAGE_FAULT       = 7,
+		SUPERVISOR_CALL        = 8,
+		RESET                  = 16,
+		IRQ_FLAG               = 1UL << 63,
 	};
 
 	addr_t ip            = 0;
