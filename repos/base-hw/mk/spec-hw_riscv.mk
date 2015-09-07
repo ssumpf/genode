@@ -1,6 +1,7 @@
 SPECS += hw riscv platform_riscv 64bit
 
-LD_TEXT_ADDR ?= 0x200
+LD_TEXT_ADDR      ?= 0x1000
+CORE_LD_TEXT_ADDR  = 0x200
 NR_OF_CPUS    = 1
 REP_INC_DIR  += include/riscv
 
