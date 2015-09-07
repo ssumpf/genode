@@ -12,3 +12,5 @@ LIBS += core
 
 # add C++ sources
 SRC_CC += kernel/test.cc
+
+LD_TEXT_ADDR = $(CORE_LD_TEXT_ADDR)
