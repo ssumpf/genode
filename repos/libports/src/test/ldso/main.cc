@@ -21,11 +21,13 @@ using namespace Genode;
 /* shared-lib includes */
 #include "test-ldso.h"
 
+#if 0
 namespace Libc {
 #include <stdlib.h>
 #include <unistd.h>
 #include <math.h>
 }
+#endif
 
 
 /********************************************************************
@@ -204,7 +206,7 @@ int main(int argc, char **argv)
 	lib_2_global.lib_2_global();
 	lib_1_local_3()->lib_1_local_3();
 	printf("lib_1_pod_1 %x\n", --pod_1);
-
+#if 0
 	int fd = 0;
 	char buf[2];
 	printf("Libc::read:\n");
@@ -213,7 +215,7 @@ int main(int argc, char **argv)
 	int i = Libc::abs(-10);
 	printf("Libc::abs(-10): %d\n", i);
 	printf("\n");
-
+#endif
 	printf("Catch exceptions in program\n");
 	printf("---------------------------\n");
 	printf("exception in remote procedure call:\n");
