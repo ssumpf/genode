@@ -204,7 +204,7 @@ SECTIONS
   
   /* merge .got.plt and .got into .got, since the ARM toolchain for OKL4
    * set's * DT_PLTGOT to .got instead of .got.plt */
-  .got            : { *(.got.plt) *(.got) }
+  .got            : { *(.got) *(.got.plt) }
 
   _prog_img_data = .;
   .data           :

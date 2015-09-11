@@ -15,6 +15,7 @@
 #define _X86_32__RELOCATION_H_
 
 #include <relocation_generic.h>
+#include <dynamic_generic.h>
 
 namespace Linker {
 
