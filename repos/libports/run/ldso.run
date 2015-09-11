@@ -15,9 +15,6 @@ install_config {
 		<start name="test-ldso">
 			<resource name="RAM" quantum="2M"/>
 			<config ld_bind_now="no" ld_verbose="no">
-				<libc stdout="/dev/log">
-					<vfs> <dir name="dev"> <log/> </dir> </vfs>
-				</libc>
 			</config>
 		</start>
 	</config>
@@ -26,7 +23,7 @@ install_config {
 set boot_modules {
 	core init test-ldso test-ldso_lib_1.lib.so
 	test-ldso_lib_2.lib.so test-ldso_lib_dl.lib.so
-	ld.lib.so libc.lib.so libm.lib.so
+	ld.lib.so
 }
 
 build_boot_image $boot_modules
