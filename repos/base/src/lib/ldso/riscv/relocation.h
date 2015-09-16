@@ -25,14 +25,13 @@ namespace Linker {
 		return d;
 	}
 
-
 /**
  * Relocation types
  */
 	enum Reloc_types {
-		R_64       = 2, /* add 64 bit symbol value.       */
-		R_RELATIVE = 3, /* add load addr of shared object */
-		R_JMPSLOT  = 5, /* jump slot                      */
+		R_64       = 2, /* add 64 bit symbol valu with addend */
+		R_RELATIVE = 3, /* add load addr of shared object     */
+		R_JMPSLOT  = 5, /* jump slot                          */
 	};
 
 	class Reloc_non_plt;
@@ -81,7 +80,11 @@ class Linker::Reloc_non_plt : public Reloc_non_plt_generic
 			for (; rel < end; rel++) {
 				Elf::Addr *addr = (Elf::Addr *)(_dep->obj->reloc_base() + rel->offset);
 
+				if (verbose_reloc(_dep))
+					PDBG("reloc: %p type: %u", rel, rel->type());
+
 				switch(rel->type()) {
+					case R_JMPSLOT:  _glob_dat_64(rel, addr, false); break;
 					case R_64:       _glob_dat_64(rel, addr, true);  break;
 					case R_RELATIVE: _relative(rel, addr);           break;
 
