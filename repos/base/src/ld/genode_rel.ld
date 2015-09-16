@@ -190,8 +190,7 @@ SECTIONS
   .data1          : { *(.data1) }
   .dynamic        : { *(.dynamic) } : dynamic : rw
   /* See: genode_dyn.ld */
-  .got            : { *(.got) *(.got.plt) }
-
+  .got            : { *(.got.plt) *(.got) }
   /* Exception handling  */
   .eh_frame :
   {

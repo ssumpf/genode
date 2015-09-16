@@ -20,4 +20,4 @@
  *  lr = &GOT[2]
  */
 _jmp_slot:
-
+	jal jmp_slot
