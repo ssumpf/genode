@@ -214,8 +214,8 @@ int main(int argc, char **argv)
 
 	int i = Libc::abs(-10);
 	printf("Libc::abs(-10): %d\n", i);
-	printf("\n");
 #endif
+	printf("\n");
 	printf("Catch exceptions in program\n");
 	printf("---------------------------\n");
 	printf("exception in remote procedure call:\n");
