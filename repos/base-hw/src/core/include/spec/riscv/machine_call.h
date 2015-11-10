@@ -7,6 +7,7 @@ namespace Machine {
 
 	enum Call {
 		PUT_CHAR = 0xff,
+		SET_SYS_TIMER = 0x100,
 	};
 
 	inline void call(Call const number, Genode::addr_t const arg0)
