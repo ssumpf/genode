@@ -300,7 +300,7 @@ j  _mt_kernel_entry_pic
 1: j 1b
 
 /* space for a client context-pointer per CPU */
-.p2align 2
+.p2align 3
 .global _mt_client_context_ptr
 _mt_client_context_ptr:
 .space 8
