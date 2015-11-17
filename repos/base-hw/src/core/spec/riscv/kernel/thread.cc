@@ -26,7 +26,7 @@ void Thread::exception(unsigned const cpu)
 		return;
 
 	switch(cpu_exception) {
-	case SUPERVISOR_CALL:
+	case ECALL_FROM_USER:
 		_call();
 		ip += 4; /* set to next instruction */
 		break;

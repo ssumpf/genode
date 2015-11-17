@@ -46,11 +46,10 @@
 .set MSTATUS_VM,    0x003E0000
 .set MSTATUS64_SD,  0x8000000000000000
 
-.set TRAP_ECALL_TIMER,       1
-.set TRAP_ECALL_USER,        8
-.set TRAP_ECALL_SUPERVISOR,  9
-.set TRAP_ECALL_HYPERVISOR, 10
-.set TRAP_ECALL_MACHINE,    11
+.set TRAP_ECALL_FROM_USER,        8
+.set TRAP_ECALL_FROM_SUPERVISOR,  9
+.set TRAP_ECALL_FROM_HYPERVISOR, 10
+.set TRAP_ECALL_FROM_MACHINE,    11
 
 .set TRAP_INTERRUPT_BITNR,    63
 .set IRQ_SOFT,                0x0
@@ -164,9 +163,9 @@
 	# If not, jump to end of macro.
 	#
 
-	li   t1, TRAP_ECALL_USER
+	li   t1, TRAP_ECALL_FROM_USER
 	bltu t0, t1, 19f
-	li   t1, TRAP_ECALL_MACHINE
+	li   t1, TRAP_ECALL_FROM_MACHINE
 	bgt  t0, t1, 19f
 
 	# Switch on ecall number
