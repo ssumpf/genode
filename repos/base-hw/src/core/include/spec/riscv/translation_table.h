@@ -209,7 +209,7 @@ class Sv39::Level_x_translation_table
 					typename Descriptor::access_t blk_desc =
 						Block_descriptor::create(flags, pa);
 
-					if (Descriptor::valid(desc) && desc != blk_desc)
+					if (Descriptor::valid(desc) && desc == blk_desc)
 						throw Double_insertion();
 
 					desc = blk_desc;
@@ -366,7 +366,7 @@ namespace Sv39 {
 				Descriptor::access_t blk_desc =
 					Block_descriptor::create(flags, pa);
 
-				if (Descriptor::valid(desc) && desc != blk_desc)
+				if (Descriptor::valid(desc) && desc == blk_desc)
 					throw Double_insertion();
 
 				desc = blk_desc;
