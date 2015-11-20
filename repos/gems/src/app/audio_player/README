@@ -1,0 +1,72 @@
+This directory contains a rudimentary audio player. It plays all tracks from
+a given playlist and reports the currently playing track.
+
+Since the player uses libav to decode all audio files it supports a variety of
+different formats. However, it only plays audio files with a sample rate of
+44.1kHz and S16LE samples because thre is no resampling yet.
+
+
+Configuration
+~~~~~~~~~~~~~
+
+A typical example configuration looks as follows:
+
+! <config playlist_mode="repeat">
+!   <libc>
+!     <vfs>
+!       <rom name="foo.flac"/>
+!       <rom name="foo.mp3"/>
+!       <rom name="foo.ogg"/>
+!     </vfs>
+!   </libc>
+! </config>
+
+The audio player obtains its audio files from the libc VFS. In this example,
+the VFS is configured to present three ROM modules as files in the root
+directory. In addition the audio player requests another ROM module that
+contains the actual playlist:
+
+! <playlist>
+!   <track path="foo.ogg"/>
+!   <track path="foo.flac"/>
+! </playlist>
+
+The prior mentioned files are then referred to by the subsequent '<track>'
+nodes within the '<playlist>' node. How the player processes the playlist is
+specified via the 'playlist_mode' attribute given in the '<config>' node.
+Valid values are 'once' and 'repeat' whereat 'once' is the default mode.
+Everytime the playlist is altered, the audio player updates its internal
+representation of the playlist but keeps playing the current track till its
+end.
+
+Playback can be paused, stopped and of course started again by setting the
+'state' attribute of the '<config> node to 'playing', 'paused' or 'stopped'.
+The player is automatically stopped if the 'state' attribute is missing.
+When playback is started the player starts playing at the first track of the
+playlist. Furthermore the player can be instructed to start at a different
+track by specifying the number of the track in the 'selected_track' attribute.
+This attribute may also be used to select a different track while the player
+is playing.
+
+The initial configuration must include the VFS configuration, all following
+configurations may safely ommit it.
+
+
+Status reporting
+~~~~~~~~~~~~~~~~
+
+Every time the player changes the track it generates a report that contains
+information about the track that is now being played. A typical report looks
+like this:
+
+! <current_track id="1" path="foo.ogg" artist="Foobar" album="SNAFU" title="blubb" duration="60000"/>
+
+The duration is given in milliseconds.
+
+
+Example
+~~~~~~~
+
+Please refer to the _gems/run/audio_player.run_ script for a practical example of
+using the audio player.
+
