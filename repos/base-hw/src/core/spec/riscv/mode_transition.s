@@ -332,6 +332,8 @@ _mt_kernel_entry_pic:
 	csrw sasid, x29
 	csrw sptbr, x30
 
+	sfence.vm x0
+
 	# save x29 - x31 in user context 
 	mv   x29, x31
 	addi x29, x29, -8
@@ -400,6 +402,8 @@ _mt_user_entry_pic:
 
 	csrw sasid, x31
 	csrw sptbr, x30
+
+	sfence.vm x0
 
 	# restore x29 - x31 from master context 
 	.irp reg,31,30,29
