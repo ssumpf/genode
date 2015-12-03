@@ -123,8 +123,8 @@ class Genode::Cpu
 			/**
 			 * Return if the context is in a page fault due to translation miss
 			 *
-			 * \param va  holds the virtual fault-address if call returns 1
-			 * \param w   holds wether it's a write fault if call returns 1
+			 * \param va  holds the virtual fault-address if call returns true
+			 * \param w   holds wether it's a write fault if call returns true
 			 */
 			bool in_fault(addr_t & va, addr_t & w) const
 			{
@@ -137,11 +137,15 @@ class Genode::Cpu
 
 
 		/**
-		 * Ensure that TLB insertions get applied
+		 * Ensure that TLB insertions get applied.
+		 * We invalidate all virtual address translations
+		 * since 'sasid' CSR is likely not set to the address space id
+		 * of the changed thread by specifying x0 as rs1 argument
+		 * (see section 4.2.1 of the RiscV priviledged spec v1.7).
 		 */
 		static void tlb_insertions()
 		{
-			asm volatile ("sfence.vm");
+			asm volatile ("sfence.vm x0");
 		}
 
 		/**
