@@ -59,7 +59,6 @@
 					<tar name="coreutils.tar" />
 					<tar name="vim.tar" />
 					<tar name="bash.tar" />
-					<tar name="grep.tar" />
 
 					<dir name="genode"> <fs label="genode" /> </dir>
 					<dir name="shared"> <fs label="shared" /> </dir>
