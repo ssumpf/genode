@@ -191,17 +191,19 @@
 	j 14f
 
 13:
-	# Clear any pending STIP
-	li t0, MIP_STIP
-	csrc mip, t0
+	# Only allow timer fiddling from supervisor mode
+	.if \mode == SUPERVISOR_MODE
+		# Clear any pending STIP
+		li t0, MIP_STIP
+		csrc mip, t0
 
-	# Set system timer
-	csrw mtimecmp, a1
+		# Set system timer
+		csrw mtimecmp, a1
 
-	# enable timer interrupt in M-mode
-	li t0, MIP_MTIP
-	csrrs t0, mie, t0
-
+		# enable timer interrupt in M-mode
+		li t0, MIP_MTIP
+		csrrs t0, mie, t0
+	.endif
 	j 14f
 
 14:
