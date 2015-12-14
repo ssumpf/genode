@@ -185,9 +185,12 @@
 	j 14f
 
 12:
-	# output character ; wait until mtohost reads 0 atomically
-	csrrw t1, mtohost, a1
+	# output character but first wait until mtohost reads 0 atomically
+	# to make sure any previous character is gone..
+	csrr t1, mtohost
 	bne zero, t1, 12b
+
+	csrw mtohost, a1
 	j 14f
 
 13:
