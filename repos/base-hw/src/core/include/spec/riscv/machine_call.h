@@ -5,9 +5,13 @@
 
 namespace Machine {
 
+	/**
+	 * SBI calls to machine.
+	 * Keep in sync with mode_transition.s.
+	 */
 	enum Call {
-		PUT_CHAR = 0xff,
-		SET_SYS_TIMER = 0x100,
+		PUT_CHAR = 0x100,
+		SET_SYS_TIMER = 0x101,
 	};
 
 	inline void call(Call const number, Genode::addr_t const arg0)
