@@ -17,6 +17,7 @@
       <service name="Block" />
       <service name="Report" />
       <service name="Nic" />
+      <service name="Audio_out" />
     </parent-provides>
     <default-route>
       <any-service> <parent/> <any-child/> </any-service>
@@ -37,6 +38,7 @@
 	</start>
 
 	<start name="vbox" priority="-1">
+		<exit propagate="yes"/>
 		<binary name="virtualbox" />
 		<resource name="RAM" quantum="1280M"/>
 			<config vbox_file="vm_linux.vbox" vm_name="linux">
@@ -47,7 +49,6 @@
 						<rtc/>
 						<block name="sda2" label="home" block_buffer_count="128" />
 					 </dir>
-					<rom name="vm_linux.vbox"/>
 					<dir name="shared"> <fs label="shared"/> </dir>
 					<fs label="rump_fs"/>
 				</vfs>
