@@ -26,20 +26,6 @@ add  sp, sp, a0
 csrw mscratch, sp
 
 jal  setup_riscv_exception_vector
-jal  init_kernel_up
-
-
-/*********************************************
- ** Startup code that is common to all CPUs **
- *********************************************/
-
-.global _start_secondary_cpus
-_start_secondary_cpus:
-
-jal init_kernel_mp
-
-/* kernel main routine */
-jal kernel
+jal  init_kernel
 
 1: j 1b
-

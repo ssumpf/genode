@@ -175,12 +175,6 @@ class Genode::Cpu
 			PDBG("not impl");
 		}
 
-		/**
-		 * Set page table
-		 */
-		static void init_virt_kernel(Kernel::Pd * pd);
-		static void init_phys_kernel();
-
 		static addr_t sbadaddr()
 		{
 			addr_t addr;
@@ -192,9 +186,8 @@ class Genode::Cpu
 		 ** Dummies **
 		 *************/
 
+		void switch_to(User_context&) { }
 		static void prepare_proceeding(Cpu_lazy_state *, Cpu_lazy_state *) { }
-
-		static void start_secondary_cpus(void * const ip) { }
 
 		static void invalidate_instr_caches() { }
 

@@ -59,3 +59,14 @@ void Thread::_call_update_pd()
 	asm volatile ("sfence.vm");
 }
 
+
+void Thread::_call_update_data_region() { }
+
+
+void Thread::_call_update_instr_region() { }
+
+
+void Thread_event::_signal_acknowledged()
+{
+	_thread->_resume();
+}

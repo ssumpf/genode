@@ -39,7 +39,7 @@ struct Mstatus : Genode::Register<64>
 };
 
 
-void Genode::Cpu::init_virt_kernel(Kernel::Pd * pd)
+void Kernel::Cpu::init(Kernel::Pic &pic, Kernel::Pd & core_pd, Genode::Board & board)
 {
 	/* read status register */
 	Mstatus::access_t mstatus = 0;
@@ -57,16 +57,13 @@ void Genode::Cpu::init_virt_kernel(Kernel::Pd * pd)
 	              "csrw stvec,   %3\n" /* exception vector  */
 	              "csrw sscratch,%4\n" /* master conext ptr */
 	              :
-	              : "r" (pd->asid),
-	                "r" (pd->translation_table()),
+	              : "r" (core_pd.asid),
+	                "r" (core_pd.translation_table()),
 	                "r" (mstatus),
 	                "r" (exception_entry),
 	                "r" (exception_entry | ((addr_t)&_mt_client_context_ptr & 0xfff))
 	              : "memory");
 }
-
-
-void Genode::Cpu::init_phys_kernel() { }
 
 
 Cpu_idle::Cpu_idle(Cpu * const cpu) : Cpu_job(Cpu_priority::MIN, 0)
