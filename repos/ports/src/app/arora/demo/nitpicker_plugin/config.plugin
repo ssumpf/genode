@@ -23,22 +23,20 @@
 		<config xpos="0" ypos="0" width="640" height="480"/>
 	</start>
 	<start name="nitpicker">
-		<resource name="RAM" quantum="1M"/>
+		<resource name="RAM" quantum="2M"/>
 		<provides><service name="Nitpicker"/></provides>
 		<config>
 			<domain name="pointer" layer="1" xray="no" origin="pointer" />
-			<domain name="" layer="2" />
-			<policy label="pointer"    domain="pointer"/>
-			<policy label="" domain=""/>
-			<global-key name="KEY_F1" operation="kill" />
-			<global-key name="KEY_F2" operation="xray" />
+			<domain name="default" layer="2" />
+			<policy label="pointer" domain="pointer"/>
+			<policy domain="default"/>
 		</config>
 	</start>
 	<start name="pointer">
 		<resource name="RAM" quantum="1M"/>
 	</start>
 	<start name="launchpad">
-		<resource name="RAM" quantum="2G"/>
+		<resource name="RAM" quantum="50M"/>
 		<config xpos="50" ypos="10" width="400" height="400">
 			<launcher name="testnit" ram_quota="1M" />
 			<launcher name="launchpad" ram_quota="6M">
