@@ -5,5 +5,5 @@ CORE_LD_TEXT_ADDR  = 0x200
 NR_OF_CPUS    = 1
 REP_INC_DIR  += include/riscv
 
-include $(call select_from_repositories,mk/spec-64bit.mk)
-include $(call select_from_repositories,mk/spec-hw.mk)
+include $(call select_from_repositories,mk/spec/spec-64bit.mk)
+include $(call select_from_repositories,mk/spec/spec-hw.mk)
