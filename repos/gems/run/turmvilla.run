@@ -145,7 +145,7 @@ set config {
 		<resource name="RAM" quantum="10M" />
 		<provides><service name="Block" /></provides>
 		<config>
-			<policy label="part_blk" device="0" />
+			<policy label="cli_monitor -> linux -> vbox -> sda" device="0"/>
 		</config>
 		<route>
 			<any-service> <parent /> <any-child /></any-service>
@@ -160,7 +160,6 @@ set config {
 		</route>
 		<config>
 			<policy label="rump_fs" partition="1"/>
-			<policy label="cli_monitor -> linux -> vbox -> home" partition="2"/>
 		</config>
 	</start>
 
@@ -198,10 +197,9 @@ set config {
 		<config ld_verbose="yes" fs="ext2fs">
 			<rump quota="8M"/>
 			<policy label="cli_monitor" root="/subsystems" writeable="no"/>
-			<policy label_prefix="cli_monitor -> noux" root="/" writeable="yes"/>
+			<policy label_prefix="cli_monitor -> noux" label_suffix="system" root="/" writeable="yes"/>
+			<policy label_prefix="cli_monitor -> noux" label_suffix="home" root="/home" writeable="yes"/>
 			<policy label="cli_monitor -> linux -> vbox -> rump_fs" root="/" writeable="yes"/>
-			<policy label="cli_monitor -> xubuntu_iso -> vbox -> rump_fs" root="/" writeable="yes"/>
-			<policy label="cli_monitor -> win7 -> vbox -> rump_fs" root="/" writeable="yes"/>
 			<policy label="rom" root="/genode" writeable="no"/>
 		</config>
 		<route>
@@ -783,7 +781,9 @@ set config {
 			</vfs>
 		</config>
 		<route>
-			<service name="File_system" label_prefix="noux" label_suffix="-> genode">
+			<service name="File_system" label_prefix="noux" label_suffix="-> system">
+				<child name="rump_fs" /> </service>
+			<service name="File_system" label_prefix="noux" label_suffix="-> home">
 				<child name="rump_fs" /> </service>
 			<service name="File_system" label_prefix="noux" label_suffix="-> shared">
 				<child name="shared_fs" /> </service>
@@ -807,7 +807,7 @@ set config {
 			<service name="ROM" label="linux -> timer -> hypervisor_info_page"> <parent/> </service>
 			<service name="ROM" label="win7 -> vbox -> hypervisor_info_page">  <parent/> </service>
 			<service name="ROM" label="win7 -> timer -> hypervisor_info_page"> <parent/> </service>
-			<service name="Block">  <child name="part_blk"/>   </service>
+			<service name="Block">  <child name="ahci_drv"/>   </service>
 			<service name="Report"> <child name="report_rom"/> </service>
 			<any-service>
 				<child name="log"/>

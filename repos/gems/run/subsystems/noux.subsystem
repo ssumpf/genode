@@ -60,7 +60,7 @@
 					<tar name="vim.tar" />
 					<tar name="bash.tar" />
 
-					<dir name="genode"> <fs label="genode" /> </dir>
+					<dir name="system"> <fs label="system" /> </dir>
 					<dir name="shared"> <fs label="shared" /> </dir>
 					<dir name="config"> <fs label="config" /> </dir>
 					<dir name="tmp">    <fs label="tmp"    /> </dir>

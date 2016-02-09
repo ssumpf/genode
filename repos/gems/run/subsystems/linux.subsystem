@@ -47,7 +47,7 @@
 					<dir name="dev">
 						<log/>
 						<rtc/>
-						<block name="sda2" label="home" block_buffer_count="128" />
+						<block name="sda" label="sda" block_buffer_count="128" />
 					 </dir>
 					<dir name="shared"> <fs label="shared"/> </dir>
 					<fs label="rump_fs"/>
