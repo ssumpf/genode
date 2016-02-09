@@ -1,5 +1,5 @@
 <subsystem name="linux" help="Linux in VirtualBox">
-  <resource name="RAM" quantum="1300M" />
+  <resource name="RAM" quantum="6800M" />
   <binary name="init" />
   <config prio_levels="2">
     <parent-provides>
@@ -40,7 +40,7 @@
 	<start name="vbox" priority="-1">
 		<exit propagate="yes"/>
 		<binary name="virtualbox" />
-		<resource name="RAM" quantum="1280M"/>
+		<resource name="RAM" quantum="6770M"/>
 			<config vbox_file="vm_linux.vbox" vm_name="linux">
 			<libc stdout="/dev/log" stderr="/dev/log" rtc="/dev/rtc">
 				<vfs>
