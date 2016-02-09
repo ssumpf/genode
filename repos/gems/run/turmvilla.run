@@ -156,7 +156,7 @@ set config {
 		<resource name="RAM" quantum="10M" />
 		<provides><service name="Block" /></provides>
 		<route>
-			<any-service><child name="ahci_drv"/> <parent/><any-child/></any-service>
+			<any-service><child name="usb_drv"/> <parent/><any-child/></any-service>
 		</route>
 		<config>
 			<policy label="rump_fs" partition="1"/>
@@ -249,10 +249,12 @@ set config {
 		<resource name="RAM" quantum="8M"/>
 		<provides>
 			<service name="Input"/>
+			<service name="Block" />
 			<service name="Usb" />
 		</provides>
 		<config uhci="yes" ehci="yes" xhci="yes">
 			<hid/>
+			<storage/>
 			<raw>
 				<report devices="yes"/>
 			</raw>
