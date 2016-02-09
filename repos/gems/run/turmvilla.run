@@ -878,6 +878,7 @@ append boot_modules {
 	libpng.lib.so zlib.lib.so
 	genode_logo.png grid.png sticks_blue.png
 	themed_decorator plain_decorator_theme.tar
+	qemu-usb.lib.so
 }
 
 append boot_modules $firmware_modules
