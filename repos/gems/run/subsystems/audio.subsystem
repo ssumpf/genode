@@ -1,0 +1,38 @@
+<subsystem name="audio" help="Audio-player">
+	<resource name="RAM" quantum="24M" />
+	<binary name="init" />
+	<config verbose="yes" prio_levels="2">
+		<parent-provides>
+			<service name="ROM"/>
+			<service name="RAM"/>
+			<service name="CAP"/>
+			<service name="PD"/>
+			<service name="RM"/>
+			<service name="CPU"/>
+			<service name="LOG"/>
+			<service name="SIGNAL"/>
+			<service name="Audio_out" />
+			<service name="File_system" />
+			<service name="Timer" />
+			<service name="Report" />
+		</parent-provides>
+		<default-route>
+			<any-service> <any-child/> <parent/> </any-service>
+		</default-route>
+
+		<start name="audio_player">
+			<resource name="RAM" quantum="20M"/>
+			<config state="playing" playlist_mode="repeat">
+				<libc>
+					<vfs>
+						<fs/>
+					</vfs>
+				</libc>
+			</config>
+			<route>
+				<any-service><parent/><any-child/></any-service>
+			</route>
+		</start>
+
+	</config>
+</subsystem>

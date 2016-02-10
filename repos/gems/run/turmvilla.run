@@ -36,6 +36,7 @@ set build_components {
 	lib/vfs/jitterentropy
 	app/backdrop
 	app/themed_decorator
+	app/audio_player
 }
 
 foreach pkg {bash coreutils vim} {
@@ -359,6 +360,8 @@ set config {
 				        report="intel_fb_drv -> connectors"/>
 				<policy label="cli_monitor -> cpu_load_display -> trace_subjects"
 				        report="trace_subject_reporter -> trace_subjects"/>
+				<policy label="cli_monitor -> noux -> noux -> current_track"
+				        report="cli_monitor -> audio -> audio_player -> current_track"/>
 			</rom>
 		</config>
 	</start>
@@ -499,16 +502,18 @@ set config {
 
 	<start name="shared_fs" priority="-1">
 		<binary name="ram_fs"/>
-		<resource name="RAM" quantum="64M"/>
+		<resource name="RAM" quantum="256M"/>
 		<provides><service name="File_system"/></provides>
 		<config>
 			<content>
+				<dir name="media"/>
 				<dir name="tmp">
 					<rom name="init" as="blubb" />
 				</dir>
 			</content>
 			<policy label="noux -> shared" root="/" writeable="yes" />
 			<policy label_prefix="cli_monitor -> noux" root="/" writeable="yes" />
+			<policy label_prefix="cli_monitor -> audio" root="/media" writeable="no" />
 			<policy label="cli_monitor -> linux -> vbox -> shared" root="/" writeable="yes" />
 			<policy label="log_file_terminal" root="/" writeable="yes" />
 			<policy label="nitpicker" root="/" writeable="yes" />
@@ -693,8 +698,8 @@ set config {
 <config>
 	<default out_volume="75" volume="75" muted="0"/>
 	<channel_list>
-		<channel type="output" label="master" number="0" volume="20" muted="0"/>
-		<channel type="output" label="master" number="1" volume="20" muted="0"/>
+		<channel type="output" label="master" number="0" volume="50" muted="0"/>
+		<channel type="output" label="master" number="1" volume="50" muted="0"/>
 	</channel_list>
 </config>
 				</inline>
@@ -772,7 +777,7 @@ set config {
 	</start>
 
 	<start name="cli_monitor" priority="-3">
-		<resource name="RAM" quantum="7G"/>
+		<resource name="RAM" quantum="7000M"/>
 		<config>
 			<vfs>
 				<dir name="subsystems">
@@ -785,6 +790,7 @@ set config {
 				<child name="rump_fs" /> </service>
 			<service name="File_system" label_prefix="noux" label_suffix="-> home">
 				<child name="rump_fs" /> </service>
+			<service name="File_system" label_prefix="audio"> <child name="shared_fs" /> </service>
 			<service name="File_system" label_prefix="noux" label_suffix="-> shared">
 				<child name="shared_fs" /> </service>
 			<service name="File_system" label_prefix="noux" label_suffix="-> config">
@@ -801,6 +807,10 @@ set config {
 				<child name="report_rom"/> </service>
 			<service name="ROM" label_prefix="noux" label_suffix="-> connectors">
 				<child name="report_rom"/> </service>
+			<service name="ROM" label_prefix="noux" label_suffix="-> current_track">
+				<child name="report_rom"/> </service>
+			<service name="ROM" label_prefix="audio" label_suffix="-> playlist">
+				<child name="config_rom"/> </service>
 
 			<service name="ROM" label="cpu_load_display -> trace_subjects"> <child name="report_rom"/> </service>
 			<service name="ROM" label="linux -> vbox -> hypervisor_info_page">  <parent/> </service>
@@ -881,6 +891,8 @@ append boot_modules {
 	genode_logo.png grid.png sticks_blue.png
 	themed_decorator plain_decorator_theme.tar
 	qemu-usb.lib.so
+	audio_player
+	avcodec.lib.so avformat.lib.so avutil.lib.so
 }
 
 append boot_modules $firmware_modules
@@ -892,7 +904,7 @@ if {![file exists bin/sticks_blue.png]} {
 
 # copy subsystem configurations to boot directory
 exec mkdir -p [run_dir]/subsystems
-foreach subsystem { noux linux cpu_load_display } {
+foreach subsystem { noux linux cpu_load_display audio } {
 	file copy -force [genode_dir]/repos/gems/run/subsystems/$subsystem.subsystem \
 		[run_dir]/subsystems/ }
 

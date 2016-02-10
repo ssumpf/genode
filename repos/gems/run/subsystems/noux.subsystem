@@ -70,6 +70,7 @@
 						<rom name="wlan_state"/>
 						<rom name="trace_subjects"/>
 						<rom name="connectors"/>
+						<rom name="current_track"/>
 					</dir>
 
 					<dir name="dev"> <zero/> </dir>
