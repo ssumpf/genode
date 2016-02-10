@@ -408,6 +408,8 @@ set config {
 				<policy label="wm -> resize_request"                    report="layouter -> resize_request"/>
 				<policy label="decorator -> decorator -> pointer"       report="wm -> pointer"/>
 				<policy label="layouter -> hover"                       report="decorator -> decorator -> hover"/>
+				<policy label="layouter -> decorator_margins"
+					report="decorator -> decorator -> decorator_margins"/>
 				<policy label="wm -> focus"                             report="layouter -> focus"/>
 			</rom>
 		</config>
@@ -437,6 +439,23 @@ set config {
 				<child name="wm"/> <child name="wm_report_rom"/> <parent/> <any-child/>
 			</any-service>
 		</route>
+		<config>
+			<press key="KEY_LEFTALT">
+				<press key="KEY_TAB" action="next_window">
+					<release key="KEY_TAB">
+						<release key="KEY_LEFTALT" action="raise_window"/>
+					</release>
+				</press>
+				<press key="KEY_LEFTSHIFT">
+					<press key="KEY_TAB" action="prev_window">
+						<release key="KEY_TAB">
+							<release key="KEY_LEFTALT" action="raise_window"/>
+						</release>
+					</press>
+				</press>
+				<press key="KEY_ENTER" action="toggle_fullscreen"/>
+			</press>
+		</config>
 	</start>
 
 	<!-- dynamically generates the decorator config depending on xray mode -->
@@ -589,6 +608,7 @@ set config {
 			<policy label="backdrop"                   domain="background"/>
 			<policy                                    domain="default"/>
 
+			<global-key name="KEY_LEFTALT"    label="wm -> decorator" />
 			<global-key name="KEY_SCROLLLOCK" label="xray_trigger" />
 			<global-key name="KEY_F12"        label="xray_trigger" />
 		</inline>
