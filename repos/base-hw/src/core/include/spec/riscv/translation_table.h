@@ -11,6 +11,7 @@
 #include <util/misc_math.h>
 #include <util/register.h>
 
+#include <cpu.h>
 #include <page_flags.h>
 #include <translation_table_allocator.h>
 
@@ -179,6 +180,9 @@ class Sv39::Level_x_translation_table
 				size_t sz  = min(size, end-vo);
 
 				func(vo, pa, sz, _entries[i]);
+
+				/* flush cached table entry address */
+				Cpu::translation_added((addr_t)&_entries[i], sz);
 
 				/* check whether we wrap */
 				if (end < vo) return;

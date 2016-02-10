@@ -15,6 +15,7 @@
 
 .set CALL_PUT_CHAR,      0x100
 .set CALL_SET_SYS_TIMER, 0x101
+.set CALL_IS_USER_MODE,  0x102
 
 .set CPU_IP,        0
 .set CPU_EXCEPTION, 8
@@ -175,6 +176,9 @@
 	li t1, CALL_SET_SYS_TIMER
 	beq t1, a0, 13f
 
+	li t1, CALL_IS_USER_MODE
+	beq t1, a0, 14f
+
 	# else, unknown ecall number
 	.if \mode == USER_MODE
 		# Assume that Genode (supervisor trap handler)
@@ -182,7 +186,7 @@
 		_restore_scratch_registers \mode
 		mrts
 	.endif
-	j 14f
+	j 15f
 
 12:
 	# output character but first wait until mtohost reads 0 atomically
@@ -191,7 +195,7 @@
 	bne zero, t1, 12b
 
 	csrw mtohost, a1
-	j 14f
+	j 15f
 
 13:
 	# Only allow timer fiddling from supervisor mode
@@ -207,9 +211,16 @@
 		li t0, MIP_MTIP
 		csrrs t0, mie, t0
 	.endif
-	j 14f
+	j 15f
 
 14:
+	mv a0, x0
+	.if \mode == USER_MODE
+		li a0, 1
+	.endif
+	j 15f
+
+15:
 	#*******  ECALL OUT *********
 	# Empty mfromhost 
 	li t0, 0
@@ -337,7 +348,7 @@ _mt_kernel_entry_pic:
 	csrw sasid, x29
 	csrw sptbr, x30
 
-	sfence.vm x0
+	# sfence.vm x0
 
 	# save x29 - x31 in user context 
 	mv   x29, x31
@@ -408,7 +419,7 @@ _mt_user_entry_pic:
 	csrw sasid, x31
 	csrw sptbr, x30
 
-	sfence.vm x0
+	# sfence.vm x0
 
 	# restore x29 - x31 from master context 
 	.irp reg,31,30,29

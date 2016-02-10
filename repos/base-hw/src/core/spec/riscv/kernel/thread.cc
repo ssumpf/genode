@@ -56,15 +56,14 @@ void Thread::_mmu_exception()
 
 void Thread::_call_update_pd()
 {
-	asm volatile ("csrrw t0, sasid, x0\n"
-	              "sfence.vm\n"
-				  "csrw sasid, t0\n"
-				  :::"t0");
-
+	Cpu::sfence();
 }
 
 
-void Thread::_call_update_data_region() { }
+void Thread::_call_update_data_region()
+{
+	Cpu::sfence();
+}
 
 
 void Thread::_call_update_instr_region() { }

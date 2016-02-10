@@ -118,10 +118,6 @@ class Genode::Cpu
 			{
 				protection_domain(pd_id);
 				translation_table(table);
-				asm volatile ("csrrw t0, sasid, x0\n"
-							  "sfence.vm\n"
-							  "csrw sasid, t0\n"
-							  :::"t0");
 			}
 
 			/**
@@ -138,27 +134,29 @@ class Genode::Cpu
 		};
 
 		static void wait_for_interrupt() { asm volatile ("wfi"); };
-
-
-		/**
-		 * Ensure that TLB insertions get applied.
-		 * We invalidate all virtual address translations
-		 * since 'sasid' CSR is likely not set to the address space id
-		 * of the changed thread by specifying x0 as rs1 argument
-		 * (see section 4.2.1 of the RiscV priviledged spec v1.7).
-		 */
-		static void tlb_insertions()
-		{
-			asm volatile ("csrrw t0, sasid, x0\n"
-						  "sfence.vm\n"
-						  "csrw sasid, t0\n"
-						  :::"t0");
-		}
-
 		/**
 		 * Return wether to retry an undefined user instruction after this call
 		 */
 		bool retry_undefined_instr(Cpu_lazy_state *) { return false; }
+
+		/**
+		 * From the manual
+		 *
+		 * The behavior of SFENCE.VM depends on the current value of the sasid
+		 * register. If sasid is nonzero, SFENCE.VM takes effect only for address
+		 * translations in the current address space. If sasid is zero, SFENCE.VM
+		 * affects address translations for all address spaces. In this case, it
+		 * also affects global mappings, which are described in Section 4.5.1.
+		 *
+		 * Right no we will flush anything
+		 */
+		static void sfence()
+		{
+			asm volatile ("csrrw t0, sasid, x0\n"
+			              "sfence.vm\n"
+			              "csrw sasid, t0\n"
+			              : : :"t0");
+		}
 
 		/**
 		 * Post processing after a translation was added to a translation table
@@ -166,12 +164,12 @@ class Genode::Cpu
 		 * \param addr  virtual address of the translation
 		 * \param size  size of the translation
 		 */
-		static void translation_added(addr_t const addr, size_t const size)
+		static void translation_added(addr_t const addr, size_t const size);
+
+
+		static void flush_tlb_by_pid(unsigned const pid)
 		{
-			asm volatile ("csrrw t0, sasid, x0\n"
-						  "sfence.vm\n"
-						  "csrw sasid, t0\n"
-						  :::"t0");
+			sfence();
 		}
 
 		/**
@@ -183,14 +181,6 @@ class Genode::Cpu
 		 * Return kernel name of the primary CPU
 		 */
 		static unsigned primary_id() { return 0; }
-
-		static void flush_tlb_by_pid(unsigned const pid)
-		{
-			asm volatile ("csrrw t0, sasid, x0\n"
-						  "sfence.vm\n"
-						  "csrw sasid, t0\n"
-						  :::"t0");
-		}
 
 		static addr_t sbadaddr()
 		{
@@ -204,50 +194,6 @@ class Genode::Cpu
 		 *************/
 
 		void switch_to(User_context&) { }
-		static void prepare_proceeding(Cpu_lazy_state *, Cpu_lazy_state *) { }
-
-		static void invalidate_instr_caches() {
-			asm volatile ("csrrw t0, sasid, x0\n"
-						  "sfence.vm\n"
-						  "csrw sasid, t0\n"
-						  :::"t0");
-		}
-
-		static void invalidate_data_caches() {
-			asm volatile ("csrrw t0, sasid, x0\n"
-						  "sfence.vm\n"
-						  "csrw sasid, t0\n"
-						  :::"t0");
-		}
-
-		static void flush_data_caches() {
-			asm volatile ("csrrw t0, sasid, x0\n"
-						  "sfence.vm\n"
-						  "csrw sasid, t0\n"
-						  :::"t0");
-		}
-
-		static void
-		flush_data_caches_by_virt_region(addr_t base, size_t const size) {
-			asm volatile ("csrrw t0, sasid, x0\n"
-						  "sfence.vm\n"
-						  "csrw sasid, t0\n"
-						  :::"t0");
-		}
-
-		static void
-		invalidate_instr_caches_by_virt_region(addr_t base, size_t const size) {
-			asm volatile ("csrrw t0, sasid, x0\n"
-						  "sfence.vm\n"
-						  "csrw sasid, t0\n"
-						  :::"t0");
-		}
-
-		static void data_synchronization_barrier()
-		{
-			asm volatile ("fence\n" : : : "memory");
-		}
-
 };
 
 #endif /* _CPU_H_ */
