@@ -64,6 +64,7 @@
 					<dir name="shared"> <fs label="shared" /> </dir>
 					<dir name="config"> <fs label="config" /> </dir>
 					<dir name="tmp">    <fs label="tmp"    /> </dir>
+					<dir name="home">   <fs label="home"   /> </dir>
 					<dir name="reports">
 						<rom name="wlan_accesspoints"/>
 						<rom name="wlan_state"/>
@@ -76,7 +77,7 @@
 				</fstab>
 				<start name="/bin/bash">
 					<env name="TERM" value="linux" />
-					<env name="HOME" value="/" />
+					<env name="HOME" value="/home" />
 				</start>
 			</config>
 			<route>
