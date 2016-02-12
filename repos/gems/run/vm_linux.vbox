@@ -9,7 +9,7 @@
   <Machine uuid="{37ab43a5-38d8-4491-93f5-5b0b077f5c32}" name="Xubuntu" OSType="Ubuntu" snapshotFolder="Snapshots" lastStateChange="2014-11-14T11:58:35Z">
     <MediaRegistry>
       <HardDisks>
-        <HardDisk uuid="{90741011-ebfc-4ad1-a870-68cc3c5e9417}" location="/sda.vmdk" format="VMDK"/>
+        <HardDisk uuid="{746eaa98-00f2-42dd-ae60-0c94966cd8d2}" location="/sda.vmdk" format="VMDK"/>
       </HardDisks>
       <DVDImages>
         <!--<Image uuid="{9727be82-5567-4c9c-ad53-33900e0cbdf6}" location="/xubuntu-14.04.2-desktop-i386.iso"/>-->
@@ -98,7 +98,7 @@
     <StorageControllers>
       <StorageController name="IDE" type="PIIX4" PortCount="2" useHostIOCache="true" Bootable="true">
         <AttachedDevice type="HardDisk" port="0" device="0">
-          <Image uuid="{90741011-ebfc-4ad1-a870-68cc3c5e9417}"/>
+          <Image uuid="{746eaa98-00f2-42dd-ae60-0c94966cd8d2}"/>
         </AttachedDevice>
         <AttachedDevice passthrough="false" type="DVD" port="1" device="0">
           <!--<Image uuid="{9727be82-5567-4c9c-ad53-33900e0cbdf6}"/>-->
