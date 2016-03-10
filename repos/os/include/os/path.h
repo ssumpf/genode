@@ -162,9 +162,9 @@ class Genode::Path_base
 			}
 		}
 
-	private:
-
 		Path_base(const Path_base &);
+
+	private:
 
 		char * const _path;
 		size_t const _path_max_len;
@@ -319,6 +319,11 @@ class Genode::Path_base
 		{
 			return strcmp(_path, other) != 0;
 		}
+
+		char const *last_element()
+		{
+			return last_element(_path)+1;
+		}
 };
 
 
@@ -354,12 +359,50 @@ class Genode::Path : public Path_base {
 		}
 
 		template <unsigned N>
-		Path& operator=(Path<N> &other)
+		Path& operator=(Path<N> &&other)
 		{
 			Genode::strncpy(_buf, other._buf, MAX_LEN);
 			return *this;
 		}
-
 };
+
+namespace Genode {
+
+	typedef Path<128> Label_path;
+
+	static inline Label_path path_from_label(char const *label)
+	{
+		Label_path path;
+
+		char tmp[path.capacity()];
+		size_t len = strlen(label);
+
+		size_t i = 0;
+		for (size_t j = 1; j < len; ++j) {
+			if (!strcmp(" -> ", label+j, 4)) {
+				path.append("/");
+
+				strncpy(tmp, label+i, (j-i)+1);
+				/* rewrite any directory seperators */
+				for (size_t k = 0; k < path.capacity(); ++k)
+					if (tmp[k] == '/')
+						tmp[k] = '_';
+				path.append(tmp);
+
+				j += 4;
+				i = j;
+			}
+		}
+		path.append("/");
+		strncpy(tmp, label+i, path.capacity());
+		/* rewrite any directory seperators */
+		for (size_t k = 0; k < path.capacity(); ++k)
+			if (tmp[k] == '/')
+				tmp[k] = '_';
+		path.append(tmp);
+
+		return path;
+	}
+}
 
 #endif /* _INCLUDE__OS__PATH_H_ */

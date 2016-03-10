@@ -1,0 +1,27 @@
+build "core init drivers/timer test/path_from_label"
+
+create_boot_directory
+
+install_config {
+	<config>
+		<parent-provides>
+			<service name="LOG"/>
+			<service name="CPU"/>
+			<service name="RAM"/>
+			<service name="RM"/>
+			<service name="SIGNAL"/>
+		</parent-provides>
+		<default-route>
+			<any-service> <any-child/> <parent/> </any-service>
+		</default-route>
+		<start name="test-path_from_label">
+			<resource name="RAM" quantum="1M"/>
+		</start>
+	</config>
+}
+
+build_boot_image "core init test-path_from_label"
+
+append qemu_args "-nographic -m 64"
+
+run_genode_until {/a/bc/c_d_e/efgh/j_k_h_l_m} 30
