@@ -55,7 +55,7 @@ set config {
 		<route>
 			<any-service> <any-child/> <parent/> </any-service>
 		</route>
-		<config rounds="1" generations="1" sleep="500"/>
+		<config rounds="1" generations="2" sleep="500"/>
 	</start>
 </config>}
 
