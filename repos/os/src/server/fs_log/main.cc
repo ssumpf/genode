@@ -60,6 +60,7 @@ class Fs_log::Root_component :
 			if (ram_quota < sizeof(Session_component))
 				throw Root::Quota_exceeded();
 
+			typedef Genode::Path<128> Label_path;
 			Label_path dir_path;
 			char file_name[MAX_NAME_LEN];
 
@@ -91,19 +92,19 @@ class Fs_log::Root_component :
 						{
 							char tmp[128];
 							strncpy(tmp, label_str, min(sizeof(tmp), i+1));
-							dir_path = path_from_label(tmp);
+							dir_path = path_from_label<Label_path>(tmp);
 						}
 						break;
 					}
 					if (dir_path == "/")
-						dir_path = path_from_label(label_str);
+						dir_path = path_from_label<Label_path>(label_str);
 
 				} else if (!policy.has_type("default-policy")) {
-					dir_path = path_from_label(label_str);
+					dir_path = path_from_label<Label_path>(label_str);
 				}
 
 			} catch (Session_policy::No_policy_defined) {
-				dir_path = path_from_label(label_str);
+				dir_path = path_from_label<Label_path>(label_str);
 			}
 
 			if (dir_path == "/") {
