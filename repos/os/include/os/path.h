@@ -368,11 +368,10 @@ class Genode::Path : public Path_base {
 
 namespace Genode {
 
-	typedef Path<128> Label_path;
-
-	static inline Label_path path_from_label(char const *label)
+	template <typename PATH>
+	static inline PATH path_from_label(char const *label)
 	{
-		Label_path path;
+		PATH path;
 
 		char tmp[path.capacity()];
 		size_t len = strlen(label);
