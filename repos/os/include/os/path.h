@@ -366,7 +366,7 @@ class Genode::Path : public Path_base {
 		}
 
 		template <unsigned N>
-		Path& operator=(Path<N> &&other)
+		Path& operator=(Path<N> &other)
 		{
 			Genode::strncpy(_buf, other._buf, MAX_LEN);
 			return *this;
