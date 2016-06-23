@@ -1,5 +1,5 @@
 /**
- * \brief  Helpr class to make the Genode Env globally available
+ * \brief  Helper class to make the Genode Env globally available
  * \author Sebastian Sumpf
  * \date   2016-06-21
  */
@@ -27,6 +27,9 @@ class Lx_kit::Env
 {
 	private:
 
+		/**
+		 * This variable is instantiated in lx_kit/env.cc
+		 */
 		static Genode::Lazy_volatile_object<Env> _lx_env;
 
 		Genode::Env                   &_env;
