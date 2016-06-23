@@ -103,12 +103,6 @@ static void run_linux(void *s)
 }
 
 
-/**
- * USB driver environment instace
- */
-Genode::Lazy_volatile_object<Lx_kit::Env> Lx_kit::Env::_lx_env;
-
-
 void start_usb_driver(Genode::Env &env)
 {
 	/* initialize USB env */

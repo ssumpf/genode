@@ -262,17 +262,13 @@ int ilog2(u32 n) { return Genode::log2(n); }
  ** linux/slab.h   **
  ********************/
 
-void kmem_cache_destroy(struct kmem_cache *cache)
-{
-	destroy(Lx::Malloc::mem(), cache);
-}
-
 
 void *kmem_cache_zalloc(struct kmem_cache *cache, gfp_t flags)
 {
 	void *ret;
 	ret = kmem_cache_alloc(cache, flags);
 	memset(ret, 0, cache->size());
+
 	return ret;
 }
 
