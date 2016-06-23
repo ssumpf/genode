@@ -495,7 +495,7 @@ class Element : public List<Element>::Element
 		uint32_t           _para_len; /* parameters to be skipped */
 		bool               _valid;    /* true if this is a valid element */
 		bool               _routed;   /* has the PCI information been read */
-		List<Pci_routing> *_pci;      /* list of PCI routing elements for this element */
+		List<Pci_routing>  _pci;      /* list of PCI routing elements for this element */
 
 		/* packages we are looking for */
 		enum { DEVICE = 0x5b, SUB_DEVICE = 0x82, DEVICE_NAME = 0x8, SCOPE = 0x10, METHOD = 0x14, PACKAGE_OP = 0x12 };
@@ -778,8 +778,8 @@ class Element : public List<Element>::Element
 					Pci_routing * r = new (&alloc) Pci_routing(val[0], val[1], val[3]);
 
 					/* set _ADR, _PIN, _GSI */
-					dev->pci_list()->insert(r);
-					dev->pci_list()->first()->dump();
+					dev->pci_list().insert(r);
+					dev->pci_list().first()->dump();
 				}
 
 				len = len ? (e.data() - (_data + offset)) + e.size() : 1;
@@ -820,7 +820,7 @@ class Element : public List<Element>::Element
 		Element(uint8_t const *data = 0, bool package_op4 = false)
 		:
 			_type(0), _size(0), _size_len(0),  _name_len(0), _bdf(0),
-			_data(data), _para_len(0), _valid(false), _routed(false), _pci(0)
+			_data(data), _para_len(0), _valid(false), _routed(false)
 		{
 			_name[0] = '\0';
 
@@ -906,17 +906,14 @@ class Element : public List<Element>::Element
 			_type     = other._type;
 			_size     = other._size;
 			_size_len = other._size_len;
+			memcpy(_name, other._name, sizeof(_name));
 			_name_len = other._name_len;
 			_bdf      = other._bdf;
 			_data     = other._data;
+			_para_len = other._para_len;
 			_valid    = other._valid;
 			_routed   = other._routed;
 			_pci      = other._pci;
-			_para_len = other._para_len;
-
-			if (other._name) {
-				memcpy(_name, other._name, min(sizeof(_name), _name_len));
-			}
 		}
 
 		bool is_device_name() { return _type == DEVICE_NAME; }
@@ -997,11 +994,7 @@ class Element : public List<Element>::Element
 		/**
 		 * Return list of PCI information for this element
 		 */
-		List<Pci_routing> *pci_list()
-		{
-			static List<Pci_routing> l;
-			return &l;
-		}
+		List<Pci_routing> & pci_list() { return _pci; }
 
 		/**
 		 * Parse elements of table
@@ -1083,7 +1076,7 @@ class Element : public List<Element>::Element
 				if (!e->is_device() || e->_bdf != bridge_bdf)
 					continue;
 
-				Pci_routing *r = e->pci_list()->first();
+				Pci_routing *r = e->pci_list().first();
 				for (; r; r = r->next()) {
 					if (r->match_bdf(device_bdf) && r->pin() == pin) {
 						if (verbose) PDBG("Found GSI: %u device : %x pin %u",
@@ -1369,7 +1362,7 @@ void Acpi::generate_report(Genode::Env &env, Genode::Allocator &alloc)
 				if (!e->is_device())
 					continue;
 
-				Pci_routing *r = e->pci_list()->first();
+				Pci_routing *r = e->pci_list().first();
 				for (; r; r = r->next()) {
 					xml.node("routing", [&] () {
 						attribute_hex(xml, "gsi", r->gsi());
