@@ -1,0 +1,12 @@
+LICENSE   := GPLv2
+VERSION   := 11.2.2
+DOWNLOADS := mesa.archive
+
+URL(mesa)     := ftp://ftp.freedesktop.org/pub/mesa/$(VERSION)/mesa-$(VERSION).tar.gz
+SHA(mesa)     := af95222c289615638b3ab2c35564877a57c0c5db
+DIR(mesa)     := src/lib/mesa
+TAR_OPT(mesa) := --strip-components=1 --files-from $(REP_DIR)/src/lib/mesa/files.list
+HASH_INPUT    += $(REP_DIR)/src/lib/mesa/files.list
+
+
+# vi: set ft=make :
