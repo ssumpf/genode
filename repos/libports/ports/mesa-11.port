@@ -8,5 +8,24 @@ DIR(mesa)     := src/lib/mesa
 TAR_OPT(mesa) := --strip-components=1 --files-from $(REP_DIR)/src/lib/mesa/files.list
 HASH_INPUT    += $(REP_DIR)/src/lib/mesa/files.list
 
+#
+# Check for tools
+#
+$(call check_tool,bison)
+$(call check_tool, flex)
+
+generated_files = src/lib/mesa/src/compiler/glsl/glsl_parser.cpp \
+                  src/lib/mesa/src/compiler/glsl/glsl_lexer.cpp
+
+src/lib/mesa/src/compiler/glsl/glsl_parser.cpp:
+	@$(MSG_GENERATE)$(notdir $@)
+	$(VERBOSE)bison  -o $@ -p "_mesa_glsl_" \
+		--defines=$(@D)/glsl_parser.h $(@D)/glsl_parser.yy
+
+src/lib/mesa/src/compiler/glsl/glsl_lexer.cpp:
+	@$(MSG_GENERATE)$(notdir $@)
+	$(VERBOSE)flex -o $@ $(@D)/glsl_lexer.ll
+
+default: $(DOWNLOADS) $(generated_files)
 
 # vi: set ft=make :
