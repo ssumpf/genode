@@ -222,6 +222,115 @@ ASM_C_FILES += \
 	x86/rtasm/x86sse.c \
 	sparc/sparc.c \
 
+PROGRAM = \
+	program/prog_statevars.c
+
+UTIL = \
+	util/hash_table.c \
+	util/rgtc.c
+
+MAPI = \
+	mapi/u_current.c
+
+GLSL = glsl/blob.c
+
+GLSL_CXX = \
+	glsl/ast_array_index.cpp \
+	glsl/ast_expr.cpp \
+	glsl/ast_function.cpp \
+	glsl/ast_to_hir.cpp \
+	glsl/ast_type.cpp \
+	glsl/builtin_functions.cpp \
+	glsl/builtin_types.cpp \
+	glsl/builtin_variables.cpp \
+	glsl/glsl_parser_extras.cpp \
+	glsl/glsl_symbol_table.cpp \
+	glsl/hir_field_selection.cpp \
+	glsl/ir_basic_block.cpp \
+	glsl/ir_builder.cpp \
+	glsl/ir_clone.cpp \
+	glsl/ir_constant_expression.cpp \
+	glsl/ir.cpp \
+	glsl/ir_equals.cpp \
+	glsl/ir_expression_flattening.cpp \
+	glsl/ir_function_can_inline.cpp \
+	glsl/ir_function_detect_recursion.cpp \
+	glsl/ir_function.cpp \
+	glsl/ir_hierarchical_visitor.cpp \
+	glsl/ir_hv_accept.cpp \
+	glsl/ir_import_prototypes.cpp \
+	glsl/ir_print_visitor.cpp \
+	glsl/ir_reader.cpp \
+	glsl/ir_rvalue_visitor.cpp \
+	glsl/ir_set_program_inouts.cpp \
+	glsl/ir_validate.cpp \
+	glsl/ir_variable_refcount.cpp \
+	glsl/linker.cpp \
+	glsl/link_atomics.cpp \
+	glsl/link_functions.cpp \
+	glsl/link_interface_blocks.cpp \
+	glsl/link_uniforms.cpp \
+	glsl/link_uniform_initializers.cpp \
+	glsl/link_uniform_block_active_visitor.cpp \
+	glsl/link_uniform_blocks.cpp \
+	glsl/link_varyings.cpp \
+	glsl/loop_analysis.cpp \
+	glsl/loop_controls.cpp \
+	glsl/loop_unroll.cpp \
+	glsl/lower_buffer_access.cpp \
+	glsl/lower_clip_distance.cpp \
+	glsl/lower_const_arrays_to_uniforms.cpp \
+	glsl/lower_discard.cpp \
+	glsl/lower_discard_flow.cpp \
+	glsl/lower_if_to_cond_assign.cpp \
+	glsl/lower_instructions.cpp \
+	glsl/lower_jumps.cpp \
+	glsl/lower_mat_op_to_vec.cpp \
+	glsl/lower_noise.cpp \
+	glsl/lower_offset_array.cpp \
+	glsl/lower_packed_varyings.cpp \
+	glsl/lower_named_interface_blocks.cpp \
+	glsl/lower_packing_builtins.cpp \
+	glsl/lower_subroutine.cpp \
+	glsl/lower_tess_level.cpp \
+	glsl/lower_texture_projection.cpp \
+	glsl/lower_variable_index_to_cond_assign.cpp \
+	glsl/lower_vec_index_to_cond_assign.cpp \
+	glsl/lower_vec_index_to_swizzle.cpp \
+	glsl/lower_vector.cpp \
+	glsl/lower_vector_derefs.cpp \
+	glsl/lower_vector_insert.cpp \
+	glsl/lower_vertex_id.cpp \
+	glsl/lower_output_reads.cpp \
+	glsl/lower_shared_reference.cpp \
+	glsl/lower_ubo_reference.cpp \
+	glsl/opt_algebraic.cpp \
+	glsl/opt_array_splitting.cpp \
+	glsl/opt_conditional_discard.cpp \
+	glsl/opt_constant_folding.cpp \
+	glsl/opt_constant_propagation.cpp \
+	glsl/opt_constant_variable.cpp \
+	glsl/opt_copy_propagation.cpp \
+	glsl/opt_copy_propagation_elements.cpp \
+	glsl/opt_dead_builtin_variables.cpp \
+	glsl/opt_dead_builtin_varyings.cpp \
+	glsl/opt_dead_code.cpp \
+	glsl/opt_dead_code_local.cpp \
+	glsl/opt_dead_functions.cpp \
+	glsl/opt_flatten_nested_if_blocks.cpp \
+	glsl/opt_flip_matrices.cpp \
+	glsl/opt_function_inlining.cpp \
+	glsl/opt_if_simplification.cpp \
+	glsl/opt_minmax.cpp \
+	glsl/opt_noop_swizzle.cpp \
+	glsl/opt_rebalance_tree.cpp \
+	glsl/opt_redundant_jumps.cpp \
+	glsl/opt_structure_splitting.cpp \
+	glsl/opt_swizzle_swizzle.cpp \
+	glsl/opt_tree_grafting.cpp \
+	glsl/opt_vectorize.cpp \
+	glsl/s_expression.cpp \
+
 SRC_C = \
 	$(MAIN_ES_FILES) \
 	$(MAIN_FILES) \
@@ -232,9 +341,13 @@ SRC_C = \
 	$(SWRAST_FILES) \
 	$(SWRAST_SETUP_FILES) \
 	$(COMMON_DRIVER_FILES) \
-	$(ASM_C_FILES)
+	$(ASM_C_FILES) \
+	$(PROGRAM) \
+	$(UTIL) \
+	$(MAPI) \
+	$(GLSL)
 
-SRC_CC = $(MAIN_FILES_CC)
+SRC_CC = $(MAIN_FILES_CC) $(GLSL_CXX)
 
 MESA_PORT_DIR := $(call select_from_ports,mesa-11)/src/lib/mesa
 MESA_SRC_DIR  := $(MESA_PORT_DIR)/src/mesa
@@ -252,13 +365,21 @@ INC_DIR += $(MESA_SRC_DIR) \
            $(LIB_DIR)/include
 
 CC_OPT = -DHAVE_PTHREAD -D_XOPEN_SOURCE=600 -DPACKAGE_VERSION=\"11.2.2\" \
-         -DPACKAGE_BUGREPORT=\"https://bugs.freedesktop.org/enter_bug.cgi\?product=Mesa\"
+         -DPACKAGE_BUGREPORT=\"https://bugs.freedesktop.org/enter_bug.cgi\?product=Mesa\" \
+         -DMAPI_ABI_HEADER=\"glapi/glapi_mapi_tmp.h\"
 
-CC_C_OPT += -std=c99
+CC_C_OPT   += -std=c99
+CC_CXX_OPT += -DINT64_MAX=0x7fffffffffffffffLL -D__STDC_CONSTANT_MACROS
 
-CC_CXX_OPT += -DINT64_MAX=0x7fffffffffffffffLL
+#
+# special flags
+#
+CC_OPT_glsl/linker = -D__BSD_VISIBLE
 
 vpath %.c    $(MESA_SRC_DIR)
 vpath %.cpp  $(MESA_SRC_DIR)
+vpath %.c    $(MESA_PORT_DIR)/src
+vpath %.cpp  $(MESA_PORT_DIR)/src/compiler
+vpath %.c    $(MESA_PORT_DIR)/src/compiler
 
 # vi: set ft=make :
