@@ -1,5 +1,5 @@
 SHARED_LIB = yes
-LIBS       = libc stdcxx
+LIBS       = libc stdcxx expat
 
 MAIN_ES_FILES = \
 	main/es1_conversion.c
@@ -223,16 +223,51 @@ ASM_C_FILES += \
 	sparc/sparc.c \
 
 PROGRAM = \
-	program/prog_statevars.c
+	program/arbprogparse.c \
+	program/lex.yy.c \
+	program/prog_cache.c \
+	program/prog_execute.c \
+	program/prog_hash_table.c \
+	program/prog_instruction.c \
+	program/prog_noise.c \
+	program/prog_opt_constant_fold.c \
+	program/prog_optimize.c \
+	program/prog_parameter.c \
+	program/prog_parameter_layout.c \
+	program/prog_print.c \
+	program/prog_statevars.c \
+	program/program.c \
+	program/programopt.c \
+	program/program_parse.tab.c \
+	program/program_parse_extra.c \
+	program/symbol_table.c
+
+PROGRAM_CXX = \
+	program/ir_to_mesa.cpp \
+	program/string_to_uint_map.cpp
 
 UTIL = \
+	util/debug.c \
+	util/format_srgb.c \
+	util/half_float.c \
 	util/hash_table.c \
-	util/rgtc.c
+	util/ralloc.c \
+	util/rgtc.c \
+	util/set.c \
+	util/strtod.c
 
 MAPI = \
+	mapi/entry.c \
+	mapi/mapi_glapi.c \
+	mapi/stub.c \
+	mapi/table.c \
 	mapi/u_current.c
 
-GLSL = glsl/blob.c
+GLSL = \
+	glsl/blob.c \
+	glsl/glcpp/glcpp-lex.c \
+	glsl/glcpp/glcpp-parse.c \
+	glsl/glcpp/pp.c
 
 GLSL_CXX = \
 	glsl/ast_array_index.cpp \
@@ -243,6 +278,8 @@ GLSL_CXX = \
 	glsl/builtin_functions.cpp \
 	glsl/builtin_types.cpp \
 	glsl/builtin_variables.cpp \
+	glsl/glsl_lexer.cpp \
+	glsl/glsl_parser.cpp \
 	glsl/glsl_parser_extras.cpp \
 	glsl/glsl_symbol_table.cpp \
 	glsl/hir_field_selection.cpp \
@@ -329,7 +366,20 @@ GLSL_CXX = \
 	glsl/opt_swizzle_swizzle.cpp \
 	glsl/opt_tree_grafting.cpp \
 	glsl/opt_vectorize.cpp \
-	glsl/s_expression.cpp \
+	glsl/s_expression.cpp
+
+LIBCOMPILER_CXX = \
+	glsl_types.cpp \
+	nir_types.cpp
+
+LIBCOMPILER = \
+	shader_enums.c
+
+DRI = \
+	drivers/dri/common/dri_util.c \
+	drivers/dri/common/megadriver_stub.c \
+	drivers/dri/common/utils.c \
+	drivers/dri/common/xmlconfig.c
 
 SRC_C = \
 	$(MAIN_ES_FILES) \
@@ -345,9 +395,11 @@ SRC_C = \
 	$(PROGRAM) \
 	$(UTIL) \
 	$(MAPI) \
-	$(GLSL)
+	$(GLSL) \
+	$(LIBCOMPILER) \
+	$(DRI)
 
-SRC_CC = $(MAIN_FILES_CC) $(GLSL_CXX)
+SRC_CC = $(MAIN_FILES_CC) $(GLSL_CXX) $(LIBCOMPILER_CXX) $(PROGRAM_CXX)
 
 MESA_PORT_DIR := $(call select_from_ports,mesa-11)/src/lib/mesa
 MESA_SRC_DIR  := $(MESA_PORT_DIR)/src/mesa
@@ -366,7 +418,7 @@ INC_DIR += $(MESA_SRC_DIR) \
 
 CC_OPT = -DHAVE_PTHREAD -D_XOPEN_SOURCE=600 -DPACKAGE_VERSION=\"11.2.2\" \
          -DPACKAGE_BUGREPORT=\"https://bugs.freedesktop.org/enter_bug.cgi\?product=Mesa\" \
-         -DMAPI_ABI_HEADER=\"glapi/glapi_mapi_tmp.h\"
+         -DMAPI_ABI_HEADER=\"shared-glapi/glapi_mapi_tmp.h\" -DMAPI_MODE_GLAPI
 
 CC_C_OPT   += -std=c99
 CC_CXX_OPT += -DINT64_MAX=0x7fffffffffffffffLL -D__STDC_CONSTANT_MACROS
