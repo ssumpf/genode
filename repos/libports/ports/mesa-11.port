@@ -13,9 +13,18 @@ HASH_INPUT    += $(REP_DIR)/src/lib/mesa/files.list
 #
 $(call check_tool,bison)
 $(call check_tool, flex)
+$(call check_tool, python)
 
+#
+# Generate files
+#
 generated_files = src/lib/mesa/src/compiler/glsl/glsl_parser.cpp \
-                  src/lib/mesa/src/compiler/glsl/glsl_lexer.cpp
+                  src/lib/mesa/src/compiler/glsl/glsl_lexer.cpp \
+                  src/lib/mesa/src/compiler/glsl/glcpp/glcpp-parse.c \
+                  src/lib/mesa/src/compiler/glsl/glcpp/glcpp-lex.c \
+                  src/lib/mesa/src/mesa/program/program_parse.tab.c \
+                  src/lib/mesa/src/mesa/program/lex.yy.c \
+                  src/lib/mesa/src/mapi/shared-glapi/glapi_mapi_tmp.h \
 
 src/lib/mesa/src/compiler/glsl/glsl_parser.cpp:
 	@$(MSG_GENERATE)$(notdir $@)
@@ -25,6 +34,31 @@ src/lib/mesa/src/compiler/glsl/glsl_parser.cpp:
 src/lib/mesa/src/compiler/glsl/glsl_lexer.cpp:
 	@$(MSG_GENERATE)$(notdir $@)
 	$(VERBOSE)flex -o $@ $(@D)/glsl_lexer.ll
+
+src/lib/mesa/src/compiler/glsl/glcpp/glcpp-parse.c:
+	@$(MSG_GENERATE)$(notdir $@)
+	$(VERBOSE)bison  -o $@ -p "glcpp_parser_" --defines=$(@D)/glcpp-parse.h \
+		$(@D)/glcpp-parse.y
+
+src/lib/mesa/src/compiler/glsl/glcpp/glcpp-lex.c:
+	@$(MSG_GENERATE)$(notdir $@)
+	$(VERBOSE)flex  -o $@ $(@D)/glcpp-lex.l
+
+src/lib/mesa/src/mesa/program/program_parse.tab.c:
+	@$(MSG_GENERATE)$(notdir $@)
+	$(VERBOSE)bison -o $@ -p "_mesa_program_" --defines=$(@D)/program_parse.tab.h \
+		$(@D)/program_parse.y
+
+src/lib/mesa/src/mesa/program/lex.yy.c:
+	@$(MSG_GENERATE)$(notdir $@)
+	$(VERBOSE)flex -o $@ $(@D)/program_lexer.l
+
+src/lib/mesa/src/mapi/shared-glapi/glapi_mapi_tmp.h:
+	@$(MSG_GENERATE)$(notdir $@)
+	$(VERBOSE)mkdir -p $(@D)
+	$(VERBOSE)python $(@D)/../mapi_abi.py --mode lib --printer shared-glapi \
+		$(@D)/../glapi/gen/gl_and_es_API.xml > $@
+
 
 default: $(DOWNLOADS) $(generated_files)
 
