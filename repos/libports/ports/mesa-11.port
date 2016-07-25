@@ -8,6 +8,10 @@ DIR(mesa)     := src/lib/mesa
 TAR_OPT(mesa) := --strip-components=1 --files-from $(REP_DIR)/src/lib/mesa/files.list
 HASH_INPUT    += $(REP_DIR)/src/lib/mesa/files.list
 
+
+PATCHES := src/lib/mesa/patches/egl.patch
+PATCH_OPT := -p1
+
 #
 # Check for tools
 #
@@ -58,7 +62,6 @@ src/lib/mesa/src/mapi/shared-glapi/glapi_mapi_tmp.h:
 	$(VERBOSE)mkdir -p $(@D)
 	$(VERBOSE)python $(@D)/../mapi_abi.py --mode lib --printer shared-glapi \
 		$(@D)/../glapi/gen/gl_and_es_API.xml > $@
-
 
 default: $(DOWNLOADS) $(generated_files)
 

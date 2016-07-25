@@ -1,5 +1,7 @@
 SHARED_LIB = yes
-LIBS       = libc stdcxx expat
+LIBS       = libc stdcxx expat glapi
+
+include $(REP_DIR)/lib/mk/mesa-11-common.inc
 
 MAIN_ES_FILES = \
 	main/es1_conversion.c
@@ -246,6 +248,9 @@ PROGRAM_CXX = \
 	program/ir_to_mesa.cpp \
 	program/string_to_uint_map.cpp
 
+MAPI_FILES = \
+	mapi/entry.c
+
 UTIL = \
 	util/debug.c \
 	util/format_srgb.c \
@@ -255,13 +260,6 @@ UTIL = \
 	util/rgtc.c \
 	util/set.c \
 	util/strtod.c
-
-MAPI = \
-	mapi/entry.c \
-	mapi/mapi_glapi.c \
-	mapi/stub.c \
-	mapi/table.c \
-	mapi/u_current.c
 
 GLSL = \
 	glsl/blob.c \
@@ -385,6 +383,7 @@ SRC_C = \
 	$(MAIN_ES_FILES) \
 	$(MAIN_FILES) \
 	$(MATH_FILES) \
+	$(MAPI_FILES) \
 	$(MATH_XFORM_FILES) \
 	$(VBO_FILES) \
 	$(TNL_FILES) \
@@ -394,31 +393,16 @@ SRC_C = \
 	$(ASM_C_FILES) \
 	$(PROGRAM) \
 	$(UTIL) \
-	$(MAPI) \
 	$(GLSL) \
 	$(LIBCOMPILER) \
 	$(DRI)
 
 SRC_CC = $(MAIN_FILES_CC) $(GLSL_CXX) $(LIBCOMPILER_CXX) $(PROGRAM_CXX)
 
-MESA_PORT_DIR := $(call select_from_ports,mesa-11)/src/lib/mesa
-MESA_SRC_DIR  := $(MESA_PORT_DIR)/src/mesa
-LIB_DIR        = $(REP_DIR)/src/lib/mesa
-
-INC_DIR += $(MESA_SRC_DIR) \
-           $(MESA_SRC_DIR)/main \
-           $(MESA_SRC_DIR)/x86 \
-           $(MESA_PORT_DIR) \
-           $(MESA_PORT_DIR)/include \
-           $(MESA_PORT_DIR)/src \
-           $(MESA_PORT_DIR)/src/mapi \
-           $(MESA_PORT_DIR)/src/gallium/auxiliary \
-           $(MESA_PORT_DIR)/src/gallium/include \
-           $(LIB_DIR)/include
-
-CC_OPT = -DHAVE_PTHREAD -D_XOPEN_SOURCE=600 -DPACKAGE_VERSION=\"11.2.2\" \
-         -DPACKAGE_BUGREPORT=\"https://bugs.freedesktop.org/enter_bug.cgi\?product=Mesa\" \
-         -DMAPI_ABI_HEADER=\"shared-glapi/glapi_mapi_tmp.h\" -DMAPI_MODE_GLAPI
+CC_OPT += -DPACKAGE_VERSION=\"11.2.2\" \
+          -DPACKAGE_BUGREPORT=\"https://bugs.freedesktop.org/enter_bug.cgi\?product=Mesa\" \
+          -DMAPI_ABI_HEADER=\"glapi/glapi_mapi_tmp.h\" \
+          -DMAPI_MODE_BRIDGE
 
 CC_C_OPT   += -std=c99
 CC_CXX_OPT += -DINT64_MAX=0x7fffffffffffffffLL -D__STDC_CONSTANT_MACROS
