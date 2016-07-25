@@ -25,7 +25,7 @@
 #endif
 #define EGLAPIENTRYP EGLAPIENTRY*
 
-typedef int   EGLNativeDisplayType;
+typedef long  EGLNativeDisplayType;
 typedef void *EGLNativePixmapType;
 
 struct Genode_egl_window
