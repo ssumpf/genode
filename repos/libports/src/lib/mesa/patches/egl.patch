@@ -1,0 +1,24 @@
+diff --git a/src/lib/mesa/src/egl/main/egldisplay.c b/src/lib/mesa/src/egl/main/egldisplay.c
+index f6db03a..36bfad4 100644
+--- a/src/lib/mesa/src/egl/main/egldisplay.c
++++ b/src/lib/mesa/src/egl/main/egldisplay.c
+@@ -71,6 +71,7 @@ static const struct {
+    { _EGL_PLATFORM_ANDROID, "android" },
+    { _EGL_PLATFORM_HAIKU, "haiku" },
+    { _EGL_PLATFORM_SURFACELESS, "surfaceless" },
++   { _EGL_PLATFORM_GENODE, "genode" },
+ };
+ 
+ 
+diff --git a/src/lib/mesa/src/egl/main/egldisplay.h b/src/lib/mesa/src/egl/main/egldisplay.h
+index 008c467..dbdbf4e 100644
+--- a/src/lib/mesa/src/egl/main/egldisplay.h
++++ b/src/lib/mesa/src/egl/main/egldisplay.h
+@@ -50,6 +50,7 @@ enum _egl_platform_type {
+    _EGL_PLATFORM_ANDROID,
+    _EGL_PLATFORM_HAIKU,
+    _EGL_PLATFORM_SURFACELESS,
++   _EGL_PLATFORM_GENODE,
+ 
+    _EGL_NUM_PLATFORMS,
+    _EGL_INVALID_PLATFORM = -1

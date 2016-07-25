@@ -1,19 +1,9 @@
 SHARED_LIB = yes
-LIBS       = libc
+LIBS       = libc mesa-11
 
-SRC_C = drivers/dri/swrast/swrast.c
+include $(REP_DIR)/lib/mk/mesa-11-common.inc
 
-MESA_PORT_DIR := $(call select_from_ports,mesa-11)/src/lib/mesa
-MESA_SRC_DIR  := $(MESA_PORT_DIR)/src/mesa
-
-INC_DIR += $(MESA_SRC_DIR) \
-           $(MESA_SRC_DIR)/drivers/dri/common \
-           $(MESA_PORT_DIR)/src \
-           $(MESA_PORT_DIR)/include \
-           $(MESA_PORT_DIR)/src/mapi \
-           $(MESA_PORT_DIR)/src/gallium/auxiliary \
-           $(MESA_PORT_DIR)/src/gallium/include \
-
-CC_OPT = -DHAVE_PTHREAD -D_XOPEN_SOURCE=600
+SRC_C    = drivers/dri/swrast/swrast.c
+INC_DIR += $(MESA_SRC_DIR)/drivers/dri/common
 
 vpath %.c $(MESA_SRC_DIR)
