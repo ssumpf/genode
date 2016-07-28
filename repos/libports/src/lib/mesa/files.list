@@ -148,12 +148,16 @@ mesa-11.2.2/src/compiler/glsl/glcpp/glcpp.h
 mesa-11.2.2/src/compiler/glsl/glcpp/glcpp-lex.l
 mesa-11.2.2/src/compiler/glsl/glcpp/glcpp-parse.y
 mesa-11.2.2/src/compiler/glsl/glcpp/pp.c
+mesa-11.2.2/src/egl/drivers/dri2/egl_dri2.c
+mesa-11.2.2/src/egl/drivers/dri2/egl_dri2.h
+mesa-11.2.2/src/egl/drivers/dri2/egl_dri2_fallbacks.h
 mesa-11.2.2/src/egl/main/eglcontext.h
 mesa-11.2.2/src/egl/main/eglcompiler.h
 mesa-11.2.2/src/egl/main/egldefines.h
 mesa-11.2.2/src/egl/main/egllog.h
 mesa-11.2.2/src/egl/main/eglsurface.c
 mesa-11.2.2/src/egl/main/eglconfig.c
+mesa-11.2.2/src/egl/main/eglconfig.h
 mesa-11.2.2/src/egl/main/egldriver.h
 mesa-11.2.2/src/egl/main/eglsync.h
 mesa-11.2.2/src/egl/main/eglarray.h
@@ -171,7 +175,6 @@ mesa-11.2.2/src/egl/main/egl.def
 mesa-11.2.2/src/egl/main/eglsurface.h
 mesa-11.2.2/src/egl/main/eglimage.h
 mesa-11.2.2/src/egl/main/egl.pc.in
-mesa-11.2.2/src/egl/main/eglconfig.h
 mesa-11.2.2/src/egl/main/eglcontext.c
 mesa-11.2.2/src/egl/main/eglcurrent.c
 mesa-11.2.2/src/egl/main/eglapi.c
