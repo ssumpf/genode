@@ -3,7 +3,7 @@ set build_components {
 	drivers/timer
 	server/nitpicker server/nit_fb
 	app/launchpad app/pointer
-	app/eglgears
+	test/eglgears
 	drivers/framebuffer drivers/input
 	lib/gallium
 }
@@ -101,7 +101,7 @@ append config {
 						<route><any-service><parent/></any-service></route>
 						<config xpos="300" ypos="100" width="576" height="408" />
 					</start>
-					<start name="eglgears">
+					<start name="gears">
 						<resource name="RAM" quantum="1G"/>
 						<route><any-service> <parent /> <any-child/> </any-service></route>
 						<config>
@@ -120,8 +120,10 @@ install_config $config
 
 set boot_modules {
 	core init ld.lib.so timer nitpicker nit_fb
-	launchpad eglgears pointer
-	gallium.lib.so libc.lib.so libm.lib.so pthread.lib.so posix.lib.so
+	launchpad gears pointer
+	libc.lib.so libm.lib.so pthread.lib.so
+	egl.lib.so mesa-11.lib.so stdcxx.lib.so
+	expat.lib.so glapi.lib.so swrast.lib.so
 }
 
 lappend_if [have_spec       linux] boot_modules fb_sdl
