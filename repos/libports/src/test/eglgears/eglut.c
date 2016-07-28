@@ -54,7 +54,6 @@ _eglutFatal(char *format, ...)
   fprintf(stderr, "EGLUT: ");
   vfprintf(stderr, format, args);
   va_end(args);
-  putc('\n', stderr);
 
   exit(1);
 }

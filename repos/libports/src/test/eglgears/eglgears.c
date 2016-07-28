@@ -30,7 +30,7 @@
 #include <math.h>
 #include "gl_wrap.h"
 #include <EGL/egl.h>
-
+#include <stdio.h>
 #include "eglut.h"
 
 static GLfloat view_rotx = 20.0, view_roty = 30.0, view_rotz = 0.0;
@@ -282,6 +282,8 @@ init(void)
 int
 main(int argc, char *argv[])
 {
+	printf("WAIT\n");
+	wait_for_continue();
    eglutInitWindowSize(300, 300);
    eglutInitAPIMask(EGLUT_OPENGL_BIT);
    eglutInit(argc, argv);

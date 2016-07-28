@@ -1,5 +1,5 @@
 SHARED_LIB = yes
-LIBS       = libc
+LIBS       = libc swrast
 
 include $(REP_DIR)/lib/mk/mesa-11-common.inc
 
@@ -16,11 +16,16 @@ SRC_C = \
 	main/eglcontext.c \
 	main/eglcurrent.c \
 	main/eglapi.c \
-	main/egldriver.c
+	main/egldriver.c \
+	drivers/dri2/egl_dri2.c \
+	platform.c
 
+CC_OPT  += -D_EGL_NATIVE_PLATFORM=_EGL_PLATFORM_GENODE -D_EGL_BUILT_IN_DRIVER_DRI2 \
+           -DHAVE_GENODE_PLATFORM
 
-CC_OPT += -D_EGL_NATIVE_PLATFORM=_EGL_PLATFORM_GENODE
+INC_DIR += $(MESA_PORT_DIR)/src/egl/main \
+           $(MESA_PORT_DIR)/src/egl/drivers/dri2
 
-MESA_PORT_DIR := $(call select_from_ports,mesa-11)/src/lib/mesa
-
-vpath %.c $(MESA_PORT_DIR)/src/egl
+vpath %.c   $(MESA_PORT_DIR)/src/egl
+vpath %.c  $(LIB_DIR)/egl
+vpath %.cc  $(LIB_DIR)/egl
