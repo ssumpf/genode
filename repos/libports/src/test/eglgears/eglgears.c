@@ -280,7 +280,7 @@ init(void)
 }
 
 int
-main(int argc, char *argv[])
+eglut_main(int argc, char *argv[])
 {
 	printf("WAIT\n");
 	wait_for_continue();
