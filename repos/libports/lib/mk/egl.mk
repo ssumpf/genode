@@ -20,12 +20,14 @@ SRC_C = \
 	drivers/dri2/egl_dri2.c \
 	platform.c
 
+SRC_CC = genode_interface.cc
+
 CC_OPT  += -D_EGL_NATIVE_PLATFORM=_EGL_PLATFORM_GENODE -D_EGL_BUILT_IN_DRIVER_DRI2 \
            -DHAVE_GENODE_PLATFORM
 
 INC_DIR += $(MESA_PORT_DIR)/src/egl/main \
            $(MESA_PORT_DIR)/src/egl/drivers/dri2
 
-vpath %.c   $(MESA_PORT_DIR)/src/egl
+vpath %.c  $(MESA_PORT_DIR)/src/egl
 vpath %.c  $(LIB_DIR)/egl
-vpath %.cc  $(LIB_DIR)/egl
+vpath %.cc $(LIB_DIR)/egl
