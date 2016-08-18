@@ -1,5 +1,5 @@
 SHARED_LIB = yes
-LIBS       = libc mesa-11
+LIBS       = libc
 
 include $(REP_DIR)/lib/mk/mesa-11-common.inc
 
