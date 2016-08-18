@@ -5,7 +5,7 @@ set build_components {
 	app/launchpad app/pointer
 	test/eglgears
 	drivers/framebuffer drivers/input
-	lib/gallium
+	lib/mesa/swrast
 }
 
 source ${genode_dir}/repos/base/run/platform_drv.inc
