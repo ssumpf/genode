@@ -16,7 +16,6 @@
  */
 #include <platform.h>
 
-
 static EGLBoolean dri2_genode_swap_interval(_EGLDriver *drv, _EGLDisplay *disp,
                                             _EGLSurface *surf, EGLint interval)
 {
@@ -43,6 +42,7 @@ dri2_genode_swrast_create_window_surface(_EGLDriver *drv, _EGLDisplay *disp,
 	const __DRIconfig *config;
 
 	dri2_surf = calloc(1, sizeof *dri2_surf);
+
 	if (!dri2_surf)
 	{
 		_eglError(EGL_BAD_ALLOC, "dri2_create_surface");
@@ -69,7 +69,7 @@ dri2_genode_swrast_create_window_surface(_EGLDriver *drv, _EGLDisplay *disp,
 	}
 
 	dri2_genode_swap_interval(drv, disp, &dri2_surf->base,
-	                      dri2_dpy->default_swap_interval);
+	                          dri2_dpy->default_swap_interval);
 
 	return &dri2_surf->base;
 
@@ -115,22 +115,22 @@ dri2_genode_create_pixmap_surface(_EGLDriver *drv, _EGLDisplay *disp,
  * platform functions
  */
 static struct dri2_egl_display_vtbl dri2_genode_swrast_display_vtbl = {
-   .authenticate = NULL,
-   .create_window_surface = dri2_genode_swrast_create_window_surface,
-   .create_pixmap_surface = dri2_genode_create_pixmap_surface,
-   .create_pbuffer_surface = dri2_fallback_create_pbuffer_surface,
-   .destroy_surface = dri2_genode_destroy_surface,
-   .create_image = dri2_fallback_create_image_khr,
-   .swap_interval = dri2_genode_swap_interval,
-   .swap_buffers = dri2_genode_swrast_swap_buffers,
-   .swap_buffers_with_damage = dri2_fallback_swap_buffers_with_damage,
-   .swap_buffers_region = dri2_fallback_swap_buffers_region,
-   .post_sub_buffer = dri2_fallback_post_sub_buffer,
-   .copy_buffers = dri2_fallback_copy_buffers,
-   .query_buffer_age = dri2_fallback_query_buffer_age,
-   .create_wayland_buffer_from_image = dri2_fallback_create_wayland_buffer_from_image,
-   .get_sync_values = dri2_fallback_get_sync_values,
-   .get_dri_drawable = dri2_surface_get_dri_drawable,
+	.authenticate = NULL,
+	.create_window_surface = dri2_genode_swrast_create_window_surface,
+	.create_pixmap_surface = dri2_genode_create_pixmap_surface,
+	.create_pbuffer_surface = dri2_fallback_create_pbuffer_surface,
+	.destroy_surface = dri2_genode_destroy_surface,
+	.create_image = dri2_fallback_create_image_khr,
+	.swap_interval = dri2_genode_swap_interval,
+	.swap_buffers = dri2_genode_swrast_swap_buffers,
+	.swap_buffers_with_damage = dri2_fallback_swap_buffers_with_damage,
+	.swap_buffers_region = dri2_fallback_swap_buffers_region,
+	.post_sub_buffer = dri2_fallback_post_sub_buffer,
+	.copy_buffers = dri2_fallback_copy_buffers,
+	.query_buffer_age = dri2_fallback_query_buffer_age,
+	.create_wayland_buffer_from_image = dri2_fallback_create_wayland_buffer_from_image,
+	.get_sync_values = dri2_fallback_get_sync_values,
+	.get_dri_drawable = dri2_surface_get_dri_drawable,
 };
 
 
@@ -149,7 +149,6 @@ dri2_genode_swrast_put_image(__DRIdrawable * draw, int op,
 	struct dri2_egl_surface *dri2_surf  = loaderPrivate;
 	struct Genode_egl_window  *window   = dri2_surf->g_win;
 	unsigned char * dst                 = window->addr;
-	int height;
 
 	printf("%s: from %p -> %p\n", __func__, data, dst);
 
@@ -169,14 +168,9 @@ dri2_genode_swrast_put_image(__DRIdrawable * draw, int op,
 	if (h > dri2_surf->base.Height - y)
 		h = dri2_surf->base.Height - y;
 
-	height = h;
-	for (; h > 0; h--) {
-		memcpy(dst, data, copy_width);
-		dst  += dst_stride;
-		data += src_stride;
-	}
-
-	genode_framebuffer_refresh(window, x, y, w, height);
+	/* copy to frame buffer and refresh */
+	genode_blit(data, src_stride, dst, dst_stride, copy_width, h);
+	genode_framebuffer_refresh(window, x, y, w, h);
 }
 
 
@@ -209,11 +203,8 @@ dri2_genode_swrast_get_image(__DRIdrawable * read,
 	if (h > dri2_surf->base.Height - y)
 		h = dri2_surf->base.Height - y;
 
-	for (; h > 0; h--) {
-		memcpy(data, src, copy_width);
-		src  += src_stride;
-		data += dst_stride;
-	}
+	/* copy to surface */
+	genode_blit(src, src_stride, data, dst_stride, copy_width, h);
 }
 
 

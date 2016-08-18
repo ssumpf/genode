@@ -1,5 +1,5 @@
 SHARED_LIB = yes
-LIBS       = libc swrast
+LIBS       = libc swrast blit
 
 include $(REP_DIR)/lib/mk/mesa-11-common.inc
 
