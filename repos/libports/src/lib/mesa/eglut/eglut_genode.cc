@@ -16,6 +16,7 @@ struct Env
 	Env(Genode::Env &env) : env(env) { }
 };
 
+
 static Env *_e;
 
 
