@@ -238,6 +238,7 @@ PROGRAM = \
 	program/prog_parameter_layout.c \
 	program/prog_print.c \
 	program/prog_statevars.c \
+	program/prog_to_nir.c \
 	program/program.c \
 	program/programopt.c \
 	program/program_parse.tab.c \
@@ -257,6 +258,7 @@ UTIL = \
 	util/half_float.c \
 	util/hash_table.c \
 	util/ralloc.c \
+	util/register_allocate.c \
 	util/rgtc.c \
 	util/set.c \
 	util/strtod.c
@@ -379,6 +381,57 @@ DRI = \
 	drivers/dri/common/utils.c \
 	drivers/dri/common/xmlconfig.c
 
+NIR = \
+	compiler/nir/nir.c \
+	compiler/nir/nir_clone.c \
+	compiler/nir/nir_constant_expressions.c \
+	compiler/nir/nir_control_flow.c \
+	compiler/nir/nir_dominance.c \
+	compiler/nir/nir_from_ssa.c \
+	compiler/nir/nir_instr_set.c \
+	compiler/nir/nir_intrinsics.c \
+	compiler/nir/nir_gs_count_vertices.c \
+	compiler/nir/nir_liveness.c \
+	compiler/nir/nir_lower_alu_to_scalar.c \
+	compiler/nir/nir_lower_atomics.c \
+	compiler/nir/nir_lower_global_vars_to_local.c \
+	compiler/nir/nir_lower_gs_intrinsics.c \
+	compiler/nir/nir_lower_io.c \
+	compiler/nir/nir_lower_load_const_to_scalar.c \
+	compiler/nir/nir_lower_locals_to_regs.c \
+	compiler/nir/nir_lower_outputs_to_temporaries.c \
+	compiler/nir/nir_lower_phis_to_scalar.c \
+	compiler/nir/nir_lower_samplers.c \
+	compiler/nir/nir_lower_system_values.c \
+	compiler/nir/nir_lower_to_source_mods.c \
+	compiler/nir/nir_lower_tex.c \
+	compiler/nir/nir_lower_vars_to_ssa.c \
+	compiler/nir/nir_lower_var_copies.c \
+	compiler/nir/nir_lower_vec_to_movs.c \
+	compiler/nir/nir_metadata.c \
+	compiler/nir/nir_move_vec_src_uses_to_dest.c \
+	compiler/nir/nir_normalize_cubemap_coords.c \
+	compiler/nir/nir_opcodes.c \
+	compiler/nir/nir_opt_algebraic.c \
+	compiler/nir/nir_opt_constant_folding.c \
+	compiler/nir/nir_opt_copy_propagate.c \
+	compiler/nir/nir_opt_cse.c \
+	compiler/nir/nir_opt_dce.c \
+	compiler/nir/nir_opt_dead_cf.c \
+	compiler/nir/nir_opt_peephole_select.c \
+	compiler/nir/nir_opt_remove_phis.c \
+	compiler/nir/nir_opt_undef.c \
+	compiler/nir/nir_print.c \
+	compiler/nir/nir_remove_dead_variables.c \
+	compiler/nir/nir_search.c \
+	compiler/nir/nir_split_var_copies.c \
+	compiler/nir/nir_sweep.c \
+	compiler/nir/nir_to_ssa.c \
+	compiler/nir/nir_worklist.c
+
+NIR_CXX = \
+	nir/glsl_to_nir.cpp
+
 SRC_C = \
 	$(MAIN_ES_FILES) \
 	$(MAIN_FILES) \
@@ -395,9 +448,10 @@ SRC_C = \
 	$(UTIL) \
 	$(GLSL) \
 	$(LIBCOMPILER) \
-	$(DRI)
+	$(DRI) \
+	$(NIR)
 
-SRC_CC = $(MAIN_FILES_CC) $(GLSL_CXX) $(LIBCOMPILER_CXX) $(PROGRAM_CXX)
+SRC_CC = $(MAIN_FILES_CC) $(GLSL_CXX) $(LIBCOMPILER_CXX) $(PROGRAM_CXX) $(NIR_CXX)
 
 CC_OPT += -DPACKAGE_VERSION=\"11.2.2\" \
           -DPACKAGE_BUGREPORT=\"https://bugs.freedesktop.org/enter_bug.cgi\?product=Mesa\" \
