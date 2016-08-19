@@ -1,0 +1,9 @@
+LICENSE   := MIT
+VERSION   := 2.4.65
+DOWNLOADS := drm.archive
+
+URL(drm) := https://dri.freedesktop.org/libdrm/libdrm-$(VERSION).tar.bz2
+SHA(drm) := 74a6b2aa8c436e822e3ec5c52e463313c4e219d9
+DIR(drm) := src/lib/drm
+
+
