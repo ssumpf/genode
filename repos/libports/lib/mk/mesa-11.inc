@@ -464,7 +464,11 @@ CC_CXX_OPT += -DINT64_MAX=0x7fffffffffffffffLL -D__STDC_CONSTANT_MACROS
 #
 # special flags
 #
-CC_OPT_glsl/linker = -D__BSD_VISIBLE
+CC_OPT_glsl/linker                        = -D__BSD_VISIBLE
+CC_OPT_compiler/nir/nir_from_ssa          = -D__BSD_VISIBLE -DFFS_DEFINED=1
+CC_OPT_compiler/nir/nir_instr_set         = -D__BSD_VISIBLE -DFFS_DEFINED=1
+CC_OPT_compiler/nir/nir_liveness          = -D__BSD_VISIBLE -DFFS_DEFINED=1
+CC_OPT_compiler/nir/nir_lower_vars_to_ssa = -D__BSD_VISIBLE -DFFS_DEFINED=1
 
 vpath %.c    $(MESA_SRC_DIR)
 vpath %.cpp  $(MESA_SRC_DIR)
