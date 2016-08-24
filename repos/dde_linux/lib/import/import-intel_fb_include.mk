@@ -1,5 +1,5 @@
-LX_CONTRIB_DIR := $(call select_from_ports,dde_linux)/src/drivers/framebuffer/intel
-SRC_DIR        := $(REP_DIR)/src/drivers/framebuffer/intel
+LX_CONTRIB_DIR := $(call select_from_ports,dde_linux)/src/lib/framebuffer/intel
+SRC_DIR        := $(REP_DIR)/src/lib/framebuffer/intel
 
 # architecture-dependent includes
 ifeq ($(filter-out $(SPECS),x86),)
