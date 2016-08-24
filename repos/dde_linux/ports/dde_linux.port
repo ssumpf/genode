@@ -49,7 +49,7 @@ DIR(dwc_otg) := $(SRC_DIR_USB)/drivers/usb/host/dwc_otg
 #
 # Intel framebuffer driver
 #
-SRC_DIR_INTEL_FB  := src/drivers/framebuffer/intel
+SRC_DIR_INTEL_FB  := src/lib/framebuffer/intel
 VERSION_INTEL_FB  := 4.4.3
 URL(intel_fb)     := https://www.kernel.org/pub/linux/kernel/v4.x/linux-$(VERSION_INTEL_FB).tar.xz
 SHA(intel_fb)     := 336d66925a15ce9077cbf2c38acbdc6c2644e33f
