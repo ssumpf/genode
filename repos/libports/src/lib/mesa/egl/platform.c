@@ -31,9 +31,9 @@ static EGLBoolean dri2_genode_swap_interval(_EGLDriver *drv, _EGLDisplay *disp,
 
 
 static _EGLSurface *
-dri2_genode_swrast_create_window_surface(_EGLDriver *drv, _EGLDisplay *disp,
-                                         _EGLConfig *conf, void *native_window,
-                                         const EGLint *attrib_list)
+dri2_genode_create_window_surface(_EGLDriver *drv, _EGLDisplay *disp,
+                                  _EGLConfig *conf, void *native_window,
+                                  const EGLint *attrib_list)
 {
 	struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
 	struct dri2_egl_config *dri2_conf = dri2_egl_config(conf);
@@ -59,9 +59,16 @@ dri2_genode_swrast_create_window_surface(_EGLDriver *drv, _EGLDisplay *disp,
 	config = dri2_get_dri_config(dri2_conf, EGL_WINDOW_BIT,
 	                             dri2_surf->base.GLColorspace);
 
-	dri2_surf->dri_drawable =
-	   (*dri2_dpy->swrast->createNewDrawable)(dri2_dpy->dri_screen,
-	                                          config, dri2_surf);
+	if (dri2_dpy->dri2) {
+		dri2_surf->dri_drawable = (*dri2_dpy->dri2->createNewDrawable)(dri2_dpy->dri_screen, config,
+		                                                               dri2_surf);
+	} else {
+		assert(dri2_dpy->swrast);
+		dri2_surf->dri_drawable =
+		   (*dri2_dpy->swrast->createNewDrawable)(dri2_dpy->dri_screen,
+		                                          config, dri2_surf);
+	}
+
 	if (dri2_surf->dri_drawable == NULL)
 	{
 		_eglError(EGL_BAD_ALLOC, "swrast->createNewDrawable");
@@ -83,7 +90,7 @@ cleanup_surf:
 
 
 static EGLBoolean
-dri2_genode_swrast_swap_buffers(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *draw)
+dri2_genode_swap_buffers(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *draw)
 {
 	struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
 	struct dri2_egl_surface *dri2_surf = dri2_egl_surface(draw);
@@ -114,21 +121,20 @@ dri2_genode_create_pixmap_surface(_EGLDriver *drv, _EGLDisplay *disp,
 /*
  * platform functions
  */
-static struct dri2_egl_display_vtbl dri2_genode_swrast_display_vtbl = {
+static struct dri2_egl_display_vtbl dri2_genode_display_vtbl = {
 	.authenticate = NULL,
-	.create_window_surface = dri2_genode_swrast_create_window_surface,
+	.create_window_surface = dri2_genode_create_window_surface,
 	.create_pixmap_surface = dri2_genode_create_pixmap_surface,
 	.create_pbuffer_surface = dri2_fallback_create_pbuffer_surface,
 	.destroy_surface = dri2_genode_destroy_surface,
 	.create_image = dri2_fallback_create_image_khr,
 	.swap_interval = dri2_genode_swap_interval,
-	.swap_buffers = dri2_genode_swrast_swap_buffers,
+	.swap_buffers = dri2_genode_swap_buffers,
 	.swap_buffers_with_damage = dri2_fallback_swap_buffers_with_damage,
 	.swap_buffers_region = dri2_fallback_swap_buffers_region,
 	.post_sub_buffer = dri2_fallback_post_sub_buffer,
 	.copy_buffers = dri2_fallback_copy_buffers,
 	.query_buffer_age = dri2_fallback_query_buffer_age,
-	.create_wayland_buffer_from_image = dri2_fallback_create_wayland_buffer_from_image,
 	.get_sync_values = dri2_fallback_get_sync_values,
 	.get_dri_drawable = dri2_surface_get_dri_drawable,
 };
@@ -236,7 +242,7 @@ dri2_initialize_genode_swrast(_EGLDriver *drv, _EGLDisplay *disp)
 		return _eglError(EGL_BAD_ALLOC, "eglInitialize");
 
 	disp->DriverData = (void *)dri2_dpy;
-	dri2_dpy->vtbl   = &dri2_genode_swrast_display_vtbl;
+	dri2_dpy->vtbl   = &dri2_genode_display_vtbl;
 
 	dri2_dpy->fd = -1;
 	dri2_dpy->driver_name = strdup("swrast");
@@ -282,9 +288,88 @@ close_driver:
 }
 
 
+static __DRIbuffer *
+dri2_genode_get_buffers(__DRIdrawable * driDrawable,
+                        int *width, int *height,
+                        unsigned int *attachments, int count,
+                        int *out_count, void *loaderPrivate)
+{
+	_eglError(EGL_BAD_PARAMETER, "dri2_genode_get_buffers not implemented");
+	return NULL;
+}
+
+
+static void
+dri2_genode_flush_front_buffer(__DRIdrawable * driDrawable, void *loaderPrivate)
+{
+	_eglError(EGL_BAD_PARAMETER, "dri2_genode_flush_front_buffer not implemented");
+}
+
+
+static __DRIbuffer *
+dri2_genode_get_buffers_with_format(__DRIdrawable * driDrawable,
+                                    int *width, int *height,
+                                    unsigned int *attachments, int count,
+                                    int *out_count, void *loaderPrivate)
+{
+	_eglError(EGL_BAD_PARAMETER, "dri2_genode_get_buffers_with_format not implemented");
+	return NULL;
+}
+
+
+static EGLBoolean
+dri2_initialize_genode_dri2(_EGLDriver *drv, _EGLDisplay *disp)
+{
+	struct dri2_egl_display *dri2_dpy;
+
+	dri2_dpy = calloc(1, sizeof *dri2_dpy);
+	if (!dri2_dpy)
+		return _eglError(EGL_BAD_ALLOC, "eglInitialize");
+
+	dri2_dpy->fd          = -1;
+	dri2_dpy->driver_name = strdup("i965");
+
+	disp->DriverData = (void *)dri2_dpy;
+
+	if (!dri2_load_driver(disp))
+		goto cleanup_dpy;
+
+	dri2_dpy->dri2_major = 2;
+	dri2_dpy->dri2_minor = __DRI_DRI2_VERSION;
+	dri2_dpy->dri2_loader_extension.base.name = __DRI_DRI2_LOADER;
+	dri2_dpy->dri2_loader_extension.base.version = 3;
+	dri2_dpy->dri2_loader_extension.getBuffers = dri2_genode_get_buffers;
+	dri2_dpy->dri2_loader_extension.flushFrontBuffer = dri2_genode_flush_front_buffer;
+	dri2_dpy->dri2_loader_extension.getBuffersWithFormat = dri2_genode_get_buffers_with_format;
+
+
+	dri2_dpy->extensions[0] = &dri2_dpy->dri2_loader_extension.base;
+	dri2_dpy->extensions[1] = &image_lookup_extension.base;
+	dri2_dpy->extensions[2] = NULL;
+	
+	dri2_dpy->swap_available = (dri2_dpy->dri2_minor >= 2);
+	dri2_dpy->invalidate_available = (dri2_dpy->dri2_minor >= 3);
+
+	if (!dri2_create_screen(disp))
+		goto close_screen;
+
+	return EGL_TRUE;
+
+close_screen:
+	dlclose(dri2_dpy->driver);
+cleanup_dpy:
+	free(dri2_dpy);
+
+	return EGL_FALSE;
+}
+
+
 EGLBoolean dri2_initialize_genode(_EGLDriver *drv, _EGLDisplay *disp)
 {
-	dri2_initialize_genode_swrast(drv, disp);
+	if (!dri2_initialize_genode_dri2(drv, disp)) {
+		return  dri2_initialize_genode_swrast(drv, disp);
+	}
+
 	return EGL_TRUE;
 }
 
