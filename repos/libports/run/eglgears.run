@@ -124,6 +124,7 @@ set boot_modules {
 	libc.lib.so libm.lib.so pthread.lib.so
 	egl.lib.so mesa-11.lib.so stdcxx.lib.so
 	expat.lib.so glapi.lib.so swrast.lib.so
+	i965.lib.so drm.lib.so
 }
 
 lappend_if [have_spec       linux] boot_modules fb_sdl

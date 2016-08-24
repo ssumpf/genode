@@ -12,9 +12,15 @@ SRC_C = intel/intel_bufmgr.c \
         xf86drm.c xf86drmHash.c \
         xf86drmRandom.c
 
-SRC_CC = dummies.cc
+SRC_CC = dummies.cc ioctl.cc
 
 CC_OPT = -DHAVE_LIBDRM_ATOMIC_PRIMITIVES=1 -DO_CLOEXEC=0
+
+#
+# We rename 'ioctl' calls to 'genode_ioctl' calls, this way we are not required
+# to write a libc plugin for libdrm.
+#
+CC_C_OPT += -Dioctl=genode_ioctl
 
 vpath %.c  $(DRM_SRC_DIR)
 vpath %.cc $(LIB_DIR)
