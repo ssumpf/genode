@@ -20,4 +20,10 @@ void genode_blit(void const *src, unsigned src_w, void *dst, unsigned dst_w, int
 	blit(src, src_w, dst, dst_w, w, h);
 }
 
+/* defined in dde_linux intel */
+void start_framebuffer_driver(Genode::Env &env);
 
+int genode_start_intel_fb_drv()
+{
+	start_framebuffer_driver(*genode_env);
+}

@@ -3,6 +3,8 @@ LIBS         = libc
 DRM_SRC_DIR := $(call select_from_ports,drm)/src/lib/drm
 LIB_DIR      = $(REP_DIR)/src/lib/drm
 
+
+CC_OLEVEL = -O0
 INC_DIR += $(DRM_SRC_DIR)/include/drm $(LIB_DIR)/include \
            $(DRM_SRC_DIR)
 

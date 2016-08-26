@@ -282,9 +282,7 @@ init(void)
 int
 eglut_main(int argc, char *argv[])
 {
-	printf("WAIT\n");
-	wait_for_continue();
-   eglutInitWindowSize(300, 300);
+   eglutInitWindowSize(600, 600);
    eglutInitAPIMask(EGLUT_OPENGL_BIT);
    eglutInit(argc, argv);
 

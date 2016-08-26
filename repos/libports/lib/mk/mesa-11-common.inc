@@ -13,6 +13,7 @@ INC_DIR += $(MESA_SRC_DIR) \
            $(MESA_PORT_DIR)/src/gallium/include \
            $(LIB_DIR)/include
 
+CC_OLEVEL = -O0
 CC_OPT += -DHAVE_PTHREAD -D_XOPEN_SOURCE=600 -DDEFAULT_DRIVER_DIR=\"\ \"
 
 # vi: set ft=make :

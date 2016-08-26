@@ -6,7 +6,9 @@ extern "C" {
 }
 
 #include <window.h>
+#include <platform.h>
 
+Genode::Env *genode_env;
 
 struct Env
 {
@@ -107,6 +109,7 @@ namespace Component {
 	{
 		static Env e(env);
 		_e = &e;
+		genode_env = &env;
 
 		eglut_main(1, nullptr);
 	}

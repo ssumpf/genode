@@ -1,5 +1,5 @@
 SHARED_LIB = yes
-LIBS       = libc blit
+LIBS       = libc blit i965
 
 include $(REP_DIR)/lib/mk/mesa-11-common.inc
 
