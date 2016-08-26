@@ -1,6 +1,7 @@
 LX_CONTRIB_DIR := $(call select_from_ports,dde_linux)/src/lib/framebuffer/intel
 SRC_DIR         = $(REP_DIR)/src/lib/framebuffer/intel
 
+CC_OLEVEL = -O0
 LIBS    += intel_fb_include libc-setjmp blit
 
 SRC_C   :=

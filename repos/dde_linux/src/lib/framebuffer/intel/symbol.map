@@ -1,0 +1,10 @@
+{
+	global:
+
+		extern "C++" {
+			start_framebuffer_driver*;
+		};
+
+	local:
+		*;
+};

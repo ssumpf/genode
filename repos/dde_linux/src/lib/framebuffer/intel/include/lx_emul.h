@@ -2069,6 +2069,7 @@ struct drm_fb_helper { unsigned dummy; };
 #define trace_smbus_result(...)
 
 #define trace_switch_mm(...)
+#define tracepoint_synchronize_unregister(...)
 
 
 /**********************
