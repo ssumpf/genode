@@ -6,6 +6,13 @@
 #include <drm/drm_rect.h>
 #include <i915/i915_drv.h>
 
+unsigned long totalram_pages;
+
+void __set_current_state(int state_value)
+{
+	TRACE_AND_STOP;
+}
+
 bool access_ok(int access, void *addr, size_t size)
 {
 	TRACE_AND_STOP;
@@ -47,6 +54,26 @@ int add_uevent_var(struct kobj_uevent_env *env, const char *format, ...)
 	return -1;
 }
 
+void add_wait_queue(wait_queue_head_t *q, wait_queue_t *wait)
+{
+	TRACE_AND_STOP;
+}
+
+int agp_3_5_enable(struct agp_bridge_data *bridge)
+{
+	TRACE_AND_STOP;
+	return -1;
+}
+
+void agp_frontend_cleanup(void)
+{
+	TRACE_AND_STOP;
+}
+
+int agp_frontend_initialize(void)
+{
+	TRACE_AND_STOP;
+}
 
 int bitmap_weight(const unsigned long *src, unsigned int nbits)
 {
@@ -151,6 +178,37 @@ int dma_set_coherent_mask(struct device *dev, u64 mask)
 {
 	TRACE_AND_STOP;
 	return -1;
+}
+
+void driver_unregister(struct device_driver *drv)
+{
+	TRACE_AND_STOP;
+}
+
+void drm_bridge_disable(struct drm_bridge *bridge)
+{
+	TRACE_AND_STOP;
+}
+
+void drm_bridge_enable(struct drm_bridge *bridge)
+{
+	TRACE_AND_STOP;
+}
+
+void drm_bridge_mode_set(struct drm_bridge *bridge, struct drm_display_mode *mode,
+                         struct drm_display_mode *adjusted_mode)
+{
+	TRACE_AND_STOP;
+}
+
+void drm_bridge_post_disable(struct drm_bridge *bridge)
+{
+	TRACE_AND_STOP;
+}
+
+void drm_bridge_pre_enable(struct drm_bridge *bridge)
+{
+	TRACE_AND_STOP;
 }
 
 void dma_unmap_page(struct device *dev, dma_addr_t dma_address, size_t size, enum dma_data_direction direction)
@@ -278,6 +336,11 @@ struct drm_dma_handle *drm_pci_alloc(struct drm_device *dev, size_t size, size_t
 	return NULL;
 }
 
+void drm_pci_exit(struct drm_driver *driver, struct pci_driver *pdriver)
+{
+	TRACE_AND_STOP;
+}
+
 void drm_pci_free(struct drm_device *dev, struct drm_dma_handle * dmah)
 {
 	TRACE_AND_STOP;
@@ -345,6 +408,17 @@ void fb_set_suspend(struct fb_info *info, int state)
 	TRACE_AND_STOP;
 }
 
+void fence_put(struct fence *fence)
+{
+	TRACE_AND_STOP;
+}
+
+signed long fence_wait(struct fence *fence, bool intr)
+{
+	TRACE_AND_STOP;
+	return -1;
+}
+
 struct vm_area_struct *find_vma(struct mm_struct *mm, unsigned long addr)
 {
 	TRACE_AND_STOP;
@@ -364,6 +438,12 @@ void flush_workqueue(struct workqueue_struct *wq)
 void __free_pages(struct page *page, unsigned int order)
 {
 	TRACE_AND_STOP;
+}
+
+struct device *get_device(struct device *dev)
+{
+	TRACE_AND_STOP;
+	return NULL;
 }
 
 unsigned long __get_free_pages(gfp_t gfp_mask, unsigned int order)
@@ -503,6 +583,11 @@ int i915_gem_userptr_ioctl(struct drm_device *dev, void *data, struct drm_file *
 	return -1;
 }
 
+void i915_error_printf(struct drm_i915_error_state_buf *e, const char *f, ...)
+{
+	TRACE_AND_STOP;
+}
+
 void i915_get_extra_instdone(struct drm_device *dev, uint32_t *instdone)
 {
 	TRACE_AND_STOP;
@@ -521,6 +606,16 @@ int i915_save_state(struct drm_device *dev)
 }
 
 void i915_teardown_sysfs(struct drm_device *dev_priv)
+{
+	TRACE_AND_STOP;
+}
+
+void ida_destroy(struct ida *ida)
+{
+	TRACE_AND_STOP;
+}
+
+void ida_init(struct ida *ida)
 {
 	TRACE_AND_STOP;
 }
@@ -653,6 +748,11 @@ void io_schedule(void)
 	TRACE_AND_STOP;
 }
 
+void ips_link_to_i915_driver(void)
+{
+	TRACE_AND_STOP;
+}
+
 unsigned int jiffies_to_usecs(const unsigned long j)
 {
 	TRACE_AND_STOP;
@@ -689,7 +789,17 @@ void *memchr_inv(const void *s, int c, size_t n)
 	return NULL;
 }
 
+void memcpy_fromio(void *dst, const volatile void __iomem *src, size_t count)
+{
+	TRACE_AND_STOP;
+}
+
 void memcpy_toio(volatile void __iomem *dst, const void *src, size_t count)
+{
+	TRACE_AND_STOP;
+}
+
+void module_put(struct module *module)
 {
 	TRACE_AND_STOP;
 }
@@ -763,6 +873,12 @@ void pci_disable_msi(struct pci_dev *dev)
 }
 
 int pci_enable_device(struct pci_dev *dev)
+{
+	TRACE_AND_STOP;
+	return -1;
+}
+
+int pci_find_capability(struct pci_dev *dev, int cap)
 {
 	TRACE_AND_STOP;
 	return -1;
@@ -920,13 +1036,19 @@ void shmem_truncate_range(struct inode *inode, loff_t start, loff_t end)
 	TRACE_AND_STOP;
 }
 
+int signal_pending(struct task_struct *p)
+{
+	TRACE_AND_STOP;
+	return -1;
+}
+
 int signal_pending_state(long state, struct task_struct *p)
 {
 	TRACE_AND_STOP;
 	return -1;
 }
 
-int    strcmp(const char *s1, const char *s2)
+int strcmp(const char *s1, const char *s2)
 {
 	TRACE_AND_STOP;
 	return -1;
@@ -935,6 +1057,12 @@ int    strcmp(const char *s1, const char *s2)
 void sysfs_remove_link(struct kobject *kobj, const char *name)
 {
 	TRACE_AND_STOP;
+}
+
+int try_module_get(struct module *module)
+{
+	TRACE_AND_STOP;
+	return false;
 }
 
 int unregister_oom_notifier(struct notifier_block *nb)
@@ -955,6 +1083,11 @@ void unregister_shrinker(struct shrinker *s)
 }
 
 void up_read(struct rw_semaphore *sem)
+{
+	TRACE_AND_STOP;
+}
+
+void vfree(const void *addr)
 {
 	TRACE_AND_STOP;
 }
@@ -999,6 +1132,12 @@ int vscnprintf(char *buf, size_t size, const char *fmt, va_list args)
 {
 	TRACE_AND_STOP;
 	return -1;
+}
+
+void *vzalloc(unsigned long size)
+{
+	TRACE_AND_STOP;
+	return NULL;
 }
 
 int __wait_completion(struct completion *work, unsigned long to)
@@ -1074,6 +1213,39 @@ int pci_map_sg(struct pci_dev *hwdev, struct scatterlist *sg, int nents, int dir
 void pci_unmap_sg(struct pci_dev *hwdev, struct scatterlist *sg, int nents, int direction)
 {
 	TRACE_AND_STOP;
+}
+
+void put_device(struct device *dev)
+{
+	TRACE_AND_STOP;
+}
+
+size_t sg_copy_from_buffer(struct scatterlist *sgl, unsigned int nents,
+                           void *buf, size_t buflen)
+{
+	TRACE_AND_STOP;
+	return 0;
+}
+
+void SetPageReserved(struct page *page)
+{
+	TRACE_AND_STOP;
+}
+
+void static_key_slow_dec(struct static_key *key)
+{
+	TRACE_AND_STOP;
+}
+
+void static_key_slow_inc(struct static_key *key)
+{
+	TRACE_AND_STOP;
+}
+
+struct pid *task_pid(struct task_struct *task)
+{
+	TRACE_AND_STOP;
+	return NULL;
 }
 
 void *vmalloc(unsigned long size)
