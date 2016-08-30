@@ -29,6 +29,9 @@ proc gdb_initial_breakpoint_cmds { target_binary_name } {
 	# load the symbols of the test application
 	append gdb_cmds "-ex \"file bin/$target_binary_name\" "
 
+	# set a breakpoint in the application's 'main()' function
+	append gdb_cmds {-ex "b eglut_main" }
+
 	# set search path for "sharedlibrary" to bin
 	append gdb_cmds {-ex "set solib-search-path bin" }
 
