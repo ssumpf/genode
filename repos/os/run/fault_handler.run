@@ -1,0 +1,42 @@
+#
+# Build
+#
+
+build { core init test/fault_handler }
+
+create_boot_directory
+
+#
+# Generate config
+#
+
+install_config {
+<config>
+	<parent-provides>
+		<service name="PD"/>
+		<service name="CPU"/>
+		<service name="ROM"/>
+		<service name="RAM"/>
+		<service name="RM"/>
+		<service name="LOG"/>
+		<service name="IO_MEM"/>
+		<service name="IO_PORT"/>
+		<service name="IRQ"/>
+	</parent-provides>
+	<default-route>
+		<any-service> <parent/> <any-child/> </any-service>
+	</default-route>
+	<start name="pf-signal_handler">
+		<resource name="RAM" quantum="10M"/>
+	</start>
+</config>}
+
+#
+# Boot image
+#
+
+build_boot_image { core init pf-signal_handler }
+
+append qemu_args " -nographic "
+
+run_genode_until "pf-signal_handler ended.*\n" 15
