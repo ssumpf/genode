@@ -40,7 +40,7 @@ proc platform_drv_policy {} {
 			<policy label="usb_drv">  <pci class="USB"/> </policy>
 			<policy label="ahci_drv"> <pci class="AHCI"/> </policy>
 			<policy label="audio_drv"> <pci class="AUDIO"/> <pci class="HDAUDIO"/> </policy>
-			<policy label="intel_fb_drv" irq_mode="nomsi">
+			<policy label_suffix="gears" irq_mode="nomsi">
 				<pci class="VGA"/>
 				<pci bus="0" device="0" function="0"/>
 				<pci class="ISABRIDGE"/>
