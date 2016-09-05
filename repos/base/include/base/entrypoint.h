@@ -138,6 +138,14 @@ class Genode::Entrypoint : Genode::Noncopyable
 			_rpc_ep->dissolve(&_signal_proxy);
 		}
 
+		void dispatch_pending()
+		{
+			try {
+				Signal sig = _sig_rec->pending_signal();
+				_dispatch_signal(sig);
+			} catch (Signal_receiver::Signal_not_pending) { }
+		}
+
 		/**
 		 * Associate RPC object with the entry point
 		 */
