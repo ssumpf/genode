@@ -8,6 +8,11 @@ EGLUT_DIR = $(REP_DIR)/src/lib/mesa/eglut
 
 INC_DIR += $(EGLUT_DIR) $(REP_DIR)/src/lib/mesa/include
 
+# XXX: Remove
+INC_DIR += $(REP_DIR)/../dde_linux/src/lib/framebuffer/intel/include
+INC_DIR += $(REP_DIR)/../dde_linux/src/include
+LIBS += intel_fb
+
 vpath %.c  $(EGLUT_DIR)
 vpath %.cc $(EGLUT_DIR)
 
