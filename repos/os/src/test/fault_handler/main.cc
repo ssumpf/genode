@@ -12,28 +12,13 @@
 
 using namespace Genode;
 
-struct Faulting_thread : Thread
-{
-	Faulting_thread(Env &env)
-	:
-	Thread(env, "faulting thread", 8*1024)
-	{ }
-
-	void entry()
-	{
-		*((unsigned int*)0x1000) = 1;
-
-		log("Page fault handled.");
-	}
-};
 
 class Main
 {
 private:
 	Env                 &_env;
-	Signal_handler<Main> _sigh {_env.ep(), *this, &Main::_handle_fault};
-	/* as this is a prove of concept, create thread inline */
-	Faulting_thread      _fault_thread {_env};
+	Genode::Entrypoint   _fault_handle_ep { _env, 2 * 1024 * sizeof(long), "fault handler" };
+	Signal_handler<Main> _sigh {_fault_handle_ep, *this, &Main::_handle_fault};
 
 	void _handle_fault()
 	{
@@ -53,7 +38,6 @@ private:
 		Dataspace_capability ds = _env.ram().alloc(4096);
 		// Attaching dataspace to the pagefault address and page-aligned
 		_env.rm().attach_at(ds, state.addr & ~(4096 - 1));
-		log("--- pf-signal_handler ended ---");
 	}
 
 public:
@@ -66,13 +50,9 @@ public:
 		// Assigning pagefault handler to address space
 		_env.rm().fault_handler(_sigh);
 
-		/* start thread which will eventually fault */
-		_fault_thread.start();
+		*((unsigned int*)0x1000) = 1;
 
-		/*
-		 * Return to entry point code that waits for RPC (which is the way signals are
-		 * delivered to the EP
-		 */
+		log("--- pf-signal_handler ended ---");
 	}
 };
 
