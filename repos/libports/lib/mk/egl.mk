@@ -28,6 +28,10 @@ CC_OPT  += -D_EGL_NATIVE_PLATFORM=_EGL_PLATFORM_GENODE -D_EGL_BUILT_IN_DRIVER_DR
 INC_DIR += $(MESA_PORT_DIR)/src/egl/main \
            $(MESA_PORT_DIR)/src/egl/drivers/dri2
 
+# XXX: Remove
+INC_DIR += $(REP_DIR)/../dde_linux/src/lib/framebuffer/intel/include
+INC_DIR += $(REP_DIR)/../dde_linux/src/include
+
 vpath %.c  $(MESA_PORT_DIR)/src/egl
 vpath %.c  $(LIB_DIR)/egl
 vpath %.cc $(LIB_DIR)/egl

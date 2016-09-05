@@ -90,6 +90,7 @@ class Framebuffer::Session_component : public Genode::Rpc_object<Session>
 		Genode::Ram_session                 &_ram;
 		Genode::Attached_ram_dataspace       _ds;
 		bool                                 _in_mode_change = true;
+		bool                                 _ready = false;
 
 		unsigned long _polling_from_config() {
 			return _config.xml().attribute_value<unsigned long>("poll", 0); }
@@ -114,8 +115,10 @@ class Framebuffer::Session_component : public Genode::Rpc_object<Session>
 
 			_driver.update_mode();
 
+			PDBG("CONFIG CHANGE w: %d h: %d session %p", _driver.width(), _driver.height(), this);
 			if (_mode_sigh.valid())
 				Genode::Signal_transmitter(_mode_sigh).submit();
+			else PDBG("not valid");
 		}
 
 		Genode::Xml_node config() { return _config.xml(); }
@@ -136,6 +139,7 @@ class Framebuffer::Session_component : public Genode::Rpc_object<Session>
 			return Mode(_driver.width(), _driver.height(), Mode::RGB565); }
 
 		void mode_sigh(Genode::Signal_context_capability sigh) override {
+			PDBG("MODE SIGH valid %u session %p", sigh.valid(), this);
 			_mode_sigh = sigh; }
 
 		void sync_sigh(Genode::Signal_context_capability sigh) override
@@ -188,5 +192,7 @@ struct Framebuffer::Root
 	                         Genode::Single_client>(env.ep(), alloc),
 	  session(env, config) { }
 };
+
+Framebuffer::Session_component *root_session();
 
 #endif /* __COMPONENT_H__ */

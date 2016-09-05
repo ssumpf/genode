@@ -26,4 +26,5 @@ void start_framebuffer_driver(Genode::Env &env);
 int genode_start_intel_fb_drv()
 {
 	start_framebuffer_driver(*genode_env);
+	return 1;
 }

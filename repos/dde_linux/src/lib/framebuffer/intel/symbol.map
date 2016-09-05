@@ -3,6 +3,8 @@
 
 		extern "C++" {
 			start_framebuffer_driver*;
+			Framebuffer::Driver::_poll*;
+			root_session*;
 		};
 
 	local:

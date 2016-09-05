@@ -38,6 +38,9 @@ static void run_linux(void * m);
 
 unsigned long jiffies;
 
+struct Main;
+
+Main *static_main;
 
 struct Main
 {
@@ -74,12 +77,15 @@ struct Main
 		linux.construct(run_linux, reinterpret_cast<void*>(this),
 		                "linux", Lx::Task::PRIORITY_0, Lx::scheduler());
 
+		static_main = this;
+
 		/* give all task a first kick before returning */
 		Lx::scheduler().schedule();
 	}
 
 	void announce() { env.parent().announce(ep.manage(root)); }
 };
+
 
 
 struct Policy_agent
@@ -96,6 +102,14 @@ struct Policy_agent
 	Policy_agent(Main &m)
 	: main(m), sd(main.ep, *this, &Policy_agent::handle) {}
 };
+
+
+Framebuffer::Session_component *root_session()
+{
+	if (!static_main)
+		PWRN("Main is NULL");
+	return &static_main->root.session;
+}
 
 
 static void run_linux(void * m)
@@ -118,4 +132,5 @@ static void run_linux(void * m)
 
 
 void start_framebuffer_driver(Genode::Env &env) {
-	static Main main (env); }
+	static Main main (env); 
+}
