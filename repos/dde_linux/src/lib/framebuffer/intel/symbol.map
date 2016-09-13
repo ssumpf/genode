@@ -5,6 +5,9 @@
 			start_framebuffer_driver*;
 			Framebuffer::Driver::_poll*;
 			root_session*;
+			gpu_driver*;
+			Lx::scheduler*;
+			Lx::Task*;
 		};
 
 	local:

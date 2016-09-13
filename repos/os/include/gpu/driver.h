@@ -24,6 +24,7 @@ class Gpu_driver
 {
 	public:
 
+#if 0
 		class Client;
 
 		/**
@@ -35,14 +36,15 @@ class Gpu_driver
 		 * Return PCI device ID of GPU
 		 */
 		virtual uint16_t device_id() = 0;
+#endif
 
 		/**
 		 * Perform operation of GPU device
 		 *
 		 * \param request  ioctl opcode relative to 'DRM_COMMAND_BASE'
 		 */
-		virtual int ioctl(Client *client, int request, void *arg) = 0;
-
+		virtual int ioctl(int request, void *arg) = 0;
+#if 0
 		/**
 		 * Map buffer object to local address space
 		 *
@@ -57,11 +59,12 @@ class Gpu_driver
 		 * \param handle  client-local buffer-object handle
 		 */
 		virtual void unmap_buffer_object(Client *client, long handle) = 0;
+#endif
 };
 
 /**
  * Obtain GPU driver interface
  */
-Gpu_driver *gpu_driver();
+Gpu_driver &gpu_driver();
 
 #endif /* _GPU__DRIVER_H_ */

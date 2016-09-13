@@ -8,7 +8,12 @@ extern "C" {
 #include <window.h>
 #include <platform.h>
 
+//XXX: dde_linux internals, remove
+#include <lx_kit/scheduler.h>
+
 Genode::Env *genode_env;
+Lx::Task    *event_loop_task;
+
 
 struct Env
 {
@@ -28,7 +33,7 @@ void _eglutNativeInitDisplay()
 	_eglut->surface_type = EGL_WINDOW_BIT;
 }
 
-
+#if 0
 void Window::sync_handler()
 {
 	struct eglut_window *win =_eglut->current;
@@ -46,6 +51,14 @@ void Window::sync_handler()
 
 	eglSwapBuffers(_eglut->dpy, win->surface);
 }
+#endif
+
+void Window::sync_handler()
+{
+	PDBG("SYNC");
+	event_loop_task->unblock();
+	Lx::scheduler().schedule();
+}
 
 
 void Window::mode_handler()
@@ -62,6 +75,7 @@ void Window::mode_handler()
 
 	if (win->reshape_cb)
 		win->reshape_cb(win->native.width, win->native.height);
+
 	update();
 }
 
@@ -94,7 +108,7 @@ void _eglutNativeEventLoop()
 	static unsigned long count = 0;
 	while (true) {
 		//_e->env.ep().wait_and_dispatch_one_signal();
-		_e->env.ep().dispatch_pending();
+		//_e->env.ep().dispatch_pending();
 
 		struct eglut_window *win =_eglut->current;
 
@@ -107,8 +121,15 @@ void _eglutNativeEventLoop()
 			win->display_cb();
 
 		PDBG("event %u", initialized);
+
 		if (initialized)
 			eglSwapBuffers(_eglut->dpy, win->surface);
+
+		/* needed for task scheduling */
+		Window *native = (Window*)win->native.u.window;
+		Genode::Signal_transmitter(native->sync_dispatcher).submit();
+		PDBG("block");
+		Lx::scheduler().current()->block_and_schedule();
 	}
 }
 
@@ -119,9 +140,32 @@ void _eglutNativeEventLoop()
 extern "C" int eglut_main(int argc, char *argv[]);
 
 
+void run_task(void * /* data */)
+{
+	PDBG("START task");
+	/* wait for signal from intel driver */
+	Lx::scheduler().current()->block_and_schedule();
+	eglut_main(1, nullptr);
+}
+
+
+void start_framebuffer_driver(Genode::Env &env, Lx::Task &task, Genode::Signal_context_capability);
 /*
  * Use as component, so signals can be dispatched easily
  */
+
+struct Signal_schedule_helper
+{
+	Genode::Signal_handler<Signal_schedule_helper> handler;
+
+	Signal_schedule_helper(Genode::Entrypoint &ep)
+	: handler(ep, *this, &Signal_schedule_helper::dispatch) { }
+
+	void dispatch() {
+		Lx::scheduler().schedule(); }
+};
+
+
 namespace Component {
 	Genode::size_t stack_size()      { return  4096 * sizeof(long); }
 
@@ -131,6 +175,19 @@ namespace Component {
 		_e = &e;
 		genode_env = &env;
 
-		eglut_main(1, nullptr);
+		static Signal_schedule_helper startup_helper(env.ep());
+
+		PDBG("CREATE TASK");
+		static Lx::Task task(run_task, nullptr, "eglut_main", Lx::Task::PRIORITY_0,
+		                     Lx::scheduler());
+
+		PDBG("START DRIVER");
+		PDBG("EGL TASK: %p", &task);
+		//XXX: remove me
+		start_framebuffer_driver(env, task, startup_helper.handler);
+		event_loop_task = &task;
+		PDBG("Schedule");
+		Lx::scheduler().schedule();
+		PDBG("CONSTRUCTED");
 	}
 }

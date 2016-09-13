@@ -27,6 +27,7 @@
 #include <os/attached_rom_dataspace.h>
 #include <blit/blit.h>
 
+#include <gpu/driver.h>
 #include <lx_emul_c.h>
 
 namespace Framebuffer {
@@ -36,7 +37,7 @@ namespace Framebuffer {
 }
 
 
-class Framebuffer::Driver
+class Framebuffer::Driver : public Gpu_driver
 {
 	private:
 
@@ -71,6 +72,7 @@ class Framebuffer::Driver
 		void set_polling(unsigned long poll);
 		void update_mode();
 		void generate_report();
+		int ioctl(int request, void *arg) override;
 };
 
 

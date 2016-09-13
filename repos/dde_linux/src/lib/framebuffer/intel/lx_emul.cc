@@ -246,6 +246,54 @@ void Framebuffer::Driver::generate_report()
 }
 
 
+extern struct drm_ioctl_desc i915_ioctls[];
+extern int i915_max_ioctl;
+
+#if 0
+struct ioctl_data {
+	int         request;
+	drm_device *dev;
+	void       *arg;
+	int         result;
+};
+
+extern "C" void ioctl_work(work_struct *work)
+{
+	PDBG("call %p", work->data);
+	ioctl_data *data = (ioctl_data *)work->data.counter;
+	data->result= i915_ioctls[data->request].func(data->dev, data->arg, nullptr);
+	PDBG("finished");
+}
+#endif
+
+int Framebuffer::Driver::ioctl(int request, void *arg)
+{
+	PDBG("request %d", request);
+	if (request < 0 || request >= i915_max_ioctl) {
+		Genode::error("invalid request, request=", Genode::Hex(request));
+		return -1;
+	}
+
+	/* execute in system work queue */
+	//ioctl_data work_data { request, lx_drm_device, arg, 0 };
+	//work_struct work { atomic_long_t { (long) &work_data }, ioctl_work };
+
+	PDBG("call ioctl");
+	//schedule_work(&work);
+	//Lx::scheduler().current()->block_and_schedule();
+	int ret = i915_ioctls[request].func(lx_drm_device, arg, nullptr);
+	PDBG("finished ioctl");
+
+	return ret;
+}
+
+
+Gpu_driver &gpu_driver()
+{
+	return root_session()->driver();
+}
+
+
 extern "C" {
 
 /**********************
