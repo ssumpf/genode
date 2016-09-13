@@ -334,8 +334,10 @@ dri2_initialize_genode_dri2(_EGLDriver *drv, _EGLDisplay *disp)
 	if (!dri2_load_driver(disp))
 		goto cleanup_dpy;
 
+/* XXX: uncomment me
 	if (!genode_start_intel_fb_drv())
 		goto cleanup_dpy;
+*/
 
 	dri2_dpy->dri2_major = 2;
 	dri2_dpy->dri2_minor = __DRI_DRI2_VERSION;
@@ -369,10 +371,6 @@ cleanup_dpy:
 
 EGLBoolean dri2_initialize_genode(_EGLDriver *drv, _EGLDisplay *disp)
 {
-	genode_start_intel_fb_drv();
-	dri2_initialize_genode_swrast(drv, disp);
-	return EGL_TRUE;
-
 	if (!dri2_initialize_genode_dri2(drv, disp)) {
 		return  dri2_initialize_genode_swrast(drv, disp);
 	}
