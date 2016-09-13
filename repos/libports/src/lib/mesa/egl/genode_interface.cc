@@ -3,6 +3,8 @@
 #include <blit/blit.h>
 #include <window.h>
 
+#include <base/log.h>
+
 extern "C" {
 #include <platform.h>
 }
@@ -21,10 +23,11 @@ void genode_blit(void const *src, unsigned src_w, void *dst, unsigned dst_w, int
 }
 
 /* defined in dde_linux intel */
-void start_framebuffer_driver(Genode::Env &env);
+//void start_framebuffer_driver(Genode::Env &env);
 
 int genode_start_intel_fb_drv()
 {
-	start_framebuffer_driver(*genode_env);
+	//start_framebuffer_driver(*genode_env);
+	Genode::error(__func__, "not implemented");
 	return 1;
 }

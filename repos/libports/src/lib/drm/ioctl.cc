@@ -4,6 +4,7 @@ extern "C" {
 }
 
 #include <base/printf.h>
+#include <gpu/driver.h>
 
 enum { verbose_ioctl = true };
 
@@ -80,5 +81,5 @@ extern "C" int genode_ioctl(int fd, unsigned long request, void *arg)
 	if (verbose_ioctl)
 		dump_ioctl(request);
 
-	return 0;
+	return gpu_driver().ioctl(drm_command(request), arg);
 }

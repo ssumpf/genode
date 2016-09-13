@@ -1,0 +1,131 @@
+set build_components {
+	core init
+	drivers/timer
+	test/eglgears
+	lib/mesa/swrast
+	drivers/nic
+	server/tcp_terminal
+	app/gdb_monitor
+}
+
+source ${genode_dir}/repos/base/run/platform_drv.inc
+append_platform_drv_build_components
+
+build $build_components
+
+create_boot_directory
+
+set config {
+<config>
+	<parent-provides>
+		<service name="ROM"/>
+		<service name="RAM"/>
+		<service name="IRQ"/>
+		<service name="IO_MEM"/>
+		<service name="IO_PORT"/>
+		<service name="PD"/>
+		<service name="RM"/>
+		<service name="CPU"/>
+		<service name="LOG"/>
+	</parent-provides>
+	<default-route>
+		<any-service> <parent/> <any-child/> </any-service>
+	</default-route>
+}
+
+append_platform_drv_config
+
+append config {
+	<start name="timer">
+		<resource name="RAM" quantum="1M"/>
+		<provides><service name="Timer"/></provides>
+	</start>
+	<start name="nic_drv">
+		<resource name="RAM" quantum="4M"/>
+		<provides> <service name="Nic"/> </provides>
+	</start>
+	<start name="tcp_terminal">
+		<resource name="RAM" quantum="2560K"/>
+		<provides> <service name="Terminal"/> </provides>
+		<config ld_verbose="yes">
+			<policy label="gdb_monitor" port="5555"/>
+			<libc stdout="/dev/log">
+				<vfs> <dir name="dev"> <log/> </dir> </vfs>
+			</libc>
+		</config>
+	</start>
+	<start name="gdb_monitor">
+		<resource name="RAM" quantum="128M" />
+		<config>
+			<target name="gears">
+				<config ld_verbose="true">
+					<libc stdout="/dev/log" stderr="/dev/log">
+						<vfs> <dir name="dev"> <log/> </dir> </vfs>
+					</libc>
+				</config>
+			</target>
+			<preserve name="RAM" quantum="10M"/>
+			<libc stdout="/dev/log" stderr="/dev/log">
+				<vfs> <dir name="dev"> <log/> </dir> </vfs>
+			</libc>
+		</config>
+		<route>
+			<any-service> <parent /> <any-child/> </any-service>
+		</route>
+	</start>
+</config>
+}
+
+install_config $config
+
+set boot_modules {
+	core init ld.lib.so timer
+	gears
+	libc.lib.so libm.lib.so pthread.lib.so
+	egl.lib.so mesa-11.lib.so stdcxx.lib.so
+	expat.lib.so glapi.lib.so swrast.lib.so
+	i965.lib.so drm.lib.so intel_fb.lib.so
+	libc_terminal.lib.so gdb_monitor tcp_terminal
+	nic_drv libc_pipe.lib.so lwip.lib.so
+}
+
+append_platform_drv_boot_modules
+
+build_boot_image $boot_modules
+
+append qemu_args " -m 768 -nographic"
+append qemu_args " -net user -redir tcp:5555::5555"
+append_if [have_spec x86] qemu_args " -net nic,model=e1000 "
+append_if [have_spec lan9118] qemu_args " -net nic,model=lan9118 "
+
+append qemu_args " -m 768 -nographic"
+append qemu_args " -net user -redir tcp:5555::5555"
+append_if [have_spec x86] qemu_args " -net nic,model=e1000 "
+append_if [have_spec lan9118] qemu_args " -net nic,model=lan9118 "
+
+set local_port 5555
+source ${genode_dir}/repos/ports/run/gdb_monitor.inc
+
+set gdb_target_binary "gears"
+
+# sequence of GDB commands to execute at startup
+set gdb_cmds ""
+append gdb_cmds "-ex \"target remote 10.0.0.30:$local_port\" "
+
+#append gdb_cmds "-ex \"b main\" "
+append gdb_cmds [gdb_main_breakpoint_cmds $gdb_target_binary]
+
+
+# ask the user for confirmations again
+append gdb_cmds {-ex "set interactive-mode auto" }
+
+puts "command: [gdb] bin/$gdb_target_binary $gdb_cmds"
+
+run_genode_until {.*got IP address.*} 50
+
+exec [terminal] -e "[gdb] bin/ld.lib.so $gdb_cmds" &
+
+interact -i [output_spawn_id]
+
+
+# vi: set ft=tcl :
