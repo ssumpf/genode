@@ -124,12 +124,6 @@ size_t copy_from_user(void *to, void const *from, size_t len)
 	return -1;
 }
 
-size_t copy_to_user(void *dst, void const *src, size_t len)
-{
-	TRACE_AND_STOP;
-	return -1;
-}
-
 void cpufreq_cpu_put(struct cpufreq_policy *policy)
 {
 	TRACE_AND_STOP;
@@ -266,11 +260,6 @@ int drm_gem_dumb_destroy(struct drm_file *file, struct drm_device *dev, uint32_t
 	return -1;
 }
 
-int drm_gem_handle_create(struct drm_file *file_priv, struct drm_gem_object *obj, u32 *handlep)
-{
-	TRACE_AND_STOP;
-	return -1;
-}
 
 int drm_gem_mmap(struct file *filp, struct vm_area_struct *vma)
 {
@@ -280,6 +269,7 @@ int drm_gem_mmap(struct file *filp, struct vm_area_struct *vma)
 
 struct drm_gem_object *drm_gem_object_lookup(struct drm_device *dev, struct drm_file *filp, u32 handle)
 {
+	lx_printf("%s: id %u\n", __func__, handle);
 	TRACE_AND_STOP;
 	return NULL;
 }
@@ -525,18 +515,6 @@ int i915_gem_execbuffer(struct drm_device *dev, void *data, struct drm_file *fil
 }
 
 int i915_gem_execbuffer2(struct drm_device *dev, void *data, struct drm_file *file_priv)
-{
-	TRACE_AND_STOP;
-	return -1;
-}
-
-int i915_gem_get_tiling(struct drm_device *dev, void *data, struct drm_file *file)
-{
-	TRACE_AND_STOP;
-	return -1;
-}
-
-int i915_gem_set_tiling(struct drm_device *dev, void *data, struct drm_file *file)
 {
 	TRACE_AND_STOP;
 	return -1;

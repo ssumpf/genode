@@ -268,7 +268,6 @@ extern "C" void ioctl_work(work_struct *work)
 
 int Framebuffer::Driver::ioctl(int request, void *arg)
 {
-	PDBG("request %d", request);
 	if (request < 0 || request >= i915_max_ioctl) {
 		Genode::error("invalid request, request=", Genode::Hex(request));
 		return -1;
@@ -278,7 +277,7 @@ int Framebuffer::Driver::ioctl(int request, void *arg)
 	//ioctl_data work_data { request, lx_drm_device, arg, 0 };
 	//work_struct work { atomic_long_t { (long) &work_data }, ioctl_work };
 
-	PDBG("call ioctl");
+	PDBG("request %d func %p", request, i915_ioctls[request].func);
 	//schedule_work(&work);
 	//Lx::scheduler().current()->block_and_schedule();
 	int ret = i915_ioctls[request].func(lx_drm_device, arg, nullptr);
@@ -437,6 +436,7 @@ int idr_alloc(struct idr *idp, void *ptr, int start, int end, gfp_t gfp_mask)
 	if (id > max) return -ENOSPC;
 
 	ASSERT(id >= start);
+	PDBG("ALLOC ID: %d", id);
 	return id;
 }
 
@@ -995,6 +995,21 @@ void drm_gem_object_release(struct drm_gem_object *obj)
 	kfree(obj->filp->f_inode->i_mapping);
 	kfree(obj->filp->f_inode);
 	kfree(obj->filp);
+}
+
+
+int drm_gem_handle_create(struct drm_file *file_priv, struct drm_gem_object *obj, u32 *handlep)
+{
+	int ret = idr_alloc(&file_priv->object_idr, obj, 1, 0, GFP_KERNEL);
+	if (ret < 0)
+		return ret;
+
+	*handlep = ret;
+
+	/* implement when necessary */
+	ASSERT(!obj->dev->driver->gem_open_object);
+
+	return 0;
 }
 
 
@@ -1742,6 +1757,17 @@ int intel_logical_rings_init(struct drm_device *dev)
 int intel_guc_ucode_load(struct drm_device *dev)
 {
 	TRACE;
+	return 0;
+}
+
+
+/*******************
+ ** asm/uaccess.h **
+ *******************/
+
+size_t copy_to_user(void *dst, void const *src, size_t len)
+{
+	Genode::memcpy(dst, src, len);
 	return 0;
 }
 

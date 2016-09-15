@@ -8,7 +8,7 @@
 #ifndef _LX_EMUL_C_H_
 #define _LX_EMUL_C_H_
 
-#if 0
+#if 1
 #define TRACE \
 	do { \
 		lx_printf("%s not implemented\n", __func__); \
