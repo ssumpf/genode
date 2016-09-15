@@ -6,6 +6,7 @@ extern "C" {
 #include <base/printf.h>
 #include <gpu/driver.h>
 
+#include <os/backtrace.h>
 enum { verbose_ioctl = true };
 
 

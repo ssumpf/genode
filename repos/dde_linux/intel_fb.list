@@ -30,6 +30,7 @@ linux-x.x.x/drivers/gpu/drm/i915/i915_gem_gtt.c
 linux-x.x.x/drivers/gpu/drm/i915/i915_gem_gtt.h
 linux-x.x.x/drivers/gpu/drm/i915/i915_gem_render_state.h
 linux-x.x.x/drivers/gpu/drm/i915/i915_gem_stolen.c
+linux-x.x.x/drivers/gpu/drm/i915/i915_gem_tiling.c
 linux-x.x.x/drivers/gpu/drm/i915/i915_guc_reg.h
 linux-x.x.x/drivers/gpu/drm/i915/i915_irq.c
 linux-x.x.x/drivers/gpu/drm/i915/i915_reg.h
