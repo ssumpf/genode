@@ -293,38 +293,55 @@ void *memmove(void *d, const void *s, size_t n)
  ** linux/sched.h **
  *******************/
 
-static Genode::Signal_receiver *_sig_rec;
-
-
-void Lx::event_init(Genode::Signal_receiver &sig_rec)
-{
-	_sig_rec = &sig_rec;
-}
-
-
 struct Timeout : Genode::Signal_dispatcher<Timeout>
 {
-	void handle(unsigned) { update_jiffies(); }
+	Genode::Signal_receiver &sig_rec;
 
-	Timeout(Timer::Session_client &timer, signed long msec)
-	: Signal_dispatcher<Timeout>(*_sig_rec, *this, &Timeout::handle)
+	Timer::Connection timer;
+
+	void handle(unsigned)
 	{
-		if (msec > 0) {
-			timer.sigh(*this);
-			timer.trigger_once(msec*1000);
-		}
+		update_jiffies();
+	}
+
+	Timeout(Genode::Signal_receiver &sig_rec)
+	:
+		Signal_dispatcher<Timeout>(sig_rec, *this, &Timeout::handle),
+		sig_rec(sig_rec)
+	{
+		timer.sigh(*this);
+	}
+
+	void schedule(signed long msec)
+	{
+		timer.trigger_once(msec * 1000);
+	}
+
+	void wait()
+	{
+		Genode::Signal s = sig_rec.wait_for_signal();
+		static_cast<Genode::Signal_dispatcher_base *>(s.context())->dispatch(s.num());
 	}
 };
 
 
-static void wait_for_timeout(signed long timeout)
-{
-	static Timer::Connection timer;
-	Timeout to(timer, timeout);
+static Timeout *_timeout;
 
-	/* dispatch signal */
-	Genode::Signal s = _sig_rec->wait_for_signal();
-	static_cast<Genode::Signal_dispatcher_base *>(s.context())->dispatch(s.num());
+
+void Lx::event_init(Genode::Signal_receiver &sig_rec)
+{
+	static Timeout handler(sig_rec);
+	_timeout = &handler;
+}
+
+
+signed long schedule_timeout(signed long timeout)
+{
+	long start = jiffies;
+	_timeout->schedule(timeout);
+	_timeout->wait();
+	timeout -= jiffies - start;
+	return timeout < 0 ? 0 : timeout;
 }
 
 
@@ -333,19 +350,9 @@ long schedule_timeout_uninterruptible(signed long timeout)
 	return schedule_timeout(timeout);
 }
 
-
-signed long schedule_timeout(signed long timeout)
-{
-	long start = jiffies;
-	wait_for_timeout(timeout);
-	timeout -= jiffies - start;
-	return timeout < 0 ? 0 : timeout;
-}
-
-
 void poll_wait(struct file * filp, wait_queue_head_t * wait_address, poll_table *p)
 {
-	wait_for_timeout(0);
+	_timeout->wait();
 }
 
 
