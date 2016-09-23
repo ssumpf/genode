@@ -267,12 +267,6 @@ int drm_gem_mmap(struct file *filp, struct vm_area_struct *vma)
 	return -1;
 }
 
-struct drm_gem_object *drm_gem_object_lookup(struct drm_device *dev, struct drm_file *filp, u32 handle)
-{
-	lx_printf("%s: id %u\n", __func__, handle);
-	TRACE_AND_STOP;
-	return NULL;
-}
 
 int drm_gem_prime_fd_to_handle(struct drm_device *dev, struct drm_file *file_priv, int prime_fd, uint32_t *handle)
 {
