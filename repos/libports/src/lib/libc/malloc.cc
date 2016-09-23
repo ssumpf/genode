@@ -121,22 +121,24 @@ class Malloc : public Genode::Allocator
 			 * the subsequent address. This way, we can retrieve
 			 * the size information when freeing the block.
 			 */
-			unsigned long real_size = size + sizeof(Block_header);
-			unsigned long msb = _slab_log2(real_size);
+			unsigned long real_size = size + (2 * sizeof(Block_header));
+//			unsigned long msb = _slab_log2(real_size);
 			void *addr = 0;
 
 			/* use backing store if requested memory is larger than largest slab */
-			if (msb > SLAB_STOP) {
+//			if (msb > SLAB_STOP) {
 
 				if (!(_backing_store->alloc(real_size, &addr)))
 					return false;
+#if 0
 			}
 			else
 				if (!(addr = _allocator[msb - SLAB_START]->alloc()))
 					return false;
 
+#endif
 			*(Block_header *)addr = real_size;
-			*out_addr = (Block_header *)addr + 1;
+			*out_addr = (Block_header *)addr + 2;
 			return true;
 		}
 
@@ -144,15 +146,15 @@ class Malloc : public Genode::Allocator
 		{
 			Genode::Lock::Guard lock_guard(_lock);
 
-			unsigned long *addr = ((unsigned long *)ptr) - 1;
+			unsigned long *addr = ((unsigned long *)ptr) - 2;
 			unsigned long  real_size = *addr;
 
-			if (real_size > (1U << SLAB_STOP))
+//			if (real_size > (1U << SLAB_STOP))
 				_backing_store->free(addr, real_size);
-			else {
-				unsigned long msb = _slab_log2(real_size);
-				_allocator[msb - SLAB_START]->free(addr);
-			}
+//			else {
+//				unsigned long msb = _slab_log2(real_size);
+//				_allocator[msb - SLAB_START]->free(addr);
+//			}
 		}
 
 		size_t overhead(size_t size) const override
