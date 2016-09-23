@@ -419,6 +419,7 @@ void idr_init(struct idr *idp)
 	Genode::memset(idp, 0, sizeof(struct idr));
 }
 
+
 static Genode::Bit_allocator<1024> id_allocator;
 
 int idr_alloc(struct idr *idp, void *ptr, int start, int end, gfp_t gfp_mask)
@@ -998,11 +999,56 @@ void drm_gem_object_release(struct drm_gem_object *obj)
 }
 
 
+class Gem_object_handle : public Genode::Avl_node<Gem_object_handle>
+{
+	private:
+
+		long            _id;
+		drm_gem_object *_obj;
+
+	public:
+
+		/**
+		 * Constructor
+		 */
+		Gem_object_handle(long id, drm_gem_object *obj) :
+			_id(id), _obj(obj) { }
+
+		/**
+		 * Accessor
+		 */
+		long id() { return _id; }
+
+		/**
+		 * Strict order criterion of the nodes in the tree
+		 */
+		bool higher(Gem_object_handle *n1) { return (n1->_id > _id); }
+
+		/**
+		 * Look up ID from tree
+		 */
+		Gem_object_handle *find_by_id(int id)
+		{
+			if (id == _id) return this;
+			Gem_object_handle *n = child(id > _id);
+			return n ? n->find_by_id(id) : 0;
+		}
+
+		drm_gem_object *gem_object() const { return _obj; }
+};
+
+
+static Genode::Avl_tree<Gem_object_handle> gem_object_handles;
+
 int drm_gem_handle_create(struct drm_file *file_priv, struct drm_gem_object *obj, u32 *handlep)
 {
 	int ret = idr_alloc(&file_priv->object_idr, obj, 1, 0, GFP_KERNEL);
 	if (ret < 0)
 		return ret;
+
+
+	Gem_object_handle *gem = new (Lx::Malloc::mem()) Gem_object_handle(ret, obj);
+	gem_object_handles.insert(gem);
 
 	*handlep = ret;
 
@@ -1010,6 +1056,17 @@ int drm_gem_handle_create(struct drm_file *file_priv, struct drm_gem_object *obj
 	ASSERT(!obj->dev->driver->gem_open_object);
 
 	return 0;
+}
+
+
+struct drm_gem_object *drm_gem_object_lookup(struct drm_device *dev, struct drm_file *filp, u32 handle)
+{
+	PDBG("%s: id %u\n", __func__, handle);
+
+	Gem_object_handle *gem = gem_object_handles.first();
+	gem = gem ? gem->find_by_id(handle) : 0;
+
+	return gem ? gem->gem_object() : nullptr;
 }
 
 
