@@ -110,7 +110,7 @@ set gdb_target_binary "gears"
 
 # sequence of GDB commands to execute at startup
 set gdb_cmds ""
-append gdb_cmds "-ex \"target remote 10.0.0.30:$local_port\" "
+append gdb_cmds "-ex \"target remote 10.0.0.83:$local_port\" "
 
 #append gdb_cmds "-ex \"b main\" "
 append gdb_cmds [gdb_main_breakpoint_cmds $gdb_target_binary]
