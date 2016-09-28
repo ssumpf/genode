@@ -12,7 +12,9 @@ linux-4.4.3/drivers/gpu/drm/drm_crtc_internal.h
 linux-4.4.3/drivers/gpu/drm/drm_dp_helper.c
 linux-4.4.3/drivers/gpu/drm/drm_edid.c
 linux-4.4.3/drivers/gpu/drm/drm_internal.h
+linux-4.4.3/drivers/gpu/drm/drm_ioctl.c
 linux-4.4.3/drivers/gpu/drm/drm_irq.c
+linux-4.4.3/drivers/gpu/drm/drm_legacy.h
 linux-4.4.3/drivers/gpu/drm/drm_mm.c
 linux-4.4.3/drivers/gpu/drm/drm_modes.c
 linux-4.4.3/drivers/gpu/drm/drm_modeset_lock.c
@@ -86,6 +88,7 @@ linux-4.4.3/include/drm/drmP.h
 linux-4.4.3/include/drm/drm_agpsupport.h
 linux-4.4.3/include/drm/drm_atomic.h
 linux-4.4.3/include/drm/drm_atomic_helper.h
+linux-4.4.3/include/drm/drm_core.h
 linux-4.4.3/include/drm/drm_crtc.h
 linux-4.4.3/include/drm/drm_crtc_helper.h
 linux-4.4.3/include/drm/drm_displayid.h

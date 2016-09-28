@@ -7,6 +7,7 @@
 #include <i915/i915_drv.h>
 
 unsigned long totalram_pages;
+struct mutex drm_global_mutex;
 
 void __set_current_state(int state_value)
 {
@@ -75,6 +76,12 @@ int agp_frontend_initialize(void)
 	TRACE_AND_STOP;
 }
 
+int arch_phys_wc_index(int handle)
+{
+	TRACE_AND_STOP;
+	return -1;
+}
+
 int bitmap_weight(const unsigned long *src, unsigned int nbits)
 {
 	TRACE_AND_STOP;
@@ -129,6 +136,11 @@ void cpufreq_cpu_put(struct cpufreq_policy *policy)
 	TRACE_AND_STOP;
 }
 
+void current_user_ns(void)
+{
+	TRACE_AND_STOP;
+}
+
 void destroy_timer_on_stack(struct timer_list *timer)
 {
 	TRACE_AND_STOP;
@@ -179,6 +191,62 @@ void driver_unregister(struct device_driver *drv)
 	TRACE_AND_STOP;
 }
 
+int drm_agp_acquire_ioctl(struct drm_device *dev, void *data,
+                          struct drm_file *file_priv)
+{
+	TRACE_AND_STOP;
+	return -1;
+}
+
+int drm_agp_alloc_ioctl(struct drm_device *dev, void *data,
+                        struct drm_file *file_priv)
+{
+	TRACE_AND_STOP;
+	return -1;
+}
+
+int drm_agp_bind_ioctl(struct drm_device *dev, void *data,
+                       struct drm_file *file_priv)
+{
+	TRACE_AND_STOP;
+	return -1;
+}
+
+int drm_agp_unbind_ioctl(struct drm_device *dev, void *data,
+                        struct drm_file *file_priv)
+{
+	TRACE_AND_STOP;
+	return -1;
+}
+
+int drm_agp_enable_ioctl(struct drm_device *dev, void *data,
+                         struct drm_file *file_priv)
+{
+	TRACE_AND_STOP;
+	return -1;
+}
+
+int drm_agp_free_ioctl(struct drm_device *dev, void *data,
+                       struct drm_file *file_priv)
+{
+	TRACE_AND_STOP;
+	return -1;
+}
+
+int drm_agp_release_ioctl(struct drm_device *dev, void *data,
+                          struct drm_file *file_priv)
+{
+	TRACE_AND_STOP;
+	return -1;
+}
+
+int drm_agp_info_ioctl(struct drm_device *dev, void *data,
+                       struct drm_file *file_priv)
+{
+	TRACE_AND_STOP;
+	return -1;
+}
+
 void drm_bridge_disable(struct drm_bridge *bridge)
 {
 	TRACE_AND_STOP;
@@ -218,6 +286,13 @@ void down_read(struct rw_semaphore *sem)
 void drm_clflush_virt_range(void *addr, unsigned long length)
 {
 	TRACE_AND_STOP;
+}
+
+int drm_dropmaster_ioctl(struct drm_device *dev, void *data,
+                         struct drm_file *file_priv)
+{
+	TRACE_AND_STOP;
+	return -1;
 }
 
 int drm_dp_mst_hpd_irq(struct drm_dp_mst_topology_mgr *mgr, u8 *esi, bool *handled)
@@ -260,13 +335,11 @@ int drm_gem_dumb_destroy(struct drm_file *file, struct drm_device *dev, uint32_t
 	return -1;
 }
 
-
 int drm_gem_mmap(struct file *filp, struct vm_area_struct *vma)
 {
 	TRACE_AND_STOP;
 	return -1;
 }
-
 
 int drm_gem_prime_fd_to_handle(struct drm_device *dev, struct drm_file *file_priv, int prime_fd, uint32_t *handle)
 {
@@ -290,7 +363,157 @@ void drm_gem_vm_open(struct vm_area_struct *vma)
 	TRACE_AND_STOP;
 }
 
-long drm_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
+int drm_gem_open_ioctl(struct drm_device *dev, void *data,
+                       struct drm_file *file_priv)
+{
+	TRACE_AND_STOP;
+	return -1;
+}
+
+int drm_gem_flink_ioctl(struct drm_device *dev, void *data,
+                        struct drm_file *file_priv)
+{
+	TRACE_AND_STOP;
+	return -1;
+}
+
+int drm_gem_close_ioctl(struct drm_device *dev, void *data,
+                        struct drm_file *file_priv)
+{
+	TRACE_AND_STOP;
+	return -1;
+}
+
+int drm_getmagic(struct drm_device *dev, void *data,
+                 struct drm_file *file_priv)
+{
+	TRACE_AND_STOP;
+	return -1;
+}
+
+int drm_authmagic(struct drm_device *dev, void *data,
+                  struct drm_file *file_priv)
+{
+	TRACE_AND_STOP;
+	return -1;
+}
+
+int drm_legacy_addmap_ioctl(struct drm_device *d, void *v, struct drm_file *f)
+{
+	TRACE_AND_STOP;
+	return -1;
+}
+
+int drm_legacy_newctx(struct drm_device *d, void *v, struct drm_file *f)
+{
+	TRACE_AND_STOP;
+	return -1;
+}
+
+int drm_legacy_addctx(struct drm_device *d, void *v, struct drm_file *f)
+{
+	TRACE_AND_STOP;
+	return -1;
+}
+
+int drm_legacy_getctx(struct drm_device *d, void *v, struct drm_file *f)
+{
+	TRACE_AND_STOP;
+	return -1;
+}
+
+int drm_legacy_resctx(struct drm_device *d, void *v, struct drm_file *f)
+{
+	TRACE_AND_STOP;
+	return -1;
+}
+
+int drm_legacy_rmctx(struct drm_device *d, void *v, struct drm_file *f)
+{
+	TRACE_AND_STOP;
+	return -1;
+}
+
+int drm_legacy_setsareactx(struct drm_device *d, void *v, struct drm_file *f)
+{
+	TRACE_AND_STOP;
+	return -1;
+}
+
+int drm_legacy_getsareactx(struct drm_device *d, void *v, struct drm_file *f)
+{
+	TRACE_AND_STOP;
+	return -1;
+}
+
+int drm_legacy_switchctx(struct drm_device *d, void *v, struct drm_file *f)
+{
+	TRACE_AND_STOP;
+	return -1;
+}
+
+int drm_legacy_addbufs(struct drm_device *d, void *v, struct drm_file *f)
+{
+	TRACE_AND_STOP;
+	return -1;
+}
+
+int drm_legacy_freebufs(struct drm_device *d, void *v, struct drm_file *f)
+{
+	TRACE_AND_STOP;
+	return -1;
+}
+
+int drm_legacy_infobufs(struct drm_device *d, void *v, struct drm_file *f)
+{
+	TRACE_AND_STOP;
+	return -1;
+}
+
+int drm_legacy_mapbufs(struct drm_device *d, void *v, struct drm_file *f)
+{
+	TRACE_AND_STOP;
+	return -1;
+}
+
+int drm_legacy_markbufs(struct drm_device *d, void *v, struct drm_file *f)
+{
+	TRACE_AND_STOP;
+	return -1;
+}
+
+int drm_legacy_dma_ioctl(struct drm_device *d, void *v, struct drm_file *f)
+{
+	TRACE_AND_STOP;
+}
+
+int drm_legacy_rmmap_ioctl(struct drm_device *d, void *v, struct drm_file *f)
+{
+	TRACE_AND_STOP;
+	return -1;
+}
+
+int drm_legacy_lock(struct drm_device *d, void *v, struct drm_file *f)
+{
+	TRACE_AND_STOP;
+	return -1;
+}
+
+int drm_legacy_unlock(struct drm_device *d, void *v, struct drm_file *f)
+{
+	TRACE_AND_STOP;
+	return -1;
+}
+
+int drm_legacy_sg_alloc(struct drm_device *dev, void *data,
+                        struct drm_file *file_priv)
+{
+	TRACE_AND_STOP;
+	return -1;
+}
+
+int drm_legacy_sg_free(struct drm_device *dev, void *data,
+                       struct drm_file *file_priv)
 {
 	TRACE_AND_STOP;
 	return -1;
@@ -300,12 +523,6 @@ void *drm_malloc_ab(size_t nmemb, size_t size)
 {
 	TRACE_AND_STOP;
 	return NULL;
-}
-
-int drm_noop(struct drm_device *dev, void *data, struct drm_file *file_priv)
-{
-	TRACE_AND_STOP;
-	return -1;
 }
 
 int drm_open(struct inode *inode, struct file *filp)
@@ -330,15 +547,44 @@ void drm_pci_free(struct drm_device *dev, struct drm_dma_handle * dmah)
 	TRACE_AND_STOP;
 }
 
-unsigned int drm_poll(struct file *filp, struct poll_table_struct *wait)
+int drm_pci_set_unique(struct drm_device *dev,
+                       struct drm_master *master,
+                       struct drm_unique *u)
 {
 	TRACE_AND_STOP;
 	return -1;
 }
 
+int drm_irq_by_busid(struct drm_device *dev, void *data,
+                     struct drm_file *file_priv)
+{
+	TRACE_AND_STOP;
+	return -1;
+}
+
+unsigned int drm_poll(struct file *filp, struct poll_table_struct *wait)
+{
+	TRACE_AND_STOP;
+	return -11;
+}
+
 void drm_prime_gem_destroy(struct drm_gem_object *obj, struct sg_table *sg)
 {
 	TRACE_AND_STOP;
+}
+
+int drm_prime_handle_to_fd_ioctl(struct drm_device *dev, void *data,
+                                 struct drm_file *file_priv)
+{
+	TRACE_AND_STOP;
+	return -1;
+}
+
+int drm_prime_fd_to_handle_ioctl(struct drm_device *dev, void *data,
+                                 struct drm_file *file_priv)
+{
+	TRACE_AND_STOP;
+	return -1;
 }
 
 void drm_put_dev(struct drm_device *dev)
@@ -353,6 +599,13 @@ ssize_t drm_read(struct file *filp, char __user *buffer, size_t count, loff_t *o
 }
 
 int drm_release(struct inode *inode, struct file *filp)
+{
+	TRACE_AND_STOP;
+	return -1;
+}
+
+int drm_setmaster_ioctl(struct drm_device *dev, void *data,
+                        struct drm_file *file_priv)
 {
 	TRACE_AND_STOP;
 	return -1;
@@ -422,6 +675,14 @@ void flush_workqueue(struct workqueue_struct *wq)
 void __free_pages(struct page *page, unsigned int order)
 {
 	TRACE_AND_STOP;
+}
+
+struct user_namespace;
+
+uid_t from_kuid_munged(struct user_namespace *to, kuid_t uid)
+{
+	TRACE_AND_STOP;
+	return 0;
 }
 
 struct device *get_device(struct device *dev)
@@ -743,6 +1004,12 @@ int  kref_get_unless_zero(struct kref *kref)
 	return -1;
 }
 
+char *kstrdup(const char *s, gfp_t gfp)
+{
+	TRACE_AND_STOP;
+	return NULL;
+}
+
 u64 local_clock(void)
 {
 	TRACE_AND_STOP;
@@ -828,6 +1095,12 @@ void of_node_clear_flag(struct device_node *n, unsigned long flag)
 	TRACE_AND_STOP;
 }
 
+u16 old_encode_dev(dev_t dev)
+{
+	TRACE_AND_STOP;
+	return -1;
+}
+
 resource_size_t pcibios_align_resource(void * p, const struct resource *r, resource_size_t s1, resource_size_t s2)
 {
 	TRACE_AND_STOP;
@@ -894,6 +1167,12 @@ pgprot_t pgprot_writecombine(pgprot_t prot)
 {
 	TRACE_AND_STOP;
 	return prot;
+}
+
+pid_t pid_vnr(struct pid *pid)
+{
+	TRACE_AND_STOP;
+	return 0;
 }
 
 void pm_qos_remove_request(struct pm_qos_request *req)
@@ -1029,6 +1308,12 @@ int strcmp(const char *s1, const char *s2)
 void sysfs_remove_link(struct kobject *kobj, const char *name)
 {
 	TRACE_AND_STOP;
+}
+
+pid_t task_pid_nr(struct task_struct *tsk)
+{
+	TRACE_AND_STOP;
+	return 0;
 }
 
 int try_module_get(struct module *module)

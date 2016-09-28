@@ -947,6 +947,7 @@ struct device {
 	struct bus_type          *bus;
 	struct device_node       *of_node;
 	struct fwnode_handle     *fwnode;
+	dev_t                     devt;
 };
 
 struct device_attribute {
@@ -1366,6 +1367,7 @@ struct file
 {
 	atomic_long_t f_count;
 	struct inode *f_inode;
+	void         *private_data;
 };
 
 struct poll_table_struct;
