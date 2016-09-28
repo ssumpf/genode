@@ -63,6 +63,8 @@ void Window::sync_handler()
 
 void Window::mode_handler()
 {
+	PDBG("MODE: %p", framebuffer);
+
 	if (!framebuffer) //.is_constructed())
 		return;
 
@@ -70,11 +72,13 @@ void Window::mode_handler()
 	Framebuffer::Mode mode = framebuffer->mode();
 
 	eglut_window *win  = _eglut->current;
-	win->native.width  = mode.width();
-	win->native.height = mode.height();
+	if (win) {
+		win->native.width  = mode.width();
+		win->native.height = mode.height();
 
-	if (win->reshape_cb)
-		win->reshape_cb(win->native.width, win->native.height);
+		if (win->reshape_cb)
+			win->reshape_cb(win->native.width, win->native.height);
+	}
 
 	update();
 }
@@ -162,6 +166,8 @@ struct Signal_schedule_helper
 	: handler(ep, *this, &Signal_schedule_helper::dispatch) { }
 
 	void dispatch() {
+		PDBG("DISPATCH");
+		event_loop_task->unblock();
 		Lx::scheduler().schedule(); }
 };
 
@@ -177,17 +183,14 @@ namespace Component {
 
 		static Signal_schedule_helper startup_helper(env.ep());
 
-		PDBG("CREATE TASK");
 		static Lx::Task task(run_task, nullptr, "eglut_main", Lx::Task::PRIORITY_0,
 		                     Lx::scheduler());
 
-		PDBG("START DRIVER");
-		PDBG("EGL TASK: %p", &task);
 		//XXX: remove me
 		start_framebuffer_driver(env, task, startup_helper.handler);
 		event_loop_task = &task;
-		PDBG("Schedule");
+
 		Lx::scheduler().schedule();
-		PDBG("CONSTRUCTED");
+
 	}
 }

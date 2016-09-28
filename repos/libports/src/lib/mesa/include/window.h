@@ -32,6 +32,7 @@ struct Window : Genode_egl_window
 		//framebuffer->sync_sigh(sync_dispatcher);
 		framebuffer->mode_sigh(mode_dispatcher);
 		PDBG("Window %dx%d mode sigh valid %u", w, h, mode_dispatcher.valid());
+		mode_handler();
 	}
 
 	void sync_handler();

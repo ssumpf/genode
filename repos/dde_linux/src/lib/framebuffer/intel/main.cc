@@ -83,13 +83,12 @@ struct Main
 		static_main = this;
 
 		/* give all task a first kick before returning */
-		//Lx::scheduler().schedule();
+		Lx::scheduler().schedule();
 	}
 
 	void announce()
 	{
 		env.parent().announce(ep.manage(root));
-		egl_task.unblock();
 		PDBG("UNBLOCK %p", &egl_task);
 		Genode::Signal_transmitter(startup_helper).submit();
 	}
