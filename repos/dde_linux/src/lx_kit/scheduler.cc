@@ -26,7 +26,7 @@
 #include <lx_kit/scheduler.h>
 
 #include <lx_kit/timer.h>
-
+#include <os/backtrace.h>
 
 namespace Lx_kit {
 	class Scheduler;
@@ -170,6 +170,7 @@ class Lx_kit::Scheduler : public Lx::Scheduler
 			if (!at_least_one) {
 				PWRN("schedule() called without runnable tasks");
 				log_state("SCHEDULE");
+				Genode::backtrace();
 			}
 
 			/* clear current as no task is running */
