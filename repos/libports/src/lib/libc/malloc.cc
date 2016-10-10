@@ -218,8 +218,8 @@ extern "C" void *realloc(void *ptr, size_t size)
 	}
 
 	/* determine size of old block content (without header) */
-	unsigned long old_size = *((Block_header *)ptr - 1)
-	                         - sizeof(Block_header);
+	unsigned long old_size = *((Block_header *)ptr - 2)
+	                         - (2 * sizeof(Block_header));
 
 	/* do not reallocate if new size is less than the current size */
 	if (size <= old_size)
