@@ -10,8 +10,9 @@ extern "C" {
 enum { verbose_ioctl = true };
 
 
-long drm_command(long request) { return (request & 0xff) - DRM_COMMAND_BASE; }
-
+long driver_nr(long request) { return (request & 0xff) - DRM_COMMAND_BASE; }
+constexpr long drm_nr(long request) { return request & 0xff; }
+bool driver_ioctl(long request) { return drm_nr(request) >= DRM_COMMAND_BASE && drm_nr(request) < DRM_COMMAND_END; }
 
 /**
  * Return name of DRM command
@@ -21,7 +22,15 @@ const char *command_name(long request)
 	if (IOCGROUP(request) != DRM_IOCTL_BASE)
 		return "<non-DRM>";
 
-	switch (drm_command(request)) {
+
+	if (!driver_ioctl(request)) {
+		switch (drm_nr(request)) {
+			case drm_nr(DRM_IOCTL_GEM_CLOSE): return "DRM_IOCTL_GEM_CLOSE";
+			default:                          return "<unknown drm>";
+		}
+	}
+
+	switch (driver_nr(request)) {
 	case DRM_I915_INIT:                  return "DRM_I915_INIT";
 	case DRM_I915_FLUSH:                 return "DRM_I915_FLUSH";
 	case DRM_I915_FLIP:                  return "DRM_I915_FLIP";
@@ -62,19 +71,23 @@ const char *command_name(long request)
 	case DRM_I915_OVERLAY_PUT_IMAGE:     return "DRM_I915_OVERLAY_PUT_IMAGE";
 	case DRM_I915_OVERLAY_ATTRS:         return "DRM_I915_OVERLAY_ATTRS";
 	case DRM_I915_GEM_EXECBUFFER2:       return "DRM_I915_GEM_EXECBUFFER2";
-	default:                             return "<unknown>";
+	case DRM_I915_REG_READ:              return "DRM_I915_REG_READ";
+	case DRM_I915_GET_RESET_STATS: Genode::backtrace();      return "DRM_I915_GET_RESET_STATS";
+	default:
+		Genode::backtrace();
+		return "<unknown driver>";
 	}
 }
 
 
 static void dump_ioctl(long request)
 {
-	PDBG("ioctl(request=%lx, %s, len=%ld, cmd=%s)", request,
+	PDBG("ioctl(request=%lx, %s, len=%ld, cmd=%s (%lx))", request,
 	     (request & 0xe0000000) == IOC_OUT   ? "out"   :
 	     (request & 0xe0000000) == IOC_IN    ? "in"    :
 	     (request & 0xe0000000) == IOC_INOUT ? "inout" : "void",
 	     IOCPARM_LEN(request),
-	     command_name(request));
+	     command_name(request), drm_nr(request));
 }
 
 extern "C" int genode_ioctl(int fd, unsigned long request, void *arg)
@@ -82,5 +95,5 @@ extern "C" int genode_ioctl(int fd, unsigned long request, void *arg)
 	if (verbose_ioctl)
 		dump_ioctl(request);
 
-	return gpu_driver().ioctl(drm_command(request), arg);
+	return gpu_driver().ioctl(drm_nr(request), arg);
 }
