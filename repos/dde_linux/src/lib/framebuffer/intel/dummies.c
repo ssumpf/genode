@@ -88,12 +88,6 @@ int bitmap_weight(const unsigned long *src, unsigned int nbits)
 	return -1;
 }
 
-bool capable(int cap)
-{
-	TRACE_AND_STOP;
-	return false;
-}
-
 void cfb_fillrect(struct fb_info *info, const struct fb_fillrect *rect)
 {
 	TRACE_AND_STOP;
@@ -371,13 +365,6 @@ int drm_gem_open_ioctl(struct drm_device *dev, void *data,
 }
 
 int drm_gem_flink_ioctl(struct drm_device *dev, void *data,
-                        struct drm_file *file_priv)
-{
-	TRACE_AND_STOP;
-	return -1;
-}
-
-int drm_gem_close_ioctl(struct drm_device *dev, void *data,
                         struct drm_file *file_priv)
 {
 	TRACE_AND_STOP;
@@ -739,12 +726,6 @@ void i915_audio_component_cleanup(struct drm_i915_private *dev_priv)
 void i915_capture_error_state(struct drm_device *dev, bool wedge, const char *error_msg)
 {
 	TRACE_AND_STOP;
-}
-
-int i915_cmd_parser_get_version(void)
-{
-	TRACE_AND_STOP;
-	return -1;
 }
 
 void i915_destroy_error_state(struct drm_device *dev)
@@ -1443,11 +1424,6 @@ bool drm_bridge_mode_fixup(struct drm_bridge *bridge, const struct drm_display_m
 {
 	TRACE_AND_STOP;
 	return -1;
-}
-
-void i915_cmd_parser_fini_ring(struct intel_engine_cs *ring)
-{
-	TRACE_AND_STOP;
 }
 
 unsigned long find_next_zero_bit(const unsigned long *addr, unsigned long size, unsigned long offset)

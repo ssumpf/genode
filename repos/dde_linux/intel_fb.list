@@ -21,6 +21,7 @@ linux-4.4.3/drivers/gpu/drm/drm_modeset_lock.c
 linux-4.4.3/drivers/gpu/drm/drm_plane_helper.c
 linux-4.4.3/drivers/gpu/drm/drm_probe_helper.c
 linux-4.4.3/drivers/gpu/drm/drm_rect.c
+linux-4.4.3/drivers/gpu/drm/i915/i915_cmd_parser.c
 linux-4.4.3/drivers/gpu/drm/i915/i915_dma.c
 linux-4.4.3/drivers/gpu/drm/i915/i915_drv.c
 linux-4.4.3/drivers/gpu/drm/i915/i915_drv.h
@@ -108,6 +109,8 @@ linux-4.4.3/include/drm/i915_drm.h
 linux-4.4.3/include/drm/i915_pciids.h
 linux-4.4.3/include/drm/intel-gtt.h
 linux-4.4.3/include/linux/agp_backend.h
+linux-4.4.3/include/linux/hash.h
+linux-4.4.3/include/linux/hashtable.h
 linux-4.4.3/include/linux/hdmi.h
 linux-4.4.3/include/linux/i2c-algo-bit.h
 linux-4.4.3/include/linux/i2c.h

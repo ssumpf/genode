@@ -247,7 +247,10 @@ void Framebuffer::Driver::generate_report()
 
 
 extern struct drm_ioctl_desc i915_ioctls[];
+extern const struct drm_ioctl_desc drm_ioctls[];
 extern int i915_max_ioctl;
+extern int drm_max_ioctl;
+
 
 #if 0
 struct ioctl_data {
@@ -268,19 +271,34 @@ extern "C" void ioctl_work(work_struct *work)
 
 int Framebuffer::Driver::ioctl(int request, void *arg)
 {
-	if (request < 0 || request >= i915_max_ioctl) {
-		Genode::error("invalid request, request=", Genode::Hex(request));
-		return -1;
-	}
+	bool is_driver_ioctl = request >= DRM_COMMAND_BASE && request < DRM_COMMAND_END;
 
 	/* execute in system work queue */
 	//ioctl_data work_data { request, lx_drm_device, arg, 0 };
 	//work_struct work { atomic_long_t { (long) &work_data }, ioctl_work };
 
-	PDBG("request %d func %p", request, i915_ioctls[request].func);
 	//schedule_work(&work);
 	//Lx::scheduler().current()->block_and_schedule();
-	int ret = i915_ioctls[request].func(lx_drm_device, arg, nullptr);
+	int ret = -1;
+	int nr = request;
+	if (is_driver_ioctl) {
+		nr -= DRM_COMMAND_BASE;
+		if (nr >= i915_max_ioctl) {
+			Genode::error("invalid i915 request, request=", Genode::Hex(request));
+			return -1;
+		}
+		PDBG("i915 request %d func %p", nr, i915_ioctls[nr].func);
+		ret = i915_ioctls[nr].func(lx_drm_device, arg, lx_c_get_drm_file());
+	} else {
+
+		if (nr < 0 || nr >= drm_max_ioctl) {
+			Genode::error("invalid drm request, request=", Genode::Hex(request));
+			return -1;
+		}
+		PDBG("drm request %d func %p", nr, drm_ioctls[nr].func);
+		ret = drm_ioctls[nr].func(lx_drm_device, arg, nullptr);
+	}
+
 	PDBG("finished ioctl");
 
 	return ret;
@@ -467,6 +485,7 @@ void idr_remove(struct idr *idp, int id)
 
 void *idr_find(struct idr *idr, int id)
 {
+	PDBG("IDR FIND %d", id);
 	TRACE;
 	return NULL;
 }
@@ -1047,9 +1066,12 @@ int drm_gem_handle_create(struct drm_file *file_priv, struct drm_gem_object *obj
 		return ret;
 
 
+	PDBG("NEW HANDLE: %d %p\n", ret, file_priv);
+
 	Gem_object_handle *gem = new (Lx::Malloc::mem()) Gem_object_handle(ret, obj);
 	gem_object_handles.insert(gem);
 
+	obj->handle_count++;
 	*handlep = ret;
 
 	/* implement when necessary */
@@ -1061,7 +1083,7 @@ int drm_gem_handle_create(struct drm_file *file_priv, struct drm_gem_object *obj
 
 struct drm_gem_object *drm_gem_object_lookup(struct drm_device *dev, struct drm_file *filp, u32 handle)
 {
-	PDBG("%s: id %u\n", __func__, handle);
+	PDBG("%s: id %u filp %p\n", __func__, handle, filp);
 
 	Gem_object_handle *gem = gem_object_handles.first();
 	gem = gem ? gem->find_by_id(handle) : 0;
@@ -1070,6 +1092,34 @@ struct drm_gem_object *drm_gem_object_lookup(struct drm_device *dev, struct drm_
 }
 
 
+int drm_gem_close_ioctl(struct drm_device *dev, void *data,
+                        struct drm_file *file_priv)
+{
+	u32 handle =((drm_gem_close *)data)->handle;
+
+	Gem_object_handle *gem = gem_object_handles.first();
+	gem = gem ? gem->find_by_id(handle) : 0;
+
+	if (!gem) {
+		Genode::error("failed to find gem object for handle ", handle, "for close");
+		return -1;
+	}
+
+	drm_gem_object *obj = gem->gem_object();
+	if (--obj->handle_count == 0 && dev->driver->gem_free_object) {
+		PDBG("gem_free_object %p", dev->driver->gem_free_object);
+		dev->driver->gem_free_object(obj);
+	}
+
+	ASSERT(!dev->driver->gem_close_object);
+
+	gem_object_handles.remove(gem);
+	idr_remove(nullptr, handle);
+
+	destroy(Lx::Malloc::mem(), gem);
+
+	return 0;
+}
 /***************************
  ** arch/x86/kernel/tsc.c **
  ***************************/
@@ -1571,12 +1621,6 @@ void wbinvd()
 	TRACE;
 }
 
-int i915_cmd_parser_init_ring(struct intel_engine_cs *ring)
-{
-	TRACE;
-	return 0;
-}
-
 u64 ktime_get_raw_ns(void)
 {
 	return ktime_get().tv64;
@@ -1826,6 +1870,16 @@ size_t copy_to_user(void *dst, void const *src, size_t len)
 {
 	Genode::memcpy(dst, src, len);
 	return 0;
+}
+
+/************************
+ ** linux/capability.h **
+ ************************/
+
+bool capable(int cap)
+{
+	TRACE;;
+	return true;
 }
 
 } /* extern "C" */

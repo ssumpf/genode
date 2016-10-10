@@ -157,3 +157,14 @@ void* lx_c_get_driver(struct drm_device * dev)
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	return (void*) dev_priv->audio_component;
 }
+
+
+struct drm_file *lx_c_get_drm_file(void)
+{
+	static struct drm_i915_file_private priv;
+	static struct drm_file file = {
+		.driver_priv = &priv,
+	};
+
+	return &file;
+}
