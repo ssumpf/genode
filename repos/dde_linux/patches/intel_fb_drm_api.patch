@@ -1,0 +1,21 @@
+diff --git a/drivers/gpu/drm/drm_ioctl.c b/drivers/gpu/drm/drm_ioctl.c
+index 8ce2a0c..ec1c111 100644
+--- a/drivers/gpu/drm/drm_ioctl.c
++++ b/drivers/gpu/drm/drm_ioctl.c
+@@ -552,7 +552,7 @@ EXPORT_SYMBOL(drm_ioctl_permit);
+ 	}
+ 
+ /* Ioctl table */
+-static const struct drm_ioctl_desc drm_ioctls[] = {
++const struct drm_ioctl_desc drm_ioctls[] = {
+ 	DRM_IOCTL_DEF(DRM_IOCTL_VERSION, drm_version,
+ 		      DRM_UNLOCKED|DRM_RENDER_ALLOW|DRM_CONTROL_ALLOW),
+ 	DRM_IOCTL_DEF(DRM_IOCTL_GET_UNIQUE, drm_getunique, 0),
+@@ -666,6 +666,7 @@ static const struct drm_ioctl_desc drm_ioctls[] = {
+ };
+ 
+ #define DRM_CORE_IOCTL_COUNT	ARRAY_SIZE( drm_ioctls )
++int drm_max_ioctl = DRM_CORE_IOCTL_COUNT;
+ 
+ /**
+  * drm_ioctl - ioctl callback implementation for DRM drivers

@@ -19,7 +19,7 @@
 
 #define TRACE_AND_STOP \
 	do { \
-		lx_printf("%s not implemented\n", __func__); \
+		lx_printf("%s not implemented from %p\n", __func__, __builtin_return_address(0)); \
 		BUG(); \
 	} while (0)
 
@@ -54,6 +54,8 @@ void   lx_c_set_mode(struct drm_device *, struct drm_connector *,
                      struct drm_framebuffer *, struct drm_display_mode *);
 void   lx_c_set_driver(struct drm_device *, void *);
 void * lx_c_get_driver(struct drm_device *);
+
+struct drm_file * lx_c_get_drm_file(void);
 
 #include <lx_emul/extern_c_end.h>
 

@@ -237,6 +237,12 @@ void SetPageReserved(struct page *page);
 void ClearPageReserved(struct page *page);
 
 
+/***********************
+ ** asm/pgtable_types **
+ ***********************/
+
+#define PAGE_KERNEL 0xdead
+
 /********************
  ** linux/printk.h **
  ********************/
@@ -488,6 +494,12 @@ void ida_remove(struct ida *ida, int id);
 	for (id = 0; ((entry) = idr_get_next(idp, &(id))) != NULL; ++id)
 
 int idr_for_each(struct idr *idp, int (*fn)(int id, void *p, void *data), void *data);
+
+/*********************
+ ** linux/rculist.h **
+ *********************/
+
+void hlist_del_init_rcu(struct hlist_node *n);
 
 
 /*************************
@@ -1758,14 +1770,6 @@ struct seq_file { unsigned dummy; };
 
 void seq_printf(struct seq_file *m, const char *fmt, ...);
 void seq_puts(struct seq_file *m, const char *s);
-
-
-/**********************
- ** linux/hastable.h **
- **********************/
-
-/* needed by intel_ringbuffer */
-#define DECLARE_HASHTABLE(name, bits)
 
 
 /**************************
