@@ -371,9 +371,6 @@ cleanup_dpy:
 
 EGLBoolean dri2_initialize_genode(_EGLDriver *drv, _EGLDisplay *disp)
 {
-	printf("SWRAST\n");
-	return  dri2_initialize_genode_swrast(drv, disp);
-	printf("SWRAST done\n");
 	if (!dri2_initialize_genode_dri2(drv, disp)) {
 		return  dri2_initialize_genode_swrast(drv, disp);
 	}
