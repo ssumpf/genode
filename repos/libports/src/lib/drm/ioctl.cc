@@ -72,7 +72,8 @@ const char *command_name(long request)
 	case DRM_I915_OVERLAY_ATTRS:         return "DRM_I915_OVERLAY_ATTRS";
 	case DRM_I915_GEM_EXECBUFFER2:       return "DRM_I915_GEM_EXECBUFFER2";
 	case DRM_I915_REG_READ:              return "DRM_I915_REG_READ";
-	case DRM_I915_GET_RESET_STATS: Genode::backtrace();      return "DRM_I915_GET_RESET_STATS";
+	case DRM_I915_GET_RESET_STATS:       return "DRM_I915_GET_RESET_STATS";
+	case DRM_I915_GEM_CONTEXT_CREATE:    return "DRM_I915_GEM_CONTEXT_CREATE";
 	default:
 		Genode::backtrace();
 		return "<unknown driver>";
