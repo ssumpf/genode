@@ -310,7 +310,7 @@ int Framebuffer::Driver::ioctl(int request, void *arg)
 		ret = drm_ioctls[nr].func(lx_drm_device, arg, nullptr);
 	}
 
-	PDBG("finished ioctl");
+	PDBG("finished ioctl (ret=%d)", ret);
 
 	return ret;
 }
@@ -1551,6 +1551,7 @@ int drm_gem_object_init(struct drm_device *dev, struct drm_gem_object *obj, size
 
 	size = PAGE_SIZE * npages;
 	void * data = page_address(pages);
+	PDBG("New object filp %p size %lx addr: %p", filp, size, data);
 	memset(data, 0, size);
 
 	return 0;
@@ -1895,6 +1896,7 @@ size_t copy_to_user(void *dst, void const *src, size_t len)
 	return 0;
 }
 
+
 /************************
  ** linux/capability.h **
  ************************/
@@ -1903,6 +1905,27 @@ bool capable(int cap)
 {
 	TRACE;;
 	return true;
+}
+
+
+/****************
+ ** linux/mm.h **
+ ****************/
+
+unsigned long vm_mmap(struct file *file, unsigned long addr,
+                      unsigned long len, unsigned long prot,
+                      unsigned long flag, unsigned long offset)
+{
+	PDBG("filp=%p, addr=0x%lx, len=0x%lx, offset=0x%lx", file, addr, len, offset);
+	PDBG("fiip=%p, mapping=%p", file, page_address(file->f_inode->i_mapping->my_page));
+
+	if (addr) {
+		Genode::error(__func__, "addr != 0 (", Genode::Hex(addr),")");
+		return 0;
+	}
+
+	unsigned long map_addr = (unsigned long)page_address(file->f_inode->i_mapping->my_page);
+	return map_addr + offset;
 }
 
 } /* extern "C" */
