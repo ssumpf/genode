@@ -321,6 +321,8 @@ static EGLBoolean
 dri2_initialize_genode_dri2(_EGLDriver *drv, _EGLDisplay *disp)
 {
 	struct dri2_egl_display *dri2_dpy;
+	static unsigned rgb565_masks[4] = { 0xf800, 0x07e0, 0x001f, 0 };
+	int i;
 
 	dri2_dpy = calloc(1, sizeof *dri2_dpy);
 	if (!dri2_dpy)
@@ -358,6 +360,23 @@ dri2_initialize_genode_dri2(_EGLDriver *drv, _EGLDisplay *disp)
 	if (!dri2_create_screen(disp))
 		goto close_screen;
 
+
+	/* add RGB565 only */
+	EGLint attrs[] = {
+		EGL_DEPTH_SIZE, 0, /* set in loop below (from DRI config) */
+		EGL_NATIVE_VISUAL_TYPE, 0,
+		EGL_NATIVE_VISUAL_ID, 0,
+		EGL_RED_SIZE, 5,
+		EGL_GREEN_SIZE, 6,
+		EGL_BLUE_SIZE, 5,
+		EGL_NONE };
+
+	for (i = 1; dri2_dpy->driver_configs[i]; i++) {
+		/* set depth size in attrs */
+		attrs[1] = dri2_dpy->driver_configs[i]->modes.depthBits;
+		dri2_add_config(disp, dri2_dpy->driver_configs[i], i, EGL_WINDOW_BIT, attrs, rgb565_masks);
+	}
+
 	return EGL_TRUE;
 
 close_screen:
@@ -371,9 +390,13 @@ cleanup_dpy:
 
 EGLBoolean dri2_initialize_genode(_EGLDriver *drv, _EGLDisplay *disp)
 {
+/*
 	if (!dri2_initialize_genode_dri2(drv, disp)) {
 		return  dri2_initialize_genode_swrast(drv, disp);
-	}
+	}*/
+	printf("INTEL DRI2 start\n");
+	int ret = dri2_initialize_genode_dri2(drv, disp);
+	printf("INTEL DRI2 initialized with %d\n", ret);
 
 	return EGL_TRUE;
 }
