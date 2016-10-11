@@ -20,14 +20,14 @@
  ***************/
 
 #define WARN_ON(condition) ({ \
-	int ret = !!(condition); \
-	if (ret) lx_printf("[%s] WARN_ON(" #condition ") \n", __func__); \
-	ret; })
+	int __ret = !!(condition); \
+	if (__ret) lx_printf("[%s] WARN_ON(" #condition ") \n", __func__); \
+	__ret; })
 
 #define WARN(condition, fmt, arg...) ({ \
-	int ret = !!(condition); \
-	if (ret) lx_printf("[%s] *WARN* " fmt " \n", __func__ , ##arg); \
-	ret; })
+	int __ret = !!(condition); \
+	if (__ret) lx_printf("[%s] *WARN* " fmt " \n", __func__ , ##arg); \
+	__ret; })
 
 #define BUG() do { \
 	lx_printf("BUG: failure at %s:%d/%s()!\n", __FILE__, __LINE__, __func__); \
