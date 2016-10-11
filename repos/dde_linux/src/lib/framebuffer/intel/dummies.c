@@ -1360,12 +1360,6 @@ int vm_insert_pfn(struct vm_area_struct *vma, unsigned long addr, unsigned long 
 	return -1;
 }
 
-unsigned long vm_mmap(struct file *f, unsigned long l1, unsigned long l2, unsigned long l3, unsigned long l4, unsigned long l5)
-{
-	TRACE_AND_STOP;
-	return -1;
-}
-
 int vscnprintf(char *buf, size_t size, const char *fmt, va_list args)
 {
 	TRACE_AND_STOP;
