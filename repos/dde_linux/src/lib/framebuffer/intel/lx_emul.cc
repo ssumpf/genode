@@ -27,6 +27,7 @@
 #include <lx_emul/extern_c_begin.h>
 #include <drm/drmP.h>
 #include <drm/drm_gem.h>
+#include <drm/i915_drm.h>
 #include <lx_emul/extern_c_end.h>
 
 #include <lx_emul/impl/kernel.h>
@@ -129,14 +130,6 @@ Framebuffer::Driver::_preferred_mode(drm_connector *connector)
 		return mode;
    	}
 	return nullptr;
-}
-
-
-void Framebuffer::Driver::finish_initialization()
-{
-	lx_c_set_driver(lx_drm_device, (void*)this);
-	generate_report();
-	_session.config_changed();
 }
 
 
@@ -257,7 +250,9 @@ void Framebuffer::Driver::generate_report()
 }
 
 
+/* note we change th mmap_gtt_ioctl to our version Driver::finish_initialization */
 extern struct drm_ioctl_desc i915_ioctls[];
+
 extern const struct drm_ioctl_desc drm_ioctls[];
 extern int i915_max_ioctl;
 extern int drm_max_ioctl;
@@ -280,6 +275,38 @@ extern "C" void ioctl_work(work_struct *work)
 }
 #endif
 
+
+/*
+ * Our own version of DRM_I915_GEM_MMAP_GTT, return virtual address in offset
+ */
+int mmap_gtt_ioctl(drm_device *dev, void *data, drm_file *file)
+{
+	drm_i915_gem_mmap_gtt *args = (drm_i915_gem_mmap_gtt *)data;
+	drm_gem_object *obj = drm_gem_object_lookup(dev, file, args->handle);
+
+	if (obj == nullptr)
+		return -ENOENT;
+
+	if (!obj->filp)
+		return -EINVAL;
+
+	args->offset = (__u64)page_address(obj->filp->f_inode->i_mapping->my_page);
+	PDBG("return %llx for HANDLE %u", args->offset, args->handle);
+
+	return 0;
+}
+
+void Framebuffer::Driver::finish_initialization()
+{
+	/* special handling for DRM_I915_GEM_MMAP_GTT (see above) */
+	i915_ioctls[DRM_I915_GEM_MMAP_GTT].func = mmap_gtt_ioctl;
+
+	lx_c_set_driver(lx_drm_device, (void*)this);
+	generate_report();
+	_session.config_changed();
+}
+
+
 int Framebuffer::Driver::ioctl(int request, void *arg)
 {
 	bool is_driver_ioctl = request >= DRM_COMMAND_BASE && request < DRM_COMMAND_END;
@@ -294,10 +321,12 @@ int Framebuffer::Driver::ioctl(int request, void *arg)
 	int nr = request;
 	if (is_driver_ioctl) {
 		nr -= DRM_COMMAND_BASE;
+
 		if (nr >= i915_max_ioctl) {
 			Genode::error("invalid i915 request, request=", Genode::Hex(request));
 			return -1;
 		}
+
 		PDBG("i915 request %d func %p", nr, i915_ioctls[nr].func);
 		ret = i915_ioctls[nr].func(lx_drm_device, arg, lx_c_get_drm_file());
 	} else {
@@ -1927,5 +1956,6 @@ unsigned long vm_mmap(struct file *file, unsigned long addr,
 	unsigned long map_addr = (unsigned long)page_address(file->f_inode->i_mapping->my_page);
 	return map_addr + offset;
 }
+
 
 } /* extern "C" */
