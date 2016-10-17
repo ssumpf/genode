@@ -287,13 +287,18 @@ int mmap_gtt_ioctl(drm_device *dev, void *data, drm_file *file)
 	if (obj == nullptr)
 		return -ENOENT;
 
-	if (!obj->filp)
-		return -EINVAL;
+	int ret = -EINVAL;
 
-	args->offset = (__u64)page_address(obj->filp->f_inode->i_mapping->my_page);
+	if (obj->filp) {
+		args->offset = (__u64)page_address(obj->filp->f_inode->i_mapping->my_page);
+		ret = 0;
+	}
+
+	drm_gem_object_unreference_unlocked(obj);
+
 	PDBG("return %llx for HANDLE %u", args->offset, args->handle);
 
-	return 0;
+	return ret;
 }
 
 void Framebuffer::Driver::finish_initialization()
@@ -1117,6 +1122,7 @@ int drm_gem_handle_create(struct drm_file *file_priv, struct drm_gem_object *obj
 	Gem_object_handle *gem = new (Lx::Malloc::mem()) Gem_object_handle(ret, obj);
 	gem_object_handles.insert(gem);
 
+	drm_gem_object_reference(obj);
 	obj->handle_count++;
 	*handlep = ret;
 
@@ -1133,6 +1139,9 @@ struct drm_gem_object *drm_gem_object_lookup(struct drm_device *dev, struct drm_
 
 	Gem_object_handle *gem = gem_object_handles.first();
 	gem = gem ? gem->find_by_id(handle) : 0;
+
+	if (gem)
+		drm_gem_object_reference(gem->gem_object());
 
 	return gem ? gem->gem_object() : nullptr;
 }
@@ -1152,20 +1161,42 @@ int drm_gem_close_ioctl(struct drm_device *dev, void *data,
 	}
 
 	drm_gem_object *obj = gem->gem_object();
-	if (--obj->handle_count == 0 && dev->driver->gem_free_object) {
-		PDBG("gem_free_object %p", dev->driver->gem_free_object);
-		dev->driver->gem_free_object(obj);
+	if (--obj->handle_count == 0 && dev->driver->gem_close_object) {
+		PDBG("gem_free_object %p", dev->driver->gem_close_object);
+		dev->driver->gem_close_object(obj, file_priv);
 	}
 
-	ASSERT(!dev->driver->gem_close_object);
-
+	/* free handle */
 	gem_object_handles.remove(gem);
 	idr_remove(nullptr, handle);
 
+	drm_gem_object_unreference_unlocked(obj);
 	destroy(Lx::Malloc::mem(), gem);
 
 	return 0;
 }
+
+
+int drm_gem_flink_ioctl(struct drm_device *dev, void *data,
+                        struct drm_file *file_priv)
+{
+	drm_gem_flink *args = (drm_gem_flink *)data;
+	drm_gem_object *obj = drm_gem_object_lookup(dev, file_priv, args->handle);
+
+	if (obj == NULL)
+		return -ENOENT;
+
+	if (!obj->name) {
+		obj->name = idr_alloc(&dev->object_name_idr, obj, 1, 0, GFP_KERNEL);
+	}
+
+	args->name = (u64)obj->name;
+	drm_gem_object_unreference_unlocked(obj);
+
+	return 0;
+}
+
+
 /***************************
  ** arch/x86/kernel/tsc.c **
  ***************************/
