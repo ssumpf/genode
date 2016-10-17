@@ -364,13 +364,6 @@ int drm_gem_open_ioctl(struct drm_device *dev, void *data,
 	return -1;
 }
 
-int drm_gem_flink_ioctl(struct drm_device *dev, void *data,
-                        struct drm_file *file_priv)
-{
-	TRACE_AND_STOP;
-	return -1;
-}
-
 int drm_getmagic(struct drm_device *dev, void *data,
                  struct drm_file *file_priv)
 {
