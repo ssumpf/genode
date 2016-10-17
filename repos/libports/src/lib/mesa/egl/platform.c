@@ -62,6 +62,15 @@ dri2_genode_create_window_surface(_EGLDriver *drv, _EGLDisplay *disp,
 	if (dri2_dpy->dri2) {
 		dri2_surf->dri_drawable = (*dri2_dpy->dri2->createNewDrawable)(dri2_dpy->dri_screen, config,
 		                                                               dri2_surf);
+		printf("CREATE drawable: %p\n", dri2_surf->dri_drawable);
+		/* create back buffer image */
+		dri2_surf->back_image = dri2_dpy->image->createImage(dri2_dpy->dri_screen,
+		                                                     dri2_surf->base.Width,
+		                                                     dri2_surf->base.Height,
+		                                                     __DRI_IMAGE_FORMAT_RGB565,
+		                                                     dri2_dpy->is_different_gpu ?
+		                                                     0 : __DRI_IMAGE_USE_SHARE,
+		                                                     NULL);
 	} else {
 		assert(dri2_dpy->swrast);
 		dri2_surf->dri_drawable =
@@ -305,6 +314,50 @@ dri2_genode_flush_front_buffer(__DRIdrawable * driDrawable, void *loaderPrivate)
 	_eglError(EGL_BAD_PARAMETER, "dri2_genode_flush_front_buffer not implemented");
 }
 
+static void
+back_bo_to_dri_buffer(struct dri2_egl_surface *dri2_surf, __DRIbuffer *buffer)
+{
+	struct dri2_egl_display *dri2_dpy = dri2_egl_display(dri2_surf->base.Resource.Display);
+	__DRIimage *image;
+	int name, pitch;
+
+	image = dri2_surf->back_image;
+
+	dri2_dpy->image->queryImage(image, __DRI_IMAGE_ATTRIB_NAME, &name);
+	dri2_dpy->image->queryImage(image, __DRI_IMAGE_ATTRIB_STRIDE, &pitch);
+
+	buffer->attachment = __DRI_BUFFER_BACK_LEFT;
+	buffer->name = name;
+	buffer->pitch = pitch;
+	buffer->cpp = 4;
+	buffer->flags = 0;
+}
+
+
+#if 0
+static int
+get_aux_bo(struct dri2_egl_surface *dri2_surf,
+           unsigned int attachment, unsigned int format, __DRIbuffer *buffer)
+{
+	struct dri2_egl_display *dri2_dpy = dri2_egl_display(dri2_surf->base.Resource.Display);
+	__DRIbuffer *b = dri2_surf->dri_buffers[attachment];
+
+	if (b == NULL) {
+		b = dri2_dpy->dri2->allocateBuffer(dri2_dpy->dri_screen,
+		                                   attachment, format,
+		                                   dri2_surf->base.Width,
+		                                   dri2_surf->base.Height);
+		dri2_surf->dri_buffers[attachment] = b;
+	}
+
+	if (b == NULL)
+		return -1;
+
+	memcpy(buffer, b, sizeof *buffer);
+
+	return 0;
+}
+#endif
 
 static __DRIbuffer *
 dri2_genode_get_buffers_with_format(__DRIdrawable * driDrawable,
@@ -312,8 +365,37 @@ dri2_genode_get_buffers_with_format(__DRIdrawable * driDrawable,
                                     unsigned int *attachments, int count,
                                     int *out_count, void *loaderPrivate)
 {
-	_eglError(EGL_BAD_PARAMETER, "dri2_genode_get_buffers_with_format not implemented");
-	return NULL;
+	struct dri2_egl_surface *dri2_surf = loaderPrivate;
+	int i, j;
+
+	printf("%s:%d DRAWABLE: %p\n", __func__, __LINE__, driDrawable);
+
+	for (i = 0, j = 0; i < 2 * count; i += 2, j++) {
+		switch (attachments[i]) {
+		case __DRI_BUFFER_BACK_LEFT:
+			printf("left back\n");
+			back_bo_to_dri_buffer(dri2_surf, &dri2_surf->buffers[j]);
+			break;
+		default:
+//			if (get_aux_bo(dri2_surf, attachments[i], attachments[i + 1],
+//			               &dri2_surf->buffers[j]) < 0) {
+//				_eglError(EGL_BAD_ALLOC, "failed to allocate aux buffer");
+//				return NULL;
+//			}
+			printf("aux buffer\n");
+			break;
+		}
+	}
+	printf("done\n");
+	*out_count = j;
+	if (j == 0)
+		return NULL;
+
+	*width = dri2_surf->base.Width;
+	*height = dri2_surf->base.Height;
+
+	printf("leave %d\n", j);
+	return dri2_surf->buffers;
 }
 
 
@@ -332,6 +414,7 @@ dri2_initialize_genode_dri2(_EGLDriver *drv, _EGLDisplay *disp)
 	dri2_dpy->driver_name = strdup("i965");
 
 	disp->DriverData = (void *)dri2_dpy;
+	dri2_dpy->vtbl   = &dri2_genode_display_vtbl;
 
 	if (!dri2_load_driver(disp))
 		goto cleanup_dpy;
