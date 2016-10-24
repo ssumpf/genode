@@ -34,21 +34,23 @@ index 8f50f0c..b4a7bc1 100644
     const char *libname = "libglapi.so.0";
  #endif
 diff --git a/src/lib/mesa/src/egl/drivers/dri2/egl_dri2.h b/src/lib/mesa/src/egl/drivers/dri2/egl_dri2.h
-index 52ad92b..eb5a013 100644
+index 52ad92b..bb4a1c1 100644
 --- a/src/lib/mesa/src/egl/drivers/dri2/egl_dri2.h
 +++ b/src/lib/mesa/src/egl/drivers/dri2/egl_dri2.h
-@@ -258,6 +258,10 @@ struct dri2_egl_surface
+@@ -258,6 +258,12 @@ struct dri2_egl_surface
     int			  format;
  #endif
  
 +#ifdef HAVE_GENODE_PLATFORM
 +   struct Genode_egl_window *g_win;
++   __DRIbuffer           *dri_buffers[__DRI_BUFFER_COUNT];
++    __DRIimage              *back_image;
 +#endif
 +
  #ifdef HAVE_DRM_PLATFORM
     struct gbm_dri_surface *gbm_surf;
  #endif
-@@ -372,6 +376,9 @@ dri2_initialize_android(_EGLDriver *drv, _EGLDisplay *disp);
+@@ -372,6 +378,9 @@ dri2_initialize_android(_EGLDriver *drv, _EGLDisplay *disp);
  EGLBoolean
  dri2_initialize_surfaceless(_EGLDriver *drv, _EGLDisplay *disp);
  

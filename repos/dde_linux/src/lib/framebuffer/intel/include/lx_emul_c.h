@@ -57,6 +57,8 @@ void * lx_c_get_driver(struct drm_device *);
 
 struct drm_file * lx_c_get_drm_file(void);
 
+void genode_backtrace();
+
 #include <lx_emul/extern_c_end.h>
 
 #endif /* _LX_EMUL_C_H_ */
