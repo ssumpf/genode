@@ -30,6 +30,8 @@
 #include <drm/i915_drm.h>
 #include <lx_emul/extern_c_end.h>
 
+#include <os/backtrace.h>
+
 #include <lx_emul/impl/kernel.h>
 #include <lx_emul/impl/delay.h>
 #include <lx_emul/impl/slab.h>
@@ -342,6 +344,12 @@ int Framebuffer::Driver::ioctl(int request, void *arg)
 Gpu_driver &gpu_driver()
 {
 	return root_session()->driver();
+}
+
+void genode_backtrace(void)
+
+{
+	Genode::backtrace();
 }
 
 
@@ -1934,6 +1942,13 @@ size_t copy_to_user(void *dst, void const *src, size_t len)
 }
 
 
+bool access_ok(int access, void *addr, size_t size)
+{
+
+	TRACE;
+	return true;
+}
+
 /************************
  ** linux/capability.h **
  ************************/
@@ -1963,6 +1978,17 @@ unsigned long vm_mmap(struct file *file, unsigned long addr,
 
 	unsigned long map_addr = (unsigned long)page_address(file->f_inode->i_mapping->my_page);
 	return map_addr + offset;
+}
+
+
+/*********************
+ ** linux/pagemap.h **
+ *********************/
+
+int fault_in_multipages_readable(const char __user *uaddr, int size)
+{
+	TRACE;
+	return 0;
 }
 
 
