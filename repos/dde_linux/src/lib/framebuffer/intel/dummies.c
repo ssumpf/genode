@@ -14,11 +14,6 @@ void __set_current_state(int state_value)
 	TRACE_AND_STOP;
 }
 
-bool access_ok(int access, void *addr, size_t size)
-{
-	TRACE_AND_STOP;
-	return -1;
-}
 
 int acpi_device_uevent_modalias(struct device *dev, struct kobj_uevent_env *ev)
 {
@@ -606,12 +601,6 @@ __u64 drm_vma_node_offset_addr(struct drm_vma_offset_node *node)
 void drm_vma_node_unmap(struct drm_vma_offset_node *node, struct address_space *file_mapping)
 {
 	TRACE_AND_STOP;
-}
-
-int fault_in_multipages_readable(const char __user *uaddr, int size)
-{
-	TRACE_AND_STOP;
-	return -1;
 }
 
 int fault_in_multipages_writeable(char __user *uaddr, int size)

@@ -26,6 +26,7 @@ const char *command_name(long request)
 	if (!driver_ioctl(request)) {
 		switch (drm_nr(request)) {
 			case drm_nr(DRM_IOCTL_GEM_CLOSE): return "DRM_IOCTL_GEM_CLOSE";
+			case drm_nr(DRM_IOCTL_GEM_FLINK): return "DRM_IOCTL_GEM_FLINK";
 			default:                          return "<unknown drm>";
 		}
 	}
