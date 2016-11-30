@@ -294,6 +294,8 @@ class Lx_kit::Timer : public Lx::Timer
 
 		void register_jiffies_func(Lx::jiffies_update_func func) {
 			_jiffies_func = func; }
+
+		unsigned long elapsed_ms() { return _timer_conn.elapsed_ms(); }
 };
 
 
@@ -313,6 +315,10 @@ void Lx::timer_update_jiffies()
 	timer().update_jiffies();
 }
 
+unsigned long Lx::timer_elapsed_ms()
+{
+	return dynamic_cast<Lx_kit::Timer &>(timer()).elapsed_ms();;
+}
 
 void Lx::register_jiffies_func(jiffies_update_func func)
 {
