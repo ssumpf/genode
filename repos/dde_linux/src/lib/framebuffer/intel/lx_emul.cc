@@ -485,13 +485,16 @@ void *krealloc(const void *p, size_t size, gfp_t flags)
  ** linux/idr.h **
  *****************/
 
+
+enum { MAX_ID = 1024 };
+static Genode::Bit_allocator<MAX_ID> id_allocator;
+static void *id_obj[MAX_ID];
+
 void idr_init(struct idr *idp)
 {
 	Genode::memset(idp, 0, sizeof(struct idr));
 }
 
-
-static Genode::Bit_allocator<1024> id_allocator;
 
 int idr_alloc(struct idr *idp, void *ptr, int start, int end, gfp_t gfp_mask)
 {
@@ -508,7 +511,8 @@ int idr_alloc(struct idr *idp, void *ptr, int start, int end, gfp_t gfp_mask)
 	if (id > max) return -ENOSPC;
 
 	ASSERT(id >= start);
-	PDBG("ALLOC ID: %d", id);
+	PDBG("ALLOC ID: %d ptr %p", id, ptr);
+	id_obj[id] = ptr;
 	return id;
 }
 
@@ -533,14 +537,16 @@ void ida_remove(struct ida *ida, int id)
 void idr_remove(struct idr *idp, int id)
 {
 	id_allocator.free(id);
+	id_obj[id] = nullptr;
 }
 
 
 void *idr_find(struct idr *idr, int id)
 {
-	PDBG("IDR FIND %d", id);
-	TRACE;
-	return NULL;
+	PDBG("IDR FIND %d %p", id, id_obj[id]);
+
+	ASSERT(id < MAX_ID);
+	return id_obj[id];
 }
 
 void *idr_replace(struct idr *idp, void *ptr, int id)
@@ -992,9 +998,16 @@ int drm_dev_register(struct drm_device *dev, unsigned long flags)
 {
 	drm_get_minor(dev, &dev->primary, DRM_MINOR_LEGACY);
 
+	PDBG("REGISTER DEV");
+
 	ASSERT(!lx_drm_device);
 	lx_drm_device = dev;
-	return dev->driver->load(dev, flags);
+
+	int err =  dev->driver->load(dev, flags);
+	if (err)
+		return err;
+
+	return dev->driver->open(dev, lx_c_get_drm_file());
 }
 
 
@@ -1115,8 +1128,8 @@ class Gem_object_handle : public Genode::Avl_node<Gem_object_handle>
 		drm_gem_object *gem_object() const { return _obj; }
 };
 
-
 static Genode::Avl_tree<Gem_object_handle> gem_object_handles;
+
 
 int drm_gem_handle_create(struct drm_file *file_priv, struct drm_gem_object *obj, u32 *handlep)
 {
@@ -1227,10 +1240,9 @@ void cpu_relax(void)
  ** linux/workqueue.h **
  ***********************/
 
-bool mod_delayed_work(struct workqueue_struct *, struct delayed_work *, unsigned long)
+bool mod_delayed_work(struct workqueue_struct *wq, struct delayed_work *dwork, unsigned long delay)
 {
-	TRACE;
-	return false;
+	return queue_delayed_work(wq, dwork, delay);
 }
 
 bool flush_delayed_work(struct delayed_work *dwork)
@@ -1319,6 +1331,17 @@ struct scatterlist *sg_next(struct scatterlist * sg)
 	return sg;
 }
 
+
+int sg_nents(struct scatterlist *sg)
+{
+	int nents;
+	for (nents = 0; sg; sg = sg_next(sg))
+		nents++;
+
+	return nents;
+}
+
+
 void __sg_page_iter_start(struct sg_page_iter *piter, struct scatterlist *sglist,
                           unsigned int nents, unsigned long pgoffset)
 {
@@ -1358,7 +1381,14 @@ dma_addr_t sg_page_iter_dma_address(struct sg_page_iter *piter)
 
 struct page *sg_page_iter_page(struct sg_page_iter *piter)
 {
-	return (page*)(PAGE_SIZE * (page_to_pfn((sg_page(piter->sg))) + (piter->sg_pgoffset)));
+	if (piter->sg_pgoffset) {
+		PERR("SG offset %x", piter->sg_pgoffset);
+		while (1);
+	}
+	PWRN("sg_page_iter_page: page %p",(page*)(PAGE_SIZE * (page_to_pfn((sg_page(piter->sg))) + (piter->sg_pgoffset))));
+
+	//return (page*)(PAGE_SIZE * (page_to_pfn((sg_page(piter->sg))) + (piter->sg_pgoffset)));
+	return sg_page(piter->sg);
 }
 
 
@@ -1586,10 +1616,6 @@ int i915_gem_init_userptr(struct drm_device *dev)
 	return 0;
 }
 
-void i915_gem_batch_pool_init(struct drm_device *dev, struct i915_gem_batch_pool *pool)
-{
-	TRACE;
-}
 
 void spin_lock(spinlock_t *lock)
 {
@@ -1651,6 +1677,7 @@ void sg_set_page(struct scatterlist *sg, struct page *page,
                  unsigned int len, unsigned int offset)
 {
 	unsigned long page_link = sg->page_link & 0x3;
+	PDBG("sg: %p, page: %p", sg, page);
 	sg->page_link = page_link | (unsigned long) page;
 	sg->offset = offset;
 	sg->length = len;
@@ -1663,6 +1690,7 @@ dma_addr_t page_to_pfn(struct page *page)
 
 struct page *sg_page(struct scatterlist *sg)
 {
+	PDBG("sg: %p page %p", sg, (struct page *)((sg)->page_link & ~0x3));
 	return (struct page *)((sg)->page_link & ~0x3);
 }
 
@@ -1919,12 +1947,6 @@ void bitmap_or(unsigned long *dst, const unsigned long *src1,
 		dst[k] = src1[k] | src2[k];
 }
 
-int i915_gem_render_state_init(struct drm_i915_gem_request *req)
-{
-	TRACE;
-	return 0;
-}
-
 int intel_dp_mst_encoder_init(struct intel_digital_port *intel_dig_port, int conn_id)
 {
 	TRACE;
@@ -1965,12 +1987,32 @@ size_t copy_to_user(void *dst, void const *src, size_t len)
 }
 
 
+size_t copy_from_user(void *to, void const *from, size_t len)
+{
+	Genode::memcpy(to, from, len);
+	return 0;
+}
+
+
 bool access_ok(int access, void *addr, size_t size)
 {
 
 	TRACE;
 	return true;
 }
+
+
+void pagefault_enable(void)
+{
+	TRACE;
+}
+
+
+void pagefault_disable(void)
+{
+	TRACE;
+}
+
 
 /************************
  ** linux/capability.h **
@@ -2004,6 +2046,14 @@ unsigned long vm_mmap(struct file *file, unsigned long addr,
 }
 
 
+struct page *nth_page(struct page *page, int n)
+{
+	ASSERT(n == 0);
+	TRACE;
+	return page;
+}
+
+
 /*********************
  ** linux/pagemap.h **
  *********************/
@@ -2012,6 +2062,55 @@ int fault_in_multipages_readable(const char __user *uaddr, int size)
 {
 	TRACE;
 	return 0;
+}
+
+
+/************************
+ ** drm/drm_mem_util.h **
+ ************************/
+
+void drm_free_large(void *ptr)
+{
+	kfree(ptr);
+}
+
+
+/*******************
+ ** linux/sched.h **
+ *******************/
+
+struct pid *task_pid(struct task_struct *task)
+{
+	static pid p;
+	TRACE;
+	return &p;
+}
+
+
+u64 local_clock(void)
+{
+	unsigned long ms = Lx::timer_elapsed_ms();
+	return (u64)ms << 20;
+}
+
+
+bool need_resched(void)
+{
+	TRACE;
+	return false;
+}
+
+
+int signal_pending_state(long state, struct task_struct *p)
+{
+	TRACE;
+	return 0;
+}
+
+
+void io_schedule(void)
+{
+	TRACE;
 }
 
 

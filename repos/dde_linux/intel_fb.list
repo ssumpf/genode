@@ -26,11 +26,14 @@ linux-4.4.3/drivers/gpu/drm/i915/i915_dma.c
 linux-4.4.3/drivers/gpu/drm/i915/i915_drv.c
 linux-4.4.3/drivers/gpu/drm/i915/i915_drv.h
 linux-4.4.3/drivers/gpu/drm/i915/i915_gem.c
+linux-4.4.3/drivers/gpu/drm/i915/i915_gem_batch_pool.c
 linux-4.4.3/drivers/gpu/drm/i915/i915_gem_batch_pool.h
 linux-4.4.3/drivers/gpu/drm/i915/i915_gem_context.c
+linux-4.4.3/drivers/gpu/drm/i915/i915_gem_execbuffer.c
 linux-4.4.3/drivers/gpu/drm/i915/i915_gem_fence.c
 linux-4.4.3/drivers/gpu/drm/i915/i915_gem_gtt.c
 linux-4.4.3/drivers/gpu/drm/i915/i915_gem_gtt.h
+linux-4.4.3/drivers/gpu/drm/i915/i915_gem_render_state.c
 linux-4.4.3/drivers/gpu/drm/i915/i915_gem_render_state.h
 linux-4.4.3/drivers/gpu/drm/i915/i915_gem_stolen.c
 linux-4.4.3/drivers/gpu/drm/i915/i915_gem_tiling.c
@@ -63,6 +66,11 @@ linux-4.4.3/drivers/gpu/drm/i915/intel_overlay.c
 linux-4.4.3/drivers/gpu/drm/i915/intel_panel.c
 linux-4.4.3/drivers/gpu/drm/i915/intel_pm.c
 linux-4.4.3/drivers/gpu/drm/i915/intel_psr.c
+linux-4.4.3/drivers/gpu/drm/i915/intel_renderstate.h
+linux-4.4.3/drivers/gpu/drm/i915/intel_renderstate_gen6.c
+linux-4.4.3/drivers/gpu/drm/i915/intel_renderstate_gen7.c
+linux-4.4.3/drivers/gpu/drm/i915/intel_renderstate_gen8.c
+linux-4.4.3/drivers/gpu/drm/i915/intel_renderstate_gen9.c
 linux-4.4.3/drivers/gpu/drm/i915/intel_ringbuffer.c
 linux-4.4.3/drivers/gpu/drm/i915/intel_ringbuffer.h
 linux-4.4.3/drivers/gpu/drm/i915/intel_runtime_pm.c

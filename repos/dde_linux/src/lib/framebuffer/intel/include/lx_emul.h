@@ -29,6 +29,8 @@ enum { HZ = 100UL };
 #include <lx_emul/bug.h>
 #include <lx_emul/atomic.h>
 
+#define BUILD_BUG_ON_NOT_POWER_OF_2(n) (0)
+
 static inline void atomic_or(int i, atomic_t *v) {
 	v->counter = v->counter | i; }
 
@@ -533,7 +535,6 @@ int kobject_uevent_env(struct kobject *kobj, enum kobject_action action, char *e
 
 dma_addr_t page_to_pfn(struct page *page);
 
-
 /*********************
  ** linux/pagemap.h **
  *********************/
@@ -657,7 +658,9 @@ extern unsigned long vm_mmap(struct file *, unsigned long,
                              unsigned long, unsigned long,
                              unsigned long, unsigned long);
 
-static inline void *page_address(struct page *page) { return page ? page->addr : 0; };
+void genode_backtrace();
+
+static inline void *page_address(struct page *page) {  return page ? page->addr : 0; };
 
 int is_vmalloc_addr(const void *x);
 
@@ -1084,6 +1087,9 @@ size_t copy_to_user(void *dst, void const *src, size_t len);
 #define __copy_to_user_inatomic           copy_to_user
 #define __copy_from_user_inatomic_nocache copy_from_user
 
+void pagefault_enable(void);
+void pagefault_disable(void);
+bool pagefault_disabled(void);
 
 /*************************
  ** linux/dma-mapping.h **
@@ -1879,8 +1885,8 @@ extern void put_pid(struct pid *pid);
  ** arch/x86/include/asm/cpufeature.h **
  ***************************************/
 
-#define cpu_has_pat 1
-
+#define cpu_has_pat    1
+#define cpu_has_clflush 1
 
 /********************
  ** linux/bitmap.h **
@@ -2034,6 +2040,7 @@ struct drm_fb_helper { unsigned dummy; };
 #define trace_i915_gem_object_fault(...)
 #define trace_i915_gem_request_add(...)
 #define trace_i915_gem_request_retire(...)
+#define trace_i915_gem_ring_dispatch(...)
 #define trace_i915_gem_ring_sync_to(...)
 #define trace_i915_gem_object_change_domain(...)
 #define trace_i915_vma_unbind(...)
