@@ -213,6 +213,8 @@ INC_DIR += $(MESA_SRC_DIR)/drivers/dri/common
 SRC_C  = $(addprefix drivers/dri/i965/,$(I965_COMPILER_FILES) $(I965_FILES))
 SRC_CC = $(addprefix drivers/dri/i965/,$(I965_COMPILER_FILES_CXX) $(I965_FILES_CXX))
 
+SRC_C += bo_map.c
+
 CC_OPT      = -DHAVE_PTHREAD -DFFS_DEFINED=1
 CC_C_OPT    = -std=c99
 CC_CXX_OPT += -D__STDC_LIMIT_MACROS
@@ -222,5 +224,6 @@ CC_CXX_OPT += -D__STDC_LIMIT_MACROS
 #
 CC_OPT_drivers/dri/i965/brw_fs_combine_constants = -D__BSD_VISIBLE
 
+vpath %.c   $(REP_DIR)/src/lib/mesa/i965
 vpath %.c   $(MESA_SRC_DIR)
 vpath %.cpp $(MESA_SRC_DIR)
