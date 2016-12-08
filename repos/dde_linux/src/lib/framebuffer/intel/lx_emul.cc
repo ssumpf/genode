@@ -46,7 +46,8 @@
 #include <lx_emul/impl/completion.h>
 #include <lx_emul/impl/wait.h>
 
-static struct drm_device * lx_drm_device = nullptr;
+//XXX static
+struct drm_device * lx_drm_device = nullptr;
 
 
 struct Drm_guard
@@ -1218,6 +1219,13 @@ int drm_gem_flink_ioctl(struct drm_device *dev, void *data,
 }
 
 
+void drm_clflush_pages(struct page *pages[], unsigned long num_pages)
+{
+	//XXX: do TRACE_AND_STOP for 3D
+	TRACE;
+}
+
+
 /***************************
  ** arch/x86/kernel/tsc.c **
  ***************************/
@@ -1670,17 +1678,18 @@ gfp_t mapping_gfp_constraint(struct address_space *mapping, gfp_t gfp_mask)
 struct page *shmem_read_mapping_page_gfp(struct address_space *mapping,
                                          pgoff_t index, gfp_t gfp_mask)
 {
-	return mapping->my_page;
+	return &mapping->my_page[index];
 }
 
 void sg_set_page(struct scatterlist *sg, struct page *page,
                  unsigned int len, unsigned int offset)
 {
 	unsigned long page_link = sg->page_link & 0x3;
-	PDBG("sg: %p, page: %p", sg, page);
+	//PDBG("sg: %p, page: %p", sg, page);
 	sg->page_link = page_link | (unsigned long) page;
 	sg->offset = offset;
 	sg->length = len;
+	PDBG("sg: %p page: %p from %p", sg, page, __builtin_return_address(0));
 }
 
 dma_addr_t page_to_pfn(struct page *page)
@@ -1690,7 +1699,7 @@ dma_addr_t page_to_pfn(struct page *page)
 
 struct page *sg_page(struct scatterlist *sg)
 {
-	PDBG("sg: %p page %p", sg, (struct page *)((sg)->page_link & ~0x3));
+	//PDBG("sg: %p page %p", sg, (struct page *)((sg)->page_link & ~0x3));
 	return (struct page *)((sg)->page_link & ~0x3);
 }
 
@@ -1815,6 +1824,20 @@ void local_irq_enable()
 {
 	TRACE;
 }
+
+
+unsigned long local_irq_save(unsigned long flags)
+{
+	TRACE;
+	return 0;
+}
+
+unsigned long local_irq_restore(unsigned long flags)
+{
+	TRACE;
+	return 0;
+}
+
 
 void drm_sysfs_hotplug_event(struct drm_device *dev)
 {
@@ -2048,9 +2071,10 @@ unsigned long vm_mmap(struct file *file, unsigned long addr,
 
 struct page *nth_page(struct page *page, int n)
 {
-	ASSERT(n == 0);
+	PDBG("n: %d", n);
+
 	TRACE;
-	return page;
+	return &page[n];
 }
 
 
@@ -2114,4 +2138,48 @@ void io_schedule(void)
 }
 
 
+/********************
+ ** linux/kernel.h **
+ ********************/
+
+int scnprintf(char *buf, size_t size, const char *fmt, ...)
+{
+	va_list args;
+
+	va_start(args, fmt);
+	Genode::String_console sc(buf, size);
+	sc.vprintf(fmt, args);
+	va_end(args);
+
+	return sc.len();
+}
+
+
+/*****************
+ ** linux/pid.h **
+ *****************/
+
+struct task_struct *pid_task(struct pid *pid, enum pid_type type)
+{
+	TRACE;
+	return nullptr;
+}
+
+
+void put_pid(struct pid *pid)
+{
+	TRACE;
+}
+
+
+/*************************
+ ** linux/timekeeping.h **
+ *************************/
+
+void do_gettimeofday(struct timeval *tv)
+{
+	TRACE;
+	tv->tv_sec = 0;
+	tv->tv_usec = 0;
+}
 } /* extern "C" */
