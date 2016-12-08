@@ -30,6 +30,7 @@ enum { HZ = 100UL };
 #include <lx_emul/atomic.h>
 
 #define BUILD_BUG_ON_NOT_POWER_OF_2(n) (0)
+#define UTS_RELEASE "4.4.3"
 
 static inline void atomic_or(int i, atomic_t *v) {
 	v->counter = v->counter | i; }
@@ -182,6 +183,7 @@ int snprintf(char *buf, size_t size, const char *fmt, ...);
 int sscanf(const char *, const char *, ...);
 
 int vscnprintf(char *buf, size_t size, const char *fmt, va_list args);
+int scnprintf(char *buf, size_t size, const char *fmt, ...);
 
 enum { SPRINTF_STR_LEN = 64 };
 
@@ -288,6 +290,8 @@ bool irqs_disabled();
 
 void local_irq_enable();
 void local_irq_disable();
+unsigned long local_irq_save(unsigned long flags);
+unsigned long local_irq_restore(unsigned long flags);
 
 
 /*********************
@@ -503,11 +507,20 @@ void ida_remove(struct ida *ida, int id);
 
 int idr_for_each(struct idr *idp, int (*fn)(int id, void *p, void *data), void *data);
 
+
 /*********************
  ** linux/rculist.h **
  *********************/
 
 void hlist_del_init_rcu(struct hlist_node *n);
+
+
+/**********************
+ ** linux/rcupdate.h **
+ **********************/
+
+static inline void rcu_read_lock(void) { }
+static inline void rcu_read_unlock(void) { }
 
 
 /*************************
@@ -1863,10 +1876,16 @@ static inline s64 timeval_to_ns(const struct timeval *tv)
 static inline s64 ktime_to_us(const ktime_t kt) {
 	return kt.tv64 / NSEC_PER_USEC; }
 
+void do_gettimeofday(struct timeval *tv);
+
 
 /*****************
  ** linux/pid.h **
  *****************/
+
+enum pid_type {
+	PIDTYPE_PID
+};
 
 struct pid { atomic_t count; };
 

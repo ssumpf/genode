@@ -37,6 +37,7 @@ linux-4.4.3/drivers/gpu/drm/i915/i915_gem_render_state.c
 linux-4.4.3/drivers/gpu/drm/i915/i915_gem_render_state.h
 linux-4.4.3/drivers/gpu/drm/i915/i915_gem_stolen.c
 linux-4.4.3/drivers/gpu/drm/i915/i915_gem_tiling.c
+linux-4.4.3/drivers/gpu/drm/i915/i915_gpu_error.c
 linux-4.4.3/drivers/gpu/drm/i915/i915_guc_reg.h
 linux-4.4.3/drivers/gpu/drm/i915/i915_irq.c
 linux-4.4.3/drivers/gpu/drm/i915/i915_reg.h
