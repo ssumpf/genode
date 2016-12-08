@@ -20,13 +20,19 @@
 
 struct page *alloc_pages(gfp_t gfp_mask, unsigned int order)
 {
-	struct page *page = (struct page *)kzalloc(sizeof(struct page), 0);
+	struct page *page = (struct page *)kzalloc(sizeof(struct page) * (1U << order), 0);
 
 	size_t size = PAGE_SIZE << order;
 
 	Genode::Ram_dataspace_capability ds_cap = Lx::backend_alloc(size, Genode::UNCACHED);
-	page->addr = Lx_kit::env().rm().attach(ds_cap);
-	page->paddr = Genode::Dataspace_client(ds_cap).phys_addr();
+
+	Genode::addr_t virt = Lx_kit::env().rm().attach(ds_cap);
+	Genode::addr_t phys = Genode::Dataspace_client(ds_cap).phys_addr();
+
+	for (unsigned i = 0; i < (1U << order); i++, virt += PAGE_SIZE, phys += PAGE_SIZE) {
+		page[i].addr  = (void *)virt;
+		page[i].paddr = phys;
+	}
 
 	if (!page->addr) {
 		Genode::error("alloc_pages: ", size, " failed");
