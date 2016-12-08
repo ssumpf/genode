@@ -699,16 +699,6 @@ void i915_audio_component_cleanup(struct drm_i915_private *dev_priv)
 	TRACE_AND_STOP;
 }
 
-void i915_capture_error_state(struct drm_device *dev, bool wedge, const char *error_msg)
-{
-	TRACE_AND_STOP;
-}
-
-void i915_destroy_error_state(struct drm_device *dev)
-{
-	TRACE_AND_STOP;
-}
-
 int i915_gem_evict_vm(struct i915_address_space *vm, bool do_idle)
 {
 	TRACE_AND_STOP;
@@ -749,16 +739,6 @@ int i915_gem_userptr_ioctl(struct drm_device *dev, void *data, struct drm_file *
 {
 	TRACE_AND_STOP;
 	return -1;
-}
-
-void i915_error_printf(struct drm_i915_error_state_buf *e, const char *f, ...)
-{
-	TRACE_AND_STOP;
-}
-
-void i915_get_extra_instdone(struct drm_device *dev, uint32_t *instdone)
-{
-	TRACE_AND_STOP;
 }
 
 int i915_restore_state(struct drm_device *dev)
@@ -1119,11 +1099,6 @@ int PTR_ERR_OR_ZERO(__force const void *ptr)
 {
 	TRACE_AND_STOP;
 	return -1;
-}
-
-void put_pid(struct pid *pid)
-{
-	TRACE_AND_STOP;
 }
 
 int pwm_config(struct pwm_device *pwm, int duty_ns, int period_ns)
@@ -1511,3 +1486,4 @@ bool pagefault_disabled(void)
 {
 	TRACE_AND_STOP;
 }
+
