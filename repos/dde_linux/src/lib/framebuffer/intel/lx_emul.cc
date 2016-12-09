@@ -288,7 +288,7 @@ int mmap_gtt_ioctl(drm_device *dev, void *data, drm_file *file)
 
 	drm_gem_object_unreference_unlocked(obj);
 
-	PDBG("return %llx for HANDLE %u", args->offset, args->handle);
+	//PDBG("return %llx for HANDLE %u", args->offset, args->handle);
 
 	return ret;
 }
@@ -324,7 +324,7 @@ int Framebuffer::Driver::ioctl(int request, void *arg)
 			return -1;
 		}
 
-		PDBG("i915 request %d func %p", nr, i915_ioctls[nr].func);
+		//PDBG("i915 request %d func %p", nr, i915_ioctls[nr].func);
 		ret = i915_ioctls[nr].func(lx_drm_device, arg, lx_c_get_drm_file());
 	} else {
 
@@ -332,11 +332,11 @@ int Framebuffer::Driver::ioctl(int request, void *arg)
 			Genode::error("invalid drm request, request=", Genode::Hex(request));
 			return -1;
 		}
-		PDBG("drm request %d func %p", nr, drm_ioctls[nr].func);
+		//PDBG("drm request %d func %p", nr, drm_ioctls[nr].func);
 		ret = drm_ioctls[nr].func(lx_drm_device, arg, nullptr);
 	}
 
-	PDBG("finished ioctl (ret=%d)", ret);
+	//PDBG("finished ioctl (ret=%d)", ret);
 
 	return ret;
 }
@@ -501,7 +501,7 @@ int idr_alloc(struct idr *idp, void *ptr, int start, int end, gfp_t gfp_mask)
 	if (id > max) return -ENOSPC;
 
 	ASSERT(id >= start);
-	PDBG("ALLOC ID: %d ptr %p", id, ptr);
+	//PDBG("ALLOC ID: %d ptr %p", id, ptr);
 	id_obj[id] = ptr;
 	return id;
 }
@@ -533,7 +533,7 @@ void idr_remove(struct idr *idp, int id)
 
 void *idr_find(struct idr *idr, int id)
 {
-	PDBG("IDR FIND %d %p", id, id_obj[id]);
+	//PDBG("IDR FIND %d %p", id, id_obj[id]);
 
 	ASSERT(id < MAX_ID);
 	return id_obj[id];
@@ -982,7 +982,7 @@ int drm_dev_register(struct drm_device *dev, unsigned long flags)
 {
 	drm_get_minor(dev, &dev->primary, DRM_MINOR_LEGACY);
 
-	PDBG("REGISTER DEV");
+	//PDBG("REGISTER DEV");
 
 	ASSERT(!lx_drm_device);
 	lx_drm_device = dev;
@@ -1122,7 +1122,7 @@ int drm_gem_handle_create(struct drm_file *file_priv, struct drm_gem_object *obj
 		return ret;
 
 
-	PDBG("NEW HANDLE: %d %p\n", ret, file_priv);
+	//PDBG("NEW HANDLE: %d %p\n", ret, file_priv);
 
 	Gem_object_handle *gem = new (Lx::Malloc::mem()) Gem_object_handle(ret, obj);
 	gem_object_handles.insert(gem);
@@ -1140,7 +1140,7 @@ int drm_gem_handle_create(struct drm_file *file_priv, struct drm_gem_object *obj
 
 struct drm_gem_object *drm_gem_object_lookup(struct drm_device *dev, struct drm_file *filp, u32 handle)
 {
-	PDBG("%s: id %u filp %p\n", __func__, handle, filp);
+	//PDBG("%s: id %u filp %p\n", __func__, handle, filp);
 
 	Gem_object_handle *gem = gem_object_handles.first();
 	gem = gem ? gem->find_by_id(handle) : 0;
@@ -1167,7 +1167,7 @@ int drm_gem_close_ioctl(struct drm_device *dev, void *data,
 
 	drm_gem_object *obj = gem->gem_object();
 	if (--obj->handle_count == 0 && dev->driver->gem_close_object) {
-		PDBG("gem_free_object %p", dev->driver->gem_close_object);
+		//PDBG("gem_free_object %p", dev->driver->gem_close_object);
 		dev->driver->gem_close_object(obj, file_priv);
 	}
 
@@ -1375,7 +1375,7 @@ struct page *sg_page_iter_page(struct sg_page_iter *piter)
 		PERR("SG offset %x", piter->sg_pgoffset);
 		while (1);
 	}
-	PWRN("sg_page_iter_page: page %p",(page*)(PAGE_SIZE * (page_to_pfn((sg_page(piter->sg))) + (piter->sg_pgoffset))));
+	//PWRN("sg_page_iter_page: page %p",(page*)(PAGE_SIZE * (page_to_pfn((sg_page(piter->sg))) + (piter->sg_pgoffset))));
 
 	//return (page*)(PAGE_SIZE * (page_to_pfn((sg_page(piter->sg))) + (piter->sg_pgoffset)));
 	return sg_page(piter->sg);
@@ -1635,7 +1635,7 @@ int drm_gem_object_init(struct drm_device *dev, struct drm_gem_object *obj, size
 
 	size = PAGE_SIZE * npages;
 	void * data = page_address(pages);
-	PDBG("New object filp %p size %lx addr: %p", filp, size, data);
+	//PDBG("New object filp %p size %lx addr: %p", filp, size, data);
 	memset(data, 0, size);
 
 	return 0;
@@ -1671,7 +1671,7 @@ void sg_set_page(struct scatterlist *sg, struct page *page,
 	sg->page_link = page_link | (unsigned long) page;
 	sg->offset = offset;
 	sg->length = len;
-	PDBG("sg: %p page: %p from %p", sg, page, __builtin_return_address(0));
+	//PDBG("sg: %p page: %p from %p", sg, page, __builtin_return_address(0));
 }
 
 dma_addr_t page_to_pfn(struct page *page)
@@ -2033,8 +2033,8 @@ unsigned long vm_mmap(struct file *file, unsigned long addr,
                       unsigned long len, unsigned long prot,
                       unsigned long flag, unsigned long offset)
 {
-	PDBG("filp=%p, addr=0x%lx, len=0x%lx, offset=0x%lx", file, addr, len, offset);
-	PDBG("fiip=%p, mapping=%p", file, page_address(file->f_inode->i_mapping->my_page));
+	//PDBG("filp=%p, addr=0x%lx, len=0x%lx, offset=0x%lx", file, addr, len, offset);
+	//PDBG("fiip=%p, mapping=%p", file, page_address(file->f_inode->i_mapping->my_page));
 
 	if (addr) {
 		Genode::error(__func__, "addr != 0 (", Genode::Hex(addr),")");
@@ -2048,7 +2048,7 @@ unsigned long vm_mmap(struct file *file, unsigned long addr,
 
 struct page *nth_page(struct page *page, int n)
 {
-	PDBG("n: %d", n);
+	//PDBG("n: %d", n);
 
 	TRACE;
 	return &page[n];
