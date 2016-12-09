@@ -154,12 +154,11 @@ $(LIB_RLIB):  $(OBJECTS)
 	$(MSG_RENAME)$(LIB_RLIB)
 	$(VERBOSE)cp $(OBJECTS) $(LIB_RLIB)
 
-
 #
 # Don't link base libraries against shared libraries except for ld.lib.so
 #
 ifdef SHARED_LIB
-ifneq ($(LIB),$(DYNAMIC_LINKER))
+ifneq ($(LIB_IS_DYNAMIC_LINKER),yes)
 override DEPS := $(filter-out $(BASE_LIBS:=.lib),$(DEPS))
 endif
 endif
