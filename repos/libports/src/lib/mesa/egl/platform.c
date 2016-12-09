@@ -10,7 +10,7 @@
  */
 #include <string.h>
 #include <dlfcn.h>
-
+#include <unistd.h>
 /*
  * Local
  */
@@ -73,6 +73,7 @@ dri2_genode_create_window_surface(_EGLDriver *drv, _EGLDisplay *disp,
 		                                                     dri2_dpy->is_different_gpu ?
 		                                                     0 : __DRI_IMAGE_USE_SHARE,
 		                                                     NULL);
+		printf("CREATED\n");
 	} else {
 		assert(dri2_dpy->swrast);
 		dri2_surf->dri_drawable =
@@ -106,17 +107,29 @@ static int stride(int value)
 	return value * 2;
 }
 
+#if 0
+void
+647 tiled_to_linear(uint32_t xt1, uint32_t xt2,
+648                 uint32_t yt1, uint32_t yt2,
+649                 char *dst, const char *src,
+650                 int32_t dst_pitch, uint32_t src_pitch,
+651                 bool has_swizzling,
+652                 uint32_t tiling,
+653                 mem_copy_fn mem_copy)
+654 {
+#endif
+
 
 static void
-dri2_genode_swrast_put_image(__DRIdrawable * draw, int op,
-                             int x, int y, int w, int h,
-                             char *data, void *loaderPrivate)
+dri2_genode_put_image(__DRIdrawable * draw, int op,
+                      int x, int y, int w, int h,
+                      char *data, void *loaderPrivate)
 {
 	struct dri2_egl_surface *dri2_surf  = loaderPrivate;
 	struct Genode_egl_window  *window   = dri2_surf->g_win;
 	unsigned char * dst                 = window->addr;
 
-	printf("%s: from %p -> %p\n", __func__, data, dst);
+	//printf("%s: from %p -> %p\n", __func__, data, dst);
 
 	int dst_stride = stride(dri2_surf->base.Width);
 	int copy_width = stride(w);
@@ -135,7 +148,49 @@ dri2_genode_swrast_put_image(__DRIdrawable * draw, int op,
 		h = dri2_surf->base.Height - y;
 
 	/* copy to frame buffer and refresh */
+	//genode_blit(data, src_stride, dst, dst_stride, copy_width, h);
+	tiled_to_linear(0, 3840,
+	                0, 1080,
+	                dst, data,
+	                3840, 4096,
+	                false,1 , memcpy);
+
+	genode_framebuffer_refresh(window, x, y, w, h);
+}
+
+
+
+static void
+dri2_genode_swrast_put_image(__DRIdrawable * draw, int op,
+                             int x, int y, int w, int h,
+                             char *data, void *loaderPrivate)
+{
+	struct dri2_egl_surface *dri2_surf  = loaderPrivate;
+	struct Genode_egl_window  *window   = dri2_surf->g_win;
+	unsigned char * dst                 = window->addr;
+
+	printf("%s: from %p -> %p\n", __func__, data, dst);
+	char *d = data + (3840 * 10);
+	memset(d, 0xff, 3840);
+	int dst_stride = stride(dri2_surf->base.Width);
+	int copy_width = stride(w);
+	int x_offset = stride(x);
+	int src_stride = copy_width;
+
+	dst += x_offset;
+	dst += y * dst_stride;
+
+	/* copy width over stride boundary */
+	if (copy_width >dst_stride - x_offset)
+		copy_width = dst_stride - x_offset;
+
+	/* limit height */
+	if (h > dri2_surf->base.Height - y)
+		h = dri2_surf->base.Height - y;
+
+	/* copy to frame buffer and refresh */
 	genode_blit(data, src_stride, dst, dst_stride, copy_width, h);
+	printf("%s src_stride %d dst_stride %d width %d height %d\n", __func__, src_stride, dst_stride, copy_width, h);
 	genode_framebuffer_refresh(window, x, y, w, h);
 }
 
@@ -157,9 +212,9 @@ dri2_genode_swap_buffers(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *draw)
 	struct dri2_egl_surface *dri2_surf = dri2_egl_surface(draw);
 
 	void *data = genode_map_image(dri2_surf->back_image);
-	dri2_genode_swrast_put_image(dri2_surf->dri_drawable, 0, 0, 0,
-	                             dri2_surf->base.Width, dri2_surf->base.Height,
-	                             (char *)data, (void *)dri2_surf);
+	dri2_genode_put_image(dri2_surf->dri_drawable, 0, 0, 0,
+	                      dri2_surf->base.Width, dri2_surf->base.Height,
+	                      (char *)data, (void *)dri2_surf);
 
 	genode_unmap_image(dri2_surf->back_image);
 

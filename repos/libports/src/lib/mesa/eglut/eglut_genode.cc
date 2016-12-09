@@ -110,6 +110,7 @@ void _eglutNativeFiniWindow(struct eglut_window *win)
 void _eglutNativeEventLoop()
 {
 	static unsigned long count = 0;
+
 	while (true) {
 		//_e->env.ep().wait_and_dispatch_one_signal();
 		//_e->env.ep().dispatch_pending();
@@ -117,23 +118,24 @@ void _eglutNativeEventLoop()
 		struct eglut_window *win =_eglut->current;
 
 		/* 50 Hz */
-		if ((count++ % 2) && _eglut->idle_cb) {
-			_eglut->idle_cb();
-		}
+		//if ((count++ % 2) && _eglut->idle_cb) {
+		//	_eglut->idle_cb();
+		//}
 
 		if (win->display_cb)
 			win->display_cb();
 
-		PDBG("event %u", initialized);
-
-		if (initialized)
+		if (initialized) {
 			eglSwapBuffers(_eglut->dpy, win->surface);
-
+			eglWaitClient();
+		}
 		/* needed for task scheduling */
+#if 0
 		Window *native = (Window*)win->native.u.window;
 		Genode::Signal_transmitter(native->sync_dispatcher).submit();
 		PDBG("block");
 		Lx::scheduler().current()->block_and_schedule();
+#endif
 	}
 }
 
