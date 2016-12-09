@@ -7,7 +7,7 @@ extern "C" {
 #include <gpu/driver.h>
 
 #include <os/backtrace.h>
-enum { verbose_ioctl = true };
+enum { verbose_ioctl = false };
 
 
 long driver_nr(long request) { return (request & 0xff) - DRM_COMMAND_BASE; }
