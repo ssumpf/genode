@@ -71,10 +71,13 @@ BASE_DIR     := $(realpath $(shell echo $(BASE_DIR)))
 #
 export SHELL := $(shell which bash)
 
-select_from_repositories = $(firstword $(foreach REP,$(REPOSITORIES),$(wildcard $(REP)/$(1))))
-
--include $(call select_from_repositories,etc/specs.conf)
+#
+# Fetch SPECS configuration from all source repositories and the build directory
+#
+-include $(foreach REP,$(REPOSITORIES),$(wildcard $(REP)/etc/specs.conf))
 -include $(BUILD_BASE_DIR)/etc/specs.conf
+
+select_from_repositories = $(firstword $(foreach REP,$(REPOSITORIES),$(wildcard $(REP)/$(1))))
 
 #
 # Determine the spec files to incorporate into the build configuration from the
