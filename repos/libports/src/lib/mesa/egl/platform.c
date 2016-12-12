@@ -107,18 +107,16 @@ static int stride(int value)
 	return value * 2;
 }
 
-#if 0
-void
-647 tiled_to_linear(uint32_t xt1, uint32_t xt2,
-648                 uint32_t yt1, uint32_t yt2,
-649                 char *dst, const char *src,
-650                 int32_t dst_pitch, uint32_t src_pitch,
-651                 bool has_swizzling,
-652                 uint32_t tiling,
-653                 mem_copy_fn mem_copy)
-654 {
-#endif
-
+/*
+extern void
+tiled_to_linear(uint32_t xt1, uint32_t xt2,
+                uint32_t yt1, uint32_t yt2,
+                char *dst, const char *src,
+                int32_t dst_pitch, uint32_t src_pitch,
+                bool has_swizzling,
+                uint32_t tiling,
+                mem_copy_fn mem_copy);
+*/
 
 static void
 dri2_genode_put_image(__DRIdrawable * draw, int op,
@@ -126,33 +124,19 @@ dri2_genode_put_image(__DRIdrawable * draw, int op,
                       char *data, void *loaderPrivate)
 {
 	struct dri2_egl_surface *dri2_surf  = loaderPrivate;
+	struct dri2_egl_display *dri2_dpy   = dri2_egl_display(dri2_surf->base.Resource.Display);
 	struct Genode_egl_window  *window   = dri2_surf->g_win;
 	unsigned char * dst                 = window->addr;
 
-	//printf("%s: from %p -> %p\n", __func__, data, dst);
-
+	int src_stride;
 	int dst_stride = stride(dri2_surf->base.Width);
-	int copy_width = stride(w);
-	int x_offset = stride(x);
-	int src_stride = copy_width;
-
-	dst += x_offset;
-	dst += y * dst_stride;
-
-	/* copy width over stride boundary */
-	if (copy_width >dst_stride - x_offset)
-		copy_width = dst_stride - x_offset;
-
-	/* limit height */
-	if (h > dri2_surf->base.Height - y)
-		h = dri2_surf->base.Height - y;
+	dri2_dpy->image->queryImage(dri2_surf->back_image, __DRI_IMAGE_ATTRIB_STRIDE, &src_stride);
 
 	/* copy to frame buffer and refresh */
-	//genode_blit(data, src_stride, dst, dst_stride, copy_width, h);
-	tiled_to_linear(0, 3840,
-	                0, 1080,
+	tiled_to_linear(0, dst_stride,
+	                0, h,
 	                dst, data,
-	                3840, 4096,
+	                dst_stride, src_stride,
 	                false,1 , memcpy);
 
 	genode_framebuffer_refresh(window, x, y, w, h);
@@ -169,9 +153,6 @@ dri2_genode_swrast_put_image(__DRIdrawable * draw, int op,
 	struct Genode_egl_window  *window   = dri2_surf->g_win;
 	unsigned char * dst                 = window->addr;
 
-	printf("%s: from %p -> %p\n", __func__, data, dst);
-	char *d = data + (3840 * 10);
-	memset(d, 0xff, 3840);
 	int dst_stride = stride(dri2_surf->base.Width);
 	int copy_width = stride(w);
 	int x_offset = stride(x);
@@ -190,7 +171,6 @@ dri2_genode_swrast_put_image(__DRIdrawable * draw, int op,
 
 	/* copy to frame buffer and refresh */
 	genode_blit(data, src_stride, dst, dst_stride, copy_width, h);
-	printf("%s src_stride %d dst_stride %d width %d height %d\n", __func__, src_stride, dst_stride, copy_width, h);
 	genode_framebuffer_refresh(window, x, y, w, h);
 }
 
@@ -427,31 +407,6 @@ back_bo_to_dri_buffer(struct dri2_egl_surface *dri2_surf, __DRIbuffer *buffer)
 }
 
 
-#if 0
-static int
-get_aux_bo(struct dri2_egl_surface *dri2_surf,
-           unsigned int attachment, unsigned int format, __DRIbuffer *buffer)
-{
-	struct dri2_egl_display *dri2_dpy = dri2_egl_display(dri2_surf->base.Resource.Display);
-	__DRIbuffer *b = dri2_surf->dri_buffers[attachment];
-
-	if (b == NULL) {
-		b = dri2_dpy->dri2->allocateBuffer(dri2_dpy->dri_screen,
-		                                   attachment, format,
-		                                   dri2_surf->base.Width,
-		                                   dri2_surf->base.Height);
-		dri2_surf->dri_buffers[attachment] = b;
-	}
-
-	if (b == NULL)
-		return -1;
-
-	memcpy(buffer, b, sizeof *buffer);
-
-	return 0;
-}
-#endif
-
 static __DRIbuffer *
 dri2_genode_get_buffers_with_format(__DRIdrawable * driDrawable,
                                     int *width, int *height,
@@ -461,12 +416,9 @@ dri2_genode_get_buffers_with_format(__DRIdrawable * driDrawable,
 	struct dri2_egl_surface *dri2_surf = loaderPrivate;
 	int i, j;
 
-	printf("%s:%d DRAWABLE: %p\n", __func__, __LINE__, driDrawable);
-
 	for (i = 0, j = 0; i < 2 * count; i += 2, j++) {
 		switch (attachments[i]) {
 		case __DRI_BUFFER_BACK_LEFT:
-			printf("left back\n");
 			back_bo_to_dri_buffer(dri2_surf, &dri2_surf->buffers[j]);
 			break;
 		default:
@@ -476,12 +428,12 @@ dri2_genode_get_buffers_with_format(__DRIdrawable * driDrawable,
 //				return NULL;
 //			}
 			printf("aux buffer\n");
-			printf("not implemented\n");
+			printf("ERROR: not implemented\n");
 			while (1);
 			break;
 		}
 	}
-	printf("done\n");
+
 	*out_count = j;
 	if (j == 0)
 		return NULL;
@@ -489,7 +441,6 @@ dri2_genode_get_buffers_with_format(__DRIdrawable * driDrawable,
 	*width = dri2_surf->base.Width;
 	*height = dri2_surf->base.Height;
 
-	printf("leave %d\n", j);
 	return dri2_surf->buffers;
 }
 
@@ -568,13 +519,9 @@ cleanup_dpy:
 
 EGLBoolean dri2_initialize_genode(_EGLDriver *drv, _EGLDisplay *disp)
 {
-/*
 	if (!dri2_initialize_genode_dri2(drv, disp)) {
 		return  dri2_initialize_genode_swrast(drv, disp);
-	}*/
-	printf("INTEL DRI2 start\n");
-	int ret = dri2_initialize_genode_dri2(drv, disp);
-	printf("INTEL DRI2 initialized with %d\n", ret);
+	}
 
 	return EGL_TRUE;
 }
