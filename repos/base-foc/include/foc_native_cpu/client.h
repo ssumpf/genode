@@ -34,6 +34,9 @@ struct Genode::Foc_native_cpu_client : Rpc_client<Foc_native_cpu>
 
 	Native_capability alloc_irq() {
 		return call<Rpc_alloc_irq>(); }
+
+	Foc_thread_state thread_state(Thread_capability cap) {
+		return call<Rpc_thread_state>(cap); }
 };
 
 #endif /* _INCLUDE__FOC_NATIVE_CPU__CLIENT_H_ */
