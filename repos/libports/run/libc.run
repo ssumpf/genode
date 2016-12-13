@@ -1,4 +1,4 @@
-build "core init test/libc"
+build "core init drivers/timer test/libc"
 
 create_boot_directory
 
@@ -19,6 +19,10 @@ install_config {
 	<default-route>
 		<any-service> <parent/> <any-child/> </any-service>
 	</default-route>
+	<start name="timer">
+		<resource name="RAM" quantum="2M"/>
+		<provides> <service name="Timer"/> </provides>
+	</start>
 	<start name="test-libc">
 		<resource name="RAM" quantum="4M"/>
 		<config>
@@ -30,7 +34,7 @@ install_config {
 }
 
 build_boot_image {
-	core init test-libc
+	core init timer test-libc
 	ld.lib.so libc.lib.so libm.lib.so
 }
 
