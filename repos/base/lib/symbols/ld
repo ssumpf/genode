@@ -402,6 +402,7 @@ _ZTIN6Genode5ChildE D 40
 _ZTIN6Genode6OutputE D 8
 _ZTIN6Genode6ThreadE D 8
 _ZTIN6Genode7ConsoleE D 8
+_ZTIPKc V
 _ZTISt10bad_typeid D 12
 _ZTISt13bad_exception D 12
 _ZTISt16bad_array_length D 12
