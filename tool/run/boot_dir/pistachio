@@ -27,7 +27,7 @@ proc run_boot_dir {binaries} {
 
 	exec mkdir -p [run_dir]/pistachio
 
-	exec cp kernel/pistachio/pistachio [run_dir]/pistachio/kernel
+	exec cp kernel/pistachio/kernel    [run_dir]/pistachio
 	exec cp kernel/pistachio/sigma0    [run_dir]/pistachio
 	exec cp kernel/pistachio/kickstart [run_dir]/pistachio
 

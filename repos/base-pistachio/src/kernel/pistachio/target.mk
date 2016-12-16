@@ -1,7 +1,6 @@
 TARGET           = kernel
 REQUIRES        += pistachio
 KERNEL_BUILD_DIR = $(BUILD_BASE_DIR)/kernel/pistachio/build
-KERNEL           = $(KERNEL_BUILD_DIR)/x86-kernel
 KERNEL_SRC      := $(call select_from_ports,pistachio)/src/kernel/pistachio/kernel
 
 LIBGCC_DIR = $(dir $(shell $(CC) $(CC_MARCH) -print-libgcc-file-name))
@@ -12,7 +11,8 @@ KERNEL_CCFLAGS += -Wno-unused-function -Wno-array-bounds -Wno-narrowing \
                   -Wno-unused-but-set-variable -Wno-maybe-uninitialized \
                   -Wno-unused-variable
 
-$(TARGET): $(KERNEL)
+$(TARGET): $(KERNEL_BUILD_DIR)/x86-kernel
+	$(VERBOSE)ln -sf $< $@
 
 $(KERNEL_BUILD_DIR)/Makefile:
 	$(VERBOSE_MK) MAKEFLAGS= $(MAKE) $(VERBOSE_DIR) -C $(KERNEL_SRC) BUILDDIR=$(dir $@)
@@ -50,18 +50,16 @@ $(KERNEL_BUILD_DIR)/config/.config: $(KERNEL_BUILD_DIR)/Makefile
 	             $(MAKE) -s $(VERBOSE_DIR) -C $(KERNEL_BUILD_DIR) batchconfig \
 	                     GCCINSTALLDIR=$(LIBGCC_DIR)
 
-$(KERNEL): $(KERNEL_BUILD_DIR)/config/.config
+$(KERNEL_BUILD_DIR)/x86-kernel: $(KERNEL_BUILD_DIR)/config/.config
 	$(VERBOSE_MK)CCFLAGS="$(KERNEL_CCFLAGS)" LDFLAGS="$(LD_MARCH)" \
 	             ASMFLAGS="$(CC_MARCH)" MAKEFLAGS= \
 	             $(MAKE) -s $(VERBOSE_DIR) -C $(KERNEL_BUILD_DIR) \
 	                     TOOLPREFIX=$(CROSS_DEV_PREFIX) \
 	                     GCCINSTALLDIR=$(LIBGCC_DIR) \
 	                     LIBGCCINC=$(GCCINC_DIR)
-	$(VERBOSE)ln -sf $(KERNEL_BUILD_DIR)/x86-kernel $@
 
 clean cleanall:
 	$(VERBOSE)rm -rf $(KERNEL_BUILD_DIR)
-
 
 #
 # Install symlinks for sigma0 and kickstart at kernel/pistachio/

@@ -74,8 +74,19 @@ export SHELL := $(shell which bash)
 #
 # Fetch SPECS configuration from all source repositories and the build directory
 #
+SPECS :=
 -include $(foreach REP,$(REPOSITORIES),$(wildcard $(REP)/etc/specs.conf))
 -include $(BUILD_BASE_DIR)/etc/specs.conf
+
+#
+# \deprecated  We include the repository-specific 'specs.conf' once again as the
+#              build-dir-local etc/specs.conf (as created by create_builddir)
+#              reassigns the 'SPECS' variable instead of appending it.
+#              We sort the 'SPECS' to remove duplicates. We should remove this
+#              once the old 'create_builddir' arguments are gone.
+#
+-include $(foreach REP,$(REPOSITORIES),$(wildcard $(REP)/etc/specs.conf))
+SPECS := $(sort $(SPECS))
 
 select_from_repositories = $(firstword $(foreach REP,$(REPOSITORIES),$(wildcard $(REP)/$(1))))
 
