@@ -202,10 +202,10 @@ class Lx::Task : public Lx_kit::List<Lx::Task>::Element
 				_state = STATE_RUNNING;
 				Genode::Thread *th = Genode::Thread::myself();
 
-				enum { STACK_SIZE = 64 * 1024 }; /* FIXME make stack size configurable */
+				enum { STACK_SIZE = 256 * 1024 }; /* FIXME make stack size configurable */
 				_stack = th->alloc_secondary_stack(_name, STACK_SIZE);
 				_stack = (void *)(((unsigned long)(_stack)) & ~(0xfUL));
-				PDBG("STACK %p", _stack);
+
 				/* switch stack and call '_func(_arg)' */
 				arch_execute(_stack, (void *)_func, _arg);
 			} else {
