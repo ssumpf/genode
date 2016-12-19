@@ -1,0 +1,95 @@
+set build_components {
+	core init
+	drivers/timer
+	test/hello-gl
+	lib/mesa/swrast
+}
+
+source ${genode_dir}/repos/base/run/platform_drv.inc
+
+# override default platform driver policy
+proc platform_drv_policy {} {
+	return {
+		<policy label_suffix="hello-gl" irq_mode="nomsi">
+			<pci class="VGA"/>
+			<pci bus="0" device="0" function="0"/>
+			<pci class="ISABRIDGE"/>
+		</policy>}
+	}
+
+
+append_platform_drv_build_components
+
+build $build_components
+
+create_boot_directory
+
+set config {
+<config>
+	<parent-provides>
+		<service name="ROM"/>
+		<service name="RAM"/>
+		<service name="IRQ"/>
+		<service name="IO_MEM"/>
+		<service name="IO_PORT"/>
+		<service name="PD"/>
+		<service name="RM"/>
+		<service name="CPU"/>
+		<service name="LOG"/>
+	</parent-provides>
+	<default-route>
+		<any-service> <parent/> <any-child/> </any-service>
+	</default-route>
+}
+
+append_platform_drv_config
+
+append config {
+	<start name="timer">
+		<resource name="RAM" quantum="1M"/>
+		<provides><service name="Timer"/></provides>
+	</start>
+	<start name="hello-gl">
+		<resource name="RAM" quantum="128M" />
+		<config ld_verbose="true">
+			<libc stdout="/dev/log" stderr="/dev/log">
+				<vfs>
+					<dir name="dev"> <log/> </dir>
+					<rom name="hello1.tga" />
+					<rom name="hello2.tga" />
+					<rom name="hello-gl.f.glsl" />
+					<rom name="hello-gl.v.glsl" />
+				</vfs>
+			</libc>
+		</config>
+		<route>
+			<any-service> <parent /> <any-child/> </any-service>
+		</route>
+	</start>
+</config>
+}
+
+install_config $config
+
+set boot_modules {
+	core init ld.lib.so timer
+	hello-gl hello1.tga hello2.tga
+	hello-gl.f.glsl hello-gl.v.glsl
+	libc.lib.so libm.lib.so pthread.lib.so
+	egl.lib.so mesa-11.lib.so stdcxx.lib.so
+	expat.lib.so glapi.lib.so swrast.lib.so
+	i965.lib.so drm.lib.so intel_fb.lib.so
+}
+
+append_platform_drv_boot_modules
+
+build_boot_image $boot_modules
+
+append qemu_args " -m 768 -nographic"
+append qemu_args " -net user -redir tcp:5555::5555"
+append_if [have_spec x86] qemu_args " -net nic,model=e1000 "
+append_if [have_spec lan9118] qemu_args " -net nic,model=lan9118 "
+
+run_genode_until forever
+
+# vi: set ft=tcl :
