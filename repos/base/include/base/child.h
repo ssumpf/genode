@@ -499,6 +499,22 @@ class Genode::Child : protected Rpc_object<Parent>,
 		virtual ~Child();
 
 		/**
+		 * Return true if the child has been started
+		 *
+		 * After the child's construction, the child is not always able to run
+		 * immediately. In particular, a session of the child's environment
+		 * may still be pending. This method returns true only if the child's
+		 * environment is completely initialized at the time of calling.
+		 *
+		 * If all environment sessions are immediately available (as is the
+		 * case for local services or parent services), the return value is
+		 * expected to be true. If this is not the case, one of child's
+		 * environment sessions could not be established, e.g., the ROM session
+		 * of the binary could not be obtained.
+		 */
+		bool active() const { return _process.constructed(); }
+
+		/**
 		 * RAM quota unconditionally consumed by the child's environment
 		 */
 		static size_t env_ram_quota()
