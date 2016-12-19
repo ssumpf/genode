@@ -16,6 +16,7 @@
 #include <../drivers/gpu/drm/i915/i915_drv.h>
 #include <../drivers/gpu/drm/i915/intel_drv.h>
 #include <drm/drm_atomic_helper.h>
+#include <drm/drmP.h>
 
 extern struct drm_framebuffer *
 lx_c_intel_framebuffer_create(struct drm_device *dev,
@@ -167,4 +168,56 @@ struct drm_file *lx_c_get_drm_file(void)
 	};
 
 	return &file;
+}
+
+
+/*
+ * Our own version of DRM_I915_GEM_MMAP_GTT, return virtual address in offset
+ */
+int mmap_gtt_ioctl(struct drm_device *dev, void *data, struct drm_file *file)
+{
+	struct drm_i915_gem_mmap_gtt *args = (struct drm_i915_gem_mmap_gtt *)data;
+	struct drm_gem_object *obj = drm_gem_object_lookup(dev, file, args->handle);
+	struct drm_i915_private *dev_priv = dev->dev_private;
+
+	if (!obj)
+		return -ENOENT;
+
+	int ret = -EINVAL;
+
+	if (obj->filp) {
+		struct i915_ggtt_view view = i915_ggtt_view_normal;
+		struct drm_i915_gem_object *i915_obj = to_intel_bo(obj);
+
+		args->offset = (__u64)page_address(obj->filp->f_inode->i_mapping->my_page);
+
+		ret = i915_gem_object_ggtt_pin(i915_obj, &view, 0, PIN_MAPPABLE);
+		if (ret) {
+			panic("ERROR: %s:%d pin failed\n", __func__, __LINE__);
+			return ret;
+		}
+
+		ret = i915_gem_object_set_to_gtt_domain(i915_obj, true);
+		if (ret) {
+			panic("%s:%d set domain failed\n", __func__, __LINE__);
+			return ret;
+		}
+
+		ret = i915_gem_object_get_fence(i915_obj);
+		if (ret) {
+			panic("%s:%d get fence failed\n", __func__, __LINE__);
+			return ret;
+		}
+
+		unsigned long gtt_phys = (unsigned long)dev_priv->gtt.mappable_base
+		                         + i915_gem_obj_ggtt_offset_view(i915_obj, &view);
+		/* save GTT mapping addr */
+		unsigned long gtt_virt = (unsigned long)ioremap_wc(gtt_phys, obj->size);
+		obj->filp->f_inode->i_mapping->gtt_addr = gtt_virt;
+		args->offset = gtt_virt;
+	}
+
+	drm_gem_object_unreference_unlocked(obj);
+
+	return ret;
 }

@@ -560,6 +560,7 @@ int fault_in_multipages_readable(const char __user *uaddr, int size);
 struct address_space {
 	unsigned long flags;
 	struct page * my_page;
+	unsigned long gtt_addr;
 };
 
 gfp_t mapping_gfp_mask(struct address_space * mapping);
