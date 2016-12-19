@@ -10,6 +10,8 @@
 			Lx::Task*;
 		};
 
+		genode_backtrace;
+
 	local:
 		*;
 };

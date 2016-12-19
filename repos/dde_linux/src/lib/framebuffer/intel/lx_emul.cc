@@ -268,31 +268,6 @@ extern "C" void ioctl_work(work_struct *work)
 #endif
 
 
-/*
- * Our own version of DRM_I915_GEM_MMAP_GTT, return virtual address in offset
- */
-int mmap_gtt_ioctl(drm_device *dev, void *data, drm_file *file)
-{
-	drm_i915_gem_mmap_gtt *args = (drm_i915_gem_mmap_gtt *)data;
-	drm_gem_object *obj = drm_gem_object_lookup(dev, file, args->handle);
-
-	if (obj == nullptr)
-		return -ENOENT;
-
-	int ret = -EINVAL;
-
-	if (obj->filp) {
-		args->offset = (__u64)page_address(obj->filp->f_inode->i_mapping->my_page);
-		ret = 0;
-	}
-
-	drm_gem_object_unreference_unlocked(obj);
-
-	//PDBG("return %llx for HANDLE %u", args->offset, args->handle);
-
-	return ret;
-}
-
 void Framebuffer::Driver::finish_initialization()
 {
 	/* special handling for DRM_I915_GEM_MMAP_GTT (see above) */
@@ -1619,7 +1594,7 @@ int drm_gem_object_init(struct drm_device *dev, struct drm_gem_object *obj, size
 	drm_gem_private_object_init(dev, obj, size);
 
 	struct file          * filp    = (struct file*) kmalloc(sizeof(struct file), GFP_KERNEL);
-	struct inode         * inode   = (struct inode*) kmalloc(sizeof(struct inode*), GFP_KERNEL);
+	struct inode         * inode   = (struct inode*) kzalloc(sizeof(struct inode*), GFP_KERNEL);
 	struct address_space * mapping = (struct address_space*)
 		kmalloc(sizeof(struct address_space*), GFP_KERNEL);
 
