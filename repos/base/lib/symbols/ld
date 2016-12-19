@@ -358,24 +358,23 @@ _ZnwmPN6Genode9AllocatorE T
 _ZnwmRN6Genode9AllocatorE T
 _ZSt18uncaught_exceptionv T
 _ZSt9terminatev T
-_ZTIa V
-_ZTIb V
-_ZTIc V
-_ZTIDd V
-_ZTIDe V
-_ZTIDf V
-_ZTIDi V
-_ZTIDn V
-_ZTIDs V
-_ZTId V
-_ZTIe V
-_ZTIf V
-_ZTIh V
-_ZTIi V
-_ZTIi V
-_ZTIj V
-_ZTIl V
-_ZTIm V
+_ZTIa D 8
+_ZTIb D 8
+_ZTIc D 8
+_ZTIDd D 8
+_ZTIDe D 8
+_ZTIDf D 8
+_ZTIDi D 8
+_ZTIDn D 8
+_ZTIDs D 8
+_ZTId D 8
+_ZTIe D 8
+_ZTIf D 8
+_ZTIh D 8
+_ZTIi D 8
+_ZTIj D 8
+_ZTIl D 8
+_ZTIm D 8
 _ZTIN10__cxxabiv115__forced_unwindE D 8
 _ZTIN10__cxxabiv116__enum_type_infoE D 12
 _ZTIN10__cxxabiv117__class_type_infoE D 12
