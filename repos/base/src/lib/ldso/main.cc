@@ -290,7 +290,8 @@ Elf::Addr Ld::jmp_slot(Dependency const &dep, Elf::Size index)
 		Reloc_jmpslot slot(dep, dep.obj().dynamic().pltrel_type(), 
 		                   dep.obj().dynamic().pltrel(), index);
 		return slot.target_addr();
-	} catch (...) { error("LD: jump slot relocation failed. FATAL!"); }
+	} catch (...) { error("LD: jump slot relocation failed (slot: ", Hex(index), ", object: '",
+	                      dep.obj().name(), "'", "). FATAL!"); }
 
 	return 0;
 }
