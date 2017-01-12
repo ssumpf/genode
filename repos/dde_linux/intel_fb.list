@@ -60,7 +60,10 @@ linux-x.x.x/drivers/gpu/drm/i915/intel_guc_fwif.h
 linux-x.x.x/drivers/gpu/drm/i915/intel_hdmi.c
 linux-x.x.x/drivers/gpu/drm/i915/intel_hotplug.c
 linux-x.x.x/drivers/gpu/drm/i915/intel_i2c.c
+linux-x.x.x/drivers/gpu/drm/i915/intel_lrc.c
 linux-x.x.x/drivers/gpu/drm/i915/intel_lrc.h
+linux-x.x.x/drivers/gpu/drm/i915/intel_mocs.c
+linux-x.x.x/drivers/gpu/drm/i915/intel_mocs.h
 linux-x.x.x/drivers/gpu/drm/i915/intel_lvds.c
 linux-x.x.x/drivers/gpu/drm/i915/intel_modes.c
 linux-x.x.x/drivers/gpu/drm/i915/intel_overlay.c
