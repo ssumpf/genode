@@ -741,6 +741,13 @@ int i915_gem_userptr_ioctl(struct drm_device *dev, void *data, struct drm_file *
 	return -1;
 }
 
+int i915_guc_submit(struct i915_guc_client *client,
+                    struct drm_i915_gem_request *rq)
+{
+	TRACE_AND_STOP;
+	return -1;
+}
+
 int i915_restore_state(struct drm_device *dev)
 {
 	TRACE_AND_STOP;
@@ -804,17 +811,6 @@ void intel_dvo_init(struct drm_device *dev)
 	TRACE_AND_STOP;
 }
 
-void intel_execlists_retire_requests(struct intel_engine_cs *ring)
-{
-	TRACE_AND_STOP;
-}
-
-int intel_execlists_submission(struct i915_execbuffer_params *params, struct drm_i915_gem_execbuffer2 *args, struct list_head *vmas)
-{
-	TRACE_AND_STOP;
-	return -1;
-}
-
 int intel_guc_resume(struct drm_device *dev)
 {
 	TRACE_AND_STOP;
@@ -828,45 +824,6 @@ int intel_guc_suspend(struct drm_device *dev)
 }
 
 void intel_guc_ucode_fini(struct drm_device *dev)
-{
-	TRACE_AND_STOP;
-}
-
-int intel_logical_ring_alloc_request_extras(struct drm_i915_gem_request *request)
-{
-	TRACE_AND_STOP;
-	return -1;
-}
-
-void intel_logical_ring_cleanup(struct intel_engine_cs *ring)
-{
-	TRACE_AND_STOP;
-}
-
-int intel_logical_ring_reserve_space(struct drm_i915_gem_request *request)
-{
-	TRACE_AND_STOP;
-	return -1;
-}
-
-void intel_logical_ring_stop(struct intel_engine_cs *ring)
-{
-	TRACE_AND_STOP;
-}
-
-int intel_lr_context_deferred_alloc(struct intel_context *ctx,
-                                    struct intel_engine_cs *ring)
-{
-	TRACE_AND_STOP;
-	return -1;
-}
-
-void intel_lrc_irq_handler(struct intel_engine_cs *ring)
-{
-	TRACE_AND_STOP;
-}
-
-void intel_lr_context_unpin(struct drm_i915_gem_request *req)
 {
 	TRACE_AND_STOP;
 }
@@ -930,12 +887,6 @@ char *kstrdup(const char *s, gfp_t gfp)
 {
 	TRACE_AND_STOP;
 	return NULL;
-}
-
-int logical_ring_flush_all_caches(struct drm_i915_gem_request *req)
-{
-	TRACE_AND_STOP;
-	return -1;
 }
 
 void *memchr_inv(const void *s, int c, size_t n)
@@ -1163,12 +1114,6 @@ void seq_puts(struct seq_file *m, const char *s)
 	TRACE_AND_STOP;
 }
 
-int set_page_dirty(struct page *page)
-{
-	TRACE_AND_STOP;
-	return -1;
-}
-
 int set_pages_wb(struct page *page, int numpages)
 {
 	TRACE_AND_STOP;
@@ -1386,10 +1331,6 @@ void *vmalloc(unsigned long size)
 	TRACE_AND_STOP;
 	return NULL;
 }
-void intel_lr_context_free(struct intel_context *ctx)
-{
-	TRACE_AND_STOP;
-}
 
 void *vmap(struct page **pages, unsigned int count, unsigned long flags, pgprot_t prot)
 {
@@ -1398,11 +1339,6 @@ void *vmap(struct page **pages, unsigned int count, unsigned long flags, pgprot_
 }
 
 void vunmap(const void *addr)
-{
-	TRACE_AND_STOP;
-}
-
-void intel_lr_context_reset(struct drm_device *dev, struct intel_context *ctx)
 {
 	TRACE_AND_STOP;
 }
@@ -1486,4 +1422,3 @@ bool pagefault_disabled(void)
 {
 	TRACE_AND_STOP;
 }
-
