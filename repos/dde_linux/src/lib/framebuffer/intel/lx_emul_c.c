@@ -23,7 +23,7 @@ lx_c_intel_framebuffer_create(struct drm_device *dev,
                          struct drm_mode_fb_cmd2 *mode_cmd,
                          struct drm_i915_gem_object *obj);
 
-
+#if 0
 int intel_sanitize_enable_execlists(struct drm_device *dev,
                                     int enable_execlists)
 {
@@ -31,7 +31,7 @@ int intel_sanitize_enable_execlists(struct drm_device *dev,
 		return 1;
 	return 0;
 }
-
+#endif
 
 void lx_c_allocate_framebuffer(struct drm_device * dev,
                                 struct lx_c_fb_config *c)

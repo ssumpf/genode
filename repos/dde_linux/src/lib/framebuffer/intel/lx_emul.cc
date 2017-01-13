@@ -1956,12 +1956,6 @@ signed long schedule_timeout_uninterruptible(signed long timeout)
 	return schedule_timeout(timeout);
 }
 
-int intel_logical_rings_init(struct drm_device *dev)
-{
-	TRACE;
-	return 0;
-}
-
 int intel_guc_ucode_load(struct drm_device *dev)
 {
 	TRACE;
@@ -2050,6 +2044,12 @@ struct page *nth_page(struct page *page, int n)
 
 	TRACE;
 	return &page[n];
+}
+
+int set_page_dirty(struct page *page)
+{
+	TRACE;
+	return 0;
 }
 
 
