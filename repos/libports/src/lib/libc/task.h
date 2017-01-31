@@ -47,7 +47,7 @@ namespace Libc {
 	 * or as separate pthread. This function returns after the libc kernel
 	 * resumed the user context execution.
 	 */
-	unsigned long suspend(unsigned long timeout_ms);
+	unsigned long suspend(unsigned long timeout_ms = 0UL);
 
 	/**
 	 * Suspend main user context and the component entrypoint

@@ -179,7 +179,7 @@ static void print(Genode::Output &output, timeval *tv)
 extern "C" int
 __attribute__((weak))
 _select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
-        struct timeval *timeout)
+        struct timeval *tv)
 {
 	fd_set in_readfds, in_writefds, in_exceptfds;
 
@@ -205,7 +205,7 @@ _select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
 			return nready;
 
 		/* return on zero-timeout */
-		if (timeout && (timeout->tv_sec) == 0 && (timeout->tv_usec == 0))
+		if (tv && (tv->tv_sec) == 0 && (tv->tv_usec == 0))
 			return 0;
 
 		/* suspend as we don't have any immediate events */
@@ -217,11 +217,20 @@ _select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
 		select_cb_list = &(*select_cb);
 	}
 
-	unsigned long timeout_ms = timeout->tv_sec*1000 + timeout->tv_usec / 1000;
+	struct Timeout
+	{
+		timeval const *_tv;
+		bool    const  valid    { _tv != nullptr };
+		unsigned long  duration { valid ? _tv->tv_sec*1000 + _tv->tv_usec/1000 : 0UL };
+
+		bool expired() const { return valid && duration == 0; };
+
+		Timeout(timeval *tv) : _tv(tv) { }
+	} timeout { tv };
+
 	do {
-		timeout_ms = Libc::suspend(timeout_ms);
-	} while (timeout_ms != 0 && select_cb->nready == 0);
-	bool const timeout_expired = (timeout_ms == 0);
+		timeout.duration = Libc::suspend(timeout.duration);
+	} while (!timeout.expired() && select_cb->nready == 0);
 
 	{
 		Genode::Lock::Guard guard(select_cb_list_lock());
@@ -240,7 +249,7 @@ _select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
 			}
 	}
 
-	if (timeout_expired)
+	if (timeout.expired())
 		return 0;
 
 	/* not timed out -> results have been stored in select_cb by select_notify() */

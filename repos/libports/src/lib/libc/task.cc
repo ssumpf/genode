@@ -248,7 +248,8 @@ struct Libc::Pthreads
 		Pthread(Timer_accessor &timer_accessor, unsigned long timeout_ms)
 		: _timeout(timer_accessor, *this)
 		{
-			_timeout.start(timeout_ms);
+			if (timeout_ms > 0)
+				_timeout.start(timeout_ms);
 		}
 
 		void handle_timeout()
@@ -295,7 +296,7 @@ struct Libc::Pthreads
 			}
 		}
 
-		return myself._timeout.duration_left();
+		return timeout_ms > 0 ? myself._timeout.duration_left() : 0;
 	}
 };
 
@@ -470,12 +471,13 @@ struct Libc::Kernel
 
 		unsigned long _suspend_main(unsigned long timeout_ms)
 		{
-			_main_timeout.timeout(timeout_ms, *_resume_main_handler);
+			if (timeout_ms > 0)
+				_main_timeout.timeout(timeout_ms, *_resume_main_handler);
 
 			if (!_setjmp(_user_context))
 				_switch_to_kernel();
 
-			return _main_timeout.duration_left();
+			return timeout_ms > 0 ? _main_timeout.duration_left() : 0;
 		}
 
 	public:
