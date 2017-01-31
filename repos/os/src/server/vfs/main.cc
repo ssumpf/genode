@@ -105,7 +105,7 @@ class Vfs_server::Session_component :
 		 ******************************/
 
 		/**
-		 * Perform packet operation, return true if op completed
+		 * Perform packet operation
 		 */
 		void _process_packet_op(Packet_descriptor &packet)
 		{
