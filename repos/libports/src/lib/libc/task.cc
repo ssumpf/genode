@@ -40,6 +40,7 @@ namespace Libc {
 	class Kernel;
 	class Pthreads;
 	class Timer;
+	class Timer_accessor;
 	class Timeout;
 	class Timeout_handler;
 
@@ -171,6 +172,19 @@ struct Libc::Timer
 };
 
 
+/**
+ * Interface for obtaining the libc-global timer instance
+ *
+ * The 'Timer' is instantiated on demand whenever the 'Timer_accessor::timer'
+ * method is first called. This way, libc-using components do not depend of a
+ * timer connection unless they actually use time-related functionality.
+ */
+struct Libc::Timer_accessor
+{
+	virtual Timer &timer() = 0;
+};
+
+
 struct Libc::Timeout_handler
 {
 	virtual void handle_timeout() = 0;
@@ -182,7 +196,7 @@ struct Libc::Timeout_handler
  */
 struct Libc::Timeout
 {
-	Libc::Timer                       &_timer;
+	Libc::Timer_accessor              &_timer_accessor;
 	Timeout_handler                   &_handler;
 	Genode::One_shot_timeout<Timeout>  _timeout;
 
@@ -196,26 +210,26 @@ struct Libc::Timeout
 		_handler.handle_timeout();
 	}
 
-	Timeout(Timer &timer, Timeout_handler &handler)
+	Timeout(Timer_accessor &timer_accessor, Timeout_handler &handler)
 	:
-		_timer(timer),
+		_timer_accessor(timer_accessor),
 		_handler(handler),
-		_timeout(_timer._timer, *this, &Timeout::_handle)
+		_timeout(_timer_accessor.timer()._timer, *this, &Timeout::_handle)
 	{ }
 
 	void start(unsigned long timeout_ms)
 	{
-		unsigned long const now = _timer.curr_time();
+		unsigned long const now = _timer_accessor.timer().curr_time();
 
 		_expired             = false;
 		_absolute_timeout_ms = now + timeout_ms;
 
-		_timeout.start(_timer.microseconds(timeout_ms));
+		_timeout.start(_timer_accessor.timer().microseconds(timeout_ms));
 	}
 
 	unsigned long duration_left() const
 	{
-		unsigned long const now = _timer.curr_time();
+		unsigned long const now = _timer_accessor.timer().curr_time();
 
 		return _expired ? 0 : _absolute_timeout_ms - now;
 	}
@@ -231,8 +245,8 @@ struct Libc::Pthreads
 
 		Timeout _timeout;
 
-		Pthread(Timer &timer, unsigned long timeout_ms)
-		: _timeout(timer, *this)
+		Pthread(Timer_accessor &timer_accessor, unsigned long timeout_ms)
+		: _timeout(timer_accessor, *this)
 		{
 			_timeout.start(timeout_ms);
 		}
@@ -243,12 +257,13 @@ struct Libc::Pthreads
 		}
 	};
 
-	Genode::Lock  mutex;
-	Pthread      *pthreads = nullptr;
-	Timer        &timer;
+	Genode::Lock    mutex;
+	Pthread        *pthreads = nullptr;
+	Timer_accessor &timer_accessor;
 
 
-	Pthreads(Timer &timer) : timer(timer) { }
+	Pthreads(Timer_accessor &timer_accessor)
+	: timer_accessor(timer_accessor) { }
 
 	void resume_all()
 	{
@@ -260,7 +275,7 @@ struct Libc::Pthreads
 
 	unsigned long suspend_myself(unsigned long timeout_ms)
 	{
-		Pthread myself { timer, timeout_ms };
+		Pthread myself { timer_accessor, timeout_ms };
 		{
 			Genode::Lock::Guard g(mutex);
 
@@ -327,22 +342,62 @@ struct Libc::Kernel
 
 		State _state = KERNEL;
 
-		Timer _timer { _env };
+		struct Timer_accessor : Libc::Timer_accessor
+		{
+			Genode::Env &_env;
+
+			/*
+			 * The '_timer' is constructed by whatever thread (main thread
+			 * of pthread) that uses a time-related function first. Hence,
+			 * the construction must be protected by a lock.
+			 */
+			Genode::Lock _lock;
+
+			Genode::Constructible<Timer> _timer;
+
+			Timer_accessor(Genode::Env &env) : _env(env) { }
+
+			Timer &timer() override
+			{
+				if (!_timer.constructed()) {
+					Lock::Guard guard(_lock);
+					_timer.construct(_env);
+				}
+
+				return *_timer;
+			}
+		};
+
+		Timer_accessor _timer_accessor { _env };
 
 		struct Main_timeout : Timeout_handler
 		{
 			Genode::Signal_context_capability _signal_cap;
-			Timeout                           _timeout;
 
-			Main_timeout(Timer &timer)
-			: _timeout(timer, *this)
+			Timer_accessor        &_timer_accessor;
+			Constructible<Timeout> _timeout;
+
+			void _construct_timeout_once()
+			{
+				if (!_timeout.constructed())
+					_timeout.construct(_timer_accessor, *this);
+			}
+
+			Main_timeout(Timer_accessor &timer_accessor)
+			: _timer_accessor(timer_accessor)
 			{ }
 
 			void timeout(unsigned long timeout_ms, Signal_context_capability signal_cap)
 			{
 				_signal_cap = signal_cap;
+				_construct_timeout_once();
+				_timeout->start(timeout_ms);
+			}
 
-				_timeout.start(timeout_ms);
+			unsigned long duration_left()
+			{
+				_construct_timeout_once();
+				return _timeout->duration_left();
 			}
 
 			void handle_timeout()
@@ -358,9 +413,9 @@ struct Libc::Kernel
 			}
 		};
 
-		Main_timeout _main_timeout { _timer };
+		Main_timeout _main_timeout { _timer_accessor };
 
-		Pthreads _pthreads { _timer };
+		Pthreads _pthreads { _timer_accessor };
 
 		/**
 		 * Trampoline to application (user) code
@@ -420,7 +475,7 @@ struct Libc::Kernel
 			if (!_setjmp(_user_context))
 				_switch_to_kernel();
 
-			return _main_timeout._timeout.duration_left();
+			return _main_timeout.duration_left();
 		}
 
 	public:
@@ -469,12 +524,12 @@ struct Libc::Kernel
 		 */
 		unsigned long suspend(unsigned long timeout_ms)
 		{
-			if (timeout_ms > _timer.max_timeout())
+			if (timeout_ms > _timer_accessor.timer().max_timeout())
 				Genode::warning("libc: limiting exceeding timeout of ",
 				                timeout_ms, " ms to maximum of ",
-				                _timer.max_timeout(), " ms");
+				                _timer_accessor.timer().max_timeout(), " ms");
 
-			timeout_ms = min(timeout_ms, _timer.max_timeout());
+			timeout_ms = min(timeout_ms, _timer_accessor.timer().max_timeout());
 
 			return _main_context() ? _suspend_main(timeout_ms)
 			                       : _pthreads.suspend_myself(timeout_ms);
