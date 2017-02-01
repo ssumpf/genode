@@ -90,6 +90,8 @@ class Vfs::Log_file_system : public Single_file_system
 			out_count = 0;
 			return READ_OK;
 		}
+
+		bool read_ready(Vfs_handle *) { return false; }
 };
 
 #endif /* _INCLUDE__VFS__LOG_FILE_SYSTEM_H_ */
