@@ -89,16 +89,11 @@ BUILD_DIR ?= $(GENODE_DIR)/build/$(PLATFORM)
 #
 ifneq ($(PLATFORM),)
    #
-   # Check if platform is deprecated
+   # Check if platform is deprecated or unknown
    #
    ifneq ($(filter $(PLATFORM),$(PLATFORMS_DEPR)),)
-      $(error Platform '$(PLATFORM)' is deprecated, use '$(PLATFORM_ALT($(PLATFORM)))' instead))
-   endif
-
-   #
-   # Check if platform is unknown
-   #
-   ifeq ($(filter $(PLATFORM),$(PLATFORMS)),)
+      $(warning Platform '$(PLATFORM)' is deprecated, use '$(PLATFORM_ALT($(PLATFORM)))' instead)
+   else ifeq ($(filter $(PLATFORM),$(PLATFORMS)),)
       $(error Bad platform argument '$(PLATFORM)')
    endif
 
