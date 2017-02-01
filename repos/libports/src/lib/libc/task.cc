@@ -359,10 +359,10 @@ struct Libc::Kernel
 
 			Timer &timer() override
 			{
-				if (!_timer.constructed()) {
-					Lock::Guard guard(_lock);
+				Lock::Guard guard(_lock);
+
+				if (!_timer.constructed())
 					_timer.construct(_env);
-				}
 
 				return *_timer;
 			}
