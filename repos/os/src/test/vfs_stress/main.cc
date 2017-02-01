@@ -108,6 +108,8 @@ inline void assert_read(Vfs::File_io_service::Read_result r)
 	typedef Vfs::File_io_service::Read_result Result;
 	switch (r) {
 	case Result::READ_OK: return;
+	case Result::READ_QUEUED:
+		error("READ_QUEUED"); break;
 	case Result::READ_ERR_AGAIN:
 		error("READ_ERR_AGAIN"); break;
 	case Result::READ_ERR_WOULD_BLOCK:
