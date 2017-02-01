@@ -16,6 +16,7 @@
 /* Genode includes */
 #include <base/log.h>
 #include <base/snprintf.h>
+#include <net/ipv4.h>
 #include <util/string.h>
 #include <util/xml_node.h>
 #include <vfs/directory_service.h>
@@ -151,6 +152,8 @@ namespace Vfs {
 	class Lxip_socket_dir;
 
 	class Lxip_new_socket_file;
+
+	class Lxip_address_file;
 
 	class Lxip_vfs_handle;
 	class Lxip_file_system;
@@ -1115,6 +1118,44 @@ class Lxip::Protocol_dir_impl : public Protocol_dir,
 };
 
 
+class Vfs::Lxip_address_file : public Vfs::File
+{
+	private:
+
+		unsigned int &_numeric_address;
+
+	public:
+
+		Lxip_address_file(char const *name, unsigned int &numeric_address)
+		: Vfs::File(name), _numeric_address(numeric_address) { }
+
+		Lxip::ssize_t read(char *dst, Genode::size_t len,
+		                   file_size /* ignored */) override
+		{
+			enum {
+				MAX_ADDRESS_STRING_SIZE = sizeof("000.000.000.000\n")
+			};
+
+			Genode::String<MAX_ADDRESS_STRING_SIZE> address {
+				Net::Ipv4_address(&_numeric_address)
+			};
+
+			Lxip::size_t n = min(len, strlen(address.string()));
+			memcpy(dst, address.string(), n);
+			if (n < len)
+				dst[n++] = '\n';
+
+			return n;
+		}
+};
+
+
+extern "C" unsigned int ic_myaddr;
+extern "C" unsigned int ic_netmask;
+extern "C" unsigned int ic_gateway;
+extern "C" unsigned int ic_nameservers[1];
+
+
 /*******************************
  ** Filesystem implementation **
  *******************************/
@@ -1132,6 +1173,11 @@ class Vfs::Lxip_file_system : public Vfs::File_system,
 		Lxip::Protocol_dir_impl _udp_dir {
 			_alloc, *this, "udp", Lxip::Protocol_dir::TYPE_DGRAM  };
 
+		Lxip_address_file   _address    { "address",    ic_myaddr };
+		Lxip_address_file   _netmask    { "netmask",    ic_netmask };
+		Lxip_address_file   _gateway    { "gateway",    ic_gateway };
+		Lxip_address_file   _nameserver { "nameserver", ic_nameservers[0] };
+
 		Vfs::Node *_lookup(char const *path)
 		{
 			if (*path == '/') path++;
@@ -1139,8 +1185,26 @@ class Vfs::Lxip_file_system : public Vfs::File_system,
 
 			if (Genode::strcmp(path, "tcp", 3) == 0)
 				return _tcp_dir.lookup(&path[3]);
+
 			if (Genode::strcmp(path, "udp", 3) == 0)
 				return _udp_dir.lookup(&path[3]);
+
+			if (Genode::strcmp(path, _address.name(),
+			                   strlen(_address.name()) + 1) == 0)
+				return &_address;
+
+			if (Genode::strcmp(path, _netmask.name(),
+			                   strlen(_netmask.name()) + 1) == 0)
+				return &_netmask;
+
+			if (Genode::strcmp(path, _gateway.name(),
+			                   strlen(_gateway.name()) + 1) == 0)
+				return &_gateway;
+
+			if (Genode::strcmp(path, _nameserver.name(),
+			                   strlen(_nameserver.name()) + 1) == 0)
+				return &_nameserver;
+
 			return nullptr;
 		}
 
