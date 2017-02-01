@@ -23,6 +23,8 @@
 
 /* Genode includes */
 #include <input/component.h>
+#include <timer_session/timer_session.h>
+#include <audio_out_session/audio_out_session.h>
 #include <os/static_parent_services.h>
 #include <os/slave.h>
 

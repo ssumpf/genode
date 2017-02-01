@@ -18,6 +18,7 @@
 #include <base/service.h>
 #include <os/static_parent_services.h>
 #include <os/slave.h>
+#include <timer_session/timer_session.h>
 
 /* local includes */
 #include "framebuffer_service_factory.h"
