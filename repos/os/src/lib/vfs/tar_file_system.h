@@ -612,7 +612,7 @@ class Vfs::Tar_file_system : public File_system
 			return FTRUNCATE_ERR_NO_PERM;
 		}
 
-		bool read_ready(Vfs_handle *) { return true; }
+		bool read_ready(Vfs_handle *) override { return true; }
 };
 
 #endif /* _INCLUDE__VFS__TAR_FILE_SYSTEM_H_ */

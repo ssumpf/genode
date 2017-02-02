@@ -312,7 +312,7 @@ class Vfs::Block_file_system : public Single_file_system
 			return READ_OK;
 		}
 
-		bool read_ready(Vfs_handle *) { return true; }
+		bool read_ready(Vfs_handle *) override { return true; }
 
 		Ftruncate_result ftruncate(Vfs_handle *vfs_handle, file_size) override
 		{
