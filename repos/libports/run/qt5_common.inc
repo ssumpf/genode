@@ -117,6 +117,7 @@ proc qt5_start_nodes { feature_arg } {
 			<route>
 				<service name="ROM" label="focus">          <child name="report_rom"/> </service>
 				<service name="ROM" label="resize_request"> <child name="report_rom"/> </service>
+				<service name="Report">                     <child name="report_rom"/> </service>
 				<any-service>
 					<child name="nitpicker"/> <parent/> <any-child/>
 				</any-service>
@@ -131,6 +132,7 @@ proc qt5_start_nodes { feature_arg } {
 				<service name="ROM" label="focus_request">     <child name="report_rom"/> </service>
 				<service name="ROM" label="hover">             <child name="report_rom"/> </service>
 				<service name="ROM" label="decorator_margins"> <child name="report_rom"/> </service>
+				<service name="Report">                        <child name="report_rom"/> </service>
 				<any-service>
 					<child name="wm"/> <parent/> <any-child/>
 				</any-service>
@@ -143,6 +145,7 @@ proc qt5_start_nodes { feature_arg } {
 			<route>
 				<service name="ROM" label="window_layout"> <child name="report_rom"/> </service>
 				<service name="ROM" label="pointer">       <child name="report_rom"/> </service>
+				<service name="Report">                    <child name="report_rom"/> </service>
 				<any-service>
 					<child name="wm"/> <parent/> <any-child/>
 				</any-service>
