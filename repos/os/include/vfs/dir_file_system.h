@@ -583,6 +583,16 @@ class Vfs::Dir_file_system : public File_system
 				fs->sync(path);
 		}
 
+		void apply_config(Genode::Xml_node const &node) override
+		{
+			using namespace Genode;
+
+			File_system *curr = _first_file_system;
+			for (unsigned i = 0; i < node.num_sub_nodes(); i++, curr = curr->next) {
+				curr->apply_config(node.sub_node(i));
+			}
+		}
+
 
 		/********************************
 		 ** File I/O service interface **
