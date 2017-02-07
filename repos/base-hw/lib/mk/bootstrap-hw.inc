@@ -35,6 +35,7 @@ NR_OF_CPUS ?= 1
 CC_OPT += -Wa,--defsym -Wa,NR_OF_CPUS=$(NR_OF_CPUS) -DNR_OF_CPUS=$(NR_OF_CPUS)
 
 vpath lib/base/%    $(HW_DIR)/src
+vpath lib/muen/%    $(HW_DIR)/src
 vpath lib/base/%    $(BASE_DIR)/src
 vpath lib/startup/% $(BASE_DIR)/src
 vpath base/%        $(HW_DIR)/src
