@@ -137,6 +137,9 @@ struct Lxip::Socket_dir
 
 
 namespace Vfs {
+
+	using namespace Genode;
+
 	struct Node;
 	struct Directory;
 	struct File;
@@ -1215,9 +1218,12 @@ class Vfs::Lxip_file_system : public Vfs::File_system,
 
 	public:
 
-		Lxip_file_system(Genode::Env &env, Genode::Allocator &alloc)
+		Lxip_file_system(Genode::Env &env, Genode::Allocator &alloc,
+		                 Genode::Xml_node config)
 		: Directory(""), _ep(env.ep()), _alloc(alloc)
-		{ }
+		{
+			apply_config(config);
+		}
 
 		~Lxip_file_system() { }
 
@@ -1228,12 +1234,50 @@ class Vfs::Lxip_file_system : public Vfs::File_system,
 		 ** File_system interface **
 		 ***************************/
 
-		void apply_config(Genode::Xml_node const &node) override
-		{
-			Genode::warning(__PRETTY_FUNCTION__, " called:", node);
-		}
-
 		char const *type() override { return "lxip"; }
+
+		 void apply_config(Genode::Xml_node const &config) override
+		 {
+			typedef String<16> Addr;
+
+			try {
+
+				if (config.attribute_value("dhcp", false)) {
+					log("Using DHCP for interface configuration.");
+					lxip_configure_dhcp();
+					return;
+				}
+
+			} catch (...) { }
+
+			try {
+
+				Addr ip_addr    = config.attribute_value("ip_addr", Addr());
+				Addr netmask    = config.attribute_value("netmask", Addr());
+				Addr gateway    = config.attribute_value("gateway", Addr());
+				Addr nameserver = config.attribute_value("nameserver", Addr());
+
+				/* either none or all 4 interface attributes must exist */
+				if (ip_addr == "") {
+					warning("Missing \"ip_addr\" attribute. Ignoring network interface config.");
+					throw Genode::Xml_node::Nonexistent_attribute();
+				} else if (netmask == "") {
+					warning("Missing \"netmask\" attribute. Ignoring network interface config.");
+					throw Genode::Xml_node::Nonexistent_attribute();
+				} else if (gateway == "") {
+					warning("Missing \"gateway\" attribute. Ignoring network interface config.");
+					throw Genode::Xml_node::Nonexistent_attribute();
+				} else if (nameserver == "") {
+					warning("Missing \"nameserver\" attribute. Ignoring network interface config.");
+					throw Genode::Xml_node::Nonexistent_attribute();
+				}
+
+				log("static network interface: ip_addr=",ip_addr," netmask=",netmask," gateway=",gateway);
+
+				lxip_configure_static(ip_addr.string(), netmask.string(),
+				                      gateway.string(), nameserver.string());
+			} catch (...) {	}
+		 }
 
 
 		/*************************
@@ -1475,8 +1519,7 @@ struct Lxip_factory : Vfs::File_system_factory
 		char *_parse_config(Genode::Xml_node);
 
 		Init(Genode::Env       &env,
-		     Genode::Allocator &alloc,
-		     Genode::Xml_node  config)
+		     Genode::Allocator &alloc)
 		{
 			Lx_kit::Env &lx_env = Lx_kit::construct_env(env);
 
@@ -1485,7 +1528,7 @@ struct Lxip_factory : Vfs::File_system_factory
 			Lx::nic_client_init(env, lx_env.env().ep(), lx_env.heap(), &poll_all);
 			Lx::lxcc_emul_init(lx_env);
 
-			lxip_init(_parse_config(config));
+			lxip_init();
 		}
 	};
 
@@ -1494,49 +1537,10 @@ struct Lxip_factory : Vfs::File_system_factory
 	                         Genode::Xml_node  config,
 	                         Vfs::Io_response_handler &io_handler) override
 	{
-		static Init inst(env, alloc, config);
-		return new (alloc) Vfs::Lxip_file_system(env, alloc);
+		static Init inst(env, alloc);
+		return new (alloc) Vfs::Lxip_file_system(env, alloc, config);
 	}
 };
-
-
-char *Lxip_factory::Init::_parse_config(Genode::Xml_node config)
-{
-	using namespace Genode;
-
-	typedef String<16> Addr;
-
-	try {
-
-		Addr ip_addr = config.attribute_value("ip_addr", Addr());
-		Addr netmask = config.attribute_value("netmask", Addr());
-		Addr gateway = config.attribute_value("gateway", Addr());
-
-		/* either none or all 3 interface attributes must exist */
-		if (ip_addr == "") {
-			error("Missing \"ip_addr\" attribute. Ignoring network interface config.");
-			throw Genode::Xml_node::Nonexistent_attribute();
-		} else if (netmask == "") {
-			error("Missing \"netmask\" attribute. Ignoring network interface config.");
-			throw Genode::Xml_node::Nonexistent_attribute();
-		} else if (gateway == "") {
-			error("Missing \"gateway\" attribute. Ignoring network interface config.");
-			throw Genode::Xml_node::Nonexistent_attribute();
-		}
-
-		log("static network interface: ip_addr=",ip_addr," netmask=",netmask," gateway=",gateway);
-
-		Genode::snprintf(_config_buf, sizeof(_config_buf), "%s::%s:%s:::off",
-		                 ip_addr.string(), gateway.string(), netmask.string());
-	} catch (...) {
-		log("Using DHCP for interface configuration.");
-		Genode::strncpy(_config_buf, "dhcp", sizeof(_config_buf));
-	}
-
-	log("init_libc_lxip() address config=", (char const *)_config_buf);
-
-	return _config_buf;
-}
 
 
 extern "C" Vfs::File_system_factory *vfs_file_system_factory(void)
