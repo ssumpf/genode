@@ -139,7 +139,7 @@ Application frameworks and runtime environments
   software directly on Genode. The centerpiece of OpenJDK is Hotspot - the
   Java virtual machine implementation, which must be ported to Genode.
   The initial port should suffice to execute simple example programs that
-  operate of textual input. Since Genode has the FreeBSB libc readily
+  operate on textual input. Since Genode has the FreeBSB libc readily
   available, OpenJDK's existing POSIX backends can be reused. The next step
   is the creation of Genode-specific native classes that bridge the gap
   between the Java world and Genode, in particular the glue code to
