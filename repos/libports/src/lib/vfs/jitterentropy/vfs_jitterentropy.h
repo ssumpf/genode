@@ -64,6 +64,7 @@ class Jitterentropy_file_system : public Vfs::Single_file_system
 		}
 
 		static char const *name() { return "jitterentropy"; }
+		char const *type() override { return "jitterentropy"; }
 
 
 		/********************************
