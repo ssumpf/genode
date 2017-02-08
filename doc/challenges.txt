@@ -226,7 +226,7 @@ Application frameworks and runtime environments
 Virtualization
 ##############
 
-:VirtualBox on top on KVM on Linux:
+:VirtualBox on top of KVM on Linux:
 
   Genode's version of VirtualBox replaces the original in-kernel VirtualBox
   hypervisor by the virtualization mechanism of the NOVA hypervisor or the
@@ -237,7 +237,7 @@ Virtualization
   is normally not possible. Also, complex Genode scenarios (like Turmvilla)
   could be prototyped on GNU/Linux.
 
-:VirtualBox on top on seL4:
+:VirtualBox on top of seL4:
 
   The [https://sel4.systems - seL4 microkernel] is a modern microkernel that
   undergoes formal verification to prove the absence of bugs. Since version
@@ -304,7 +304,7 @@ Device drivers
   USB devices like USB storage, user input, printers, and networking devices
   can be used. However, multi-media devices such as cameras or audio
   equipment use isochronous endpoints, which are not supported. The goal
-  of this line of work is the support these devices in Genode. The topic
+  of this line of work is the support of these devices in Genode. The topic
   touches the USB driver, the USB session interface, an example implementation
   of a USB client driver (using the session interface) for a device of choice,
   and - potentially - the enhancement of Genode's USB-pass-through mechanism
