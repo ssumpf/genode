@@ -40,6 +40,11 @@ struct Vfs::File_system : Directory_service, File_io_service
 	 * Adjust to configuration changes
 	 */
 	virtual void apply_config(Genode::Xml_node const &node) { }
+
+	/**
+	 * Return the file-system type
+	 */
+	virtual char const *type() = 0;
 };
 
 #endif /* _INCLUDE__VFS__FILE_SYSTEM_H_ */

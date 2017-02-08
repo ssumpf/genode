@@ -787,6 +787,7 @@ class Vfs::Ram_file_system : public Vfs::File_system
 		 ***************************/
 
 		static char const *name() { return "ram"; }
+		char const *type() override { return "ram"; }
 };
 
 #endif /* _INCLUDE__VFS__RAM_FILE_SYSTEM_H_ */

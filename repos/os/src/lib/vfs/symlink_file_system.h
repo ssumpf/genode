@@ -41,7 +41,7 @@ class Vfs::Symlink_file_system : public Single_file_system
 		{ }
 
 		static char const *name() { return "symlink"; }
-
+		char const *type() { return "symlink"; }
 
 		/*********************************
 		 ** Directory-service interface **

@@ -583,6 +583,8 @@ class Vfs::Fs_file_system : public File_system
 
 		static char const *name() { return "fs"; }
 
+		char const *type() override { return "fs"; }
+
 		void sync(char const *path) override
 		{
 			try {

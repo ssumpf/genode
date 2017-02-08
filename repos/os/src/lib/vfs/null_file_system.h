@@ -32,6 +32,7 @@ struct Vfs::Null_file_system : Single_file_system
 
 	static char const *name() { return "null"; }
 
+	char const *type() override { return "null"; }
 
 	/********************************
 	 ** File I/O service interface **

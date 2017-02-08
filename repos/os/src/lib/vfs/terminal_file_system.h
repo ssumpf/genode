@@ -68,7 +68,7 @@ class Vfs::Terminal_file_system : public Single_file_system
 		}
 
 		static const char *name() { return "terminal"; }
-
+		char const *type() override { return "terminal"; }
 
 		/********************************
 		 ** File I/O service interface **

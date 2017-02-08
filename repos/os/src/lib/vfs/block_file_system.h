@@ -149,7 +149,7 @@ class Vfs::Block_file_system : public Single_file_system
 		}
 
 		static char const *name() { return "block"; }
-
+		char const *type() override { return "block"; }
 
 		/*********************************
 		 ** Directory service interface **

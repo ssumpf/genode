@@ -1223,14 +1223,18 @@ class Vfs::Lxip_file_system : public Vfs::File_system,
 
 		char const *name() { return "lxip"; }
 
+
 		/***************************
 		 ** File_system interface **
 		 ***************************/
 
 		void apply_config(Genode::Xml_node const &node) override
 		{
-			Genode::warning(__PRETTY_FUNCTION__, " called");
+			Genode::warning(__PRETTY_FUNCTION__, " called:", node);
 		}
+
+		char const *type() override { return "lxip"; }
+
 
 		/*************************
 		 ** Directory interface **
