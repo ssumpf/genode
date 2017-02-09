@@ -82,7 +82,7 @@ Applications and library infrastructure
   support for real-time priorities, this base techniques enable the creation of
   flexible audio mixer / switchboard applications, which require dedicated
   frameworks (e.g., Jack audio) on traditional operating systems. The goal of
-  this project is to create a show case implementation demonstrating the
+  this project is to create a showcase implementation demonstrating the
   feasibility for creating high-quality audio applications on Genode.
   Furthermore, we wish for feedback regarding the current design of our bulk
   streaming interface when used for low-latency applications.
@@ -139,7 +139,7 @@ Application frameworks and runtime environments
   software directly on Genode. The centerpiece of OpenJDK is Hotspot - the
   Java virtual machine implementation, which must be ported to Genode.
   The initial port should suffice to execute simple example programs that
-  operate on textual input. Since Genode has the FreeBSB libc readily
+  operate on textual input. Since Genode has the FreeBSD libc readily
   available, OpenJDK's existing POSIX backends can be reused. The next step
   is the creation of Genode-specific native classes that bridge the gap
   between the Java world and Genode, in particular the glue code to
@@ -175,7 +175,7 @@ Application frameworks and runtime environments
 
   Go is a popular language in particular for web applications. In the past,
   there were numerous attempts to make the Go runtime available on Genode
-  but so far, none of those undertakings eventually landed in the official
+  but so far, none of those undertakings have landed in the official
   Genode source tree. To goal of this project is the hosting of
   Go-written applications - in particular networking applications - as
   Genode components. The topic comprises work on the tool-chain
@@ -190,7 +190,7 @@ Application frameworks and runtime environments
   Genode can be seen as the opposite ends of component-based used-land
   architectures. The goal of this project is to build a bridge between
   both projects with the potential to cross-pollinate the respective communities.
-  Among the principle approaches are embedding of a single CAmkES
+  Among the principal approaches are embedding of a single CAmkES
   component as a Genode component (e.g., an individual device driver),
   the hosting of a dynamic Genode system as a component within a
   CAmkES system, or the hosting of a CAmkES system composition as a Genode
