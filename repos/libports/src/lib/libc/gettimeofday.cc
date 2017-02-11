@@ -17,9 +17,7 @@
 #include "task.h"
 
 
-namespace Libc {
-extern time_t read_rtc();
-}
+namespace Libc { time_t read_rtc(); }
 
 
 extern "C" __attribute__((weak))
@@ -29,13 +27,15 @@ int gettimeofday(struct timeval *tv, struct timezone *)
 
 	static bool read_rtc = false;
 	static time_t rtc = 0;
+	static unsigned long t0 = 0;
 
 	if (!read_rtc) {
 		rtc = Libc::read_rtc();
 		read_rtc = true;
+		t0 = Libc::current_time();
 	}
 
-	unsigned long time = Libc::current_time();
+	unsigned long time = Libc::current_time() - t0;
 
 	tv->tv_sec  = rtc + time/1000;
 	tv->tv_usec = (time % 1000) * 1000;
