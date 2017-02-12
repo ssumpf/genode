@@ -166,8 +166,11 @@ class Genode::Entrypoint : Genode::Noncopyable
 		 */
 		void wait_and_dispatch_one_signal()
 		{
-			Signal sig = _sig_rec->wait_for_signal();
-			_dispatch_signal(sig);
+			{
+				Signal sig = _sig_rec->wait_for_signal();
+				_dispatch_signal(sig);
+			}
+			_execute_post_signal_hook();
 		}
 
 		/**
