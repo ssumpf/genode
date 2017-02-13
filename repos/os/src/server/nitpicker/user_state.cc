@@ -222,6 +222,12 @@ void User_state::handle_event(Input::Event ev)
 		_input_receiver->submit_input_event(ev);
 
 	/*
+	 * Forward character events
+	 */
+	if (type == Event::CHARACTER && _input_receiver)
+		_input_receiver->submit_input_event(ev);
+
+	/*
 	 * Detect end of global key sequence
 	 */
 	if (ev.type() == Event::RELEASE && Mode::has_key_cnt(0) && _global_key_sequence) {
