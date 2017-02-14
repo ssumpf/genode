@@ -265,6 +265,11 @@ class Genode::Signal_receiver : Noncopyable
 		void block_for_signal();
 
 		/**
+		 * Unblock signal waiter
+		 */
+		void unblock_signal_waiter();
+
+		/**
 		 * Retrieve  pending signal
 		 *
 		 * \throw   'Signal_not_pending' no pending signal found
