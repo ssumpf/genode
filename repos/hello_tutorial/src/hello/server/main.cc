@@ -25,11 +25,42 @@ namespace Hello {
 	struct Main;
 }
 
+class Sender : public Genode::Thread
+{
+	private:
+
+		Genode::Signal_context_capability _context;
+
+	public:
+
+		Sender(Genode::Env &env, Genode::Signal_context_capability context)
+		: Thread(env, "sender_ctx", 1024 * sizeof(long)), _context(context)
+		{ }
+
+		void entry()
+		{
+			Genode::Signal_transmitter(_context).submit();
+		}
+};
+
 
 struct Hello::Session_component : Genode::Rpc_object<Session>
 {
-	void say_hello() {
-		Genode::log("I am here... Hello."); }
+	Genode::Env                              &env;
+	Genode::Signal_handler<Session_component> dispatcher { env.ep(), *this, &Session_component::handle };
+	Sender                                    sender { env, dispatcher };
+
+	Session_component(Genode::Env &env)
+	: env(env) { }
+
+	void handle() { Genode::log(__func__, " called"); }
+
+	void say_hello()
+	{
+		sender.start();
+		env.ep().wait_and_dispatch_one_signal();
+		Genode::log("I am here... Hello.");
+	}
 
 	int add(int a, int b) {
 		return a + b; }
@@ -40,20 +71,25 @@ class Hello::Root_component
 :
 	public Genode::Root_component<Session_component>
 {
+	private:
+
+		Genode::Env &_env;
+
 	protected:
 
 		Session_component *_create_session(const char *args)
 		{
 			Genode::log("creating hello session");
-			return new (md_alloc()) Session_component();
+			return new (md_alloc()) Session_component(_env);
 		}
 
 	public:
 
-		Root_component(Genode::Entrypoint &ep,
+		Root_component(Genode::Env &env,
+		               Genode::Entrypoint &ep,
 		               Genode::Allocator &alloc)
 		:
-			Genode::Root_component<Session_component>(ep, alloc)
+			Genode::Root_component<Session_component>(ep, alloc), _env(env)
 		{
 			Genode::log("creating root component");
 		}
@@ -70,7 +106,7 @@ struct Hello::Main
 	 */
 	Genode::Sliced_heap sliced_heap { env.ram(), env.rm() };
 
-	Hello::Root_component root { env.ep(), sliced_heap };
+	Hello::Root_component root { env, env.ep(), sliced_heap };
 
 	Main(Genode::Env &env) : env(env)
 	{
