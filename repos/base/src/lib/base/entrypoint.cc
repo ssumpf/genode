@@ -16,6 +16,8 @@
 #include <base/entrypoint.h>
 #include <base/component.h>
 
+#include <cpu/atomic.h>
+
 #define INCLUDED_BY_ENTRYPOINT_CC  /* prevent "deprecated" warning */
 #include <cap_session/connection.h>
 #undef INCLUDED_BY_ENTRYPOINT_CC
@@ -63,17 +65,28 @@ void Entrypoint::_process_incoming_signals()
 		do {
 			_sig_rec->block_for_signal();
 
-			/*
-			 * It might happen that we try to forward a signal to the
-			 * entrypoint, while the context of that signal is already
-			 * destroyed. In that case we will get an ipc error exception
-			 * as result, which has to be caught.
-			 */
-			retry<Genode::Blocking_canceled>(
-				[&] () { _signal_proxy_cap.call<Signal_proxy::Rpc_signal>(); },
-				[]  () { warning("blocking canceled during signal processing"); }
-			);
+			int success = Genode::cmpxchg(&_signal_recipient, NONE, SIGNAL_PROXY);
 
+			/* common case, entrypoint is not in 'wait_and_dispatch_one_signal' */
+			if (success) {
+				/*
+				 * It might happen that we try to forward a signal to the
+				 * entrypoint, while the context of that signal is already
+				 * destroyed. In that case we will get an ipc error exception
+				 * as result, which has to be caught.
+				 */
+				retry<Genode::Blocking_canceled>(
+					[&] () { _signal_proxy_cap.call<Signal_proxy::Rpc_signal>(); },
+					[]  () { warning("blocking canceled during signal processing"); });
+
+				Genode::cmpxchg(&_signal_recipient, SIGNAL_PROXY, NONE);
+			} else {
+				/*
+				 * Entrypoint is in 'wait_and_dispatch_one_signal', wakup it up and
+				 * block for next signal
+				 */
+				_sig_rec->unblock_signal_waiter();
+			}
 		} while (!_suspended);
 
 		_suspend_dispatcher.destruct();
@@ -104,6 +117,37 @@ void Entrypoint::_process_incoming_signals()
 
 		resumed_callback();
 	}
+}
+
+
+void Entrypoint::wait_and_dispatch_one_signal()
+{
+	bool blocked = false;
+
+	try {
+		Genode::Signal sig  =_sig_rec->pending_signal();
+		_dispatch_signal(sig);
+
+		if (blocked)
+			Genode::cmpxchg(&_signal_recipient, ENTRYPOINT, NONE);
+	} catch (Signal_receiver::Signal_not_pending) {
+
+		/*
+		 * No signals are pending, try to set entrypoint as recipient of the next
+		 * signal. On failure this implies that we are calling this function during
+		 * signal handling operation, which might lead to a potential dead lock in
+		 * case the current signal context triggers agains.
+		 */
+		if (!Genode::cmpxchg(&_signal_recipient, NONE, ENTRYPOINT)) {
+			Genode::warning("wait_and_dispatch_one_signal: potential nested signal "
+			                "context deadlock");
+		}
+
+		blocked = true;
+		_sig_rec->block_for_signal();
+	}
+
+	_execute_post_signal_hook();
 }
 
 
