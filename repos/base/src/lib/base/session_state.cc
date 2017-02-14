@@ -33,6 +33,14 @@ void Session_state::generate_session_request(Xml_generator &xml) const
 	if (!id_at_server.constructed())
 		warning(__func__, ": id_at_server not initialized");
 
+	/*
+	 * Override the client-provided label by the label assigned by
+	 * 'Child_policy::resolve_session_request'.
+	 */
+	char argbuf[Args::capacity()];
+	strncpy(argbuf, _args.string(), sizeof(argbuf));
+	Arg_string::set_arg_string(argbuf, sizeof(argbuf), "label", _label.string());
+
 	switch (phase) {
 
 	case CREATE_REQUESTED:
@@ -40,8 +48,9 @@ void Session_state::generate_session_request(Xml_generator &xml) const
 		xml.node("create", [&] () {
 			xml.attribute("id", id_at_server->id().value);
 			xml.attribute("service", _service.name());
+			xml.attribute("label", _label);
 			xml.node("args", [&] () {
-				xml.append_sanitized(_args.string());
+				xml.append_sanitized(argbuf);
 			});
 		});
 		break;
@@ -110,11 +119,12 @@ void Session_state::destroy()
 Session_state::Session_state(Service                  &service,
                              Id_space<Parent::Client> &client_id_space,
                              Parent::Client::Id        client_id,
+                             Session_label      const &label,
                              Args const               &args,
                              Affinity           const &affinity)
 :
 	_service(service),
 	_donated_ram_quota(Arg_string::find_arg(args.string(), "ram_quota").ulong_value(0)),
 	_id_at_client(*this, client_id_space, client_id),
-	_args(args), _affinity(affinity)
+	_label(label), _args(args), _affinity(affinity)
 { }
