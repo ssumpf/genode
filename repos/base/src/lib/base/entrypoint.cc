@@ -127,8 +127,10 @@ void Entrypoint::wait_and_dispatch_one_signal()
 	for (;;) {
 
 		try {
-			Signal sig  =_sig_rec->pending_signal();
-			_dispatch_signal(sig);
+			{
+				Signal sig  =_sig_rec->pending_signal();
+				_dispatch_signal(sig);
+			}
 
 			if (blocked)
 				cmpxchg(&_signal_recipient, ENTRYPOINT, NONE);
