@@ -8,7 +8,7 @@ assert_spec 64bit
 set flavor   "win7"
 
 set use_vbox4 0
-set use_vbox5 5
+set use_vbox5 1
 
 set use_rumpfs 1
 # Write overlay only into ram
