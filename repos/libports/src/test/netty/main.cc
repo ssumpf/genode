@@ -335,25 +335,27 @@ struct Main
 
 	Main(Genode::Env &env)
 	{
-		Genode::Xml_node config { "<empty/>" };
+		Libc::with_libc([&] () {
+			Genode::Xml_node config { "<empty/>" };
 
-		/* parse mode configuration */
-		try {
-			static Genode::Attached_rom_dataspace rom(env, "config");
+			/* parse mode configuration */
+			try {
+				static Genode::Attached_rom_dataspace rom(env, "config");
 
-			config = rom.xml();
-		} catch (Genode::Rom_connection::Rom_connection_failed) { }
+				config = rom.xml();
+			} catch (Genode::Rom_connection::Rom_connection_failed) { }
 
-		mode = config.attribute_value("mode", mode);
+			mode = config.attribute_value("mode", mode);
 
-		if (mode == "server") {
-			server(config);
-		} else if (mode == "client") {
-			client(config);
-		} else {
-			Genode::error("unknown mode '", mode.string(), "'");
-			exit(__LINE__);
-		}
+			if (mode == "server") {
+				server(config);
+			} else if (mode == "client") {
+				client(config);
+			} else {
+				Genode::error("unknown mode '", mode.string(), "'");
+				exit(__LINE__);
+			}
+		});
 	}
 };
 
