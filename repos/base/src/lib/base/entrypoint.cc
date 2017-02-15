@@ -149,8 +149,12 @@ void Entrypoint::wait_and_dispatch_one_signal()
 			 * triggers agains.
 			 */
 			if (!cmpxchg(&_signal_recipient, NONE, ENTRYPOINT)) {
-				warning("wait_and_dispatch_one_signal: potential nested signal "
-				        "context deadlock");
+				static bool printed;
+				if (!printed) {
+					warning("wait_and_dispatch_one_signal: potential nested signal "
+					        "context deadlock");
+					printed = true;
+				}
 			}
 
 			blocked = true;
