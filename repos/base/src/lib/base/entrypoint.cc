@@ -85,7 +85,7 @@ void Entrypoint::_process_incoming_signals()
 				 * Entrypoint is in 'wait_and_dispatch_one_signal', wakup it up and
 				 * block for next signal
 				 */
-				_sig_rec->unblock_signal_waiter();
+				_sig_rec->unblock_signal_waiter(*_rpc_ep);
 			}
 		} while (!_suspended);
 

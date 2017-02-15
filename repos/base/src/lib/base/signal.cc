@@ -255,7 +255,7 @@ void Signal_receiver::block_for_signal()
 }
 
 
-void Signal_receiver::unblock_signal_waiter()
+void Signal_receiver::unblock_signal_waiter(Rpc_entrypoint &)
 {
 	_signal_available.up();
 }
