@@ -122,42 +122,25 @@ void Entrypoint::_process_incoming_signals()
 
 void Entrypoint::wait_and_dispatch_one_signal()
 {
-	bool blocked = false;
-
 	for (;;) {
 
 		try {
+
 			{
+				cmpxchg(&_signal_recipient, NONE, ENTRYPOINT);
+
 				Signal sig  =_sig_rec->pending_signal();
+
+				cmpxchg(&_signal_recipient, ENTRYPOINT, NONE);
+
 				_dispatch_signal(sig);
 			}
-
-			if (blocked)
-				cmpxchg(&_signal_recipient, ENTRYPOINT, NONE);
 
 			_execute_post_signal_hook();
 
 			return;
 
 		} catch (Signal_receiver::Signal_not_pending) {
-
-			/*
-			 * No signals are pending, try to set entrypoint as recipient of
-			 * the next signal. On failure this implies that we are calling
-			 * this function during signal handling operation, which might lead
-			 * to a potential dead lock in case the current signal context
-			 * triggers agains.
-			 */
-			if (!cmpxchg(&_signal_recipient, NONE, ENTRYPOINT)) {
-				static bool printed;
-				if (!printed) {
-					warning("wait_and_dispatch_one_signal: potential nested signal "
-					        "context deadlock");
-					printed = true;
-				}
-			}
-
-			blocked = true;
 			_sig_rec->block_for_signal();
 		}
 	}
