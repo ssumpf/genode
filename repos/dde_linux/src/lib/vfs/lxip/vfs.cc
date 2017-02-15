@@ -30,6 +30,7 @@
 
 /* Lx_kit */
 #include <lx_kit/env.h>
+#include <lx_kit/malloc.h>
 
 
 namespace Linux {
@@ -1598,10 +1599,11 @@ struct Lxip_factory : Vfs::File_system_factory
 		{
 			Lx_kit::Env &lx_env = Lx_kit::construct_env(env);
 
+			Lx::lxcc_emul_init(lx_env);
+			Lx::malloc_init(env, lx_env.heap());
 			Lx::timer_init(env, lx_env.env().ep(), lx_env.heap(), &poll_all);
 			Lx::event_init(env, lx_env.env().ep(), &poll_all);
 			Lx::nic_client_init(env, lx_env.env().ep(), lx_env.heap(), &poll_all);
-			Lx::lxcc_emul_init(lx_env);
 
 			lxip_init();
 		}
