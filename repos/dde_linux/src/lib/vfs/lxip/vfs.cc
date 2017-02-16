@@ -164,7 +164,7 @@ namespace Vfs {
 	class Lxip_vfs_handle;
 	class Lxip_file_system;
 
-	typedef Genode::List<Lxip_vfs_handle> Lxip_vfs_handles;
+	typedef Genode::List<List_element<Lxip_vfs_handle> > Lxip_vfs_handles;
 }
 
 
@@ -172,9 +172,12 @@ namespace Vfs {
  ** Vfs nodes **
  ***************/
 
-struct Vfs::Lxip_vfs_handle final : Vfs::Vfs_handle, Lxip_vfs_handles::Element
+struct Vfs::Lxip_vfs_handle final : Vfs::Vfs_handle
 {
 	Vfs::File &file;
+
+	List_element<Lxip_vfs_handle> file_le    { this };
+	List_element<Lxip_vfs_handle> polling_le { this };
 
 	Lxip_vfs_handle(Vfs::File_system &fs, Allocator &alloc, int status_flags,
 	                Vfs::File &file);
@@ -241,13 +244,13 @@ Vfs::Lxip_vfs_handle::Lxip_vfs_handle(Vfs::File_system &fs,
 :
 	Vfs_handle(fs, fs, alloc, status_flags), file(file)
 {
-	file.handles.insert(this);
+	file.handles.insert(&file_le);
 }
 
 
 Vfs::Lxip_vfs_handle::~Lxip_vfs_handle()
 {
-	file.handles.remove(this);
+	file.handles.remove(&file_le);
 }
 
 
@@ -262,8 +265,12 @@ static void poll_all()
 {
 	using namespace Linux;
 
-	for (Vfs::Lxip_vfs_handle *h = _polling_handles.first(); h; h = h->next())
-		h->file.poll(true, h->context);
+	for (Genode::List_element<Vfs::Lxip_vfs_handle> *le = _polling_handles.first();
+	     le; le = le->next())
+	{
+		Vfs::Lxip_vfs_handle *handle = le->object();
+		handle->file.poll(true, handle->context);
+	}
 }
 
 
@@ -301,8 +308,11 @@ class Vfs::Lxip_file : public Vfs::File
 
 		void dissolve_handles()
 		{
-			for (Vfs::Lxip_vfs_handle *h = handles.first(); h; h = h->next()) {
-				_polling_handles.remove(h); }
+			for (Genode::List_element<Vfs::Lxip_vfs_handle> *le = handles.first();
+			     le; le = le->next())
+			{
+				_polling_handles.remove(&le->object()->polling_le);
+			}
 		}
 };
 
@@ -1481,7 +1491,7 @@ class Vfs::Lxip_file_system : public Vfs::File_system,
 			Lxip_vfs_handle *handle =
 				static_cast<Vfs::Lxip_vfs_handle*>(vfs_handle);
 			if (handle) {
-				_polling_handles.remove(handle);
+				_polling_handles.remove(&handle->polling_le);
 				Genode::destroy(handle->alloc(), handle);
 			}
 		}
@@ -1568,8 +1578,8 @@ class Vfs::Lxip_file_system : public Vfs::File_system,
 				static_cast<Vfs::Lxip_vfs_handle *>(vfs_handle);
 
 			if (dynamic_cast<Lxip_file*>(&handle->file)) {
-				_polling_handles.remove(handle);
-				_polling_handles.insert(handle);
+				_polling_handles.remove(&handle->polling_le);
+				_polling_handles.insert(&handle->polling_le);
 			}
 
 			return true;
