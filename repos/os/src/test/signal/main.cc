@@ -433,7 +433,23 @@ struct Many_contexts_test : Signal_test
 	}
 };
 
-
+/**
+ * Test 'wait_and_dispatch_one_signal' implementation for entrypoints
+ *
+ * Normally Genode signals are delivered by a signal thread, which blocks for
+ * incoming signals and is woken up when a signals arrives, the thread then
+ * sends an RPC to an entrypoint that, in turn, processes the signal.
+ * 'wait_and_dispatch_one_signal' allows an entrypoint to receive signals
+ * directly, by taking advantage of the same code as the signal thread. This
+ * leaves the problem that at this point two entities (the signal thread and the
+ * entrypoint) may wait for signals to arrive. It is not decidable which entity
+ * is woken up on signal arrival. If the signal thread is woken up and tries to
+ * deliver the signal RPC, system may dead lock when no additional signal
+ * arrives to pull the entrypoint out of the signal waiting code. This test
+ * triggers this exact situation. We also test nesting with the same signal
+ * context of 'wait_and_dispatch_one_signal' here, which also caused dead locks
+ * in the past.
+ */
 struct Wait_and_dispatch_test : Signal_test
 {
 	static constexpr char const *brief = "wait and dispatch signals at entrypoint";
