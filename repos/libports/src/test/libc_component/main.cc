@@ -139,7 +139,7 @@ struct Log::Session_component : Genode::Rpc_object<Log_session>
 		});
 	}
 
-	size_t write(String const &string_buf)
+	Genode::size_t write(String const &string_buf)
 	{
 		if (!(string_buf.valid_string())) { return 0; }
 
