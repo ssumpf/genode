@@ -193,6 +193,14 @@ struct Genode::Child_policy
 	virtual void session_state_changed() { }
 
 	/**
+	 * Granularity of allocating the backing store for session meta data
+	 *
+	 * Session meta data is allocated from 'ref_ram'. The first batch of
+	 * session-state objects is allocated at child-construction time.
+	 */
+	virtual size_t session_alloc_batch_size() const { return 16; }
+
+	/**
 	 * Return region map for the child's address space
 	 *
 	 * \param pd  the child's PD session capability
@@ -301,6 +309,9 @@ class Genode::Child : protected Rpc_object<Parent>,
 		/* sessions opened by the child */
 		Id_space<Client> _id_space;
 
+		/* allocator used for dynamically created session state objects */
+		Sliced_heap _session_md_alloc { _policy.ref_ram(), _local_rm };
+
 		typedef Session_state::Args Args;
 
 		static Child_policy::Route _resolve_session_request(Child_policy &,
@@ -312,9 +323,6 @@ class Genode::Child : protected Rpc_object<Parent>,
 		 */
 
 		void _try_construct_env_dependent_members();
-
-		/* heap for child-specific allocations using the child's quota */
-		Constructible<Heap> _heap;
 
 		/* factory for dynamically created  session-state objects */
 		Constructible<Session_state::Factory> _session_factory;
@@ -583,11 +591,6 @@ class Genode::Child : protected Rpc_object<Parent>,
 
 			return ram_quota - env_ram_quota();
 		}
-
-		/**
-		 * Return heap that uses the child's quota
-		 */
-		Allocator &heap() { return *_heap; }
 
 		Ram_session_capability ram_session_cap() const { return _ram.cap(); }
 
