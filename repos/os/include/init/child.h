@@ -578,12 +578,9 @@ class Init::Child : Child_policy, Child_service::Wakeup
 						               _session_requester.id_space(),
 						               _child.session_factory(),
 						               name, _child.ram_session_cap(), *this);
-
 				}
 			}
 			catch (Xml_node::Nonexistent_sub_node) { }
-			catch (Genode::Child::Inactive) {
-				error(this->name(), ": incomplete environment at construction time"); }
 		}
 
 		virtual ~Child()

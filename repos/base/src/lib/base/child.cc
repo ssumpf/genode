@@ -237,7 +237,7 @@ Session_capability Child::session(Parent::Client::Id id,
 	size_t const ram_quota = Arg_string::find_arg(argbuf, "ram_quota").ulong_value(0);
 
 	/* portion of quota to keep for ourself to maintain the session meta data */
-	size_t const keep_ram_quota = _session_factory->session_costs();
+	size_t const keep_ram_quota = _session_factory.session_costs();
 
 	if (ram_quota < keep_ram_quota)
 		throw Parent::Quota_exceeded();
@@ -254,7 +254,7 @@ Session_capability Child::session(Parent::Client::Id id,
 	Service &service = route.service;
 
 	Session_state &session =
-		create_session(_policy.name(), service, route.label, *_session_factory,
+		create_session(_policy.name(), service, route.label, _session_factory,
 		               _id_space, id, argbuf, filtered_affinity);
 
 	_policy.session_state_changed();
@@ -424,7 +424,7 @@ void Child::_revert_quota_and_destroy(Session_state &session)
 		 * ('session_costs').
 		 */
 		Transfer donation_to_client(session.donated_ram_quota() +
-		                            _session_factory->session_costs(),
+		                            _session_factory.session_costs(),
 		                            _policy.ref_ram_cap(), ram_session_cap());
 		/* finish transaction */
 		donation_from_service.acknowledge();
@@ -678,11 +678,6 @@ void Child::_try_construct_env_dependent_members()
 	_policy.init(_cpu.session(), _cpu.cap());
 	_policy.init(_pd.session(),  _pd.cap());
 
-	Session_state::Factory::Batch_size const
-		batch_size { _policy.session_alloc_batch_size() };
-
-	_session_factory.construct(_session_md_alloc, batch_size);
-
 	try {
 		_initial_thread.construct(_cpu.session(), _pd.cap(), "initial");
 		_process.construct(_binary.session().dataspace(), _linker_dataspace(),
@@ -779,6 +774,5 @@ Child::~Child()
 	 */
 	_process.destruct();
 	_initial_thread.destruct();
-	_session_factory.destruct();
 }
 
