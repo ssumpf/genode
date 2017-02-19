@@ -704,6 +704,31 @@ void Child::_discard_env_session(Id_space<Parent::Client>::Id id)
 }
 
 
+void Child::initiate_env_ram_session() { _ram.initiate(); }
+
+
+void Child::initiate_env_sessions()
+{
+	_pd    .initiate();
+	_cpu   .initiate();
+	_log   .initiate();
+	_binary.initiate();
+
+	/*
+	 * Issue environment-session request for obtaining the linker binary. We
+	 * accept this request to fail. In this case, the child creation may still
+	 * succeed if the binary is statically linked.
+	 */
+	try {
+		_linker.construct(*this, Parent::Env::linker(), _policy.linker_name());
+		_linker->initiate();
+	}
+	catch (Parent::Service_denied) { }
+
+	_try_construct_env_dependent_members();
+}
+
+
 Child::Child(Region_map      &local_rm,
              Rpc_entrypoint  &entrypoint,
              Child_policy    &policy)
@@ -711,15 +736,10 @@ Child::Child(Region_map      &local_rm,
 	_policy(policy), _local_rm(local_rm), _entrypoint(entrypoint),
 	_parent_cap(_entrypoint.manage(this))
 {
-	/*
-	 * Issue environment-session request for obtaining the linker binary. We
-	 * accept this request to fail. In this case, the child creation may still
-	 * succeed if the binary is statically linked.
-	 */
-	try { _linker.construct(*this, Parent::Env::linker(), _policy.linker_name()); }
-	catch (Parent::Service_denied) { }
-
-	_try_construct_env_dependent_members();
+	if (_policy.initiate_env_sessions()) {
+		initiate_env_ram_session();
+		initiate_env_sessions();
+	}
 }
 
 
