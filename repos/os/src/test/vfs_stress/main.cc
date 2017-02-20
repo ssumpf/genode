@@ -33,7 +33,7 @@
  */
 
 /* Genode includes */
-#include <vfs/default_file_system_factory.h>
+#include <vfs/file_system_factory.h>
 #include <vfs/dir_file_system.h>
 #include <timer_session/connection.h>
 #include <base/heap.h>
@@ -480,11 +480,11 @@ void Component::construct(Genode::Env &env)
 		}
 	} io_response_handler;
 
-	Vfs::Default_file_system_factory default_file_system_factory(heap);
+	Vfs::Global_file_system_factory global_file_system_factory(heap);
 
 	Vfs::Dir_file_system vfs_root(env, heap, config_xml.sub_node("vfs"),
 	                              io_response_handler,
-	                              default_file_system_factory);
+	                              global_file_system_factory);
 	char path[Vfs::MAX_PATH_LEN];
 
 	MAX_DEPTH = config_xml.attribute_value("depth", 16U);
