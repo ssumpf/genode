@@ -225,7 +225,7 @@ class Genode::Session_state::Factory : Noncopyable
 
 	public:
 
-		struct Batch_size { unsigned value; };
+		struct Batch_size { size_t value; };
 
 		/**
 		 * Constructor
