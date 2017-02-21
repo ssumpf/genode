@@ -118,7 +118,7 @@ void Session_state::generate_client_side_info(Xml_generator &xml, Detail detail)
 
 void Session_state::generate_server_side_info(Xml_generator &xml, Detail detail) const
 {
-	generate_server_side_info(xml, detail);
+	generate_client_side_info(xml, detail);
 }
 
 
