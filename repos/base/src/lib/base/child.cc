@@ -323,6 +323,8 @@ Session_capability Child::session_cap(Client::Id id)
 		if (session.phase == Session_state::INVALID_ARGS
 		 || session.phase == Session_state::QUOTA_EXCEEDED) {
 
+			Session_state::Phase const phase = session.phase;
+
 			/*
 			 * Implicity discard the session request when delivering an
 			 * exception because the exception will trigger the deallocation
@@ -330,7 +332,7 @@ Session_capability Child::session_cap(Client::Id id)
 			 */
 			_revert_quota_and_destroy(session);
 
-			if (session.phase == Session_state::INVALID_ARGS)
+			if (phase == Session_state::INVALID_ARGS)
 				throw Parent::Service_denied();
 			else
 				throw Parent::Quota_exceeded();
