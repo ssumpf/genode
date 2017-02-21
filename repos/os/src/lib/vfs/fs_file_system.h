@@ -336,7 +336,7 @@ class Vfs::Fs_file_system : public File_system
 					file_size const count = min(max_packet_size, status.size -
 					                                             seek_offset);
 
-					_read(file_guard, local_addr + seek_offset, count, 0);
+					_read(file_guard, local_addr + seek_offset, count, seek_offset);
 				}
 
 				_env.rm().detach(local_addr);
