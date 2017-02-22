@@ -550,14 +550,7 @@ struct Libc::Kernel
 	public:
 
 		Kernel(Genode::Env &env) : _env(env)
-		{
-			Genode::log("libc: kernel stack {",
-			            Genode::Hex(Thread::myself()->mystack().base), ",",
-			            Genode::Hex(Thread::myself()->mystack().top),
-			            "} user stack {",
-			            Genode::Hex((Genode::addr_t)_user_stack - Component::stack_size()),
-			            ",", _user_stack, "}");
-		}
+		{ }
 
 		~Kernel() { Genode::error(__PRETTY_FUNCTION__, " should not be executed!"); }
 
