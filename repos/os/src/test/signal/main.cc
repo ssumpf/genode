@@ -566,7 +566,7 @@ struct Nested_stress_test : Signal_test
 		bool                     destruct { false };
 
 		Receiver(Env &env, char const *name)
-		: ep(env, 1024 * sizeof(long), name), name(name) { }
+		: ep(env, 3 * 1024 * sizeof(long), name), name(name) { }
 
 		void handle()
 		{
