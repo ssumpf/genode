@@ -17,12 +17,23 @@
 
 /* Genode includes */
 #include <util/register.h>
+#include <base/exception.h>
 
 namespace Genode {
 
 	struct Register_set_plain_access;
 	template <typename> class Register_set;
+
+	/**
+	 * Helper to mark old Register_set::wait_for deprecated
+	 *
+	 * FIXME Please remove as soon as the old Register_set::wait_for methods
+	 *       get removed.
+	 */
+	void inline deprecate_old_register_set_wait_for() __attribute__ ((deprecated));
 }
+
+void Genode::deprecate_old_register_set_wait_for() { }
 
 
 /**
@@ -91,6 +102,77 @@ class Genode::Register_set
 
 		enum { BYTE_WIDTH_LOG2 = 3, BYTE_WIDTH = 1 << BYTE_WIDTH_LOG2 };
 
+		/**
+		 * Return wether one IO condition is met
+		 *
+		 * \param CONDITION  A condition subtype of Register, Bitfield, or
+		 *                   such (for example the Bitfield::Equal type)
+		 * \param condition  the condition instance
+		 */
+		template <typename CONDITION>
+		inline bool _conditions_met(CONDITION condition) {
+			return condition.met(read<typename CONDITION::Io_type>()); }
+
+		/**
+		 * Return wether a list of IO conditions is met
+		 *
+		 * \param CONDITION   The type of the head of the condition list.
+		 *                    A condition subtype of Register, Bitfield, or
+		 *                    such (for example the Bitfield::Equal type).
+		 * \param CONDITIONS  The types of the tail of the condition list.
+		 *                    condition subtypes of Register, Bitfield, or
+		 *                    such (for example the Bitfield::Equal type)
+		 * \param head        the condition instance
+		 */
+		template <typename CONDITION, typename... CONDITIONS>
+		inline bool _conditions_met(CONDITION head, CONDITIONS... tail) {
+			return _conditions_met(head) ? _conditions_met(tail...) : false; }
+
+		/**
+		 * This template equips IO types with condition subtypes for polling
+		 *
+		 * \param IO_TYPE  IO type that the conditions shall be about
+		 *
+		 * The condition subtypes enable us to poll for a variable amount of
+		 * IO conditions for different IO types at once. They are used as
+		 * input to the 'wait_for' template.
+		 */
+		template <typename IO_TYPE>
+		struct Conditions
+		{
+			/**
+			 * Condition that the IO type equals a value
+			 */
+			class Equal
+			{
+				private:
+
+					typedef typename IO_TYPE::access_t io_access_t;
+
+					io_access_t const _reference_val;
+
+				public:
+
+					typedef IO_TYPE Io_type;
+
+					/**
+					 * Constructor
+					 *
+					 * \param reference_val  reference value
+					 */
+					explicit Equal(io_access_t const reference_val)
+					: _reference_val(reference_val) { }
+
+					/**
+					 * Return whether the condition is met
+					 *
+					 * \param actual_val  actual IO value
+					 */
+					bool met(io_access_t const actual_val) const {
+						return _reference_val == actual_val; }
+			};
+		};
+
 		PLAIN_ACCESS &_plain_access;
 
 	public:
@@ -115,7 +197,10 @@ class Genode::Register_set
 		template <off_t _OFFSET, unsigned long _ACCESS_WIDTH,
 		          bool _STRICT_WRITE = false>
 
-		struct Register : public Genode::Register<_ACCESS_WIDTH>
+		struct Register
+		:
+			public Genode::Register<_ACCESS_WIDTH>,
+			public Conditions<Register<_OFFSET, _ACCESS_WIDTH, _STRICT_WRITE> >
 		{
 			enum {
 				OFFSET       = _OFFSET,
@@ -136,6 +221,9 @@ class Genode::Register_set
 			typedef Register<_OFFSET, _ACCESS_WIDTH, _STRICT_WRITE>
 				Register_base;
 
+			typedef typename Genode::Register<_ACCESS_WIDTH>::access_t
+				access_t;
+
 			/**
 			 * A region within a register
 			 *
@@ -146,8 +234,11 @@ class Genode::Register_set
 			 * For details see 'Genode::Register::Bitfield'.
 			 */
 			template <unsigned long _SHIFT, unsigned long _WIDTH>
-			struct Bitfield : public Genode::Register<ACCESS_WIDTH>::
-			                         template Bitfield<_SHIFT, _WIDTH>
+			struct Bitfield
+			:
+				public Genode::Register<ACCESS_WIDTH>::
+				               template Bitfield<_SHIFT, _WIDTH>,
+				public Conditions<Bitfield<_SHIFT, _WIDTH> >
 			{
 				/* analogous to 'Register_set::Register::Register_base' */
 				typedef Bitfield<_SHIFT, _WIDTH> Bitfield_base;
@@ -155,6 +246,8 @@ class Genode::Register_set
 				/* back reference to containing register */
 				typedef Register<_OFFSET, _ACCESS_WIDTH, _STRICT_WRITE>
 					Compound_reg;
+
+				typedef Compound_reg::access_t access_t;
 			};
 		};
 
@@ -572,6 +665,20 @@ class Genode::Register_set
 		 ** Polling for bitfield states **
 		 *********************************/
 
+		struct Polling_timeout : Exception { };
+
+		struct Attempts
+		{
+			unsigned value;
+			explicit Attempts(unsigned value) : value(value) { }
+		};
+
+		struct Microseconds
+		{
+			unsigned value;
+			explicit Microseconds(unsigned value) : value(value) { }
+		};
+
 		/**
 		 * Interface for delaying the execution of a calling thread
 		 */
@@ -583,6 +690,46 @@ class Genode::Register_set
 			virtual void usleep(unsigned us) = 0;
 		};
 
+
+		/**
+		 * Wait until a list of IO conditions is met
+		 *
+		 * \param CONDITIONS    Types of the of conditions in the condition
+		 *                      list. Condition subtypes of the IO types. For
+		 *                      example the Bitfield::Equal type.
+		 * \param attempts      maximum number of probing attempts
+		 * \param us            number of microseconds between attempts
+		 * \param delayer       Sleeping facility to be used when the
+		 *                      conditions are not met
+		 * \param conditions    condition list
+		 *
+		 * \throw Polling_timeout
+		 */
+		template <typename... CONDITIONS>
+		inline void wait_for(Attempts      attempts,
+		                     Microseconds  us,
+		                     Delayer      &delayer,
+		                     CONDITIONS... conditions)
+		{
+			for (unsigned i = 0; i < attempts.value; i++,
+			     delayer.usleep(us.value))
+			{
+				if (_conditions_met(conditions...)) {
+					return; }
+			}
+			throw Polling_timeout();
+		}
+
+		/**
+		 * Shortcut for 'wait_for' with 'us = 500' and 'attempts = 1000'
+		 */
+		template <typename... CONDITIONS>
+		inline void wait_for(Delayer &delayer, CONDITIONS... conditions)
+		{
+			wait_for<CONDITIONS...>(Attempts(500), Microseconds(1000),
+			                        delayer, conditions...);
+		}
+
 		/**
 		 * Wait until register 'T' contains the specified 'value'
 		 *
@@ -591,6 +738,9 @@ class Genode::Register_set
 		 *                      value is not reached yet
 		 * \param max_attempts  number of register probing attempts
 		 * \param us            number of microseconds between attempts
+		 *
+		 * \noapi
+		 * \deprecated  use 'template <typename... CONDITIONS> wait_for'
 		 */
 		template <typename T>
 		inline bool
@@ -599,6 +749,7 @@ class Genode::Register_set
 		         unsigned max_attempts = 500,
 		         unsigned us           = 1000)
 		{
+			deprecate_old_register_set_wait_for();
 			typedef typename T::Register_base Register;
 			for (unsigned i = 0; i < max_attempts; i++, delayer.usleep(us))
 			{
@@ -615,6 +766,9 @@ class Genode::Register_set
 		 *                      value is not reached yet
 		 * \param max_attempts  number of bitfield probing attempts
 		 * \param us            number of microseconds between attempts
+		 *
+		 * \noapi
+		 * \deprecated  use 'template <typename... CONDITIONS> wait_for'
 		 */
 		template <typename T>
 		inline bool
@@ -623,6 +777,7 @@ class Genode::Register_set
 		         unsigned max_attempts = 500,
 		         unsigned us           = 1000)
 		{
+			deprecate_old_register_set_wait_for();
 			typedef typename T::Bitfield_base Bitfield;
 			for (unsigned i = 0; i < max_attempts; i++, delayer.usleep(us))
 			{
