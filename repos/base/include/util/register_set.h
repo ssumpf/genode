@@ -1,4 +1,3 @@
-
 /*
  * \brief  Set of fine-grained and typesafe accessible registers with offsets
  * \author Martin stein
@@ -6,10 +5,10 @@
  */
 
 /*
- * Copyright (C) 2011-2016 Genode Labs GmbH
+ * Copyright (C) 2011-2017 Genode Labs GmbH
  *
  * This file is part of the Genode OS framework, which is distributed
- * under the terms of the GNU General Public License version 2.
+ * under the terms of the GNU Affero General Public License version 3.
  */
 
 #ifndef _INCLUDE__UTIL__REGISTER_SET_H_
@@ -721,7 +720,7 @@ class Genode::Register_set
 		}
 
 		/**
-		 * Shortcut for 'wait_for' with 'us = 500' and 'attempts = 1000'
+		 * Shortcut for 'wait_for' with 'attempts = 500' and 'us = 1000'
 		 */
 		template <typename... CONDITIONS>
 		inline void wait_for(Delayer &delayer, CONDITIONS... conditions)
