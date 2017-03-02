@@ -11,7 +11,25 @@
  * under the terms of the GNU Affero General Public License version 3.
  */
 
+#include <base/log.h>
+#include <base/semaphore.h>
 #include <cpu/atomic.h>
+#include <util/list.h>
+
+using Genode::List;
+using Genode::List_element;
+using Genode::Lock;
+
+struct Block : List_element<Block>
+{
+	Genode::Semaphore sem { 0 };
+	Block() : List_element<Block>(this) { }
+};
+
+
+static List<List_element<Block> > list;
+static Lock list_lock;
+
 
 namespace __cxxabiv1 
 {
@@ -33,18 +51,38 @@ namespace __cxxabiv1
 
 	typedef int __guard;
 
+	enum State { INIT_NONE = 0, INIT_DONE = 1, IN_INIT = 0x100, WAITERS = 0x200 };
+
 	extern "C" int __cxa_guard_acquire(__guard *guard)
 	{
 		volatile char *initialized = (char *)guard;
 		volatile int  *in_init     = (int *)guard;
 
 		/* check for state 3) */
-		if (*initialized) return 0;
+		if (*initialized == INIT_DONE) return 0;
 
 		/* atomically check and set state 2) */
-		if (!Genode::cmpxchg(in_init, 0, 0x100)) {
-			/* spin until state 3) is reached if other thread is in init */
-			while (!*initialized) ;
+		if (!Genode::cmpxchg(in_init, INIT_NONE, IN_INIT)) {
+
+			/* register current thread for blocking */
+			Block block;
+			{
+				Lock::Guard lock(list_lock);
+				list.insert(&block);
+			}
+
+			/* tell guard thread that current thread needs a wakeup */
+			while (!Genode::cmpxchg(in_init, *in_init, *in_init | WAITERS)) ;
+
+			/* wait until state 3) is reached by guard thread */
+			while (*initialized != INIT_DONE)
+				block.sem.down();
+
+			/* remove current thread */
+			{
+				Lock::Guard lock(list_lock);
+				list.remove(&block);
+			}
 
 			/* guard not acquired */
 			return 0;
@@ -61,12 +99,22 @@ namespace __cxxabiv1
 
 	extern "C" void __cxa_guard_release(__guard *guard)
 	{
-		volatile char *initialized = (char *)guard;
+		volatile int  *in_init     = (int *)guard;
 
 		/* set state 3) */
-		*initialized = 1;
+		while (!Genode::cmpxchg(in_init, *in_init, *in_init | INIT_DONE)) ;
+
+		/* check whether somebody blocked on this guard */
+		if (!(*in_init & WAITERS))
+			return;
+
+		/* we had contention - wake all up */
+		Lock::Guard lock(list_lock);
+		for (List_element<Block> *block = list.first(); block; block = block->next())
+			block->object()->sem.up();
 	}
 
 
-	extern "C" void __cxa_guard_abort(__guard *) { }
+	extern "C" void __cxa_guard_abort(__guard *) {
+		Genode::error(__func__, " called"); }
 }
