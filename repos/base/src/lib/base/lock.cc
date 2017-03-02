@@ -88,7 +88,7 @@ void Cancelable_lock::lock()
 		/* reset owner */
 		_owner = Applicant(invalid_thread_base());
 
-		/* put thread calling twice 'lock' at second position in list */
+		/* register thread calling twice 'lock' as first applicant */
 		_owner.applicant_to_wake_up(&myself);
 
 		/* if we had already applicants, add after myself in list */
