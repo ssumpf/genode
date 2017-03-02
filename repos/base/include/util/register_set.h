@@ -22,17 +22,7 @@ namespace Genode {
 
 	struct Register_set_plain_access;
 	template <typename> class Register_set;
-
-	/**
-	 * Helper to mark old Register_set::wait_for deprecated
-	 *
-	 * FIXME Please remove as soon as the old Register_set::wait_for methods
-	 *       get removed.
-	 */
-	void inline deprecate_old_register_set_wait_for() __attribute__ ((deprecated));
 }
-
-void Genode::deprecate_old_register_set_wait_for() { }
 
 
 /**
@@ -110,7 +100,7 @@ class Genode::Register_set
 		 */
 		template <typename CONDITION>
 		inline bool _conditions_met(CONDITION condition) {
-			return condition.met(read<typename CONDITION::Io_type>()); }
+			return condition.met(read<typename CONDITION::Object>()); }
 
 		/**
 		 * Return wether a list of IO conditions is met
@@ -128,46 +118,46 @@ class Genode::Register_set
 			return _conditions_met(head) ? _conditions_met(tail...) : false; }
 
 		/**
-		 * This template equips IO types with condition subtypes for polling
+		 * This template equips registers/bitfields with conditions for polling
 		 *
-		 * \param IO_TYPE  IO type that the conditions shall be about
+		 * \param T  register/bitfield type that the conditions shall be about
 		 *
 		 * The condition subtypes enable us to poll for a variable amount of
-		 * IO conditions for different IO types at once. They are used as
-		 * input to the 'wait_for' template.
+		 * conditions for different registers/bitfields at once. They are used
+		 * as input to the 'wait_for' template.
 		 */
-		template <typename IO_TYPE>
+		template <typename T>
 		struct Conditions
 		{
 			/**
-			 * Condition that the IO type equals a value
+			 * Condition that the register/bitfield equals a value
 			 */
 			class Equal
 			{
 				private:
 
-					typedef typename IO_TYPE::access_t io_access_t;
+					typedef typename T::access_t access_t;
 
-					io_access_t const _reference_val;
+					access_t const _reference_val;
 
 				public:
 
-					typedef IO_TYPE Io_type;
+					typedef T Object;
 
 					/**
 					 * Constructor
 					 *
 					 * \param reference_val  reference value
 					 */
-					explicit Equal(io_access_t const reference_val)
+					explicit Equal(access_t const reference_val)
 					: _reference_val(reference_val) { }
 
 					/**
 					 * Return whether the condition is met
 					 *
-					 * \param actual_val  actual IO value
+					 * \param actual_val  actual regster/bitfield value
 					 */
-					bool met(io_access_t const actual_val) const {
+					bool met(access_t const actual_val) const {
 						return _reference_val == actual_val; }
 			};
 		};
@@ -705,10 +695,10 @@ class Genode::Register_set
 		 * \throw Polling_timeout
 		 */
 		template <typename... CONDITIONS>
-		inline void wait_for(Attempts      attempts,
-		                     Microseconds  us,
-		                     Delayer      &delayer,
-		                     CONDITIONS... conditions)
+		inline void wait_for(Attempts       attempts,
+		                     Microseconds   us,
+		                     Delayer       &delayer,
+		                     CONDITIONS...  conditions)
 		{
 			for (unsigned i = 0; i < attempts.value; i++,
 			     delayer.usleep(us.value))
@@ -746,16 +736,7 @@ class Genode::Register_set
 		wait_for(typename T::Register_base::access_t const value,
 		         Delayer & delayer,
 		         unsigned max_attempts = 500,
-		         unsigned us           = 1000)
-		{
-			deprecate_old_register_set_wait_for();
-			typedef typename T::Register_base Register;
-			for (unsigned i = 0; i < max_attempts; i++, delayer.usleep(us))
-			{
-				if (read<Register>() == value) return true;
-			}
-			return false;
-		}
+		         unsigned us           = 1000) __attribute__ ((deprecated));
 
 		/**
 		 * Wait until bitfield 'T' contains the specified 'value'
@@ -774,16 +755,44 @@ class Genode::Register_set
 		wait_for(typename T::Bitfield_base::Compound_reg::access_t const value,
 		         Delayer & delayer,
 		         unsigned max_attempts = 500,
-		         unsigned us           = 1000)
-		{
-			deprecate_old_register_set_wait_for();
-			typedef typename T::Bitfield_base Bitfield;
-			for (unsigned i = 0; i < max_attempts; i++, delayer.usleep(us))
-			{
-				if (read<Bitfield>() == value) return true;
-			}
-			return false;
-		}
+		         unsigned us           = 1000) __attribute__ ((deprecated));
 };
+
+
+template <typename PLAIN_ACCESS>
+template <typename T>
+bool Genode::Register_set<PLAIN_ACCESS>::
+wait_for(typename T::Register_base::access_t const  value,
+         Delayer                                   &delayer,
+         unsigned                                   max_attempts,
+         unsigned                                   us)
+{
+	typedef typename T::Register_base Register;
+	for (unsigned i = 0; i < max_attempts; i++, delayer.usleep(us))
+	{
+		if (read<Register>() == value) {
+			return true; }
+	}
+	return false;
+}
+
+
+template <typename PLAIN_ACCESS>
+template <typename T>
+bool Genode::Register_set<PLAIN_ACCESS>::
+wait_for(typename T::Bitfield_base::Compound_reg::access_t const  value,
+         Delayer                                                 &delayer,
+         unsigned                                                 max_attempts,
+         unsigned                                                 us)
+{
+	typedef typename T::Bitfield_base Bitfield;
+	for (unsigned i = 0; i < max_attempts; i++, delayer.usleep(us))
+	{
+		if (read<Bitfield>() == value) {
+			return true; }
+	}
+	return false;
+}
+
 
 #endif /* _INCLUDE__UTIL__REGISTER_SET_H_ */
