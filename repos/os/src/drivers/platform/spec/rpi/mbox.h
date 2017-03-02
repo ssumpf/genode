@@ -99,7 +99,8 @@ class Mbox : Genode::Attached_mmio
 			while (!read<Status::Rd_empty>())
 				read<Read>();
 
-			try { wait_for(500, 1, _delayer, Status::Wr_full::Equal(0)); }
+			try { wait_for(Attempts(500), Microseconds(1), _delayer,
+			               Status::Wr_full::Equal(0)); }
 			catch (Polling_timeout) {
 				Genode::error("Mbox: timeout waiting for ready-to-write");
 				return;
@@ -111,7 +112,8 @@ class Mbox : Genode::Attached_mmio
 			Write::Cache_policy::set(value, MESSAGE::cache_policy());
 			write<Write>(value);
 
-			try { wait_for(500, 1, _delayer, Status::Rd_empty::Equal(0)); }
+			try { wait_for(Attempts(500), Microseconds(1), _delayer,
+			               Status::Rd_empty::Equal(0)); }
 			catch (Polling_timeout) {
 				Genode::error("Mbox: timeout waiting for response");
 				return;
