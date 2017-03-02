@@ -146,7 +146,7 @@ proc check_counter { name opt cnt total_cnt } {
 	# tolerance as for ARM where the driver, once configured, can sleep for
 	# the whole test timeout.
 	#
-	if {[have_spec x86]} { set tol 0.02 }
+	if {[have_spec x86]} { set tol 0.01 }
 
 	#
 	# Zynq is currently tested merely in Qemu and most likely because of
