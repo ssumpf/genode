@@ -193,7 +193,7 @@ void Slab::Block::inc_avail(Entry &e)
 {
 	/* mark slab entry as free */
 	if (_state(_slab_entry_idx(&e)) == FREE)
-		PERR("Double Slab free");
+		error("Double Slab free");
 
 	_state(_slab_entry_idx(&e), FREE);
 	_avail++;
