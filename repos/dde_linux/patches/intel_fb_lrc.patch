@@ -1,0 +1,12 @@
+diff --git a/drivers/gpu/drm/i915/intel_lrc.c b/drivers/gpu/drm/i915/intel_lrc.c
+index 88e12bd..85f31f6 100644
+--- a/drivers/gpu/drm/i915/intel_lrc.c
++++ b/drivers/gpu/drm/i915/intel_lrc.c
+@@ -136,6 +136,7 @@
+ #include <drm/i915_drm.h>
+ #include "i915_drv.h"
+ #include "intel_mocs.h"
++#include "intel_drv.h"
+ 
+ #define GEN9_LR_CONTEXT_RENDER_SIZE (22 * PAGE_SIZE)
+ #define GEN8_LR_CONTEXT_RENDER_SIZE (20 * PAGE_SIZE)
