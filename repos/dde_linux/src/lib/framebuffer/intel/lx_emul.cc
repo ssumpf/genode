@@ -1365,7 +1365,7 @@ dma_addr_t sg_page_iter_dma_address(struct sg_page_iter *piter)
 struct page *sg_page_iter_page(struct sg_page_iter *piter)
 {
 	if (piter->sg_pgoffset) {
-		PERR("SG offset %x", piter->sg_pgoffset);
+		Genode::error("SG offset %x", piter->sg_pgoffset);
 		while (1);
 	}
 	//PWRN("sg_page_iter_page: page %p",(page*)(PAGE_SIZE * (page_to_pfn((sg_page(piter->sg))) + (piter->sg_pgoffset))));
@@ -1960,12 +1960,6 @@ int intel_guc_ucode_load(struct drm_device *dev)
 {
 	TRACE;
 	return 0;
-}
-
-
-void intel_lrc_irq_handler(struct intel_engine_cs *ring)
-{
-	TRACE;
 }
 
 /*******************
