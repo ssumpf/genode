@@ -1,6 +1,7 @@
 #ifndef _WINDOW_H_
 #define _WINDOW_H_
 
+#include <base/debug.h>
 #include <base/env.h>
 #include <framebuffer_session/connection.h>
 #include <util/volatile_object.h>

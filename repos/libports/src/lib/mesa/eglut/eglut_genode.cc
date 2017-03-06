@@ -1,5 +1,6 @@
 #include <base/heap.h>
 #include <base/printf.h>
+#include <libc/component.h>
 
 extern "C" {
 #include "eglutint.h"
@@ -161,25 +162,22 @@ struct Signal_schedule_helper
 };
 
 
-namespace Component {
-	Genode::size_t stack_size()      { return  4096 * sizeof(long); }
 
-	void construct(Genode::Env &env)
-	{
-		static Env e(env);
-		_e = &e;
-		genode_env = &env;
+void Libc::Component::construct(Libc::Env &env)
+{
+	static ::Env e(env);
+	_e = &e;
+	genode_env = &env;
 
-		static Signal_schedule_helper startup_helper(env.ep());
+	static Signal_schedule_helper startup_helper(env.ep());
 
-		static Lx::Task task(run_task, nullptr, "eglut_main", Lx::Task::PRIORITY_0,
-		                     Lx::scheduler());
+	static Lx::Task task(run_task, nullptr, "eglut_main", Lx::Task::PRIORITY_0,
+	                     Lx::scheduler());
 
-		//XXX: remove me
-		start_framebuffer_driver(env, task, startup_helper.handler);
-		event_loop_task = &task;
+	//XXX: remove me
+	start_framebuffer_driver(env, task, startup_helper.handler);
 
-		Lx::scheduler().schedule();
+	event_loop_task = &task;
 
-	}
+	Lx::scheduler().schedule();
 }
