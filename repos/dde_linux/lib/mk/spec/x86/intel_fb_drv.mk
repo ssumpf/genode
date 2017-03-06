@@ -1,8 +1,6 @@
 LX_CONTRIB_DIR := $(call select_from_ports,dde_linux)/src/lib/framebuffer/intel
 SRC_DIR         = $(REP_DIR)/src/lib/framebuffer/intel
 
-CC_OLEVEL = -O0
-CC_OPT += -gdwarf-2
 LIBS    += intel_fb_include libc-setjmp blit
 
 SRC_C   :=
@@ -26,7 +24,8 @@ SRC_C    += dummies.c i915_params.c lx_emul_c.c
 SRC_CC   += main.cc lx_emul.cc
 
 # lx_kit
-SRC_CC  += irq.cc \
+SRC_CC  += env.cc \
+           irq.cc \
            malloc.cc \
            mapped_io_mem_range.cc \
            pci.cc \

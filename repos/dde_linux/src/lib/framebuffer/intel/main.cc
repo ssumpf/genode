@@ -13,6 +13,7 @@
  */
 
 /* Genode includes */
+#include <base/heap.h>
 #include <base/log.h>
 #include <base/component.h>
 #include <base/attached_rom_dataspace.h>
@@ -23,6 +24,8 @@
 
 /* Linux emulation environment includes */
 #include <lx_emul.h>
+#include <lx_kit/env.h>
+#include <lx_kit/malloc.h>
 #include <lx_kit/scheduler.h>
 #include <lx_kit/timer.h>
 #include <lx_kit/irq.h>
@@ -89,7 +92,7 @@ struct Main
 	void announce()
 	{
 		env.parent().announce(ep.manage(root));
-		PDBG("UNBLOCK %p", &egl_task);
+		Genode::log("UNBLOCK %p", &egl_task);
 		Genode::Signal_transmitter(startup_helper).submit();
 	}
 };
@@ -99,11 +102,11 @@ struct Main
 struct Policy_agent
 {
 	Main &main;
-	Genode::Signal_rpc_member<Policy_agent> sd;
+	Genode::Signal_handler<Policy_agent> sd;
 
-	void handle(unsigned)
+	void handle()
 	{
-		main.linux.unblock();
+		main.linux->unblock();
 		Lx::scheduler().schedule();
 	}
 
@@ -115,7 +118,7 @@ struct Policy_agent
 Framebuffer::Session_component *root_session()
 {
 	if (!static_main)
-		PWRN("Main is NULL");
+		Genode::warning("Main is NULL");
 	return &static_main->root.session;
 }
 

@@ -860,11 +860,6 @@ void io_mapping_unmap_atomic(void *vaddr)
 	TRACE_AND_STOP;
 }
 
-void ips_link_to_i915_driver(void)
-{
-	TRACE_AND_STOP;
-}
-
 unsigned int jiffies_to_usecs(const unsigned long j)
 {
 	TRACE_AND_STOP;
