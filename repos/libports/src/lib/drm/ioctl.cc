@@ -3,7 +3,7 @@ extern "C" {
 #include <i915_drm.h>
 }
 
-#include <base/printf.h>
+#include <base/log.h>
 #include <gpu/driver.h>
 
 #include <os/backtrace.h>
@@ -84,12 +84,14 @@ const char *command_name(long request)
 
 static void dump_ioctl(long request)
 {
-	PDBG("ioctl(request=%lx, %s, len=%ld, cmd=%s (%lx))", request,
-	     (request & 0xe0000000) == IOC_OUT   ? "out"   :
-	     (request & 0xe0000000) == IOC_IN    ? "in"    :
-	     (request & 0xe0000000) == IOC_INOUT ? "inout" : "void",
-	     IOCPARM_LEN(request),
-	     command_name(request), drm_nr(request));
+	using namespace Genode;
+
+	log("ioctl(request=", Hex(request),
+	    (request & 0xe0000000) == IOC_OUT   ? " out"   :
+	    (request & 0xe0000000) == IOC_IN    ? " in"    :
+	    (request & 0xe0000000) == IOC_INOUT ? " inout" : " void",
+	    " len=", IOCPARM_LEN(request),
+	    " cmd=",command_name(request), " (", Hex(drm_nr(request)), ")");
 }
 
 extern "C" int genode_ioctl(int fd, unsigned long request, void *arg)
@@ -97,5 +99,10 @@ extern "C" int genode_ioctl(int fd, unsigned long request, void *arg)
 	if (verbose_ioctl)
 		dump_ioctl(request);
 
-	return gpu_driver().ioctl(drm_nr(request), arg);
+	int ret =  gpu_driver().ioctl(drm_nr(request), arg);
+
+	if (verbose_ioctl)
+		Genode::log("returned ", ret);
+
+	return ret;
 }
