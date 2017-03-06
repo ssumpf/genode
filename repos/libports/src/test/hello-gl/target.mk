@@ -1,5 +1,5 @@
-TARGET = hello-gl
-LIBS   = libm libc egl mesa-11
+TARGET = hello_gl
+LIBS   = libm libc libc-setjmp egl mesa-11
 
 SRC_C  = hello-gl.c eglut.c util.c
 SRC_CC = eglut_genode.cc
