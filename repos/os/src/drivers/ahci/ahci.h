@@ -444,7 +444,8 @@ struct Port : Port_base
 		platform_hba(platform_hba)
 	{
 		reset();
-		enable();
+		if (!enable())
+			throw 1;
 		stop();
 		wait_for(hba.delayer(), Cmd::Cr::Equal(0));
 	}

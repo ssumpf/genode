@@ -71,16 +71,6 @@ struct Ahci
 		scan_ports(env.rm(), env.ram());
 	}
 
-	bool atapi(unsigned sig)
-	{
-		return enable_atapi && (sig == ATAPI_SIG_QEMU || sig == ATAPI_SIG);
-	}
-
-	bool ata(unsigned sig)
-	{
-		return sig == ATA_SIG;
-	}
-
 	/**
 	 * Forward IRQs to ports
 	 */
@@ -125,31 +115,35 @@ struct Ahci
 			if (!(available & (1U << i)))
 				continue;
 
-			switch (Port_base(i, hba).read<Port_base::Sig>()) {
+			bool enabled = false;
 
+			switch (Port_base(i, hba).read<Port_base::Sig>()) {
 				case ATA_SIG:
 					try {
 						ports[i] = new (&alloc)
 							Ata_driver(alloc, ram, root, ready_count, rm, hba,
 							           platform_hba, i);
-						log("\t\t#", i, ": ATA");
-					} catch (...) {
-						error("failed to initialize ATA port ", i); }
+						enabled = true;
+					} catch (...) { }
+
+					log("\t\t#", i, ":", enabled ? " ATA" : " off (ATA)");
 					break;
 
 				case ATAPI_SIG:
 				case ATAPI_SIG_QEMU:
-					try {
-						ports[i] = new (&alloc)
-							Atapi_driver(ram, root, ready_count, rm, hba,
-							             platform_hba, i);
-						log("\t\t#", i, ": ATAPI");
-					} catch (...) {
-						error("failed to initialize ATAPI port ", i); }
+					if (enable_atapi)
+						try {
+							ports[i] = new (&alloc)
+								Atapi_driver(ram, root, ready_count, rm, hba,
+								             platform_hba, i);
+							enabled = true;
+						} catch (...) { }
+
+					log("\t\t#", i, ":", enabled ? " ATAPI" : " off (ATAPI)");
 					break;
 
 				default:
-					warning("unsupported device signature at port ", i);
+					log("\t\t#", i, ": off (unknown device signature)");
 			}
 		}
 	};
