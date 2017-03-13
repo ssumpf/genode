@@ -405,10 +405,32 @@ size_t strlcpy(char *dest, const char *src, size_t size)
 	return ret;
 }
 
+char *strcpy(char *dst, const char *src)
+{
+	char *p = dst;
+
+	while ((*dst = *src)) {
+	++src;
+	++dst;
+	}
+
+	return p;
+}
+
+
 int sysfs_create_link(struct kobject *kobj, struct kobject *target, const char *name)
 {
 	TRACE;
 	return 0;
+}
+
+
+int vsnprintf(char *buf, size_t size, const char *fmt, va_list args)
+{
+	Genode::String_console sc(buf, size);
+	sc.vprintf(fmt, args);
+
+	return sc.len();
 }
 
 
