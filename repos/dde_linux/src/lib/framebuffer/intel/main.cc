@@ -52,14 +52,12 @@ struct Main
 	Genode::Attached_rom_dataspace config { env, "config" };
 	Genode::Heap                   heap   { env.ram(), env.rm() };
 	Framebuffer::Root              root   { env, heap, config };
-	Lx::Task                      &egl_task;
-	Genode::Signal_context_capability startup_helper;
 
 	/* Linux task that handles the initialization */
 	Genode::Constructible<Lx::Task> linux;
 
-	Main(Genode::Env &env, Lx::Task &egl_task, Genode::Signal_context_capability startup_helper)
-	: env(env), egl_task(egl_task), startup_helper(startup_helper)
+	Main(Genode::Env &env)
+	: env(env)
 	{
 		Genode::log("--- intel framebuffer driver ---");
 
@@ -92,8 +90,6 @@ struct Main
 	void announce()
 	{
 		env.parent().announce(ep.manage(root));
-		Genode::log("UNBLOCK %p", &egl_task);
-		Genode::Signal_transmitter(startup_helper).submit();
 	}
 };
 
@@ -142,6 +138,6 @@ static void run_linux(void * m)
 }
 
 
-void start_framebuffer_driver(Genode::Env &env, Lx::Task &hack, Genode::Signal_context_capability helper) {
-	static Main main (env, hack, helper); 
+void start_framebuffer_driver(Genode::Env &env) {
+	static Main main(env);
 }
