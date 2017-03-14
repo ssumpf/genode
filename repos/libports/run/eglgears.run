@@ -130,7 +130,6 @@ set boot_modules {
 lappend_if [have_spec       linux] boot_modules fb_sdl
 lappend_if [have_spec framebuffer] boot_modules fb_drv
 lappend_if [have_spec         ps2] boot_modules ps2_drv
-lappend_if [have_spec        i915] boot_modules gallium-i915.lib.so
 
 append_platform_drv_boot_modules
 

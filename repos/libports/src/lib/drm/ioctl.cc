@@ -7,7 +7,7 @@ extern "C" {
 #include <gpu/driver.h>
 
 #include <os/backtrace.h>
-enum { verbose_ioctl = false };
+enum { verbose_ioctl = true };
 
 
 long driver_nr(long request) { return (request & 0xff) - DRM_COMMAND_BASE; }
@@ -99,8 +99,8 @@ extern "C" int genode_ioctl(int fd, unsigned long request, void *arg)
 	if (verbose_ioctl)
 		dump_ioctl(request);
 
-	int ret =  gpu_driver().ioctl(drm_nr(request), arg);
-
+	//int ret =  gpu_driver().ioctl(drm_nr(request), arg);
+	int ret = -1;
 	if (verbose_ioctl)
 		Genode::log("returned ", ret);
 

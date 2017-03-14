@@ -1,5 +1,5 @@
 SHARED_LIB = yes
-LIBS       = libc drm intel_fb
+LIBS       = libc drm
 
 include $(REP_DIR)/lib/mk/mesa-11-common.inc
 
