@@ -4,61 +4,48 @@
 
 extern "C" {
 #include "eglutint.h"
+#include <sys/select.h>
 }
 
 #include <window.h>
 #include <platform.h>
 
-//XXX: dde_linux internals, remove
-#include <lx_kit/scheduler.h>
+static bool initialized = false;
 
-Genode::Env *genode_env;
-Lx::Task    *event_loop_task;
-
-
-struct Env
+struct Eglut_env
 {
-	Genode::Env                   &env;
-	Genode::Heap                   heap { env.ram(), env.rm() };
-	Genode::Attached_rom_dataspace config { env, "config" };
+	Libc::Env &env;
+	Genode::Heap heap { env.ram(), env.rm() };
 
-	Env(Genode::Env &env) : env(env) { }
+	Eglut_env(Libc::Env &env) : env(env) { }
 };
 
-
-static Env *_e;
-static bool initialized = false;
+Genode::Constructible<Eglut_env> eglut_env;
 
 void _eglutNativeInitDisplay()
 {
 	_eglut->surface_type = EGL_WINDOW_BIT;
 }
 
-#if 0
 void Window::sync_handler()
 {
+	PDBG("called");
+#if 0
 	struct eglut_window *win =_eglut->current;
 
-	static unsigned long count = 0;
-
-	/* 50 Hz */
-	if ((count++ % 2) && _eglut->idle_cb) {
+	if (_eglut->idle_cb)
 		_eglut->idle_cb();
-		return;
-	}
+
 
 	if (win->display_cb)
 		win->display_cb();
 
-	eglSwapBuffers(_eglut->dpy, win->surface);
-}
+	if (initialized) {
+		eglSwapBuffers(_eglut->dpy, win->surface);
+		//XXX: may be required
+		//eglWaitClient();
+	}
 #endif
-
-void Window::sync_handler()
-{
-	PDBG("SYNC");
-	event_loop_task->unblock();
-	Lx::scheduler().schedule();
 }
 
 
@@ -66,7 +53,7 @@ void Window::mode_handler()
 {
 	PDBG("MODE: %p", framebuffer);
 
-	if (!framebuffer) //.is_constructed())
+	if (!framebuffer.is_constructed())
 		return;
 
 	initialized = true;
@@ -94,8 +81,7 @@ void _eglutNativeFiniDisplay(void)
 void _eglutNativeInitWindow(struct eglut_window *win, const char *title,
                             int x, int y, int w, int h)
 {
-	//Genode_egl_window *native = new (_e->heap) Window(_e->env, w, h);
-	Genode_egl_window *native = new (_e->heap) Window(_e->env, w, h, _e->config);
+	Genode_egl_window *native = new (eglut_env->heap) Window(eglut_env->env, w, h);
 	win->native.u.window = native;
 	win->native.width = w;
 	win->native.height = h;
@@ -111,20 +97,7 @@ void _eglutNativeFiniWindow(struct eglut_window *win)
 void _eglutNativeEventLoop()
 {
 	while (true) {
-
-		struct eglut_window *win =_eglut->current;
-
-		if (_eglut->idle_cb)
-			_eglut->idle_cb();
-
-
-		if (win->display_cb)
-			win->display_cb();
-
-		if (initialized) {
-			eglSwapBuffers(_eglut->dpy, win->surface);
-			eglWaitClient();
-		}
+		select(0, nullptr, nullptr, nullptr, nullptr);
 	}
 }
 
@@ -134,50 +107,8 @@ void _eglutNativeEventLoop()
  */
 extern "C" int eglut_main(int argc, char *argv[]);
 
-
-void run_task(void * /* data */)
-{
-	/* wait for signal from intel driver */
-	Lx::scheduler().current()->block_and_schedule();
-	eglut_main(1, nullptr);
-}
-
-
-void start_framebuffer_driver(Genode::Env &env, Lx::Task &task, Genode::Signal_context_capability);
-/*
- * Use as component, so signals can be dispatched easily
- */
-
-struct Signal_schedule_helper
-{
-	Genode::Signal_handler<Signal_schedule_helper> handler;
-
-	Signal_schedule_helper(Genode::Entrypoint &ep)
-	: handler(ep, *this, &Signal_schedule_helper::dispatch) { }
-
-	void dispatch() {
-		PDBG("DISPATCH");
-		event_loop_task->unblock();
-		Lx::scheduler().schedule(); }
-};
-
-
-
 void Libc::Component::construct(Libc::Env &env)
 {
-	static ::Env e(env);
-	_e = &e;
-	genode_env = &env;
-
-	static Signal_schedule_helper startup_helper(env.ep());
-
-	static Lx::Task task(run_task, nullptr, "eglut_main", Lx::Task::PRIORITY_0,
-	                     Lx::scheduler());
-
-	//XXX: remove me
-	start_framebuffer_driver(env, task, startup_helper.handler);
-
-	event_loop_task = &task;
-
-	Lx::scheduler().schedule();
+	eglut_env.construct(env);
+	Libc::with_libc([] () { eglut_main(1, nullptr); });
 }
