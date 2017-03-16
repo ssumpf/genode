@@ -200,6 +200,8 @@ void Init::Child::apply_ram_upgrade()
 		_resources.assigned_ram_quota =
 			Ram_quota { _resources.assigned_ram_quota.value + transfer };
 
+		_check_resource_constraints(_ram_limit_accessor.ram_limit());
+
 		ref_ram().transfer_quota(_child.ram_session_cap(), transfer);
 
 		/* wake up child that blocks on a resource request */
