@@ -106,9 +106,15 @@ void _eglutNativeEventLoop()
  * 'eglut_main' will be called instead of 'main' by component initialization
  */
 extern "C" int eglut_main(int argc, char *argv[]);
+extern void drm_init(Genode::Env &env);
+
 
 void Libc::Component::construct(Libc::Env &env)
 {
 	eglut_env.construct(env);
+
+	//XXX: does not work for swrast
+	drm_init(env);
+
 	Libc::with_libc([] () { eglut_main(1, nullptr); });
 }
