@@ -21,6 +21,7 @@
 
 /* Server related local includes */
 #include <component.h>
+#include <drm_component.h>
 
 /* Linux emulation environment includes */
 #include <lx_emul.h>
@@ -48,10 +49,11 @@ Main *static_main;
 struct Main
 {
 	Genode::Env                   &env;
-	Genode::Entrypoint            &ep     { env.ep() };
-	Genode::Attached_rom_dataspace config { env, "config" };
-	Genode::Heap                   heap   { env.ram(), env.rm() };
-	Framebuffer::Root              root   { env, heap, config };
+	Genode::Entrypoint            &ep       { env.ep() };
+	Genode::Attached_rom_dataspace config   { env, "config" };
+	Genode::Heap                   heap     { env.ram(), env.rm() };
+	Framebuffer::Root              root     { env, heap, config };
+	Drm::Root                      drm_root { env, heap };
 
 	/* Linux task that handles the initialization */
 	Genode::Constructible<Lx::Task> linux;
@@ -90,6 +92,7 @@ struct Main
 	void announce()
 	{
 		env.parent().announce(ep.manage(root));
+		env.parent().announce(ep.manage(drm_root));
 	}
 };
 

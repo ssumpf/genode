@@ -4,8 +4,9 @@ set build_components {
 	server/nitpicker server/nit_fb
 	app/launchpad app/pointer
 	test/eglgears
-	drivers/framebuffer drivers/input
+	drivers/framebuffer/intel drivers/input
 	lib/mesa/swrast
+	drivers/usb
 }
 
 source ${genode_dir}/repos/base/run/platform_drv.inc
@@ -16,7 +17,7 @@ build $build_components
 create_boot_directory
 
 set config {
-<config>
+<config prio_levels="2">
 	<parent-provides>
 		<service name="ROM"/>
 		<service name="RAM"/>
@@ -45,14 +46,18 @@ append_if [have_spec sdl] config {
 append_platform_drv_config
 
 append_if [have_spec framebuffer] config {
-	<start name="fb_drv">
-		<resource name="RAM" quantum="4M"/>
-		<provides><service name="Framebuffer"/></provides>
+	<start name="intel_fb_drv">
+		<resource name="RAM" quantum="20M"/>
+		<provides>
+			<service name="Framebuffer"/>
+			<service name="Drm"/>
+		</provides>
+		<route><any-service> <parent /> <any-child/> </any-service></route>
 	</start>}
-
 append_if [have_spec ps2] config {
-	<start name="ps2_drv">
-		<resource name="RAM" quantum="1M"/>
+	<start name="usb_drv">
+		<resource name="RAM" quantum="20M"/>
+		<config xhci="yes"> <hid/></config>
 		<provides><service name="Input"/></provides>
 	</start> }
 
@@ -93,6 +98,7 @@ append config {
 						<service name="Platform"/>
 						<service name="Nitpicker"/>
 						<service name="Timer"/>
+						<service name="Drm" />
 					</parent-provides>
 					<start name="nit_fb">
 						<resource name="RAM" quantum="2M"/>
@@ -102,7 +108,9 @@ append config {
 					</start>
 					<start name="gears">
 						<resource name="RAM" quantum="1G"/>
-						<route><any-service> <parent /> <any-child/> </any-service></route>
+						<route>
+							<any-service> <parent /> <any-child/> </any-service>
+						</route>
 						<config ld_verbose="true">
 							<libc stdout="/dev/log" stderr="/dev/log">
 								<vfs> <dir name="dev"> <log/> </dir> </vfs>
@@ -128,8 +136,8 @@ set boot_modules {
 }
 
 lappend_if [have_spec       linux] boot_modules fb_sdl
-lappend_if [have_spec framebuffer] boot_modules fb_drv
-lappend_if [have_spec         ps2] boot_modules ps2_drv
+lappend_if [have_spec framebuffer] boot_modules intel_fb_drv
+lappend_if [have_spec         ps2] boot_modules usb_drv
 
 append_platform_drv_boot_modules
 

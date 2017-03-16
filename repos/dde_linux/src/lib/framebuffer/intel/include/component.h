@@ -38,7 +38,7 @@ namespace Framebuffer {
 }
 
 
-class Framebuffer::Driver : public Gpu_driver
+class Framebuffer::Driver
 {
 	private:
 
@@ -75,7 +75,6 @@ class Framebuffer::Driver : public Gpu_driver
 		void set_polling(unsigned long poll);
 		void update_mode();
 		void generate_report();
-		int ioctl(int request, void *arg) override;
 };
 
 

@@ -20,6 +20,7 @@
 
 /* local includes */
 #include <component.h>
+#include <drm_component.h>
 
 /* DRM-specific includes */
 #include <lx_emul.h>
@@ -289,8 +290,18 @@ void Framebuffer::Driver::finish_initialization()
 	_session.config_changed();
 }
 
+static void fixup_i915_ioctl(int nr, void *arg)
+{
+	switch(nr) {
+		case DRM_I915_GETPARAM: {
+			Genode::log("FIXUP");
+			drm_i915_getparam_t *param = (drm_i915_getparam_t *)arg;
+			param->value = (int *)&param->value;
+		}
+	}
+}
 
-int Framebuffer::Driver::ioctl(int request, void *arg)
+int lx_ioctl(int request, void *arg)
 {
 	bool is_driver_ioctl = request >= DRM_COMMAND_BASE && request < DRM_COMMAND_END;
 
@@ -310,6 +321,8 @@ int Framebuffer::Driver::ioctl(int request, void *arg)
 			return -1;
 		}
 
+		fixup_i915_ioctl(nr, arg);
+
 		//PDBG("i915 request %d func %p", nr, i915_ioctls[nr].func);
 		ret = i915_ioctls[nr].func(lx_drm_device, arg, lx_c_get_drm_file());
 	} else {
@@ -327,11 +340,6 @@ int Framebuffer::Driver::ioctl(int request, void *arg)
 	return ret;
 }
 
-
-Gpu_driver &gpu_driver()
-{
-	return root_session()->driver();
-}
 
 void genode_backtrace(void)
 

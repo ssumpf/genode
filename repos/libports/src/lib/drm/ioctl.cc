@@ -3,17 +3,18 @@ extern "C" {
 #include <i915_drm.h>
 }
 
+#include <base/heap.h>
 #include <base/log.h>
-#include <gpu/driver.h>
+#include <base/debug.h>
+
+#include <gpu/connection.h>
 
 #include <os/backtrace.h>
 enum { verbose_ioctl = true };
 
-
 long driver_nr(long request) { return (request & 0xff) - DRM_COMMAND_BASE; }
 constexpr long drm_nr(long request) { return request & 0xff; }
 bool driver_ioctl(long request) { return drm_nr(request) >= DRM_COMMAND_BASE && drm_nr(request) < DRM_COMMAND_END; }
-
 /**
  * Return name of DRM command
  */
@@ -94,13 +95,76 @@ static void dump_ioctl(long request)
 	    " cmd=",command_name(request), " (", Hex(drm_nr(request)), ")");
 }
 
+
+class Drm_call
+{
+	private:
+
+		Genode::Env          &_env;
+		Genode::Heap          _heap { _env.ram(), _env.rm() };
+		Genode::Allocator_avl _drm_alloc { &_heap };
+		Drm::Connection       _drm_session { _env, &_drm_alloc };
+
+		bool _fixup_i915_ioctl(unsigned long request, void *target, void *result)
+		{
+			switch (driver_nr(request)) {
+				case DRM_I915_GETPARAM: {
+					drm_i915_getparam_t *t = (drm_i915_getparam_t *)target;
+					drm_i915_getparam_t *r = (drm_i915_getparam_t *)result;
+					*t->value = ((long)r->value & ~0U);
+					Genode::log("USE FIXUP ", *t->value);
+					return true;
+				}
+			}
+			return false;
+		}
+
+	public:
+
+		Drm_call(Genode::Env &env) : _env(env) { }
+
+		int ioctl(unsigned long request, void *arg)
+		{
+			using namespace Drm;
+			size_t size = IOCPARM_LEN(request);
+
+			/* submit */
+			Session::Tx::Source &src = *_drm_session.tx();
+			Packet_descriptor pkt(src.alloc_packet(size), drm_nr(request));
+			Genode::memcpy(src.packet_content(pkt), arg, size);
+			src.submit_packet(pkt);
+
+			/* receive */
+			pkt = src.get_acked_packet();
+
+			if (!_fixup_i915_ioctl(request, arg, src.packet_content(pkt))) {
+				Genode::memcpy(arg, src.packet_content(pkt), size);
+			}
+
+			src.release_packet(pkt);
+
+			return pkt.error();
+		}
+};
+
+Genode::Constructible<Drm_call> drm;
+
+
+void drm_init(Genode::Env &env)
+{
+	PDBG("CONSTRUCT DRM");
+	drm.construct(env);
+	PDBG("DRM done");
+}
+
+
 extern "C" int genode_ioctl(int fd, unsigned long request, void *arg)
 {
 	if (verbose_ioctl)
 		dump_ioctl(request);
 
-	//int ret =  gpu_driver().ioctl(drm_nr(request), arg);
-	int ret = -1;
+	int ret = drm->ioctl(request, arg);
+
 	if (verbose_ioctl)
 		Genode::log("returned ", ret);
 
