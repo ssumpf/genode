@@ -36,6 +36,16 @@ class Lx::Addr_to_page_mapping : public Lx_kit::List<Addr_to_page_mapping>::Elem
 			return &_l;
 		}
 
+		static Addr_to_page_mapping *_find_mapping(struct page *page)
+		{
+			Addr_to_page_mapping *mp = 0;
+			for (Addr_to_page_mapping *m = _list()->first(); m; m = m->next())
+				if (m->_page == page)
+					mp = m;
+			return mp;
+		}
+
+
 	public:
 
 		static void insert(struct page *page,
@@ -53,11 +63,8 @@ class Lx::Addr_to_page_mapping : public Lx_kit::List<Addr_to_page_mapping>::Elem
 
 		static Genode::Ram_dataspace_capability remove(struct page *page)
 		{
+			Addr_to_page_mapping *mp = _find_mapping(page);
 			Genode::Ram_dataspace_capability cap;
-			Addr_to_page_mapping *mp = 0;
-			for (Addr_to_page_mapping *m = _list()->first(); m; m = m->next())
-				if (m->_page == page)
-					mp = m;
 
 			if (mp) {
 				cap = mp->_cap;
@@ -66,6 +73,13 @@ class Lx::Addr_to_page_mapping : public Lx_kit::List<Addr_to_page_mapping>::Elem
 			}
 
 			return cap;
+		}
+
+		static Genode::Ram_dataspace_capability find_cap(struct page *page)
+		{
+			Addr_to_page_mapping *mp = _find_mapping(page);
+
+			return mp ? mp->_cap : Genode::Ram_dataspace_capability();
 		}
 
 		static struct page* find_page(unsigned long addr)
