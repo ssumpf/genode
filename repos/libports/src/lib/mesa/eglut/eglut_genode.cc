@@ -30,7 +30,7 @@ void _eglutNativeInitDisplay()
 void Window::sync_handler()
 {
 	PDBG("called");
-#if 0
+#if 1
 	struct eglut_window *win =_eglut->current;
 
 	if (_eglut->idle_cb)
@@ -43,7 +43,7 @@ void Window::sync_handler()
 	if (initialized) {
 		eglSwapBuffers(_eglut->dpy, win->surface);
 		//XXX: may be required
-		//eglWaitClient();
+		eglWaitClient();
 	}
 #endif
 }

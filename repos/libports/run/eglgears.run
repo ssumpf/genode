@@ -47,7 +47,7 @@ append_platform_drv_config
 
 append_if [have_spec framebuffer] config {
 	<start name="intel_fb_drv">
-		<resource name="RAM" quantum="20M"/>
+		<resource name="RAM" quantum="40M"/>
 		<provides>
 			<service name="Framebuffer"/>
 			<service name="Drm"/>
@@ -104,7 +104,7 @@ append config {
 						<resource name="RAM" quantum="2M"/>
 						<provides><service name="Input"/><service name="Framebuffer"/></provides>
 						<route><any-service><parent/></any-service></route>
-						<config xpos="300" ypos="100" width="300" height="300" />
+						<config xpos="300" ypos="100" width="600" height="600" />
 					</start>
 					<start name="gears">
 						<resource name="RAM" quantum="1G"/>

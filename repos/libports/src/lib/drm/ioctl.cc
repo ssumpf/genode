@@ -105,18 +105,57 @@ class Drm_call
 		Genode::Allocator_avl _drm_alloc { &_heap };
 		Drm::Connection       _drm_session { _env, &_drm_alloc };
 
+		void _fixup_packet(unsigned long request, void *arg, void *content)
+		{
+			if (driver_nr(request) == DRM_I915_GEM_EXECBUFFER2) {
+				drm_i915_gem_execbuffer2 *buffer = (drm_i915_gem_execbuffer2 *)arg;
+
+				Genode::memcpy((char *)content + sizeof(drm_i915_gem_execbuffer2),
+				               (void *)buffer->buffers_ptr,
+				               sizeof(drm_i915_gem_exec_object2) * buffer->buffer_count);
+			}
+		}
+
 		bool _fixup_i915_ioctl(unsigned long request, void *target, void *result)
 		{
-			switch (driver_nr(request)) {
-				case DRM_I915_GETPARAM: {
-					drm_i915_getparam_t *t = (drm_i915_getparam_t *)target;
-					drm_i915_getparam_t *r = (drm_i915_getparam_t *)result;
-					*t->value = ((long)r->value & ~0U);
-					Genode::log("USE FIXUP ", *t->value);
-					return true;
-				}
+			if (driver_nr(request) == DRM_I915_GETPARAM) {
+				drm_i915_getparam_t *t = (drm_i915_getparam_t *)target;
+				drm_i915_getparam_t *r = (drm_i915_getparam_t *)result;
+				*t->value = ((long)r->value & ~0U);
+				return true;
 			}
+
+			if (driver_nr(request) == DRM_I915_GEM_EXECBUFFER2) {
+				drm_i915_gem_execbuffer2 *buffer = (drm_i915_gem_execbuffer2 *)target;
+				Genode::memcpy((void *)buffer->buffers_ptr,
+				               (char *)result + sizeof(drm_i915_gem_execbuffer2),
+				               sizeof(drm_i915_gem_exec_object2) * buffer->buffer_count);
+				return true;
+			}
+
 			return false;
+		}
+
+		int _gem_mmap(void *arg)
+		{
+			//TODO: ERROR handling
+			drm_i915_gem_mmap *data = (drm_i915_gem_mmap *)arg;
+
+			Genode::Ram_dataspace_capability ds = _drm_session.object_dataspace(data->handle);
+			data->addr_ptr = (__u64)_env.rm().attach(ds);
+			error("MMAP: ", Genode::Hex(data->addr_ptr));
+			return 0;
+		}
+
+		int _gem_mmap_gtt(void *arg)
+		{
+			//TODO: ERROR handling
+			drm_i915_gem_mmap_gtt *data = (drm_i915_gem_mmap_gtt *)arg;
+
+			Genode::Dataspace_capability ds = _drm_session.object_dataspace_gtt(data->handle);
+			data->offset = (__u64)_env.rm().attach(ds);
+			error("MMAP_GTT: ", Genode::Hex(data->offset));
+			return 0;
 		}
 
 	public:
@@ -126,12 +165,24 @@ class Drm_call
 		int ioctl(unsigned long request, void *arg)
 		{
 			using namespace Drm;
+
+			if (driver_nr(request) == DRM_I915_GEM_MMAP) {
+				return _gem_mmap(arg);
+			}
+
+			if (driver_nr(request) == DRM_I915_GEM_MMAP_GTT) {
+				return _gem_mmap_gtt(arg);
+			}
+
 			size_t size = IOCPARM_LEN(request);
 
 			/* submit */
 			Session::Tx::Source &src = *_drm_session.tx();
 			Packet_descriptor pkt(src.alloc_packet(size), drm_nr(request));
 			Genode::memcpy(src.packet_content(pkt), arg, size);
+
+			_fixup_packet(request, arg, src.packet_content(pkt));
+
 			src.submit_packet(pkt);
 
 			/* receive */
