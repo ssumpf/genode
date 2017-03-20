@@ -60,10 +60,17 @@ class Drm::Session : public Genode::Session
 		 */
 		virtual Tx::Source *tx() { return 0; }
 
+		virtual Genode::Ram_dataspace_capability object_dataspace(unsigned handle) = 0;
+		virtual Genode::Dataspace_capability object_dataspace_gtt(unsigned handle) = 0;
+
 		static const char *service_name() { return "Drm"; }
 
 		GENODE_RPC(Rpc_tx_cap, Genode::Capability<Tx>, _tx_cap);
-		GENODE_RPC_INTERFACE(Rpc_tx_cap);
+		GENODE_RPC(Rpc_object_ds_cap, Genode::Ram_dataspace_capability, object_dataspace,
+		           unsigned);
+		GENODE_RPC(Rpc_object_ds_gtt_cap, Genode::Dataspace_capability, object_dataspace_gtt,
+		           unsigned);
+		GENODE_RPC_INTERFACE(Rpc_tx_cap, Rpc_object_ds_cap, Rpc_object_ds_gtt_cap);
 };
 
 #endif /* _INCLUDE__GPU__DRM_SESSION_H_ */

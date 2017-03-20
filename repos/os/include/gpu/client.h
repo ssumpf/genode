@@ -44,8 +44,18 @@ class Drm::Session_client : public Genode::Rpc_client<Session>
 			_tx(call<Rpc_tx_cap>(), rm, tx_buffer_alloc)
 		{ }
 
-		Tx *tx_channel() { return &_tx; }
-		Tx::Source *tx() { return _tx.source(); }
+		Tx *tx_channel() override { return &_tx; }
+		Tx::Source *tx() override { return _tx.source(); }
+
+		Genode::Ram_dataspace_capability object_dataspace(unsigned handle) override
+		{
+			return call<Rpc_object_ds_cap>(handle);
+		}
+
+		Genode::Dataspace_capability object_dataspace_gtt(unsigned handle) override
+		{
+			return call<Rpc_object_ds_gtt_cap>(handle);
+		}
 };
 
 #endif /* _INCLUDE__GPU__CLIENT_H_ */
