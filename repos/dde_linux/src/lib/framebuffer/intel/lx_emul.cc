@@ -262,24 +262,6 @@ extern int i915_max_ioctl;
 extern int drm_max_ioctl;
 
 
-#if 0
-struct ioctl_data {
-	int         request;
-	drm_device *dev;
-	void       *arg;
-	int         result;
-};
-
-extern "C" void ioctl_work(work_struct *work)
-{
-	PDBG("call %p", work->data);
-	ioctl_data *data = (ioctl_data *)work->data.counter;
-	data->result= i915_ioctls[data->request].func(data->dev, data->arg, nullptr);
-	PDBG("finished");
-}
-#endif
-
-
 void Framebuffer::Driver::finish_initialization()
 {
 	/* special handling for DRM_I915_GEM_MMAP_GTT (see above) */
@@ -290,16 +272,62 @@ void Framebuffer::Driver::finish_initialization()
 	_session.config_changed();
 }
 
+
+class Gem_object_handle : public Genode::Avl_node<Gem_object_handle>
+{
+	private:
+
+		long            _id;
+		drm_gem_object *_obj;
+
+	public:
+
+		/**
+		 * Constructor
+		 */
+		Gem_object_handle(long id, drm_gem_object *obj) :
+			_id(id), _obj(obj) { }
+
+		/**
+		 * Accessor
+		 */
+		long id() { return _id; }
+
+		/**
+		 * Strict order criterion of the nodes in the tree
+		 */
+		bool higher(Gem_object_handle *n1) { return (n1->_id > _id); }
+
+		/**
+		 * Look up ID from tree
+		 */
+		Gem_object_handle *find_by_id(int id)
+		{
+			if (id == _id) return this;
+			Gem_object_handle *n = child(id > _id);
+			return n ? n->find_by_id(id) : 0;
+		}
+
+		drm_gem_object *gem_object() const { return _obj; }
+};
+
+static Genode::Avl_tree<Gem_object_handle> gem_object_handles;
+
+
 static void fixup_i915_ioctl(int nr, void *arg)
 {
-	switch(nr) {
-		case DRM_I915_GETPARAM: {
-			Genode::log("FIXUP");
-			drm_i915_getparam_t *param = (drm_i915_getparam_t *)arg;
-			param->value = (int *)&param->value;
-		}
+	if (nr ==  DRM_I915_GETPARAM) {
+		drm_i915_getparam_t *param = (drm_i915_getparam_t *)arg;
+		param->value = (int *)&param->value;
+	}
+
+	if (nr == DRM_I915_GEM_EXECBUFFER2) {
+		drm_i915_gem_execbuffer2 *buffer = (drm_i915_gem_execbuffer2 *)arg;
+		/* objects lie behind buffer in packet stream */
+		buffer->buffers_ptr = (__u64)(buffer + 1);
 	}
 }
+
 
 int lx_ioctl(int request, void *arg)
 {
@@ -338,6 +366,33 @@ int lx_ioctl(int request, void *arg)
 	//PDBG("finished ioctl (ret=%d)", ret);
 
 	return ret;
+}
+
+
+Genode::Ram_dataspace_capability lx_object_dataspace(unsigned handle)
+{
+	//TODO: add sanity checks
+	Gem_object_handle *gem = gem_object_handles.first();
+	gem = gem ? gem->find_by_id(handle) : 0;
+
+	drm_gem_object *obj = gem->gem_object();
+	struct page *pages = obj->filp->f_inode->i_mapping->my_page;
+
+	return Lx::Addr_to_page_mapping::find_cap(pages);
+}
+
+
+Genode::Dataspace_capability lx_object_gtt_dataspace(unsigned handle)
+{
+	drm_i915_gem_mmap_gtt data;
+	data.handle = handle;
+	data.offset = 0;
+
+	mmap_gtt_ioctl(lx_drm_device, &data, lx_c_get_drm_file());
+	Genode::log(__func__, " offset ", Genode::Hex(data.offset));
+	Genode::Dataspace_capability ds = Lx::ioremap_lookup(data.handle, 0x1000);
+	Genode::log(__func__, " ds ", ds.valid());
+	return ds;
 }
 
 
@@ -1096,47 +1151,6 @@ void drm_gem_object_release(struct drm_gem_object *obj)
 }
 
 
-class Gem_object_handle : public Genode::Avl_node<Gem_object_handle>
-{
-	private:
-
-		long            _id;
-		drm_gem_object *_obj;
-
-	public:
-
-		/**
-		 * Constructor
-		 */
-		Gem_object_handle(long id, drm_gem_object *obj) :
-			_id(id), _obj(obj) { }
-
-		/**
-		 * Accessor
-		 */
-		long id() { return _id; }
-
-		/**
-		 * Strict order criterion of the nodes in the tree
-		 */
-		bool higher(Gem_object_handle *n1) { return (n1->_id > _id); }
-
-		/**
-		 * Look up ID from tree
-		 */
-		Gem_object_handle *find_by_id(int id)
-		{
-			if (id == _id) return this;
-			Gem_object_handle *n = child(id > _id);
-			return n ? n->find_by_id(id) : 0;
-		}
-
-		drm_gem_object *gem_object() const { return _obj; }
-};
-
-static Genode::Avl_tree<Gem_object_handle> gem_object_handles;
-
-
 int drm_gem_handle_create(struct drm_file *file_priv, struct drm_gem_object *obj, u32 *handlep)
 {
 	int ret = idr_alloc(&file_priv->object_idr, obj, 1, 0, GFP_KERNEL);
@@ -1654,6 +1668,7 @@ int drm_gem_object_init(struct drm_device *dev, struct drm_gem_object *obj, size
 	size_t sz_log2 = Genode::log2(npages);
 	sz_log2 += (npages > (1UL << sz_log2)) ? 1 : 0;
 	struct page *pages = alloc_pages(0, sz_log2);
+	Genode::warning("alloc_pages: ", pages, " valid: ",  Lx::Addr_to_page_mapping::find_cap(pages).valid());
 	mapping->my_page = pages;
 
 	size = PAGE_SIZE * npages;

@@ -11,6 +11,10 @@ namespace Drm {
 	class Session_component;
 }
 
+int lx_ioctl(int request, void *arg);
+Genode::Ram_dataspace_capability lx_object_dataspace(unsigned handle);
+Genode::Dataspace_capability lx_object_gtt_dataspace(unsigned handle);
+
 class Drm::Session_component : public Session_rpc_object
 {
 	private:
@@ -60,6 +64,16 @@ class Drm::Session_component : public Session_rpc_object
 		{
 			_tx.sigh_packet_avail(_packet_avail);
 			_tx.sigh_ready_to_ack(_ready_to_ack);
+		}
+
+		Ram_dataspace_capability object_dataspace(unsigned handle) override
+		{
+			return lx_object_dataspace(handle);
+		}
+
+		Dataspace_capability object_dataspace_gtt(unsigned handle) override
+		{
+			return lx_object_dataspace(handle);
 		}
 };
 
