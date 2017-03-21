@@ -8,6 +8,7 @@ extern "C" {
 #include <base/debug.h>
 
 #include <gpu/connection.h>
+#include <drm/serialize.h>
 
 #include <os/backtrace.h>
 enum { verbose_ioctl = true };
@@ -82,7 +83,6 @@ const char *command_name(long request)
 	}
 }
 
-
 static void dump_ioctl(long request)
 {
 	using namespace Genode;
@@ -105,15 +105,16 @@ class Drm_call
 		Genode::Allocator_avl _drm_alloc { &_heap };
 		Drm::Connection       _drm_session { _env, &_drm_alloc };
 
-		void _fixup_packet(unsigned long request, void *arg, void *content)
+		bool _fixup_packet(unsigned long request, void *arg, void *content)
 		{
 			if (driver_nr(request) == DRM_I915_GEM_EXECBUFFER2) {
 				drm_i915_gem_execbuffer2 *buffer = (drm_i915_gem_execbuffer2 *)arg;
 
-				Genode::memcpy((char *)content + sizeof(drm_i915_gem_execbuffer2),
-				               (void *)buffer->buffers_ptr,
-				               sizeof(drm_i915_gem_exec_object2) * buffer->buffer_count);
+				Drm::Gem_execbuffer2(buffer, content).copy_out();
+				return true;
 			}
+
+			return false;
 		}
 
 		bool _fixup_i915_ioctl(unsigned long request, void *target, void *result)
@@ -127,9 +128,8 @@ class Drm_call
 
 			if (driver_nr(request) == DRM_I915_GEM_EXECBUFFER2) {
 				drm_i915_gem_execbuffer2 *buffer = (drm_i915_gem_execbuffer2 *)target;
-				Genode::memcpy((void *)buffer->buffers_ptr,
-				               (char *)result + sizeof(drm_i915_gem_execbuffer2),
-				               sizeof(drm_i915_gem_exec_object2) * buffer->buffer_count);
+
+				Drm::Gem_execbuffer2(buffer, result).copy_in();
 				return true;
 			}
 
@@ -164,6 +164,8 @@ class Drm_call
 
 		int ioctl(unsigned long request, void *arg)
 		{
+			size_t size = IOCPARM_LEN(request);
+
 			using namespace Drm;
 
 			if (driver_nr(request) == DRM_I915_GEM_MMAP) {
@@ -174,14 +176,19 @@ class Drm_call
 				return _gem_mmap_gtt(arg);
 			}
 
-			size_t size = IOCPARM_LEN(request);
+			if (driver_nr(request) == DRM_I915_GEM_EXECBUFFER2) {
+				size = Drm::Gem_execbuffer2((drm_i915_gem_execbuffer2 *)arg).size();
+				PDBG("EXEC2 size: ", size);
+			}
 
 			/* submit */
 			Session::Tx::Source &src = *_drm_session.tx();
 			Packet_descriptor pkt(src.alloc_packet(size), drm_nr(request));
-			Genode::memcpy(src.packet_content(pkt), arg, size);
 
-			_fixup_packet(request, arg, src.packet_content(pkt));
+
+			if(!_fixup_packet(request, arg, src.packet_content(pkt))) {
+				Genode::memcpy(src.packet_content(pkt), arg, size);
+			}
 
 			src.submit_packet(pkt);
 
