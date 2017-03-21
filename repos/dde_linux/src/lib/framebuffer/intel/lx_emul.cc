@@ -30,6 +30,7 @@
 #include <drm/drm_gem.h>
 #include <drm/i915_drm.h>
 #include <lx_emul/extern_c_end.h>
+#include <drm/serialize.h>
 
 #include <os/backtrace.h>
 
@@ -322,9 +323,7 @@ static void fixup_i915_ioctl(int nr, void *arg)
 	}
 
 	if (nr == DRM_I915_GEM_EXECBUFFER2) {
-		drm_i915_gem_execbuffer2 *buffer = (drm_i915_gem_execbuffer2 *)arg;
-		/* objects lie behind buffer in packet stream */
-		buffer->buffers_ptr = (__u64)(buffer + 1);
+		Drm::Gem_execbuffer2(arg).adjust();
 	}
 }
 
