@@ -73,7 +73,7 @@ class Drm::Session_component : public Session_rpc_object
 
 		Dataspace_capability object_dataspace_gtt(unsigned handle) override
 		{
-			return lx_object_dataspace(handle);
+			return lx_object_gtt_dataspace(handle);
 		}
 };
 
