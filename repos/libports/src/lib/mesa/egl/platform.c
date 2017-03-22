@@ -64,7 +64,6 @@ dri2_genode_create_window_surface(_EGLDriver *drv, _EGLDisplay *disp,
 	if (dri2_dpy->dri2) {
 		dri2_surf->dri_drawable = (*dri2_dpy->dri2->createNewDrawable)(dri2_dpy->dri_screen, config,
 		                                                               dri2_surf);
-		printf("CREATE drawable: %p\n", dri2_surf->dri_drawable);
 		/* create back buffer image */
 		dri2_surf->back_image = dri2_dpy->image->createImage(dri2_dpy->dri_screen,
 		                                                     dri2_surf->base.Width,
@@ -73,7 +72,6 @@ dri2_genode_create_window_surface(_EGLDriver *drv, _EGLDisplay *disp,
 		                                                     dri2_dpy->is_different_gpu ?
 		                                                     0 : __DRI_IMAGE_USE_SHARE,
 		                                                     NULL);
-		printf("CREATED\n");
 	} else {
 		assert(dri2_dpy->swrast);
 		dri2_surf->dri_drawable =
@@ -269,8 +267,6 @@ dri2_genode_swrast_get_image(__DRIdrawable * read,
 	struct dri2_egl_surface *dri2_surf  = loaderPrivate;
 	struct Genode_egl_window  *window   = dri2_surf->g_win;
 	unsigned char * src                 = window->addr;
-
-	printf("%s: from %p -> %p\n", __func__, src, data);
 
 	int src_stride = stride(dri2_surf->base.Width);
 	int copy_width = stride(w);
