@@ -4,7 +4,9 @@
 void *genode_map_image(__DRIimage *image)
 {
 	/* map read only */
+	printf("BO MAP\n");
 	drm_intel_bo_map(image->bo, false);
+	printf("BO MAP DONE\n");
 	return image->bo->virtual;
 }
 

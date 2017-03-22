@@ -322,6 +322,11 @@ static void fixup_i915_ioctl(int nr, void *arg)
 		param->value = (int *)&param->value;
 	}
 
+	if (nr ==  DRM_I915_GEM_PWRITE) {
+		drm_i915_gem_pwrite *param = (drm_i915_gem_pwrite *)arg;
+		param->data_ptr = (__u64)(param + 1);
+	}
+
 	if (nr == DRM_I915_GEM_EXECBUFFER2) {
 		Drm::Gem_execbuffer2(arg).adjust();
 	}
