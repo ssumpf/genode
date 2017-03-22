@@ -393,9 +393,7 @@ Genode::Dataspace_capability lx_object_gtt_dataspace(unsigned handle)
 	data.offset = 0;
 
 	mmap_gtt_ioctl(lx_drm_device, &data, lx_c_get_drm_file());
-	Genode::log(__func__, " offset ", Genode::Hex(data.offset));
-	Genode::Dataspace_capability ds = Lx::ioremap_lookup(data.handle, 0x1000);
-	Genode::log(__func__, " ds ", ds.valid());
+	Genode::Dataspace_capability ds = Lx::ioremap_lookup(data.offset, 0x1000);
 	return ds;
 }
 
@@ -1672,7 +1670,6 @@ int drm_gem_object_init(struct drm_device *dev, struct drm_gem_object *obj, size
 	size_t sz_log2 = Genode::log2(npages);
 	sz_log2 += (npages > (1UL << sz_log2)) ? 1 : 0;
 	struct page *pages = alloc_pages(0, sz_log2);
-	Genode::warning("alloc_pages: ", pages, " valid: ",  Lx::Addr_to_page_mapping::find_cap(pages).valid());
 	mapping->my_page = pages;
 
 	size = PAGE_SIZE * npages;
