@@ -256,7 +256,7 @@ static void render(void)
 int eglut_main(int argc, char** argv)
 {
     eglutInit(argc, argv);
-    eglutInitWindowSize(1920, 1080);
+    eglutInitWindowSize(600, 600);
     eglutInitAPIMask(EGLUT_OPENGL_BIT);
     eglutCreateWindow("Hello World");
     eglutIdleFunc(&update_timer);

@@ -114,6 +114,13 @@ class Drm_call
 				return true;
 			}
 
+			if (driver_nr(request) == DRM_I915_GEM_PWRITE) {
+				drm_i915_gem_pwrite *target = (drm_i915_gem_pwrite *)arg;
+				Genode::memcpy(content, arg, sizeof(*target));
+				Genode::memcpy((char *)content + sizeof(*target), (void *)target->data_ptr, target->size);
+				return true;
+			}
+
 			return false;
 		}
 

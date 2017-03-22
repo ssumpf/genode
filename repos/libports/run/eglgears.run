@@ -7,6 +7,7 @@ set build_components {
 	drivers/framebuffer/intel drivers/input
 	lib/mesa/swrast
 	drivers/usb
+	test/hello-gl
 }
 
 source ${genode_dir}/repos/base/run/platform_drv.inc
@@ -123,6 +124,48 @@ append config {
 					</start>
 				</config>
 			</launcher>
+			<launcher name="init" ram_quota="150M">
+				<config>
+					<parent-provides>
+						<service name="ROM"/>
+						<service name="RAM"/>
+						<service name="IRQ"/>
+						<service name="IO_MEM"/>
+						<service name="IO_PORT"/>
+						<service name="PD"/>
+						<service name="RM"/>
+						<service name="CPU"/>
+						<service name="LOG"/>
+						<service name="Platform"/>
+						<service name="Nitpicker"/>
+						<service name="Timer"/>
+						<service name="Drm" />
+					</parent-provides>
+					<start name="nit_fb">
+						<resource name="RAM" quantum="2M"/>
+						<provides><service name="Input"/><service name="Framebuffer"/></provides>
+						<route><any-service><parent/></any-service></route>
+						<config xpos="1000" ypos="400" width="600" height="600" />
+					</start>
+					<start name="hello_gl">
+						<resource name="RAM" quantum="128M" />
+						<config ld_verbose="true">
+							<libc stdout="/dev/log" stderr="/dev/log">
+								<vfs>
+									<dir name="dev"> <log/> </dir>
+									<rom name="hello1.tga" />
+									<rom name="hello2.tga" />
+									<rom name="hello-gl.f.glsl" />
+									<rom name="hello-gl.v.glsl" />
+								</vfs>
+							</libc>
+						</config>
+						<route>
+							<any-service> <parent /> <any-child/> </any-service>
+						</route>
+					</start>
+				</config>
+			</launcher>
 		</config>
 	</start>
 </config>
@@ -137,6 +180,8 @@ set boot_modules {
 	egl.lib.so mesa-11.lib.so stdcxx.lib.so
 	expat.lib.so glapi.lib.so swrast.lib.so
 	i965.lib.so drm.lib.so
+	hello_gl hello1.tga hello2.tga
+	hello-gl.f.glsl hello-gl.v.glsl
 }
 
 lappend_if [have_spec       linux] boot_modules fb_sdl
