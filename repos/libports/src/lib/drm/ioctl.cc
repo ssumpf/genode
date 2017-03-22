@@ -11,7 +11,7 @@ extern "C" {
 #include <drm/serialize.h>
 
 #include <os/backtrace.h>
-enum { verbose_ioctl = true };
+enum { verbose_ioctl = false };
 
 long driver_nr(long request) { return (request & 0xff) - DRM_COMMAND_BASE; }
 constexpr long drm_nr(long request) { return request & 0xff; }
@@ -150,7 +150,6 @@ class Drm_call
 
 			Genode::Ram_dataspace_capability ds = _drm_session.object_dataspace(data->handle);
 			data->addr_ptr = (__u64)_env.rm().attach(ds);
-			error("MMAP: ", Genode::Hex(data->addr_ptr));
 			return 0;
 		}
 
@@ -161,7 +160,6 @@ class Drm_call
 
 			Genode::Dataspace_capability ds = _drm_session.object_dataspace_gtt(data->handle);
 			data->offset = (__u64)_env.rm().attach(ds);
-			error("MMAP_GTT: ", Genode::Hex(data->offset));
 			return 0;
 		}
 
@@ -185,7 +183,6 @@ class Drm_call
 
 			if (driver_nr(request) == DRM_I915_GEM_EXECBUFFER2) {
 				size = Drm::Gem_execbuffer2((drm_i915_gem_execbuffer2 *)arg).size();
-				PDBG("EXEC2 size: ", size);
 			}
 
 			/* submit */
@@ -217,9 +214,7 @@ Genode::Constructible<Drm_call> drm;
 
 void drm_init(Genode::Env &env)
 {
-	PDBG("CONSTRUCT DRM");
 	drm.construct(env);
-	PDBG("DRM done");
 }
 
 
