@@ -211,6 +211,7 @@ GDB_CONFIG += $(COMMON_CONFIG) --disable-werror
 GCC_CONFIG += $(COMMON_CONFIG) \
               --enable-languages=c,c++,go \
               --disable-libgo \
+              --disable-gotools \
               --disable-libssp \
               --disable-libquadmath \
               --disable-libffi \
