@@ -305,7 +305,7 @@ build/$(PLATFORM)/binutils/Makefile: $(BINUTILS_CONTRIB_DIR)/configure
 	$(VERBOSE)cd $(dir $@); $(BINUTILS_CONTRIB_DIR)/configure $(BINUTILS_CONFIG)
 
 $(BINUTILS_BINARIES): build/$(PLATFORM)/binutils/Makefile
-	$(ECHO) "$(BRIGHT_COL)builing binutils...$(DEFAULT_COL)"
+	$(ECHO) "$(BRIGHT_COL)building binutils...$(DEFAULT_COL)"
 	$(VERBOSE)$(MAKE) -C $(dir $<) $(MAKE_OPT)
 
 $(BINUTILS_INSTALLED_BINARIES): $(BINUTILS_BINARIES)
@@ -376,7 +376,7 @@ $(GCC_BINARIES): build/$(PLATFORM)/gcc/Makefile \
                  $(LIBC)
 
 $(GCC_BINARIES): build/$(PLATFORM)/gcc/Makefile
-	$(ECHO) "$(BRIGHT_COL)builing gcc...$(DEFAULT_COL)"
+	$(ECHO) "$(BRIGHT_COL)building gcc...$(DEFAULT_COL)"
 	$(VERBOSE)$(MAKE) -C $(dir $<) $(MAKE_OPT)
 
 $(GCC_INSTALLED_BINARIES): $(GCC_BINARIES)
@@ -396,7 +396,7 @@ build/$(PLATFORM)/gdb/Makefile: $(GDB_CONTRIB_DIR)/configure
 		$(GDB_CONTRIB_DIR)/configure $(GDB_CONFIG)
 
 $(GDB_BINARIES): build/$(PLATFORM)/gdb/Makefile
-	$(ECHO) "$(BRIGHT_COL)builing gdb...$(DEFAULT_COL)"
+	$(ECHO) "$(BRIGHT_COL)building gdb...$(DEFAULT_COL)"
 	$(VERBOSE)$(MAKE) -C $(dir $<) $(MAKE_OPT)
 
 $(GDB_INSTALLED_BINARIES): $(GDB_BINARIES)
