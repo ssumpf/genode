@@ -12,8 +12,8 @@
  * under the terms of the GNU Affero General Public License version 3.
  */
 
-#ifndef _CORE__INCLUDE__UTIL_H_
-#define _CORE__INCLUDE__UTIL_H_
+#ifndef _CORE__UTIL_H_
+#define _CORE__UTIL_H_
 
 #include <hw/util.h>
 
@@ -45,4 +45,4 @@ namespace Genode
 		return (size_log2 < 20) ? 12 : 20; }
 }
 
-#endif /* _CORE__INCLUDE__UTIL_H_ */
+#endif /* _CORE__UTIL_H_ */

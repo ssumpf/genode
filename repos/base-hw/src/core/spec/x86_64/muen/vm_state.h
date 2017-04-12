@@ -11,8 +11,8 @@
  * under the terms of the GNU Affero General Public License version 3.
  */
 
-#ifndef _VM_STATE_H_
-#define _VM_STATE_H_
+#ifndef _CORE__SPEC__X86_64__MUEN__VM_STATE_H_
+#define _CORE__SPEC__X86_64__MUEN__VM_STATE_H_
 
 namespace Genode
 {
@@ -20,4 +20,4 @@ namespace Genode
 	using Vm_state = Cpu_state;
 }
 
-#endif /* _VM_STATE_H_ */
+#endif /* _CORE__SPEC__X86_64__MUEN__VM_STATE_H_ */

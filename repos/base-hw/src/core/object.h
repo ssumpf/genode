@@ -11,8 +11,8 @@
  * under the terms of the GNU Affero General Public License version 3.
  */
 
-#ifndef _CORE__INCLUDE__OBJECT_H_
-#define _CORE__INCLUDE__OBJECT_H_
+#ifndef _CORE__OBJECT_H_
+#define _CORE__OBJECT_H_
 
 /* Genode includes */
 #include <util/construct_at.h>
@@ -77,4 +77,4 @@ class Genode::Kernel_object
 		}
 };
 
-#endif /* _CORE__INCLUDE__OBJECT_H_ */
+#endif /* _CORE__OBJECT_H_ */

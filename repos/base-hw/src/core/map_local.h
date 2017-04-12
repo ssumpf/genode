@@ -11,8 +11,8 @@
  * under the terms of the GNU Affero General Public License version 3.
  */
 
-#ifndef _CORE__INCLUDE__MAP_LOCAL_H_
-#define _CORE__INCLUDE__MAP_LOCAL_H_
+#ifndef _CORE__MAP_LOCAL_H_
+#define _CORE__MAP_LOCAL_H_
 
 #include <hw/page_flags.h>
 
@@ -44,4 +44,4 @@ namespace Genode {
 	bool unmap_local(addr_t virt_addr, size_t num_pages);
 }
 
-#endif /* _CORE__INCLUDE__MAP_LOCAL_H_ */
+#endif /* _CORE__MAP_LOCAL_H_ */

@@ -11,8 +11,8 @@
  * under the terms of the GNU Affero General Public License version 3.
  */
 
-#ifndef _CORE__INCLUDE__KERNEL__CPU_SCHEDULER_H_
-#define _CORE__INCLUDE__KERNEL__CPU_SCHEDULER_H_
+#ifndef _CORE__KERNEL__CPU_SCHEDULER_H_
+#define _CORE__KERNEL__CPU_SCHEDULER_H_
 
 /* core includes */
 #include <util.h>
@@ -230,4 +230,4 @@ class Kernel::Cpu_scheduler
 		unsigned residual() const { return _residual; }
 };
 
-#endif /* _CORE__INCLUDE__KERNEL__CPU_SCHEDULER_H_ */
+#endif /* _CORE__KERNEL__CPU_SCHEDULER_H_ */

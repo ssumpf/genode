@@ -11,8 +11,8 @@
  * under the terms of the GNU Affero General Public License version 3.
  */
 
-#ifndef _CORE__INCLUDE__SPEC__X86_64__SERIAL_H_
-#define _CORE__INCLUDE__SPEC__X86_64__SERIAL_H_
+#ifndef _CORE__SPEC__X86_64__SERIAL_H_
+#define _CORE__SPEC__X86_64__SERIAL_H_
 
 /* Genode includes */
 #include <bios_data_area.h>
@@ -38,4 +38,4 @@ class Genode::Serial : public X86_uart_base
 		{ }
 };
 
-#endif /* _CORE__INCLUDE__SPEC__X86_64__SERIAL_H_ */
+#endif /* _CORE__SPEC__X86_64__SERIAL_H_ */

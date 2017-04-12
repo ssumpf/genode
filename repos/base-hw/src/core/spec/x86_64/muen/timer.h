@@ -11,8 +11,8 @@
  * under the terms of the GNU Affero General Public License version 3.
  */
 
-#ifndef _CORE__INCLUDE__SPEC__X86_64__MUEN__TIMER_H_
-#define _CORE__INCLUDE__SPEC__X86_64__MUEN__TIMER_H_
+#ifndef _CORE__SPEC__X86_64__MUEN__TIMER_H_
+#define _CORE__SPEC__X86_64__MUEN__TIMER_H_
 
 /* base includes */
 #include <base/log.h>
@@ -123,4 +123,4 @@ class Genode::Timer
 
 namespace Kernel { class Timer : public Genode::Timer { }; }
 
-#endif /* _CORE__INCLUDE__SPEC__X86_64__MUEN__TIMER_H_ */
+#endif /* _CORE__SPEC__X86_64__MUEN__TIMER_H_ */

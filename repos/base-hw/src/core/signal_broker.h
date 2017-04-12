@@ -11,8 +11,8 @@
  * under the terms of the GNU Affero General Public License version 3.
  */
 
-#ifndef _CORE__INCLUDE__SIGNAL_BROKER_H_
-#define _CORE__INCLUDE__SIGNAL_BROKER_H_
+#ifndef _CORE__SIGNAL_BROKER_H_
+#define _CORE__SIGNAL_BROKER_H_
 
 /* Genode includes */
 #include <base/tslab.h>
@@ -147,4 +147,4 @@ class Genode::Signal_broker
 		}
 };
 
-#endif /* _CORE__INCLUDE__SIGNAL_BROKER_H_ */
+#endif /* _CORE__SIGNAL_BROKER_H_ */

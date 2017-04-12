@@ -11,8 +11,8 @@
  * under the terms of the GNU Affero General Public License version 3.
  */
 
-#ifndef _CORE__INCLUDE__KERNEL__CONFIGURATION_H_
-#define _CORE__INCLUDE__KERNEL__CONFIGURATION_H_
+#ifndef _CORE__KERNEL__CONFIGURATION_H_
+#define _CORE__KERNEL__CONFIGURATION_H_
 
 #include <kernel/interface.h>
 
@@ -33,4 +33,4 @@ namespace Kernel
 	constexpr time_t cpu_fill_us = 10000;
 }
 
-#endif /* _CORE__INCLUDE__KERNEL__CONFIGURATION_H_ */
+#endif /* _CORE__KERNEL__CONFIGURATION_H_ */

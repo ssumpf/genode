@@ -11,8 +11,8 @@
  * under the terms of the GNU Affero General Public License version 3.
  */
 
-#ifndef _CORE__INCLUDE__SIGNAL_SOURCE_COMPONENT_H_
-#define _CORE__INCLUDE__SIGNAL_SOURCE_COMPONENT_H_
+#ifndef _CORE__SIGNAL_SOURCE_COMPONENT_H_
+#define _CORE__SIGNAL_SOURCE_COMPONENT_H_
 
 /* Genode includes */
 #include <base/object_pool.h>
@@ -62,4 +62,4 @@ Genode::Signal_context_component::Signal_context_component(Signal_source_compone
 	Signal_context_pool::Entry(Kernel_object<Kernel::Signal_context>::_cap)
 { }
 
-#endif /* _CORE__INCLUDE__SIGNAL_SOURCE_COMPONENT_H_ */
+#endif /* _CORE__SIGNAL_SOURCE_COMPONENT_H_ */

@@ -11,9 +11,9 @@
  * under the terms of the GNU Affero General Public License version 3.
  */
 
-#ifndef _CORE__INCLUDE__KERNEL__LOG_H_
-#define _CORE__INCLUDE__KERNEL__LOG_H_
+#ifndef _CORE__KERNEL__LOG_H_
+#define _CORE__KERNEL__LOG_H_
 
 namespace Kernel { void log(char const); }
 
-#endif
+#endif /* _CORE__KERNEL__LOG_H_ */

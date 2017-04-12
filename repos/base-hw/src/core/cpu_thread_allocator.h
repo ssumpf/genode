@@ -11,8 +11,8 @@
  * under the terms of the GNU Affero General Public License version 3.
  */
 
-#ifndef _CORE__INCLUDE__CPU_THREAD_ALLOCATOR_H_
-#define _CORE__INCLUDE__CPU_THREAD_ALLOCATOR_H_
+#ifndef _CORE__CPU_THREAD_ALLOCATOR_H_
+#define _CORE__CPU_THREAD_ALLOCATOR_H_
 
 #include <base/log.h>
 #include <base/allocator.h>
@@ -68,4 +68,4 @@ namespace Genode
 	};
 }
 
-#endif /* _CORE__INCLUDE__CPU_THREAD_ALLOCATOR_H_ */
+#endif /* _CORE__CPU_THREAD_ALLOCATOR_H_ */

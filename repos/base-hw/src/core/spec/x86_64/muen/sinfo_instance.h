@@ -11,8 +11,8 @@
  * under the terms of the GNU Affero General Public License version 3.
  */
 
-#ifndef _CORE__INCLUDE__SPEC__X86_64__MUEN__SINFO_INSTANCE_H_
-#define _CORE__INCLUDE__SPEC__X86_64__MUEN__SINFO_INSTANCE_H_
+#ifndef _CORE__SPEC__X86_64__MUEN__SINFO_INSTANCE_H_
+#define _CORE__SPEC__X86_64__MUEN__SINFO_INSTANCE_H_
 
 /* base includes */
 #include <muen/sinfo.h>
@@ -29,4 +29,4 @@ namespace Genode
 	}
 }
 
-#endif /* _CORE__INCLUDE__SPEC__X86_64__MUEN__SINFO_INSTANCE_H_ */
+#endif /* _CORE__SPEC__X86_64__MUEN__SINFO_INSTANCE_H_ */

@@ -12,8 +12,8 @@
  * under the terms of the GNU Affero General Public License version 3.
  */
 
-#ifndef _CORE__INCLUDE__PLATFORM_PD_H_
-#define _CORE__INCLUDE__PLATFORM_PD_H_
+#ifndef _CORE__PLATFORM_PD_H_
+#define _CORE__PLATFORM_PD_H_
 
 /* Core includes */
 #include <translation_table.h>
@@ -217,4 +217,4 @@ struct Genode::Core_platform_pd : Genode::Platform_pd
 	Core_platform_pd();
 };
 
-#endif /* _CORE__INCLUDE__PLATFORM_PD_H_ */
+#endif /* _CORE__PLATFORM_PD_H_ */

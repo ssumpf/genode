@@ -11,10 +11,10 @@
  * under the terms of the GNU Affero General Public License version 3.
  */
 
-#ifndef _CORE__INCLUDE__SPEC__CORTEX_A15__TRANSLATION_TABLE_H_
-#define _CORE__INCLUDE__SPEC__CORTEX_A15__TRANSLATION_TABLE_H_
+#ifndef _CORE__SPEC__CORTEX_A15__TRANSLATION_TABLE_H_
+#define _CORE__SPEC__CORTEX_A15__TRANSLATION_TABLE_H_
 
 /* core includes */
 #include <hw/spec/arm/lpae.h>
 
-#endif /* _CORE__INCLUDE__SPEC__CORTEX_A15__TRANSLATION_TABLE_H_ */
+#endif /* _CORE__SPEC__CORTEX_A15__TRANSLATION_TABLE_H_ */

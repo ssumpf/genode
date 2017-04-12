@@ -11,8 +11,8 @@
  * under the terms of the GNU Affero General Public License version 3.
  */
 
-#ifndef _CORE__INCLUDE__SPEC__ARM_V7__CPU_SUPPORT_H_
-#define _CORE__INCLUDE__SPEC__ARM_V7__CPU_SUPPORT_H_
+#ifndef _CORE__SPEC__ARM_V7__CPU_SUPPORT_H_
+#define _CORE__SPEC__ARM_V7__CPU_SUPPORT_H_
 
 /* core includes */
 #include <spec/arm/cpu_support.h>
@@ -148,4 +148,4 @@ class Genode::Arm_v7 : public Arm
 			asm volatile ("mcr p15, 4, %[rd], c12, c0, 0" :: [rd] "r" (a)); }
 };
 
-#endif /* _CORE__INCLUDE__SPEC__ARM_V7__CPU_SUPPORT_H_ */
+#endif /* _CORE__SPEC__ARM_V7__CPU_SUPPORT_H_ */

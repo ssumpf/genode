@@ -11,8 +11,8 @@
  * under the terms of the GNU Affero General Public License version 3.
  */
 
-#ifndef _CORE__INCLUDE__KERNEL__DOUBLE_LIST_H_
-#define _CORE__INCLUDE__KERNEL__DOUBLE_LIST_H_
+#ifndef _CORE__KERNEL__DOUBLE_LIST_H_
+#define _CORE__KERNEL__DOUBLE_LIST_H_
 
 namespace Kernel
 {
@@ -126,4 +126,4 @@ template <typename T> class Kernel::Double_list_typed : public Double_list
 		T * head() const { return _typed(Double_list::head()); }
 };
 
-#endif /* _CORE__INCLUDE__KERNEL__DOUBLE_LIST_H_ */
+#endif /* _CORE__KERNEL__DOUBLE_LIST_H_ */

@@ -12,8 +12,8 @@
  * under the terms of the GNU Affero General Public License version 3.
  */
 
-#ifndef _CORE__INCLUDE__SPEC__ARM__CPU_SUPPORT_H_
-#define _CORE__INCLUDE__SPEC__ARM__CPU_SUPPORT_H_
+#ifndef _CORE__SPEC__ARM__CPU_SUPPORT_H_
+#define _CORE__SPEC__ARM__CPU_SUPPORT_H_
 
 /* Genode includes */
 #include <util/register.h>
@@ -493,4 +493,4 @@ class Genode::Arm
 		static unsigned primary_id() { return 0; }
 };
 
-#endif /* _CORE__INCLUDE__SPEC__ARM__CPU_SUPPORT_H_ */
+#endif /* _CORE__SPEC__ARM__CPU_SUPPORT_H_ */

@@ -11,8 +11,8 @@
  * under the terms of the GNU Affero General Public License version 3.
  */
 
-#ifndef _CORE__INCLUDE__SPEC__ARM_V7__TRUSTZONE__VM_SESSION_COMPONENT_H_
-#define _CORE__INCLUDE__SPEC__ARM_V7__TRUSTZONE__VM_SESSION_COMPONENT_H_
+#ifndef _CORE__SPEC__ARM_V7__TRUSTZONE__VM_SESSION_COMPONENT_H_
+#define _CORE__SPEC__ARM_V7__TRUSTZONE__VM_SESSION_COMPONENT_H_
 
 /* Genode includes */
 #include <base/allocator.h>
@@ -73,4 +73,4 @@ class Genode::Vm_session_component
 			warning("Not implemented for TrustZone case"); }
 };
 
-#endif /* _CORE__INCLUDE__SPEC__ARM_V7__TRUSTZONE__VM_SESSION_COMPONENT_H_ */
+#endif /* _CORE__SPEC__ARM_V7__TRUSTZONE__VM_SESSION_COMPONENT_H_ */

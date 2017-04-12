@@ -14,8 +14,8 @@
  * under the terms of the GNU Affero General Public License version 3.
  */
 
-#ifndef _SPEC__X86_64__FPU_H_
-#define _SPEC__X86_64__FPU_H_
+#ifndef _CORE__SPEC__X86_64__FPU_H_
+#define _CORE__SPEC__X86_64__FPU_H_
 
 /* Genode includes */
 #include <base/stdint.h>
@@ -142,4 +142,4 @@ class Genode::Fpu
 			if (_context == &context) _context = nullptr; }
 };
 
-#endif /* _SPEC__X86_64__FPU_H_ */
+#endif /* _CORE__SPEC__X86_64__FPU_H_ */

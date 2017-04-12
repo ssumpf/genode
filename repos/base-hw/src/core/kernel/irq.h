@@ -12,8 +12,8 @@
  * under the terms of the GNU Affero General Public License version 3.
  */
 
-#ifndef _CORE__INCLUDE__KERNEL__IRQ_H_
-#define _CORE__INCLUDE__KERNEL__IRQ_H_
+#ifndef _CORE__KERNEL__IRQ_H_
+#define _CORE__KERNEL__IRQ_H_
 
 /* Genode includes */
 #include <irq_session/irq_session.h>
@@ -156,4 +156,4 @@ class Kernel::User_irq : public Kernel::Irq, public Kernel::Object
 			return dynamic_cast<User_irq*>(_pool()->object(irq)); }
 };
 
-#endif /* _CORE__INCLUDE__KERNEL__IRQ_H_ */
+#endif /* _CORE__KERNEL__IRQ_H_ */

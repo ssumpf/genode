@@ -12,8 +12,8 @@
  * under the terms of the GNU Affero General Public License version 3.
  */
 
-#ifndef _SPEC__CORTEX_A9__CPU_H_
-#define _SPEC__CORTEX_A9__CPU_H_
+#ifndef _CORE__SPEC__CORTEX_A9__CPU_H_
+#define _CORE__SPEC__CORTEX_A9__CPU_H_
 
 /* core includes */
 #include <spec/arm/fpu.h>
@@ -106,4 +106,4 @@ class Genode::Cpu : public Arm_v7
 		static unsigned executing_id() { return Mpidr::Aff_0::get(Mpidr::read()); }
 };
 
-#endif /* _SPEC__CORTEX_A9__CPU_H_ */
+#endif /* _CORE__SPEC__CORTEX_A9__CPU_H_ */

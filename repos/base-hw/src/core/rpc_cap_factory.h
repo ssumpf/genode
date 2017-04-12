@@ -11,8 +11,8 @@
  * under the terms of the GNU Affero General Public License version 3.
  */
 
-#ifndef _CORE__INCLUDE__RPC_CAP_FACTORY_H_
-#define _CORE__INCLUDE__RPC_CAP_FACTORY_H_
+#ifndef _CORE__RPC_CAP_FACTORY_H_
+#define _CORE__RPC_CAP_FACTORY_H_
 
 /* Genode includes */
 #include <util/list.h>
@@ -119,4 +119,4 @@ class Genode::Rpc_cap_factory
 		}
 };
 
-#endif /* _CORE__INCLUDE__RPC_CAP_FACTORY_H_ */
+#endif /* _CORE__RPC_CAP_FACTORY_H_ */

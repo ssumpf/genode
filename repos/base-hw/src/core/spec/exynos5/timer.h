@@ -11,8 +11,8 @@
  * under the terms of the GNU Affero General Public License version 3.
  */
 
-#ifndef _CORE__INCLUDE__SPEC__EXYNOS5__TIMER_H_
-#define _CORE__INCLUDE__SPEC__EXYNOS5__TIMER_H_
+#ifndef _CORE__SPEC__EXYNOS5__TIMER_H_
+#define _CORE__SPEC__EXYNOS5__TIMER_H_
 
 /* base-hw includes */
 #include <kernel/types.h>
@@ -261,4 +261,4 @@ class Genode::Timer : public Mmio
 
 namespace Kernel { class Timer : public Genode::Timer { }; }
 
-#endif /* _CORE__INCLUDE__SPEC__EXYNOS5__TIMER_H_ */
+#endif /* _CORE__SPEC__EXYNOS5__TIMER_H_ */

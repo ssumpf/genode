@@ -12,8 +12,8 @@
  * under the terms of the GNU Affero General Public License version 3.
  */
 
-#ifndef _CORE__INCLUDE__KERNEL__LOCK_H_
-#define _CORE__INCLUDE__KERNEL__LOCK_H_
+#ifndef _CORE__SPEC__SMP__KERNEL__LOCK_H_
+#define _CORE__SPEC__SMP__KERNEL__LOCK_H_
 
 #include <hw/spin_lock.h>
 
@@ -24,4 +24,4 @@ namespace Kernel
 	Lock & data_lock();
 }
 
-#endif /* _CORE__INCLUDE__KERNEL__LOCK_H_ */
+#endif /* _CORE__SPEC__SMP__KERNEL__LOCK_H_ */

@@ -11,8 +11,8 @@
  * under the terms of the GNU Affero General Public License version 3.
  */
 
-#ifndef _CORE__INCLUDE__SPEC__IMX53__PIC_H_
-#define _CORE__INCLUDE__SPEC__IMX53__PIC_H_
+#ifndef _CORE__SPEC__IMX53__PIC_H_
+#define _CORE__SPEC__IMX53__PIC_H_
 
 #include <hw/spec/arm/imx_tzic.h>
 
@@ -45,4 +45,4 @@ class Genode::Pic : public Hw::Pic
 
 namespace Kernel { using Pic = Genode::Pic; }
 
-#endif /* _CORE__INCLUDE__SPEC__IMX53__PIC_H_ */
+#endif /* _CORE__SPEC__IMX53__PIC_H_ */

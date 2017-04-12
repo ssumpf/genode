@@ -12,8 +12,8 @@
  * under the terms of the GNU Affero General Public License version 3.
  */
 
-#ifndef _CORE__INCLUDE__SPEC__ARM_V6__CPU_H_
-#define _CORE__INCLUDE__SPEC__ARM_V6__CPU_H_
+#ifndef _CORE__SPEC__ARM_V6__CPU_H_
+#define _CORE__SPEC__ARM_V6__CPU_H_
 
 /* core includes */
 #include <spec/arm/cpu_support.h>
@@ -47,4 +47,4 @@ class Genode::Cpu : public Arm
 		static void wait_for_interrupt() { /* FIXME */ }
 };
 
-#endif /* _CORE__INCLUDE__SPEC__ARM_V6__CPU_H_ */
+#endif /* _CORE__SPEC__ARM_V6__CPU_H_ */

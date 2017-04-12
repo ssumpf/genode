@@ -11,8 +11,8 @@
  * under the terms of the GNU Affero General Public License version 3.
  */
 
-#ifndef _CPU_H_
-#define _CPU_H_
+#ifndef _CORE__SPEC__RISCV__CPU_H_
+#define _CORE__SPEC__RISCV__CPU_H_
 
 /* Genode includes */
 #include <base/stdint.h>
@@ -160,4 +160,4 @@ class Genode::Cpu
 		void switch_to(User_context&) { }
 };
 
-#endif /* _CPU_H_ */
+#endif /* _CORE__SPEC__RISCV__CPU_H_ */

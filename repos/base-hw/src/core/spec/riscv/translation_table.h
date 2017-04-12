@@ -11,9 +11,8 @@
  * under the terms of the GNU Affero General Public License version 3.
  */
 
-
-#ifndef _CORE__INCLUDE__SPEC__RISCV__TRANSLATION_TABLE_H_
-#define _CORE__INCLUDE__SPEC__RISCV__TRANSLATION_TABLE_H_
+#ifndef _CORE__SPEC__RISCV__TRANSLATION_TABLE_H_
+#define _CORE__SPEC__RISCV__TRANSLATION_TABLE_H_
 
 #include <hw/spec/riscv/page_table.h>
 #include <kernel/interface.h>
@@ -25,4 +24,4 @@ void Sv39::Level_x_translation_table<E, B, S>::_translation_added(addr_t addr,
 	Kernel::update_data_region(addr, size);
 }
 
-#endif /* _CORE__INCLUDE__SPEC__RISCV__TRANSLATION_TABLE_H_ */
+#endif /* _CORE__SPEC__RISCV__TRANSLATION_TABLE_H_ */

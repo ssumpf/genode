@@ -11,8 +11,8 @@
  * under the terms of the GNU Affero General Public License version 3.
  */
 
-#ifndef _CORE__INCLUDE__KERNEL__CLOCK_H_
-#define _CORE__INCLUDE__KERNEL__CLOCK_H_
+#ifndef _CORE__KERNEL__CLOCK_H_
+#define _CORE__KERNEL__CLOCK_H_
 
 /* base-hw includes */
 #include <kernel/types.h>
@@ -104,4 +104,4 @@ class Kernel::Clock
 		time_t timeout_max_us() const;
 };
 
-#endif /* _CORE__INCLUDE__KERNEL__CLOCK_H_ */
+#endif /* _CORE__KERNEL__CLOCK_H_ */

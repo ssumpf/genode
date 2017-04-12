@@ -12,8 +12,8 @@
  * under the terms of the GNU Affero General Public License version 3.
  */
 
-#ifndef _CORE__INCLUDE__KERNEL__PD_H_
-#define _CORE__INCLUDE__KERNEL__PD_H_
+#ifndef _CORE__KERNEL__PD_H_
+#define _CORE__KERNEL__PD_H_
 
 /* core includes */
 #include <kernel/cpu.h>
@@ -141,4 +141,4 @@ class Kernel::Pd : public Cpu::Pd,
 		Object_identity_reference_tree & cap_tree()     { return _cap_tree;    }
 };
 
-#endif /* _CORE__INCLUDE__KERNEL__PD_H_ */
+#endif /* _CORE__KERNEL__PD_H_ */

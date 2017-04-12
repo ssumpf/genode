@@ -13,8 +13,8 @@
  * under the terms of the GNU Affero General Public License version 3.
  */
 
-#ifndef _PIC_H_
-#define _PIC_H_
+#ifndef _CORE__SPEC__RISCV__PIC_H_
+#define _CORE__SPEC__RISCV__PIC_H_
 
 namespace Genode { class Pic; }
 
@@ -43,4 +43,4 @@ class Genode::Pic
 
 namespace Kernel { class Pic : public Genode::Pic { }; }
 
-#endif /* _PIC_H_ */
+#endif /* _CORE__SPEC__RISCV__PIC_H_ */

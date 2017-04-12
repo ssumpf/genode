@@ -11,8 +11,8 @@
  * under the terms of the GNU Affero General Public License version 3.
  */
 
-#ifndef _CORE__INCLUDE__KERNEL__VM_H_
-#define _CORE__INCLUDE__KERNEL__VM_H_
+#ifndef _CORE__KERNEL__VM_H_
+#define _CORE__KERNEL__VM_H_
 
 #include <vm_state.h>
 
@@ -122,4 +122,4 @@ class Kernel::Vm : public Cpu_job,
 		Cpu_job * helping_sink() { return this; }
 };
 
-#endif /* _CORE__INCLUDE__KERNEL__VM_H_ */
+#endif /* _CORE__KERNEL__VM_H_ */

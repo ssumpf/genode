@@ -12,8 +12,8 @@
  * under the terms of the GNU Affero General Public License version 3.
  */
 
-#ifndef _CORE__INCLUDE__PLATFORM_THREAD_H_
-#define _CORE__INCLUDE__PLATFORM_THREAD_H_
+#ifndef _CORE__PLATFORM_THREAD_H_
+#define _CORE__PLATFORM_THREAD_H_
 
 /* Genode includes */
 #include <ram_session/ram_session.h>
@@ -211,4 +211,4 @@ namespace Genode {
 	};
 }
 
-#endif /* _CORE__INCLUDE__PLATFORM_THREAD_H_ */
+#endif /* _CORE__PLATFORM_THREAD_H_ */

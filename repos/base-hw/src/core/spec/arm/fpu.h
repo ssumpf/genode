@@ -12,8 +12,8 @@
  * under the terms of the GNU Affero General Public License version 3.
  */
 
-#ifndef _SPEC__ARM__FPU_H_
-#define _SPEC__ARM__FPU_H_
+#ifndef _CORE__SPEC__ARM__FPU_H_
+#define _CORE__SPEC__ARM__FPU_H_
 
 #include <util/register.h>
 
@@ -243,4 +243,4 @@ class Genode::Fpu
  *  head branch as from 2014.04.17.
  */
 
-#endif /* _SPEC__ARM__FPU_H_ */
+#endif /* _CORE__SPEC__ARM__FPU_H_ */

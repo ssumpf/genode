@@ -11,9 +11,9 @@
  * under the terms of the GNU Affero General Public License version 3.
  */
 
-#ifndef _BOARD_H_
-#define _BOARD_H_
+#ifndef _CORE__SPEC__RISCV__BOARD_H_
+#define _CORE__SPEC__RISCV__BOARD_H_
 
 namespace Genode { struct Board { void init() { } }; }
 
-#endif /* _BOARD_H_ */
+#endif /* _CORE__SPEC__RISCV__BOARD_H_ */

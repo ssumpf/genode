@@ -12,8 +12,8 @@
  * under the terms of the GNU Affero General Public License version 3.
  */
 
-#ifndef _CORE__INCLUDE__PLATFORM_H_
-#define _CORE__INCLUDE__PLATFORM_H_
+#ifndef _CORE__PLATFORM_H_
+#define _CORE__PLATFORM_H_
 
 /* Genode includes */
 #include <base/synced_allocator.h>
@@ -142,4 +142,4 @@ class Genode::Platform : public Genode::Platform_generic
 			return Affinity::Space(NR_OF_CPUS); }
 };
 
-#endif /* _CORE__INCLUDE__PLATFORM_H_ */
+#endif /* _CORE__PLATFORM_H_ */

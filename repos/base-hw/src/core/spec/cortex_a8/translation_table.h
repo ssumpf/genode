@@ -12,8 +12,8 @@
  * under the terms of the GNU Affero General Public License version 3.
  */
 
-#ifndef _CORE__INCLUDE__SPEC__CORTEX_A8__TRANSLATION_TABLE_H_
-#define _CORE__INCLUDE__SPEC__CORTEX_A8__TRANSLATION_TABLE_H_
+#ifndef _CORE__SPEC__CORTEX_A8__TRANSLATION_TABLE_H_
+#define _CORE__SPEC__CORTEX_A8__TRANSLATION_TABLE_H_
 
 #include <hw/spec/arm/page_table.h>
 #include <kernel/interface.h>
@@ -38,4 +38,4 @@ void Hw::Page_table::_translation_added(unsigned long addr, unsigned long size)
 	else Genode::Cpu::clean_invalidate_data_cache();
 }
 
-#endif /* _CORE__INCLUDE__SPEC__CORTEX_A8__TRANSLATION_TABLE_H_ */
+#endif /* _CORE__SPEC__CORTEX_A8__TRANSLATION_TABLE_H_ */

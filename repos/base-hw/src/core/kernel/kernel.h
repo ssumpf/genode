@@ -12,8 +12,8 @@
  * under the terms of the GNU Affero General Public License version 3.
  */
 
-#ifndef _CORE__INCLUDE__KERNEL__KERNEL_H_
-#define _CORE__INCLUDE__KERNEL__KERNEL_H_
+#ifndef _CORE__KERNEL__KERNEL_H_
+#define _CORE__KERNEL__KERNEL_H_
 
 #include <pic.h>
 #include <board.h>
@@ -33,4 +33,4 @@ namespace Kernel {
 	Genode::Board & board();
 }
 
-#endif /* _CORE__INCLUDE__KERNEL__KERNEL_H_ */
+#endif /* _CORE__KERNEL__KERNEL_H_ */

@@ -11,8 +11,8 @@
  * under the terms of the GNU Affero General Public License version 3.
  */
 
-#ifndef _CORE__INCLUDE__PAGER_H_
-#define _CORE__INCLUDE__PAGER_H_
+#ifndef _CORE__PAGER_H_
+#define _CORE__PAGER_H_
 
 /* Genode includes */
 #include <base/session_label.h>
@@ -222,4 +222,4 @@ class Genode::Pager_entrypoint : public Object_pool<Pager_object>,
 		void entry();
 };
 
-#endif /* _CORE__INCLUDE__PAGER_H_ */
+#endif /* _CORE__PAGER_H_ */

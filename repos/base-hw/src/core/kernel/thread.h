@@ -11,8 +11,8 @@
  * under the terms of the GNU Affero General Public License version 3.
  */
 
-#ifndef _CORE__INCLUDE__KERNEL__THREAD_H_
-#define _CORE__INCLUDE__KERNEL__THREAD_H_
+#ifndef _CORE__KERNEL__THREAD_H_
+#define _CORE__KERNEL__THREAD_H_
 
 /* core includes */
 #include <kernel/signal_receiver.h>
@@ -306,4 +306,4 @@ class Kernel::Core_thread : public Core_object<Kernel::Thread>
 		static Thread & singleton();
 };
 
-#endif /* _CORE__INCLUDE__KERNEL__THREAD_H_ */
+#endif /* _CORE__KERNEL__THREAD_H_ */

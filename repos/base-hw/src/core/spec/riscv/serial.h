@@ -11,8 +11,8 @@
  * under the terms of the GNU Affero General Public License version 3.
  */
 
-#ifndef _SERIAL_H_
-#define _SERIAL_H_
+#ifndef _CORE__SPEC__RISCV__SERIAL_H_
+#define _CORE__SPEC__RISCV__SERIAL_H_
 
 #include <hw/spec/riscv/uart.h>
 
@@ -26,4 +26,4 @@ struct Genode::Serial : Hw::Riscv_uart
 	Serial(unsigned) { }
 };
 
-#endif /* _SERIAL_H_ */
+#endif /* _CORE__SPEC__RISCV__SERIAL_H_ */
