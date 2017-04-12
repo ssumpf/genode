@@ -13,11 +13,14 @@ help:
 	$(ECHO) "and will be created at '$(LOCAL_INSTALL_LOCATION)'."
 	$(ECHO)
 	$(ECHO) "--- available commands ---"
-	$(ECHO) "x86        - create tool chain for x86"
-	$(ECHO) "arm        - create tool chain for arm"
-	$(ECHO) "riscv      - create tool chain for riscv"
-	$(ECHO) "clean      - clean everything except downloaded archives"
-	$(ECHO) "cleanall   - clean everything including downloaded archives"
+	$(ECHO) "x86         - create tool chain for x86"
+	$(ECHO) "arm         - create tool chain for arm"
+	$(ECHO) "riscv       - create tool chain for riscv"
+	$(ECHO) "clean       - clean everything except downloaded archives"
+	$(ECHO) "cleanall    - clean everything including downloaded archives"
+	$(ECHO)
+	$(ECHO) "--- available command line options ---"
+	$(ECHO) "MAKE_JOBS=4 - number of parallel make jobs (default: 4)"
 	$(ECHO)
 
 #
@@ -34,7 +37,7 @@ $(SUPPORTED_PLATFORMS): install
 # Enable parallel build for 2nd-level $(MAKE) by default
 #
 
-MAKE_OPT ?= -j4
+MAKE_JOBS ?= 4
 
 #
 # Determine Genode base directory based on the known location of the
@@ -243,7 +246,7 @@ GCC_INSTALL_RULE = install-strip
 #
 
 MAKE_OPT_x86 := MULTILIB_OPTIONS="m64/m32" MULTILIB_DIRNAMES="64 32"
-MAKE_OPT += $(MAKE_OPT_$(PLATFORM))
+MAKE_OPT += $(MAKE_OPT_$(PLATFORM)) -j$(MAKE_JOBS)
 
 #
 # Build rules and dependencies between build steps
