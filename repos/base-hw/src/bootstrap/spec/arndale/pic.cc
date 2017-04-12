@@ -42,8 +42,8 @@ void Bootstrap::Pic::init_cpu_local()
 
 
 Hw::Pic::Pic()
-: _distr(Platform::mmio_to_virt(Memory_map::IRQ_CONTROLLER_DISTR_BASE)),
-  _cpui(Platform::mmio_to_virt(Memory_map::IRQ_CONTROLLER_CPU_BASE)),
+: _distr(Memory_map::IRQ_CONTROLLER_DISTR_BASE),
+  _cpui(Memory_map::IRQ_CONTROLLER_CPU_BASE),
   _last_iar(Cpu_interface::Iar::Irq_id::bits(spurious_id)),
   _max_irq(_distr.max_irq())
 {

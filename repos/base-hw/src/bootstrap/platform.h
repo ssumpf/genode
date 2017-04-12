@@ -134,8 +134,6 @@ class Bootstrap::Platform
 
 		Platform();
 
-		static addr_t mmio_to_virt(addr_t mmio) { return mmio; }
-
 		void enable_mmu();
 		void start_core() __attribute__((noreturn));
 };

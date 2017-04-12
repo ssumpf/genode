@@ -16,6 +16,7 @@
 
 #include <drivers/board_base.h>
 #include <drivers/uart_base.h>
+#include <hw/spec/arm/cortex_a9.h>
 #include <hw/spec/arm/pl310.h>
 
 #include <spec/arm/cortex_a9_actlr.h>
