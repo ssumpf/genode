@@ -47,7 +47,7 @@ GENODE_DIR ?= $(realpath $(dir $(firstword $(MAKEFILE_LIST)))/..)
 # Tool versions and install location
 #
 
-GCC_VERSION       = 4.9.2
+GCC_VERSION       = 6.3.0
 BINUTILS_VERSION  = 2.28
 INSTALL_LOCATION  = /usr/local/genode-gcc
 
@@ -75,13 +75,7 @@ VERBOSE     = @
 #
 # Check if 'autoconf' is installed
 #
-AUTOCONF_VERSION_gcc_4.9.2 = 2.64
-
-AUTOCONF_VERSION = $(AUTOCONF_VERSION_gcc_$(GCC_VERSION))
-
-ifeq ($(AUTOCONF_VERSION),)
-$(error Unknown autoconf version for GCC $(GCC_VERSION).)
-endif
+AUTOCONF_VERSION = 2.64
 
 AUTOCONF_VERSION_STRING = "autoconf (GNU Autoconf) $(AUTOCONF_VERSION)"
 ifeq ($(shell autoconf -V | grep $(AUTOCONF_VERSION_STRING)),)
