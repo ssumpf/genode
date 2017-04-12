@@ -72,7 +72,7 @@ all: message $(TARGET)
 
 ifneq ($(INSTALL_DIR),)
 ifneq ($(DEBUG_DIR),)
-all: message $(INSTALL_DIR)/$(TARGET)
+all: message $(INSTALL_DIR)/$(TARGET) $(DEBUG_DIR)/$(TARGET)
 endif
 endif
 
@@ -180,21 +180,28 @@ $(TARGET): $(LINK_ITEMS) $(wildcard $(LD_SCRIPTS)) $(LIB_SO_DEPS)
 	$(VERBOSE)libs=$(LIB_CACHE_DIR); $(LD_CMD) -o $@
 
 STRIP_TARGET_CMD ?= $(STRIP) -o $@ $<
-$(INSTALL_DIR)/$(TARGET): $(DEBUG_DIR)/$(TARGET)
+
+$(TARGET).stripped: $(TARGET)
 	$(VERBOSE)$(STRIP_TARGET_CMD)
-else
-$(TARGET):
-$(INSTALL_DIR)/$(TARGET): $(TARGET)
-endif
+
+$(INSTALL_DIR)/$(TARGET): $(TARGET).stripped
+	$(VERBOSE)ln -sf $(CURDIR)/$< $@
 
 ifneq ($(DEBUG_DIR),)
 $(DEBUG_DIR)/$(TARGET): $(TARGET)
-	$(VERBOSE)ln -sf $(CURDIR)/$(TARGET) $@
+	$(VERBOSE)ln -sf $(CURDIR)/$< $@
 endif
+
+else
+$(TARGET):
+$(INSTALL_DIR)/$(TARGET): $(TARGET)
+$(DEBUG_DIR)/$(TARGET): $(TARGET)
+endif
+
 
 clean_prg_objects:
 	$(MSG_CLEAN)$(PRG_REL_DIR)
-	$(VERBOSE)$(RM) -f $(OBJECTS) $(OBJECTS:.o=.d) $(TARGET)
+	$(VERBOSE)$(RM) -f $(OBJECTS) $(OBJECTS:.o=.d) $(TARGET) $(TARGET).stripped
 	$(VERBOSE)$(RM) -f *.d *.i *.ii *.s *.ali *.lib.so
 
 clean: clean_prg_objects

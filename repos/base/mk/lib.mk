@@ -153,7 +153,7 @@ all: $(LIB_TAG)
 #
 $(LIB_TAG) $(OBJECTS): $(HOST_TOOLS)
 
-$(LIB_TAG): $(LIB_A) $(LIB_SO) $(ABI_SO) $(INSTALL_SO)
+$(LIB_TAG): $(LIB_A) $(LIB_SO) $(ABI_SO) $(INSTALL_SO) $(DEBUG_SO)
 	@touch $@
 
 #
@@ -248,8 +248,13 @@ $(ABI_SO): $(LIB).symbols.o
 	                $(LIB_SO_DEPS) $< \
 	                --end-group --no-whole-archive
 
-$(INSTALL_SO): $(DEBUG_SO)
+$(LIB_SO).stripped: $(LIB_SO)
 	$(VERBOSE)$(STRIP) -o $@ $<
 
 $(DEBUG_SO): $(LIB_SO)
-	$(VERBOSE)ln -sf $(CURDIR)/$(LIB_SO) $@
+	echo this
+	$(VERBOSE)ln -sf $(CURDIR)/$< $@
+
+$(INSTALL_SO): $(LIB_SO).stripped
+	echo that
+	$(VERBOSE)ln -sf $(CURDIR)/$< $@

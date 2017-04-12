@@ -6,13 +6,16 @@ $(TARGET):
 
 ifneq ($(INSTALL_DIR),)
 ifneq ($(DEBUG_DIR),)
-$(TARGET): $(INSTALL_DIR)/$(CORE_OBJ)
+$(TARGET): $(INSTALL_DIR)/$(CORE_OBJ) $(DEBUG_DIR)/$(CORE_OBJ)
 
-$(INSTALL_DIR)/$(CORE_OBJ) : $(DEBUG_DIR)/$(CORE_OBJ)
+$(CORE_OBJ).stripped: $(CORE_OBJ)
 	$(VERBOSE)$(STRIP) --strip-debug -o $@ $<
 
+$(INSTALL_DIR)/$(CORE_OBJ) : $(CORE_OBJ).stripped
+	$(VERBOSE)ln -sf $(CURDIR)/$< $(INSTALL_DIR)/$(CORE_OBJ)
+
 $(DEBUG_DIR)/$(CORE_OBJ) : $(CORE_OBJ)
-	$(VERBOSE)ln -sf $(CURDIR)/$(CORE_OBJ) $(DEBUG_DIR)/$(CORE_OBJ)
+	$(VERBOSE)ln -sf $(CURDIR)/$< $(DEBUG_DIR)/$(CORE_OBJ)
 endif
 endif
 

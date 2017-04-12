@@ -355,7 +355,7 @@ clean_install_dir:
 	$(VERBOSE)(test -d $(INSTALL_DIR) && find $(INSTALL_DIR) -type l -not -readable -delete) || true
 
 clean_debug_dir:
-	$(VERBOSE)(test -d $(DEBUG_DIR) && find $(DEBUG_DIR) -type f -delete) || true
+	$(VERBOSE)(test -d $(DEBUG_DIR) && find $(DEBUG_DIR) -type l -not -readable -delete) || true
 
 clean_empty_dirs: clean_targets clean_libcache clean_run clean_gen_files clean_install_dir clean_debug_dir
 	$(VERBOSE)$(GNU_FIND) . -depth -type d -empty -delete
