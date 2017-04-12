@@ -1,6 +1,6 @@
 LICENSE   := GPLv2
 VERSION   := git
 DOWNLOADS := foc.git
-URL(foc)  := http://github.com/ssumpf/foc.git
-REV(foc)  := 8fb47446ed075efc13fae3e87b6ca5119a14a38f
+URL(foc)  := http://github.com/cproc/foc.git
+REV(foc)  := 2d27cb7e869b46c8d3c66bcc6cbaaa530f4c8528
 DIR(foc)  := src/kernel/foc
