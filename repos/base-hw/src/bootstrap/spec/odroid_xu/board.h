@@ -17,6 +17,7 @@
 #include <drivers/board_base.h>
 #include <drivers/uart_base.h>
 
+#include <hw/spec/arm/cortex_a15.h>
 #include <hw/spec/arm/lpae.h>
 #include <spec/arm/cpu.h>
 #include <spec/arm/pic.h>
