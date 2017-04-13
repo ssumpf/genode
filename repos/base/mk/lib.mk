@@ -252,9 +252,7 @@ $(LIB_SO).stripped: $(LIB_SO)
 	$(VERBOSE)$(STRIP) -o $@ $<
 
 $(DEBUG_SO): $(LIB_SO)
-	echo this
 	$(VERBOSE)ln -sf $(CURDIR)/$< $@
 
 $(INSTALL_SO): $(LIB_SO).stripped
-	echo that
 	$(VERBOSE)ln -sf $(CURDIR)/$< $@
