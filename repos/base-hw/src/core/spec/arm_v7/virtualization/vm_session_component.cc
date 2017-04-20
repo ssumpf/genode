@@ -44,7 +44,7 @@ void Vm_session_component::_attach(addr_t phys_addr, addr_t vm_addr, size_t size
 		_table.insert_translation(vm_addr, phys_addr, size, pflags,
 		                          _table_array.alloc());
 		return;
-	} catch(Allocator::Out_of_memory) {
+	} catch(Hw::Out_of_tables &) {
 		Genode::error("Translation table needs to much RAM");
 	} catch(...) {
 		Genode::error("Invalid mapping ", Genode::Hex(phys_addr), " -> ",

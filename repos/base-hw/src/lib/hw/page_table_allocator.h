@@ -17,7 +17,10 @@
 #include <util/bit_allocator.h>
 #include <util/construct_at.h>
 
-namespace Hw { template <Genode::size_t TABLE_SIZE> class Page_table_allocator; }
+namespace Hw {
+	template <Genode::size_t TABLE_SIZE> class Page_table_allocator;
+	struct Out_of_tables {};
+}
 
 template <Genode::size_t TABLE_SIZE>
 class Hw::Page_table_allocator
@@ -41,7 +44,6 @@ class Hw::Page_table_allocator
 	public:
 
 		template <unsigned COUNT> class Array;
-		struct Out_of_tables {};
 
 		Page_table_allocator(addr_t virt_addr, addr_t phys_addr)
 		: _virt_addr(virt_addr), _phys_addr(phys_addr) {}
