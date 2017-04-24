@@ -147,6 +147,11 @@ $(EXTRACT_MK_FILE): checked_versions_defined checked_no_uncategorized
 	                   echo "ARGS($$target) := $$recipe USER=$$user"; \
 	             ) ) \
 	             echo -e ""; \
+	             $(foreach A,${ARCHIVES(pkg)},\
+	                $(foreach DEP,$(call pkg_pkg_archives,$A),\
+	                   echo -e "$(call versioned_archive,$A) :" \
+	                           "$(call versioned_archive,$(DEP))";)) \
+	             echo -e ""; \
 	             echo -e "\$${ARCHIVES(src)} : \$${ARCHIVES(api)}"; \
 	             echo -e "\$${ARCHIVES(pkg)} : \$${ARCHIVES(api)}"; \
 	             echo -e "\$${ARCHIVES(pkg)} : \$${ARCHIVES(src)}"; \
@@ -159,7 +164,6 @@ $(EXTRACT_MK_FILE): checked_versions_defined checked_no_uncategorized
 	                     "VERBOSE=\$$(VERBOSE)" \
 	                     "UPDATE_VERSIONS=\$$(UPDATE_VERSIONS)\n"; \
 	          ) > $@
-
 
 #
 # Invoke sub make to process generated makefile
