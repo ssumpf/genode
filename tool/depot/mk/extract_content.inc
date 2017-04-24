@@ -55,5 +55,8 @@ $(DEPOT_ARCHIVE_DIR)/$(TAG_FILE): $(CONTENT_MK_FILE)
 	                           REP_DIR=$(REP_DIR) \
 	                           CONTRIB_DIR=$(GENODE_DIR)/contrib || \
 	( rm -r $(DEPOT_ARCHIVE_DIR); false )
-	$(VERBOSE)find $(DEPOT_ARCHIVE_DIR) -name "*~" -delete
+	$(VERBOSE)find $(DEPOT_ARCHIVE_DIR) \( -name "*~" \
+	                                   -or -name "*.rej" \
+	                                   -or -name "*.orig" \
+	                                   -or -name "*.swp" \) -delete
 
