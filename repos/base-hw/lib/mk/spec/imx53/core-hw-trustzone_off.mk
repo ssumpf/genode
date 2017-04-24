@@ -6,7 +6,6 @@
 #
 
 # add C++ sources
-SRC_CC += spec/arm/cpu_context.cc
 SRC_CC += kernel/vm_thread_off.cc
 SRC_CC += platform_services.cc
 
