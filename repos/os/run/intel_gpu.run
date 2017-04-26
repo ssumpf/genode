@@ -1,0 +1,98 @@
+if {[have_include power_on/qemu]} {
+	puts "Run script is not supported on this platform."
+	exit 0
+}
+
+assert_spec x86
+
+set build_components {
+	core
+	init
+	drivers/timer
+	drivers/gpu/intel
+	test/intel_gpu_mux
+}
+
+source ${genode_dir}/repos/base/run/platform_drv.inc
+append_platform_drv_build_components
+
+build $build_components
+
+create_boot_directory
+
+append config {
+<config>
+	<parent-provides>
+		<service name="ROM"/>
+		<service name="RAM"/>
+		<service name="IRQ"/>
+		<service name="IO_MEM"/>
+		<service name="IO_PORT"/>
+		<service name="PD"/>
+		<service name="RM"/>
+		<service name="CPU"/>
+		<service name="LOG"/>
+	</parent-provides>
+	<default-route>
+		<any-service> <parent/> <any-child/> </any-service>
+	</default-route>
+	<default caps="100"/>
+
+	<start name="timer">
+		<resource name="RAM" quantum="1M"/>
+		<provides><service name="Timer"/></provides>
+	</start>
+}
+
+proc platform_drv_policy {} {
+	return {
+		<policy label_prefix="intel_gpu_mux" irq_mode="nomsi">
+			<pci class="VGA"/>
+			<pci bus="0" device="0" function="0"/>
+			<pci class="ISABRIDGE"/>
+		</policy>}
+}
+
+append_platform_drv_config
+
+append config {
+	<start name="intel_gpu_mux">
+		<resource name="RAM" quantum="16M"/>
+		<provides> <service name="Gpu"/> </provides>
+	</start>
+
+	<start name="gpu_0">
+		<binary name="test-intel_gpu_mux"/>
+		<resource name="RAM" quantum="16M"/>
+		<config limit="3"/>
+		<route>
+			<service name="Gpu"> <child name="intel_gpu_mux"/> </service>
+			<any-service> <parent/> <any-child/> </any-service>
+		</route>
+	</start>
+
+	<!--
+	<start name="gpu_1">
+		<binary name="test-intel_gpu_mux"/>
+		<resource name="RAM" quantum="16M"/>
+		<config limit="5"/>
+		<route>
+			<service name="Gpu"> <child name="intel_gpu_mux"/> </service>
+			<any-service> <parent/> <any-child/> </any-service>
+		</route>
+	</start>
+	-->
+</config>}
+
+install_config $config
+
+# generic modules
+set boot_modules {
+	core init timer ld.lib.so intel_gpu_mux test-intel_gpu_mux
+}
+
+append_platform_drv_boot_modules
+
+build_boot_image $boot_modules
+
+run_genode_until forever
