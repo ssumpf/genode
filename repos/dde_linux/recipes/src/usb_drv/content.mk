@@ -1,4 +1,6 @@
-LIB_MK := $(shell cd $(REP_DIR); find lib -name "usb*") lib/mk/xhci.inc
+LIB_MK := $(shell cd $(REP_DIR); find lib -name "usb*") \
+          $(foreach SPEC,x86_32 x86_64 arm,lib/mk/spec/$(SPEC)/lx_kit_setjmp.mk) \
+          lib/mk/xhci.inc
 
 PORT_DIR := $(call port_dir,$(REP_DIR)/ports/dde_linux)
 
