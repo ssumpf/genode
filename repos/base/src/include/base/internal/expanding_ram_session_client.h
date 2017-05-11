@@ -16,7 +16,7 @@
 
 /* Genode includes */
 #include <util/retry.h>
-#include <ram_session/connection.h>
+#include <pd_session/client.h>
 
 /* base-internal includes */
 #include <base/internal/upgradeable_client.h>
@@ -24,7 +24,7 @@
 namespace Genode { class Expanding_ram_session_client; }
 
 
-struct Genode::Expanding_ram_session_client : Upgradeable_client<Genode::Ram_session_client>
+struct Genode::Expanding_ram_session_client : Upgradeable_client<Genode::Pd_session_client>
 {
 	void _request_ram_from_parent(size_t amount)
 	{
@@ -38,9 +38,9 @@ struct Genode::Expanding_ram_session_client : Upgradeable_client<Genode::Ram_ses
 		parent.resource_request(String<128>("cap_quota=", amount).string());
 	}
 
-	Expanding_ram_session_client(Ram_session_capability cap, Parent::Client::Id id)
+	Expanding_ram_session_client(Pd_session_capability cap, Parent::Client::Id id)
 	:
-		Upgradeable_client<Genode::Ram_session_client>(cap, id)
+		Upgradeable_client<Genode::Pd_session_client>(cap, id)
 	{ }
 
 	Ram_dataspace_capability alloc(size_t size, Cache_attribute cached = UNCACHED) override
@@ -54,7 +54,7 @@ struct Genode::Expanding_ram_session_client : Upgradeable_client<Genode::Ram_ses
 		return retry<Out_of_ram>(
 			[&] () {
 				return retry<Out_of_caps>(
-					[&] () { return Ram_session_client::alloc(size, cached); },
+					[&] () { return Pd_session_client::alloc(size, cached); },
 					[&] () {
 						try { upgrade_caps(UPGRADE_CAPS); }
 						catch (Out_of_caps) {
@@ -81,7 +81,7 @@ struct Genode::Expanding_ram_session_client : Upgradeable_client<Genode::Ram_ses
 			NUM_ATTEMPTS);
 	}
 
-	void transfer_quota(Ram_session_capability ram_session, Ram_quota amount) override
+	void transfer_quota(Pd_session_capability ram_session, Ram_quota amount) override
 	{
 		/*
 		 * Should the transfer fail because we don't have enough quota, request
@@ -89,7 +89,7 @@ struct Genode::Expanding_ram_session_client : Upgradeable_client<Genode::Ram_ses
 		 */
 		enum { NUM_ATTEMPTS = 2 };
 		retry<Out_of_ram>(
-			[&] () { Ram_session_client::transfer_quota(ram_session, amount); },
+			[&] () { Pd_session_client::transfer_quota(ram_session, amount); },
 			[&] () { _request_ram_from_parent(amount.value); },
 			NUM_ATTEMPTS);
 	}
