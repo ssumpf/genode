@@ -1,0 +1,8 @@
+LICENSE   := GPLv2
+VERSION   := git
+DOWNLOADS := ioq3.git
+
+URL(ioq3) := /build/quake3/ioq3
+REV(ioq3) := 58b8cfa0b3fb926ffc6c699967199ef18ed0fda7
+DIR(ioq3) := src/app/ioq3
+
