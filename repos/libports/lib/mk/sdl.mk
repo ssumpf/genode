@@ -74,7 +74,13 @@ SRC_C   += cdrom/SDL_cdrom.c \
 INC_DIR += $(SDL_DIR)/src/cdrom
 
 # we need libc
-LIBS = libc pthread
+LIBS = libc pthread egl mesa-11
+
+INC_DIR +=  $(REP_DIR)/src/lib/mesa/include
+
+INC_DIR += $(REP_DIR)/../dde_linux/src/lib/framebuffer/intel/include
+INC_DIR += $(REP_DIR)/../dde_linux/src/include
+INC_DIR += $(REP_DIR)/../dde_linux/src/include/spec/x86_64
 
 # backend path
 vpath % $(REP_DIR)/src/lib/sdl

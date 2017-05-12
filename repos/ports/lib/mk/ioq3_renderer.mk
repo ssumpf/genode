@@ -37,4 +37,4 @@ $(SRC_C): $(SHADERS)
 	$(VERBOSE)cat $(@: .c=.glsl) | sed 's/^/\"/;s/$$/\\n\"/' >> $@
 	$(VERBOSE)echo ";" >> $@
 
-vpath %.glsl $(IOQ3_DIR)/code/renderergl2/glsl
+vpath %.glsl $(IOQ3_DIR)/code/rend2/glsl

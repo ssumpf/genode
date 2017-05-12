@@ -32,7 +32,25 @@
 #include <base/env.h>
 #include <framebuffer_session/connection.h>
 
+#include <window.h>
+
+#define EGL_EGLEXT_PROTOTYPES
+
+#include <EGL/egl.h>
+#include <EGL/eglext.h>
+
+#define MAX_CONFIGS 10
+#define MAX_MODES 100
+
+#define GENODE_OPENGL 1
+
+extern Genode::Env &genode_env();
+
+
+
 extern "C" {
+
+#include <dlfcn.h>
 
 #include <SDL/SDL.h>
 #include <SDL/SDL_video.h>
@@ -52,10 +70,20 @@ extern "C" {
 	 * Genode_Fb driver bootstrap functions
 	 **************************************/
 
+	static void Genode_Fb_GL_Init()
+	{
+	}
+
+
+	static EGLDisplay display;
+	static EGLSurface screen_surf;
+	static EGLNativeWindowType native_window;
+
 	/**
 	 *
 	 */
 	static int Genode_Fb_Available(void) {
+#ifndef GENODE_OPENGL
 		if(framebuffer == 0)
 			framebuffer = new(Genode::env()->heap()) Framebuffer::Connection();
 		if (!framebuffer->cap().valid())
@@ -63,6 +91,7 @@ extern "C" {
 			Genode::error("couldn't obtain framebuffer session");
 			return 0;
 		}
+#endif
 		return 1;
 	}
 
@@ -74,7 +103,7 @@ extern "C" {
 	{
 		Genode::log("free framebuffer session object");
 		if(framebuffer != 0)
-			Genode::destroy(Genode::env()->heap(), framebuffer);
+			delete framebuffer;
 		framebuffer = 0;
 	}
 
@@ -127,6 +156,11 @@ extern "C" {
 		device->IconifyWindow    = 0;
 		device->GrabInput        = 0;
 		device->GetWMInfo        = 0;
+
+		device->GL_MakeCurrent    = Genode_Fb_GL_MakeCurrent;
+		device->GL_SwapBuffers    = Genode_Fb_GL_SwapBuffers;
+		device->GL_LoadLibrary    = Genode_Fb_GL_LoadLibrary;
+		device->GL_GetProcAddress = Genode_Fb_GL_GetProcAddress;
 		return device;
 	}
 
@@ -147,6 +181,7 @@ extern "C" {
 	 */
 	int Genode_Fb_VideoInit(SDL_VideoDevice *t, SDL_PixelFormat *vformat)
 	{
+#ifndef GENODE_OPENGL
 		if(framebuffer == 0)
 		{
 			Genode::error("framebuffer isn't initialized");
@@ -189,7 +224,104 @@ extern "C" {
 			return -1;
 		}
 		t->hidden->buffer = Genode::env()->rm_session()->attach(fb_ds_cap);
+#else
+		int maj, min;
+		EGLContext ctx;
+		EGLConfig configs[MAX_CONFIGS];
+		EGLBoolean b;
+		GLboolean printInfo = GL_FALSE;
+		EGLint width = 0, height = 0;
 
+		/* DBR : Create EGL context/surface etc */
+		display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+		if (!display) {
+			printf("eglGetDisplay failed\n");
+			return -1;
+		}
+
+		if (!eglInitialize(display, &maj, &min)) {
+			printf("eglInitialize failed\n");
+			return -1;
+		}
+
+		printf("EGL version = %d.%d\n", maj, min);
+		printf("EGL_VENDOR = %s\n", eglQueryString(display, EGL_VENDOR));
+
+		EGLConfig config;
+		EGLint config_attribs[32];
+		EGLint renderable_type, num_configs, i;
+
+		i = 0;
+		config_attribs[i++] = EGL_RED_SIZE;
+		config_attribs[i++] = 1;
+		config_attribs[i++] = EGL_GREEN_SIZE;
+		config_attribs[i++] = 1;
+		config_attribs[i++] = EGL_BLUE_SIZE;
+		config_attribs[i++] = 1;
+		config_attribs[i++] = EGL_DEPTH_SIZE;
+		config_attribs[i++] = 1;
+
+		config_attribs[i++] = EGL_SURFACE_TYPE;
+		config_attribs[i++] = EGL_WINDOW_BIT;;
+
+		config_attribs[i++] = EGL_RENDERABLE_TYPE;
+		renderable_type = 0x0;
+		renderable_type |= EGL_OPENGL_BIT;
+		config_attribs[i++] = renderable_type;
+
+		config_attribs[i] = EGL_NONE;
+
+		if (!eglChooseConfig(display, config_attribs, &config, 1, &num_configs) || !num_configs) {
+			printf("eglChooseConfig failed\n");
+			return -1;
+		}
+
+		eglBindAPI(EGL_OPENGL_API);
+
+		EGLint context_attribs[4]; context_attribs[0] = EGL_NONE;
+		ctx = eglCreateContext(display, config, EGL_NO_CONTEXT, context_attribs);
+		if (!ctx) {
+			printf("failed to create context\n");
+			return -1;
+		}
+
+		width = 1920;
+		height = 1080;
+
+		native_window = new (Genode::env()->heap()) Window(genode_env(), width, height);
+
+		screen_surf = eglCreateWindowSurface(display, config, native_window, NULL);
+		if (screen_surf == EGL_NO_SURFACE) {
+			printf("failed to create screen surface\n");
+			return -1;
+		}
+		printf("returned from eglCreateScreenSurfaceMESA\n");
+
+		b = eglMakeCurrent(display, screen_surf, screen_surf, ctx);
+		if (!b) {
+			printf("make current failed\n");
+			return -1;
+		}
+		printf("returned from eglMakeCurrent\n");
+
+		printf("GL_RENDERER   = %s\n", (char *) glGetString(GL_RENDERER));
+		printf("GL_VERSION    = %s\n", (char *) glGetString(GL_VERSION));
+		printf("GL_VENDOR     = %s\n", (char *) glGetString(GL_VENDOR));
+		printf("GL_EXTENSIONS = %s\n", (char *) glGetString(GL_EXTENSIONS));
+
+		t->info.current_w = width;
+		t->info.current_h = height;
+		vformat->BitsPerPixel  = 16;
+		vformat->BytesPerPixel = scr_mode.bytes_per_pixel();
+		vformat->Rmask = 0x0000f800;
+		vformat->Gmask = 0x000007e0;
+		vformat->Bmask = 0x0000001f;
+		modes[0] = &df_mode;
+		df_mode.w = width;
+		df_mode.h = height;
+		modes[1] = 0;
+		t->gl_config.driver_loaded = 1;
+#endif
 		return 0;
 	}
 
@@ -225,11 +357,13 @@ extern "C" {
 		Genode::log("Set video mode to: "
 		            "width=", width, " " "height=", height, " " "bpp=", bpp);
 
+#ifndef GENODE_OPENGL
 		if ( ! t->hidden->buffer ) {
 			Genode::error("no buffer for requested mode");
 			return(0);
 		}
 		SDL_memset(t->hidden->buffer, 0, width * height * (bpp / 8));
+#endif
 
 		/* Allocate the new pixel format for the screen */
 		if ( ! SDL_ReallocFormat(current, bpp, 0, 0, 0, 0) ) {
@@ -238,11 +372,13 @@ extern "C" {
 		}
 
 		/* Set up the new mode framebuffer */
-		current->flags = flags & SDL_FULLSCREEN;
+		current->flags = flags | SDL_FULLSCREEN;
 		t->hidden->w = current->w = width;
 		t->hidden->h = current->h = height;
 		current->pitch = current->w * (bpp / 8);
+#ifndef GENODE_OPENGL
 		current->pixels = t->hidden->buffer;
+#endif
 		return(current);
 	}
 
@@ -286,9 +422,11 @@ extern "C" {
 	static void Genode_Fb_UpdateRects(SDL_VideoDevice *t, int numrects,
 	                                  SDL_Rect *rects)
 	{
+#ifndef GENODE_OPENGL
 		int i;
 		for(i=0;i<numrects;i++)
 			framebuffer->refresh(rects[i].x, rects[i].y, rects[i].w, rects[i].h);
+#endif
 	}
 
 
@@ -321,6 +459,38 @@ extern "C" {
 			SDL_free(t->screen->pixels);
 			t->screen->pixels = 0;
 		}
+	}
+
+	int Genode_Fb_GL_MakeCurrent(SDL_VideoDevice *t)
+	{
+		Genode::warning("%s: Not yet implemented", __func__);
+		return 0;
+	}
+
+	void Genode_Fb_GL_SwapBuffers(SDL_VideoDevice *t)
+	{
+		eglWaitClient();
+		eglSwapBuffers(display, screen_surf);
+	}
+
+	int Genode_Fb_GL_LoadLibrary(SDL_VideoDevice *t, const char *path)
+	{
+		Genode::warning("Not yet implemented");
+		return 0;
+	}
+
+
+	static void* load_mesa()
+	{
+		static void *ptr = dlopen("mesa-11.lib.so", 0);
+		return ptr;
+	}
+
+
+	void* Genode_Fb_GL_GetProcAddress(SDL_VideoDevice *t, const char *proc)
+	{
+		PDBG("get proc %s", proc);
+		return dlsym(load_mesa(), proc);
 	}
 
 } //extern "C"
