@@ -40,13 +40,6 @@ struct Genode::Timer
 
 		addr_t _timeout = 0;
 
-		addr_t _stime()
-		{
-			addr_t t;
-			asm volatile ("csrr %0, stime\n" : "=r"(t));
-			return t;
-		}
-
 	public:
 
 		Timer()
@@ -63,7 +56,7 @@ struct Genode::Timer
 		 */
 		void start_one_shot(time_t const tics, unsigned const)
 		{
-			_timeout = _stime() + tics;
+			_timeout = Hw::get_sys_timer() + tics;
 			Hw::set_sys_timer(_timeout);
 		}
 
@@ -80,7 +73,7 @@ struct Genode::Timer
 		 */
 		time_t value(unsigned const)
 		{
-			addr_t time = _stime();
+			addr_t time = Hw::get_sys_timer();
 			return time < _timeout ? _timeout - time : 0;
 		}
 

@@ -166,7 +166,7 @@ LOCAL_LIB_INSTALL_LOCATION = $(shell pwd)/build/lib-install
 TARGET_NAME_x86        = x86_64-pc-elf
 TARGET_NAME_arm        = arm-none-eabi
 TARGET_NAME_riscv      = riscv64-unknown-elf
-
+GCC_CONFIG_riscv       = --with-arch=rv64imac
 ifneq ($(VERBOSE),)
 CONFIG_QUIET = --quiet
 MAKEFLAGS   += --quiet
