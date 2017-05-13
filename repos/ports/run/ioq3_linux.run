@@ -1,0 +1,80 @@
+set build_components {
+	core init
+	drivers/timer
+	app/ioq3
+	lib/mesa/swrast
+	drivers/framebuffer
+}
+
+build $build_components
+
+create_boot_directory
+
+set config {
+<config>
+	<parent-provides>
+		<service name="ROM"/>
+		<service name="RAM"/>
+		<service name="IRQ"/>
+		<service name="IO_MEM"/>
+		<service name="IO_PORT"/>
+		<service name="PD"/>
+		<service name="RM"/>
+		<service name="CPU"/>
+		<service name="LOG"/>
+	</parent-provides>
+	<default-route>
+		<any-service> <parent/> <any-child/> </any-service>
+	</default-route>
+}
+
+append config {
+	<start name="timer">
+		<resource name="RAM" quantum="1M"/>
+		<provides><service name="Timer"/></provides>
+	</start>
+	<start name="fb_sdl">
+		<resource name="RAM" quantum="4M"/>
+		<provides>
+			<service name="Input"/>
+			<service name="Framebuffer"/>
+		</provides>
+	</start>
+	<start name="ioq3">
+		<resource name="RAM" quantum="2G" />
+		<config ld_verbose="true">
+			<libc stdin="/dev/log" stdout="/dev/log" stderr="/dev/log" />
+			<vfs>
+				<dir name="dev"> <log/> </dir>
+				<tar name="assets.tar"/>
+			</vfs>
+		</config>
+		<route>
+			<any-service> <parent /> <any-child/> </any-service>
+		</route>
+	</start>
+</config>
+}
+
+install_config $config
+
+set boot_modules {
+	core init ld.lib.so timer
+	ioq3
+	libc.lib.so libm.lib.so pthread.lib.so
+	egl.lib.so mesa-11.lib.so stdcxx.lib.so
+	expat.lib.so glapi.lib.so swrast.lib.so
+	drm.lib.so intel_fb.lib.so fb_sdl
+	i965.lib.so sdl.lib.so assets.tar
+}
+
+build_boot_image $boot_modules
+
+append qemu_args " -m 768 -nographic"
+append qemu_args " -net user -redir tcp:5555::5555"
+append_if [have_spec x86] qemu_args " -net nic,model=e1000 "
+append_if [have_spec lan9118] qemu_args " -net nic,model=lan9118 "
+
+run_genode_until forever
+
+# vi: set ft=tcl :
