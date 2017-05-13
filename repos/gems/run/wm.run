@@ -31,13 +31,14 @@ install_config {
 	<default-route>
 		<any-service> <parent/> <any-child/> </any-service>
 	</default-route>
+	<default caps="100"/>
 
 	<start name="timer">
 		<resource name="RAM" quantum="1M"/>
 		<provides><service name="Timer"/></provides>
 	</start>
 
-	<start name="drivers">
+	<start name="drivers" caps="1000">
 		<resource name="RAM" quantum="32M"/>
 		<binary name="init"/>
 		<route>
@@ -70,7 +71,7 @@ install_config {
 		</route>
 	</start>
 
-	<start name="wm">
+	<start name="wm" caps="1000">
 		<resource name="RAM" quantum="24M"/>
 		<binary name="init"/>
 		<provides> <service name="Nitpicker"/> </provides>
