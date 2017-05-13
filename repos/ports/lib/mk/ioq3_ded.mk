@@ -36,6 +36,7 @@ SRC_C   = code/server/sv_bot.c \
           code/zlib/inflate.c \
           code/zlib/inftrees.c \
           code/zlib/zutil.c \
-          code/qcommon/vm_x86.c \
+          code/qcommon/vm_x86_64.c \
+          code/qcommon/vm_x86_64_assembler.c \
           code/sys/sys_unix.c \
           code/sys/con_tty.c

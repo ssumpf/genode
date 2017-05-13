@@ -1,8 +1,8 @@
-TARGET      = ioquake
+TARGET      = ioq3
 LIBS        = libc sdl \
               mesa-11 ioq3_bot ioq3_common ioq3_renderer
 
-SRC_C       = con_log.c con_tty.c sys_main.c sys_unix.c
+SRC_C       = con_log.c con_passive.c sys_main.c sys_unix.c
 SRC_CC      = main.cc
 
 CC_OPT_sys_main = -Dmain=ioq3_main

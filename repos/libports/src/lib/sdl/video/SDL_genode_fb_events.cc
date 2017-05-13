@@ -55,9 +55,9 @@ extern "C" {
 		return k;
 	}
 
-
 	void Genode_Fb_PumpEvents(SDL_VideoDevice *t)
 	{
+		return;
 		if (!input->pending())
 			return;
 		input->for_each_event([&] (Input::Event const &curr) {

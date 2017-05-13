@@ -352,6 +352,8 @@ bool Slab::alloc(size_t size, void **out_addr)
 
 	/* skip completely occupied slab blocks, detect cycles */
 	Block const * const orig_curr_sb = _curr_sb;
+	if ((unsigned long)_curr_sb < 0x20)
+		Genode::error("slab zero ", Genode::Hex((unsigned long)&_curr_sb));
 	for (; _curr_sb->avail() == 0; _curr_sb = _curr_sb->next)
 		if (_curr_sb->next == orig_curr_sb)
 			break;

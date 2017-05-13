@@ -34,7 +34,9 @@ SRC_C   = $(SHADERS:.glsl=.c)
 $(SRC_C): $(SHADERS)
 	$(VERBOSE)$(ECHO) "REF_STR $(@: .c=.glsl)"
 	$(VERBOSE)echo "const char *fallbackShader_$(notdir $(basename $@)) =" > $@
-	$(VERBOSE)cat $(@: .c=.glsl) | sed 's/^/\"/;s/$$/\\n\"/' >> $@
+	$(VERBOAE)cat $(IOQ3_DIR)/code/rend2/glsl/$(@:.c=.glsl) | sed 's/^/\"/;s/$$/\\n\"/' >> $@
 	$(VERBOSE)echo ";" >> $@
 
+
+# $(VERBOSE)cat $(@: .c=.glsl) | sed 's/^/\"/;s/$$/\\n\"/' >> $@
 vpath %.glsl $(IOQ3_DIR)/code/rend2/glsl

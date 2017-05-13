@@ -97,43 +97,38 @@ SRC_C   = code/asm/ftola.c \
           code/qcommon/unzip.c \
           code/qcommon/vm.c \
           code/qcommon/vm_interpreted.c \
-          code/qcommon/vm_x86.c \
-          code/rend2/tr_font.c \
-          code/rend2/tr_font.c \
-          code/rend2/tr_image_bmp.c \
-          code/rend2/tr_image_jpg.c \
-          code/rend2/tr_image_pcx.c \
-          code/rend2/tr_image_png.c \
-          code/rend2/tr_image_tga.c \
-          code/rend2/tr_noise.c \
-          code/rend2/tr_animation.c \
-          code/rend2/tr_backend.c \
-          code/rend2/tr_bsp.c \
-          code/rend2/tr_cmds.c \
-          code/rend2/tr_curve.c \
-          code/rend2/tr_extensions.c \
-          code/rend2/tr_extramath.c \
-          code/rend2/tr_fbo.c \
-          code/rend2/tr_flares.c \
-          code/rend2/tr_glsl.c \
-          code/rend2/tr_image.c \
-          code/rend2/tr_init.c \
-          code/rend2/tr_light.c \
-          code/rend2/tr_main.c \
-          code/rend2/tr_marks.c \
-          code/rend2/tr_mesh.c \
-          code/rend2/tr_model.c \
-          code/rend2/tr_model_iqm.c \
-          code/rend2/tr_postprocess.c \
-          code/rend2/tr_scene.c \
-          code/rend2/tr_shade.c \
-          code/rend2/tr_shade_calc.c \
-          code/rend2/tr_shader.c \
-          code/rend2/tr_shadows.c \
-          code/rend2/tr_sky.c \
-          code/rend2/tr_surface.c \
-          code/rend2/tr_vbo.c \
-          code/rend2/tr_world.c \
+          code/qcommon/vm_x86_64.c \
+          code/qcommon/vm_x86_64_assembler.c \
+          code/renderer/tr_font.c \
+          code/renderer/tr_font.c \
+          code/renderer/tr_image_bmp.c \
+          code/renderer/tr_image_jpg.c \
+          code/renderer/tr_image_pcx.c \
+          code/renderer/tr_image_png.c \
+          code/renderer/tr_image_tga.c \
+          code/renderer/tr_noise.c \
+          code/renderer/tr_animation.c \
+          code/renderer/tr_backend.c \
+          code/renderer/tr_bsp.c \
+          code/renderer/tr_cmds.c \
+          code/renderer/tr_curve.c \
+          code/renderer/tr_flares.c \
+          code/renderer/tr_image.c \
+          code/renderer/tr_init.c \
+          code/renderer/tr_light.c \
+          code/renderer/tr_main.c \
+          code/renderer/tr_marks.c \
+          code/renderer/tr_mesh.c \
+          code/renderer/tr_model.c \
+          code/renderer/tr_model_iqm.c \
+          code/renderer/tr_scene.c \
+          code/renderer/tr_shade.c \
+          code/renderer/tr_shade_calc.c \
+          code/renderer/tr_shader.c \
+          code/renderer/tr_shadows.c \
+          code/renderer/tr_sky.c \
+          code/renderer/tr_surface.c \
+          code/renderer/tr_world.c \
           code/sdl/sdl_gamma.c \
           code/sdl/sdl_glimp.c \
           code/sdl/sdl_input.c \
@@ -154,6 +149,12 @@ SRC_C   = code/asm/ftola.c \
           code/zlib/inftrees.c \
           code/zlib/zutil.c
 
+          #code/renderer/tr_postprocess.c \
+          #code/renderer/tr_glsl.c \
+          #code/renderer/tr_vbo.c \
+          #code/renderer/tr_fbo.c \
+          ##code/renderer/tr_extramath.c \
+          ##code/renderer/tr_extensions.c \
 #          code/renderergl2/tr_animation.c \
 #          code/renderergl2/tr_backend.c \
 #          code/renderergl2/tr_bsp.c \
