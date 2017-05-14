@@ -1,6 +1,6 @@
 TARGET      = ioq3
 LIBS        = libc sdl \
-              mesa-11 ioq3_bot ioq3_common ioq3_renderer
+              mesa-11 ioq3_bot ioq3_common ioq3_renderer libc_resolv
 
 SRC_C       = con_log.c con_passive.c sys_main.c sys_unix.c
 SRC_CC      = main.cc
