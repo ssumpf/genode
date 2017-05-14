@@ -13,6 +13,7 @@ set build_components {
 	lib/vfs/lxip
 	server/input_filter
 	drivers/usb
+	drivers/audio
 }
 
 source ${genode_dir}/repos/base/run/platform_drv.inc
@@ -77,6 +78,13 @@ append config {
 		<resource name="RAM" quantum="10M" />
 		<provides><service name="Nic" /></provides>
 	</start>
+	<start name="audio_drv">
+		<resource name="RAM" quantum="8M"/>
+		<provides> <service name="Audio_out"/> </provides>
+		<config>
+			<mixer field="outputs.master" value="128,128"/>
+		</config>
+	</start>
 	<start name="input_filter">
 		<resource name="RAM" quantum="2M" />
 		<provides> <service name="Input" /> </provides>
@@ -138,7 +146,7 @@ set boot_modules {
 	i965.lib.so sdl.lib.so vfs_lxip.lib.so
 	rump_fs rump.lib.so rump_fs.lib.so
 	intel_fb_drv usb_drv ps2_drv nic_drv
-	input_filter
+	input_filter audio_drv
 }
 
 append_platform_drv_boot_modules
