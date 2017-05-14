@@ -39,6 +39,7 @@ append config {
 			<service name="Input"/>
 			<service name="Framebuffer"/>
 		</provides>
+		<config width="640" height="480" />
 	</start>
 	<start name="ioq3">
 		<resource name="RAM" quantum="2G" />

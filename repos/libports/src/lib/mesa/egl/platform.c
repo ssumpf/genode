@@ -515,9 +515,9 @@ cleanup_dpy:
 
 EGLBoolean dri2_initialize_genode(_EGLDriver *drv, _EGLDisplay *disp)
 {
-	//if (!dri2_initialize_genode_dri2(drv, disp)) {
+	if (!dri2_initialize_genode_dri2(drv, disp)) {
 		return  dri2_initialize_genode_swrast(drv, disp);
-	//}
+	}
 
 	return EGL_TRUE;
 }
