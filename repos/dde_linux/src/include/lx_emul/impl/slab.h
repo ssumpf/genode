@@ -26,9 +26,15 @@ void *kmalloc(size_t size, gfp_t flags)
 
 	void *addr = nullptr;
 
-	addr = (flags & GFP_LX_DMA)
-		? Lx::Malloc::dma().alloc(size, 12)
-		: Lx::Malloc::mem().alloc(size);
+	if (size < 64 * 1024) {
+		addr = (flags & GFP_LX_DMA)
+			? Lx::Malloc::dma().alloc(size, 12)
+			: Lx::Malloc::mem().alloc(size);
+	} else {
+		addr = (flags & GFP_LX_DMA)
+			? Lx::Malloc::dma().alloc_large(size)
+			: Lx::Malloc::mem().alloc_large(size);
+	}
 
 	if ((Genode::addr_t)addr & 0x3)
 		Genode::error("unaligned kmalloc ", (Genode::addr_t)addr);

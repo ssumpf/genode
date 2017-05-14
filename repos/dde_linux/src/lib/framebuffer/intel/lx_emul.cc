@@ -929,6 +929,12 @@ int bus_for_each_drv(struct bus_type *bus, struct device_driver *start,
 }
 
 
+void device_unregister(struct device *dev)
+{
+	TRACE;
+}
+
+
 /***********************
  ** linux/workqueue.h **
  ***********************/
@@ -1411,13 +1417,16 @@ dma_addr_t sg_page_iter_dma_address(struct sg_page_iter *piter)
 struct page *sg_page_iter_page(struct sg_page_iter *piter)
 {
 	if (piter->sg_pgoffset) {
-		Genode::error("SG offset %x", piter->sg_pgoffset);
-		while (1);
+		if ((piter->sg_pgoffset * PAGE_SIZE) > piter->sg->length) {
+			Genode::error("SG offset too large");
+			genode_backtrace();
+			while (1);
+		}
 	}
 	//PWRN("sg_page_iter_page: page %p",(page*)(PAGE_SIZE * (page_to_pfn((sg_page(piter->sg))) + (piter->sg_pgoffset))));
 
 	//return (page*)(PAGE_SIZE * (page_to_pfn((sg_page(piter->sg))) + (piter->sg_pgoffset)));
-	return sg_page(piter->sg);
+	return sg_page(piter->sg) + (piter->sg_pgoffset * PAGE_SIZE);
 }
 
 
@@ -2197,4 +2206,15 @@ void do_gettimeofday(struct timeval *tv)
 	tv->tv_sec = 0;
 	tv->tv_usec = 0;
 }
+
+
+/**********************
+ ** linux/shmem_fs.h **
+ **********************/
+
+void shmem_truncate_range(struct inode *inode, loff_t start, loff_t end)
+{
+	TRACE;
+}
+
 } /* extern "C" */

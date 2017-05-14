@@ -152,11 +152,6 @@ int device_init_wakeup(struct device *dev, bool val)
 	return -1;
 }
 
-void device_unregister(struct device *dev)
-{
-	TRACE_AND_STOP;
-}
-
 const char *dev_name(const struct device *dev)
 {
 	TRACE_AND_STOP;
@@ -1119,11 +1114,6 @@ struct page *shmem_read_mapping_page( struct address_space *mapping, pgoff_t ind
 {
 	TRACE_AND_STOP;
 	return NULL;
-}
-
-void shmem_truncate_range(struct inode *inode, loff_t start, loff_t end)
-{
-	TRACE_AND_STOP;
 }
 
 int signal_pending(struct task_struct *p)
