@@ -1200,7 +1200,7 @@ int drm_gem_close_ioctl(struct drm_device *dev, void *data,
                         struct drm_file *file_priv)
 {
 	u32 handle =((drm_gem_close *)data)->handle;
-
+	return -1;
 	Gem_object_handle *gem = gem_object_handles.first();
 	gem = gem ? gem->find_by_id(handle) : 0;
 
@@ -1210,9 +1210,22 @@ int drm_gem_close_ioctl(struct drm_device *dev, void *data,
 	}
 
 	drm_gem_object *obj = gem->gem_object();
-	if (--obj->handle_count == 0 && dev->driver->gem_close_object) {
+	if (!obj)
+		return -1;
+
+	if (--obj->handle_count == 0) {
 		//PDBG("gem_free_object %p", dev->driver->gem_close_object);
-		dev->driver->gem_close_object(obj, file_priv);
+		if (obj->filp->f_inode->i_mapping->gtt_addr) {
+			Genode::warning("UNMAP GTT");
+			while (1) ;
+		}
+
+		/* free backing storage */
+		struct page *pages = obj->filp->f_inode->i_mapping->my_page;
+		free_pages((unsigned long)pages->addr, 0);
+		kfree(obj->filp->f_inode->i_mapping);
+		kfree(obj->filp->f_inode);
+		kfree(obj->filp);
 	}
 
 	/* free handle */
