@@ -100,6 +100,7 @@ namespace File_system {
 					e->type = Directory_entry::TYPE_DIRECTORY;
 				else
 					e->type = Directory_entry::TYPE_FILE;
+				e->inode = 1;
 
 				return sizeof(Directory_entry);
 			}
