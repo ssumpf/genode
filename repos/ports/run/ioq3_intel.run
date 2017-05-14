@@ -11,6 +11,8 @@ set build_components {
 	drivers/nic
 	server/rump_fs
 	lib/vfs/lxip
+	server/input_filter
+	drivers/usb
 }
 
 source ${genode_dir}/repos/base/run/platform_drv.inc
@@ -55,9 +57,10 @@ append config {
 	</start>
 	<start name="usb_drv">
 		<resource name="RAM" quantum="20M"/>
-		<config xhci="yes"><storage/></config>
+		<config xhci="yes"><storage/><hid/></config>
 		<provides>
 			<service name="Block" />
+			<service name="Input" />
 		</provides>
 	</start>
 	<start name="ps2_drv">
@@ -73,7 +76,32 @@ append config {
 	<start name="nic_drv">
 		<resource name="RAM" quantum="10M" />
 		<provides><service name="Nic" /></provides>
-	</start> }
+	</start>
+	<start name="input_filter">
+		<resource name="RAM" quantum="2M" />
+		<provides> <service name="Input" /> </provides>
+		<config>
+			<input label="ps2"/>
+			<input label="usb"/>
+			<output>
+				<merge>
+					<input name="ps2" />
+					<input name="usb" />
+				</merge>
+			</output>
+		</config>
+		<route>
+			<service name="LOG"> <parent/> </service>
+			<service name="RAM"> <parent/> </service>
+			<service name="CPU"> <parent/> </service>
+			<service name="ROM"> <parent/> </service>
+			<service name="PD">  <parent/> </service>
+			<service name="Timer"> <child name="timer"/> </service>
+			<service name="Input" label="ps2"> <child name="ps2_drv" /> </service>
+			<service name="Input" label="usb"> <child name="usb_drv" /> </service>
+			<route><any-service> <parent /> <any-child/> </any-service></route>
+		</route>
+	</start>}
 
 append_platform_drv_config
 
@@ -91,6 +119,7 @@ append config {
 			</vfs>
 		</config>
 		<route>
+			<service name="Input"> <child name="input_filter" /> </service>
 			<any-service> <parent /> <any-child/> </any-service>
 		</route>
 	</start>
@@ -109,6 +138,7 @@ set boot_modules {
 	i965.lib.so sdl.lib.so vfs_lxip.lib.so
 	rump_fs rump.lib.so rump_fs.lib.so
 	intel_fb_drv usb_drv ps2_drv nic_drv
+	input_filter
 }
 
 append_platform_drv_boot_modules
