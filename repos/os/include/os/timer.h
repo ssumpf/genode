@@ -53,7 +53,7 @@ class Genode::Timer_time_source : public Genode::Time_source
 		enum { MAX_REMOTE_TIME_TRIALS     = 5 };
 
 		::Timer::Session                                    &_session;
-		Signal_handler<Timer_time_source>                    _signal_handler;
+		Io_signal_handler<Timer_time_source>                 _signal_handler;
 		Timeout_handler                                     *_handler = nullptr;
 		Constructible<Periodic_timeout<Timer_time_source> >  _real_time_update;
 
