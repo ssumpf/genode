@@ -1,0 +1,87 @@
+if {[have_spec arm]} {
+   assert_spec arm_v7
+}
+
+#
+# Check used commands
+#
+set mkfsfat [check_installed mkfs.fat]
+
+#
+# Build
+#
+set build_components {
+	core init
+	drivers/timer
+	server/ram_blk
+	test/fatfs
+}
+
+build $build_components
+
+#
+# Build FAT-file-system image
+#
+catch { exec $mkfsfat -C -n "fat.raw" bin/fat.raw 64 }
+
+
+create_boot_directory
+
+#
+# Generate config
+#
+append config {
+<config>
+	<parent-provides>
+		<service name="CPU"/>
+		<service name="IO_MEM"/>
+		<service name="IO_PORT"/>
+		<service name="IRQ"/>
+		<service name="LOG"/>
+		<service name="PD"/>
+		<service name="RAM"/>
+		<service name="RM"/>
+		<service name="ROM"/>
+	</parent-provides>
+	<default-route>
+		<any-service> <parent/> <any-child/> </any-service>
+	</default-route>
+	<default caps="128"/>
+	<start name="timer">
+		<resource name="RAM" quantum="1M"/>
+		<provides><service name="Timer"/></provides>
+	</start>
+	<start name="ram_blk">
+		<resource name="RAM" quantum="20M"/>
+		<provides><service name="Block"/></provides>
+		<config file="fat.raw" block_size="512"/>
+	</start>
+	<start name="test-fatfs">
+		<resource name="RAM" quantum="10M"/>
+		<config ld_verbose="true"/>
+	</start>
+</config>}
+
+install_config $config
+
+#
+# Boot modules
+#
+
+# generic modules
+set boot_modules {
+	core init ld.lib.so
+	ram_blk
+	timer
+	test-fatfs
+
+	fat.raw
+}
+
+build_boot_image $boot_modules
+
+append qemu_args " -m 256 -nographic"
+
+run_genode_until {.*child "test-fatfs" exited with exit value 0.*} 60
+
+exec rm -f bin/fat.raw

@@ -1,5 +1,5 @@
 #
-# \brief  Test for using the libc_ffat plugin
+# \brief  Test for using file systems in the libc
 # \author Christian Prochaska
 # \date   2011-05-27
 #
