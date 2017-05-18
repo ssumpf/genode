@@ -25,6 +25,7 @@
 #include <base/internal/globals.h>
 
 /* core includes */
+#include <core_parent.h>
 #include <platform.h>
 #include <platform_thread.h>
 #include <platform_pd.h>
