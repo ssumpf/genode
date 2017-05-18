@@ -3,4 +3,4 @@ SRC_CC += timer.cc
 SRC_CC += hw/timer_timestamp.cc
 SRC_CC += duration.cc
 
-vpath % $(REP_DIR)/src/lib/timeout
+vpath % $(BASE_DIR)/../os/src/lib/timeout
