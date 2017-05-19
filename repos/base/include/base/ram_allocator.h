@@ -86,10 +86,18 @@ class Genode::Constrained_ram_allocator : public Ram_allocator
 		{
 			size_t page_aligned_size = align_addr(size, 12);
 
-			_ram_guard.withdraw(Ram_quota{page_aligned_size});
-			_cap_guard.withdraw(Cap_quota{1});
+			Ram_quota_guard::Reservation ram (_ram_guard, Ram_quota{page_aligned_size});
+			Cap_quota_guard::Reservation caps(_cap_guard, Cap_quota{1});
 
-			return _ram_alloc.alloc(page_aligned_size, cached);
+			/*
+			 * \throw Out_of_caps, Out_of_ram
+			 */
+			Ram_dataspace_capability ds = _ram_alloc.alloc(page_aligned_size, cached);
+
+			ram. acknowledge();
+			caps.acknowledge();
+
+			return ds;
 		}
 
 		void free(Ram_dataspace_capability ds) override
