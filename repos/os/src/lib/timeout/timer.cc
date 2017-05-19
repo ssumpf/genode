@@ -76,27 +76,38 @@ void Timer_time_source::_handle_real_time_update(Duration)
 {
 	Lock_guard<Lock> lock_guard(_real_time_lock);
 
-	Timestamp     volatile ts;
-	unsigned long volatile ms;
-	unsigned remote_time_trials = 0;
-	for (; remote_time_trials < MAX_REMOTE_TIME_TRIALS;
-	       remote_time_trials++)
+	Timestamp     ts      = 0;
+	unsigned long ms      = 0UL;
+	unsigned long us_diff = ~0UL;
+
+	for (unsigned remote_time_trials = 0;
+	     remote_time_trials < MAX_REMOTE_TIME_TRIALS;
+	     remote_time_trials++)
 	{
 		/* determine time and timestamp difference since the last call */
-		ts = _timestamp();
-		ms = _session.elapsed_ms();
+		Timestamp     volatile new_ts = _timestamp();
+		unsigned long volatile new_ms = _session.elapsed_ms();
 
 		if (_interpolation_quality < MAX_INTERPOLATION_QUALITY) {
-			break; }
+			ms = new_ms;
+			ts = new_ts;
+			break;
+		}
 
-		Timestamp ts_diff = _timestamp() - ts;
+		Timestamp     const ts_diff     = _timestamp() - ts;
+		unsigned long const new_us_diff = _ts_to_us_ratio(ts_diff,
+		                                                  _us_to_ts_factor);
 
-		if (_ts_to_us_ratio(ts_diff, _us_to_ts_factor) <
-		    MAX_REMOTE_TIME_LATENCY_US)
-		{ break; }
+		/* remember results only if the latency was better than last time */
+		if (new_us_diff < us_diff) {
+			ms = new_ms;
+			ts = new_ts;
+
+			if (us_diff < MAX_REMOTE_TIME_LATENCY_US) {
+				break;
+			}
+		}
 	}
-	if (remote_time_trials == MAX_REMOTE_TIME_TRIALS) {
-		warning("reading remote time is too slow"); }
 
 	unsigned long const ms_diff = ms - _ms;
 	Timestamp     const ts_diff = ts - _ts;
