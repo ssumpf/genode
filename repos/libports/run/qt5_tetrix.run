@@ -38,7 +38,7 @@ append config {
 append config [qt5_start_nodes feature]
 
 append config {
-	<start name="tetrix">
+	<start name="tetrix" caps="200">
 		<resource name="RAM" quantum="80M"/>
 		<config>
 			<vfs>
