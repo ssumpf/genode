@@ -152,25 +152,17 @@ void Component::construct(Genode::Env &env)
 	print_quota_stats(env.ram());
 
 	/*
-	 * Out of memory while upgrading session quotas.
-	 *
-	 * This test provokes the signal session to consume more resources than
-	 * donated via the initial session creation. Once drained, we need to
-	 * successively upgrade the session. At one point, we will run out of our
-	 * initial quota. Now, before we can issue another upgrade, we first need
-	 * to request additional resources.
-	 *
-	 * Note that the construction of the signal receiver will consume a part
-	 * of the quota we preserved as 'KEEP_QUOTA'.
+	 * Drain PD session by allocating a lot of signal-context capabilities.
+	 * This step will ultimately trigger resource requests to the parent.
 	 */
-	log("\n-- draining signal session --");
+	log("\n-- draining PD session --");
 	{
 		struct Dummy_signal_handler : Signal_handler<Dummy_signal_handler>
 		{
 			Dummy_signal_handler(Entrypoint &ep)
 			: Signal_handler<Dummy_signal_handler>(ep, *this, nullptr) { }
 		};
-		enum { NUM_SIGH = 2000U };
+		enum { NUM_SIGH = 1000U };
 		static Constructible<Dummy_signal_handler> dummy_handlers[NUM_SIGH];
 
 		for (unsigned i = 0; i < NUM_SIGH; i++)

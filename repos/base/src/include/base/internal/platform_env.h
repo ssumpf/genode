@@ -30,6 +30,7 @@
 #include <base/internal/parent_cap.h>
 #include <base/internal/attached_stack_area.h>
 #include <base/internal/expanding_cpu_session_client.h>
+#include <base/internal/expanding_pd_session_client.h>
 #include <base/internal/expanding_region_map_client.h>
 #include <base/internal/expanding_parent_client.h>
 
@@ -56,7 +57,7 @@ class Genode::Platform_env : public Platform_env_base,
 				return static_cap_cast<T>(parent.session_cap(id));
 			}
 
-			Pd_session_client            pd;
+			Expanding_pd_session_client  pd;
 			Expanding_cpu_session_client cpu;
 			Expanding_region_map_client  rm;
 

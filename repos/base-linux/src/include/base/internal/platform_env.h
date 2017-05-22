@@ -21,7 +21,7 @@
 /* base-internal includes */
 #include <base/internal/expanding_cpu_session_client.h>
 #include <base/internal/expanding_region_map_client.h>
-#include <base/internal/expanding_ram_session_client.h>
+#include <base/internal/expanding_pd_session_client.h>
 #include <base/internal/expanding_parent_client.h>
 #include <base/internal/region_map_mmap.h>
 #include <base/internal/local_rm_session.h>
