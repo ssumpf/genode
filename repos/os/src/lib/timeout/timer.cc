@@ -94,7 +94,7 @@ void Timer_time_source::_handle_real_time_update(Duration)
 			break;
 		}
 
-		Timestamp     const ts_diff     = _timestamp() - ts;
+		Timestamp     const ts_diff     = _timestamp() - new_ts;
 		unsigned long const new_us_diff = _ts_to_us_ratio(ts_diff,
 		                                                  _us_to_ts_factor);
 
