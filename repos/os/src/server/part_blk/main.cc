@@ -75,7 +75,7 @@ Block::Partition_table & Main::_table()
 		report = config.xml().sub_node("report").attribute_value
                          ("partitions", false);
 		if (report)
-			_reporter.enabled(true); 
+			_reporter.enabled(true);
 	} catch(...) {}
 
 	if (use_gpt)

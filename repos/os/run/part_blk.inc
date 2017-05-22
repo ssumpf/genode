@@ -93,16 +93,15 @@ if { $mode == "mbr" } {
 			<report partitions="yes"/>
 			<policy label_prefix="test-part1" partition="2"/>
 			<policy label_prefix="test-part2" partition="1"/>
-		</config>
-	}
+		</config>}
 }
 
 append config {
 	</start>
 	<start name="report_rom">
-		<provides> 
+		<provides>
 			<service name="Report"/>
-			<service name="ROM"/> 
+			<service name="ROM"/>
 		</provides>
 		<resource name="RAM" quantum="5M" />
 		<config verbose="yes"/>
@@ -129,8 +128,8 @@ install_config $config
 # Boot modules
 #
 
-append boot_modules { 
-	core ld.lib.so init timer 
+append boot_modules {
+	core ld.lib.so init timer
 	rom_blk part_blk test-blk-cli report_rom
 }
 append boot_modules $img_file

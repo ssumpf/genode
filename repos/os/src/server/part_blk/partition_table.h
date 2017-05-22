@@ -70,7 +70,7 @@ struct Block::Partition_table
 				template <typename T> T addr() {
 					return reinterpret_cast<T>(_session.tx()->packet_content(_p)); }
 		};
-		
+
 		Genode::Heap & heap;
 		Driver       & driver;
 		Genode::Reporter & reporter;
@@ -81,7 +81,6 @@ struct Block::Partition_table
 		virtual Partition *partition(int num) = 0;
 
 		virtual bool parse() = 0;
-
 };
 
 #endif /* _PART_BLK__PARTITION_TABLE_H_ */

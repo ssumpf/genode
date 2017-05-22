@@ -142,12 +142,12 @@ struct Mbr_partition_table : public Block::Partition_table
 		{
 			Sector s(driver, 0, 1);
 			Mbr *mbr = s.addr<Mbr *>();
-			
+
 			/* no partition table, use whole disc as partition 0 */
 			if (!(mbr->valid()))
 				_part_list[0] = new (&heap)
 					Block::Partition(0, driver.blk_cnt() - 1);
-			
+
 			_parse_mbr(mbr, [&] (int i, Partition_record *r, unsigned offset) {
 				Genode::log("Partition ", i, ": LBA ",
 				            (unsigned int) r->_lba + offset, " (",
@@ -173,7 +173,7 @@ struct Mbr_partition_table : public Block::Partition_table
 						});
 					});
 				});
-			}	
+			}
 
 			for (unsigned num = 0; num < MAX_PARTITIONS; num++)
 				if (_part_list[num])

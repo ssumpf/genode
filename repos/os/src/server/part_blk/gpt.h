@@ -251,22 +251,21 @@ class Gpt : public Block::Partition_table
 				            " blocks) type: '", e->_type.to_string(),
 				            "' name: '", e->name(), "'");
 			}
-			
+
 			/* Report the partitions */
 			if (reporter.enabled())
 			{
 				Genode::Reporter::Xml_generator xml(reporter, [&] () {
-					
 					xml.attribute("type", "gpt");
-					
+
 					for (int i = 0; i < MAX_PARTITIONS; i++) {
 						Gpt_entry *e = (entries + i);
-						
+
 						if (!e->valid()){
 							continue;
 						}
 
-						xml.node("partition", [&] {
+						xml.node("partition", [&] () {
 							xml.attribute("number", i + 1);
 							xml.attribute("name", e->name());
 							xml.attribute("type", e->_type.to_string());
@@ -275,8 +274,8 @@ class Gpt : public Block::Partition_table
 							xml.attribute("length", e->_lba_end - e->_lba_start + 1);
 						});
 					}
-				} );
-			}	
+				});
+			}
 
 		}
 
