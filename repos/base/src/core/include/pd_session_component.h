@@ -45,15 +45,15 @@ class Genode::Pd_session_component : public Session_object<Pd_session>
 {
 	private:
 
-		Rpc_entrypoint           &_ep;
-		Constrained_ram_allocator _constrained_md_ram_alloc;
-		Sliced_heap               _sliced_heap;
-		Platform_pd               _pd { &_sliced_heap, _label.string() };
-		Capability<Parent>        _parent;
-		Signal_broker             _signal_broker;
-		Rpc_cap_factory           _rpc_cap_factory;
-		Ram_dataspace_factory     _ram_ds_factory;
-		Native_pd_component       _native_pd;
+		Rpc_entrypoint            &_ep;
+		Constrained_ram_allocator  _constrained_md_ram_alloc;
+		Sliced_heap                _sliced_heap;
+		Constructible<Platform_pd> _pd { &_sliced_heap, _label.string() };
+		Capability<Parent>         _parent;
+		Signal_broker              _signal_broker;
+		Rpc_cap_factory            _rpc_cap_factory;
+		Ram_dataspace_factory      _ram_ds_factory;
+		Native_pd_component        _native_pd;
 
 		Region_map_component _address_space;
 		Region_map_component _stack_area;
@@ -133,7 +133,10 @@ class Genode::Pd_session_component : public Session_object<Pd_session>
 			               platform()->vm_start(), platform()->vm_size()),
 			_stack_area (ep, _sliced_heap, pager_ep, 0, stack_area_virtual_size()),
 			_linker_area(ep, _sliced_heap, pager_ep, 0, LINKER_AREA_SIZE)
-		{ }
+		{
+			if (platform()->core_needs_platform_pd() || label != "core")
+				_pd.construct(&_sliced_heap, _label.string());
+		}
 
 		/**
 		 * Initialize cap and RAM accounts without providing a reference account
@@ -163,7 +166,7 @@ class Genode::Pd_session_component : public Session_object<Pd_session>
 		 */
 		bool bind_thread(Platform_thread &thread)
 		{
-			return _pd.bind_thread(&thread);
+			return _pd->bind_thread(&thread);
 		}
 
 		Region_map_component &address_space_region_map()
@@ -174,7 +177,7 @@ class Genode::Pd_session_component : public Session_object<Pd_session>
 		void assign_parent(Capability<Parent> parent) override
 		{
 			_parent = parent;
-			_pd.assign_parent(parent);
+			_pd->assign_parent(parent);
 		}
 
 		bool assign_pci(addr_t, uint16_t) override;

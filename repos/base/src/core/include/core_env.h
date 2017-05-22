@@ -60,16 +60,16 @@ class Genode::Core_env : public Env_deprecated
 			_entrypoint(nullptr, ENTRYPOINT_STACK_SIZE, "entrypoint"),
 			_region_map(_entrypoint),
 			_pd_session(_entrypoint,
-			             Session::Resources {
-			                 Ram_quota { platform()->ram_alloc()->avail() },
-			                 Cap_quota { platform()->max_caps() } },
-			             Session::Label("core"),
-			             Session::Diag{false},
-			             *platform()->ram_alloc(),
-			             Ram_dataspace_factory::any_phys_range(),
-			             _region_map,
-			             *((Pager_entrypoint *)nullptr),
-			             "" /* args to native PD */)
+			            Session::Resources {
+			                Ram_quota { platform()->ram_alloc()->avail() },
+			                Cap_quota { platform()->max_caps() } },
+			            Session::Label("core"),
+			            Session::Diag{false},
+			            *platform()->ram_alloc(),
+			            Ram_dataspace_factory::any_phys_range(),
+			            _region_map,
+			            *((Pager_entrypoint *)nullptr),
+			            "" /* args to native PD */)
 		{
 			_pd_session.init_cap_and_ram_accounts();
 		}
