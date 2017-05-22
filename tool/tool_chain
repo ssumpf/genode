@@ -184,7 +184,8 @@ export MAKEFLAGS
 endif
 
 COMMON_BOOTSTRAP_CONFIG = $(CONFIG_QUIET) \
-                          --prefix=$(LOCAL_BOOTSTRAP_INSTALL_LOCATION)
+                          --prefix=$(LOCAL_BOOTSTRAP_INSTALL_LOCATION) \
+                          --disable-multilib
 
 BINUTILS_BOOTSTRAP_CONFIG += $(COMMON_BOOTSTRAP_CONFIG)
 
