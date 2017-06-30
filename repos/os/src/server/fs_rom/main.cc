@@ -105,7 +105,7 @@ class Fs_rom::Rom_session_component :
 		 */
 		struct Version { unsigned value; };
 		Version _curr_version       { 0 };
-		Version _handed_out_version { ~0UL };
+		Version _handed_out_version { ~0U };
 
 		/**
 		 * Open compound directory of specified file
