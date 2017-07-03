@@ -65,8 +65,10 @@ struct Usb_driver::Main : Driver_starter
 
 	void _handle_start()
 	{
-		_initial_config_handler.destruct();
-		start_usb_driver(_env);
+		if (_initial_config_handler.constructed()) {
+			_initial_config_handler.destruct();
+			start_usb_driver(_env);
+		}
 	}
 
 	Signal_handler<Main> _start_handler {
