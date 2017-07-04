@@ -144,10 +144,15 @@ class Genode::Platform : public Platform_generic
 		                    Cnode_index(Core_cspace::phys_cnode_sel()),
 		                    Core_cspace::NUM_PHYS_SEL_LOG2, _initial_untyped_pool };
 
-		/* allocate 2nd-level CNode for storing cap selectors for untyped pages */
+		/* allocate 2nd-level CNode for storing cap selectors for untyped 4k objects */
 		Cnode _untyped_cnode { Cap_sel(seL4_CapInitThreadCNode),
-		                       Cnode_index(Core_cspace::untyped_cnode_sel()),
+		                       Cnode_index(Core_cspace::untyped_cnode_4k()),
 		                       Core_cspace::NUM_PHYS_SEL_LOG2, _initial_untyped_pool };
+
+		/* allocate 2nd-level CNode for storing cap selectors for untyped 16k objects */
+		Cnode _untyped_cnode_16k { Cap_sel(seL4_CapInitThreadCNode),
+		                           Cnode_index(Core_cspace::untyped_cnode_16k()),
+		                           Core_cspace::NUM_PHYS_SEL_LOG2, _initial_untyped_pool };
 
 		/*
 		 * XXX Consider making Bit_allocator::_reserve public so that we can
