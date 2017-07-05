@@ -16,7 +16,7 @@
 			<service name="LOG"/>
 			<service name="PD"/>
 			<service name="ROM"/>
-			<service name="Timer"/
+			<service name="Timer"/>
 		</parent-provides>
 
 		<default-route>
