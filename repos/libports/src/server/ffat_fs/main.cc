@@ -500,8 +500,9 @@ class Ffat_fs::Session_component : public Session_rpc_object
 		void close(Node_handle handle)
 		{
 			auto close_fn = [&] (Open_node &open_node) {
-				destroy(_heap, &open_node.node());
+				Node &node = open_node.node();
 				destroy(_heap, &open_node);
+				destroy(_heap, &node);
 			};
 
 			try {
