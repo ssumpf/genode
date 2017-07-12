@@ -1,0 +1,55 @@
+
+set build_components {
+	core init
+	app/jdk/java
+}
+
+build $build_components
+create_boot_directory
+
+set config {
+<config>
+	<parent-provides>
+		<service name="ROM"/>
+		<service name="LOG"/>
+		<service name="RM"/>
+		<service name="CPU"/>
+		<service name="PD"/>
+		<service name="IRQ"/>
+		<service name="IO_PORT"/>
+		<service name="IO_MEM"/>
+	</parent-provides>
+	<default-route>
+		<any-service> <parent/> <any-child/> </any-service>
+	</default-route>
+	<default caps="100" />
+	<start name="java">
+		<resource name="RAM" quantum="10M" />
+		<config>
+			<arg value="java" />
+			<arg value="-jar" />
+			<arg value="hello.jar" />
+			<libc stdout="/dev/log" stderr="/dev/log" />
+			<vfs>
+				<dir name="dev">
+					<log/>
+				</dir>
+				<rom name="hello.jar" />
+			</vfs>
+		</config>
+	</start>
+</config>
+}
+
+install_config $config
+
+set boot_modules {
+	core init ld.lib.so
+	java jli.lib.so hello.jar
+	libc.lib.so libm.lib.so zlib.lib.so
+	posix.lib.so
+}
+
+build_boot_image $boot_modules
+
+run_genode_until forever
