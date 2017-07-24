@@ -5,9 +5,9 @@ JAVA_BASE  = $(JDK_BASE)/share/native/libjava
 
 SRC_C = $(notdir $(wildcard $(JAVA_BASE)/*.c))
 
-CC_C_OPT = -DVERSION_SPECIFICATION='"9"' -DVERSION_SHORT='"9-internal"' \
-           -DVERSION_MAJOR=9 -DVERSION_MINOR=0 -DVERSION_SECURITY=0 \
-           -DVERSION_BUILD=0 -DVERSION_PATCH=0
+include $(REP_DIR)/lib/mk/jdk_version.inc
+
+CC_C_OPT = $(JDK_VERSION)
 
 CC_C_OPT += -Dlseek64=lseek -DO_DSYNC=O_SYNC
 
