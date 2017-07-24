@@ -1,4 +1,4 @@
-CC_OPT  = -DINCLUDE_SUFFIX_CPU=_x86 -DAMD64
+CC_OPT  = -DINCLUDE_SUFFIX_CPU=_x86 -DAMD64 -DHOTSPOT_LIB_ARCH='"amd64"'
 
 INC_DIR = $(call select_from_ports,jdk)/src/app/jdk/hotspot/src/cpu/x86/vm
 
