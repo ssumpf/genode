@@ -2,6 +2,7 @@ LIBS         = stdcxx
 SHARED_LIB   = yes
 HOTSPOT_BASE = $(call select_from_ports,jdk)/src/app/jdk/hotspot/src
 
+include $(REP_DIR)/lib/mk/jdk_version.inc
 
 CC_OPT += -fpermissive -Wno-comment -Wno-reorder -Wno-switch
 
@@ -41,11 +42,95 @@ SRC_CONE += share/vm/c1/c1_Canonicalizer.cpp \
             share/vm/c1/c1_ValueStack.cpp \
             share/vm/c1/c1_ValueType.cpp
 
+SRC_CTWO += share/vm/ci/bcEscapeAnalyzer.cpp \
+            share/vm/ci/ciTypeFlow.cpp \
+            share/vm/jvmci/compilerRuntime.cpp \
+            share/vm/jvmci/jvmci_globals.cpp \
+            share/vm/opto/addnode.cpp \
+            share/vm/opto/arraycopynode.cpp \
+            share/vm/opto/block.cpp \
+            share/vm/opto/buildOopMap.cpp \
+            share/vm/opto/bytecodeInfo.cpp \
+            share/vm/opto/c2compiler.cpp \
+            share/vm/opto/callGenerator.cpp \
+            share/vm/opto/callnode.cpp \
+            share/vm/opto/castnode.cpp \
+            share/vm/opto/cfgnode.cpp \
+            share/vm/opto/chaitin.cpp \
+            share/vm/opto/classes.cpp \
+            share/vm/opto/coalesce.cpp \
+            share/vm/opto/compile.cpp \
+            share/vm/opto/connode.cpp \
+            share/vm/opto/convertnode.cpp \
+            share/vm/opto/countbitsnode.cpp \
+            share/vm/opto/divnode.cpp \
+            share/vm/opto/doCall.cpp \
+            share/vm/opto/domgraph.cpp \
+            share/vm/opto/escape.cpp \
+            share/vm/opto/gcm.cpp \
+            share/vm/opto/generateOptoStub.cpp \
+            share/vm/opto/graphKit.cpp \
+            share/vm/opto/idealGraphPrinter.cpp \
+            share/vm/opto/idealKit.cpp \
+            share/vm/opto/ifg.cpp \
+            share/vm/opto/ifnode.cpp \
+            share/vm/opto/indexSet.cpp \
+            share/vm/opto/intrinsicnode.cpp \
+            share/vm/opto/lcm.cpp \
+            share/vm/opto/library_call.cpp \
+            share/vm/opto/live.cpp \
+            share/vm/opto/locknode.cpp \
+            share/vm/opto/loopnode.cpp \
+            share/vm/opto/loopopts.cpp \
+            share/vm/opto/loopPredicate.cpp \
+            share/vm/opto/loopTransform.cpp \
+            share/vm/opto/loopUnswitch.cpp \
+            share/vm/opto/machnode.cpp \
+            share/vm/opto/macroArrayCopy.cpp \
+            share/vm/opto/macro.cpp \
+            share/vm/opto/matcher.cpp \
+            share/vm/opto/mathexactnode.cpp \
+            share/vm/opto/memnode.cpp \
+            share/vm/opto/movenode.cpp \
+            share/vm/opto/mulnode.cpp \
+            share/vm/opto/multnode.cpp \
+            share/vm/opto/narrowptrnode.cpp \
+            share/vm/opto/node.cpp \
+            share/vm/opto/opaquenode.cpp \
+            share/vm/opto/opcodes.cpp \
+            share/vm/opto/output.cpp \
+            share/vm/opto/parse1.cpp \
+            share/vm/opto/parse2.cpp \
+            share/vm/opto/parse3.cpp \
+            share/vm/opto/parseHelper.cpp \
+            share/vm/opto/phase.cpp \
+            share/vm/opto/phaseX.cpp \
+            share/vm/opto/postaloc.cpp \
+            share/vm/opto/regalloc.cpp \
+            share/vm/opto/regmask.cpp \
+            share/vm/opto/reg_split.cpp \
+            share/vm/opto/replacednodes.cpp \
+            share/vm/opto/rootnode.cpp \
+            share/vm/opto/runtime.cpp \
+            share/vm/opto/split_if.cpp \
+            share/vm/opto/stringopts.cpp \
+            share/vm/opto/subnode.cpp \
+            share/vm/opto/superword.cpp \
+            share/vm/opto/type.cpp \
+            share/vm/opto/vectornode.cpp \
+            share/vm/prims/jvm.cpp \
+            share/vm/runtime/globals.cpp \
+
 #
 # create CC_OPT_file for c1/c2 compiler
 #
 $(foreach FILE, $(SRC_CONE:.cpp=), $(eval CC_OPT_$(FILE) = -DCOMPILER1))
-$(foreach FILE, $(SRC_CTWO:.cpp=), $(eval CC_OPT_$(FILE) = -DCOMPILER2))
+$(foreach FILE, $(SRC_CTWO:.cpp=), $(eval CC_OPT_$(FILE) = -DCOMPILER2 -DINCLUDE_AOT))
+
+CC_OPT_share/vm/runtime/vm_version += $(JDK_VERSION) \
+              -DHOTSPOT_VERSION_STRING='"9-internal+0-adhoc.genode.openjdk-jdk9-jdk9"'\
+              -DDEBUG_LEVEL='"release"' -DHOTSPOT_VM_DISTRO='"OpenJDK"' \
+              -DHOTSPOT_BUILD_USER='"genode"'
 
 
 SRC_CC += $(SRC_CONE) $(SRC_CTWO) \
@@ -53,7 +138,6 @@ SRC_CC += $(SRC_CONE) $(SRC_CTWO) \
           os/bsd/vm/attachListener_bsd.cpp \
           os/bsd/vm/decoder_machO.cpp \
           os/bsd/vm/jvm_bsd.cpp \
-          os/bsd/vm/os_bsd.cpp \
           os/bsd/vm/osThread_bsd.cpp \
           os/bsd/vm/perfMemory_bsd.cpp \
           os/bsd/vm/stubRoutines_bsd.cpp \
@@ -61,22 +145,9 @@ SRC_CC += $(SRC_CONE) $(SRC_CTWO) \
           os/posix/vm/os_posix.cpp \
           os/posix/vm/threadLocalStorage_posix.cpp \
           os/posix/vm/vmError_posix.cpp \
-          share/vm/adlc/adlparse.cpp \
-          share/vm/adlc/archDesc.cpp \
-          share/vm/adlc/arena.cpp \
-          share/vm/adlc/dfa.cpp \
-          share/vm/adlc/dict2.cpp \
-          share/vm/adlc/filebuff.cpp \
-          share/vm/adlc/forms.cpp \
-          share/vm/adlc/formsopt.cpp \
-          share/vm/adlc/formssel.cpp \
-          share/vm/adlc/main.cpp \
-          share/vm/adlc/output_c.cpp \
-          share/vm/adlc/output_h.cpp \
           share/vm/asm/assembler.cpp \
           share/vm/asm/codeBuffer.cpp \
           share/vm/asm/register.cpp \
-          share/vm/ci/bcEscapeAnalyzer.cpp \
           share/vm/ci/ciArray.cpp \
           share/vm/ci/ciArrayKlass.cpp \
           share/vm/ci/ciBaseObject.cpp \
@@ -108,7 +179,6 @@ SRC_CC += $(SRC_CONE) $(SRC_CTWO) \
           share/vm/ci/ciTypeArray.cpp \
           share/vm/ci/ciTypeArrayKlass.cpp \
           share/vm/ci/ciType.cpp \
-          share/vm/ci/ciTypeFlow.cpp \
           share/vm/ci/ciUtilities.cpp \
           share/vm/classfile/altHashing.cpp \
           share/vm/classfile/bytecodeAssembler.cpp \
@@ -357,12 +427,10 @@ SRC_CC += $(SRC_CONE) $(SRC_CTWO) \
           share/vm/interpreter/templateInterpreter.cpp \
           share/vm/interpreter/templateInterpreterGenerator.cpp \
           share/vm/interpreter/templateTable.cpp \
-          share/vm/jvmci/compilerRuntime.cpp \
           share/vm/jvmci/jvmciCodeInstaller.cpp \
           share/vm/jvmci/jvmciCompiler.cpp \
           share/vm/jvmci/jvmciCompilerToVM.cpp \
           share/vm/jvmci/jvmciEnv.cpp \
-          share/vm/jvmci/jvmci_globals.cpp \
           share/vm/jvmci/jvmciJavaClasses.cpp \
           share/vm/jvmci/jvmciRuntime.cpp \
           share/vm/jvmci/vmStructs_jvmci.cpp \
@@ -429,85 +497,12 @@ SRC_CC += $(SRC_CONE) $(SRC_CTWO) \
           share/vm/oops/oopsHierarchy.cpp \
           share/vm/oops/symbol.cpp \
           share/vm/oops/typeArrayKlass.cpp \
-          share/vm/opto/addnode.cpp \
-          share/vm/opto/arraycopynode.cpp \
-          share/vm/opto/block.cpp \
-          share/vm/opto/buildOopMap.cpp \
-          share/vm/opto/bytecodeInfo.cpp \
-          share/vm/opto/c2compiler.cpp \
           share/vm/opto/c2_globals.cpp \
-          share/vm/opto/callGenerator.cpp \
-          share/vm/opto/callnode.cpp \
-          share/vm/opto/castnode.cpp \
-          share/vm/opto/cfgnode.cpp \
-          share/vm/opto/chaitin.cpp \
-          share/vm/opto/classes.cpp \
-          share/vm/opto/coalesce.cpp \
-          share/vm/opto/compile.cpp \
-          share/vm/opto/connode.cpp \
-          share/vm/opto/convertnode.cpp \
-          share/vm/opto/countbitsnode.cpp \
-          share/vm/opto/divnode.cpp \
-          share/vm/opto/doCall.cpp \
-          share/vm/opto/domgraph.cpp \
-          share/vm/opto/escape.cpp \
-          share/vm/opto/gcm.cpp \
-          share/vm/opto/generateOptoStub.cpp \
-          share/vm/opto/graphKit.cpp \
-          share/vm/opto/idealGraphPrinter.cpp \
-          share/vm/opto/idealKit.cpp \
-          share/vm/opto/ifg.cpp \
-          share/vm/opto/ifnode.cpp \
-          share/vm/opto/indexSet.cpp \
-          share/vm/opto/intrinsicnode.cpp \
-          share/vm/opto/lcm.cpp \
-          share/vm/opto/library_call.cpp \
-          share/vm/opto/live.cpp \
-          share/vm/opto/locknode.cpp \
-          share/vm/opto/loopnode.cpp \
-          share/vm/opto/loopopts.cpp \
-          share/vm/opto/loopPredicate.cpp \
-          share/vm/opto/loopTransform.cpp \
-          share/vm/opto/loopUnswitch.cpp \
-          share/vm/opto/machnode.cpp \
-          share/vm/opto/macroArrayCopy.cpp \
-          share/vm/opto/macro.cpp \
-          share/vm/opto/matcher.cpp \
-          share/vm/opto/mathexactnode.cpp \
-          share/vm/opto/memnode.cpp \
-          share/vm/opto/movenode.cpp \
-          share/vm/opto/mulnode.cpp \
-          share/vm/opto/multnode.cpp \
-          share/vm/opto/narrowptrnode.cpp \
-          share/vm/opto/node.cpp \
-          share/vm/opto/opaquenode.cpp \
-          share/vm/opto/opcodes.cpp \
-          share/vm/opto/output.cpp \
-          share/vm/opto/parse1.cpp \
-          share/vm/opto/parse2.cpp \
-          share/vm/opto/parse3.cpp \
-          share/vm/opto/parseHelper.cpp \
-          share/vm/opto/phase.cpp \
-          share/vm/opto/phaseX.cpp \
-          share/vm/opto/postaloc.cpp \
-          share/vm/opto/regalloc.cpp \
-          share/vm/opto/regmask.cpp \
-          share/vm/opto/reg_split.cpp \
-          share/vm/opto/replacednodes.cpp \
-          share/vm/opto/rootnode.cpp \
-          share/vm/opto/runtime.cpp \
-          share/vm/opto/split_if.cpp \
-          share/vm/opto/stringopts.cpp \
-          share/vm/opto/subnode.cpp \
-          share/vm/opto/superword.cpp \
-          share/vm/opto/type.cpp \
-          share/vm/opto/vectornode.cpp \
           share/vm/prims/evmCompat.cpp \
           share/vm/prims/forte.cpp \
           share/vm/prims/jniCheck.cpp \
           share/vm/prims/jni.cpp \
           share/vm/prims/jniFastGetField.cpp \
-          share/vm/prims/jvm.cpp \
           share/vm/prims/jvmtiClassFileReconstituter.cpp \
           share/vm/prims/jvmtiCodeBlobEvents.cpp \
           share/vm/prims/jvmtiEnvBase.cpp \
@@ -552,7 +547,6 @@ SRC_CC += $(SRC_CONE) $(SRC_CTWO) \
           share/vm/runtime/fieldType.cpp \
           share/vm/runtime/fprofiler.cpp \
           share/vm/runtime/frame.cpp \
-          share/vm/runtime/globals.cpp \
           share/vm/runtime/handles.cpp \
           share/vm/runtime/icache.cpp \
           share/vm/runtime/init.cpp \
@@ -630,25 +624,6 @@ SRC_CC += $(SRC_CONE) $(SRC_CTWO) \
           share/vm/services/threadService.cpp \
           share/vm/services/virtualMemoryTracker.cpp \
           share/vm/services/writeableFlags.cpp \
-          share/vm/shark/sharkBlock.cpp \
-          share/vm/shark/sharkBuilder.cpp \
-          share/vm/shark/sharkCacheDecache.cpp \
-          share/vm/shark/sharkCompiler.cpp \
-          share/vm/shark/sharkConstant.cpp \
-          share/vm/shark/sharkContext.cpp \
-          share/vm/shark/sharkFunction.cpp \
-          share/vm/shark/shark_globals.cpp \
-          share/vm/shark/sharkInliner.cpp \
-          share/vm/shark/sharkIntrinsics.cpp \
-          share/vm/shark/sharkInvariants.cpp \
-          share/vm/shark/sharkMemoryManager.cpp \
-          share/vm/shark/sharkNativeWrapper.cpp \
-          share/vm/shark/sharkRuntime.cpp \
-          share/vm/shark/sharkStack.cpp \
-          share/vm/shark/sharkState.cpp \
-          share/vm/shark/sharkStateScanner.cpp \
-          share/vm/shark/sharkTopLevelBlock.cpp \
-          share/vm/shark/sharkValue.cpp \
           share/vm/trace/traceBackend.cpp \
           share/vm/trace/traceStream.cpp \
           share/vm/utilities/accessFlags.cpp \
