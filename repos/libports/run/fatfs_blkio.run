@@ -1,31 +1,18 @@
-if {[have_spec arm]} {
-   assert_spec arm_v7
-}
-
-#
-# Check used commands
-#
-set mkfsfat [check_installed mkfs.fat]
-
 #
 # Build
 #
 set build_components {
-	core init
-	drivers/timer
-	server/ram_blk
-	test/fatfs
+	test/fatfs_blkio
 }
 
 build $build_components
 
-#
-# Build FAT-file-system image
-#
-catch { exec $mkfsfat -C -n "fat.raw" bin/fat.raw 64 }
-
-
 create_boot_directory
+
+import_from_depot \
+	genodelabs/src/[base_src] \
+	genodelabs/src/init \
+	genodelabs/src/ram_blk \
 
 #
 # Generate config
@@ -52,13 +39,16 @@ append config {
 		<provides><service name="Timer"/></provides>
 	</start>
 	<start name="ram_blk">
-		<resource name="RAM" quantum="20M"/>
+		<resource name="RAM" quantum="68M"/>
 		<provides><service name="Block"/></provides>
-		<config file="fat.raw" block_size="512"/>
+		<config size="64M" block_size="512"/>
 	</start>
-	<start name="test-fatfs">
+	<start name="test-fatfs_blkio">
 		<resource name="RAM" quantum="10M"/>
-		<config ld_verbose="true"/>
+		<config ld_verbose="true">
+			<libc stdout="/log" stderr="/log"/>
+			<vfs> <log/> </vfs>
+		</config>
 	</start>
 </config>}
 
@@ -70,18 +60,13 @@ install_config $config
 
 # generic modules
 set boot_modules {
-	core init ld.lib.so
-	ram_blk
-	timer
-	test-fatfs
-
-	fat.raw
+	libc.lib.so
+	libm.lib.so
+	test-fatfs_blkio
 }
 
 build_boot_image $boot_modules
 
-append qemu_args " -m 256 -nographic"
+append qemu_args " -m 512 -nographic"
 
-run_genode_until {.*child "test-fatfs" exited with exit value 0.*} 60
-
-exec rm -f bin/fat.raw
+run_genode_until {.*child "test-fatfs_blkio" exited with exit value 0.*} 60
