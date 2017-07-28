@@ -1,13 +1,13 @@
-LIBS         = stdcxx
+LIBS         = stdcxx pthread
 SHARED_LIB   = yes
 HOTSPOT_BASE = $(call select_from_ports,jdk)/src/app/jdk/hotspot/src
 
 include $(REP_DIR)/lib/mk/jdk_version.inc
 
-CC_OPT += -fpermissive -Wno-comment -Wno-reorder -Wno-switch
+CC_OPT += -fpermissive -Wno-comment -Wno-reorder -Wno-switch -Wno-unused-variable
 
 ##XXX: may have to use our own
-CC_OPT += -DINCLUDE_SUFFIX_OS=_bsd -DTARGET_COMPILER_gcc -D_ALLBSD_SOURCE
+CC_OPT += -DINCLUDE_SUFFIX_OS=_bsd -DTARGET_COMPILER_gcc -D_ALLBSD_SOURCE -DUSE_LIBRARY_BASED_TLS_ONLY
 
 INC_DIR += $(HOTSPOT_BASE)/os/bsd/vm \
            $(HOTSPOT_BASE)/os/posix/vm \
@@ -17,6 +17,8 @@ INC_DIR += $(REP_DIR)/src/app/jdk/lib/include \
            $(HOTSPOT_BASE)/share/vm \
            $(HOTSPOT_BASE)/share/vm/precompiled \
            $(HOTSPOT_BASE)/share/vm/prims
+
+SRC_CC += os_genode.cc
 
 
 SRC_CONE += share/vm/c1/c1_Canonicalizer.cpp \
@@ -40,12 +42,18 @@ SRC_CONE += share/vm/c1/c1_Canonicalizer.cpp \
             share/vm/c1/c1_ValueMap.cpp \
             share/vm/c1/c1_ValueSet.cpp \
             share/vm/c1/c1_ValueStack.cpp \
-            share/vm/c1/c1_ValueType.cpp
+            share/vm/c1/c1_ValueType.cpp \
+            share/vm/ci/ciMethod.cpp
 
-SRC_CTWO += share/vm/ci/bcEscapeAnalyzer.cpp \
+SRC_CTWO += share/vm/aot/compiledIC_aot.cpp \
+            share/vm/ci/bcEscapeAnalyzer.cpp \
             share/vm/ci/ciTypeFlow.cpp \
+            share/vm/code/codeBlob.cpp \
             share/vm/jvmci/compilerRuntime.cpp \
             share/vm/jvmci/jvmci_globals.cpp \
+            share/vm/aot/aotCodeHeap.cpp \
+            share/vm/aot/aotCompiledMethod.cpp \
+            share/vm/aot/aotLoader.cpp \
             share/vm/opto/addnode.cpp \
             share/vm/opto/arraycopynode.cpp \
             share/vm/opto/block.cpp \
@@ -120,6 +128,7 @@ SRC_CTWO += share/vm/ci/bcEscapeAnalyzer.cpp \
             share/vm/opto/vectornode.cpp \
             share/vm/prims/jvm.cpp \
             share/vm/runtime/globals.cpp \
+            share/vm/runtime/sharedRuntime.cpp
 
 #
 # create CC_OPT_file for c1/c2 compiler
@@ -142,6 +151,7 @@ SRC_CC += $(SRC_CONE) $(SRC_CTWO) \
           os/bsd/vm/perfMemory_bsd.cpp \
           os/bsd/vm/stubRoutines_bsd.cpp \
           os/bsd/vm/threadCritical_bsd.cpp \
+          os/linux/vm/decoder_linux.cpp \
           os/posix/vm/os_posix.cpp \
           os/posix/vm/threadLocalStorage_posix.cpp \
           os/posix/vm/vmError_posix.cpp \
@@ -164,7 +174,6 @@ SRC_CC += $(SRC_CONE) $(SRC_CTWO) \
           share/vm/ci/ciMemberName.cpp \
           share/vm/ci/ciMetadata.cpp \
           share/vm/ci/ciMethodBlocks.cpp \
-          share/vm/ci/ciMethod.cpp \
           share/vm/ci/ciMethodData.cpp \
           share/vm/ci/ciMethodHandle.cpp \
           share/vm/ci/ciNullObject.cpp \
@@ -212,7 +221,6 @@ SRC_CC += $(SRC_CONE) $(SRC_CTWO) \
           share/vm/classfile/verificationType.cpp \
           share/vm/classfile/verifier.cpp \
           share/vm/classfile/vmSymbols.cpp \
-          share/vm/code/codeBlob.cpp \
           share/vm/code/codeCache.cpp \
           share/vm/code/compiledIC.cpp \
           share/vm/code/compiledMethod.cpp \
@@ -573,7 +581,6 @@ SRC_CC += $(SRC_CONE) $(SRC_CTWO) \
           share/vm/runtime/rtmLocking.cpp \
           share/vm/runtime/safepoint.cpp \
           share/vm/runtime/serviceThread.cpp \
-          share/vm/runtime/sharedRuntime.cpp \
           share/vm/runtime/sharedRuntimeTrans.cpp \
           share/vm/runtime/sharedRuntimeTrig.cpp \
           share/vm/runtime/signature.cpp \
@@ -658,7 +665,11 @@ SRC_CC += $(SRC_CONE) $(SRC_CTWO) \
           share/vm/utilities/vmError.cpp \
           share/vm/utilities/xmlstream.cpp
 
+CC_OPT_share/vm/runtime/rtmLocking = -DINCLUDE_RTM_OPT
+
 
 vpath %.cpp $(HOTSPOT_BASE)
+vpath %.s   $(HOTSPOT_BASE)
+vpath %.cc  $(REP_DIR)/src/app/jdk/lib/jvm
 
 # vi: set ft=make :
