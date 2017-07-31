@@ -18,7 +18,7 @@ INC_DIR += $(REP_DIR)/src/app/jdk/lib/include \
            $(HOTSPOT_BASE)/share/vm/precompiled \
            $(HOTSPOT_BASE)/share/vm/prims
 
-SRC_CC += os_genode.cc
+SRC_CC += os_genode.cpp
 
 
 SRC_CONE += share/vm/c1/c1_Canonicalizer.cpp \
@@ -667,9 +667,8 @@ SRC_CC += $(SRC_CONE) $(SRC_CTWO) \
 
 CC_OPT_share/vm/runtime/rtmLocking = -DINCLUDE_RTM_OPT
 
-
+vpath os_genode.cpp $(REP_DIR)/src/app/jdk/lib/jvm
 vpath %.cpp $(HOTSPOT_BASE)
 vpath %.s   $(HOTSPOT_BASE)
-vpath %.cc  $(REP_DIR)/src/app/jdk/lib/jvm
 
 # vi: set ft=make :
