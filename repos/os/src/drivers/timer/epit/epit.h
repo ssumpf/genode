@@ -26,7 +26,7 @@ class Genode::Epit_base : public Mmio
 {
 	protected:
 
-		enum { TICS_PER_MS = 33333 };
+		enum { TICS_PER_MS = 66000 };
 
 		/**
 		 * Control register
