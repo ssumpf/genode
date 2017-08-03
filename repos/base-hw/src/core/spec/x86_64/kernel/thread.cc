@@ -29,11 +29,11 @@ void Kernel::Thread::_call_update_instr_region() { }
  *                    Interrupt 14—Page-Fault Exception (#PF)
  */
 enum {
-	ERR_I = 1 << 4,
-	ERR_R = 1 << 3,
-	ERR_U = 1 << 2,
-	ERR_W = 1 << 1,
-	ERR_P = 1 << 0,
+	ERR_I = 1UL << 4,
+	ERR_R = 1UL << 3,
+	ERR_U = 1UL << 2,
+	ERR_W = 1UL << 1,
+	ERR_P = 1UL << 0,
 };
 
 
