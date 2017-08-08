@@ -111,6 +111,14 @@ extern "C" {
 
 	/* Thread */
 
+	int pthread_join(pthread_t thread, void **retval)
+	{
+		thread->join();
+		Genode::warning(__func__, " returned");
+		*((int **)retval) = 0;
+		return 0;
+	}
+
 
 	int pthread_attr_init(pthread_attr_t *attr)
 	{
