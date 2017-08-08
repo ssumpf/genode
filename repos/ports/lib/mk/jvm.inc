@@ -18,7 +18,7 @@ INC_DIR += $(REP_DIR)/src/app/jdk/lib/include \
            $(HOTSPOT_BASE)/share/vm/precompiled \
            $(HOTSPOT_BASE)/share/vm/prims
 
-SRC_CC += os_genode.cpp
+SRC_CC += os_genode.cpp dummies.cpp
 
 
 SRC_CONE += share/vm/c1/c1_Canonicalizer.cpp \
@@ -476,7 +476,6 @@ SRC_CC += $(SRC_CONE) $(SRC_CTWO) \
           share/vm/memory/metaspaceShared.cpp \
           share/vm/memory/metaspaceTracer.cpp \
           share/vm/memory/oopFactory.cpp \
-          share/vm/memory/operator_new.cpp \
           share/vm/memory/resourceArea.cpp \
           share/vm/memory/universe.cpp \
           share/vm/memory/universe_ext.cpp \
@@ -668,6 +667,7 @@ SRC_CC += $(SRC_CONE) $(SRC_CTWO) \
 CC_OPT_share/vm/runtime/rtmLocking = -DINCLUDE_RTM_OPT
 
 vpath os_genode.cpp $(REP_DIR)/src/app/jdk/lib/jvm
+vpath dummies.cpp $(REP_DIR)/src/app/jdk/lib/jvm
 vpath %.cpp $(HOTSPOT_BASE)
 vpath %.s   $(HOTSPOT_BASE)
 
