@@ -564,7 +564,7 @@ Elf::Sym const *Linker::lookup_symbol(char const *name, Dependency const &dep,
 		if (binary_ptr && &dep != binary_ptr->first_dep()) {
 			return lookup_symbol(name, *binary_ptr->first_dep(), base, undef, other);
 		} else {
-			throw Not_found();
+			throw Not_found(name);
 		}
 	}
 
@@ -572,7 +572,7 @@ Elf::Sym const *Linker::lookup_symbol(char const *name, Dependency const &dep,
 		log("LD: return ", weak_symbol);
 
 	if (!weak_symbol)
-		throw Not_found();
+		throw Not_found(name);
 
 	*base = weak_base;
 	return weak_symbol;
@@ -661,6 +661,9 @@ void Component::construct(Genode::Env &env)
 	/* load binary and all dependencies */
 	try {
 		binary_ptr = unmanaged_singleton<Binary>(env, *heap(), config.bind());
+	} catch(Linker::Not_found &symbol) {
+		Genode::warning("symbol not found: '", symbol.string(), "'");
+		throw;
 	} catch (...) {
 		error("LD: failed to load program");
 		throw;
