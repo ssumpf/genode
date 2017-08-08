@@ -145,9 +145,10 @@ int (*os::Bsd::_clock_gettime)(clockid_t, struct timespec *) = NULL;
 pthread_t os::Bsd::_main_thread;
 int os::Bsd::_page_size = -1;
 
-int clock_getres(clockid_t, struct timespec *)
+int clock_getres(clockid_t, struct timespec *res)
 {
-	NOT_IMPL;
+	res->tv_sec = 0;
+	res->tv_nsec = 1000*1000; /* 1ms */
 	return 0;
 }
 
@@ -1162,11 +1163,11 @@ int os::current_process_id() {
 
 // DLL functions
 
-#define JNI_LIB_PREFIX "lib"
+#define JNI_LIB_PREFIX ""
 #ifdef __APPLE__
   #define JNI_LIB_SUFFIX ".dylib"
 #else
-  #define JNI_LIB_SUFFIX ".so"
+  #define JNI_LIB_SUFFIX ".lib.so"
 #endif
 
 const char* os::dll_file_extension() { return JNI_LIB_SUFFIX; }
