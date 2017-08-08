@@ -1,6 +1,8 @@
 
 set build_components {
 	core init
+	drivers/timer
+	drivers/rtc
 	app/jdk/java
 }
 
@@ -23,16 +25,36 @@ set config {
 		<any-service> <parent/> <any-child/> </any-service>
 	</default-route>
 	<default caps="100" />
-	<start name="java">
+	<start name="timer">
+		<resource name="RAM" quantum="2M" />
+		<provides> <service name="Timer" /> </provides>
+	</start>
+	<start name="rtc_drv">
+		<resource name="RAM" quantum="2M" />
+		<provides> <service name="Rtc" /> </provides>
+	</start>
+	<start name="java" caps="200">
 		<resource name="RAM" quantum="10M" />
-		<config>
-			<arg value="java" />
+		<config ld_verbose="yes">
+			<arg value="/bin/java" />
 			<arg value="-jar" />
 			<arg value="hello.jar" />
-			<libc stdout="/dev/log" stderr="/dev/log" />
-			<vfs>
+			<libc stdout="/dev/log" stderr="/dev/log" rtc="/dev/rtc" />
+			<vfs rtc="/dev/rtc">
 				<dir name="dev">
-					<log/>
+					<log/><rtc/>
+				</dir>
+				<dir name="bin">
+					<rom name="java" />
+				</dir>
+				<dir name="lib">
+					<rom name="java.lib.so" />
+					<inline name="jvm.cfg">-server KNOWN
+-client IGNORE
+</inline>
+					<dir name="server">
+						<rom name="jvm.lib.so" />
+					</dir>
 				</dir>
 				<rom name="hello.jar" />
 			</vfs>
@@ -44,10 +66,11 @@ set config {
 install_config $config
 
 set boot_modules {
-	core init ld.lib.so
+	core init ld.lib.so timer rtc_drv
 	java jli.lib.so hello.jar
+	java.lib.so jvm.lib.so
 	libc.lib.so libm.lib.so zlib.lib.so
-	posix.lib.so
+	posix.lib.so pthread.lib.so stdcxx.lib.so
 }
 
 build_boot_image $boot_modules
