@@ -147,10 +147,9 @@ class Vfs::Rom_file_system : public Single_file_system
 		Stat_result stat(char const *path, Stat &out) override
 		{
 			Stat_result result = Single_file_system::stat(path, out);
-
 			_rom.update();
-			out.size = _rom.valid() ? _rom.size() : 0;
-
+			out.size  = _rom.valid() ? _rom.size() : 0;
+			out.mode |= 0555;
 			return result;
 		}
 };
