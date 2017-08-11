@@ -28,10 +28,28 @@ class Genode::Multiboot2_info : Mmio
 		struct Tag : Genode::Mmio {
 			enum { LOG2_SIZE = 3 };
 
-			struct Type : Register <0x00, 32> { enum { END = 0, MEMORY = 6 }; };
+			struct Type : Register <0x00, 32>
+			{
+				enum { END = 0, MEMORY = 6, ACPI_RSDP = 15 };
+			};
 			struct Size : Register <0x04, 32> { };
 
 			Tag(addr_t addr) : Mmio(addr) { }
+		};
+
+		struct Acpi_rsdp : Mmio {
+			struct Signature : Register <0x00, 64> { };
+			struct Revision  : Register <0x0f,  8> { };
+			struct Rsdt      : Register <0x10, 32> { };
+			struct Xsdt      : Register <0x18, 64> { };
+
+			Acpi_rsdp(addr_t addr) : Mmio(addr) { }
+
+			bool valid() {
+				/* XXX checksum verification missing */
+				const char signature[] = "RSD PTR ";
+				return read<Signature>() == *(uint64_t *)signature;
+			}
 		};
 
 	public:
@@ -50,8 +68,8 @@ class Genode::Multiboot2_info : Mmio
 
 		Multiboot2_info(addr_t mbi) : Mmio(mbi) { }
 
-        template <typename FUNC>
-		void for_each_mem(FUNC functor)
+        template <typename FUNC_MEM, typename FUNC_ACPI>
+		void for_each_tag(FUNC_MEM mem_fn, FUNC_ACPI acpi_fn)
 		{
 			addr_t const size = read<Multiboot2_info::Size>();
 
@@ -69,8 +87,18 @@ class Genode::Multiboot2_info : Mmio
 
 					for (; mem_start < mem_end; mem_start += Memory::SIZE) {
 						Memory mem(mem_start);
-						functor(mem);
+						mem_fn(mem);
 					}
+				}
+
+				if (tag.read<Tag::Type>() == Tag::Type::ACPI_RSDP) {
+					addr_t const rsdp_addr = tag_addr + (1UL << Tag::LOG2_SIZE);
+
+					Acpi_rsdp rsdp(rsdp_addr);
+					if (rsdp.valid())
+						acpi_fn(rsdp.read<Acpi_rsdp::Revision>(),
+						        rsdp.read<Acpi_rsdp::Rsdt>(),
+						        rsdp.read<Acpi_rsdp::Xsdt>());
 				}
 
 				tag_addr += align_addr(tag.read<Tag::Size>(), Tag::LOG2_SIZE);
