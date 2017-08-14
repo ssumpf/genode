@@ -46,6 +46,8 @@ class Drm::Session : public Genode::Session
 	                                                 char>;
 	public:
 
+		enum { CAP_QUOTA = 3 };
+
 		using Tx = Packet_stream_tx::Channel<Tx_policy>;
 
 		virtual ~Session() { }
