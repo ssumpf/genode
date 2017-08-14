@@ -17,7 +17,6 @@
 #include <base/log.h>
 #include <base/component.h>
 #include <base/attached_rom_dataspace.h>
-#include <os/config.h>
 
 /* Server related local includes */
 #include <component.h>
@@ -141,6 +140,10 @@ static void run_linux(void * m)
 }
 
 
-void start_framebuffer_driver(Genode::Env &env) {
+void start_framebuffer_driver(Genode::Env &env)
+{
+	/* XXX execute constructors of global statics */
+	env.exec_static_constructors();
+
 	static Main main(env);
 }
