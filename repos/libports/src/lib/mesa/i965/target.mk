@@ -1,1 +1,1 @@
-LIBS = i965
+LIBS = egl_i965

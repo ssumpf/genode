@@ -11,6 +11,8 @@ extern "C" {
 #include <platform.h>
 
 static bool initialized = false;
+Genode::Env *genode_env;
+
 
 struct Eglut_env
 {
@@ -48,7 +50,7 @@ void Window::sync_handler()
 
 void Window::mode_handler()
 {
-	PDBG("MODE: %p", framebuffer);
+	PDBG("MODE: ", framebuffer.is_constructed());
 
 	if (!framebuffer.is_constructed())
 		return;
@@ -103,15 +105,13 @@ void _eglutNativeEventLoop()
  * 'eglut_main' will be called instead of 'main' by component initialization
  */
 extern "C" int eglut_main(int argc, char *argv[]);
-extern void drm_init(Genode::Env &env);
 
 
 void Libc::Component::construct(Libc::Env &env)
 {
 	eglut_env.construct(env);
 
-	//XXX: does not work for swrast
-	drm_init(env);
+	genode_env = &env;
 
 	Libc::with_libc([] () { eglut_main(1, nullptr); });
 }

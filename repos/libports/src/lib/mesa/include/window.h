@@ -11,9 +11,8 @@
 struct Window : Genode_egl_window
 {
 	Genode::Constructible<Framebuffer::Connection> framebuffer;
-	//Framebuffer::Session_component                       *framebuffer = root_session();
-	Genode::Signal_handler<Window>                 sync_dispatcher;
-	Genode::Signal_handler<Window>                 mode_dispatcher;
+	Genode::Io_signal_handler<Window>              sync_dispatcher;
+	Genode::Io_signal_handler<Window>              mode_dispatcher;
 	Genode::Env                                   &env;
 
 	Window(Genode::Env &env, int w, int h)
@@ -30,7 +29,7 @@ struct Window : Genode_egl_window
 
 		framebuffer->sync_sigh(sync_dispatcher);
 		framebuffer->mode_sigh(mode_dispatcher);
-		PDBG("Window %dx%d mode sigh valid %u", w, h, mode_dispatcher.valid());
+		PDBG("Window ",w ,"x", h, " mode sigh valid ", mode_dispatcher.valid());
 		mode_handler();
 	}
 

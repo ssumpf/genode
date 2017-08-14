@@ -6,6 +6,7 @@ set build_components {
 	test/eglgears
 	drivers/framebuffer/intel drivers/input
 	lib/mesa/swrast
+	lib/mesa/i965
 	drivers/usb
 	test/hello-gl
 }
@@ -32,9 +33,7 @@ set config {
 	<default caps="100"/>
 	<default-route>
 		<any-service> <parent/> <any-child/> </any-service>
-	</default-route>
-	<default caps="100"/>
-}
+	</default-route>}
 
 append_if [have_spec sdl] config {
 	<start name="fb_sdl" caps="200">
@@ -48,11 +47,6 @@ append_if [have_spec sdl] config {
 append_platform_drv_config
 
 append_if [have_spec framebuffer] config {
-<<<<<<< HEAD
-	<start name="fb_drv" caps="200">
-		<resource name="RAM" quantum="4M"/>
-		<provides><service name="Framebuffer"/></provides>
-=======
 	<start name="intel_fb_drv">
 		<resource name="RAM" quantum="40M"/>
 		<provides>
@@ -60,7 +54,6 @@ append_if [have_spec framebuffer] config {
 			<service name="Drm"/>
 		</provides>
 		<route><any-service> <parent /> <any-child/> </any-service></route>
->>>>>>> intel_fb: drm session
 	</start>}
 append_if [have_spec ps2] config {
 	<start name="usb_drv">
@@ -88,10 +81,10 @@ append config {
 	<start name="pointer">
 		<resource name="RAM" quantum="1M"/>
 	</start>
-	<start name="launchpad" caps="400">
+	<start name="launchpad" caps="500">
 		<resource name="RAM" quantum="1G"/>
 		<config>
-			<launcher name="init" ram_quota="100M" caps="300">
+			<launcher name="init" ram_quota="100M" caps="400">
 				<config>
 					<parent-provides>
 						<service name="ROM"/>
@@ -114,55 +107,16 @@ append config {
 						<route><any-service><parent/></any-service></route>
 						<config xpos="300" ypos="100" width="600" height="600" />
 					</start>
-					<start name="gears">
+					<start name="gears" caps="200">
 						<resource name="RAM" quantum="1G"/>
-						<route><any-service> <parent /> <any-child/> </any-service></route>
-						<config>
+						<route>
+							<service name="ROM" label="egl_drv.lib.so"> <parent label="egl_i965.lib.so" /> </service>
+							<any-service> <parent /> <any-child/> </any-service>
+						</route>
+						<config ld_verbose="yes">
 							<vfs> <dir name="dev"> <log/> </dir> </vfs>
 							<libc stdout="/dev/log"/>
 						</config>
-					</start>
-				</config>
-			</launcher>
-			<launcher name="init" ram_quota="150M">
-				<config>
-					<parent-provides>
-						<service name="ROM"/>
-						<service name="RAM"/>
-						<service name="IRQ"/>
-						<service name="IO_MEM"/>
-						<service name="IO_PORT"/>
-						<service name="PD"/>
-						<service name="RM"/>
-						<service name="CPU"/>
-						<service name="LOG"/>
-						<service name="Platform"/>
-						<service name="Nitpicker"/>
-						<service name="Timer"/>
-						<service name="Drm" />
-					</parent-provides>
-					<start name="nit_fb">
-						<resource name="RAM" quantum="2M"/>
-						<provides><service name="Input"/><service name="Framebuffer"/></provides>
-						<route><any-service><parent/></any-service></route>
-						<config xpos="1000" ypos="400" width="600" height="600" />
-					</start>
-					<start name="hello_gl">
-						<resource name="RAM" quantum="128M" />
-						<config ld_verbose="true">
-							<libc stdout="/dev/log" stderr="/dev/log">
-								<vfs>
-									<dir name="dev"> <log/> </dir>
-									<rom name="hello1.tga" />
-									<rom name="hello2.tga" />
-									<rom name="hello-gl.f.glsl" />
-									<rom name="hello-gl.v.glsl" />
-								</vfs>
-							</libc>
-						</config>
-						<route>
-							<any-service> <parent /> <any-child/> </any-service>
-						</route>
 					</start>
 				</config>
 			</launcher>
@@ -180,8 +134,7 @@ set boot_modules {
 	egl.lib.so mesa-11.lib.so stdcxx.lib.so
 	expat.lib.so glapi.lib.so swrast.lib.so
 	i965.lib.so drm.lib.so
-	hello_gl hello1.tga hello2.tga
-	hello-gl.f.glsl hello-gl.v.glsl
+	egl_i965.lib.so
 }
 
 lappend_if [have_spec       linux] boot_modules fb_sdl
