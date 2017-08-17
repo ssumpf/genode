@@ -112,7 +112,7 @@ proc run_boot_dir {binaries} {
 		#
 		set fh [open "[run_dir]/config-52-54-00-12-34-56" "WRONLY CREAT TRUNC"]
 		puts $fh " exec /boot/bender"
-		puts $fh " load /hypervisor iommu serial novpid novga"
+		puts $fh " load /hypervisor serial novpid novga"
 		puts $fh " load /image.elf"
 		close $fh
 
