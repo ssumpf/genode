@@ -472,13 +472,12 @@ class Vfs::Rump_file_system : public File_system
 
 			if (create) {
 				if (rump_sys_mkdir(path, 0777) != 0) switch (::errno) {
-				case ENAMETOOLONG: Genode::error("1"); return OPENDIR_ERR_NAME_TOO_LONG;
-				case EACCES:       Genode::error("2"); return OPENDIR_ERR_PERMISSION_DENIED;
-				case ENOENT:       Genode::error("3"); return OPENDIR_ERR_LOOKUP_FAILED;
-				case EEXIST:       Genode::error("4"); return OPENDIR_ERR_NODE_ALREADY_EXISTS;
-				case ENOSPC:       Genode::error("5"); return OPENDIR_ERR_NO_SPACE;
+				case ENAMETOOLONG: return OPENDIR_ERR_NAME_TOO_LONG;
+				case EACCES:       return OPENDIR_ERR_PERMISSION_DENIED;
+				case ENOENT:       return OPENDIR_ERR_LOOKUP_FAILED;
+				case EEXIST:       return OPENDIR_ERR_NODE_ALREADY_EXISTS;
+				case ENOSPC:       return OPENDIR_ERR_NO_SPACE;
 				default:
-					Genode::error("6");
 					return OPENDIR_ERR_PERMISSION_DENIED;
 				}
 			}
