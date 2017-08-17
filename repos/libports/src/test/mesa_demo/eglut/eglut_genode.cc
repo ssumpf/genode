@@ -58,6 +58,7 @@ void _eglutNativeInitDisplay()
 
 void Window::sync_handler()
 {
+#if 0
 	struct eglut_window *win =_eglut->current;
 
 	if (_eglut->idle_cb)
@@ -73,6 +74,7 @@ void Window::sync_handler()
 		//XXX: required till vsync interrupt
 		eglWaitClient();
 	}
+#endif
 }
 
 
@@ -122,7 +124,19 @@ void _eglutNativeFiniWindow(struct eglut_window *win)
 void _eglutNativeEventLoop()
 {
 	while (true) {
-		select(0, nullptr, nullptr, nullptr, nullptr);
+		struct eglut_window *win =_eglut->current;
+
+		if (_eglut->idle_cb)
+			_eglut->idle_cb();
+
+
+		if (win->display_cb)
+			win->display_cb();
+
+		if (initialized) {
+			eglWaitClient();
+			eglSwapBuffers(_eglut->dpy, win->surface);
+		}
 	}
 }
 
