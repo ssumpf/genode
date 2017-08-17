@@ -87,6 +87,7 @@ dri2_genode_swap_buffers(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *draw)
 	                      (char *)data, (void *)dri2_surf);
 
 	genode_unmap_image(dri2_surf->back_image);
+	genode_drm_complete();
 
 	return EGL_TRUE;
 }
