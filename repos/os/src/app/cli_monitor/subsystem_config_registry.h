@@ -157,7 +157,7 @@ class Cli_monitor::Subsystem_config_registry
 
 				Vfs::Directory_service::Dirent dirent;
 
-				dir_handle->seek(i * sizeof(dirent)); 
+				dir_handle->seek(i * sizeof(dirent));
 				dir_handle->fs().queue_read(dir_handle, sizeof(dirent));
 
 				Vfs::file_size out_count;

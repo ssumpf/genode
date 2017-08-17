@@ -96,8 +96,8 @@ class Vfs::Fs_file_system : public File_system
 
 				::File_system::Packet_descriptor const
 					packet(p, file_handle(),
-				       	   ::File_system::Packet_descriptor::READ,
-				       	   clipped_count, seek_offset);
+					       ::File_system::Packet_descriptor::READ,
+					       clipped_count, seek_offset);
 
 				read_ready_state  = Handle_state::Read_ready_state::IDLE;
 				queued_read_state = Handle_state::Queued_state::QUEUED;
@@ -109,7 +109,7 @@ class Vfs::Fs_file_system : public File_system
 			}
 
 			Read_result _complete_read(void *dst, file_size count,
-		                           	   file_size &out_count)
+			                           file_size &out_count)
 			{
 				if (queued_read_state != Handle_state::Queued_state::ACK)
 					return READ_QUEUED;
@@ -186,7 +186,7 @@ class Vfs::Fs_file_system : public File_system
 
 				::File_system::Packet_descriptor const
 					packet(p, file_handle(),
-				       	   ::File_system::Packet_descriptor::SYNC, 0);
+					       ::File_system::Packet_descriptor::SYNC, 0);
 
 				queued_sync_state = Handle_state::Queued_state::QUEUED;
 
@@ -280,10 +280,10 @@ class Vfs::Fs_file_system : public File_system
 				}
 
 				/*
-			 	 * The default value has no meaning because the switch below
-			 	 * assigns a value in each possible branch. But it is needed to
-			 	 * keep the compiler happy.
-			 	 */
+				 * The default value has no meaning because the switch below
+				 * assigns a value in each possible branch. But it is needed to
+				 * keep the compiler happy.
+				 */
 				Dirent_type type = DIRENT_TYPE_END;
 
 				/* copy-out payload into destination buffer */
@@ -372,8 +372,8 @@ class Vfs::Fs_file_system : public File_system
 					Lock::Guard list_guard(_list_lock);
 
 					for (Vfs_handle::Context *list_context = _context_list.first();
-				     	 list_context;
-				     	 list_context = list_context->next())
+					     list_context;
+					     list_context = list_context->next())
 					{
 						if (list_context == context) {
 							/* already in list */
@@ -477,10 +477,10 @@ class Vfs::Fs_file_system : public File_system
 
 			try {
 				Packet_descriptor packet_in(source.alloc_packet(count),
-			                            	handle.file_handle(),
-			                            	Packet_descriptor::WRITE,
-			                            	count,
-			                            	seek_offset);
+				                            handle.file_handle(),
+				                            Packet_descriptor::WRITE,
+				                            count,
+				                            seek_offset);
 
 				memcpy(source.packet_content(packet_in), buf, count);
 
@@ -523,9 +523,9 @@ class Vfs::Fs_file_system : public File_system
 
 						case Packet_descriptor::WRITE:
 							/*
-				 	 	 	 * Notify anyone who might have failed on
-				 	 	 	 * 'alloc_packet()' or 'submit_packet()'
-				 	 	 	 */
+							 * Notify anyone who might have failed on
+							 * 'alloc_packet()' or 'submit_packet()'
+							 */
 							_post_signal_hook.arm(nullptr);
 
 							break;

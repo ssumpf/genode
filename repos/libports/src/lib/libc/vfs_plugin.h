@@ -93,9 +93,9 @@ class Libc::Vfs_plugin : public Libc::Plugin
 				} check(vfs_handle);
 
 				/*
-			 	 * Cannot call Libc::suspend() immediately, because the Libc kernel
-			 	 * might not be running yet.
-			 	 */
+				 * Cannot call Libc::suspend() immediately, because the Libc kernel
+				 * might not be running yet.
+				 */
 				if (!vfs_handle->fs().queue_sync(vfs_handle)) {
 					do {
 						Libc::suspend(check);
@@ -122,9 +122,9 @@ class Libc::Vfs_plugin : public Libc::Plugin
 				} check(vfs_handle);
 
 				/*
-			 	 * Cannot call Libc::suspend() immediately, because the Libc kernel
-			 	 * might not be running yet.
-			 	 */
+				 * Cannot call Libc::suspend() immediately, because the Libc kernel
+				 * might not be running yet.
+				 */
 				if (vfs_handle->fs().complete_sync(vfs_handle) ==
 				    Vfs::File_io_service::SYNC_QUEUED) {
 					do {

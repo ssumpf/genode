@@ -48,7 +48,7 @@ class Vfs::Inline_file_system : public Single_file_system
 				{ }
 
 				Read_result read(char *dst, file_size count,
-			                 	 file_size &out_count) override
+				                 file_size &out_count) override
 				{
 					/* file read limit is the size of the dataspace */
 					file_size const max_size = _size;
@@ -78,7 +78,7 @@ class Vfs::Inline_file_system : public Single_file_system
 				}
 
 				Write_result write(char const *src, file_size count,
-			                   	   file_size &out_count) override
+				                   file_size &out_count) override
 				{
 					out_count = 0;
 					return WRITE_ERR_INVALID;

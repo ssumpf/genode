@@ -68,7 +68,7 @@ class Jitterentropy_file_system : public Vfs::Single_file_system
 				  _initialized(initialized) { }
 
 				Read_result read(char *dst, Vfs::file_size count,
-			                 	 Vfs::file_size &out_count) override
+				                 Vfs::file_size &out_count) override
 				{
 					if (!_initialized)
 						return READ_ERR_IO;
@@ -89,7 +89,7 @@ class Jitterentropy_file_system : public Vfs::Single_file_system
 				}
 
 				Write_result write(char const *src, Vfs::file_size count,
-			                   	   Vfs::file_size &out_count) override
+				                   Vfs::file_size &out_count) override
 				{
 					return WRITE_ERR_IO;
 				}

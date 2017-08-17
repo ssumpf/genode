@@ -75,7 +75,7 @@ class Vfs::Block_file_system : public Single_file_system
 				Genode::Signal_context_capability &_source_submit_cap;
 
 				file_size _block_io(file_size nr, void *buf, file_size sz,
-		                    		bool write, bool bulk = false)
+				                    bool write, bool bulk = false)
 				{
 					Block::Packet_descriptor::Opcode op;
 					op = write ? Block::Packet_descriptor::WRITE : Block::Packet_descriptor::READ;
@@ -171,7 +171,7 @@ class Vfs::Block_file_system : public Single_file_system
 				{ }
 
 				Read_result read(char *dst, file_size count,
-			                 	 file_size &out_count) override
+			                     file_size &out_count) override
 				{
 					if (!_readable) {
 						Genode::error("block device is not readable");
@@ -195,14 +195,14 @@ class Vfs::Block_file_system : public Single_file_system
 							length = count;
 
 						/*
-				 	 	 * We take a shortcut and read the blocks all at once if the
-				 	 	 * offset is aligned on a block boundary and we the count is a
-				 	 	 * multiple of the block size, e.g. 4K reads will be read at
-				 	 	 * once.
-				 	 	 *
-				 	 	 * XXX this is quite hackish because we have to omit partial
-				 	 	 * blocks at the end.
-				 	 	 */
+						 * We take a shortcut and read the blocks all at once if the
+						 * offset is aligned on a block boundary and we the count is a
+						 * multiple of the block size, e.g. 4K reads will be read at
+						 * once.
+						 *
+						 * XXX this is quite hackish because we have to omit partial
+						 * blocks at the end.
+						 */
 						if (displ == 0 && (count % _block_size) >= 0 && !(count < _block_size)) {
 							file_size bytes_left = count - (count % _block_size);
 
@@ -239,7 +239,7 @@ class Vfs::Block_file_system : public Single_file_system
 				}
 
 				Write_result write(char const *buf, file_size count,
-			                   	   file_size &out_count) override
+				                   file_size &out_count) override
 				{
 					if (!_writeable) {
 						Genode::error("block device is not writeable");
@@ -263,19 +263,19 @@ class Vfs::Block_file_system : public Single_file_system
 							length = count;
 
 						/*
-				 	 	 * We take a shortcut and write as much as possible without
-				 	 	 * using the block buffer if the offset is aligned on a block
-				 	 	 * boundary and the count is a multiple of the block size,
-				 	 	 * e.g. 4K writes will be written at once.
-				 	 	 *
-				 	 	 * XXX this is quite hackish because we have to omit partial
-				 	 	 * blocks at the end.
-				 	 	 */
+						 * We take a shortcut and write as much as possible without
+						 * using the block buffer if the offset is aligned on a block
+						 * boundary and the count is a multiple of the block size,
+						 * e.g. 4K writes will be written at once.
+						 *
+						 * XXX this is quite hackish because we have to omit partial
+						 * blocks at the end.
+						 */
 						if (displ == 0 && (count % _block_size) >= 0 && !(count < _block_size)) {
 							file_size bytes_left = count - (count % _block_size);
 
 							nbytes = _block_io(blk_nr, (void*)(buf + written),
-					                   	   	   bytes_left, true, true);
+							                   bytes_left, true, true);
 							if (nbytes == 0) {
 								Genode::error("error while write block:", blk_nr, " to block device");
 								return WRITE_ERR_INVALID;
@@ -289,12 +289,12 @@ class Vfs::Block_file_system : public Single_file_system
 						}
 
 						/*
-				 	 	 * The offset is not aligned on a block boundary. Therefore
-				 	 	 * we need to read the block to the block buffer first and
-				 	 	 * put the buffer content at the right offset before we can
-				 	 	 * write the whole block back. In addition if length is less
-				 	 	 * than block size, we also have to read the block first.
-				 	 	 */
+						 * The offset is not aligned on a block boundary. Therefore
+						 * we need to read the block to the block buffer first and
+						 * put the buffer content at the right offset before we can
+						 * write the whole block back. In addition if length is less
+						 * than block size, we also have to read the block first.
+						 */
 						if (displ > 0 || length < _block_size)
 							_block_io(blk_nr, _block_buffer, _block_size, false);
 

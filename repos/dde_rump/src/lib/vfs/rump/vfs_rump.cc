@@ -65,8 +65,8 @@ class Vfs::Rump_file_system : public File_system
 		{
 			using Vfs_handle::Vfs_handle;
 
- 			virtual Read_result read(char *buf, file_size buf_size,
- 			                         file_size seek_offset, file_size &out_count)
+			virtual Read_result read(char *buf, file_size buf_size,
+			                         file_size seek_offset, file_size &out_count)
 			{
 				Genode::error("Rump_vfs_handle::read() called");
 				return READ_ERR_INVALID;
@@ -154,9 +154,9 @@ class Vfs::Rump_file_system : public File_system
 				                         struct ::dirent *dent, Dirent &vfs_dir)
 				{
 					/*
-			 	 	 * We cannot use 'd_type' member of 'dirent' here since the EXT2
-			 	 	 * implementation sets the type to unkown. Hence we use stat.
-			 	 	 */
+					 * We cannot use 'd_type' member of 'dirent' here since the EXT2
+					 * implementation sets the type to unkown. Hence we use stat.
+					 */
 					struct stat s;
 					rump_sys_lstat(path, &s);
 
@@ -215,8 +215,8 @@ class Vfs::Rump_file_system : public File_system
 						bytes = rump_sys_getdents(_fd, buf, BUFFER_SIZE);
 						void *current, *end;
 						for (current = buf, end = &buf[bytes];
-				     	 	 current < end;
-				     	 	 current = _DIRENT_NEXT((::dirent *)current))
+						     current < end;
+						     current = _DIRENT_NEXT((::dirent *)current))
 						{
 							dent = (::dirent *)current;
 							if (strcmp(".", dent->d_name) && strcmp("..", dent->d_name)) {

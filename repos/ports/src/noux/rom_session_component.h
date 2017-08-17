@@ -94,8 +94,8 @@ struct Noux::Vfs_dataspace
 
 				for (;;) {
 					read_result = file->fs().complete_read(file, addr + bytes_read,
-						                               	   stat_out.size,
-						                               	   out_count);
+					                                       stat_out.size,
+					                                       out_count);
 					if (read_result != Vfs::File_io_service::READ_QUEUED)
 						break;
 

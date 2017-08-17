@@ -667,7 +667,7 @@ bool Noux::Child::syscall(Noux::Session::Syscall sc)
 				break;
 
 			Vfs::file_size count = min(_sysio.readlink_in.bufsiz,
-			    	                   sizeof(_sysio.readlink_out.chunk));
+			                           sizeof(_sysio.readlink_out.chunk));
 
 			Registered_no_delete<Vfs_io_waiter>
 				vfs_io_waiter(_vfs_io_waiter_registry);
@@ -686,7 +686,7 @@ bool Noux::Child::syscall(Noux::Session::Syscall sc)
 				read_result = symlink_handle->fs().complete_read(symlink_handle,
 				                                                 _sysio.readlink_out.chunk,
 				                                                 count,
-			        	                                         out_count);
+				                                                 out_count);
 
 				if (read_result != Vfs::File_io_service::READ_QUEUED)
 					break;

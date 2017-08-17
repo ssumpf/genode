@@ -402,7 +402,7 @@ ssize_t Libc::Vfs_plugin::write(Libc::File_descriptor *fd, const void *buf,
 			      ::size_t count, Vfs::file_size &out_count,
 			      Result &out_result)
 			: handle(handle), buf(buf), count(count), out_count(out_count),
-	  	  	  out_result(out_result)
+			  out_result(out_result)
 			{ }
 
 			bool suspend() override
@@ -489,7 +489,7 @@ ssize_t Libc::Vfs_plugin::read(Libc::File_descriptor *fd, void *buf,
 			Check(Vfs::Vfs_handle *handle, void *buf, ::size_t count,
 			      Vfs::file_size &out_count, Result &out_result)
 			: handle(handle), buf(buf), count(count), out_count(out_count),
-	  	  	  out_result(out_result)
+			  out_result(out_result)
 			{ }
 
 			bool suspend() override
@@ -973,7 +973,7 @@ ssize_t Libc::Vfs_plugin::readlink(const char *path, char *buf, ::size_t buf_siz
 			::size_t const   buf_size;
 
 			Check(Vfs::Vfs_handle *symlink_handle,
-			  	  ::size_t const buf_size)
+			      ::size_t const buf_size)
 			: symlink_handle(symlink_handle), buf_size(buf_size) { }
 
 			bool suspend() override

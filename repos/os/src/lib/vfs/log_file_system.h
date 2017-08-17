@@ -62,14 +62,14 @@ class Vfs::Log_file_system : public Single_file_system
 				  _log(log) { }
 
 				Read_result read(char *dst, file_size count,
-			                 	 file_size &out_count) override
+				                 file_size &out_count) override
 				{
 					out_count = 0;
 					return READ_OK;
 				}
 
 				Write_result write(char const *src, file_size count,
-			                   	   file_size &out_count) override
+				                   file_size &out_count) override
 				{
 					out_count = count;
 

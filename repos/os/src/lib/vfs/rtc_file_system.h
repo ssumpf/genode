@@ -44,13 +44,13 @@ class Vfs::Rtc_file_system : public Single_file_system
 				  _rtc(rtc) { }
 
 				/**
-		 	 	 * Read the current time from the Rtc session
-		 	 	 *
-		 	 	 * On each read the current time is queried and afterwards formated
-		 	 	 * as '%Y-%m-%d %H:%M\n'.
-		 	 	 */
+				 * Read the current time from the Rtc session
+				 *
+				 * On each read the current time is queried and afterwards formated
+				 * as '%Y-%m-%d %H:%M\n'.
+				 */
 				Read_result read(char *dst, file_size count,
-			                 	 file_size &out_count) override
+				                 file_size &out_count) override
 				{
 					enum { TIMESTAMP_LEN = 17 };
 
@@ -64,7 +64,7 @@ class Vfs::Rtc_file_system : public Single_file_system
 					char buf[TIMESTAMP_LEN+1];
 					char *b = buf;
 					unsigned n = Genode::snprintf(buf, sizeof(buf), "%04u-%02u-%02u %02u:%02u\n",
-			                              	  	  ts.year, ts.month, ts.day, ts.hour, ts.minute);
+					                              ts.year, ts.month, ts.day, ts.hour, ts.minute);
 					n -= seek();
 					b += seek();
 
@@ -77,7 +77,7 @@ class Vfs::Rtc_file_system : public Single_file_system
 				}
 
 				Write_result write(char const *src, file_size count,
-			                   	   file_size &out_count) override
+				                   file_size &out_count) override
 				{
 					return WRITE_ERR_IO;
 				}
