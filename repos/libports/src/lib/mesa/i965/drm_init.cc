@@ -24,3 +24,12 @@ void genode_drm_init()
 {
 	drm_init(*genode_env);
 }
+
+extern bool drm_complete();
+
+void genode_drm_complete()
+{
+	while (!drm_complete()) {
+		genode_env->ep().wait_and_dispatch_one_io_signal();
+	}
+}

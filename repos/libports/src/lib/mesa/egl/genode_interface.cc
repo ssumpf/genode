@@ -34,4 +34,3 @@ void genode_blit(void const *src, unsigned src_w, void *dst, unsigned dst_w, int
 {
 	blit(src, src_w, dst, dst_w, w, h);
 }
-
