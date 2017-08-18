@@ -197,23 +197,6 @@ DIR_CONTENT(include/libc-arm/machine) := \
 # Rules for generating files
 #
 
-generated_files += src/lib/libc/lib/libc/net/nslexer.c
-
-src/lib/libc/lib/libc/net/nslexer.l : $(DOWNLOADS)
-
-src/lib/libc/lib/libc/net/nslexer.c: src/lib/libc/lib/libc/net/nslexer.l
-	@$(MSG_GENERATE)$(notdir $@)
-	$(VERBOSE)flex -P_nsyy -t $< | sed -e '/YY_BUF_SIZE/s/16384/1024/' > $@
-
-generated_files += src/lib/libc/lib/libc/net/nsparser.c
-
-src/lib/libc/lib/libc/net/nsparser.y : $(DOWNLOADS)
-
-src/lib/libc/lib/libc/net/nsparser.c: src/lib/libc/lib/libc/net/nsparser.y
-	@$(MSG_GENERATE)$(notdir $@)
-	$(VERBOSE)bison -d -p_nsyy $< \
-		--defines=src/lib/libc/lib/libc/net/nsparser.h --output=$@
-
 src/lib/libc/include/rpcsvc/nis.h: src/lib/libc/include/rpcsvc/nis_object.x
 	@$(MSG_GENERATE)$(notdir $@)
 	$(VERBOSE)rpcgen -C -h -DWANT_NFS3 $< -o $@
@@ -223,6 +206,8 @@ src/lib/libc/include/rpcsvc/nis_object.x : $(DOWNLOADS)
 %.h: %.x
 	@$(MSG_GENERATE)$(notdir $@)
 	$(VERBOSE)rpcgen -C -h -DWANT_NFS3 $< -o $@
+
+src/lib/libc/include/rpcsvc/crypt.h: src/lib/libc/include/rpcsvc/crypt.x
 
 generated_files += \
     $(addprefix src/lib/libc/include/rpcsvc/,\
