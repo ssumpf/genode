@@ -207,9 +207,7 @@ src/lib/libc/include/rpcsvc/nis_object.x : $(DOWNLOADS)
 	@$(MSG_GENERATE)$(notdir $@)
 	$(VERBOSE)rpcgen -C -h -DWANT_NFS3 $< -o $@
 
-src/lib/libc/include/rpcsvc/crypt.h: src/lib/libc/include/rpcsvc/crypt.x
-
-generated_files += \
+generated_rpcsvc_files := \
     $(addprefix src/lib/libc/include/rpcsvc/,\
                 bootparam_prot.h nfs_prot.h nlm_prot.h rstat.h ypupdate_prot.h \
                 crypt.h nis_cache.h pmap_prot.h rwall.h yp.h \
@@ -217,6 +215,12 @@ generated_files += \
                 klm_prot.h nis_object.h rnusers.h spray.h \
                 mount.h nis.h rquota.h yppasswd.h) \
     src/lib/libc/include/rpc/rpcb_prot.h
+
+$(generated_rpcsvc_files:.h=.x): $(DOWNLOADS)
+
+$(generated_rpcsvc_files) : $(generated_rpcsvc_files:.h=.x)
+
+generated_files += $(generated_rpcsvc_files)
 
 # generate files before assembling the public include directory tree
 _dirs: $(generated_files)
