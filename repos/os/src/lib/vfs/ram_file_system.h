@@ -565,7 +565,6 @@ class Vfs::Ram_file_system : public Vfs::File_system
 				if (!file) return OPEN_ERR_UNACCESSIBLE;
 			}
 
-			file->open();
 			*handle = new (alloc) Ram_vfs_handle(*this, alloc, mode, *file);
 			return OPEN_OK;
 		}
