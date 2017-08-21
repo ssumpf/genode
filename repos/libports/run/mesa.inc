@@ -128,7 +128,7 @@ set launchpad_config {
 			<start name="liquid_fb" caps="100">
 				<resource name="RAM" quantum="16M"/>
 				<provides> <service name="Framebuffer"/> <service name="Input"/> </provides>
-				<config resize_handle="on" animate="off" title="gears" width="600" height="600" xpos="100" ypos="100"/>
+				<config resize_handle="off" animate="off" title="gears" width="600" height="600" xpos="100" ypos="100"/>
 				<route>
 				<any-service> <parent/> <any-child/> </any-service>
 				</route>

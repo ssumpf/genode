@@ -8,8 +8,8 @@ set build_components {
 	drivers/gpu/intel
 	lib/mesa/swrast
 	lib/mesa/i965
+	server/liquid_framebuffer
 	server/nitpicker
-	server/nit_fb
 	app/launchpad
 	app/pointer
 	test/mesa_demo/eglgears
@@ -118,11 +118,12 @@ append config {
 						<service name="Gpu" />
 					</parent-provides>
 					<default caps="100"/>
-					<start name="nit_fb">
-						<resource name="RAM" quantum="2M"/>
+					<start name="liquid_fb">
+						<resource name="RAM" quantum="8M"/>
 						<provides><service name="Input"/><service name="Framebuffer"/></provides>
 						<route><any-service><parent/></any-service></route>
-						<config xpos="300" ypos="100" width="600" height="600" />
+						<config xpos="300" ypos="100" width="600" height="600"
+						resize_handle="on" animate="off" title="EGL gears" />
 					</start>
 					<start name="gears" caps="128">
 						<resource name="RAM" quantum="1G"/>
@@ -153,7 +154,7 @@ append config {
 install_config $config
 
 set boot_modules {
-	core init ld.lib.so timer nitpicker nit_fb
+	core init ld.lib.so timer nitpicker liquid_fb
 	launchpad gears pointer
 	libc.lib.so libm.lib.so pthread.lib.so
 	egl.lib.so mesa.lib.so stdcxx.lib.so

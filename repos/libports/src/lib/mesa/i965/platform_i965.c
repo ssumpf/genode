@@ -67,10 +67,6 @@ dri2_genode_put_image(__DRIdrawable * draw, int op,
 	                (char *)dst, data,
 	                dst_stride, src_stride,
 	                false, 1, memcpy);
-
-	if (window->type == WINDOW) {
-		genode_framebuffer_refresh(window, x, y, w, h);
-	}
 }
 
 
