@@ -35,7 +35,7 @@ Session_component::Session_component(Genode::Env &env,
 	Genode::log("Framebuffer with ", _core_fb.width, "x", _core_fb.height,
 	            "x", _core_fb.bpp, " @ ", (void*)_core_fb.addr);
 
-	/*Calculate required padding to align framebuffer to 16 pixels.*/
+	/* calculate required padding to align framebuffer to 16 pixels */
 	_pad = (16 - (_core_fb.width % 16)) & 0x0f;
 
 	_fb_mem.construct(
