@@ -45,7 +45,7 @@ append config {
 			<service name="ROM" label="egl_drv.lib.so"> <parent label="egl_swrast.lib.so" /> </service>
 			<any-service> <parent /> <child name="wm" /> <any-child/> </any-service>
 		</route>
-		<config ld_verbose="yes">
+		<config>
 			<vfs>
 				<dir name="dev"> <log/> </dir>
 				<tar name="qt5_fs_openglwindow.tar"/>
