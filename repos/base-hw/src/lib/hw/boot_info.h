@@ -27,12 +27,6 @@ struct Hw::Boot_info
 	Mapping_pool  const elf_mappings;
 	Mmio_space    const mmio_space;
 	Memory_region_array ram_regions;
-	struct {
-		Genode::uint32_t revision;
-		Genode::uint32_t rsdt;
-		Genode::uint64_t xsdt;
-	} acpi_rsdp = { 0UL, 0UL, 0ULL};
-
 
 	Boot_info(addr_t       const table,
 	          addr_t       const table_alloc,

@@ -189,8 +189,4 @@ Platform::Platform()
 		bootinfo.ram_regions.add(r); });
 	board.late_ram_regions.for_each([&] (Memory_region const & r) {
 		bootinfo.ram_regions.add(r); });
-
-	bootinfo.acpi_rsdp.revision = board.acpi_rsdp.revision;
-	bootinfo.acpi_rsdp.rsdt     = board.acpi_rsdp.rsdt;
-	bootinfo.acpi_rsdp.xsdt     = board.acpi_rsdp.xsdt;
 }

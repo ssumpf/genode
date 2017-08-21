@@ -27,8 +27,6 @@ namespace Bootstrap {
 
 	using Genode::addr_t;
 	using Genode::size_t;
-	using Genode::uint32_t;
-	using Genode::uint64_t;
 	using Hw::Boot_info;
 	using Hw::Mmio_space;
 	using Hw::Mapping;
@@ -47,11 +45,6 @@ class Bootstrap::Platform
 			Memory_region_array early_ram_regions;
 			Memory_region_array late_ram_regions;
 			Mmio_space const    core_mmio;
-			struct {
-				uint32_t        revision;
-				uint32_t        rsdt;
-				uint64_t        xsdt;
-			} acpi_rsdp = { 0UL, 0UL, 0ULL };
 
 			Board();
 		};
