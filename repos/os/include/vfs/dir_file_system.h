@@ -256,14 +256,23 @@ class Vfs::Dir_file_system : public File_system
 		                                           char *dst, file_size count,
 		                                           file_size &out_count)
 		{
-			if (!dir_vfs_handle->fs_for_complete_read) {
-				/* no fs was found for the given index */
-				return READ_ERR_INVALID;
-			}
+			if (!dir_vfs_handle->fs_for_complete_read ||
+			    !dir_vfs_handle->fs_dir_handle) {
 
-			if (!dir_vfs_handle->fs_dir_handle) {
-				/* fs->opendir() failed */
-				return READ_ERR_INVALID;
+				/*
+				 * no fs was found for the given index or
+				 * fs->opendir() failed
+				 */
+
+				if (count < sizeof(Dirent))
+					return READ_ERR_INVALID;
+
+				Dirent *dirent = (Dirent*)dst;
+				*dirent = Dirent();
+
+				out_count = sizeof(Dirent);
+
+				return READ_OK;
 			}
 
 			Read_result result = dir_vfs_handle->fs_for_complete_read->
