@@ -213,6 +213,8 @@ proc create_tar_from_depot_binaries { archive_path args } {
 		lappend content $subdir
 	}
 
+	check_for_missing_depot_archives
+
 	eval "exec tar cf $archive_path -C [depot_dir] $content"
 }
 
