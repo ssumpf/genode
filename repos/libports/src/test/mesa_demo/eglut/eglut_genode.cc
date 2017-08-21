@@ -40,10 +40,17 @@ extern "C" {
 
 Genode::Env *genode_env;
 
+static Genode::Constructible<Genode::Entrypoint> signal_ep;
+
+Genode::Entrypoint &genode_entrypoint()
+{
+	return *signal_ep;
+}
+
+
 struct Window : Genode_egl_window
 {
 	Genode::Env                                   &env;
-	Genode::Entrypoint                             signal_ep { env, 1024*sizeof(long), "eglut_signal_ep" };
 	Genode::Constructible<Framebuffer::Connection> framebuffer;
 	Genode::Io_signal_handler<Window>              mode_dispatcher;
 	bool                                           mode_change_pending = false;
@@ -51,7 +58,7 @@ struct Window : Genode_egl_window
 	Window(Genode::Env &env, int w, int h)
 	:
 		env(env),
-	  mode_dispatcher(signal_ep, *this, &Window::mode_handler)
+	  mode_dispatcher(*signal_ep, *this, &Window::mode_handler)
 	{
 		width  = w;
 		height = h;
@@ -165,8 +172,7 @@ extern "C" int eglut_main(int argc, char *argv[]);
 
 void Libc::Component::construct(Libc::Env &env)
 {
-	using namespace Genode;
 	genode_env = &env;
-
+	signal_ep.construct(env, 1024*sizeof(long), "eglut_signal_ep");
 	Libc::with_libc([] () { eglut_main(1, nullptr); });
 }

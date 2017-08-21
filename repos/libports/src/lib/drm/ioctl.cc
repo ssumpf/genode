@@ -158,6 +158,8 @@ class Drm_call
 		Gpu::Connection _gpu_session { _env };
 		Gpu::Info       _gpu_info { _gpu_session.info() };
 
+		Genode::Lock _completion_lock { Genode::Lock::LOCKED };
+
 		size_t available_gtt_size { _gpu_info.aperture_size };
 
 		using Handle = uint32_t;
@@ -357,12 +359,7 @@ class Drm_call
 		 ** execbuffer completion **
 		 ***************************/
 
-		bool _exec_buffer_completed { false };
-
-		void _handle_completion()
-		{
-			_exec_buffer_completed = true;
-		}
+		void _handle_completion() { _completion_lock.unlock(); }
 
 		Genode::Io_signal_handler<Drm_call> _completion_sigh {
 			_env.ep(), *this, &Drm_call::_handle_completion };
@@ -628,7 +625,6 @@ class Drm_call
 
 		int _device_gem_execbuffer2(void *arg)
 		{
-			_exec_buffer_completed = false;
 			drm_i915_gem_execbuffer2 * const p = reinterpret_cast<drm_i915_gem_execbuffer2*>(arg);
 			uint64_t const buffers_ptr         = p->buffers_ptr;
 			uint64_t const buffer_count        = p->buffer_count;
@@ -792,7 +788,9 @@ class Drm_call
 
 	public:
 
-		Drm_call(Genode::Env &env) : _env(env)
+		Drm_call(Genode::Env &env, Genode::Entrypoint &signal_ep)
+		: _env(env),
+			_completion_sigh(signal_ep, *this, &Drm_call::_handle_completion)
 		{
 			_gpu_session.completion_sigh(_completion_sigh);
 		}
@@ -838,17 +836,20 @@ class Drm_call
 			              : _generic_ioctl(command_number(request), arg);
 		}
 
-		bool execbuffer_complete() const { return _exec_buffer_completed; }
+		void wait_for_completion() { _completion_lock.lock(); }
 };
 
 
 static Genode::Constructible<Drm_call> _call;
 
 
-void drm_init(Genode::Env &env) { _call.construct(env); }
+void drm_init(Genode::Env &env, Genode::Entrypoint &signal_ep)
+{
+	_call.construct(env, signal_ep);
+}
 
 
-bool drm_complete() { return _call->execbuffer_complete(); }
+void drm_complete() { _call->wait_for_completion(); }
 
 
 /**

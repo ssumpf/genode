@@ -18,18 +18,17 @@ extern "C" {
 #include <platform.h>
 }
 
-extern void drm_init(Genode::Env &env);
+extern Genode::Entrypoint &genode_entrypoint();
+extern void drm_init(Genode::Env &env, Genode::Entrypoint &ep);
 
 void genode_drm_init()
 {
-	drm_init(*genode_env);
+	drm_init(*genode_env, genode_entrypoint());
 }
 
-extern bool drm_complete();
+extern void drm_complete();
 
 void genode_drm_complete()
 {
-	while (!drm_complete()) {
-		genode_env->ep().wait_and_dispatch_one_io_signal();
-	}
+	drm_complete();
 }

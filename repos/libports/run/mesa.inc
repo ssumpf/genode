@@ -25,7 +25,7 @@ set build_components {
 
 lappend_if $use_i965 build_components lib/mesa/i965
 
-append $build_components $demo_component
+lappend build_components $demo_component 
 
 source ${genode_dir}/repos/base/run/platform_drv.inc
 append_platform_drv_build_components
