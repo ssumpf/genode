@@ -210,10 +210,13 @@ class Drm_call
 
 			Genode::addr_t const addr = static_cast<Genode::addr_t>(_env.rm().attach(cap));
 
-			bool const ppgtt = Genode::retry<Gpu::Session::Out_of_ram>(
-				[&]() { return _gpu_session.map_buffer_ppgtt(cap, addr); },
-				[&]() { _gpu_session.upgrade_ram(4096); }
-			);
+			bool ppgtt = false;
+			try {
+				ppgtt = Genode::retry<Gpu::Session::Out_of_ram>(
+					[&]() { return _gpu_session.map_buffer_ppgtt(cap, addr); },
+					[&]() { _gpu_session.upgrade_ram(4096); }
+				);
+			} catch (Gpu::Session::Mapping_buffer_failed) { }
 
 			if (!ppgtt) {
 				Genode::error("could not insert buffer into PPGTT");
