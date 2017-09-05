@@ -809,8 +809,8 @@ struct Igd::Device
 			} catch (Igd::Ppgtt_allocator::Out_of_memory) {
 				throw Igd::Device::Out_of_ram();
 			} catch (...) {
-				Genode::log(__func__, ": unknown exception");
-				throw;
+				/* Double_insertion and the like */
+				throw Igd::Device::Could_not_map_buffer();
 			}
 		}
 
@@ -1584,7 +1584,9 @@ class Gpu::Session_component : public Genode::Session_object<Gpu::Session>
 		{
 			if (!cap.valid()) { return false; }
 
-			bool result = false;
+			enum Result { OK, ALLOC_FAILED, MAP_FAILED, };
+
+			Result result = ALLOC_FAILED;
 			auto lookup_and_map = [&] (Buffer &buffer) {
 				if (!(buffer.cap == cap)) { return; }
 
@@ -1600,20 +1602,25 @@ class Gpu::Session_component : public Genode::Session_object<Gpu::Session>
 					Genode::addr_t const phys_addr   = buf.phys_addr();
 					_vgpu.rcs_map_ppgtt(va, phys_addr, actual_size);
 					buffer.ppgtt_va = va;
-					result = true;
+					result = OK;
 				} catch (Igd::Device::Could_not_map_buffer) {
-					/* FIXME do not result in Out_of_ram */
-					Genode::error("could not map buffer object into PPGTT");
+					Genode::error("could not map buffer object (", Genode::Hex(va), ") into PPGTT");
+					result = MAP_FAILED;
 					return;
 				}
-				/* will throw below */
-				catch (Igd::Device::Out_of_ram) { return; }
+				catch (Igd::Device::Out_of_ram) {
+					result = ALLOC_FAILED;
+					return;
+				}
 			};
 			_buffer_registry.for_each(lookup_and_map);
 
-			if (!result) { throw Gpu::Session::Out_of_ram(); }
+			switch (result) {
+			case ALLOC_FAILED: throw Gpu::Session::Out_of_ram();
+			case MAP_FAILED:   throw Gpu::Session::Mapping_buffer_failed();
+			}
 
-			return result;
+			return true;
 		}
 
 		void unmap_buffer_ppgtt(Genode::Dataspace_capability cap,
