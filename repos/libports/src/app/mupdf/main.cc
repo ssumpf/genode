@@ -329,4 +329,7 @@ struct Main
 };
 
 
-void Libc::Component::construct(Libc::Env &env) { static Main main(env); }
+void Libc::Component::construct(Libc::Env &env)
+{
+	Libc::with_libc([&] () { static Main main(env); });
+}
