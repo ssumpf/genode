@@ -16,6 +16,8 @@
 
 /* Genode includes */
 #include <util/interface.h>
+#include <base/allocator_guard.h>
+#include <dataspace/client.h>
 #include <ram_session/ram_session.h>
 
 namespace Utils {
@@ -35,7 +37,7 @@ namespace Utils {
 
 	template <unsigned int ELEMENTS> class Address_map;
 
-	void clflush(volatile void *addr)
+	inline void clflush(volatile void *addr)
 	{
 		asm volatile("clflush %0" : "+m" (*(volatile char *)addr));
 	}

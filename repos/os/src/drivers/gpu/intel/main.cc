@@ -682,6 +682,12 @@ struct Igd::Device
 			/* save old tail */
 			Ring_buffer::Index const tail = el.ring_tail();
 
+			/*
+			 * IHD-OS-BDW-Vol 7-11.15 p. 18 ff.
+			 *
+			 * Pipeline synchronization
+			 */
+
 			/* prolog */
 			if (1)
 			{
@@ -788,7 +794,8 @@ struct Igd::Device
 			/* w/a */
 			if (1)
 			{
-				for (size_t i = 0; i < 2; i++) {
+				enum { CMD_NUM = 2, };
+				for (size_t i = 0; i < CMD_NUM; i++) {
 					advance += el.ring_append(0);
 				}
 			}
@@ -952,16 +959,13 @@ struct Igd::Device
 		(void)ctx_switch;
 		bool const user_complete = Mmio::GT_0_INTERRUPT_IIR::Cs_mi_user_interrupt::get(v);
 
+		if (v) { _clear_rcs_iir(v); }
+
 		Vgpu *notify_gpu = nullptr;
 		if (user_complete) { notify_gpu = _current_vgpu(); }
 
-		if (v) { _clear_rcs_iir(v); }
-
 		bool const fault_valid = _mmio->fault_regs_valid();
 		if (fault_valid) { Genode::error("FAULT_REG valid"); }
-
-		bool const csb = _mmio->csb_unread();
-		(void)csb;
 
 		_mmio->update_context_status_pointer();
 
@@ -1123,6 +1127,7 @@ struct Igd::Device
 		_irq->ack_irq();
 
 		_mmio->dump();
+		_mmio->context_status_pointer_dump();
 
 		_timer.sigh(_watchdog_timeout_sigh);
 	}
@@ -1618,6 +1623,7 @@ class Gpu::Session_component : public Genode::Session_object<Gpu::Session>
 			switch (result) {
 			case ALLOC_FAILED: throw Gpu::Session::Out_of_ram();
 			case MAP_FAILED:   throw Gpu::Session::Mapping_buffer_failed();
+			case OK: break;
 			}
 
 			return true;
