@@ -1,0 +1,54 @@
+<?xml version="1.0"?>
+<VirtualBox xmlns="http://www.virtualbox.org/" version="1.14-freebsd">
+  <Machine uuid="{03ba59c2-4476-4bb2-ba12-d63ec11e20d6}" name="VM" OSType="Ubuntu_64" snapshotFolder="Snapshots" lastStateChange="2017-12-14T20:18:53Z">
+    <MediaRegistry>
+      <HardDisks>
+        <HardDisk uuid="{8bf3ef3e-ef70-4bcd-8dc8-cb1649d5adeb}" location="machine.vdi" format="VDI" type="Normal"/>
+      </HardDisks>
+    </MediaRegistry>
+    <Hardware>
+      <CPU count="2">
+        <PAE enabled="true"/>
+        <LongMode enabled="true"/>
+        <HardwareVirtExLargePages enabled="false"/>
+      </CPU>
+      <Memory RAMSize="4096"/>
+      <HID Pointing="USBTablet"/>
+      <Display VRAMSize="20"/>
+      <RemoteDisplay enabled="false"/>
+      <BIOS>
+        <IOAPIC enabled="true"/>
+      </BIOS>
+      <USB>
+        <Controllers>
+          <Controller name="OHCI" type="OHCI"/>
+        </Controllers>
+      </USB>
+      <Network>
+        <Adapter slot="0" enabled="true" MACAddress="0800271D7901" cable="true" type="82540EM">
+          <BridgedInterface/>
+        </Adapter>
+      </Network>
+      <UART>
+        <Port slot="0" enabled="false" IOBase="0x3f8" IRQ="4" hostMode="Disconnected"/>
+        <Port slot="1" enabled="false" IOBase="0x2f8" IRQ="3" hostMode="Disconnected"/>
+      </UART>
+      <LPT>
+        <Port slot="0" enabled="false" IOBase="0x378" IRQ="7"/>
+        <Port slot="1" enabled="false" IOBase="0x378" IRQ="7"/>
+      </LPT>
+      <AudioAdapter controller="HDA" driver="OSS" enabled="false"/>
+      <RTC localOrUTC="UTC"/>
+      <SharedFolders>
+        <SharedFolder name="shared" hostPath="/shared" writable="true" autoMount="true"/>
+      </SharedFolders>
+    </Hardware>
+    <StorageControllers>
+      <StorageController name="SATA" type="AHCI" PortCount="2" useHostIOCache="true" Bootable="true" IDE0MasterEmulationPort="0" IDE0SlaveEmulationPort="1" IDE1MasterEmulationPort="2" IDE1SlaveEmulationPort="3">
+        <AttachedDevice type="HardDisk" port="0" device="0">
+          <Image uuid="{8bf3ef3e-ef70-4bcd-8dc8-cb1649d5adeb}"/>
+        </AttachedDevice>
+      </StorageController>
+    </StorageControllers>
+  </Machine>
+</VirtualBox>
