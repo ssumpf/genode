@@ -37,6 +37,8 @@ class Pthread_registry
 		void remove(pthread_t thread);
 
 		bool contains(pthread_t thread);
+
+		int position(pthread_t thread);
 };
 
 

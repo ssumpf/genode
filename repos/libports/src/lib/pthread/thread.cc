@@ -100,6 +100,16 @@ bool Pthread_registry::contains(pthread_t thread)
 }
 
 
+int Pthread_registry::position(pthread_t thread)
+{
+	for (unsigned int i = 0; i < MAX_NUM_PTHREADS; i++)
+		if (_array[i] == thread)
+			return i;
+
+	return -1;
+}
+
+
 Pthread_registry &pthread_registry()
 {
 	static Pthread_registry instance;
@@ -234,6 +244,12 @@ extern "C" {
 		(*attr)->stack_size = Genode::align_addr(stacksize, 12);
 
 		return 0;
+	}
+
+
+	pid_t pthread_tid(pthread_t thread)
+	{
+		return pthread_registry().position(thread);
 	}
 
 
