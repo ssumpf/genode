@@ -30,8 +30,8 @@
 #include <nitpicker_gfx/box_painter.h>
 
 
-enum { LOG_W = 80 };  /* number of visible characters per line */
-enum { LOG_H = 25 };  /* number of lines of log window         */
+enum { LOG_W = 120 }; /* number of visible characters per line */
+enum { LOG_H = 88 };  /* number of lines of log window         */
 
 typedef Text_painter::Font          Font;
 typedef Genode::Surface_base::Point Point;
@@ -433,7 +433,7 @@ struct Nitlog::Main
 	bool const _canvas_initialized = (_init_canvas(), true);
 
 	/* create view for log window */
-	Nitpicker::Rect const _view_geometry { Nitpicker::Point(20, 20),
+	Nitpicker::Rect const _view_geometry { Nitpicker::Point(1910-_win_w, 10),
 	                                       Nitpicker::Area(_win_w, _win_h) };
 	Log_view _view { _nitpicker, _view_geometry };
 
@@ -462,9 +462,9 @@ struct Nitlog::Main
 
 			Nitpicker::Point mouse_pos(ev.ax(), ev.ay());
 
-			/* move view */
-			if (ev.type() == Input::Event::MOTION && _key_cnt > 0)
-				_view.move(_view.pos() + mouse_pos - _old_mouse_pos);
+			// /* move view */
+			// if (ev.type() == Input::Event::MOTION && _key_cnt > 0)
+			// 	_view.move(_view.pos() + mouse_pos - _old_mouse_pos);
 
 			/* find selected view and bring it to front */
 			if (ev.type() == Input::Event::PRESS && _key_cnt == 1)
