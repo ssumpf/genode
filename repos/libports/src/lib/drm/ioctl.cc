@@ -199,8 +199,13 @@ class Drm_call
 			[&] () { return _gpu_session.alloc_buffer(size); },
 			[&] () {
 				_gpu_session.upgrade_ram(donate);
-				donate /= 4;
-			});
+				donate /= 2;
+			}, 4);
+
+			if (!cap.valid()) {
+				Genode::error("could not allocate buffer with size: ", size);
+				return INVALID_HANDLE;
+			}
 
 			/*
 			 * Every buffer always is mapped into the PPGTT. To make things
