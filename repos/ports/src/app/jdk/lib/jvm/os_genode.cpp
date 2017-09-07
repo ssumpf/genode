@@ -22,6 +22,17 @@
  *
  */
 
+#include <base/heap.h>
+#include <base/registry.h>
+#include <libc/component.h>
+#include <region_map/client.h>
+#include <rm_session/connection.h>
+#include <util/retry.h>
+#include <base/debug.h>
+
+/* libc includes */
+#include <stdlib.h> /* 'malloc'/ 'exit' */
+
 // no precompiled headers
 #include "classfile/classLoader.hpp"
 #include "classfile/systemDictionary.hpp"
@@ -105,21 +116,17 @@
 # include <sys/ioctl.h>
 # include <sys/syscall.h>
 
+
 #if defined(__FreeBSD__) || defined(__NetBSD__)
   #include <elf.h>
 #endif
 
-#ifdef __APPLE__
-  #include <mach/mach.h> // semaphore_* API
-  #include <mach-o/dyld.h>
-  #include <sys/proc_info.h>
-  #include <objc/objc-auto.h>
-#endif
 
 #define NOT_IMPL ({ \
- printf("Genode ERROR: %s called not implmemented\n", __func__); \
- while (1); \
+ PDBG("called not implmemented\n"); \
 })
+
+extern "C" void backtrace();
 
 #ifndef MAP_ANONYMOUS
   #define MAP_ANONYMOUS MAP_ANON
@@ -558,6 +565,8 @@ bool os::Bsd::is_sig_ignored(int sig) {
   }
 }
 
+
+#if 0
 void os::Bsd::signal_sets_init() {
   // Should also have an assertion stating we are still single-threaded.
   assert(!signal_sets_initialized, "Already initialized");
@@ -604,6 +613,7 @@ void os::Bsd::signal_sets_init() {
   debug_only(signal_sets_initialized = true);
 
 }
+#endif
 
 // These are signals that are unblocked while a thread is running Java.
 // (For some reason, they get blocked by default.)
@@ -1130,10 +1140,20 @@ size_t os::lasterror(char *buf, size_t len) {
   return n;
 }
 
+//XXX: if needed make avaiable
+extern "C" pid_t pthread_tid(pthread_t thread);
+
 // Information of current thread in variety of formats
-pid_t os::Bsd::gettid() {
-	NOT_IMPL;
-	return 0;
+pid_t os::Bsd::gettid()
+{
+	printf("%s: pid: %d\n", __PRETTY_FUNCTION__, pthread_tid(pthread_self()));
+
+	pid_t p = pthread_tid(pthread_self());
+	if (p < 0) {
+		printf("error gettid called outside of POSIX thread\n");
+	}
+
+	return p;
 }
 
 intx os::current_thread_id() {
@@ -1205,6 +1225,8 @@ bool os::dll_build_name(char* buffer, size_t buflen,
   bool retval = false;
   // Copied from libhpi
   const size_t pnamelen = pname ? strlen(pname) : 0;
+
+	printf("%s: %s\n", __func__, fname);
 
   // Return error on buffer overflow.
   if (pnamelen + strlen(fname) + strlen(JNI_LIB_PREFIX) + strlen(JNI_LIB_SUFFIX) + 2 > buflen) {
@@ -1848,6 +1870,8 @@ void* os::signal(int signal_number, void* handler) {
 }
 
 void os::signal_raise(int signal_number) {
+	printf("%s called from", __func__);
+	backtrace();
   ::raise(signal_number);
 }
 
@@ -2091,58 +2115,6 @@ static void warn_fail_commit_memory(char* addr, size_t size, bool exec,
           os::errno_name(err), err);
 }
 
-// NOTE: Bsd kernel does not really reserve the pages for us.
-//       All it does is to check if there are enough free pages
-//       left at the time of mmap(). This could be a potential
-//       problem.
-bool os::pd_commit_memory(char* addr, size_t size, bool exec) {
-  int prot = exec ? PROT_READ|PROT_WRITE|PROT_EXEC : PROT_READ|PROT_WRITE;
-#ifdef __OpenBSD__
-  // XXX: Work-around mmap/MAP_FIXED bug temporarily on OpenBSD
-  if (::mprotect(addr, size, prot) == 0) {
-    return true;
-  }
-#else
-  uintptr_t res = (uintptr_t) ::mmap(addr, size, prot,
-                                     MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0);
-  if (res != (uintptr_t) MAP_FAILED) {
-    return true;
-  }
-#endif
-
-  // Warn about any commit errors we see in non-product builds just
-  // in case mmap() doesn't work as described on the man page.
-  NOT_PRODUCT(warn_fail_commit_memory(addr, size, exec, errno);)
-
-  return false;
-}
-
-bool os::pd_commit_memory(char* addr, size_t size, size_t alignment_hint,
-                          bool exec) {
-  // alignment_hint is ignored on this OS
-  return pd_commit_memory(addr, size, exec);
-}
-
-void os::pd_commit_memory_or_exit(char* addr, size_t size, bool exec,
-                                  const char* mesg) {
-  assert(mesg != NULL, "mesg must be specified");
-  if (!pd_commit_memory(addr, size, exec)) {
-    // add extra info in product mode for vm_exit_out_of_memory():
-    PRODUCT_ONLY(warn_fail_commit_memory(addr, size, exec, errno);)
-    vm_exit_out_of_memory(size, OOM_MMAP_ERROR, "%s", mesg);
-  }
-}
-
-void os::pd_commit_memory_or_exit(char* addr, size_t size,
-                                  size_t alignment_hint, bool exec,
-                                  const char* mesg) {
-  // alignment_hint is ignored on this OS
-  pd_commit_memory_or_exit(addr, size, exec, mesg);
-}
-
-void os::pd_realign_memory(char *addr, size_t bytes, size_t alignment_hint) {
-}
-
 void os::pd_free_memory(char *addr, size_t bytes, size_t alignment_hint) {
   ::madvise(addr, bytes, MADV_DONTNEED);
 }
@@ -2180,19 +2152,9 @@ char *os::scan_pages(char *start, char* end, page_info* page_expected, page_info
 }
 
 
-bool os::pd_uncommit_memory(char* addr, size_t size) {
-#ifdef __OpenBSD__
-  // XXX: Work-around mmap/MAP_FIXED bug temporarily on OpenBSD
-  return ::mprotect(addr, size, PROT_NONE) == 0;
-#else
-  uintptr_t res = (uintptr_t) ::mmap(addr, size, PROT_NONE,
-                                     MAP_PRIVATE|MAP_FIXED|MAP_NORESERVE|MAP_ANONYMOUS, -1, 0);
-  return res  != (uintptr_t) MAP_FAILED;
-#endif
-}
-
 bool os::pd_create_stack_guard_pages(char* addr, size_t size) {
-  return os::commit_memory(addr, size, !ExecMem);
+  NOT_IMPL;
+  return true;
 }
 
 // If this is a growable mapping, remove the guard pages entirely by
@@ -2228,15 +2190,6 @@ static char* anon_mmap(char* requested_addr, size_t bytes, bool fixed) {
 
 static int anon_munmap(char * addr, size_t size) {
   return ::munmap(addr, size) == 0;
-}
-
-char* os::pd_reserve_memory(size_t bytes, char* requested_addr,
-                            size_t alignment_hint) {
-  return anon_mmap(requested_addr, bytes, (requested_addr != NULL));
-}
-
-bool os::pd_release_memory(char* addr, size_t size) {
-  return anon_munmap(addr, size);
 }
 
 static bool bsd_mprotect(char* addr, size_t size, int prot) {
@@ -2638,7 +2591,7 @@ static void SR_handler(int sig, siginfo_t* siginfo, ucontext_t* context) {
   errno = old_errno;
 }
 
-
+#if 0
 static int SR_initialize() {
   struct sigaction act;
   char *s;
@@ -2679,6 +2632,8 @@ static int SR_initialize() {
   os::Bsd::set_our_sigflags(SR_signum, act.sa_flags);
   return 0;
 }
+#endif
+
 
 static int sr_notify(OSThread* osthread) {
   int status = pthread_kill(osthread->pthread_id(), SR_signum);
@@ -2975,6 +2930,7 @@ void os::Bsd::set_signal_handler(int sig, bool set_installed) {
 // install signal handlers for signals that HotSpot needs to
 // handle in order to support Java-level exception handling.
 
+#if 0
 void os::Bsd::install_signal_handlers() {
   if (!signal_handlers_are_installed) {
     signal_handlers_are_installed = true;
@@ -3050,6 +3006,7 @@ void os::Bsd::install_signal_handlers() {
     }
   }
 }
+#endif
 
 
 /////
@@ -3323,13 +3280,14 @@ jint os::init_2(void) {
   }
 
   // initialize suspend/resume support - must do this before signal_sets_init()
+#if 0
   if (SR_initialize() != 0) {
     perror("SR_initialize failed");
     return JNI_ERR;
   }
-
-  Bsd::signal_sets_init();
-  Bsd::install_signal_handlers();
+#endif 
+  //Bsd::signal_sets_init();
+  //Bsd::install_signal_handlers();
 
   // Check and sets minimum stack sizes against command line options
   if (Posix::set_minimum_stack_sizes() == JNI_ERR) {
@@ -3434,6 +3392,9 @@ bool os::bind_to_processor(uint processor_id) {
 }
 
 void os::SuspendedThreadTask::internal_do_task() {
+	printf("%s called from", __func__);
+	backtrace();
+
   if (do_suspend(_thread->osthread())) {
     SuspendedThreadTaskContext context(_thread, _thread->osthread()->ucontext());
     do_task(context);
@@ -4408,3 +4369,308 @@ bool os::start_debugging(char *buf, int buflen) {
   }
   return yes;
 }
+
+/************************** 
+ ** VM region management **
+ **************************/
+
+
+namespace Genode {
+	class Vm_area;
+	class Vm_area_registry;
+};
+
+class Genode::Vm_area
+{
+	private:
+
+		struct Vm_area_ds
+		{
+				addr_t               vm_start;
+				size_t               vm_size;
+				Dataspace_capability ds;
+
+				Vm_area_ds(addr_t vm_start, size_t vm_size, Dataspace_capability ds)
+				: vm_start(vm_start), vm_size(vm_size), ds(ds) { }
+
+				virtual ~Vm_area_ds() { };
+		};
+
+		typedef Registered<Vm_area_ds> Vm_handle;
+
+		Env                &_env;
+		Heap               &_heap;
+		Rm_connection      &_rm_connection;
+		size_t              _vm_size;
+		Region_map_client   _rm { _rm_connection.create(_vm_size) };
+		addr_t              _vm_start { _env.rm().attach(_rm.dataspace()) };
+		Registry<Vm_handle> _ds;
+
+		bool _inside(addr_t start, size_t size) {
+			return start >= _vm_start && (start + size) <= (_vm_start + _vm_size); }
+
+	public:
+
+		Vm_area(Env &env, Heap &heap, Rm_connection &rm, size_t vm_size)
+		: _env(env), _heap(heap), _rm_connection(rm),  _vm_size(vm_size) { }
+
+		addr_t start() { return _vm_start; }
+
+		bool commit(addr_t start, size_t size, bool executable)
+		{
+			if (!_inside(start, size))
+				return false;
+
+			Dataspace_capability ds = _env.ram().alloc(size);
+
+			try {
+				addr_t addr = retry<Genode::Out_of_ram>(
+					[&] () {
+						if (executable)
+							return _rm.attach_executable(ds, start - _vm_start);
+						else
+							return _rm.attach_at(ds, start - _vm_start);
+					},
+					[&] () { _env.upgrade(Parent::Env::pd(), "ram_quota=8K"); });
+			} catch (...) {
+				_env.ram().free(ds);
+				return false;
+			}
+
+			new (_heap) Vm_handle(_ds, start, size, ds);
+
+			return true;
+		}
+
+		virtual ~Vm_area()
+		{
+			_ds.for_each([&] (Vm_handle &h) {
+				_rm.detach(h.vm_start - _vm_start);
+				_env.ram().free(h.ds);
+				destroy(_heap, &h);
+			});
+
+			_env.rm().detach(_vm_start);
+		}
+};
+
+
+class Genode::Vm_area_registry
+{
+	private:
+
+		typedef Registered<Vm_area> Vm_area_handle;
+
+		Env                     &_env;
+		Heap                     _heap { _env.ram(), _env.rm() };
+		Rm_connection            _rm { _env };
+		Registry<Vm_area_handle> _registry;
+
+	public:
+
+		Vm_area_registry(Env &env) : _env(env) { }
+
+		addr_t reserve(size_t vm_size)
+		{
+			Vm_area *vm = new (&_heap) Vm_area_handle(_registry, _env, _heap, _rm, vm_size);
+			return vm->start();
+		}
+
+		bool commit(addr_t start, size_t size, bool executable)
+		{
+			bool success = false;
+
+			_registry.for_each([&] (Vm_area_handle &vm) {
+				if (success)
+					return;
+
+				success |= vm.commit(start, size, executable);
+			});
+
+			return success;
+		}
+};
+
+static Genode::Constructible<Genode::Vm_area_registry> vm_reg;
+
+char* os::pd_reserve_memory(size_t bytes, char* requested_addr,
+                            size_t alignment_hint)
+{
+	Genode::warning(__func__, " mem: ", Genode::Hex(bytes), " addr: ", (void *)requested_addr);
+	if (requested_addr != nullptr)
+		Genode::error(__func__,  " addr ", (void *)requested_addr, " != 0x0");
+
+	try {
+		return vm_reg->reserve(bytes);
+	} catch (...) {
+		Genode::error(__PRETTY_FUNCTION__, " exception!");
+	}
+	return nullptr;
+}
+
+
+bool os::pd_release_memory(char* addr, size_t size) {
+  Genode::error(__PRETTY_FUNCTION__, "addr: ", (void *)addr, " size: ", (void *)size);
+  while (1);
+}
+
+
+bool os::pd_commit_memory(char* addr, size_t size, bool exec) {
+	Genode::warning(__func__, "addr: ", (void *)addr, " size: ", (void *)size, " exec: ", exec);
+
+	if (!addr) {
+		Genode::error(__PRETTY_FUNCTION__, "  addr == 0");
+		while(1);
+	}
+
+	bool ret = vm_reg->commit(addr, size, exec);
+
+	if (!ret)
+		NOT_PRODUCT(warn_fail_commit_memory(addr, size, exec, errno);)
+
+  return ret;;
+}
+
+
+bool os::pd_commit_memory(char* addr, size_t size, size_t alignment_hint,
+                          bool exec) {
+  // alignment_hint is ignored on this OS
+  return pd_commit_memory(addr, size, exec);
+}
+
+
+void os::pd_commit_memory_or_exit(char* addr, size_t size, bool exec,
+                                  const char* mesg) {
+  assert(mesg != NULL, "mesg must be specified");
+  if (!pd_commit_memory(addr, size, exec)) {
+    // add extra info in product mode for vm_exit_out_of_memory():
+    PRODUCT_ONLY(warn_fail_commit_memory(addr, size, exec, errno);)
+    vm_exit_out_of_memory(size, OOM_MMAP_ERROR, "%s", mesg);
+  }
+}
+
+
+void os::pd_commit_memory_or_exit(char* addr, size_t size,
+                                  size_t alignment_hint, bool exec,
+                                  const char* mesg) {
+  // alignment_hint is ignored on this OS
+  pd_commit_memory_or_exit(addr, size, exec, mesg);
+}
+
+
+void os::pd_realign_memory(char *addr, size_t bytes, size_t alignment_hint) {
+	NOT_IMPL;
+}
+
+
+bool os::pd_uncommit_memory(char* addr, size_t size) {
+  Genode::error(__PRETTY_FUNCTION__, "addr: ", (void *)addr, " size: ", (void *)size);
+  while (1);
+#ifdef __OpenBSD__
+  // XXX: Work-around mmap/MAP_FIXED bug temporarily on OpenBSD
+  return ::mprotect(addr, size, PROT_NONE) == 0;
+#else
+  uintptr_t res = (uintptr_t) ::mmap(addr, size, PROT_NONE,
+                                     MAP_PRIVATE|MAP_FIXED|MAP_NORESERVE|MAP_ANONYMOUS, -1, 0);
+  return res  != (uintptr_t) MAP_FAILED;
+#endif
+}
+
+
+
+extern char **genode_argv;
+extern int    genode_argc;
+extern char **genode_envp;
+
+/* initial environment for the FreeBSD libc implementation */
+extern char **environ;
+
+/* provided by the application */
+extern "C" int main(int argc, char ** argv, char **envp);
+
+
+static void construct_component(Libc::Env &env)
+{
+	using Genode::Xml_node;
+	using Genode::Xml_attribute;
+
+	env.config([&] (Xml_node const &node) {
+		int argc = 0;
+		int envc = 0;
+		char **argv;
+		char **envp;
+
+		/* count the number of arguments and environment variables */
+		node.for_each_sub_node([&] (Xml_node const &node) {
+			/* check if the 'value' attribute exists */
+			if (node.has_type("arg") && node.has_attribute("value"))
+				++argc;
+			else
+			if (node.has_type("env") && node.has_attribute("key") && node.has_attribute("value"))
+				++envc;
+		});
+
+		if (argc == 0 && envc == 0)
+			return; /* from lambda */
+
+		/* arguments and environment are a contiguous array (but don't count on it) */
+		argv = (char**)malloc((argc + envc + 1) * sizeof(char*));
+		envp = &argv[argc];
+
+		/* read the arguments */
+		int arg_i = 0;
+		int env_i = 0;
+		node.for_each_sub_node([&] (Xml_node const &node) {
+			/* insert an argument */
+			if (node.has_type("arg")) try {
+				Xml_attribute attr = node.attribute("value");
+
+				Genode::size_t const arg_len = attr.value_size()+1;
+				char *arg = argv[arg_i] = (char*)malloc(arg_len);
+
+				attr.value(arg, arg_len);
+				++arg_i;
+
+			} catch (Xml_node::Nonexistent_sub_node) { }
+
+			else
+
+			/* insert an environment variable */
+			if (node.has_type("env")) try {
+				Xml_attribute key_attr = node.attribute("key");
+				Xml_attribute val_attr = node.attribute("value");
+
+				Genode::size_t const pair_len =
+					key_attr.value_size() +
+					val_attr.value_size() + 1;
+				char *env = envp[env_i] = (char*)malloc(pair_len);
+
+				Genode::size_t off = 0;
+				key_attr.value(&env[off], key_attr.value_size()+1);
+				off = key_attr.value_size();
+				env[off++] = '=';
+				val_attr.value(&env[off], val_attr.value_size()+1);
+				++env_i;
+
+			} catch (Xml_node::Nonexistent_sub_node) { }
+		});
+
+		envp[env_i] = NULL;
+
+		/* register command-line arguments at Genode's startup code */
+		genode_argc = argc;
+		genode_argv = argv;
+		genode_envp = environ = envp;
+	});
+
+	exit(main(genode_argc, genode_argv, genode_envp));
+}
+
+
+void Libc::Component::construct(Libc::Env &env)
+{
+	vm_reg.construct(env);
+
+	Libc::with_libc([&] () { construct_component(env); });
+}
+
