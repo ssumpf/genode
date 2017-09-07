@@ -1,4 +1,4 @@
-LIBS         = stdcxx pthread
+LIBS         = stdcxx pthread jzip jimage
 SHARED_LIB   = yes
 HOTSPOT_BASE = $(call select_from_ports,jdk)/src/app/jdk/hotspot/src
 
@@ -6,8 +6,11 @@ include $(REP_DIR)/lib/mk/jdk_version.inc
 
 CC_OPT += -fpermissive -Wno-comment -Wno-reorder -Wno-switch -Wno-unused-variable
 
+CC_OLEVEL = -O0
+
 ##XXX: may have to use our own
-CC_OPT += -DINCLUDE_SUFFIX_OS=_bsd -DTARGET_COMPILER_gcc -D_ALLBSD_SOURCE -DUSE_LIBRARY_BASED_TLS_ONLY
+CC_OPT += -DINCLUDE_SUFFIX_OS=_bsd -DTARGET_COMPILER_gcc -D_ALLBSD_SOURCE -DUSE_LIBRARY_BASED_TLS_ONLY \
+          -DVM_LITTLE_ENDIAN
 
 INC_DIR += $(HOTSPOT_BASE)/os/bsd/vm \
            $(HOTSPOT_BASE)/os/posix/vm \
