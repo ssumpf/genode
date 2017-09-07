@@ -34,7 +34,7 @@ set config {
 		<provides> <service name="Rtc" /> </provides>
 	</start>
 	<start name="java" caps="200">
-		<resource name="RAM" quantum="10M" />
+		<resource name="RAM" quantum="100M" />
 		<config ld_verbose="yes">
 			<arg value="/bin/java" />
 			<arg value="-jar" />
@@ -56,6 +56,9 @@ set config {
 						<rom name="jvm.lib.so" />
 					</dir>
 				</dir>
+				<dir name="modules">
+					<tar name="classes.tar" />
+				</dir>
 				<rom name="hello.jar" />
 			</vfs>
 		</config>
@@ -68,9 +71,10 @@ install_config $config
 set boot_modules {
 	core init ld.lib.so timer rtc_drv
 	java jli.lib.so hello.jar
-	java.lib.so jvm.lib.so
+	java.lib.so jvm.lib.so jzip.lib.so jimage.lib.so
 	libc.lib.so libm.lib.so zlib.lib.so
 	posix.lib.so pthread.lib.so stdcxx.lib.so
+	classes.tar
 }
 
 build_boot_image $boot_modules
