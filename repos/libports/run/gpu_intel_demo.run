@@ -1,0 +1,356 @@
+
+if {[have_spec linux]} {
+	puts "i965 driver not supported on Linux."
+	exit 1
+}
+
+if {[have_include power_on/qemu]} {
+	puts "i965 driver not supported in Qemu."
+	exit 1
+}
+
+
+set build_components {
+	core init
+	drivers/timer
+	drivers/input
+	drivers/framebuffer
+	drivers/gpu/intel
+	server/liquid_framebuffer
+	server/nitlog
+	server/nitpicker
+	lib/mesa/swrast
+	lib/mesa/i965
+	app/launchpad
+	app/pointer
+
+	test/mesa_demo/hello_gl
+	test/mesa_demo/gears
+	test/sdl_opengl/lesson3
+	test/sdl_opengl/lesson36
+}
+
+source ${genode_dir}/repos/base/run/platform_drv.inc
+append_platform_drv_build_components
+
+build $build_components
+
+create_boot_directory
+
+set config {
+<config verbose="yes" prio_levels="2">
+	<parent-provides>
+		<service name="CPU"/>
+		<service name="IRQ"/>
+		<service name="IO_MEM"/>
+		<service name="IO_PORT"/>
+		<service name="LOG"/>
+		<service name="PD"/>
+		<service name="RM"/>
+		<service name="ROM"/>
+	</parent-provides>
+	<default caps="200"/>
+	<default-route>
+		<any-service> <parent/> <any-child/> </any-service>
+	</default-route>
+}
+
+append_platform_drv_config
+
+append_if [expr ![have_spec linux]] config {
+	<start name="fb_drv">
+		<resource name="RAM" quantum="10M"/>
+		<provides>
+			<service name="Framebuffer"/>
+		</provides>
+		<route><any-service> <parent /> <any-child/> </any-service> </route>
+	</start>}
+
+append_if [have_spec ps2] config {
+	<start name="ps2_drv" priority="0">
+		<resource name="RAM" quantum="2M"/>
+		<provides> <service name="Input"/> </provides>
+	</start> }
+
+append config {
+	<start name="timer" priority="0">
+		<resource name="RAM" quantum="1M"/>
+		<provides><service name="Timer"/></provides>
+	</start>
+	<start name="nitpicker" caps="200" priority="0">
+		<resource name="RAM" quantum="2M"/>
+		<provides><service name="Nitpicker"/></provides>
+		<config>
+			<domain name="pointer" layer="1" content="client" label="no" origin="pointer" />
+			<domain name="default" layer="2" content="client" label="no" focus="click" hover="always" />
+			<policy label_prefix="pointer" domain="pointer"/>
+			<default-policy                domain="default"/>
+		</config>
+		<route>
+			<service name="Framebuffer"> <child name="fb_drv"/> </service>
+			<any-service><parent/><any-child/></any-service>
+		</route>
+	</start>
+	<start name="pointer" priority="-1">
+		<resource name="RAM" quantum="1M"/>
+	</start>
+
+	<start name="intel_fb_drv" caps="1000" priority="0">
+		<binary name="intel_gpu_drv"/>
+		<resource name="RAM" quantum="1G"/>
+		<provides> <service name="Gpu"/> </provides>
+		<route>
+			<service name="LOG"> <child name="nitlog"/> </service>
+			<any-service> <parent /> <any-child/> </any-service>
+		</route>
+	</start>
+
+	<start name="nitlog" priority="-1">
+		<resource name="RAM" quantum="4M"/>
+		<provides> <service name="LOG"/> </provides>
+		<route>
+			<any-service> <parent/> <any-child/> </any-service>
+		</route>
+	</start>}
+
+set launchpad_config {
+<config xpos="20" ypos="20">
+	<!-- lesson3 -->
+	<launcher name="init" ram_quota="96M" caps="500">
+		<config verbose="yes">
+			<parent-provides>
+				<service name="ROM"/>
+				<service name="IRQ"/>
+				<service name="IO_MEM"/>
+				<service name="IO_PORT"/>
+				<service name="PD"/>
+				<service name="RM"/>
+				<service name="CPU"/>
+				<service name="LOG"/>
+				<service name="Nitpicker"/>
+				<service name="Timer"/>
+				<service name="Gpu"/>
+			</parent-provides>
+
+			<start name="liquid_fb" caps="200">
+				<resource name="RAM" quantum="16M"/>
+				<provides> <service name="Framebuffer"/> <service name="Input"/> </provides>
+				<config resize_handle="off" animate="off" title="Lesson 3" width="600" height="600" xpos="400" ypos="100"/>
+				<route>
+				<any-service> <parent/> <any-child/> </any-service>
+				</route>
+			</start>
+
+			<start name="sdl_opengl-lesson3" caps="200">
+				<resource name="RAM" quantum="32M"/>
+				<config>
+					<libc stdout="/dev/log" stderr="/dev/log" rtc="/dev/rtc"/>
+					<vfs>
+						<dir name="dev">
+							<log/>
+							<inline name="rtc">2018-01-01 00:00</inline>
+						</dir>
+					</vfs>
+				</config>
+				<route>
+					<service name="ROM" label="egl_drv.lib.so">
+						<parent label="egl_i965.lib.so"/>
+					</service>
+					<any-service> <parent/> <any-child/> </any-service>
+				</route>
+			</start>
+			</config>
+	</launcher>
+	<!-- lesson36 -->
+	<launcher name="init" ram_quota="96M" caps="500">
+		<config verbose="yes">
+			<parent-provides>
+				<service name="ROM"/>
+				<service name="IRQ"/>
+				<service name="IO_MEM"/>
+				<service name="IO_PORT"/>
+				<service name="PD"/>
+				<service name="RM"/>
+				<service name="CPU"/>
+				<service name="LOG"/>
+				<service name="Nitpicker"/>
+				<service name="Timer"/>
+				<service name="Gpu"/>
+			</parent-provides>
+
+			<start name="liquid_fb" caps="200">
+				<resource name="RAM" quantum="16M"/>
+				<provides> <service name="Framebuffer"/> <service name="Input"/> </provides>
+				<config resize_handle="off" animate="off" title="Lesson 36" width="600" height="600" xpos="600" ypos="200"/>
+				<route>
+				<any-service> <parent/> <any-child/> </any-service>
+				</route>
+			</start>
+
+			<start name="sdl_opengl-lesson36" caps="200">
+				<resource name="RAM" quantum="60M"/>
+				<config>
+					<libc stdout="/dev/log" stderr="/dev/log" rtc="/dev/rtc"/>
+					<vfs>
+						<dir name="dev">
+							<log/>
+							<inline name="rtc">2018-01-01 00:00</inline>
+						</dir>
+					</vfs>
+				</config>
+				<route>
+					<service name="ROM" label="egl_drv.lib.so">
+						<parent label="egl_i965.lib.so"/>
+					</service>
+					<any-service> <parent/> <any-child/> </any-service>
+				</route>
+			</start>
+			</config>
+	</launcher>
+	<!-- gears -->
+	<launcher name="init" ram_quota="96M" caps="500">
+		<config verbose="yes">
+			<parent-provides>
+				<service name="ROM"/>
+				<service name="IRQ"/>
+				<service name="IO_MEM"/>
+				<service name="IO_PORT"/>
+				<service name="PD"/>
+				<service name="RM"/>
+				<service name="CPU"/>
+				<service name="LOG"/>
+				<service name="Nitpicker"/>
+				<service name="Timer"/>
+				<service name="Gpu"/>
+			</parent-provides>
+
+			<start name="liquid_fb" caps="200">
+				<resource name="RAM" quantum="16M"/>
+				<provides> <service name="Framebuffer"/> <service name="Input"/> </provides>
+				<config resize_handle="off" animate="off" title="Gears" width="600" height="600" xpos="800" ypos="300"/>
+				<route>
+				<any-service> <parent/> </any-service>
+				</route>
+			</start>
+
+			<start name="gears" caps="200">
+				<resource name="RAM" quantum="32M"/>
+				<config>
+					<libc stdout="/dev/log" stderr="/dev/log" rtc="/dev/rtc"/>
+					<vfs>
+						<dir name="dev">
+							<log/>
+							<inline name="rtc">2018-01-01 00:00</inline>
+						</dir>
+					</vfs>
+				</config>
+				<route>
+					<service name="ROM" label="egl_drv.lib.so">
+						<parent label="egl_i965.lib.so"/>
+					</service>
+					<any-service> <parent/> <any-child/> </any-service>
+				</route>
+			</start>
+		</config>
+	</launcher>
+	<!-- hello_gl -->
+	<launcher name="init" ram_quota="96M" caps="500">
+		<config verbose="yes">
+			<parent-provides>
+				<service name="ROM"/>
+				<service name="IRQ"/>
+				<service name="IO_MEM"/>
+				<service name="IO_PORT"/>
+				<service name="PD"/>
+				<service name="RM"/>
+				<service name="CPU"/>
+				<service name="LOG"/>
+				<service name="Nitpicker"/>
+				<service name="Timer"/>
+				<service name="Gpu"/>
+			</parent-provides>
+
+			<start name="liquid_fb" caps="200">
+				<resource name="RAM" quantum="16M"/>
+				<provides> <service name="Framebuffer"/> <service name="Input"/> </provides>
+				<config resize_handle="off" animate="off" title="Hello GL" width="600" height="600" xpos="1000" ypos="400"/>
+				<route>
+				<any-service> <parent/> </any-service>
+				</route>
+			</start>
+
+			<start name="hello_gl" caps="200">
+				<resource name="RAM" quantum="50M"/>
+				<config>
+					<libc stdout="/dev/log" stderr="/dev/log" rtc="/dev/rtc"/>
+					<vfs>
+						<dir name="dev">
+							<log/>
+							<inline name="rtc">2018-01-01 00:00</inline>
+						</dir>
+						<rom name="hello1.tga"/>
+						<rom name="hello2.tga"/>
+						<rom name="hello-gl.f.glsl"/>
+						<rom name="hello-gl.v.glsl"/>
+					</vfs>
+				</config>
+				<route>
+					<service name="ROM" label="egl_drv.lib.so">
+						<parent label="egl_i965.lib.so"/>
+					</service>
+					<any-service> <parent/> <any-child/> </any-service>
+				</route>
+			</start>
+			</config>
+	</launcher>
+</config>}
+
+append config {
+	<start name="launchpad" caps="5000" priority="-1">
+		<resource name="RAM" quantum="2G"/>}
+append config $launchpad_config
+append config {
+		<route>
+			<service name="LOG" label_suffix=" -> gears">               <child name="nitlog"/> </service>
+			<service name="LOG" label_suffix=" -> hello_gl">            <child name="nitlog"/> </service>
+			<service name="LOG" label_suffix=" -> sdl_opengl-lesson3">  <child name="nitlog"/> </service>
+			<service name="LOG" label_suffix=" -> sdl_opengl-lesson36"> <child name="nitlog"/> </service>
+			<service name="Gpu"> <child name="intel_fb_drv"/> </service>
+			<any-service> <parent/> <any-child/> </any-service>
+		</route>
+	</start>}
+
+append config {
+</config>}
+
+install_config $config
+
+foreach file {hello1.tga hello2.tga hello-gl.f.glsl hello-gl.v.glsl} {
+	exec cp [genode_dir]/repos/libports/src/test/mesa_demo/hello_gl/$file bin
+}
+
+set boot_modules {
+	core init ld.lib.so timer nitpicker pointer liquid_fb
+	ps2_drv fb_drv intel_gpu_drv launchpad nitlog
+
+	libc.lib.so libm.lib.so pthread.lib.so
+	egl.lib.so mesa.lib.so stdcxx.lib.so
+	expat.lib.so glapi.lib.so
+
+	egl_swrast.lib.so
+	egl_i965.lib.so drm.lib.so
+
+	gears
+
+	sdl.lib.so
+	sdl_opengl-lesson3 sdl_opengl-lesson36
+
+	hello_gl hello1.tga hello2.tga
+	hello-gl.f.glsl hello-gl.v.glsl
+}
+
+append_platform_drv_boot_modules
+
+build_boot_image $boot_modules
+
+run_genode_until forever
