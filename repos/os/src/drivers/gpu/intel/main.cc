@@ -187,8 +187,8 @@ struct Igd::Device
 			 * able to give us back any quota
 			 */
 			guard.upgrade(size);
-			Genode::warning("leaking ", size, " bytes of RAM quota at ",
-			                " platform_drv but upgrade guard anyway");
+			// Genode::warning("leaking ", size, " bytes of RAM quota at ",
+			//                 " platform_drv but upgrade guard anyway");
 
 			_pci.free_dma_buffer(cap);
 		}
