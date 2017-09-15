@@ -77,7 +77,12 @@ set noswapfile
 set viminfo=}
 close $vimrc_fd
 
-exec tar cvf bin/genode.tar -C $genode_dir tool repos/base repos/$platform_base_dir repos/os repos/demo
+exec mkdir -p $genode_dir/depot/test
+exec $genode_dir/tool/depot/create test/src/zlib
+exec tar cvf bin/genode.tar --transform s/^depot/_depot/ -C $genode_dir tool repos/base repos/$platform_base_dir repos/os depot/test repos/libports/recipes
+exec ln -sf /home/build/_depot bin/depot
+exec tar -C bin  -rf bin/genode.tar depot
+exec rm -f bin/depot
 
 create_boot_directory
 
@@ -152,10 +157,12 @@ append config {
 							cp /bin/echo /usr/bin/
 							cp /bin/mkdir /usr/bin/
 							echo "creating build directory..."
+							mkdir -p "/home/build"
+							cp -r /genode/_depot /home/build
 }
-append config "						/genode/tool/create_builddir $platform BUILD_DIR=/home/build"
+#append config "						/genode/tool/create_builddir $platform BUILD_DIR=/home/build"
 append config {
-							cd /home/build
+#							cd /home/build
 }
 append config "						echo \"CROSS_DEV_PREFIX=$tool_prefix\" > etc/tools.conf"
 append config "                                         $platform_cmds"

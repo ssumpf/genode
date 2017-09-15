@@ -4,10 +4,10 @@
 # \date   2012-11-26
 #
 
-if {[have_include "power_on/qemu"]} {
-	puts "\nAuto test running on Qemu is not recommended.\n"
-	exit 0
-}
+#if {[have_include "power_on/qemu"]} {
+#	puts "\nAuto test running on Qemu is not recommended.\n"
+#	exit 0
+#}
 
 if {[have_spec pistachio] || [have_spec sel4]} {
 	puts "Platform is unsupported."
@@ -19,9 +19,9 @@ set verbose_mode      "no"
 
 set platform_pkgs     ""
 set platform_cmds     {
-                         make core KERNEL=hw &&
-                         exit 234
+                        
 }
+#/genode/tool/depot/build VERBOSE= test/bin/x86_64/zlib-2017-08-28
 set platform_base_dir   "base-hw"
 
 if {[have_spec arm]} {
@@ -56,7 +56,7 @@ if {[have_spec x86]} {
 
 source ${genode_dir}/repos/ports/run/noux_tool_chain.inc
 
-append qemu_args " -m 768 "
+append qemu_args " -m 1024 "
 
 # wait until Noux started
 run_genode_until {\[init -\> noux\].*--- noux started ---} $noux_boot_timeout
