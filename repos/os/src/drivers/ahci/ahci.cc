@@ -95,6 +95,19 @@ struct Ahci
 		platform_hba.ack_irq();
 	}
 
+	/*
+	 * Least significant bit
+	 */
+	unsigned lsb(unsigned bits) const
+	{
+		for (unsigned i = 0; i < 32; i++)
+			if (bits & (1u << i)) {
+				return i;
+			}
+
+		return 0;
+	}
+
 	void info()
 	{
 		using Genode::log;
@@ -116,17 +129,18 @@ struct Ahci
 		for (unsigned i = 0; i < hba.port_count(); i++) {
 
 			/* check if port is implemented */
-			if (!(available & (1U << i)))
-				continue;
+			if (!available) break;
+			unsigned index = lsb(available);
+			available ^= (1u << index);
 
 			bool enabled = false;
 
-			switch (Port_base(i, hba).read<Port_base::Sig>()) {
+			switch (Port_base(index, hba).read<Port_base::Sig>()) {
 				case ATA_SIG:
 					try {
 						ports[i] = new (&alloc)
 							Ata_driver(alloc, ram, root, ready_count, rm, hba,
-							           platform_hba, i, device_identified);
+							           platform_hba, index, device_identified);
 						enabled = true;
 					} catch (...) { }
 
@@ -139,7 +153,7 @@ struct Ahci
 						try {
 							ports[i] = new (&alloc)
 								Atapi_driver(ram, root, ready_count, rm, hba,
-								             platform_hba, i);
+								             platform_hba, index);
 							enabled = true;
 						} catch (...) { }
 
