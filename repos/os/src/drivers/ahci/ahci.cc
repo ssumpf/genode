@@ -138,30 +138,30 @@ struct Ahci
 			switch (Port_base(index, hba).read<Port_base::Sig>()) {
 				case ATA_SIG:
 					try {
-						ports[i] = new (&alloc)
+						ports[index] = new (&alloc)
 							Ata_driver(alloc, ram, root, ready_count, rm, hba,
 							           platform_hba, index, device_identified);
 						enabled = true;
 					} catch (...) { }
 
-					log("\t\t#", i, ":", enabled ? " ATA" : " off (ATA)");
+					log("\t\t#", index, ":", enabled ? " ATA" : " off (ATA)");
 					break;
 
 				case ATAPI_SIG:
 				case ATAPI_SIG_QEMU:
 					if (enable_atapi)
 						try {
-							ports[i] = new (&alloc)
+							ports[index] = new (&alloc)
 								Atapi_driver(ram, root, ready_count, rm, hba,
 								             platform_hba, index);
 							enabled = true;
 						} catch (...) { }
 
-					log("\t\t#", i, ":", enabled ? " ATAPI" : " off (ATAPI)");
+					log("\t\t#", index, ":", enabled ? " ATAPI" : " off (ATAPI)");
 					break;
 
 				default:
-					log("\t\t#", i, ": off (unknown device signature)");
+					log("\t\t#", index, ": off (unknown device signature)");
 			}
 		}
 	};
