@@ -180,7 +180,7 @@ class Pdf_view
 			_update_pdfapp_parameters();
 
 			/* reload file */
-			pdfapp_onkey(&_pdfapp, 'r');
+			Libc::with_libc([&] () { pdfapp_onkey(&_pdfapp, 'r'); });
 		}
 
 		Genode::Signal_handler<Pdf_view> _resize_handler;
@@ -227,7 +227,7 @@ class Pdf_view
 
 		void handle_key(int ascii)
 		{
-			pdfapp_onkey(&_pdfapp, ascii);
+			Libc::with_libc([&] () { pdfapp_onkey(&_pdfapp, ascii); });
 		}
 };
 
