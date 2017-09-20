@@ -33,8 +33,14 @@ set config {
 		<resource name="RAM" quantum="2M" />
 		<provides> <service name="Rtc" /> </provides>
 	</start>
-	<start name="java" caps="200">
+	<start name="java" caps="300">
 		<resource name="RAM" quantum="100M" />
+		<route>
+			<service name="ROM" label="zip.lib.so">
+				<parent label="jzip.lib.so" />
+			</service>
+			<any-service> <parent/> <any-child/> </any-service>
+		</route>
 		<config ld_verbose="yes">
 			<arg value="/bin/java" />
 			<arg value="-jar" />
@@ -60,6 +66,7 @@ set config {
 					<tar name="classes.tar" />
 				</dir>
 				<rom name="hello.jar" />
+				<rom name="zip.lib.so" />
 			</vfs>
 		</config>
 	</start>
