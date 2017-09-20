@@ -1190,7 +1190,11 @@ int os::current_process_id() {
   #define JNI_LIB_SUFFIX ".lib.so"
 #endif
 
-const char* os::dll_file_extension() { return JNI_LIB_SUFFIX; }
+const char* os::dll_file_extension()
+{
+	Genode::warning(__func__);
+	return JNI_LIB_SUFFIX;
+}
 
 // This must be hard coded because it's the system's temporary
 // directory not the java application's temp directory, ala java.io.tmpdir.
@@ -1226,7 +1230,7 @@ bool os::dll_build_name(char* buffer, size_t buflen,
   // Copied from libhpi
   const size_t pnamelen = pname ? strlen(pname) : 0;
 
-	printf("%s: %s\n", __func__, fname);
+	Genode::warning(__func__,": ", fname);
 
   // Return error on buffer overflow.
   if (pnamelen + strlen(fname) + strlen(JNI_LIB_PREFIX) + strlen(JNI_LIB_SUFFIX) + 2 > buflen) {
@@ -2268,82 +2272,6 @@ bool os::can_execute_large_page_memory() {
   return UseHugeTLBFS;
 }
 
-// Reserve memory at an arbitrary address, only if that area is
-// available (and not reserved for something else).
-
-char* os::pd_attempt_reserve_memory_at(size_t bytes, char* requested_addr) {
-  const int max_tries = 10;
-  char* base[max_tries];
-  size_t size[max_tries];
-  const size_t gap = 0x000000;
-
-  // Assert only that the size is a multiple of the page size, since
-  // that's all that mmap requires, and since that's all we really know
-  // about at this low abstraction level.  If we need higher alignment,
-  // we can either pass an alignment to this method or verify alignment
-  // in one of the methods further up the call chain.  See bug 5044738.
-  assert(bytes % os::vm_page_size() == 0, "reserving unexpected size block");
-
-  // Repeatedly allocate blocks until the block is allocated at the
-  // right spot.
-
-  // Bsd mmap allows caller to pass an address as hint; give it a try first,
-  // if kernel honors the hint then we can return immediately.
-  char * addr = anon_mmap(requested_addr, bytes, false);
-  if (addr == requested_addr) {
-    return requested_addr;
-  }
-
-  if (addr != NULL) {
-    // mmap() is successful but it fails to reserve at the requested address
-    anon_munmap(addr, bytes);
-  }
-
-  int i;
-  for (i = 0; i < max_tries; ++i) {
-    base[i] = reserve_memory(bytes);
-
-    if (base[i] != NULL) {
-      // Is this the block we wanted?
-      if (base[i] == requested_addr) {
-        size[i] = bytes;
-        break;
-      }
-
-      // Does this overlap the block we wanted? Give back the overlapped
-      // parts and try again.
-
-      size_t top_overlap = requested_addr + (bytes + gap) - base[i];
-      if (top_overlap >= 0 && top_overlap < bytes) {
-        unmap_memory(base[i], top_overlap);
-        base[i] += top_overlap;
-        size[i] = bytes - top_overlap;
-      } else {
-        size_t bottom_overlap = base[i] + bytes - requested_addr;
-        if (bottom_overlap >= 0 && bottom_overlap < bytes) {
-          unmap_memory(requested_addr, bottom_overlap);
-          size[i] = bytes - bottom_overlap;
-        } else {
-          size[i] = bytes;
-        }
-      }
-    }
-  }
-
-  // Give back the unused reserved pieces.
-
-  for (int j = 0; j < i; ++j) {
-    if (base[j] != NULL) {
-      unmap_memory(base[j], size[j]);
-    }
-  }
-
-  if (i < max_tries) {
-    return requested_addr;
-  } else {
-    return NULL;
-  }
-}
 
 size_t os::read(int fd, void *buf, unsigned int nBytes) {
   RESTARTABLE_RETURN_INT(::read(fd, buf, nBytes));
@@ -3724,11 +3652,6 @@ char* os::pd_remap_memory(int fd, const char* file_name, size_t file_offset,
 }
 
 
-// Unmap a block of memory.
-bool os::pd_unmap_memory(char* addr, size_t bytes) {
-  return munmap(addr, bytes) == 0;
-}
-
 // current_thread_cpu_time(bool) and thread_cpu_time(Thread*, bool)
 // are used by JVM M&M and JVMTI to get user+sys or user CPU time
 // of a thread.
@@ -4402,23 +4325,30 @@ class Genode::Vm_area
 		Heap               &_heap;
 		Rm_connection      &_rm_connection;
 		size_t              _vm_size;
+		addr_t              _vm_start;
 		Region_map_client   _rm { _rm_connection.create(_vm_size) };
-		addr_t              _vm_start { _env.rm().attach(_rm.dataspace()) };
 		Registry<Vm_handle> _ds;
-
-		bool _inside(addr_t start, size_t size) {
-			return start >= _vm_start && (start + size) <= (_vm_start + _vm_size); }
 
 	public:
 
-		Vm_area(Env &env, Heap &heap, Rm_connection &rm, size_t vm_size)
-		: _env(env), _heap(heap), _rm_connection(rm),  _vm_size(vm_size) { }
+		Vm_area(Env &env, Heap &heap, Rm_connection &rm, size_t vm_size, addr_t vm_start)
+		: _env(env), _heap(heap), _rm_connection(rm), _vm_size(vm_size)
+		{
+			if (vm_start)
+				_vm_start = _env.rm().attach_at(_rm.dataspace(), vm_start);
+			else
+				_vm_start = _env.rm().attach(_rm.dataspace());
+		}
 
-		addr_t start() { return _vm_start; }
+		addr_t start() const { return _vm_start; }
+		size_t size()  const { return _vm_size; }
+
+		bool inside(addr_t start, size_t size) {
+			return start >= _vm_start && (start + size) <= (_vm_start + _vm_size); }
 
 		bool commit(addr_t start, size_t size, bool executable)
 		{
-			if (!_inside(start, size))
+			if (!inside(start, size))
 				return false;
 
 			Dataspace_capability ds = _env.ram().alloc(size);
@@ -4444,10 +4374,10 @@ class Genode::Vm_area
 
 		virtual ~Vm_area()
 		{
-			_ds.for_each([&] (Vm_handle &h) {
-				_rm.detach(h.vm_start - _vm_start);
-				_env.ram().free(h.ds);
-				destroy(_heap, &h);
+			_ds.for_each([&] (Vm_handle &vm) {
+				_rm.detach(vm.vm_start - _vm_start);
+				_env.ram().free(vm.ds);
+				destroy(_heap, &vm);
 			});
 
 			_env.rm().detach(_vm_start);
@@ -4470,10 +4400,32 @@ class Genode::Vm_area_registry
 
 		Vm_area_registry(Env &env) : _env(env) { }
 
-		addr_t reserve(size_t vm_size)
+		addr_t reserve(size_t vm_size, addr_t vm_start)
 		{
-			Vm_area *vm = new (&_heap) Vm_area_handle(_registry, _env, _heap, _rm, vm_size);
+			Vm_area *vm = new (&_heap) Vm_area_handle(_registry, _env, _heap, _rm, vm_size, vm_start);
 			return vm->start();
+		}
+
+		bool release(addr_t addr, size_t size)
+		{
+			bool success = false;
+
+			_registry.for_each([&] (Vm_area_handle &vm) {
+				if (success || !vm.inside(addr, size)) return;
+
+				if (addr != vm.start() || size != vm.size()) {
+					error(__func__, " sub region release ", " addr: ", Hex(addr), " vm addr: ", Hex(vm.start()),
+					      " size: ", Hex(size), " vm size: ", Hex(vm.size()));
+					while (1);
+				}
+
+				destroy(_heap, &vm);
+				success = true;
+			});
+
+			if (!success) error(__func__, " failed");
+
+			return success;
 		}
 
 		bool commit(addr_t start, size_t size, bool executable)
@@ -4481,10 +4433,8 @@ class Genode::Vm_area_registry
 			bool success = false;
 
 			_registry.for_each([&] (Vm_area_handle &vm) {
-				if (success)
-					return;
-
-				success |= vm.commit(start, size, executable);
+				if (success) return;
+				success = vm.commit(start, size, executable);
 			});
 
 			return success;
@@ -4496,12 +4446,10 @@ static Genode::Constructible<Genode::Vm_area_registry> vm_reg;
 char* os::pd_reserve_memory(size_t bytes, char* requested_addr,
                             size_t alignment_hint)
 {
-	Genode::warning(__func__, " mem: ", Genode::Hex(bytes), " addr: ", (void *)requested_addr);
-	if (requested_addr != nullptr)
-		Genode::error(__func__,  " addr ", (void *)requested_addr, " != 0x0");
-
 	try {
-		return vm_reg->reserve(bytes);
+		Genode::addr_t addr =  vm_reg->reserve(bytes, requested_addr);
+		Genode::warning(__func__, " mem: ", Genode::Hex(bytes), " req: ", (void *)requested_addr, " addr: ", Genode::Hex(addr));
+		return addr;
 	} catch (...) {
 		Genode::error(__PRETTY_FUNCTION__, " exception!");
 	}
@@ -4509,9 +4457,25 @@ char* os::pd_reserve_memory(size_t bytes, char* requested_addr,
 }
 
 
+/*
+ * Reserve memory at an arbitrary address, only if that area is
+ *  available (and not reserved for something else)
+ */
+char* os::pd_attempt_reserve_memory_at(size_t bytes, char* requested_addr)
+{
+	pd_reserve_memory(bytes, requested_addr, 0);
+}
+
+
 bool os::pd_release_memory(char* addr, size_t size) {
   Genode::error(__PRETTY_FUNCTION__, "addr: ", (void *)addr, " size: ", (void *)size);
   while (1);
+}
+
+
+bool os::pd_unmap_memory(char* addr, size_t bytes) {
+	Genode::warning(__func__, " addr: ", (void *)addr, " size: ", Genode::Hex(bytes));
+  return vm_reg->release(addr, bytes);
 }
 
 
@@ -4577,6 +4541,9 @@ bool os::pd_uncommit_memory(char* addr, size_t size) {
 }
 
 
+/******************
+ ** Startup code **
+ ******************/
 
 extern char **genode_argv;
 extern int    genode_argc;

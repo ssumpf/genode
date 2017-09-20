@@ -52,11 +52,7 @@ SRC_CTWO += share/vm/aot/compiledIC_aot.cpp \
             share/vm/ci/bcEscapeAnalyzer.cpp \
             share/vm/ci/ciTypeFlow.cpp \
             share/vm/code/codeBlob.cpp \
-            share/vm/jvmci/compilerRuntime.cpp \
             share/vm/jvmci/jvmci_globals.cpp \
-            share/vm/aot/aotCodeHeap.cpp \
-            share/vm/aot/aotCompiledMethod.cpp \
-            share/vm/aot/aotLoader.cpp \
             share/vm/opto/addnode.cpp \
             share/vm/opto/arraycopynode.cpp \
             share/vm/opto/block.cpp \
@@ -137,7 +133,7 @@ SRC_CTWO += share/vm/aot/compiledIC_aot.cpp \
 # create CC_OPT_file for c1/c2 compiler
 #
 $(foreach FILE, $(SRC_CONE:.cpp=), $(eval CC_OPT_$(FILE) = -DCOMPILER1))
-$(foreach FILE, $(SRC_CTWO:.cpp=), $(eval CC_OPT_$(FILE) = -DCOMPILER2 -DINCLUDE_AOT))
+$(foreach FILE, $(SRC_CTWO:.cpp=), $(eval CC_OPT_$(FILE) = -DCOMPILER2))
 
 CC_OPT_share/vm/runtime/vm_version += $(JDK_VERSION) \
               -DHOTSPOT_VERSION_STRING='"9-internal+0-adhoc.genode.openjdk-jdk9-jdk9"'\

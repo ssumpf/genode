@@ -13,9 +13,7 @@ extern "C" void collector_func_load(char* name,
                                    int size,
                                    int zero_argument,
                                    void* null_argument_3)
-{
-	WARN_NOT_IMPL;
-}
+{ }
 
 
 int getpwuid_r(uid_t uid, struct passwd *pwd,

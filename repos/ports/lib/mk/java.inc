@@ -4,9 +4,12 @@ JDK_BASE   = $(call select_from_ports,jdk)/src/app/jdk/jdk/src/java.base
 JAVA_BASE  = $(JDK_BASE)/share/native/libjava
 VERIFY_BASE= $(JDK_BASE)/share/native/libverify
 
+CC_OLEVEL = -O0
+
 SRC_C  = $(notdir $(wildcard $(JAVA_BASE)/*.c))
 SRC_C += unix/native/libjava/canonicalize_md.c \
          unix/native/libjava/FileDescriptor_md.c \
+         unix/native/libjava/FileOutputStream_md.c \
          unix/native/libjava/io_util_md.c \
          unix/native/libjava/java_props_md.c \
          unix/native/libjava/jdk_util_md.c \
