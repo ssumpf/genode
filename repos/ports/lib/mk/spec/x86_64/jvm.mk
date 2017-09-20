@@ -15,7 +15,6 @@ SRC_CONE = cpu/x86/vm/c1_CodeStubs_x86.cpp \
 SRC_CTWO = cpu/x86/vm/c2_init_x86.cpp \
            cpu/x86/vm/compiledIC_x86.cpp \
            cpu/x86/vm/macroAssembler_x86.cpp \
-           cpu/x86/vm/compiledIC_aot_x86_64.cpp \
            cpu/x86/vm/sharedRuntime_x86_64.cpp
 
 SRC_CC = cpu/x86/vm/abstractInterpreter_x86.cpp \
