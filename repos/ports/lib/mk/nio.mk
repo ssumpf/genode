@@ -1,7 +1,6 @@
-LIBS          = libc
-SHARED_LIB    = yes
-JDK_BASE      = $(call select_from_ports,jdk)/src/app/jdk/jdk/src/java.base
-JDK_GENERATED = $(call select_from_ports,jdk_generated)/src/app/jdk
+LIBS       = libc
+SHARED_LIB = yes
+JDK_BASE   = $(call select_from_ports,jdk)/src/app/jdk/jdk/src/java.base
 
 SRC_C = fs/UnixNativeDispatcher.c \
         fs/UnixCopyFile.c \
@@ -23,7 +22,7 @@ SRC_C = fs/UnixNativeDispatcher.c \
         ch/SocketChannelImpl.c
 
 
-INC_DIR += $(JDK_GENERATED)/include/java.base \
+INC_DIR += $(REP_DIR)/src/app/jdk/lib/include/java.base \
            $(JDK_BASE)/share/native/include \
            $(JDK_BASE)/share/native/libjava \
            $(JDK_BASE)/share/native/libnet \

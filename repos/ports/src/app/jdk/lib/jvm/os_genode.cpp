@@ -1384,6 +1384,7 @@ void * os::dll_load(const char *filename, char *ebuf, int ebuflen) {
 }
 #else
 void * os::dll_load(const char *filename, char *ebuf, int ebuflen) {
+	PDBG(filename);
 #ifdef STATIC_BUILD
   return os::get_default_process_handle();
 #else

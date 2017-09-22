@@ -1,19 +1,15 @@
-LIBS          = libc
-SHARED_LIB    = yes
-JDK_BASE      = $(call select_from_ports,jdk)/src/app/jdk/jdk/src/java.base
-JDK_GENERATED = $(call select_from_ports,jdk_generated)/src/app/jdk
+LIBS       = libc
+SHARED_LIB = yes
+JDK_BASE   = $(call select_from_ports,jdk)/src/app/jdk/jdk/src/java.base
 
 SRC_C = bsd_close.c \
         net_util.c \
         net_util_md.c \
         InetAddress.c \
         Inet4Address.c \
-        Inet4AddressImpl.c \
         Inet6Address.c \
-        InetAddressImplFactory.c \
-        PlainSocketImpl.c
 
-INC_DIR += $(JDK_GENERATED)/include/java.base \
+INC_DIR += $(REP_DIR)/src/app/jdk/lib/include/java.base \
            $(JDK_BASE)/share/native/include \
            $(JDK_BASE)/share/native/libjava \
            $(JDK_BASE)/share/native/libnet \
