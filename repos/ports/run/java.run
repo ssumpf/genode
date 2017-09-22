@@ -39,6 +39,9 @@ set config {
 			<service name="ROM" label="zip.lib.so">
 				<parent label="jzip.lib.so" />
 			</service>
+			<service name="ROM" label="net.lib.so">
+				<parent label="jnet.lib.so" />
+			</service>
 			<any-service> <parent/> <any-child/> </any-service>
 		</route>
 		<config ld_verbose="yes">
@@ -67,6 +70,8 @@ set config {
 				</dir>
 				<rom name="hello.jar" />
 				<rom name="zip.lib.so" />
+				<rom name="nio.lib.so" />
+				<rom name="net.lib.so" />
 			</vfs>
 		</config>
 	</start>
@@ -79,7 +84,7 @@ set boot_modules {
 	core init ld.lib.so timer rtc_drv
 	java jli.lib.so hello.jar
 	java.lib.so jvm.lib.so jzip.lib.so jimage.lib.so
-	libc.lib.so libm.lib.so zlib.lib.so
+	libc.lib.so libm.lib.so zlib.lib.so nio.lib.so jnet.lib.so
 	posix.lib.so pthread.lib.so stdcxx.lib.so
 	classes.tar
 }
