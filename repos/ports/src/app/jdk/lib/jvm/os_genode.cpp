@@ -3282,16 +3282,18 @@ jint os::init_2(void) {
 
 // Mark the polling page as unreadable
 void os::make_polling_page_unreadable(void) {
-  if (!guard_memory((char*)_polling_page, Bsd::page_size())) {
-    fatal("Could not disable polling page");
-  }
+  //if (!guard_memory((char*)_polling_page, Bsd::page_size())) {
+  //  fatal("Could not disable polling page");
+  //}
+  NOT_IMPL;
 }
 
 // Mark the polling page as readable
 void os::make_polling_page_readable(void) {
-  if (!bsd_mprotect((char *)_polling_page, Bsd::page_size(), PROT_READ)) {
-    fatal("Could not enable polling page");
-  }
+  //if (!bsd_mprotect((char *)_polling_page, Bsd::page_size(), PROT_READ)) {
+  //  fatal("Could not enable polling page");
+  //}
+  NOT_IMPL;
 }
 
 int os::active_processor_count() {
