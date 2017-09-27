@@ -7,8 +7,10 @@ extern "C" {
 #include <sys/mman.h>
 #include <sys/socket.h>
 #include <sys/time.h>
+#include <signal.h>
 }
-#define WARN_NOT_IMPL Genode::warning(__func__, " not implemented");
+
+#define WARN_NOT_IMPL Genode::warning(__func__, " not implemented (jvm)");
 
 extern "C" void collector_func_load(char* name,
                                    void* null_argument_1,
@@ -68,6 +70,20 @@ ssize_t sendmsg(int sockfd, const struct msghdr *msg, int flags)
 {
 	WARN_NOT_IMPL;
 	return -1;
+}
+
+
+int socketpair(int domain, int type, int protocol, int sv[2])
+{
+	WARN_NOT_IMPL;
+	return 0;
+}
+
+int sigaction(int signum, const struct sigaction *act,
+              struct sigaction *oldact)
+{
+	WARN_NOT_IMPL;
+	return 0;
 }
 
 
