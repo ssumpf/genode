@@ -34,7 +34,7 @@ set config {
 		<provides> <service name="Rtc" /> </provides>
 	</start>
 	<start name="java" caps="300">
-		<resource name="RAM" quantum="100M" />
+		<resource name="RAM" quantum="64M" />
 		<route>
 			<service name="ROM" label="zip.lib.so">
 				<parent label="jzip.lib.so" />
@@ -48,10 +48,10 @@ set config {
 			<arg value="/bin/java" />
 			<arg value="-jar" />
 			<arg value="hello.jar" />
-			<libc stdout="/dev/log" stderr="/dev/log" rtc="/dev/rtc" />
+			<libc stdin="/dev/null" stdout="/dev/log" stderr="/dev/log" rtc="/dev/rtc" />
 			<vfs rtc="/dev/rtc">
 				<dir name="dev">
-					<log/><rtc/>
+					<log/><rtc/><null/>
 				</dir>
 				<dir name="bin">
 					<rom name="java" />
