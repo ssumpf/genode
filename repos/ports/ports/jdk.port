@@ -4,7 +4,10 @@ DOWNLOADS := jdk.archive
 
 NAME(jdk) := jdk.tgz
 URL(jdk)  := https://api.github.com/repos/dmlloyd/openjdk/tarball/$(VERSION)
-SHA(jdk)  := a344c97c97746f6b87654f90caf46c5969cc573c
+SHA(jdk)  := 46a6bfab37216a8726bb55ab11743536678810ae
 DIR(jdk)  := src/app/jdk
+
+PATCHES   := src/app/jdk/patches/jdk.patch
+PATCH_OPT := -p1 -d src/app/jdk
 
 # vi: set ft=make :
