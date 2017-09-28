@@ -67,7 +67,7 @@ SRC_S = os_cpu/bsd_x86/vm/bsd_x86_64.s
 CC_OPT_os_cpu/bsd_x86/vm/bsd_x86_64 = -x assembler-with-cpp
 
 #
-# XXX: generated source
+# Generated source
 #
 SRC_GEN = ad_x86.cpp ad_x86_format.cpp ad_x86_clone.cpp ad_x86_gen.cpp \
           ad_x86_expand.cpp ad_x86_misc.cpp  ad_x86_peephole.cpp \
@@ -76,18 +76,7 @@ SRC_GEN = ad_x86.cpp ad_x86_format.cpp ad_x86_clone.cpp ad_x86_gen.cpp \
 $(foreach FILE, $(SRC_GEN:.cpp=), $(eval CC_OPT_$(FILE) = -DLINUX -D_GNU_SOURCE -DCOMPILER2))
 SRC_CC += $(SRC_GEN)
 
-
-vpath ad_x86.cpp $(REP_DIR)/src/app/jdk/lib/jvm
-vpath ad_x86_format.cpp $(REP_DIR)/src/app/jdk/lib/jvm
-vpath ad_x86_clone.cpp $(REP_DIR)/src/app/jdk/lib/jvm
-vpath ad_x86_gen.cpp $(REP_DIR)/src/app/jdk/lib/jvm
-vpath ad_x86_expand.cpp $(REP_DIR)/src/app/jdk/lib/jvm
-vpath ad_x86_misc.cpp $(REP_DIR)/src/app/jdk/lib/jvm
-vpath ad_x86_peephole.cpp $(REP_DIR)/src/app/jdk/lib/jvm
-vpath ad_x86_pipeline.cpp $(REP_DIR)/src/app/jdk/lib/jvm
-vpath dfa_x86.cpp $(REP_DIR)/src/app/jdk/lib/jvm
-vpath jvmtiEnterTrace.cpp $(REP_DIR)/src/app/jdk/lib/jvm
-vpath jvmtiEnter.cpp $(REP_DIR)/src/app/jdk/lib/jvm
-
+vpath %.cpp $(BUILD_BASE_DIR)/tool/jdk/hotspot/variant-server/gensrc/adfiles
+vpath %.cpp $(BUILD_BASE_DIR)/tool/jdk/hotspot/variant-server/gensrc/jvmtifiles
 
 include $(REP_DIR)/lib/mk/jvm.inc

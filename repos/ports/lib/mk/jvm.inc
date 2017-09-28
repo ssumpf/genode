@@ -12,6 +12,8 @@ CC_OLEVEL = -O0
 CC_OPT += -DINCLUDE_SUFFIX_OS=_bsd -DTARGET_COMPILER_gcc -D_ALLBSD_SOURCE -DUSE_LIBRARY_BASED_TLS_ONLY \
           -DVM_LITTLE_ENDIAN
 
+CC_OPT += -D__GENODE__
+
 INC_DIR += $(HOTSPOT_BASE)/os/bsd/vm \
            $(HOTSPOT_BASE)/os/posix/vm \
            $(HOTSPOT_BASE)/os_cpu/bsd_x86/vm
@@ -19,7 +21,8 @@ INC_DIR += $(HOTSPOT_BASE)/os/bsd/vm \
 INC_DIR += $(REP_DIR)/src/app/jdk/lib/include \
            $(HOTSPOT_BASE)/share/vm \
            $(HOTSPOT_BASE)/share/vm/precompiled \
-           $(HOTSPOT_BASE)/share/vm/prims
+           $(HOTSPOT_BASE)/share/vm/prims \
+           $(BUILD_BASE_DIR)/tool/jdk/hotspot/variant-server/gensrc
 
 SRC_CC += os_genode.cpp dummies.cpp
 

@@ -25,11 +25,11 @@ SRC_C += math_genode.c
 include $(REP_DIR)/lib/mk/jdk_version.inc
 
 CC_C_OPT = $(JDK_VERSION)
-CC_C_OPT += -D_ALLBSD_SOURCE
+CC_C_OPT += -D_ALLBSD_SOURCE -D__GENODE__
 CC_OPT_unix/native/libjava/TimeZone_md = -D__linux__
 
 INC_DIR += $(REP_DIR)/src/app/jdk/lib/include \
-           $(REP_DIR)/src/app/jdk/lib/include/java.base \
+           $(BUILD_BASE_DIR)/tool/jdk/support/headers/java.base \
            $(JDK_BASE)/share/native/include \
            $(JDK_BASE)/share/native/libfdlibm \
            $(JDK_BASE)/share/native/libjava \
