@@ -9,7 +9,7 @@ SRC_C = bsd_close.c \
         Inet4Address.c \
         Inet6Address.c \
 
-INC_DIR += $(REP_DIR)/src/app/jdk/lib/include/java.base \
+INC_DIR += $(BUILD_BASE_DIR)/tool/jdk/support/headers/java.base \
            $(JDK_BASE)/share/native/include \
            $(JDK_BASE)/share/native/libjava \
            $(JDK_BASE)/share/native/libnet \
