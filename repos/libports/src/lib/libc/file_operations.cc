@@ -646,6 +646,7 @@ extern "C" int stat(const char *path, struct stat *buf)
 		resolve_symlinks(path, resolved_path);
 		FNAME_FUNC_WRAPPER(stat, resolved_path.base(), buf);
 	} catch(Symlink_resolve_error) {
+		Genode::warning("stat failed");
 		return -1;
 	}
 }
