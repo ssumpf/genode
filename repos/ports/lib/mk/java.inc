@@ -9,6 +9,7 @@ CC_OLEVEL = -O0
 SRC_C  = $(notdir $(wildcard $(JAVA_BASE)/*.c))
 SRC_C += unix/native/libjava/canonicalize_md.c \
          unix/native/libjava/FileDescriptor_md.c \
+         unix/native/libjava/FileInputStream_md.c \
          unix/native/libjava/FileOutputStream_md.c \
          unix/native/libjava/io_util_md.c \
          unix/native/libjava/java_props_md.c \
