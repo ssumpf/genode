@@ -65,11 +65,8 @@ bool Driver::_issue_cmd_finish_xfertyp(Xfertyp::access_t &,
 }
 
 
-bool Driver::_supported_host_version(Hostver::access_t hostver)
-{
-	return Hostver::Vvn::get(hostver) == 0 &&
-	       Hostver::Svn::get(hostver) == 3;
-}
+bool Driver::_supported_host_version(Hostver::access_t) {
+	return true; }
 
 
 void Driver::_watermark_level(Wml::access_t &wml)

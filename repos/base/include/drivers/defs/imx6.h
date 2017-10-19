@@ -19,8 +19,8 @@
 namespace Imx6 {
 	enum {
 		/* SD host controller */
-		SDHC_IRQ       = 54,
-		SDHC_MMIO_BASE = 0x02190000,
+		SDHC_IRQ       = 55,
+		SDHC_MMIO_BASE = 0x02194000,
 		SDHC_MMIO_SIZE = 0x00004000,
 
 		/* GPIO */
