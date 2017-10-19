@@ -15,6 +15,7 @@ SRC_C += unix/native/libjava/canonicalize_md.c \
          unix/native/libjava/java_props_md.c \
          unix/native/libjava/jdk_util_md.c \
          unix/native/libjava/jni_util_md.c \
+         unix/native/libjava/ProcessEnvironment_md.c \
          unix/native/libjava/RandomAccessFile_md.c \
          unix/native/libjava/TimeZone_md.c \
          unix/native/libjava/UnixFileSystem_md.c
