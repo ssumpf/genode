@@ -72,6 +72,13 @@ install_config {
 		</config>
 	</start>
 
+	<start name="report_logger">
+		<binary name="report_rom"/>
+		<resource name="RAM" quantum="1M"/>
+		<provides> <service name="Report"/> <service name="ROM"/> </provides>
+		<config verbose="yes"/>
+	</start>
+
 	<start name="config_fs" caps="200">
 		<binary name="ram_fs"/>
 		<resource name="RAM" quantum="10M"/>
@@ -202,6 +209,8 @@ install_config {
 		<route>
 			<service name="ROM" label="config">
 				<child name="config_rom" label="nitpicker.config"/> </service>
+			<service name="Report" label="keystate">
+				<child name="report_logger"/> </service>
 			<service name="Report">      <child name="report_rom"/> </service>
 			<service name="Framebuffer"> <child name="drivers"/>    </service>
 			<service name="Input">       <child name="drivers"/>    </service>
