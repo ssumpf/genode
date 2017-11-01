@@ -203,7 +203,7 @@ install_config {
 		<provides> <service name="Report"/> <service name="ROM"/> </provides>
 		<config verbose="yes"/>
 	</start>
-
+<!--
 	<start name="menu_view" caps="200">
 		<resource name="RAM" quantum="5M"/>
 		<config xpos="200" ypos="100">
@@ -220,11 +220,15 @@ install_config {
 			<any-service> <parent/> <any-child/> </any-service>
 		</route>
 	</start>
+	-->
 
 </config>}
 
-build { app/menu_view }
+build { app/menu_view server/nitpicker server/input_filter }
 
-build_boot_image { menu_view menu_view_styles.tar }
+file copy -force [genode_dir]/repos/os/recipes/raw/drivers_interactive-pc/input_filter.config \
+                 [run_dir]/genode/input_filter.config
+
+build_boot_image { menu_view menu_view_styles.tar nitpicker input_filter }
 
 run_genode_until forever

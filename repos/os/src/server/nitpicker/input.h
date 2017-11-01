@@ -84,6 +84,8 @@ static bool import_input_events(Input::Event *ev_buf, unsigned num_ev,
 			Input::Event *e = &ev_buf[src_ev_cnt];
 			Input::Event curr = *e;
 
+			Genode::log("event ", (int)curr.type(), ", rx=", curr.rx(), " ry=", curr.ry());
+
 			if (e->type() == Input::Event::MOTION) {
 				unsigned n = num_consecutive_events(e, num_ev - src_ev_cnt);
 				curr = merge_motion_events(e, n);
