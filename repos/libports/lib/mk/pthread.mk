@@ -3,6 +3,8 @@ SRC_CC = semaphore.cc \
 
 LIBS  += libc
 
+INC_DIR += $(REP_DIR)/src/lib
+
 vpath % $(REP_DIR)/src/lib/pthread
 
 SHARED_LIB = yes
