@@ -22,6 +22,8 @@
 #include <stdlib.h> /* malloc, free */
 #include "thread.h"
 
+#include <base/debug.h>
+
 using namespace Genode;
 
 /*
@@ -123,6 +125,19 @@ extern "C" {
 
 	int pthread_join(pthread_t thread, void **retval)
 	{
+		struct Check : Libc::Suspend_functor
+		{
+			bool suspend() override {
+				return true;
+			}
+		} check;
+
+		while (!thread->exiting()) {
+			Libc::suspend(check);
+			Genode::error("SIGNAL processed");
+		}
+
+
 		thread->join();
 		Genode::warning(__func__, " returned");
 		*((int **)retval) = 0;
@@ -911,3 +926,6 @@ extern "C" {
 		return 0;
 	}
 }
+
+
+
