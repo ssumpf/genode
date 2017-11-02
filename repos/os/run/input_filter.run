@@ -231,6 +231,7 @@ append_if [test_char_repeat] config {
 			<expect_release code="KEY_B"/>}
 
 append config {
+
 			<message string="capslock handling"/>
 
 			<filter_config>
@@ -246,6 +247,13 @@ append config {
 					</chargen>
 				</output>
 			</filter_config>
+			<!--
+			     Leave the 'capslock' ROM initially undefined, which prompts
+			     the input filter to complain about the modifier state being
+			     unavailable. However, as soon as 'capslock' becomes defined,
+			     the input filter is expected to re-processes its configuration.
+			 -->
+			<sleep ms="250"/>
 			<capslock enabled="no"/>
 			<sleep ms="250"/>
 			<usb> <press code="KEY_A"/> <release code="KEY_A"/> </usb>

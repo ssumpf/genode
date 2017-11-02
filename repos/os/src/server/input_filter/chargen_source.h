@@ -470,7 +470,7 @@ class Input_filter::Chargen_source : public Source, Source::Sink
 		void _apply_sub_node(Xml_node const node, unsigned const max_recursion)
 		{
 			if (max_recursion == 0) {
-				error("too deeply nested includes");
+				warning("too deeply nested includes");
 				throw Invalid_config();
 			}
 
