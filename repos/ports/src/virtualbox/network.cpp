@@ -152,6 +152,7 @@ class Nic_client
 					return packet;
 				} catch (Nic::Session::Tx::Source::Packet_alloc_failed) {
 					_tx_ack(true);
+					Genode::warning("alloc failed");
 				}
 			}
 		}
@@ -203,6 +204,8 @@ class Nic_client
 			char *tx_content = _nic.tx()->packet_content(tx_packet);
 			Genode::memcpy(tx_content, packet, packet_len);
 
+			if (!_nic.tx()->ready_to_submit())
+				Genode::log("submit without ready");
 			_nic.tx()->submit_packet(tx_packet);
 			_tx_ack();
 

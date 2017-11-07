@@ -32,6 +32,8 @@ set build_components {
 	server/nit_fb
 	server/report_rom
 	server/dynamic_rom
+	drivers/wifi
+	lib/vfs/jitterentropy
 }
 
 set boot_modules {
@@ -43,6 +45,18 @@ set boot_modules {
 	nit_fb
 	report_rom
 	dynamic_rom
+	iwlwifi-6000-4.ucode
+	iwlwifi-6000g2a-6.ucode
+	iwlwifi-6000g2b-6.ucode
+	iwlwifi-7260-16.ucode
+	iwlwifi-7265-16.ucode
+	iwlwifi-7265D-16.ucode
+	iwlwifi-8000C-16.ucode
+	vfs_jitterentropy.lib.so
+	libcrypto.lib.so libssl.lib.so
+	wpa_driver_nl80211.lib.so wpa_supplicant.lib.so
+	wifi.lib.so
+	wifi_drv
 }
 
 set virtualbox_binary  "virtualbox-rem"
@@ -78,15 +92,42 @@ append config_of_app {
 		</route>
 	</start>
 
-	<!--
-		Note: to get network access in the VM, the virtual network adapter
-		      needs to be enabled in the .vbox file (disabled by default)
-	-->
-	<start name="nic_drv" priority="-1">
-		<resource name="RAM" quantum="8M" />
-		<provides>
-			<service name="Nic" />
-		</provides>
+	<start name="config_rom">
+		<binary name="dynamic_rom"/>
+		<resource name="RAM" quantum="4M"/>
+		<provides><service name="ROM"/></provides>
+		<config verbose="yes">
+			<rom name="wlan_configuration">
+				<inline description="DISCONNECT"> <selected_network/> </inline>
+				<sleep milliseconds="10000"/> <!-- 10 seconds -->
+				<inline description="CONNECT">}
+append config_of_app "<selected_network ssid=\"$::env(GENODE_WIFI_SSID)\" protection=\"WPA-PSK\" psk=\"$::env(GENODE_WIFI_PSK)\"/>"
+append config_of_app {
+				</inline>
+				<sleep milliseconds="3000000"/> <!-- 5 minutes -->
+			</rom>
+		</config>
+	</start>
+	<start name="wifi_drv" caps="220">
+		<resource name="RAM" quantum="64M"/>
+		<provides> <service name="Nic"/> </provides>
+		<config ld_verbose="yes" verbose="yes" connected_scan_interval="30">
+			<libc stdout="/dev/log" stderr="/dev/log" rtc="/dev/rtc">
+				<vfs>
+					<dir name="dev"> <log/> <rtc/>
+						<jitterentropy name="random"/>
+						<jitterentropy name="urandom"/>
+					</dir>
+					<dir name="config"> <ram/> </dir>
+				</vfs>
+			</libc>
+		</config>
+		<route>
+			<service name="Rtc"> <any-child/> </service>
+			<service name="Report"> <child name="report_rom"/> </service>
+			<service name="ROM" label="wlan_configuration"> <child name="config_rom"/> </service>
+			<any-service> <parent/> <any-child/> </any-service>
+		</route>
 	</start>
 
 	<!--

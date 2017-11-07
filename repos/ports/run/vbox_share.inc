@@ -273,7 +273,8 @@ build_boot_image $boot_modules
 #
 # Step 2: Read out TCP/IP address of tcp_terminal running on Genode target
 #
-run_genode_until {\[init -> tcp_terminal\] got IP address [0-9]+\.[0-9]+\.[0-9]+\.[0-9]+} 20
+run_genode_until forever
+#run_genode_until {\[init -> tcp_terminal\] got IP address [0-9]+\.[0-9]+\.[0-9]+\.[0-9]+} 20
 set serial_id [output_spawn_id]
 
 regexp {\[init -> tcp_terminal\] got IP address [0-9]+\.[0-9]+\.[0-9]+\.[0-9]+} $output serial_ip_addr
