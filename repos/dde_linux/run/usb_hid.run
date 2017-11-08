@@ -118,8 +118,7 @@ append config {
 		<resource name="RAM" quantum="16M"/>
 		<provides><service name="Input"/></provides>
 		<config uhci="yes" ohci="yes" ehci="yes" xhci="yes"
-		        capslock_led="rom" numlock_led="rom" scrlock_led="rom"
-		        bios_handoff="no">
+		        capslock_led="rom" numlock_led="rom" scrlock_led="rom">
 			<hid/>
 		</config>
 		<route>
