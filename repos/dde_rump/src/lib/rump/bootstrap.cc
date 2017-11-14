@@ -14,7 +14,7 @@
 extern "C" {
 #include <sys/types.h>
 #include <rump/rumpuser.h>
-#include <elf.h>
+#include <exec_elf.h>
 }
 
 #include <rump/env.h>
