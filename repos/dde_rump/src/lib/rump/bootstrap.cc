@@ -14,7 +14,7 @@
 extern "C" {
 #include <sys/types.h>
 #include <rump/rumpuser.h>
-#include <elf.h>
+#include <exec_elf.h>
 }
 
 #include <rump/env.h>
@@ -23,8 +23,6 @@ extern "C" {
 #include <base/shared_object.h>
 #include <util/string.h>
 
-
-extern "C" void wait_for_continue();
 
 #ifdef _LP64
 typedef Elf64_Dyn Elf_Dyn;
@@ -215,14 +213,14 @@ static void _dl_init(Genode::Shared_object::Link_map const *map,
 
 	mi_start = obj->lookup<modinfo **>("__start_link_set_modules");
 	mi_end   = obj->lookup<modinfo **>("__stop_link_set_modules");
-	if (verbose)
+	//if (verbose)
 		log("MI: start: ", mi_start, " end: ", mi_end);
 	if (mi_start && mi_end)
 		mod_init(mi_start, (Genode::size_t)(mi_end-mi_start));
 
 	rc_start = obj->lookup<rump_component **>("__start_link_set_rump_components");
 	rc_end   = obj->lookup<rump_component **>("__stop_link_set_rump_components");
-	if (verbose)
+	//if (verbose)
 		log("RC: start: ", rc_start, " end: ", rc_end);
 	if (rc_start && rc_end) {
 		for (; rc_start < rc_end; rc_start++)
@@ -251,6 +249,7 @@ void rumpuser_dl_bootstrap(rump_modinit_fn domodinit, rump_symload_fn symload,
 
 	for (curr_map = map; curr_map; curr_map = curr_map->prev) {
 		if (!Genode::strcmp(curr_map->path, "rump", 4)) {
+			Genode::log("curr map: ", curr_map->path);
 			Sym_tab tab(curr_map);
 			/* load into rum kernel */
 			tab.rump_load(symload);
