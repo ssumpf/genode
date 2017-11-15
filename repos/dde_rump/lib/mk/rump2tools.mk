@@ -47,6 +47,9 @@ HOST_D_OPT = $(addprefix -D,HAVE_DIRFD=1 \
                             HAVE_DECL_HTOBE16=1 \
                             HAVE_DECL_HTOBE32=1 \
                             HAVE_DECL_HTOBE64=1 \
+                            HAVE_DECL_HTOLE16=1 \
+                            HAVE_DECL_HTOLE32=1 \
+                            HAVE_DECL_HTOLE64=1 \
                             HAVE_DECL_BE16TOH=1 \
                             HAVE_DECL_BE32TOH=1 \
                             HAVE_DECL_BE64TOH=1 \
@@ -90,5 +93,6 @@ $(RUMP_TOOL)/%.o: %.c
 vpath %.c $(RUMP_PORT_DIR)/src/common/lib/libc/string
 vpath %.c $(RUMP_PORT_DIR)/src/lib/libutil
 vpath %.c $(RUMP_PORT_DIR)/src/lib/libc/gen
+vpath %.c $(RUMP_PORT_DIR)/src/usr.bin/config
 vpath %.c $(RUMP_PORT_DIR)/src/usr.bin/cksum
 vpath %.c $(RUMP_TOOL)

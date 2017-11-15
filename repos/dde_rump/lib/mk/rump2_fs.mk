@@ -1,9 +1,10 @@
 include $(REP_DIR)/lib/mk/rump2.inc
 
-LIBS += rump2 rump2tools
-
+LIBS        += rump2 rump2tools
+SHARED_LIB   = yes
 RUMP_FS_BASE = $(BUILD_BASE_DIR)/var/libcache/rump2_fs
 NBCONFIG     = $(BUILD_BASE_DIR)/var/libcache/rump2tools/bin/nbconfig
+
 
 #
 # librumpdev.a
@@ -23,7 +24,7 @@ ioconf.c:
 	$(NBCONFIG) -b $(RUMP_FS_BASE) -s $(RUMP_PORT_DIR)/src/sys \
 		$(RUMP_PORT_DIR)/src/sys/rump/librump/rumpdev/MAINBUS.ioconf
 
-autoconf.c: ioconf.c
+autoconf.o: ioconf.c
 
 
 vpath %.c $(RUMP_PORT_DIR)/src/sys/kern
@@ -40,7 +41,7 @@ vpath %.c $(RUMP_PORT_DIR)/src/sys/dev/dkwedge
 
 
 #
-# librumpvfs
+# librumpvfs.a
 #
 SRC_C += bufq_disksort.c compat.c devnull.c genfs_vfsops.c \
          kern_physio.c rumpfs.c rumpvnode_if.c sync_subr.c \
@@ -71,7 +72,7 @@ vpath %.c $(RUMP_PORT_DIR)/src/sys/uvm
 #
 # librumpfs_ext2fs.a
 #
-SRC_C = ext2fs_alloc.c ext2fs_balloc.c ext2fs_bmap.c ext2fs_bswap.c ext2fs_inode.c \
+SRC_C += ext2fs_alloc.c ext2fs_balloc.c ext2fs_bmap.c ext2fs_bswap.c ext2fs_inode.c \
          ext2fs_lookup.c ext2fs_readwrite.c ext2fs_rename.c ext2fs_subr.c \
          ext2fs_vfsops.c ext2fs_vnops
 
