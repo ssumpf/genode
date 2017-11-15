@@ -1,6 +1,7 @@
 include $(REP_DIR)/lib/mk/rump2.inc
 #include $(REP_DIR)/lib/import/import-rump2.mk
 
+SHARED_LIB = yes
 
 CC_OPT += -DLIBRUMPUSER
 
@@ -8,198 +9,201 @@ SRC_CC = dummies.cc hypercall.cc bootstrap.cc io.cc sync.cc misc.cc env.cc
 
 CC_C_OPT += -DHAVE_PROP_DICTIONARY_T
 
-SRC_C +=__main.c \
-        accessors.c \
-        cdbr.c \
-        clock_subr.c \
-        consttime_memequal.c \
-        cprng_fast.c \
-        cpuset.c \
-        crc32.c \
-        devsw.c \
-        emul.c \
-        etfs_wrap.c \
-        explicit_memset.c \
-        ffs.c \
-        getfstypename.c \
-        heapsort.c \
-        hyperentropy.c \
-        imax.c \
-        imin.c \
-        inet_addr.c \
-        init_sysctl_base.c \
-        intoa.c \
-        intr.c \
-        kern_assert.c \
-        kern_auth.c \
-        kern_cfglock.c \
-        kern_descrip.c \
-        kern_event.c \
-        kern_hook.c \
-        kern_ksyms.c \
-        kern_ktrace.c \
-        kern_malloc.c \
-        kern_module.c \
-        kern_mutex_obj.c \
-        kern_ntptime.c \
-        kern_proc.c \
-        kern_prot.c \
-        kern_rate.c \
-        kern_resource.c \
-        kern_rndpool.c \
-        kern_rndq.c \
-        kern_rndsink.c \
-        kern_select_50.c \
-        kern_stub.c \
-        kern_syscall.c \
-        kern_sysctl.c \
-        kern_tc.c \
-        kern_time_50.c \
-        kern_time.c \
-        kern_timeout.c \
-        kern_uidinfo.c \
-        kern_xxx.c \
-        klock.c \
-        kobj_machdep.c \
-        kobj_rename.c \
-        lmax.c \
-        lmin.c \
-        locks_up.c \
-        ltsleep.c \
-        lwproc.c \
-        max.c \
-        mcount.c \
-        md4c.c \
-        md5c.c \
-        memchr.c \
-        memcmp.c \
-        memcpy.c \
-        memmove.c \
-        memset.c \
-        mertwist.c \
-        min.c \
-        mi_vector_hash.c \
-        murmurhash.c \
-        nist_ctr_drbg.c \
-        param.c \
-        pmatch.c \
-        popcount32.c \
-        popcount64.c \
-        ppath_extant.c \
-        ppath_kmem_alloc.c \
-        ppath.c \
-        proc_compare.c \
-        prop_array.c \
-        prop_array_util.c \
-        prop_bool.c \
-        prop_data.c \
-        prop_dictionary.c \
-        prop_dictionary_util.c \
-        prop_ingest.c \
-        prop_kern.c \
-        prop_number.c \
-        prop_object.c \
-        prop_stack.c \
-        prop_string.c \
-        ptree.c \
-        random.c \
-        rb.c \
-        rijndael-alg-fst.c \
-        rijndael-api-fst.c \
-        rijndael.c \
-        rmd160.c \
-        rngtest.c \
-        rumpcopy.c \
-        rumpkern_if_wrappers.c \
-        rumpkern_syscalls.c \
-        rump.c \
-        rump_syscalls.c \
-        rump_x86_cpu_counter.c \
-        rump_x86_cpu.c \
-        rump_x86_pmap.c \
-        rump_x86_spinlock.c \
-        rump_x86_spl.c \
-        scanc.c \
-        scheduler.c \
-        secmodel.c \
-        secmodel_suser.c \
-        sha1.c \
-        sha2.c \
-        signals.c \
-        skpc.c \
-        sleepq.c \
-        snprintb.c \
-        strcasecmp.c \
-        strcat.c \
-        strchr.c \
-        strcmp.c \
-        strcpy.c \
-        strcspn.c \
-        strlcat.c \
-        strlcpy.c \
-        strlen.c \
-        strncasecmp.c \
-        strncat.c \
-        strncmp.c \
-        strncpy.c \
-        strnlen.c \
-        strpbrk.c \
-        strrchr.c \
-        strsep.c \
-        strspn.c \
-        strstr.c \
-        strtoimax.c \
-        strtoll.c \
-        strtoull.c \
-        strtoul.c \
-        strtoumax.c \
-        subr_callback.c \
-        subr_copy.c \
-        subr_cprng.c \
-        subr_device.c \
-        subr_devsw.c \
-        subr_evcnt.c \
-        subr_extent.c \
-        subr_hash.c \
-        subr_humanize.c \
-        subr_iostat.c \
-        subr_kcpuset.c \
-        subr_kmem.c \
-        subr_kobj.c \
-        subr_log.c \
-        subr_lwp_specificdata.c \
-        subr_once.c \
-        subr_pcq.c \
-        subr_percpu.c \
-        subr_pool.c \
-        subr_prf.c \
-        subr_pserialize.c \
-        subr_specificdata.c \
-        subr_time.c \
-        subr_vmem.c \
-        subr_workqueue.c \
-        subr_xcall.c \
-        syscalls.c \
-        sys_descrip.c \
-        sys_generic.c \
-        sys_module.c \
-        sys_pipe.c \
-        sys_select.c \
-        threads.c \
-        uipc_sem.c \
-        ulmax.c \
-        ulmin.c \
-        uvm_aobj.c \
-        uvm_object.c \
-        uvm_readahead.c \
-        uvm_swapstub.c \
-        vers.c \
-        vm.c \
-        vnode_if.c \
-        xlat_mbr_fstype.c
+SRC_C = __main.c \
+        rumpkern_syscalls.c
+
+SRC_NOLINK += accessors.c \
+              cdbr.c \
+              clock_subr.c \
+              cons.c \
+              consttime_memequal.c \
+              cprng_fast.c \
+              cpuset.c \
+              crc32.c \
+              devsw.c \
+              emul.c \
+              etfs_wrap.c \
+              explicit_memset.c \
+              ffs.c \
+              getfstypename.c \
+              heapsort.c \
+              hyperentropy.c \
+              imax.c \
+              imin.c \
+              inet_addr.c \
+              init_sysctl_base.c \
+              intoa.c \
+              intr.c \
+              kern_assert.c \
+              kern_auth.c \
+              kern_cfglock.c \
+              kern_descrip.c \
+              kern_event.c \
+              kern_hook.c \
+              kern_ksyms.c \
+              kern_ktrace.c \
+              kern_malloc.c \
+              kern_module.c \
+              kern_mutex_obj.c \
+              kern_ntptime.c \
+              kern_proc.c \
+              kern_prot.c \
+              kern_rate.c \
+              kern_resource.c \
+              kern_rndpool.c \
+              kern_rndq.c \
+              kern_rndsink.c \
+              kern_select_50.c \
+              kern_stub.c \
+              kern_syscall.c \
+              kern_sysctl.c \
+              kern_tc.c \
+              kern_time_50.c \
+              kern_time.c \
+              kern_timeout.c \
+              kern_uidinfo.c \
+              kern_xxx.c \
+              klock.c \
+              kobj_machdep.c \
+              kobj_rename.c \
+              lmax.c \
+              lmin.c \
+              locks_up.c \
+              ltsleep.c \
+              lwproc.c \
+              max.c \
+              mcount.c \
+              md4c.c \
+              md5c.c \
+              memchr.c \
+              memcmp.c \
+              memcpy.c \
+              memmove.c \
+              memset.c \
+              mertwist.c \
+              min.c \
+              mi_vector_hash.c \
+              murmurhash.c \
+              nist_ctr_drbg.c \
+              param.c \
+              pmatch.c \
+              popcount32.c \
+              popcount64.c \
+              ppath_extant.c \
+              ppath_kmem_alloc.c \
+              ppath.c \
+              proc_compare.c \
+              prop_array.c \
+              prop_array_util.c \
+              prop_bool.c \
+              prop_data.c \
+              prop_dictionary.c \
+              prop_dictionary_util.c \
+              prop_ingest.c \
+              prop_kern.c \
+              prop_number.c \
+              prop_object.c \
+              prop_stack.c \
+              prop_string.c \
+              ptree.c \
+              random.c \
+              rb.c \
+              rijndael-alg-fst.c \
+              rijndael-api-fst.c \
+              rijndael.c \
+              rmd160.c \
+              rngtest.c \
+              rumpcopy.c \
+              rumpkern_if_wrappers.c \
+              rump.c \
+              rump_syscalls.c \
+              rump_x86_cpu_counter.c \
+              rump_x86_cpu.c \
+              rump_x86_pmap.c \
+              rump_x86_spinlock.c \
+              rump_x86_spl.c \
+              scanc.c \
+              scheduler.c \
+              secmodel.c \
+              secmodel_suser.c \
+              sha1.c \
+              sha2.c \
+              signals.c \
+              skpc.c \
+              sleepq.c \
+              snprintb.c \
+              strcasecmp.c \
+              strcat.c \
+              strchr.c \
+              strcmp.c \
+              strcpy.c \
+              strcspn.c \
+              strlcat.c \
+              strlcpy.c \
+              strlen.c \
+              strncasecmp.c \
+              strncat.c \
+              strncmp.c \
+              strncpy.c \
+              strnlen.c \
+              strpbrk.c \
+              strrchr.c \
+              strsep.c \
+              strspn.c \
+              strstr.c \
+              strtoimax.c \
+              strtoll.c \
+              strtoull.c \
+              strtoul.c \
+              strtoumax.c \
+              subr_callback.c \
+              subr_copy.c \
+              subr_cprng.c \
+              subr_device.c \
+              subr_devsw.c \
+              subr_evcnt.c \
+              subr_extent.c \
+              subr_hash.c \
+              subr_humanize.c \
+              subr_iostat.c \
+              subr_kcpuset.c \
+              subr_kmem.c \
+              subr_kobj.c \
+              subr_log.c \
+              subr_lwp_specificdata.c \
+              subr_once.c \
+              subr_pcq.c \
+              subr_percpu.c \
+              subr_pool.c \
+              subr_prf.c \
+              subr_pserialize.c \
+              subr_specificdata.c \
+              subr_time.c \
+              subr_vmem.c \
+              subr_workqueue.c \
+              subr_xcall.c \
+              syscalls.c \
+              sys_descrip.c \
+              sys_generic.c \
+              sys_module.c \
+              sys_pipe.c \
+              sys_select.c \
+              threads.c \
+              uipc_sem.c \
+              ulmax.c \
+              ulmin.c \
+              uvm_aobj.c \
+              uvm_object.c \
+              uvm_readahead.c \
+              uvm_swapstub.c \
+              vers.c \
+              vm.c \
+              vnode_if.c \
+              xlat_mbr_fstype.c
 
 
-INC_DIR += $(RUMP_PORT_DIR)/src/lib/libc/include \
+INC_DIR += $(RUMP_BASE) \
+           $(RUMP_PORT_DIR)/src/lib/libc/include \
            $(RUMP_PORT_DIR)/src/sys/rump/librump/rumpkern/opt \
            $(RUMP_PORT_DIR)/src/sys \
            $(RUMP_PORT_DIR)/src/sys/sys \
@@ -210,8 +214,8 @@ INC_DIR += $(RUMP_PORT_DIR)/src/lib/libc/include \
            $(RUMP_PORT_DIR)/src/sys/rump/librump/rumpvfs \
            $(RUMP_PORT_DIR)/src/include \
            $(RUMP_PORT_DIR)/src/common/include \
-           $(RUMP_PORT_DIR)/nblibs/lib/libpthread \
-           $(RUMP_BASE)
+           $(RUMP_PORT_DIR)/nblibs/lib/libpthread
+
 
 #
 # XXX: x86 spedfic
@@ -224,11 +228,32 @@ $(RUMP_BASE)/machine:
 vers.c: $(RUMP_BASE)/machine
 	cd $(RUMP_BASE) && /bin/sh $(RUMP_PORT_DIR)/src/sys/conf/newvers.sh -iRUMP_ROAST -n
 
+# trigger build
 $(SRC_C:.c=.o): vers.c
+
+#
+# We prefix any global symbol in object files from SRC_NOLINK with 'rmpns_',
+# for this we add a 'rmpns_<source file>.o' to 'SRC_O' and perform a symbol
+# prefixing using an AWK script and object copy below which in turn creates the
+# prefixed object file. The rpmns files are linked into the library.
+#
+OBJ_PREFIX  = $(addprefix rmpns_,$(SRC_NOLINK:%.c=%.o))
+OBJ_PREFIX += $(addprefix rmpns_,$(SRC_NOLINK:%.S=%.o))
+SRC_O     += $(OBJ_PREFIX)
+PREFIX_AWK = '$$NF!~/^(rump|RUMP|__|_GLOBAL_OFFSET_TABLE)/  {s=$$NF;sub(/^/, "&rumpns_", s); print $$NF, s}'
+
+
+$(OBJ_PREFIX): $(SRC_NOLINK:%.c=%.o) $(SRC_NOLINK:%.S=%.o)
+	$(VERBOSE_MK)$(CUSTOM_NM) -go $(RUMP_BASE)/$(subst rmpns_,,$@) | awk $(PREFIX_AWK) \
+	          > $(RUMP_BASE)/_$@
+	$(VERBOSE_MK)$(CUSTOM_OBJCOPY) --preserve-dates --redefine-syms $(RUMP_BASE)/_$@ \
+	          $(RUMP_BASE)/$(subst rmpns_,,$@) $(RUMP_BASE)/$@
+	$(VERBOSE_MK)rm $(RUMP_BASE)/_$@
 
 
 vpath %.cc $(REP_DIR)/src/lib/rump
 
+vpath %.c $(RUMP_PORT_DIR)/src/sys/rump/librump/rumpkern
 vpath %.c $(RUMP_PORT_DIR)/src/sys/conf
 vpath %.c $(RUMP_PORT_DIR)/src/sys/crypto/cprng_fast
 vpath %.c $(RUMP_PORT_DIR)/src/sys/crypto/nist_ctr_drbg
@@ -237,7 +262,6 @@ vpath %.c $(RUMP_PORT_DIR)/src/sys/compat/common
 vpath %.c $(RUMP_PORT_DIR)/src/sys/dev
 vpath %.c $(RUMP_PORT_DIR)/src/sys/lib/libkern
 vpath %.c $(RUMP_PORT_DIR)/src/sys/kern
-vpath %.c $(RUMP_PORT_DIR)/src/sys/rump/librump/rumpkern
 vpath %.c $(RUMP_PORT_DIR)/src/sys/secmodel
 vpath %.c $(RUMP_PORT_DIR)/src/sys/secmodel/suser
 vpath %.c $(RUMP_PORT_DIR)/src/sys/uvm
@@ -259,7 +283,7 @@ vpath %.c $(RUMP_PORT_DIR)/src/common/lib/libutil
 
 
 # XXX x86 specific
-SRC_C += atomic.S byte_swap_2.S byte_swap_4.S byte_swap_8.S
+SRC_NOLINK += atomic.S byte_swap_2.S byte_swap_4.S byte_swap_8.S
 vpath %.S $(RUMP_PORT_DIR)/src/common/lib/libc/arch/x86_64/atomic
 vpath %.S $(RUMP_PORT_DIR)/src/common/lib/libc/arch/x86_64/gen
 vpath %.c $(RUMP_PORT_DIR)/src/sys/arch/amd64/amd64

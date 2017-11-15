@@ -11,14 +11,14 @@ NBCONFIG     = $(BUILD_BASE_DIR)/var/libcache/rump2tools/bin/nbconfig
 #
 SRC_C = autoconf.c kern_pmf.c rump_dev.c subr_autoconf.c
 
-INC_DIR += $(RUMP_PORT_DIR)/src/common/include \
+INC_DIR += $(RUMP_BASE) \
+           $(RUMP_FS_BASE) \
+           $(RUMP_PORT_DIR)/src/common/include \
            $(RUMP_PORT_DIR)/src/sys \
            $(RUMP_PORT_DIR)/src/sys/rump/librump/rumpkern \
            $(RUMP_PORT_DIR)/src/sys/rump/librump/rumpdev/opt \
            $(RUMP_PORT_DIR)/src/sys/rump/include \
-           $(RUMP_PORT_DIR)/src/sys/sys \
-           $(RUMP_FS_BASE) \
-           $(RUMP_BASE)
+           $(RUMP_PORT_DIR)/src/sys/sys
 
 ioconf.c:
 	$(NBCONFIG) -b $(RUMP_FS_BASE) -s $(RUMP_PORT_DIR)/src/sys \
@@ -56,6 +56,7 @@ SRC_C += bufq_disksort.c compat.c devnull.c genfs_vfsops.c \
          rumpvfs_syscalls.c subr_kobj_vfs.c vfs_bio.c vfs_getcwd.c \
          vfs_lookup.c vfs_syscalls_50.c vfs_vnops.c
 
+
 INC_DIR += $(RUMP_PORT_DIR)/src/sys/rump/librump/rumpkern/opt
 
 vpath %.c $(RUMP_PORT_DIR)/src/sys/compat/common
@@ -67,6 +68,11 @@ vpath %.c $(RUMP_PORT_DIR)/src/sys/miscfs/syncfs
 vpath %.c $(RUMP_PORT_DIR)/src/sys/ufs/mfs
 vpath %.c $(RUMP_PORT_DIR)/src/sys/ufs/ufs
 vpath %.c $(RUMP_PORT_DIR)/src/sys/uvm
+
+#
+# librump_ufs.a
+#
+SRC_C += ufs_bmap.c ufs_inode.c ufs_lookup.c ufs_vfsops. ufs_vnops
 
 
 #
