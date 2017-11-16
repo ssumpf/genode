@@ -1,8 +1,11 @@
 include $(REP_DIR)/lib/mk/rump2.inc
 
+#XXX:
+CC_OLEVEL = -O0
 SHARED_LIB = yes
 
-CC_OPT += -DLIBRUMPUSER
+#XXX: RUMP2
+CC_OPT += -DLIBRUMPUSER -DRUMP2
 SRC_CC  = dummies.cc hypercall.cc bootstrap.cc io.cc sync.cc misc.cc env.cc
 
 CC_C_OPT += -DHAVE_PROP_DICTIONARY_T
@@ -197,7 +200,7 @@ SRC_NOLINK += accessors.c \
               vm.c \
               vnode_if.c \
               xlat_mbr_fstype.c
-
+SRC_NOLINK += bswap32.c
 
 INC_DIR += $(RUMP_BASE) \
            $(RUMP_PORT_DIR)/src/lib/libc/include \
@@ -211,7 +214,8 @@ INC_DIR += $(RUMP_BASE) \
            $(RUMP_PORT_DIR)/src/sys/rump/librump/rumpvfs \
            $(RUMP_PORT_DIR)/src/include \
            $(RUMP_PORT_DIR)/src/common/include \
-           $(RUMP_PORT_DIR)/nblibs/lib/libpthread
+           $(RUMP_PORT_DIR)/nblibs/lib/libpthread \
+           $(RUMP_PORT_DIR)/common/lib/libc/gen
 
 
 #
@@ -234,6 +238,7 @@ vers.c: $(RUMP_BASE)/machine
 
 # trigger build
 $(SRC_C:.c=.o): vers.c
+
 
 #
 # rmpns_ prefix rules
