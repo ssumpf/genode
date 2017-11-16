@@ -1,16 +1,12 @@
 include $(REP_DIR)/lib/mk/rump2.inc
-#include $(REP_DIR)/lib/import/import-rump2.mk
 
 SHARED_LIB = yes
 
 CC_OPT += -DLIBRUMPUSER
-
-SRC_CC = dummies.cc hypercall.cc bootstrap.cc io.cc sync.cc misc.cc env.cc
+SRC_CC  = dummies.cc hypercall.cc bootstrap.cc io.cc sync.cc misc.cc env.cc
 
 CC_C_OPT += -DHAVE_PROP_DICTIONARY_T
-
-SRC_C = __main.c \
-        rumpkern_syscalls.c
+SRC_C     = __main.c \
 
 SRC_NOLINK += accessors.c \
               cdbr.c \
@@ -116,12 +112,13 @@ SRC_NOLINK += accessors.c \
               rumpcopy.c \
               rumpkern_if_wrappers.c \
               rump.c \
-              rump_syscalls.c \
+              rumpkern_syscalls.c \
               rump_x86_cpu_counter.c \
               rump_x86_cpu.c \
               rump_x86_pmap.c \
               rump_x86_spinlock.c \
               rump_x86_spl.c \
+              rump_syscalls.c \
               scanc.c \
               scheduler.c \
               secmodel.c \
@@ -220,11 +217,18 @@ INC_DIR += $(RUMP_BASE) \
 #
 # XXX: x86 spedfic
 #
+SRC_NOLINK += atomic.S byte_swap_2.S byte_swap_4.S byte_swap_8.S
+
+
 $(RUMP_BASE)/machine:
 	mkdir -p $(RUMP_BASE)
 	ln -sf $(RUMP_PORT_DIR)/src/sys/arch/amd64/include $(RUMP_BASE)/machine
 	ln -sf $(RUMP_PORT_DIR)/src/sys/arch/x86/include $(RUMP_BASE)/x86
 
+
+#
+# generic
+#
 vers.c: $(RUMP_BASE)/machine
 	cd $(RUMP_BASE) && /bin/sh $(RUMP_PORT_DIR)/src/sys/conf/newvers.sh -iRUMP_ROAST -n
 
@@ -232,23 +236,10 @@ vers.c: $(RUMP_BASE)/machine
 $(SRC_C:.c=.o): vers.c
 
 #
-# We prefix any global symbol in object files from SRC_NOLINK with 'rmpns_',
-# for this we add a 'rmpns_<source file>.o' to 'SRC_O' and perform a symbol
-# prefixing using an AWK script and object copy below which in turn creates the
-# prefixed object file. The rpmns files are linked into the library.
+# rmpns_ prefix rules
 #
-OBJ_PREFIX  = $(addprefix rmpns_,$(SRC_NOLINK:%.c=%.o))
-OBJ_PREFIX += $(addprefix rmpns_,$(SRC_NOLINK:%.S=%.o))
-SRC_O     += $(OBJ_PREFIX)
-PREFIX_AWK = '$$NF!~/^(rump|RUMP|__|_GLOBAL_OFFSET_TABLE)/  {s=$$NF;sub(/^/, "&rumpns_", s); print $$NF, s}'
-
-
-$(OBJ_PREFIX): $(SRC_NOLINK:%.c=%.o) $(SRC_NOLINK:%.S=%.o)
-	$(VERBOSE_MK)$(CUSTOM_NM) -go $(RUMP_BASE)/$(subst rmpns_,,$@) | awk $(PREFIX_AWK) \
-	          > $(RUMP_BASE)/_$@
-	$(VERBOSE_MK)$(CUSTOM_OBJCOPY) --preserve-dates --redefine-syms $(RUMP_BASE)/_$@ \
-	          $(RUMP_BASE)/$(subst rmpns_,,$@) $(RUMP_BASE)/$@
-	$(VERBOSE_MK)rm $(RUMP_BASE)/_$@
+RUMP_LIB_BASE = $(RUMP_BASE)
+include $(REP_DIR)/lib/mk/rump2_prefix.inc
 
 
 vpath %.cc $(REP_DIR)/src/lib/rump
@@ -283,7 +274,6 @@ vpath %.c $(RUMP_PORT_DIR)/src/common/lib/libutil
 
 
 # XXX x86 specific
-SRC_NOLINK += atomic.S byte_swap_2.S byte_swap_4.S byte_swap_8.S
 vpath %.S $(RUMP_PORT_DIR)/src/common/lib/libc/arch/x86_64/atomic
 vpath %.S $(RUMP_PORT_DIR)/src/common/lib/libc/arch/x86_64/gen
 vpath %.c $(RUMP_PORT_DIR)/src/sys/arch/amd64/amd64

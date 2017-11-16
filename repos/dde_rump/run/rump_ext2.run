@@ -83,7 +83,7 @@ install_config $config
 # generic modules
 set boot_modules {
 	core ld.lib.so init timer test-libc_vfs ram_blk
-	rump.lib.so rump_fs.lib.so rump_fs
+	rump2.lib.so rump2_fs.lib.so rump_fs
 	ext2.raw libc.lib.so
 }
 
