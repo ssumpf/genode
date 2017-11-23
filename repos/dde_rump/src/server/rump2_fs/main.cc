@@ -515,7 +515,6 @@ class Rump_fs::Root : public Root_component<Session_component>
 		{ }
 };
 
-extern "C" void wait_for_continue();
 
 struct Rump_fs::Main
 {
@@ -577,8 +576,6 @@ struct Rump_fs::Main
 
 void Component::construct(Genode::Env &env)
 {
-	Genode::log("WAIT");
-	wait_for_continue();
 	/* XXX execute constructors of global statics (uses shared objects) */
 	env.exec_static_constructors();
 

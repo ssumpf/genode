@@ -1,7 +1,7 @@
 #
 # Host tools required to build rump
 #
-include $(REP_DIR)/lib/mk/rump2.inc
+include $(REP_DIR)/lib/mk/rump2_common.inc
 
 HOST_CC   ?= gcc
 HOST_YACC ?= bison

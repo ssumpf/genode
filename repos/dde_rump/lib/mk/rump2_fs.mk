@@ -1,4 +1,4 @@
-include $(REP_DIR)/lib/mk/rump2.inc
+include $(REP_DIR)/lib/mk/rump2_common.inc
 
 LIBS        += rump2 rump2tools
 SHARED_LIB   = yes

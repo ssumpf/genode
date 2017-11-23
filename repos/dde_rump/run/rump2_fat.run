@@ -15,7 +15,7 @@ set build_components {
 	core init
 	drivers/timer
 	server/ram_blk
-	server/rump_fs
+	server/rump2_fs
 	test/libc_vfs
 }
 
@@ -57,7 +57,7 @@ append config {
 		<provides><service name="Block"/></provides>
 		<config file="fs.raw" block_size="512"/>
 	</start>
-	<start name="rump_fs" caps="200">
+	<start name="rump2_fs" caps="200">
 		<resource name="RAM" quantum="8M" />
 		<provides><service name="File_system"/></provides>
 		<config fs="msdos"><default-policy root="/" writeable="yes"/></config>
@@ -84,7 +84,7 @@ install_config $config
 # generic modules
 set boot_modules {
 	core ld.lib.so init timer test-libc_vfs ram_blk
-	rump.lib.so rump_fs.lib.so rump_fs
+	rump2.lib.so rump2_fs.lib.so rump2_fs
 	fs.raw libc.lib.so
 }
 

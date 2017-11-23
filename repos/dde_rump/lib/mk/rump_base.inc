@@ -10,7 +10,7 @@ RMAKE       = $(RUMP_TOOLS)/rumpmake
 #
 # Can be up to 4 for most verbose output
 #
-VERBOSE_LEVEL ?= 0
+VERBOSE_LEVEL ?= 4
 
 #
 # Sources

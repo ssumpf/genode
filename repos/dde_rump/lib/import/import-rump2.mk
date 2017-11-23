@@ -1,4 +1,4 @@
-include $(REP_DIR)/lib/mk/rump2.inc
+include $(REP_DIR)/lib/mk/rump2_common.inc
 
 INC_DIR += $(LIBGCC_INC_DIR) \
            $(RUMP_PORT_DIR)//nblibs/lib/libpthread \

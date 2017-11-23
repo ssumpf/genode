@@ -1,0 +1,149 @@
+if {[have_spec arm]} {
+   assert_spec arm_v7
+}
+
+#
+# Check used commands
+#
+set mkisofs [check_installed mkisofs]
+
+#
+# Build
+#
+set build_components {
+	core init
+	drivers/timer
+	server/fs_rom
+	server/rom_blk
+	server/rump2_fs
+	test/iso
+}
+
+build $build_components
+create_boot_directory
+
+#
+# Generate config
+#
+append config {
+<config>
+	<parent-provides>
+		<service name="ROM"/>
+		<service name="IRQ"/>
+		<service name="IO_MEM"/>
+		<service name="IO_PORT"/>
+		<service name="PD"/>
+		<service name="RM"/>
+		<service name="CPU"/>
+		<service name="LOG"/>
+	</parent-provides>
+	<default-route>
+		<any-service> <parent/> <any-child/> </any-service>
+	</default-route>
+	<default caps="100"/>
+	<start name="timer">
+		<resource name="RAM" quantum="1M"/>
+		<provides><service name="Timer"/></provides>
+	</start>
+	<start name="rom_blk">
+		<resource name="RAM" quantum="2M"/>
+		<provides><service name="Block"/></provides>
+		<config file="fs.iso" block_size="2048"/>
+	</start>
+	<start name="rump2_fs" caps="200">
+		<resource name="RAM" quantum="8M" />
+		<provides><service name="File_system"/></provides>
+		<config fs="cd9660"><policy label_prefix="fs_rom" root="/" writeable="no"/></config>
+	</start>
+	<start name="fs_rom">
+		<resource name="RAM" quantum="2M"/>
+		<provides><service name="ROM"/></provides>
+	</start>
+	<start name="test-iso">
+		<resource name="RAM" quantum="1M" />
+		<config/>
+		<route>
+			<service name="ROM" label_prefix=""><child name="fs_rom"/></service>
+			<any-service> <parent/> <any-child /> </any-service>
+		</route>
+	</start>
+</config>}
+
+#
+# Create iso
+#
+exec cp -f [genode_dir]/repos/os/src/test/iso/test.txt [run_dir]
+
+for { set i 1 } { $i <= 30 } { incr i } {
+	exec touch [run_dir]/$i.txt
+}
+
+exec rm -f bin/fs.iso
+catch { exec $mkisofs -l -R -hide-rr-moved -jcharset utf-8 -o bin/fs.iso [run_dir]}
+
+
+install_config $config
+
+#
+# Boot modules
+#
+set boot_modules {
+	core ld.lib.so init timer test-iso rom_blk
+	rump2.lib.so rump2_fs.lib.so rump2_fs
+	fs.iso fs_rom
+}
+
+build_boot_image $boot_modules
+
+append qemu_args "-nographic "
+run_genode_until forever
+run_genode_until {child .* exited with exit value 0.*\n} 60
+
+# pay only attention to the output of init and its children
+grep_output {^\[init -> test-iso}
+
+unify_output {at [a-f0-9]+} "at <unified>"
+
+if {[have_spec 32bit]} {
+compare_output_to {
+[init -> test-iso] File size is 31000 at <unified>
+[init -> test-iso] 00001000: 61616161  61616161  61616161  61616161  61616161  
+[init -> test-iso] 00001014: 61616161  61616161  61616161  61616161  61616161  
+[init -> test-iso] 00001028: 61616161  61616161  61616161  61616161  61616161  
+[init -> test-iso] 0000103c: 61616161  61616161  61616161  61616161  61616161  
+[init -> test-iso] 
+[init -> test-iso] 00010000: 62626262  62626262  62626262  62626262  62626262  
+[init -> test-iso] 00010014: 62626262  62626262  62626262  62626262  62626262  
+[init -> test-iso] 00010028: 62626262  62626262  62626262  62626262  62626262  
+[init -> test-iso] 0001003c: 62626262  62626262  62626262  62626262  62626262  
+[init -> test-iso] 
+[init -> test-iso] 00020000: 63636363  63636363  63636363  63636363  63636363  
+[init -> test-iso] 00020014: 63636363  63636363  63636363  63636363  63636363  
+[init -> test-iso] 00020028: 63636363  63636363  63636363  63636363  63636363  
+[init -> test-iso] 0002003c: 63636363  63636363  63636363  63636363  63636363  
+[init -> test-iso] 
+}
+}
+
+if {[have_spec 64bit]} {
+compare_output_to {
+[init -> test-iso] File size is 31000 at <unified>
+[init -> test-iso] 00001000: 6161616161616161  6161616161616161  6161616161616161  6161616161616161  6161616161616161  
+[init -> test-iso] 00001028: 6161616161616161  6161616161616161  6161616161616161  6161616161616161  6161616161616161  
+[init -> test-iso] 00001050: 6161616161616161  6161616161616161  6161616161616161  6161616161616161  6161616161616161  
+[init -> test-iso] 00001078: 6161616161616161  6161616161616161  6161616161616161  6161616161616161  6161616161616161  
+[init -> test-iso] 
+[init -> test-iso] 00010000: 6262626262626262  6262626262626262  6262626262626262  6262626262626262  6262626262626262  
+[init -> test-iso] 00010028: 6262626262626262  6262626262626262  6262626262626262  6262626262626262  6262626262626262  
+[init -> test-iso] 00010050: 6262626262626262  6262626262626262  6262626262626262  6262626262626262  6262626262626262  
+[init -> test-iso] 00010078: 6262626262626262  6262626262626262  6262626262626262  6262626262626262  6262626262626262  
+[init -> test-iso] 
+[init -> test-iso] 00020000: 6363636363636363  6363636363636363  6363636363636363  6363636363636363  6363636363636363  
+[init -> test-iso] 00020028: 6363636363636363  6363636363636363  6363636363636363  6363636363636363  6363636363636363  
+[init -> test-iso] 00020050: 6363636363636363  6363636363636363  6363636363636363  6363636363636363  6363636363636363  
+[init -> test-iso] 00020078: 6363636363636363  6363636363636363  6363636363636363  6363636363636363  6363636363636363  
+[init -> test-iso] 
+}
+}
+
+exec rm -rf bin/fs.iso

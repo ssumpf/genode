@@ -1,4 +1,4 @@
-include $(REP_DIR)/lib/mk/rump2.inc
+include $(REP_DIR)/lib/mk/rump2_common.inc
 
 CC   ?= gcc
 YACC ?= bison
