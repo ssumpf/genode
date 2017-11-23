@@ -73,7 +73,18 @@ vpath %.c $(RUMP_PORT_DIR)/src/sys/uvm
 #
 # librump_ufs.a
 #
-SRC_NOLINK += ufs_bmap.c ufs_inode.c ufs_lookup.c ufs_vfsops.c ufs_vnops.c
+SRC_NOLINK += ufs_bmap.c ufs_inode.c ufs_lookup.c ufs_vfsops.c ufs_vnops.c \
+              ufs_extattr.c ufs_quota.c ufs_wapbl.c quota2_subr.c ufs_dirhash.c \
+               ufs_quota2.c ufs_rename.c
+
+
+#
+# librump_ffs.a
+#
+SRC_NOLINK += ffs_alloc.c ffs_balloc.c ffs_inode.c ffs_snapshot.c ffs_tables.c ffs_vnops.c \
+              ffs_appleufs.c ffs_bswap.c ffs_quota2.c ffs_subr.c ffs_vfsops.c ffs_wapbl.c \
+
+vpath %.c $(RUMP_PORT_DIR)/src/sys/ufs/ffs
 
 
 #
@@ -84,6 +95,22 @@ SRC_NOLINK += ext2fs_alloc.c ext2fs_balloc.c ext2fs_bmap.c ext2fs_bswap.c ext2fs
               ext2fs_vfsops.c ext2fs_vnops.c
 
 vpath %.c $(RUMP_PORT_DIR)/src/sys/ufs/ext2fs
+
+#
+# librumpfs_cd9660.a
+#
+SRC_NOLINK += cd9660_bmap.c cd9660_lookup.c cd9660_node.c cd9660_rrip.c cd9660_util.c \
+              cd9660_vfsops.c cd9660_vnops.c
+
+vpath %.c $(RUMP_PORT_DIR)/src/sys/fs/cd9660
+
+#
+# librumpfs_msdos.a
+#
+SRC_NOLINK += msdosfs_conv.c msdosfs_denode.c msdosfs_fat.c msdosfs_lookup.c \
+              msdosfs_vfsops.c msdosfs_vnops.c
+
+vpath %.c $(RUMP_PORT_DIR)/src/sys/fs/msdosfs
 
 
 #

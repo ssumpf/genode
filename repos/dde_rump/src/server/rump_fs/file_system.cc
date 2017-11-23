@@ -21,13 +21,14 @@
 #include <base/attached_rom_dataspace.h>
 
 /**
- * We define our own fs arg structure to fit all sizes, we assume that 'fspec'
- * is the only valid argument and all other fields are unused.
+ * We define our own fs arg structure to fit all sizes used by the different
+ * file system implementations, we assume that 'fspec' * is the only valid
+ * argument and all other fields are unused.
  */
 struct fs_args
 {
 	char *fspec;
-	char  pad[150];
+	char  pad[164];
 
 	fs_args() { Genode::memset(pad, 0, sizeof(pad)); }
 };
@@ -95,6 +96,8 @@ void File_system::init()
 	/* mount into extra-terrestrial-file system */
 	struct fs_args args;
 	int            opts = check_read_only(fs_type) ? RUMP_MNT_RDONLY : 0;
+
+	Genode::error("FS ARGS ", sizeof(args));
 
 	args.fspec =  (char *)GENODE_DEVICE;
 	if (rump_sys_mount(fs_type.string(), "/", opts, &args, sizeof(args)) == -1) {
