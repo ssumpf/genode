@@ -1,6 +1,6 @@
 ifeq ($(called_from_lib_mk),yes)
 
-include $(REP_DIR)/lib/mk/rump2_common.inc
+include $(REP_DIR)/lib/mk/rump_common.inc
 
 $(RUMP_BASE)/include/machine:
 	$(VERBOSE_MK)mkdir -p $(RUMP_BASE)/include

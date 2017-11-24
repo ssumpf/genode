@@ -1,5 +1,5 @@
 RUMP_PORT_DIR := $(call select_from_ports,dde_rump)/src/lib/dde_rump
-RUMP_BASE     := $(BUILD_BASE_DIR)/var/libcache/rump2
+RUMP_BASE     := $(BUILD_BASE_DIR)/var/libcache/rump
 
 CC_C_OPT += -D__NetBSD__ -D'CTASSERT(x)=' -DMAXPHYS=32768 -D_RUMP_NATIVE_ABI \
             -DMAXUSERS=32 -DCOMPAT_50=1 -DCOMPAT_60=1 -DDIAGNOSTIC -DKTRACE \

@@ -1,7 +1,7 @@
 #
 # Host tools required to build rump
 #
-include $(REP_DIR)/lib/mk/rump2_common.inc
+include $(REP_DIR)/lib/mk/rump_common.inc
 
 HOST_CC   ?= gcc
 HOST_YACC ?= bison
@@ -13,7 +13,7 @@ COMPAT_DEFS = -include $(RUMP_PORT_DIR)/src/tools/compat/compat_defs.h
 # nbconfig
 #
 
-RUMP_TOOL = $(BUILD_BASE_DIR)/var/libcache/rump2tools
+RUMP_TOOL = $(BUILD_BASE_DIR)/var/libcache/rump_tools
 
 HOST_TARGET = $(RUMP_TOOL)/bin/nbconfig
 
