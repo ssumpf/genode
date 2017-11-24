@@ -223,7 +223,7 @@ vers.c:
 	$(VERBOSE_MK)cd $(RUMP_BASE) && /bin/sh $(RUMP_PORT_DIR)/src/sys/conf/newvers.sh -iRUMP_ROAST -n
 
 # trigger build
-$(filter %.o,$(SRC_NOLINK:.c=.o) $(SRC_NOLINK:.S=.o) $(SRC_CC:.cc=.o) $(SRC_C:.c=.o)): vers.c
+$(SRC_O): vers.c
 
 
 #

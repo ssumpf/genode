@@ -1,6 +1,9 @@
-include $(REP_DIR)/lib/mk/rump2_common.inc
+RUMP_PORT_DIR := $(call select_from_ports,dde_rump)/src/lib/dde_rump
+RUMP_BASE     := $(BUILD_BASE_DIR)/var/libcache/rump2
 
 ifeq ($(filter-out $(SPECS),arm),)
+	# rump include shadows some parts of 'machine' on ARM only,
+	# Therefore, it must be included before RUMP_BASE/include/machine
 	INC_DIR := $(RUMP_PORT_DIR)/src/sys/rump/include $(INC_DIR)
 endif
 
