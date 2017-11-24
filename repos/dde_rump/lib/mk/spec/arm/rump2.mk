@@ -1,20 +1,18 @@
 #
-# x86 specific
+# ARM specific
 #
-#SRC_NOLINK += atomic.S bswap64.c
+SRC_NOLINK += atomic_inc_32.S atomic_swap.S atomic_add_32.S \
+              atomic_or_32.S atomic_dec_32.S atomic_and_32.S \
+              atomic_cas_32.S membar_ops.S \
+              bswap64.c
 
-#SRC_NOLINK += rump_x86_cpu_counter.c \
-#              rump_x86_cpu.c \
-#              rump_x86_pmap.c \
-#              rump_x86_spinlock.c \
-#              rump_x86_spl.c
-#
-INC_MACHINE = $(RUMP_PORT_DIR)/src/sys/arch/arm/include
-INC_ARCH    = arm
+SRC_NOLINK += rump_generic_cpu.c rump_generic_pmap.c
+
+INC_DIR += $(RUMP_PORT_DIR)/src/sys/rump/include
 
 include $(REP_DIR)/lib/mk/rump2.inc
 
-#vpath %.S $(RUMP_PORT_DIR)/src/common/lib/libc/arch/i386/atomic
-#vpath %.S $(RUMP_PORT_DIR)/src/common/lib/libc/gen
-#vpath %.c $(RUMP_PORT_DIR)/src/sys/arch/i386/i386
-#vpath %.c $(RUMP_PORT_DIR)/src/sys/rump/librump/rumpkern/arch/x86
+vpath %.S $(RUMP_PORT_DIR)/src/common/lib/libc/arch/arm/atomic
+vpath %.S $(RUMP_PORT_DIR)/src/common/lib/libc/gen
+vpath %.c $(RUMP_PORT_DIR)/src/sys/arch/arm/arm32
+vpath %.c $(RUMP_PORT_DIR)/src/sys/rump/librump/rumpkern/arch/generic

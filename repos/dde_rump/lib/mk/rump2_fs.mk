@@ -5,13 +5,12 @@ SHARED_LIB   = yes
 RUMP_FS_BASE = $(BUILD_BASE_DIR)/var/libcache/rump2_fs
 NBCONFIG     = $(BUILD_BASE_DIR)/var/libcache/rump2tools/bin/nbconfig
 
-
 #
 # librumpdev.a
 #
 SRC_NOLINK = autoconf.c kern_pmf.c rump_dev.c subr_autoconf.c
 
-INC_DIR += $(RUMP_BASE) \
+INC_DIR += $(RUMP_BASE)/include \
            $(RUMP_FS_BASE) \
            $(RUMP_PORT_DIR)/src/common/include \
            $(RUMP_PORT_DIR)/src/sys \
@@ -21,7 +20,7 @@ INC_DIR += $(RUMP_BASE) \
            $(RUMP_PORT_DIR)/src/sys/sys
 
 ioconf.c:
-	$(NBCONFIG) -b $(RUMP_FS_BASE) -s $(RUMP_PORT_DIR)/src/sys \
+	$(VERBOSE)$(NBCONFIG) -b $(RUMP_FS_BASE) -s $(RUMP_PORT_DIR)/src/sys \
 		$(RUMP_PORT_DIR)/src/sys/rump/librump/rumpdev/MAINBUS.ioconf
 
 autoconf.o: ioconf.c

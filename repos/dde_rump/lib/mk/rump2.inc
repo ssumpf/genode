@@ -4,6 +4,8 @@ include $(REP_DIR)/lib/mk/rump2_common.inc
 CC_OLEVEL = -O0
 SHARED_LIB = yes
 
+LIBS += rump2_include
+
 #XXX: RUMP2
 CC_OPT += -DLIBRUMPUSER -DRUMP2
 SRC_CC  = dummies.cc hypercall.cc bootstrap.cc io.cc sync.cc misc.cc env.cc
@@ -198,7 +200,7 @@ SRC_NOLINK += accessors.c \
 #XXX: libc
 SRC_NOLINK += bswap32.c
 
-INC_DIR += $(RUMP_BASE) \
+INC_DIR += $(RUMP_BASE)/include \
            $(RUMP_PORT_DIR)/src/lib/libc/include \
            $(RUMP_PORT_DIR)/src/sys/rump/librump/rumpkern/opt \
            $(RUMP_PORT_DIR)/src/sys \
@@ -214,21 +216,14 @@ INC_DIR += $(RUMP_BASE) \
            $(RUMP_PORT_DIR)/common/lib/libc/gen
 
 
-
-$(RUMP_BASE)/machine:
-	$(VERBOSE_MK)mkdir -p $(RUMP_BASE)
-	$(VERBOSE_MK)ln -sf $(INC_MACHINE) $(RUMP_BASE)/machine
-	$(VERBOSE_MK)$(foreach ARCH, $(INC_ARCH), \
-		$(shell ln -sf $(RUMP_PORT_DIR)/src/sys/arch/$(ARCH)/include $(RUMP_BASE)/$(ARCH)))
-
 #
 # generic
 #
-vers.c: $(RUMP_BASE)/machine
+vers.c:
 	$(VERBOSE_MK)cd $(RUMP_BASE) && /bin/sh $(RUMP_PORT_DIR)/src/sys/conf/newvers.sh -iRUMP_ROAST -n
 
 # trigger build
-$(SRC_C:.c=.o): vers.c
+$(filter %.o,$(SRC_NOLINK:.c=.o) $(SRC_NOLINK:.S=.o) $(SRC_CC:.cc=.o) $(SRC_C:.c=.o)): vers.c
 
 
 #

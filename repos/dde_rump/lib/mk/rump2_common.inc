@@ -6,7 +6,11 @@ CC_C_OPT += -D__NetBSD__ -D'CTASSERT(x)=' -DMAXPHYS=32768 -D_RUMP_NATIVE_ABI \
             -DRUMP_KERNEL_IS_LIBC -D_RUMPKERNEL -D_KERNEL -DMULTIPROCESSOR \
             -D_MODULE -DMODULAR -DRUMP_USE_CTOR
 
-CC_C_OPT += -fno-builtin-printf -fno-builtin-vprintf
+CC_C_OPT += -fno-builtin-printf -fno-builtin-vprintf -fno-builtin-log \
+            -fno-builtin-putchar
+CC_C_OPT += -Wno-pointer-sign -Wno-unused-but-set-variable \
+            -Wno-unused-variable -Wno-format-zero-length \
+            -Wno-nonnull-compare -Wno-misleading-indentation
 
 #
 # rump.ld is an additional linker script which is required during
