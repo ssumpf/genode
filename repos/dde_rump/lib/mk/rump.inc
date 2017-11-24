@@ -208,7 +208,6 @@ INC_DIR += $(RUMP_BASE)/include \
            $(RUMP_PORT_DIR)/src/sys/rump/librump/rumpvfs \
            $(RUMP_PORT_DIR)/src/include \
            $(RUMP_PORT_DIR)/src/common/include \
-           $(RUMP_PORT_DIR)/nblibs/lib/libpthread \
            $(RUMP_PORT_DIR)/common/lib/libc/gen
 
 

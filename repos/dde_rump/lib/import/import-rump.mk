@@ -8,7 +8,6 @@ ifeq ($(filter-out $(SPECS),arm),)
 endif
 
 INC_DIR += $(LIBGCC_INC_DIR) \
-           $(RUMP_PORT_DIR)//nblibs/lib/libpthread \
            $(RUMP_PORT_DIR)/src/sys \
            $(RUMP_PORT_DIR)/src/sys/rump/include  \
            $(RUMP_PORT_DIR)/src/sys/sys \
