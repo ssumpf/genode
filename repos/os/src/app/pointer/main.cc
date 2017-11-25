@@ -24,15 +24,15 @@
 #include <os/texture_rgb888.h>
 #include <nitpicker_session/connection.h>
 #include <report_rom/report_service.h>
-#include <vbox_pointer/dither_painter.h>
-#include <vbox_pointer/shape_report.h>
+#include <pointer/dither_painter.h>
+#include <pointer/shape_report.h>
 
 /* local includes */
 #include "util.h"
 #include "rom_registry.h"
 #include "big_mouse.h"
 
-namespace Vbox_pointer { class Main; }
+namespace Pointer { class Main; }
 
 
 template <typename PT>
@@ -55,11 +55,11 @@ void convert_default_pointer_data_to_pixels(PT *pixel, Nitpicker::Area size)
 }
 
 
-class Vbox_pointer::Main : public Rom::Reader
+class Pointer::Main : public Rom::Reader
 {
 	private:
 
-		typedef Vbox_pointer::String String;
+		typedef Pointer::String String;
 
 		Genode::Env &_env;
 
@@ -103,13 +103,13 @@ class Vbox_pointer::Main : public Rom::Reader
 		String _hovered_label;
 
 		Genode::Attached_ram_dataspace _texture_pixel_ds { _env.ram(), _env.rm(),
-		                                                   Vbox_pointer::MAX_WIDTH  *
-		                                                   Vbox_pointer::MAX_HEIGHT *
+		                                                   Pointer::MAX_WIDTH  *
+		                                                   Pointer::MAX_HEIGHT *
 		                                                   sizeof(Genode::Pixel_rgb888) };
 
 		Genode::Attached_ram_dataspace _texture_alpha_ds { _env.ram(), _env.rm(),
-		                                                   Vbox_pointer::MAX_WIDTH  *
-		                                                   Vbox_pointer::MAX_HEIGHT };
+		                                                   Pointer::MAX_WIDTH  *
+		                                                   Pointer::MAX_HEIGHT };
 
 		void _show_shape_pointer(Shape_report &shape_report);
 		void _handle_hover();
@@ -134,7 +134,7 @@ class Vbox_pointer::Main : public Rom::Reader
 };
 
 
-void Vbox_pointer::Main::_resize_nitpicker_buffer_if_needed(Nitpicker::Area pointer_size)
+void Pointer::Main::_resize_nitpicker_buffer_if_needed(Nitpicker::Area pointer_size)
 {
 	if (pointer_size == _current_pointer_size)
 		return;
@@ -151,7 +151,7 @@ void Vbox_pointer::Main::_resize_nitpicker_buffer_if_needed(Nitpicker::Area poin
 }
 
 
-void Vbox_pointer::Main::_show_default_pointer()
+void Pointer::Main::_show_default_pointer()
 {
 	/* only draw default pointer if not already drawn */
 	if (_default_pointer_visible)
@@ -181,7 +181,7 @@ void Vbox_pointer::Main::_show_default_pointer()
 }
 
 
-void Vbox_pointer::Main::_show_shape_pointer(Shape_report &shape_report)
+void Pointer::Main::_show_shape_pointer(Shape_report &shape_report)
 {
 	Nitpicker::Area shape_size { shape_report.width, shape_report.height };
 	Nitpicker::Point shape_hot { (int)-shape_report.x_hot, (int)-shape_report.y_hot };
@@ -239,7 +239,7 @@ void Vbox_pointer::Main::_show_shape_pointer(Shape_report &shape_report)
 }
 
 
-void Vbox_pointer::Main::_update_pointer()
+void Pointer::Main::_update_pointer()
 {
 	if (!_shapes_enabled || _xray) {
 		_show_default_pointer();
@@ -280,9 +280,9 @@ void Vbox_pointer::Main::_update_pointer()
 }
 
 
-void Vbox_pointer::Main::_handle_hover()
+void Pointer::Main::_handle_hover()
 {
-	using Vbox_pointer::read_string_attribute;
+	using Pointer::read_string_attribute;
 
 	_hover_ds->update();
 	if (!_hover_ds->valid())
@@ -309,7 +309,7 @@ void Vbox_pointer::Main::_handle_hover()
 }
 
 
-void Vbox_pointer::Main::_handle_xray()
+void Pointer::Main::_handle_xray()
 {
 	_xray_ds->update();
 	if (!_xray_ds->valid())
@@ -331,14 +331,14 @@ void Vbox_pointer::Main::_handle_xray()
 	}
 }
 
-Vbox_pointer::Main::Main(Genode::Env &env) : _env(env)
+Pointer::Main::Main(Genode::Env &env) : _env(env)
 {
 	/*
 	 * Try to allocate the Nitpicker buffer for the maximum supported
 	 * pointer size to let the user know right from the start if the
 	 * RAM quota is too low.
 	 */
-	Framebuffer::Mode const mode { Vbox_pointer::MAX_WIDTH, Vbox_pointer::MAX_HEIGHT,
+	Framebuffer::Mode const mode { Pointer::MAX_WIDTH, Pointer::MAX_HEIGHT,
 	                               Framebuffer::Mode::RGB565 };
 
 	_nitpicker.buffer(mode, true /* use alpha */);
@@ -375,4 +375,4 @@ Vbox_pointer::Main::Main(Genode::Env &env) : _env(env)
 }
 
 
-void Component::construct(Genode::Env &env) { static Vbox_pointer::Main main(env); }
+void Component::construct(Genode::Env &env) { static Pointer::Main main(env); }

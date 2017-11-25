@@ -15,7 +15,7 @@ MIRROR_FROM_REP_DIR := src/virtualbox5 \
                        src/virtualbox/rt.cc \
                        src/virtualbox/thread.cc \
                        include/vmm \
-                       include/vbox_pointer/shape_report.h \
+                       include/pointer/shape_report.h \
                        $(addprefix lib/mk/,$(LIB_MK_FILES))
 
 content: $(MIRROR_FROM_REP_DIR)
