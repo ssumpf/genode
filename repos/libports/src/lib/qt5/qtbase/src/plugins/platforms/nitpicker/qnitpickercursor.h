@@ -18,7 +18,7 @@
 /* Genode includes */
 #include <base/attached_dataspace.h>
 #include <report_session/connection.h>
-#include <vbox_pointer/shape_report.h>
+#include <pointer/shape_report.h>
 
 /* Qt includes */
 #include <qpa/qplatformcursor.h>
@@ -31,7 +31,7 @@ class QNitpickerCursor : public QPlatformCursor
 
 		Genode::Constructible<Report::Connection>          _shape_report_connection;
 		Genode::Constructible<Genode::Attached_dataspace>  _shape_report_ds;
-		Vbox_pointer::Shape_report                        *_shape_report { nullptr };
+		Pointer::Shape_report                             *_shape_report { nullptr };
 
 	public:
 

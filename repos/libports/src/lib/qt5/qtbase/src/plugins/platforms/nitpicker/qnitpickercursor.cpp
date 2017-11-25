@@ -24,9 +24,9 @@ QT_BEGIN_NAMESPACE
 QNitpickerCursor::QNitpickerCursor(Genode::Env &env)
 {
 	try {
-		_shape_report_connection.construct(env, "shape", sizeof(Vbox_pointer::Shape_report));
+		_shape_report_connection.construct(env, "shape", sizeof(Pointer::Shape_report));
 		_shape_report_ds.construct(env.rm(), _shape_report_connection->dataspace());
-		_shape_report = _shape_report_ds->local_addr<Vbox_pointer::Shape_report>();
+		_shape_report = _shape_report_ds->local_addr<Pointer::Shape_report>();
 	} catch (Genode::Service_denied) { }
 }
 
@@ -69,7 +69,7 @@ void QNitpickerCursor::changeCursor(QCursor *widgetCursor, QWindow *window)
 	memcpy(_shape_report->shape, cursor.constBits(),
 		   cursor.width() * cursor.height() * 4);
 
-	_shape_report_connection->submit(sizeof(Vbox_pointer::Shape_report));
+	_shape_report_connection->submit(sizeof(Pointer::Shape_report));
 
 #else // !QT_NO_CURSOR
 	Q_UNUSED(widgetCursor);
