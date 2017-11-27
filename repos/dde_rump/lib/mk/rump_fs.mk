@@ -74,7 +74,7 @@ vpath %.c $(RUMP_PORT_DIR)/src/sys/uvm
 #
 SRC_NOLINK += ufs_bmap.c ufs_inode.c ufs_lookup.c ufs_vfsops.c ufs_vnops.c \
               ufs_extattr.c ufs_quota.c ufs_wapbl.c quota2_subr.c ufs_dirhash.c \
-               ufs_quota2.c ufs_rename.c
+              ufs_quota2.c ufs_rename.c
 
 
 #
