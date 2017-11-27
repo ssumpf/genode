@@ -3,8 +3,8 @@ content: src/lib/jbig2dec lib/mk/jbig2dec.mk LICENSE
 PORT_DIR := $(call port_dir,$(REP_DIR)/ports/jbig2dec)
 
 src/lib/jbig2dec:
-	mkdir -p $(dir $@)
-	cp -r $(PORT_DIR)/src/lib/jbig2dec $@
+	mkdir -p $@
+	cp -a $(PORT_DIR)/src/lib/jbig2dec/* $@/
 	echo "LIBS = jbig2dec" > $@/target.mk
 
 lib/mk/%.mk:
