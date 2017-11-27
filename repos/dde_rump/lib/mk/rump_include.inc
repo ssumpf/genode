@@ -2,7 +2,11 @@ ifeq ($(called_from_lib_mk),yes)
 
 include $(REP_DIR)/lib/mk/rump_common.inc
 
-$(RUMP_BASE)/include/machine:
+
+$(RUMP_BASE):
+	mkdir -p $@
+
+$(RUMP_BASE)/include/machine: $(RUMP_BASE)
 	$(VERBOSE_MK)mkdir -p $(RUMP_BASE)/include
 	$(VERBOSE_MK)for arch in $(INC_ARCH); do \
 		ln -sf $(RUMP_PORT_DIR)/src/sys/arch/$$arch/include $(RUMP_BASE)/include/$$arch ; done

@@ -121,32 +121,6 @@ PORT_FILES := src/common/include/ppath/ppath.h \
               src/common/lib/libutil/proc_compare.c \
               src/common/lib/libutil/snprintb.c \
               src/include/stdbool.h \
-              src/lib/rump/bootstrap.cc \
-              src/lib/rump/dummies.cc \
-              src/lib/rump/env.cc \
-              src/lib/rump/hypercall.cc \
-              src/lib/rump/io.cc \
-              src/lib/rump/misc.cc \
-              src/lib/rump/sched.h \
-              src/lib/rump/sync.cc \
-              src/server/rump2_fs/directory.h \
-              src/server/rump2_fs/file.h \
-              src/server/rump2_fs/file_system.cc \
-              src/server/rump2_fs/file_system.h \
-              src/server/rump2_fs/main.cc \
-              src/server/rump2_fs/node.h \
-              src/server/rump2_fs/random.cc \
-              src/server/rump2_fs/symlink.h \
-              src/server/rump2_fs/undef.h \
-              src/server/rump_fs/directory.h \
-              src/server/rump_fs/file.h \
-              src/server/rump_fs/file_system.cc \
-              src/server/rump_fs/file_system.h \
-              src/server/rump_fs/main.cc \
-              src/server/rump_fs/node.h \
-              src/server/rump_fs/random.cc \
-              src/server/rump_fs/symlink.h \
-              src/server/rump_fs/undef.h \
               src/sys/altq/if_altq.h \
               src/sys/arch/amd64/amd64/kobj_machdep.c \
               src/sys/arch/arm/arm32/kobj_machdep.c \
@@ -730,6 +704,350 @@ PORT_FILES := src/common/include/ppath/ppath.h \
               src/sys/uvm/uvm_swap.h \
               src/sys/uvm/uvm_swapstub.c \
               src/sys/uvm/uvm_vnode.c
+
+
+#
+# machine for x86_64
+#
+PORT_FILES += src/sys/arch/amd64/include//ansi.h \
+              src/sys/arch/amd64/include//asm.h \
+              src/sys/arch/amd64/include//bswap.h \
+              src/sys/arch/amd64/include//bus_defs.h \
+              src/sys/arch/amd64/include//bus_funcs.h \
+              src/sys/arch/amd64/include//byte_swap.h \
+              src/sys/arch/amd64/include//cdefs.h \
+              src/sys/arch/amd64/include//cpu_counter.h \
+              src/sys/arch/amd64/include//cpufunc.h \
+              src/sys/arch/amd64/include//cpu.h \
+              src/sys/arch/amd64/include//disklabel.h \
+              src/sys/arch/amd64/include//elf_machdep.h \
+              src/sys/arch/amd64/include//endian.h \
+              src/sys/arch/amd64/include//endian_machdep.h \
+              src/sys/arch/amd64/include//frame.h \
+              src/sys/arch/amd64/include//frame_regs.h \
+              src/sys/arch/amd64/include//int_const.h \
+              src/sys/arch/amd64/include//int_fmtio.h \
+              src/sys/arch/amd64/include//int_limits.h \
+              src/sys/arch/amd64/include//int_mwgwtypes.h \
+              src/sys/arch/amd64/include//intrdefs.h \
+              src/sys/arch/amd64/include//intr.h \
+              src/sys/arch/amd64/include//int_types.h \
+              src/sys/arch/amd64/include//limits.h \
+              src/sys/arch/amd64/include//lock.h \
+              src/sys/arch/amd64/include//mcontext.h \
+              src/sys/arch/amd64/include//mutex.h \
+              src/sys/arch/amd64/include//param.h \
+              src/sys/arch/amd64/include//pcb.h \
+              src/sys/arch/amd64/include//pic.h \
+              src/sys/arch/amd64/include//pmap.h \
+              src/sys/arch/amd64/include//proc.h \
+              src/sys/arch/amd64/include//psl.h \
+              src/sys/arch/amd64/include//pte.h \
+              src/sys/arch/amd64/include//ptrace.h \
+              src/sys/arch/amd64/include//rwlock.h \
+              src/sys/arch/amd64/include//segments.h \
+              src/sys/arch/amd64/include//signal.h \
+              src/sys/arch/amd64/include//specialreg.h \
+              src/sys/arch/amd64/include//trap.h \
+              src/sys/arch/amd64/include//tss.h \
+              src/sys/arch/amd64/include//types.h \
+              src/sys/arch/amd64/include//vmparam.h \
+              src/sys/arch/amd64/include//wchar_limits.h
+
+
+#
+# machine for x86_32
+#
+PORT_FILES += src/sys/arch/i386/include//ansi.h \
+              src/sys/arch/i386/include//asm.h \
+              src/sys/arch/i386/include//bswap.h \
+              src/sys/arch/i386/include//bus_defs.h \
+              src/sys/arch/i386/include//bus_funcs.h \
+              src/sys/arch/i386/include//byte_swap.h \
+              src/sys/arch/i386/include//cdefs.h \
+              src/sys/arch/i386/include//cpu_counter.h \
+              src/sys/arch/i386/include//cpufunc.h \
+              src/sys/arch/i386/include//cpu.h \
+              src/sys/arch/i386/include//disklabel.h \
+              src/sys/arch/i386/include//elf_machdep.h \
+              src/sys/arch/i386/include//endian.h \
+              src/sys/arch/i386/include//endian_machdep.h \
+              src/sys/arch/i386/include//frame.h \
+              src/sys/arch/i386/include//int_const.h \
+              src/sys/arch/i386/include//int_fmtio.h \
+              src/sys/arch/i386/include//int_limits.h \
+              src/sys/arch/i386/include//int_mwgwtypes.h \
+              src/sys/arch/i386/include//intrdefs.h \
+              src/sys/arch/i386/include//intr.h \
+              src/sys/arch/i386/include//int_types.h \
+              src/sys/arch/i386/include//limits.h \
+              src/sys/arch/i386/include//lock.h \
+              src/sys/arch/i386/include//mcontext.h \
+              src/sys/arch/i386/include//mutex.h \
+              src/sys/arch/i386/include//param.h \
+              src/sys/arch/i386/include//pcb.h \
+              src/sys/arch/i386/include//pic.h \
+              src/sys/arch/i386/include//pmap.h \
+              src/sys/arch/i386/include//proc.h \
+              src/sys/arch/i386/include//psl.h \
+              src/sys/arch/i386/include//pte.h \
+              src/sys/arch/i386/include//ptrace.h \
+              src/sys/arch/i386/include//rwlock.h \
+              src/sys/arch/i386/include//segments.h \
+              src/sys/arch/i386/include//signal.h \
+              src/sys/arch/i386/include//specialreg.h \
+              src/sys/arch/i386/include//trap.h \
+              src/sys/arch/i386/include//tss.h \
+              src/sys/arch/i386/include//types.h \
+              src/sys/arch/i386/include//vmparam.h \
+              src/sys/arch/i386/include//wchar_limits.h
+
+
+#
+# machine for arm
+#
+PORT_FILES += src/sys/arch/evbarm/include//ansi.h \
+              src/sys/arch/evbarm/include//asm.h \
+              src/sys/arch/evbarm/include//bswap.h \
+              src/sys/arch/evbarm/include//cdefs.h \
+              src/sys/arch/evbarm/include//disklabel.h \
+              src/sys/arch/evbarm/include//elf_machdep.h \
+              src/sys/arch/evbarm/include//endian.h \
+              src/sys/arch/evbarm/include//endian_machdep.h \
+              src/sys/arch/evbarm/include//frame.h \
+              src/sys/arch/evbarm/include//int_const.h \
+              src/sys/arch/evbarm/include//int_fmtio.h \
+              src/sys/arch/evbarm/include//int_limits.h \
+              src/sys/arch/evbarm/include//int_mwgwtypes.h \
+              src/sys/arch/evbarm/include//int_types.h \
+              src/sys/arch/evbarm/include//limits.h \
+              src/sys/arch/evbarm/include//lock.h \
+              src/sys/arch/evbarm/include//mcontext.h \
+              src/sys/arch/evbarm/include//mutex.h \
+              src/sys/arch/evbarm/include//param.h \
+              src/sys/arch/evbarm/include//pcb.h \
+              src/sys/arch/evbarm/include//proc.h \
+              src/sys/arch/evbarm/include//ptrace.h \
+              src/sys/arch/evbarm/include//rwlock.h \
+              src/sys/arch/evbarm/include//signal.h \
+              src/sys/arch/evbarm/include//types.h \
+              src/sys/arch/evbarm/include//vmparam.h \
+              src/sys/arch/evbarm/include//wchar_limits.h
+
+
+#
+# x86
+#
+PORT_FILES += src/sys/arch//x86/include/bus_defs.h \
+              src/sys/arch//x86/include/busdefs.h \
+              src/sys/arch//x86/include/bus_funcs.h \
+              src/sys/arch//x86/include/cacheinfo.h \
+              src/sys/arch//x86/include/cpu_counter.h \
+              src/sys/arch//x86/include/cpu_extended_state.h \
+              src/sys/arch//x86/include/cpufunc.h \
+              src/sys/arch//x86/include/cpu.h \
+              src/sys/arch//x86/include/intrdefs.h \
+              src/sys/arch//x86/include/intr.h \
+              src/sys/arch//x86/include/lock.h \
+              src/sys/arch//x86/include/mutex.h \
+              src/sys/arch//x86/include/pic.h \
+              src/sys/arch//x86/include/pmap.h \
+              src/sys/arch//x86/include/pmap_pv.h \
+              src/sys/arch//x86/include/psl.h \
+              src/sys/arch//x86/include/pte.h \
+              src/sys/arch//x86/include/rwlock.h \
+              src/sys/arch//x86/include/specialreg.h \
+              src/sys/arch//x86/include/trap.h
+
+
+#
+# i386
+#
+PORT_FILES += src/sys/arch/i386/include/pte.h
+
+
+#
+# arm
+#
+PORT_FILES += src/sys/arch/arm/include/ansi.h \
+              src/sys/arch/arm/include/arm32/frame.h \
+              src/sys/arch/arm/include/arm32/param.h \
+              src/sys/arch/arm/include/arm32/pte.h \
+              src/sys/arch/arm/include/arm32/types.h \
+              src/sys/arch/arm/include/arm32/vmparam.h \
+              src/sys/arch/arm/include/armreg.h \
+              src/sys/arch/arm/include/asm.h \
+              src/sys/arch/arm/include/bswap.h \
+              src/sys/arch/arm/include/byte_swap.h \
+              src/sys/arch/arm/include/cdefs.h \
+              src/sys/arch/arm/include/cpuconf.h \
+              src/sys/arch/arm/include/cpufunc.h \
+              src/sys/arch/arm/include/cpufunc_proto.h \
+              src/sys/arch/arm/include/disklabel.h \
+              src/sys/arch/arm/include/elf_machdep.h \
+              src/sys/arch/arm/include/endian_machdep.h \
+              src/sys/arch/arm/include/frame.h \
+              src/sys/arch/arm/include/int_const.h \
+              src/sys/arch/arm/include/int_fmtio.h \
+              src/sys/arch/arm/include/int_limits.h \
+              src/sys/arch/arm/include/int_mwgwtypes.h \
+              src/sys/arch/arm/include/int_types.h \
+              src/sys/arch/arm/include/limits.h \
+              src/sys/arch/arm/include/lock.h \
+              src/sys/arch/arm/include/locore.h \
+              src/sys/arch/arm/include/mcontext.h \
+              src/sys/arch/arm/include/mutex.h \
+              src/sys/arch/arm/include/param.h \
+              src/sys/arch/arm/include/pcb.h \
+              src/sys/arch/arm/include/proc.h \
+              src/sys/arch/arm/include/ptrace.h \
+              src/sys/arch/arm/include/reg.h \
+              src/sys/arch/arm/include/rwlock.h \
+              src/sys/arch/arm/include/signal.h \
+              src/sys/arch/arm/include/types.h \
+              src/sys/arch/arm/include/wchar_limits.h
+
+
+#
+# tooling (host)
+#
+PORT_FILES += src/include/vis.h \
+              src/lib/libc/gen/unvis.c \
+              src/lib/libc/gen/vis.c \
+              src/lib/libutil/efun.c \
+              src/sys/conf/copyright \
+              src/sys/conf/files \
+              src/sys/conf/osrelease.sh \
+              src/sys/rump/dev/files.rump \
+              src/sys/rump/librump/rumpdev/MAINBUS.ioconf \
+              src/sys/conf/newvers.sh \
+              src/usr.bin/cksum/crc.c \
+              src/usr.bin/config/defs.h \
+              src/usr.bin/config/files.c \
+              src/usr.bin/config/gram.y \
+              src/usr.bin/config/hash.c \
+              src/usr.bin/config/lint.c \
+              src/usr.bin/config/main.c \
+              src/usr.bin/config/mkdevsw.c \
+              src/usr.bin/config/mkheaders.c \
+              src/usr.bin/config/mkioconf.c \
+              src/usr.bin/config/mkmakefile.c \
+              src/usr.bin/config/mkswap.c \
+              src/usr.bin/config/pack.c \
+              src/usr.bin/config/sem.c \
+              src/usr.bin/config/sem.h \
+              src/usr.bin/config/scan.l \
+              src/usr.bin/config/util.c \
+              src/usr.bin/cksum/crc_extern.h \
+              src/usr.bin/cksum/extern.h \
+              src/tools/compat/compat_defs.h \
+              src/tools/compat/namespace.h \
+              src/tools/compat/vis.h
+
+PORT_FILES += src/sys/crypto/arc4/files.arc4 \
+              src/sys/crypto/des/files.des \
+              src/sys/crypto/blowfish/files.blowfish \
+              src/sys/crypto/cast128/files.cast128 \
+              src/sys/crypto/rijndael/files.rijndael \
+              src/sys/crypto/skipjack/files.skipjack \
+              src/sys/crypto/camellia/files.camellia \
+              src/sys/opencrypto/files.opencrypto \
+              src/sys/crypto/nist_ctr_drbg/files.nist_ctr_drbg \
+              src/sys/crypto/cprng_fast/files.cprng_fast \
+              src/sys/dev/sysmon/files.sysmon \
+              src/sys/net80211/files.net80211 \
+              src/sys/netatalk/files.netatalk \
+              src/sys/netbt/files.netbt \
+              src/sys/netinet/files.netinet \
+              src/sys/netinet6/files.netinet6 \
+              src/sys/netipsec/files.netipsec \
+              src/sys/netmpls/files.netmpls \
+              src/sys/netnatm/files.netnatm \
+              src/sys/netsmb/files.netsmb \
+              src/sys/net/npf/files.npf \
+              src/sys/netinet/files.ipfilter \
+              src/sys/net/files.pf \
+              src/sys/ddb/files.ddb \
+              src/sys/conf/majors \
+              src/sys/dev/files.audio \
+              src/sys/dev/dtv/files.dtv \
+              src/sys/dev/i2c/files.i2c \
+              src/sys/dev/spi/files.spi \
+              src/sys/dev/ir/files.ir \
+              src/sys/dev/ppbus/files.ppbus \
+              src/sys/dev/stbi/files.stbi \
+              src/sys/dev/splash/files.splash \
+              src/sys/dev/videomode/files.videomode \
+              src/sys/altq/files.altq \
+              src/sys/ipkdb/files.ipkdb \
+              src/sys/dev/mii/files.mii \
+              src/sys/dev/raidframe/files.raidframe \
+              src/sys/dev/dmover/files.dmover \
+              src/sys/external/isc/atheros_hal/conf/files.ath_hal \
+              src/sys/external/bsd/drm/conf/files.drm \
+              src/sys/dev/drm/files.drm \
+              src/sys/external/bsd/drm2/drm/files.drmkms \
+              src/sys/dev/wscons/files.wscons \
+              src/sys/dev/rasops/files.rasops \
+              src/sys/dev/wsfont/files.wsfont \
+              src/sys/dev/wsfb/files.wsfb \
+              src/sys/external/bsd/dwc2/conf/files.dwc2 \
+              src/sys/dev/dm/files.dm \
+              src/sys/coda/files.coda \
+              src/sys/fs/adosfs/files.adosfs \
+              src/sys/fs/cd9660/files.cd9660 \
+              src/sys/fs/efs/files.efs \
+              src/sys/fs/filecorefs/files.filecorefs \
+              src/sys/fs/hfs/files.hfs \
+              src/sys/fs/msdosfs/files.msdosfs \
+              src/sys/fs/nilfs/files.nilfs \
+              src/sys/fs/ntfs/files.ntfs \
+              src/sys/fs/ptyfs/files.ptyfs \
+              src/sys/fs/puffs/files.puffs \
+              src/sys/fs/udf/files.udf \
+              src/sys/fs/smbfs/files.smbfs \
+              src/sys/fs/sysvbfs/files.sysvbfs \
+              src/sys/fs/tmpfs/files.tmpfs \
+              src/sys/fs/union/files.union \
+              src/sys/fs/v7fs/files.v7fs \
+              src/sys/miscfs/fdesc/files.fdesc \
+              src/sys/miscfs/kernfs/files.kernfs \
+              src/sys/miscfs/nullfs/files.nullfs \
+              src/sys/miscfs/overlay/files.overlay \
+              src/sys/miscfs/procfs/files.procfs \
+              src/sys/miscfs/umapfs/files.umapfs \
+              src/sys/nfs/files.nfs \
+              src/sys/ufs/files.ufs \
+              src/sys/uvm/files.uvm \
+              src/sys/secmodel/files.secmodel \
+              src/sys/kern/files.kern \
+              src/sys/net/files.net \
+              src/sys/dev/gpio/files.gpio \
+              src/sys/dev/onewire/files.onewire \
+              src/sys/dev/pad/files.pad \
+              src/sys/lib/libx86emu/files.x86emu \
+              src/sys/dev/tprof/files.tprof \
+              src/sys/dev/altmem/files.altmem \
+              src/sys/dev/flash/files.flash \
+              src/sys/dev/nand/files.nand \
+              src/sys/dev/nor/files.nor \
+              src/sys/dev/iscsi/files.iscsi \
+              src/sys/dev/ic/files.athn
+
+PORT_FILES += src/sys/external/bsd/drm2/linux/files.drmkms_linux \
+              src/sys/external/bsd/drm2/ttm/files.ttm \
+              src/sys/dev/rcons/files.rcons \
+              src/sys/secmodel/suser/files.suser \
+              src/sys/secmodel/securelevel/files.securelevel \
+              src/sys/secmodel/extensions/files.extensions \
+              src/sys/secmodel/bsd44/files.bsd44 \
+              src/sys/secmodel/overlay/files.overlay \
+              src/sys/secmodel/keylock/files.keylock \
+              src/sys/net/agr/files.agr \
+              src/sys/netisdn/files.i4b
+
+
+
 
 MIRROR_FROM_PORT_DIR := $(addprefix src/lib/dde_rump/, $(PORT_FILES))
 
