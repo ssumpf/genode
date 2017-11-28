@@ -1,5 +1,4 @@
 LIB_MK := $(addprefix lib/mk/, \
-            nbconfig.mk \
             rump_common.inc \
             rump_fs.mk \
             rump.inc \
