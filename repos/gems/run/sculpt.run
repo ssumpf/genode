@@ -330,9 +330,9 @@ install_config {
 			<bool name="capslock"     initial="no"/>
 			<bool name="numlock"      initial="no"/>
 
-			<press   name="KEY_F11"      bool="reset"        change="on"/>
-			<release name="KEY_F11"      bool="reset"        change="off"/>
-			<press   name="KEY_F12"      bool="leitzentrale" change="toggle"/>
+			<press   name="KEY_F10"      bool="reset"        change="on"/>
+			<release name="KEY_F10"      bool="reset"        change="off"/>
+			<press   name="KEY_F11"      bool="leitzentrale" change="toggle"/>
 			<press   name="KEY_CAPSLOCK" bool="capslock"     change="toggle"/>
 			<press   name="KEY_NUMLOCK"  bool="numlock"      change="toggle"/>
 
