@@ -833,7 +833,7 @@ class Vcpu_handler : public Vmm::Vcpu_dispatcher<Genode::Thread>,
 			}
 
 #if 0
-			if (_recall_req % 1000 == 0) {
+			if (_recall_req % 10 == 0) {
 				using Genode::log;
 
 				while (other) {
@@ -842,13 +842,36 @@ class Vcpu_handler : public Vmm::Vcpu_dispatcher<Genode::Thread>,
 					    other->_recall_skip, ":", other->_recall_drop, ":",
 					    other->_recall_inv, " req:inj:drop irq=",
 					    other->_irq_request, ":", other->_irq_inject, ":",
-					    other->_irq_drop);
+					    other->_irq_drop, " thread: ", Genode::Thread::myself()->name());
 
 					other = other->next();
 				}
 			}
 #endif
 		}
+
+		struct Reason
+		{
+			unsigned _reason[65];
+			unsigned long _count = 0;
+
+			void trigger(unsigned reason)
+			{
+				_reason[reason]++;
+				if((_count++ % 1000) == 0)
+					dump();
+			}
+
+			void dump()
+			{
+				for (unsigned i = 0; i < 65; i++) {
+					if (_reason[i] > 0) {
+						Genode::log("reason: ", i, " count: ", _reason[i]);
+						_reason[i] = 0;
+					}
+				}
+			}
+		} _reason;
 
 		void halt(Genode::uint64_t tsc_abs)
 		{
@@ -956,7 +979,7 @@ class Vcpu_handler : public Vmm::Vcpu_dispatcher<Genode::Thread>,
 			PGMChangeMode(pVCpu, pCtx->cr0, pCtx->cr4, pCtx->msrEFER);
 
 			int rc = vm_exit_requires_instruction_emulation(pCtx);
-
+			_reason.trigger(exit_reason);
 			/* evaluated in VMM/include/EMHandleRCTmpl.h */
 			return rc;
 		}

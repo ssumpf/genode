@@ -419,7 +419,7 @@ install_config {
 			<service name="Report" label_suffix="-> shape"> <child name="pointer"/> </service>
 			<service name="Report"> <child name="fs_report"/> </service>
 			<service name="LOG" label="unlogged"> <parent/> </service>
-			<service name="LOG"> <child name="log"/> </service>
+			<service name="LOG"> <parent/> </service>
 			<service name="Rtc"> <child name="rtc_drv"/> </service>
 			<service name="IO_MEM"  label_prefix="acpica"> <parent/> </service>
 			<service name="IO_PORT" label_prefix="acpica"> <parent/> </service>
@@ -457,7 +457,9 @@ file copy -force [genode_dir]/repos/os/src/server/input_filter/de.chargen \
 file copy -force [genode_dir]/repos/gems/recipes/raw/drivers_managed-pc/input_filter.config \
                  [run_dir]/genode/input_filter.config
 
-append boot_modules { }
+build { virtualbox5 }
+
+append boot_modules { virtualbox5-nova }
 
 build_boot_image $boot_modules
 
