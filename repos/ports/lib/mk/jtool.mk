@@ -12,7 +12,7 @@ unexport SPEC
 $(JDK_TOOL_BASE)/.prepared:
 	@echo "Building jdk ..."
 	@mkdir -p $(JDK_TOOL_BASE)
-	cd $(JDK_TOOL_BASE) && /bin/bash $(JDK_CONTRIB_DIR)/configure && make
+	cd $(JDK_TOOL_BASE) && /bin/bash $(JDK_CONTRIB_DIR)/configure --disable-warnings-as-errors && make
 	@touch $(JDK_TOOL_BASE)/.prepared
 
 all: $(JDK_TOOL_BASE)/.prepared
