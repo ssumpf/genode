@@ -39,6 +39,8 @@
 #include "libc_mmap_registry.h"
 #include "libc_errno.h"
 
+#include <base/debug.h>
+
 using namespace Libc;
 
 
@@ -631,6 +633,7 @@ extern "C" int rmdir(const char *path)
 
 extern "C" int stat(const char *path, struct stat *buf)
 {
+	PDBG(path);
 	try {
 		Absolute_path resolved_path;
 		resolve_symlinks(path, resolved_path);

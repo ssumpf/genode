@@ -56,6 +56,8 @@ void *dlopen(const char *name, int mode)
 {
 	int supported = RTLD_LAZY | RTLD_NOW | RTLD_LOCAL | RTLD_NODELETE | RTLD_GLOBAL;
 
+	Genode::warning("dlopen ", name);
+
 	/* error on unsupported mode values */
 	if (mode & ~supported) {
 		snprintf(err_str, MAX_ERR, "Unsupported mode 0x%x\n", mode & ~supported);
@@ -92,16 +94,21 @@ void *dlsym(void *handle, const char *name)
 		return nullptr;
 	}
 
+	Genode::warning("dlsym: ", name);
+
 	try {
 		if (RTLD_DEFAULT) {
 			static Libc::Allocator global_alloc;
 
-			return Shared_object(*genode_env, global_alloc, nullptr,
+			void *ptr =  Shared_object(*genode_env, global_alloc, nullptr,
 			                     Shared_object::BIND_LAZY,
 			                     Shared_object::KEEP).lookup(name);
+			Genode::warning("dlsym ", ptr);
+			return ptr;
 		}
 
-		return to_object(handle)->lookup(name);
+		void *ptr =  to_object(handle)->lookup(name);
+		Genode::warning("dlsym2 ", ptr);
 	} catch (...) {
 		snprintf(err_str, MAX_ERR, "Symbol '%s' not found\n", name);
 	}
