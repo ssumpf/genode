@@ -34,7 +34,7 @@ set config {
 		<provides> <service name="Rtc" /> </provides>
 	</start>
 	<start name="java" caps="300">
-		<resource name="RAM" quantum="64M" />
+		<resource name="RAM" quantum="96M" />
 		<route>
 			<service name="ROM" label="zip.lib.so">
 				<parent label="jzip.lib.so" />
