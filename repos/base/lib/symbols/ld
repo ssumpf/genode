@@ -272,11 +272,6 @@ _ZN6Genode5printERNS_6OutputEl T
 _ZN6Genode5printERNS_6OutputEm T
 _ZN6Genode5printERNS_6OutputEx T
 _ZN6Genode5printERNS_6OutputEy T
-_ZN6Genode6Config4sighENS_10CapabilityINS_14Signal_contextEEE T
-_ZN6Genode6Config6reloadEv T
-_ZN6Genode6Config8xml_nodeEv T
-_ZN6Genode6ConfigC1Ev T
-_ZN6Genode6ConfigC2Ev T
 _ZN6Genode6Output10out_stringEPKcm T
 _ZN6Genode6Parent8announceERKNS_13Rpc_in_bufferILm64EEENS_10CapabilityINS_4RootEEE T
 _ZN6Genode6Signal19_dec_ref_and_unlockEv T
@@ -314,7 +309,6 @@ _ZN6Genode6ThreadC2EmPKcmNS0_4TypeEPNS_11Cpu_sessionENS_8Affinity8LocationE T
 _ZN6Genode6ThreadD0Ev T
 _ZN6Genode6ThreadD1Ev T
 _ZN6Genode6ThreadD2Ev T
-_ZN6Genode6configEv T
 _ZN6Genode6printfEPKcz T
 _ZN6Genode7Console11_out_stringEPKc T
 _ZN6Genode7Console6printfEPKcz T
@@ -390,10 +384,8 @@ _ZTIN10__cxxabiv121__vmi_class_type_infoE D 12
 _ZTIN10__cxxabiv123__fundamental_type_infoE D 12
 _ZTIN5Timer10ConnectionE D 48
 _ZTIN6Genode11Sliced_heapE D 12
-_ZTIN6Genode14Rpc_entrypointE D 2
 _ZTIN6Genode14Rpc_entrypointE D 32
-_ZTIN6Genode14Signal_contextE D 8
-_ZTIN6Genode14Timeout_threadE D 2
+_ZTIN6Genode14Signal_contextE D 32
 _ZTIN6Genode14Timeout_threadE D 32
 _ZTIN6Genode17Region_map_clientE D 12
 _ZTIN6Genode17Rm_session_clientE D 12
@@ -403,9 +395,8 @@ _ZTIN6Genode4HeapE D 12
 _ZTIN6Genode4SlabE D 12
 _ZTIN6Genode5AlarmE D 8
 _ZTIN6Genode5Child14Initial_threadE D 12
-_ZTIN6Genode5ChildE D 2
 _ZTIN6Genode5ChildE D 40
-_ZTIN6Genode6OutputE D 8
+_ZTIN6Genode6OutputE D 12
 _ZTIN6Genode6ThreadE D 8
 _ZTIN6Genode7ConsoleE D 8
 _ZTIN6Genode7Timeout5AlarmE D 24
@@ -514,7 +505,7 @@ _ZTSN10__cxxabiv120__function_type_infoE R 37
 _ZTSN10__cxxabiv120__si_class_type_infoE R 37
 _ZTSN10__cxxabiv121__vmi_class_type_infoE R 38
 _ZTSN10__cxxabiv123__fundamental_type_infoE R 40
-_ZTSN5Timer10ConnectionE R 232
+_ZTSN5Timer10ConnectionE R 21
 _ZTSN6Genode11Sliced_heapE R 23
 _ZTSN6Genode14Rpc_entrypointE R 26
 _ZTSN6Genode14Signal_contextE R 26
@@ -540,74 +531,41 @@ _ZTSSt8bad_cast R 12
 _ZTSSt9bad_alloc R 13
 _ZTSSt9exception R 13
 _ZTSSt9type_info R 13
-_ZTVN10__cxxabiv115__forced_unwindE D 1
 _ZTVN10__cxxabiv115__forced_unwindE D 20
-_ZTVN10__cxxabiv116__enum_type_infoE D 2
 _ZTVN10__cxxabiv116__enum_type_infoE D 32
-_ZTVN10__cxxabiv117__class_type_infoE D 2
 _ZTVN10__cxxabiv117__class_type_infoE D 44
-_ZTVN10__cxxabiv117__pbase_type_infoE D 2
 _ZTVN10__cxxabiv117__pbase_type_infoE D 36
-_ZTVN10__cxxabiv119__foreign_exceptionE D 1
 _ZTVN10__cxxabiv119__foreign_exceptionE D 20
-_ZTVN10__cxxabiv119__pointer_type_infoE D 2
 _ZTVN10__cxxabiv119__pointer_type_infoE D 36
-_ZTVN10__cxxabiv120__function_type_infoE D 2
 _ZTVN10__cxxabiv120__function_type_infoE D 32
-_ZTVN10__cxxabiv120__si_class_type_infoE D 2
 _ZTVN10__cxxabiv120__si_class_type_infoE D 44
-_ZTVN10__cxxabiv121__vmi_class_type_infoE D 2
 _ZTVN10__cxxabiv121__vmi_class_type_infoE D 44
-_ZTVN10__cxxabiv123__fundamental_type_infoE D 2
 _ZTVN10__cxxabiv123__fundamental_type_infoE D 32
-_ZTVN5Timer10ConnectionE D 116
-_ZTVN6Genode11Sliced_heapE D 2
+_ZTVN5Timer10ConnectionE D 160
 _ZTVN6Genode11Sliced_heapE D 36
-_ZTVN6Genode14Rpc_entrypointE D 1
-_ZTVN6Genode14Rpc_entrypointE D 24
-_ZTVN6Genode14Signal_contextE D 1
+_ZTVN6Genode14Rpc_entrypointE D 40
 _ZTVN6Genode14Signal_contextE D 16
-_ZTVN6Genode14Timeout_threadE D 1
 _ZTVN6Genode14Timeout_threadE D 24
-_ZTVN6Genode17Region_map_clientE D 1
-_ZTVN6Genode17Region_map_clientE D 28
-_ZTVN6Genode17Rm_session_clientE D 1
+_ZTVN6Genode17Region_map_clientE D 36
 _ZTVN6Genode17Rm_session_clientE D 24
-_ZTVN6Genode18Allocator_avl_baseE D 4
 _ZTVN6Genode18Allocator_avl_baseE D 64
 _ZTVN6Genode23Alarm_timeout_schedulerE D 80
-_ZTVN6Genode4HeapE D 2
 _ZTVN6Genode4HeapE D 36
-_ZTVN6Genode4SlabE D 2
 _ZTVN6Genode4SlabE D 36
-_ZTVN6Genode5AlarmE D 1
 _ZTVN6Genode5AlarmE D 20
-_ZTVN6Genode5Child14Initial_threadE D 1
-_ZTVN6Genode5Child14Initial_threadE D 16
-_ZTVN6Genode5ChildE D 11
-_ZTVN6Genode5ChildE D 188
-_ZTVN6Genode6OutputE D 1
-_ZTVN6Genode6OutputE D 16
-_ZTVN6Genode6ThreadE D 1
+_ZTVN6Genode5Child14Initial_threadE D 24
+_ZTVN6Genode5ChildE D 204
+_ZTVN6Genode6OutputE D 24
 _ZTVN6Genode6ThreadE D 24
-_ZTVN6Genode7ConsoleE D 1
 _ZTVN6Genode7ConsoleE D 24
 _ZTVN6Genode7Timeout5AlarmE D 40
-_ZTVSt10bad_typeid D 1
 _ZTVSt10bad_typeid D 20
-_ZTVSt13bad_exception D 1
 _ZTVSt13bad_exception D 20
-_ZTVSt16bad_array_length D 1
 _ZTVSt16bad_array_length D 20
-_ZTVSt20bad_array_new_length D 1
 _ZTVSt20bad_array_new_length D 20
-_ZTVSt8bad_cast D 1
 _ZTVSt8bad_cast D 20
-_ZTVSt9bad_alloc D 1
 _ZTVSt9bad_alloc D 20
-_ZTVSt9exception D 1
 _ZTVSt9exception D 20
-_ZTVSt9type_info D 2
 _ZTVSt9type_info D 32
 _ZThn236_N5Timer10Connection16schedule_timeoutEN6Genode12MicrosecondsERNS1_11Time_source15Timeout_handlerE T
 _ZThn236_N5Timer10Connection9curr_timeEv T
@@ -674,8 +632,8 @@ dl_iterate_phdr T
 dl_unwind_find_exidx T
 genode_argc D 4
 genode_argv D 8
-genode_envp B 4
-lx_environ B 4
+genode_envp B 8
+lx_environ B 8
 memcpy W
 memmove W
 memset W
