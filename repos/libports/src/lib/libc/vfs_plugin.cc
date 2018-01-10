@@ -345,7 +345,7 @@ int Libc::Vfs_plugin::mkdir(const char *path, mode_t mode)
 
 	switch (VFS_THREAD_SAFE(_root_dir.opendir(path, true, &dir_handle, _alloc))) {
 	case Opendir_result::OPENDIR_OK:
-		dir_handle->ds().close(dir_handle);
+		VFS_THREAD_SAFE(dir_handle->ds().close(dir_handle));
 		break;
 	case Opendir_result::OPENDIR_ERR_LOOKUP_FAILED:
 		return Errno(ENOENT);
@@ -400,7 +400,7 @@ ssize_t Libc::Vfs_plugin::write(Libc::File_descriptor *fd, const void *buf,
 	if (fd->flags & O_NONBLOCK) {
 
 		try {
-			out_result = handle->fs().write(handle, (char const *)buf, count, out_count);
+			out_result = VFS_THREAD_SAFE(handle->fs().write(handle, (char const *)buf, count, out_count));
 		} catch (Vfs::File_io_service::Insufficient_buffer) { }
 
 	} else {
@@ -940,8 +940,8 @@ int Libc::Vfs_plugin::symlink(const char *oldpath, const char *newpath)
 		bool suspend() override
 		{
 			try {
-				handle->fs().write(handle, (char const *)buf,
-					               count, out_count);
+				VFS_THREAD_SAFE(handle->fs().write(handle, (char const *)buf,
+					              count, out_count));
 				retry = false;
 			} catch (Vfs::File_io_service::Insufficient_buffer) {
 				retry = true;
@@ -956,7 +956,7 @@ int Libc::Vfs_plugin::symlink(const char *oldpath, const char *newpath)
 	} while (check.retry);
 
 	_vfs_sync(handle);
-	handle->ds().close(handle);
+	VFS_THREAD_SAFE(handle->ds().close(handle));
 
 	if (out_count != count)
 		return Errno(ENAMETOOLONG);
