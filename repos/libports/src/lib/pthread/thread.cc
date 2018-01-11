@@ -239,8 +239,7 @@ extern "C" {
 		 * of the pthread object would also destruct the 'Thread' of the main
 		 * thread.
 		 */
-		static pthread_attr main_thread_attr;
-		static pthread *main = new pthread(*Thread::myself(), &main_thread_attr);
+		static pthread *main = new pthread(*Thread::myself());
 		return main;
 	}
 
@@ -290,7 +289,7 @@ extern "C" {
 		if (!attr)
 			return EINVAL;
 
-		*attr = pthread->attr();
+		(*attr)->pthread = pthread;
 		return 0;
 	}
 
