@@ -84,6 +84,7 @@ addr_t Region_map_mmap::_reserve_local(bool           use_local_addr,
 		 * initial mapping preserved in linker script and apply the actual
 		 * reservation. Subsequent requests are just ignored.
 		 */
+		Genode::raw(Genode::Hex(local_addr), " - ", Genode::Hex(local_addr + size));
 
 		static struct Context
 		{
