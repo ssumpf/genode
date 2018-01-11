@@ -147,15 +147,9 @@ struct pthread : Genode::Noncopyable, Genode::Thread::Tls::Base
 		 */
 		Genode::Thread &_thread;
 
-		pthread_attr_t _attr;
-
 		void _associate_thread_with_pthread()
 		{
-			if (_attr)
-				_attr->pthread = this;
-
 			Genode::Thread::Tls::Base::tls(_thread, *this);
-
 			pthread_registry().insert(this);
 		}
 
@@ -164,13 +158,12 @@ struct pthread : Genode::Noncopyable, Genode::Thread::Tls::Base
 		/**
 		 * Constructor for threads created via 'pthread_create'
 		 */
-		pthread(pthread_attr_t attr, start_routine_t start_routine,
+		pthread(start_routine_t start_routine,
 		        void *arg, size_t stack_size, char const * name,
 		        Genode::Cpu_session * cpu, Genode::Affinity::Location location)
 		:
 			_thread(_construct_thread_object(name, stack_size, cpu, location,
-			                                 start_routine, arg)),
-			_attr(attr)
+			                                 start_routine, arg))
 		{
 			_associate_thread_with_pthread();
 		}
@@ -179,10 +172,9 @@ struct pthread : Genode::Noncopyable, Genode::Thread::Tls::Base
 		 * Constructor to create pthread object out of existing thread,
 		 * i.e., the main thread
 		 */
-		pthread(Genode::Thread &existing_thread, pthread_attr_t attr)
+		pthread(Genode::Thread &existing_thread)
 		:
-			_thread(existing_thread),
-			_attr(attr)
+			_thread(existing_thread)
 		{
 			_associate_thread_with_pthread();
 		}
@@ -202,8 +194,6 @@ struct pthread : Genode::Noncopyable, Genode::Thread::Tls::Base
 
 		void *stack_top()  const { return _thread.stack_top();  }
 		void *stack_base() const { return _thread.stack_base(); }
-
-		pthread_attr_t attr() { return _attr; }
 };
 
 #endif /* _INCLUDE__SRC_LIB_PTHREAD_THREAD_H_ */
