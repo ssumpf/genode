@@ -4481,9 +4481,15 @@ bool os::pd_unmap_memory(char* addr, size_t bytes) {
   return vm_reg->release(addr, bytes);
 }
 
+extern "C" void wait_for_continue();
 
 bool os::pd_commit_memory(char* addr, size_t size, bool exec) {
 	Genode::warning(__func__, "addr: ", (void *)addr, " size: ", (void *)size, " exec: ", exec);
+
+	if (size == 0x400000) {
+		Genode::log("wait a second ;-)");
+		wait_for_continue();
+	}
 
 	if (!addr) {
 		Genode::error(__PRETTY_FUNCTION__, "  addr == 0");
