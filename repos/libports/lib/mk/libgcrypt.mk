@@ -7,7 +7,7 @@ SRC_C := global.c stdmem.c visibility.c fips.c misc.c secmem.c md.c cipher.c \
          random.c random-csprng.c poly1305.c rndjent.c pubkey.c random-drbg.c \
          primegen.c random-system.c sha1.c mac.c hmac-tests.c mac-poly1305.c \
          hwfeatures.c hmac256.c blake2.c rndhw.c hash-common.c sexp.c \
-         mac-hmac.c rsa.c rsa-common.c pubkey-util.c
+         mac-hmac.c rsa.c rsa-common.c pubkey-util.c sha256.c
 
 SRC_C += $(notdir $(wildcard $(LIBGCRYPT_DIR)/mpi/mpi*.c))
 SRC_C += $(notdir $(wildcard $(LIBGCRYPT_DIR)/mpi/generic/*.c))
