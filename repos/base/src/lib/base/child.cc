@@ -788,6 +788,8 @@ void Child::close_all_sessions()
 
 	_initial_thread.destruct();
 
+	_cpu._connection.destruct();
+
 	/*
 	 * Purge the meta data about any dangling sessions provided by the child to
 	 * other children.
