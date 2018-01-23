@@ -76,6 +76,7 @@ struct Igd::Device
 	struct Initialization_failed : Genode::Exception { };
 	struct Unsupported_device    : Genode::Exception { };
 	struct Out_of_ram            : Genode::Exception { };
+	struct Out_of_caps           : Genode::Exception { };
 	struct Already_scheduled     : Genode::Exception { };
 	struct Could_not_map_buffer  : Genode::Exception { };
 
@@ -168,11 +169,16 @@ struct Igd::Device
 			 *     make the alloc_dma_buffer call fail.
 			 */
 			_pci.upgrade_ram(size);
+			_pci.upgrade_caps(2);
 			try {
 				return _pci.alloc_dma_buffer(size);
 			}
 			catch (Platform::Out_of_ram) {
+				Genode::warning("backend alloc out of RAM");
 				throw Out_of_ram(); }
+			catch (Platform::Out_of_caps) {
+				Genode::warning("backend alloc out of CAPS");
+				throw Out_of_caps(); }
 		}
 
 		void free(Genode::Allocator_guard &guard, Genode::Ram_dataspace_capability cap)
