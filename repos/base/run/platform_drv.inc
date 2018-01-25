@@ -93,6 +93,11 @@ proc platform_drv_policy {} {
 				<pci class="VGA"/>
 				<pci bus="0" device="0" function="0"/>
 				<pci class="ISABRIDGE"/>
+			</policy>
+			<policy label_prefix="launchpad -> init -> intel_gpu_drv" irq_mode="nomsi">
+				<pci class="VGA"/>
+				<pci bus="0" device="0" function="0"/>
+				<pci class="ISABRIDGE"/>
 			</policy>}
 	} else {
 		return {}

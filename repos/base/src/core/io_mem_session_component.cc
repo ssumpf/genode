@@ -52,7 +52,7 @@ Io_mem_session_component::_prepare_io_mem(const char      *args,
 	switch (_io_mem_alloc->alloc_addr(req_size, req_base).value) {
 	case Range_allocator::Alloc_return::RANGE_CONFLICT:
 		error("I/O memory ", Hex_range<addr_t>(req_base, req_size), " not available");
-		return Dataspace_attr();
+		break;
 
 	case Range_allocator::Alloc_return::OUT_OF_METADATA:
 		error("I/O memory allocator ran out of meta data");

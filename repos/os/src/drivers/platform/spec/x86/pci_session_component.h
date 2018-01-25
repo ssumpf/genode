@@ -555,6 +555,8 @@ class Platform::Session_component : public Genode::Rpc_object<Session>
 					throw Xml_attribute::Nonexistent_attribute();
 
 					enum { DOUBLET = false };
+					return;
+
 					if (!find_dev_in_policy(bus, device, function, DOUBLET))
 						return;
 
