@@ -71,7 +71,9 @@ Genode::Io_mem_session_capability Platform::Device_component::io_mem(Genode::uin
 			Io_mem * io_mem = new (_slab_iomem) Io_mem(_env,
 			                                           res.base() + offset,
 			                                           res_size, wc);
+			Genode::log("INSERT ", Genode::Hex(res.base() + offset), " - ", Genode::Hex(res.base() + offset + size - 1));
 			_io_mem[i].insert(io_mem);
+			Genode::log("DONE");
 			return io_mem->cap();
 		}
 		catch (Genode::Out_of_caps) {

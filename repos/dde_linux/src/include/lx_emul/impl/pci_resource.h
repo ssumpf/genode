@@ -39,7 +39,14 @@ extern "C" size_t pci_resource_len(struct pci_dev *dev, unsigned bar)
 	if (!start)
 		return 0;
 
-	return (dev->resource[bar].end - start) + 1;
+	size_t len = (dev->resource[bar].end - start) + 1;
+
+	if (bar == 2 && len > 128*1024*1024) {
+		lx_printf("BAR 2\n");
+		return 128*1024*1024;
+	}
+
+	return len;
 }
 
 

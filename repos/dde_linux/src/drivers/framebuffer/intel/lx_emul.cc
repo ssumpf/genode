@@ -43,7 +43,7 @@
 #include <lx_emul/impl/completion.h>
 #include <lx_emul/impl/wait.h>
 
-static struct drm_device * lx_drm_device = nullptr;
+struct drm_device * lx_drm_device = nullptr;
 
 
 struct Drm_guard

@@ -256,6 +256,7 @@ set launchpad_config {
 				<service name="Nitpicker"/>
 				<service name="Timer"/>
 				<service name="Platform"/>
+				<service name="Gpu" />
 			</parent-provides>
 
 			<start name="liquid_fb" caps="200">
@@ -292,31 +293,8 @@ set launchpad_config {
 			</config>
 	</launcher>
 	<!--- gpu multiplexer -->
-	<launcher name="init" ram_quota="256M" caps="1200">
-		<config verbose="yes">
-			<parent-provides>
-				<service name="ROM"/>
-				<service name="IRQ"/>
-				<service name="IO_MEM"/>
-				<service name="IO_PORT"/>
-				<service name="PD"/>
-				<service name="RM"/>
-				<service name="CPU"/>
-				<service name="LOG"/>
-				<service name="Nitpicker"/>
-				<service name="Timer"/>
-				<service name="Gpu"/>
-				<service name="Platform" />
-			</parent-provides>
-			<start name="intel_gpu_drv" caps="1000">
-				<resource name="RAM" quantum="128M"/>
-				<provides> <service name="Gpu"/> </provides>
-				<config fb_size="128M"></config>
-				<route>
-					<any-service> <parent /> <any-child/> </any-service>
-				</route>
-			</start>
-		</config>
+	<launcher name="intel_gpu_drv" ram_quota="256M" caps="1200">
+				<config fb_size="134217728"></config>
 	</launcher>
 </config>}
 
@@ -330,8 +308,6 @@ append config {
 			<service name="LOG" label_suffix=" -> hello_gl">            <child name="nitlog"/> </service>
 			<service name="LOG" label_suffix=" -> sdl_opengl-lesson3">  <child name="nitlog"/> </service>
 			<service name="LOG" label_suffix=" -> sdl_opengl-lesson36"> <child name="nitlog"/> </service>
-			<service name="LOG" label_suffix=" -> intel_gpu_drv">       <child name="nitlog"/> </service>
-			<service name="Gpu"> <child name="intel_gpu_drv"/> </service>
 			<any-service> <parent/> <any-child/> </any-service>
 		</route>
 	</start>}

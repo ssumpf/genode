@@ -107,8 +107,9 @@ class Platform::Irq_proxy : private Genode::List<Platform::Irq_proxy>::Element
 			_woken_up          = false;
 
 			/* inform blocked clients */
-			for (Irq_sigh * s = _sigh_list.first(); s ; s = s->next())
+			for (Irq_sigh * s = _sigh_list.first(); s ; s = s->next()) {
 				s->notify();
+			}
 		}
 
 		unsigned irq_number() const { return _irq_number; }
@@ -116,7 +117,7 @@ class Platform::Irq_proxy : private Genode::List<Platform::Irq_proxy>::Element
 		virtual bool add_sharer(Irq_sigh *s)
 		{
 			Genode::Lock::Guard lock_guard(_mutex);
-
+			Genode::warning("NEW IRQ");
 			++_num_sharers;
 			_sigh_list.insert(s);
 

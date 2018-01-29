@@ -957,6 +957,7 @@ struct Igd::Device
 
 	void _handle_irq()
 	{
+		Genode::warning("IRQ");
 		_mmio->disable_master_irq();
 
 		Mmio::GT_0_INTERRUPT_IIR::access_t const v = _mmio->read<Mmio::GT_0_INTERRUPT_IIR>();
@@ -964,6 +965,9 @@ struct Igd::Device
 		bool const ctx_switch    = Mmio::GT_0_INTERRUPT_IIR::Cs_ctx_switch_interrupt::get(v);
 		(void)ctx_switch;
 		bool const user_complete = Mmio::GT_0_INTERRUPT_IIR::Cs_mi_user_interrupt::get(v);
+
+		_mmio->intr_dump();
+		Genode::warning("User complete ", user_complete);
 
 		if (v) { _clear_rcs_iir(v); }
 
@@ -1046,9 +1050,9 @@ struct Igd::Device
 			_unschedule_current_vgpu();
 		}
 
-		if (_current_vgpu()) {
+		//if (_current_vgpu()) {
 			_schedule_current_vgpu();
-		}
+		//}
 	}
 
 	Genode::Signal_handler<Device> _watchdog_timeout_sigh {
@@ -1078,9 +1082,12 @@ struct Igd::Device
 
 		if (!_supported()) { throw Unsupported_device(); }
 
+		Genode::log(__func__, ":", __LINE__);
+
 		/* trigger device_pd assignment */
 		_enable_pci_bus_master();
 
+		Genode::log(__func__, ":", __LINE__);
 		/*
 		 * IHD-OS-BDW-Vol 2c-11.15 p. 1068
 		 */
@@ -1093,8 +1100,10 @@ struct Igd::Device
 			struct Ggc_lock                           : Bitfield<0, 1> { };
 		};
 		enum { PCI_GMCH_CTL = 0x50, };
+		Genode::log(__func__, ":", __LINE__);
 		MGGC_0_2_0_PCI::access_t v = _config_read<uint16_t>(PCI_GMCH_CTL);
 
+		Genode::log(__func__, ":", __LINE__);
 		{
 			log("MGGC_0_2_0_PCI");
 			log("  Graphics_mode_select:               ", Hex(MGGC_0_2_0_PCI::Graphics_mode_select::get(v)));
@@ -1106,9 +1115,12 @@ struct Igd::Device
 
 		/* map PCI resources */
 		_poke_pci_resource(GMADR);
+		Genode::log(__func__, ":", __LINE__);
 
 		addr_t gttmmadr_base = _map_pci_resource(GTTMMADR);
+		Genode::log(__func__, ":", __LINE__);
 		_mmio.construct(_delayer, gttmmadr_base);
+		Genode::log(__func__, ":", __LINE__);
 
 		/* GGTT */
 		Number_of_bytes const fb_size =

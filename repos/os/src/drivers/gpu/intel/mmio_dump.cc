@@ -127,7 +127,7 @@ void Igd::Mmio::error_dump()
 void Igd::Mmio::intr_dump()
 {
 #define DUMP_GT_1
-#define DUMP_GT_2
+//#define DUMP_GT_2
 #define DUMP_GT_3
 
 	using namespace Genode;

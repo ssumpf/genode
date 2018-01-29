@@ -34,6 +34,7 @@ Io_mem_session_component::_prepare_io_mem(const char      *args,
 	addr_t base = req_base & ~(get_page_size() - 1);
 	size_t size = end - base;
 
+	log("IOMEM: ", Genode::Hex(base), " - ", Genode::Hex(base + req_size));
 	_cacheable = UNCACHED;
 
 	Arg a = Arg_string::find_arg(args, "wc");

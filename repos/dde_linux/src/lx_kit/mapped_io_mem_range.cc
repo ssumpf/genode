@@ -27,6 +27,7 @@
 #include <lx_kit/pci_dev_registry.h>
 #include <lx_kit/types.h>
 
+#include <base/debug.h>
 namespace Lx_kit { class Mapped_io_mem_range; }
 
 
@@ -99,6 +100,8 @@ void *Lx::ioremap(addr_t phys_addr, unsigned long size,
 {
 	using namespace Genode;
 
+	PDBG(Genode::Hex(phys_addr), " - ", Genode::Hex(phys_addr + size - 1));
+
 	/* search for the requested region within the already mapped ranges */
 	for (Lx_kit::Mapped_io_mem_range *r = ranges.first(); r; r = r->next()) {
 
@@ -129,9 +132,11 @@ void *Lx::ioremap(addr_t phys_addr, unsigned long size,
 
 	retry<Genode::Out_of_ram>(
 		[&] () {
+			Genode::log(__func__, " map phys: ", Genode::Hex(phys_addr), " s: ", Genode::Hex(size), " o: ", Genode::Hex(offset));
 			io_mem = new (&Lx_kit::env().heap())
 			Lx_kit::Mapped_io_mem_range(Lx_kit::env().env(), *_global_rm,
 		                                phys_addr, size, ds_cap, offset);
+			Genode::log(__func__, " mapped");
 		},
 		[&] () {
 			_global_rm->upgrade_ram(16384);

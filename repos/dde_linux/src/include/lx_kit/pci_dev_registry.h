@@ -67,7 +67,7 @@ class Lx::Pci_dev_registry
 
 				/* offset from the beginning of the PCI resource */
 				offset = phys - pci_resource_start(d, bar);
-
+				Genode::log(__func__, "bar ", Genode::Hex(bar), " size ", Genode::Hex(size));
 				Genode::Io_mem_session_capability io_mem_cap =
 					d->io_mem(bar, cache_attribute);
 

@@ -198,9 +198,15 @@ class Lx::Pci_dev : public pci_dev, public Lx_kit::List<Pci_dev>::Element
 			if (bar >= DEVICE_COUNT_RESOURCE)
 				return Genode::Io_mem_session_capability();
 
+			size_t size = ~0ul;
+			if (bar == 2) {
+				Genode::log("BAR2");
+				size = 128*1024*1024;
+			}
+
 			if (!_io_mem[bar].valid())
 				_io_mem[bar] = _client.io_mem(_client.phys_bar_to_virt(bar),
-				                              cache_attribute);
+				                              cache_attribute, 0, size);
 
 			return _io_mem[bar];
 		}

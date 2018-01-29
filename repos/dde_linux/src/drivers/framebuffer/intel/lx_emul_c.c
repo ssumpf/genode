@@ -44,10 +44,14 @@ void lx_c_allocate_framebuffer(struct drm_device * dev,
 	/* for linear buffers the pitch needs to be 64 byte aligned */
 	c->pitch = roundup(c->width * c->bpp, 64);
 	c->size  = roundup(c->pitch * c->height, PAGE_SIZE);
-	if (c->size * 2 < dev_priv->gtt.stolen_usable_size)
+	if (c->size * 2 < dev_priv->gtt.stolen_usable_size) {
+		lx_printf("INTEL: STOLEN\n");
 		obj = i915_gem_object_create_stolen(dev, c->size);
-	if (obj == NULL)
+	}
+	if (obj == NULL) {
+		lx_printf("INTEL: ALLOC\n");
 		obj = i915_gem_alloc_object(dev, c->size);
+	}
 	if (obj == NULL) goto out2;
 
 	r = (struct drm_mode_fb_cmd2*) kzalloc(sizeof(struct drm_mode_fb_cmd2), 0);
@@ -61,6 +65,8 @@ void lx_c_allocate_framebuffer(struct drm_device * dev,
 
 	if (intel_pin_and_fence_fb_obj(NULL, c->lx_fb, NULL, NULL, NULL))
 		goto err1;
+
+	lx_printf("FRAMEBUFFER GTT OFFSET: %lx\n", i915_gem_obj_ggtt_offset(obj));
 
 	c->addr = ioremap_wc(dev_priv->gtt.mappable_base
 	                     + i915_gem_obj_ggtt_offset(obj), c->size);

@@ -29,10 +29,12 @@
 
 namespace Lx_kit { class Irq; }
 
-
+static bool _disabled = false;
 class Lx_kit::Irq : public Lx::Irq
 {
 	private:
+
+
 
 		/**
 		 * Helper utilty for composing IRQ related names
@@ -133,6 +135,7 @@ class Lx_kit::Irq : public Lx::Irq
 				 */
 				void unblock()
 				{
+					Genode::error("IRQ");
 					_task.unblock();
 
 					/* kick off scheduling */
@@ -145,9 +148,10 @@ class Lx_kit::Irq : public Lx::Irq
 				void handle_irq()
 				{
 					/* report IRQ to all clients */
-					for (Handler *h = _handler.first(); h; h = h->next()) {
-						h->handle();
-					}
+					if (_disabled == false)
+						for (Handler *h = _handler.first(); h; h = h->next()) {
+							h->handle();
+						}
 
 					_irq_sess.ack_irq();
 				}
@@ -220,6 +224,8 @@ class Lx_kit::Irq : public Lx::Irq
 			Context *ctx = _find_context(dev);
 			if (ctx) ctx->unblock();
 		}
+
+		void disable_irq() override { _disabled = true; }
 };
 
 

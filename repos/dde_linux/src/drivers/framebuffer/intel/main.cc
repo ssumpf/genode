@@ -23,6 +23,11 @@
 
 /* Linux emulation environment includes */
 #include <lx_emul.h>
+#include <lx_emul/extern_c_begin.h>
+#include <drm/drmP.h>
+#include <drm/drm_gem.h>
+#include <lx_emul/extern_c_end.h>
+
 #include <lx_kit/env.h>
 #include <lx_kit/malloc.h>
 #include <lx_kit/scheduler.h>
@@ -37,6 +42,7 @@ extern "C" int postcore_i2c_init(); /* i2c-core.c */
 extern "C" int module_i915_init();  /* i915_drv.c */
 
 static void run_linux(void * m);
+extern drm_device *lx_drm_device;
 
 unsigned long jiffies;
 
@@ -80,7 +86,12 @@ struct Main
 		Lx::scheduler().schedule();
 	}
 
-	void announce() { env.parent().announce(ep.manage(root)); }
+	void announce()
+	{
+		Lx::Irq::irq().disable_irq();
+		lx_drm_device->driver->irq_uninstall(lx_drm_device);
+		env.parent().announce(ep.manage(root));
+	}
 
 	Lx::Task &linux_task() { return *linux; }
 };
