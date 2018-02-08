@@ -19,7 +19,7 @@ INC_DIR += $(JDK_BASE)/share/native/include \
            $(JDK_BASE)/unix/native/include \
            $(JDK_BASE)/unix/native/libjli
 
-CC_C_OPT = -D__linux__ -Dlseek64=lseek
+CC_C_OPT = -D__linux__ -D__GENODE__ -Dlseek64=lseek
 
 vpath %.c $(JDK_BASE)/share/native/libjli
 vpath %.c $(JDK_BASE)/unix/native/libjli

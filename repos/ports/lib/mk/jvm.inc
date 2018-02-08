@@ -5,6 +5,8 @@ HOTSPOT_BASE = $(call select_from_ports,jdk)/src/app/jdk/hotspot/src
 include $(REP_DIR)/lib/mk/jdk_version.inc
 
 CC_OPT += -fpermissive -Wno-comment -Wno-reorder -Wno-switch -Wno-unused-variable
+CC_OPT += -D__GENODE__
+
 
 CC_OLEVEL = -O0
 
@@ -17,6 +19,7 @@ INC_DIR += $(HOTSPOT_BASE)/os/bsd/vm \
            $(HOTSPOT_BASE)/os_cpu/bsd_x86/vm
 
 INC_DIR += $(REP_DIR)/src/app/jdk/lib/include \
+           $(JDK_GENERATED)/include \
            $(HOTSPOT_BASE)/share/vm \
            $(HOTSPOT_BASE)/share/vm/precompiled \
            $(HOTSPOT_BASE)/share/vm/prims
