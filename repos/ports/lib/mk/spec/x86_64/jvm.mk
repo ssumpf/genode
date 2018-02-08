@@ -1,6 +1,7 @@
 CC_OPT  = -DINCLUDE_SUFFIX_CPU=_x86 -DAMD64 -DHOTSPOT_LIB_ARCH='"amd64"'
 
-INC_DIR = $(call select_from_ports,jdk)/src/app/jdk/hotspot/src/cpu/x86/vm
+INC_DIR       = $(call select_from_ports,jdk)/src/app/jdk/hotspot/src/cpu/x86/vm
+JDK_GENERATED = $(call select_from_ports,jdk_generated)/src/app/jdk
 
 SRC_CONE = cpu/x86/vm/c1_CodeStubs_x86.cpp \
            cpu/x86/vm/c1_FpuStackSim_x86.cpp \
@@ -77,17 +78,17 @@ $(foreach FILE, $(SRC_GEN:.cpp=), $(eval CC_OPT_$(FILE) = -DLINUX -D_GNU_SOURCE 
 SRC_CC += $(SRC_GEN)
 
 
-vpath ad_x86.cpp $(REP_DIR)/src/app/jdk/lib/jvm
-vpath ad_x86_format.cpp $(REP_DIR)/src/app/jdk/lib/jvm
-vpath ad_x86_clone.cpp $(REP_DIR)/src/app/jdk/lib/jvm
-vpath ad_x86_gen.cpp $(REP_DIR)/src/app/jdk/lib/jvm
-vpath ad_x86_expand.cpp $(REP_DIR)/src/app/jdk/lib/jvm
-vpath ad_x86_misc.cpp $(REP_DIR)/src/app/jdk/lib/jvm
-vpath ad_x86_peephole.cpp $(REP_DIR)/src/app/jdk/lib/jvm
-vpath ad_x86_pipeline.cpp $(REP_DIR)/src/app/jdk/lib/jvm
-vpath dfa_x86.cpp $(REP_DIR)/src/app/jdk/lib/jvm
-vpath jvmtiEnterTrace.cpp $(REP_DIR)/src/app/jdk/lib/jvm
-vpath jvmtiEnter.cpp $(REP_DIR)/src/app/jdk/lib/jvm
+vpath ad_x86.cpp $(JDK_GENERATED)/src
+vpath ad_x86_format.cpp $(JDK_GENERATED)/src
+vpath ad_x86_clone.cpp $(JDK_GENERATED)/src
+vpath ad_x86_gen.cpp $(JDK_GENERATED)/src
+vpath ad_x86_expand.cpp $(JDK_GENERATED)/src
+vpath ad_x86_misc.cpp $(JDK_GENERATED)/src
+vpath ad_x86_peephole.cpp $(JDK_GENERATED)/src
+vpath ad_x86_pipeline.cpp $(JDK_GENERATED)/src
+vpath dfa_x86.cpp $(JDK_GENERATED)/src
+vpath jvmtiEnterTrace.cpp $(JDK_GENERATED)/src
+vpath jvmtiEnter.cpp $(JDK_GENERATED)/src
 
 
 include $(REP_DIR)/lib/mk/jvm.inc
