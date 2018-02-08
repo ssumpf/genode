@@ -22,7 +22,7 @@ SRC_C = fs/UnixNativeDispatcher.c \
         ch/SocketChannelImpl.c
 
 
-INC_DIR += $(BUILD_BASE_DIR)/tool/jdk/support/headers/java.base \
+INC_DIR += $(REP_DIR)/src/app/jdk/lib/include/java.base \
            $(JDK_BASE)/share/native/include \
            $(JDK_BASE)/share/native/libjava \
            $(JDK_BASE)/share/native/libnet \
