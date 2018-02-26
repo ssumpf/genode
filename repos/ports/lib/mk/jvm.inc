@@ -16,7 +16,7 @@ CC_OPT += -DINCLUDE_SUFFIX_OS=_bsd -DTARGET_COMPILER_gcc -D_ALLBSD_SOURCE -DUSE_
 
 INC_DIR += $(HOTSPOT_BASE)/os/bsd/vm \
            $(HOTSPOT_BASE)/os/posix/vm \
-           $(HOTSPOT_BASE)/os_cpu/bsd_x86/vm
+
 
 INC_DIR += $(REP_DIR)/src/app/jdk/lib/include \
            $(JDK_GENERATED)/include \
@@ -51,8 +51,7 @@ SRC_CONE += share/vm/c1/c1_Canonicalizer.cpp \
             share/vm/c1/c1_ValueType.cpp \
             share/vm/ci/ciMethod.cpp
 
-SRC_CTWO += share/vm/aot/compiledIC_aot.cpp \
-            share/vm/ci/bcEscapeAnalyzer.cpp \
+SRC_CTWO += share/vm/ci/bcEscapeAnalyzer.cpp \
             share/vm/ci/ciTypeFlow.cpp \
             share/vm/code/codeBlob.cpp \
             share/vm/jvmci/jvmci_globals.cpp \
@@ -665,6 +664,8 @@ SRC_CC += $(SRC_CONE) $(SRC_CTWO) \
           share/vm/utilities/utf8.cpp \
           share/vm/utilities/vmError.cpp \
           share/vm/utilities/xmlstream.cpp
+
+SRC_CC = share/vm/ci/ciMethodData.cpp
 
 CC_OPT_share/vm/runtime/rtmLocking = -DINCLUDE_RTM_OPT
 
