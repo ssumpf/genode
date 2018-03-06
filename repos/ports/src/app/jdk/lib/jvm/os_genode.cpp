@@ -142,6 +142,7 @@ extern "C" void backtrace();
 ////////////////////////////////////////////////////////////////////////////////
 // global variables
 julong os::Bsd::_physical_memory = 0;
+size_t os::Posix::_java_thread_min_stack_allowed = 64 * K;
 
 #ifdef __APPLE__
 mach_timebase_info_data_t os::Bsd::_timebase_info = {0, 0};
