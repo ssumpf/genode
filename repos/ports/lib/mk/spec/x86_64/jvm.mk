@@ -66,6 +66,7 @@ SRC_S = os_cpu/bsd_x86/vm/bsd_x86_64.s
 # Force preprocessing
 #
 CC_OPT_os_cpu/bsd_x86/vm/bsd_x86_64 = -x assembler-with-cpp
+CC_OPT_share/vm/runtime/rtmLocking = -DINCLUDE_RTM_OPT
 
 #
 # XXX: generated source
