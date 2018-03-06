@@ -665,9 +665,7 @@ SRC_CC += $(SRC_CONE) $(SRC_CTWO) \
           share/vm/utilities/vmError.cpp \
           share/vm/utilities/xmlstream.cpp
 
-SRC_CC = share/vm/ci/ciMethodData.cpp
-
-CC_OPT_share/vm/runtime/rtmLocking = -DINCLUDE_RTM_OPT
+#SRC_CC = cpu/arm/vm/runtime_arm.cpp
 
 vpath os_genode.cpp $(REP_DIR)/src/app/jdk/lib/jvm
 vpath dummies.cpp $(REP_DIR)/src/app/jdk/lib/jvm
