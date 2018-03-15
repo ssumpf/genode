@@ -21,6 +21,7 @@
 #include <lx_emul.h>
 
 /* Linux emulation environment includes */
+#include <lx_kit/env.h>
 #include <lx_kit/backend_alloc.h>
 #include <lx_kit/pci_dev_registry.h>
 

@@ -18,7 +18,7 @@
 #include <region_map/client.h>
 #include <timer_session/connection.h>
 #include <util/string.h>
-
+#include <os/backtrace.h>
 /* Local includes */
 #include "signal.h"
 #include "lx_emul.h"
@@ -38,7 +38,7 @@ namespace Genode {
 
 
 unsigned long jiffies;
-void backtrace() { }
+void backtrace() { Genode::backtrace(); }
 
 
 void pci_dev_put(struct pci_dev *pci_dev)
@@ -353,10 +353,10 @@ class Driver : public Genode::List<Driver>::Element
 			dev->driver = _drv;
 
 			if (dev->bus->probe) {
-				lx_log(DEBUG_DRIVER, "Probing device bus %p", dev->bus->probe);
+				lx_log(1, "Probing device bus %p", dev->bus->probe);
 				return dev->bus->probe(dev);
 			} else if (_drv->probe) {
-				lx_log(DEBUG_DRIVER, "Probing driver: %s %p", _drv->name, _drv->probe);
+				lx_log(1, "Probing driver: %s %p", _drv->name, _drv->probe);
 				return _drv->probe(dev);
 			}
 
@@ -394,9 +394,16 @@ int device_add(struct device *dev)
 
 void device_del(struct device *dev)
 {
-	lx_log(DEBUG_DRIVER, "Remove device %p", dev);
-	if (dev->driver && dev->driver->remove)
+	lx_log(1 , "Remove drivere %p bus: %p", dev->driver, dev->bus);
+	if (dev->bus && dev->bus->remove) {
+		lx_log(1, " Remove bus");
+		dev->bus->remove(dev);
+	}
+
+	if (dev->driver && dev->driver->remove) {
+		lx_log(1, " Remove driver %s", dev->driver->name);
 		dev->driver->remove(dev);
+	}
 }
 
 
@@ -404,6 +411,19 @@ int device_register(struct device *dev)
 {
 	//XXX: initialize DMA pools (see device_initialize)
 	return device_add(dev);
+}
+
+
+void device_unregister(struct device *dev) 
+{
+	lx_printf("%s:%d\n", __func__, __LINE__);
+	device_del(dev);
+}
+
+
+int device_is_registered(struct device *dev)
+{
+	return 1;
 }
 
 

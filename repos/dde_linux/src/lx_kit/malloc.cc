@@ -21,8 +21,11 @@
 #include <rm_session/connection.h>
 #include <region_map/client.h>
 
+#include <os/backtrace.h>
+
 /* Linux kit includes */
 #include <lx_kit/types.h>
+#include <lx_kit/env.h>
 #include <lx_kit/backend_alloc.h>
 #include <lx_kit/malloc.h>
 
@@ -103,6 +106,8 @@ class Lx_kit::Slab_backend_alloc : public Lx::Slab_backend_alloc,
 			if (done)
 				return done;
 
+			static unsigned back_cnt = 0;
+			Genode::error("Alloc backend block ", ++back_cnt);
 			done = _alloc_block();
 			if (!done) {
 				Genode::error("backend allocator exhausted");
@@ -167,6 +172,14 @@ class Lx_kit::Malloc : public Lx::Malloc
 		typedef Genode::addr_t         addr_t;
 		typedef Lx::Slab_alloc         Slab_alloc;
 		typedef Lx::Slab_backend_alloc Slab_backend_alloc;
+ 
+		size_t _large_alloc_cnt = 0;
+		size_t _large_free_cnt  = 0;
+
+		unsigned _cnt = 0;
+
+		char const * _name;
+
 
 		Slab_backend_alloc                &_back_allocator;
 		Genode::Constructible<Slab_alloc>  _allocator[NUM_SLABS];
@@ -217,9 +230,9 @@ class Lx_kit::Malloc : public Lx::Malloc
 
 	public:
 
-		Malloc(Slab_backend_alloc &alloc, Genode::Cache_attribute cached)
+		Malloc(Slab_backend_alloc &alloc, Genode::Cache_attribute cached, char const *name = "")
 		:
-			_back_allocator(alloc), _cached(cached), _start(alloc.start()),
+			_name(name), _back_allocator(alloc), _cached(cached), _start(alloc.start()),
 			_end(alloc.end())
 		{
 			/* init slab allocators */
@@ -231,10 +244,22 @@ class Lx_kit::Malloc : public Lx::Malloc
 		/**************************
 		 ** Lx::Malloc interface **
 		 **************************/
+		void print_info()
+		{
+			for (unsigned i = SLAB_START_LOG2; i <= SLAB_STOP_LOG2; i++)
+				_allocator[i - SLAB_START_LOG2]->print_info(_name);
+
+			Genode::log(_name, " large ", _large_alloc_cnt, " ", _large_free_cnt);
+		}
+
 
 		void *alloc(Genode::size_t size, int align = 0, Genode::addr_t *phys = 0)
 		{
 			using namespace Genode;
+			if (++_cnt == 500) {
+			//	print_info();
+				_cnt = 0;
+			}
 
 			/* save requested size */
 			size_t orig_size = size;
@@ -256,6 +281,7 @@ class Lx_kit::Malloc : public Lx::Malloc
 				              1UL << msb, " requested ", size, " cached ", (int)_cached);
 				return 0;
 			}
+
 
 			addr_t addr =  _allocator[msb - SLAB_START_LOG2]->alloc();
 			if (!addr) {
@@ -282,6 +308,13 @@ class Lx_kit::Malloc : public Lx::Malloc
 
 			if (phys)
 				*phys = _back_allocator.phys_addr(addr);
+#if 0
+			if (msb - SLAB_START_LOG2 == 10 && _cached == Genode::UNCACHED) {
+				Genode::log("alloc size: ", size, " a: ", Genode::Hex(addr));
+				Genode::backtrace();
+			}
+#endif
+
 			return (addr_t *)addr;
 		}
 
@@ -292,6 +325,12 @@ class Lx_kit::Malloc : public Lx::Malloc
 
 			/* XXX changes addr */
 			unsigned nr = _slab_index(&addr);
+
+#if 0
+			if (nr == 10 && _cached == Genode::UNCACHED) {
+				Genode::log("free: ", a);
+			}
+#endif
 			/* we need to decrease addr by 2, orig_size and index come first */
 			_allocator[nr]->free((void *)(addr - 2));
 		}
@@ -346,8 +385,8 @@ void Lx::malloc_init(Genode::Env &env, Genode::Allocator &md_alloc)
 	_mem_backend_alloc.construct(env, md_alloc, Genode::CACHED);
 	_dma_backend_alloc.construct(env, md_alloc, Genode::UNCACHED);
 
-	_mem_alloc.construct(*_mem_backend_alloc, Genode::CACHED);
-	_dma_alloc.construct(*_dma_backend_alloc, Genode::UNCACHED);
+	_mem_alloc.construct(*_mem_backend_alloc, Genode::CACHED, "M");
+	_dma_alloc.construct(*_dma_backend_alloc, Genode::UNCACHED, "D");
 }
 
 
@@ -374,3 +413,9 @@ Lx::Malloc &Lx::Malloc::mem() { return *_mem_alloc; }
  * DMA memory allocator
  */
 Lx::Malloc &Lx::Malloc::dma() { return *_dma_alloc; }
+
+
+extern "C" void dma_print_info()
+{
+	dynamic_cast<Lx_kit::Malloc *>(&Lx::Malloc::dma())->print_info();
+}

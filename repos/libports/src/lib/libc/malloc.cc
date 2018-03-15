@@ -45,6 +45,9 @@ namespace Genode {
 				return align_addr(block_size, 12);
 			}
 
+			size_t _alloc_cnt = 0;
+			size_t _free_cnt  = 0;
+
 		public:
 
 			Slab_alloc(size_t object_size, Allocator *backing_store)
@@ -55,11 +58,24 @@ namespace Genode {
 
 			void *alloc()
 			{
+				++_alloc_cnt;
+
 				void *result;
 				return (Slab::alloc(_object_size, &result) ? result : 0);
 			}
 
-			void free(void *ptr) { Slab::free(ptr, _object_size); }
+			void free(void *ptr)
+			{
+				++_free_cnt;
+
+				Slab::free(ptr, _object_size);
+			}
+
+			void print_info()
+			{
+				Genode::log("L ", _object_size, " ", _alloc_cnt, " ", _free_cnt,
+				            " ", _alloc_cnt - _free_cnt);
+			}
 	};
 }
 
@@ -131,6 +147,9 @@ class Malloc
 			return msb;
 		}
 
+		size_t _alloc_cnt = 0;
+		size_t _free_cnt  = 0;
+
 	public:
 
 		Malloc(Genode::Allocator &backing_store) : _backing_store(backing_store)
@@ -142,6 +161,15 @@ class Malloc
 		}
 
 		~Malloc() { Genode::warning(__func__, " unexpectedly called"); }
+
+		void print_info()
+		{
+			for (unsigned i = SLAB_START; i <= SLAB_STOP; i++) {
+				_allocator[i - SLAB_START]->print_info();
+			}
+
+			Genode::log("L large ", _alloc_cnt, " ", _free_cnt, " ", _alloc_cnt - _free_cnt);
+		}
 
 		/**
 		 * Allocator interface
@@ -219,6 +247,13 @@ class Malloc
 
 
 static Malloc *mallocator;
+
+
+extern "C" void malloc_print_info()
+{
+	Genode::Allocator *alloc = allocator();
+	reinterpret_cast<Malloc*>(alloc)->print_info();
+}
 
 
 extern "C" void *malloc(size_t size)
