@@ -161,7 +161,7 @@ append qemu_args " -device nec-usb-xhci,id=xhci -device usb-kbd,bus=xhci.0 -nogr
 #append qemu_args " -device usb-ehci,id=ehci -device usb-kbd,bus=ehci.0 -nographic"
 
 # autopilot test
-
+#run_genode_until forever
 # wait for keyboard
 run_genode_until {.*USB HID.*Keyboard.*} 60
 

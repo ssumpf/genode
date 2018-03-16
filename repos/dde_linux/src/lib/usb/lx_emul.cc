@@ -395,15 +395,23 @@ int device_add(struct device *dev)
 void device_del(struct device *dev)
 {
 	lx_log(1 , "Remove drivere %p bus: %p", dev->driver, dev->bus);
+	if (dev->driver && dev->driver->remove) {
+		lx_log(1, " Remove driver %s", dev->driver->name);
+		dev->driver->remove(dev);
+	}
+
 	if (dev->bus && dev->bus->remove) {
 		lx_log(1, " Remove bus");
 		dev->bus->remove(dev);
 	}
 
-	if (dev->driver && dev->driver->remove) {
-		lx_log(1, " Remove driver %s", dev->driver->name);
-		dev->driver->remove(dev);
-	}
+	lx_log(1, "RELEASE: %p\n", dev->release);
+	lx_log(1, "TYPE RELEASE: %p\n", dev->type ? dev->type->release : 0);
+	if (dev->release)
+		dev->release(dev);
+	else if (dev->type && dev->type->release)
+		dev->type->release(dev);
+
 }
 
 

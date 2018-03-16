@@ -261,6 +261,8 @@ class Lx_kit::Malloc : public Lx::Malloc
 				_cnt = 0;
 			}
 
+			bool check = (size == 63);
+
 			/* save requested size */
 			size_t orig_size = size;
 			size += sizeof(addr_t);
@@ -282,6 +284,9 @@ class Lx_kit::Malloc : public Lx::Malloc
 				return 0;
 			}
 
+
+			if (check)
+				Genode::log("63: ", msb - SLAB_START_LOG2);
 
 			addr_t addr =  _allocator[msb - SLAB_START_LOG2]->alloc();
 			if (!addr) {
@@ -309,7 +314,7 @@ class Lx_kit::Malloc : public Lx::Malloc
 			if (phys)
 				*phys = _back_allocator.phys_addr(addr);
 #if 0
-			if (msb - SLAB_START_LOG2 == 10 && _cached == Genode::UNCACHED) {
+			if (msb - SLAB_START_LOG2 == 3 && _cached == Genode::UNCACHED) {
 				Genode::log("alloc size: ", size, " a: ", Genode::Hex(addr));
 				Genode::backtrace();
 			}
@@ -327,10 +332,11 @@ class Lx_kit::Malloc : public Lx::Malloc
 			unsigned nr = _slab_index(&addr);
 
 #if 0
-			if (nr == 10 && _cached == Genode::UNCACHED) {
+			if (nr == 3 && _cached == Genode::UNCACHED) {
 				Genode::log("free: ", a);
 			}
 #endif
+
 			/* we need to decrease addr by 2, orig_size and index come first */
 			_allocator[nr]->free((void *)(addr - 2));
 		}
