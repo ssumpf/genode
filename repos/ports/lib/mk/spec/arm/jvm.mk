@@ -4,7 +4,8 @@ CC_OPT  = -DINCLUDE_SUFFIX_CPU=_arm -DHOTSPOT_LIB_ARCH='"arm"' -DARM -DARM32 \
 INC_DIR       = $(call select_from_ports,jdk)/src/app/jdk/hotspot/src/cpu/arm/vm
 JDK_GENERATED = $(call select_from_ports,jdk_generated)/src/app/jdk
 
-INC_DIR += $(HOTSPOT_BASE)/os_cpu/linux_arm/vm
+INC_DIR += $(HOTSPOT_BASE)/os_cpu/bsd_zero/vm \
+           $(HOTSPOT_BASE)/os_cpu/linux_arm/vm
 
 SRC_CONE = cpu/arm/vm/c1_CodeStubs_arm.cpp \
            cpu/arm/vm/c1_FpuStackSim_arm.cpp \
@@ -49,7 +50,6 @@ SRC_CC = cpu/arm/vm/abstractInterpreter_arm.cpp \
          cpu/arm/vm/vmreg_arm.cpp \
          cpu/arm/vm/vm_version_arm_32.cpp \
          cpu/arm/vm/vtableStubs_arm.cpp \
-         os_cpu/linux_arm/vm/macroAssembler_linux_arm_32.cpp \
 
 #         os_cpu/bsd_x86/vm/assembler_bsd_x86.cpp \
 #         os_cpu/bsd_x86/vm/thread_bsd_x86.cpp \
