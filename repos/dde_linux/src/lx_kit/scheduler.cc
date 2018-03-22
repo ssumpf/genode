@@ -158,7 +158,7 @@ class Lx_kit::Scheduler : public Lx::Scheduler
 				for (Lx::Task *t = _present_list.first(); t; t = t->next()) {
 					/* update current before running task */
 					_current = t;
-
+					//Genode::warning("run: ", t->name());
 					if ((was_run = t->run())) {
 						at_least_one = true;
 						break;
@@ -173,6 +173,7 @@ class Lx_kit::Scheduler : public Lx::Scheduler
 				log_state("SCHEDULE");
 			}
 
+			//Genode::warning("run: EP");
 			/* clear current as no task is running */
 			_current = nullptr;
 		}

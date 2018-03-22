@@ -394,24 +394,11 @@ int device_add(struct device *dev)
 
 void device_del(struct device *dev)
 {
-	lx_log(1 , "Remove drivere %p bus: %p", dev->driver, dev->bus);
-	if (dev->driver && dev->driver->remove) {
-		lx_log(1, " Remove driver %s", dev->driver->name);
+	if (dev->driver && dev->driver->remove)
 		dev->driver->remove(dev);
-	}
 
-	if (dev->bus && dev->bus->remove) {
-		lx_log(1, " Remove bus");
+	if (dev->bus && dev->bus->remove)
 		dev->bus->remove(dev);
-	}
-
-	lx_log(1, "RELEASE: %p\n", dev->release);
-	lx_log(1, "TYPE RELEASE: %p\n", dev->type ? dev->type->release : 0);
-	if (dev->release)
-		dev->release(dev);
-	else if (dev->type && dev->type->release)
-		dev->type->release(dev);
-
 }
 
 
@@ -424,14 +411,40 @@ int device_register(struct device *dev)
 
 void device_unregister(struct device *dev) 
 {
-	lx_printf("%s:%d\n", __func__, __LINE__);
 	device_del(dev);
+	put_device(dev);
 }
 
 
 int device_is_registered(struct device *dev)
 {
 	return 1;
+}
+
+
+void put_device(struct device *dev)
+{
+	//lx_printf("%s:%d %p ref: %u\n", __func__, __LINE__, dev, dev->ref ? dev->ref - 1 : 0u);
+	if (dev->ref) {
+		dev->ref--; 
+		return;
+	}
+
+	//lx_printf("%s:%d release %p\n", __func__, __LINE__, dev);
+
+	if (dev->release)
+		dev->release(dev);
+	else if (dev->type && dev->type->release)
+		dev->type->release(dev);
+}
+
+
+struct device *get_device(struct device *dev)
+{
+	//lx_printf("%s:%d %p ref: %u\n", __func__, __LINE__, dev, dev->ref + 1);
+	dev->ref++;
+
+	return dev;
 }
 
 

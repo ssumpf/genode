@@ -368,10 +368,6 @@ void device_remove_file(struct device *dev,
 int device_for_each_child(struct device *dev, void *data,
                           int (*fn)(struct device *dev, void *data)) { TRACE; return 0; }
 
-
-void put_device(struct device *dev) { TRACE; }
-struct device *get_device(struct device *dev) { TRACE; return dev; }
-
 void driver_unregister(struct device_driver *drv) { TRACE; }
 int  driver_attach(struct device_driver *drv) { TRACE; return 0; }
 int  driver_create_file(struct device_driver *driver,

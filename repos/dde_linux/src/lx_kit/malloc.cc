@@ -261,7 +261,7 @@ class Lx_kit::Malloc : public Lx::Malloc
 				_cnt = 0;
 			}
 
-			bool check = (size == 63);
+			//bool check = (size == 63);
 
 			/* save requested size */
 			size_t orig_size = size;
@@ -285,8 +285,8 @@ class Lx_kit::Malloc : public Lx::Malloc
 			}
 
 
-			if (check)
-				Genode::log("63: ", msb - SLAB_START_LOG2);
+			//if (check)
+			//	Genode::log("63: ", msb - SLAB_START_LOG2);
 
 			addr_t addr =  _allocator[msb - SLAB_START_LOG2]->alloc();
 			if (!addr) {
@@ -314,7 +314,7 @@ class Lx_kit::Malloc : public Lx::Malloc
 			if (phys)
 				*phys = _back_allocator.phys_addr(addr);
 #if 0
-			if (msb - SLAB_START_LOG2 == 3 && _cached == Genode::UNCACHED) {
+			if (msb - SLAB_START_LOG2 == 5 && _cached == Genode::CACHED) {
 				Genode::log("alloc size: ", size, " a: ", Genode::Hex(addr));
 				Genode::backtrace();
 			}
@@ -332,7 +332,7 @@ class Lx_kit::Malloc : public Lx::Malloc
 			unsigned nr = _slab_index(&addr);
 
 #if 0
-			if (nr == 3 && _cached == Genode::UNCACHED) {
+			if (nr == 5 && _cached == Genode::CACHED) {
 				Genode::log("free: ", a);
 			}
 #endif
@@ -424,4 +424,5 @@ Lx::Malloc &Lx::Malloc::dma() { return *_dma_alloc; }
 extern "C" void dma_print_info()
 {
 	dynamic_cast<Lx_kit::Malloc *>(&Lx::Malloc::dma())->print_info();
+	dynamic_cast<Lx_kit::Malloc *>(&Lx::Malloc::mem())->print_info();
 }
