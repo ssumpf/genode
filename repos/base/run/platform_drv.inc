@@ -5,6 +5,7 @@ proc have_platform_drv {} {
 
 	return [expr [have_spec arndale] \
 	          || [have_spec imx53] \
+	          || [have_spec nit6_solox] \
 	          || [have_spec rpi] \
 	          || [have_spec odroid_x2] \
 	          || [have_spec x86]]
@@ -77,9 +78,14 @@ proc append_platform_drv_build_components {} {
 	append build_components { } [platform_drv_build_components]
 }
 
+proc platform_drv_name {} {
+	if [have_spec nit6_solox] { return nit6_solox_platform_drv }
+	return platform_drv
+}
+
 proc platform_drv_boot_modules {} {
 	set drv_boot_modules ""
-	lappend_if [have_platform_drv] drv_boot_modules platform_drv
+	lappend_if [have_platform_drv] drv_boot_modules [platform_drv_name]
 	lappend_if [have_spec x86]     drv_boot_modules report_rom
 
 	if {[have_spec x86]} {
@@ -191,6 +197,7 @@ proc platform_drv_config {} {
 
 		append drv_config {
 	<start name="platform_drv" } [platform_drv_priority] { caps="800">
+		<binary name="} [platform_drv_name] {"/>
 		<resource name="RAM" quantum="4M" constrain_phys="yes"/>
 		<provides>
 			<service name="Platform"/>}
