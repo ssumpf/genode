@@ -21,6 +21,10 @@
  * questions.
  *
  */
+#ifdef ZERO
+#undef ZERO
+#define ZERO_ENABLE
+#endif
 
 #include <base/heap.h>
 #include <base/registry.h>
@@ -29,6 +33,10 @@
 #include <rm_session/connection.h>
 #include <util/retry.h>
 #include <base/debug.h>
+
+#ifdef ZERO_ENABLE
+#define ZERO
+#endif
 
 /* libc includes */
 #include <stdlib.h> /* 'malloc'/ 'exit' */
@@ -142,7 +150,6 @@ extern "C" void backtrace();
 ////////////////////////////////////////////////////////////////////////////////
 // global variables
 julong os::Bsd::_physical_memory = 0;
-size_t os::Posix::_java_thread_min_stack_allowed = 64 * K;
 
 #ifdef __APPLE__
 mach_timebase_info_data_t os::Bsd::_timebase_info = {0, 0};
