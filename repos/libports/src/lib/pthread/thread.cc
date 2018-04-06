@@ -280,7 +280,22 @@ extern "C" {
 		*stackaddr = pthread->stack_top();
 		*stacksize = (addr_t)pthread->stack_top() - (addr_t)pthread->stack_base();
 
+		Genode::log("addr: ", *stackaddr, " size: ", Genode::Hex(*stacksize));
 		return 0;
+	}
+
+
+	int pthread_attr_getstackaddr(const pthread_attr_t *attr, void **stackaddr)
+	{
+		size_t stacksize;
+		return pthread_attr_getstack(attr, stackaddr, &stacksize);
+	}
+
+
+	int pthread_attr_getstacksize(const pthread_attr_t *attr, size_t *stacksize)
+	{
+		void *stackaddr;
+		return pthread_attr_getstack(attr, &stackaddr, stacksize);
 	}
 
 
