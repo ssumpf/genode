@@ -4312,6 +4312,63 @@ bool os::start_debugging(char *buf, int buflen) {
 namespace Genode {
 	class Vm_area;
 	class Vm_area_registry;
+	class Vm_region_map;
+};
+
+class Genode::Vm_region_map
+{
+	public:
+
+		typedef Region_map_client::Local_addr Local_addr;
+
+	private:
+
+		enum { VM_SIZE = 256ul * 1024 * 1024 };
+		Env               &_env;
+		Rm_connection      _rm_connection { _env };
+		Region_map_client  _rm { _rm_connection.create(VM_SIZE) };
+		addr_t       const _base { _env.rm().attach(_rm.dataspace()) };
+		Allocator_avl      _range;
+
+	public:
+
+		Vm_region_map(Env &env, Allocator &md_alloc)
+		: _env(env), _range(&md_alloc)
+		{
+			_range.add_range(_base, VM_SIZE);
+		}
+
+		addr_t alloc_region(size_t size, int align)
+		{
+			addr_t addr;
+
+			_range.alloc_aligned(size, (void **)&addr,
+			                     align > 12 ? align : 12);
+			PDBG("ALLOC align: ", align, " addr: ", (void *)addr);
+			return addr;
+		}
+
+		void free_region(addr_t vaddr) { _range.free((void *)vaddr); }
+
+		Local_addr attach_at(Dataspace_capability ds, addr_t local_addr)
+		{
+			return retry<Genode::Out_of_ram>(
+				[&] () {
+					return _rm.attach_at(ds, local_addr - _base);
+				},
+				[&] () { _env.upgrade(Parent::Env::pd(), "ram_quota=8K"); });
+		}
+
+		Local_addr attach_executable(Dataspace_capability ds, addr_t local_addr)
+		{
+			return retry<Genode::Out_of_ram>(
+				[&] () {
+					return _rm.attach_executable(ds, local_addr - _base);
+				},
+				[&] () { _env.upgrade(Parent::Env::pd(), "ram_quota=8K"); });
+		}
+
+		void detach(Local_addr local_addr) { _rm.detach((addr_t)local_addr - _base); }
 };
 
 class Genode::Vm_area
@@ -4320,12 +4377,12 @@ class Genode::Vm_area
 
 		struct Vm_area_ds
 		{
-				addr_t               vm_start;
-				size_t               vm_size;
+				addr_t               base;
+				size_t               size;
 				Dataspace_capability ds;
 
-				Vm_area_ds(addr_t vm_start, size_t vm_size, Dataspace_capability ds)
-				: vm_start(vm_start), vm_size(vm_size), ds(ds) { }
+				Vm_area_ds(addr_t base, size_t size, Dataspace_capability ds)
+				: base(base), size(size), ds(ds) { }
 
 				virtual ~Vm_area_ds() { };
 		};
@@ -4334,51 +4391,41 @@ class Genode::Vm_area
 
 		Env                &_env;
 		Heap               &_heap;
-		Rm_connection      &_rm_connection;
-		size_t              _vm_size;
-		addr_t              _vm_start;
-		Region_map_client   _rm { _rm_connection.create(_vm_size) };
+		Vm_region_map      &_rm;
+		size_t        const _base;
+		addr_t        const _size;
 		Registry<Vm_handle> _ds;
 
 	public:
 
-		Vm_area(Env &env, Heap &heap, Rm_connection &rm, size_t vm_size, addr_t vm_start)
-		: _env(env), _heap(heap), _rm_connection(rm), _vm_size(vm_size)
+		Vm_area(Env &env, Heap &heap, Vm_region_map &rm, addr_t base, size_t size)
+		: _env(env), _heap(heap), _rm(rm), _base(base), _size(size)
+		{ }
+
+		addr_t base()  const { return _base; }
+		size_t size()  const { return _size; }
+
+		bool inside(addr_t base, size_t size) {
+			return base >= _base && (base + size) <= (_base + _size); }
+
+		bool commit(addr_t base, size_t size, bool executable)
 		{
-			if (vm_start)
-				_vm_start = _env.rm().attach_at(_rm.dataspace(), vm_start);
-			else
-				_vm_start = _env.rm().attach(_rm.dataspace());
-		}
-
-		addr_t start() const { return _vm_start; }
-		size_t size()  const { return _vm_size; }
-
-		bool inside(addr_t start, size_t size) {
-			return start >= _vm_start && (start + size) <= (_vm_start + _vm_size); }
-
-		bool commit(addr_t start, size_t size, bool executable)
-		{
-			if (!inside(start, size))
+			if (!inside(base, size))
 				return false;
 
 			Dataspace_capability ds = _env.ram().alloc(size);
 
 			try {
-				addr_t addr = retry<Genode::Out_of_ram>(
-					[&] () {
-						if (executable)
-							return _rm.attach_executable(ds, start - _vm_start);
-						else
-							return _rm.attach_at(ds, start - _vm_start);
-					},
-					[&] () { _env.upgrade(Parent::Env::pd(), "ram_quota=8K"); });
+				if (executable)
+					_rm.attach_executable(ds, base);
+				else
+					_rm.attach_at(ds, base);
 			} catch (...) {
 				_env.ram().free(ds);
 				return false;
 			}
 
-			new (_heap) Vm_handle(_ds, start, size, ds);
+			new (_heap) Vm_handle(_ds, base, size, ds);
 
 			return true;
 		}
@@ -4386,12 +4433,13 @@ class Genode::Vm_area
 		virtual ~Vm_area()
 		{
 			_ds.for_each([&] (Vm_handle &vm) {
-				_rm.detach(vm.vm_start - _vm_start);
+
+				PDBG("detach");
+				_rm.detach(vm.base);
+				PDBG("detached");
 				_env.ram().free(vm.ds);
 				destroy(_heap, &vm);
 			});
-
-			_env.rm().detach(_vm_start);
 		}
 };
 
@@ -4404,49 +4452,57 @@ class Genode::Vm_area_registry
 
 		Env                     &_env;
 		Heap                     _heap { _env.ram(), _env.rm() };
-		Rm_connection            _rm { _env };
 		Registry<Vm_area_handle> _registry;
+		Vm_region_map            _rm { _env, _heap };
 
 	public:
 
-		Vm_area_registry(Env &env) : _env(env) { }
+		Vm_area_registry(Env &env) : _env(env)
+		{ }
 
-		addr_t reserve(size_t vm_size, addr_t vm_start)
+		addr_t reserve(size_t size, addr_t base, int align)
 		{
-			Vm_area *vm = new (&_heap) Vm_area_handle(_registry, _env, _heap, _rm, vm_size, vm_start);
-			return vm->start();
+			Genode::warning(__func__, " vm_size: ", (void *)size, " vm_start: ", (void *)base);
+			if (base) {
+				Genode::error("vm_start set");
+				while(1);
+			}
+			base = _rm.alloc_region(size, align);
+			Vm_area *vm = new (&_heap) Vm_area_handle(_registry, _env, _heap, _rm, base, size);
+			return base;
 		}
 
-		bool release(addr_t addr, size_t size)
-		{
-			bool success = false;
-
-			_registry.for_each([&] (Vm_area_handle &vm) {
-				if (success || !vm.inside(addr, size)) return;
-
-				if (addr != vm.start() || size != vm.size()) {
-					error(__func__, " sub region release ", " addr: ", Hex(addr), " vm addr: ", Hex(vm.start()),
-					      " size: ", Hex(size), " vm size: ", Hex(vm.size()));
-					while (1);
-				}
-
-				destroy(_heap, &vm);
-				success = true;
-			});
-
-			if (!success) error(__func__, " failed");
-
-			return success;
-		}
-
-		bool commit(addr_t start, size_t size, bool executable)
+		bool commit(addr_t base, size_t size, bool executable)
 		{
 			bool success = false;
 
 			_registry.for_each([&] (Vm_area_handle &vm) {
 				if (success) return;
-				success = vm.commit(start, size, executable);
+				success = vm.commit(base, size, executable);
 			});
+
+			return success;
+		}
+
+		bool release(addr_t base, size_t size)
+		{
+			bool success = false;
+
+			_registry.for_each([&] (Vm_area_handle &vm) {
+				if (success || !vm.inside(base, size)) return;
+
+				if (base != vm.base() || size != vm.size()) {
+					error(__func__, " sub region release ", " addr: ", Hex(base), " vm addr: ", Hex(vm.base()),
+					      " size: ", Hex(size), " vm size: ", Hex(vm.size()));
+					while (1);
+				}
+
+				_rm.free_region(vm.base());
+				destroy(_heap, &vm);
+				success = true;
+			});
+
+			if (!success) error(__func__, " failed");
 
 			return success;
 		}
@@ -4458,8 +4514,10 @@ char* os::pd_reserve_memory(size_t bytes, char* requested_addr,
                             size_t alignment_hint)
 {
 	try {
-		Genode::addr_t addr =  vm_reg->reserve(bytes, requested_addr);
-		Genode::warning(__func__, " mem: ", Genode::Hex(bytes), " req: ", (void *)requested_addr, " addr: ", Genode::Hex(addr));
+		Genode::addr_t addr =  vm_reg->reserve(bytes, requested_addr,
+		                       alignment_hint ? Genode::log2(alignment_hint) : 12);
+		Genode::warning(__func__, " mem: ", Genode::Hex(bytes), " req: ", (void *)requested_addr, 
+		                " addr: ", Genode::Hex(addr), " align: ", Genode::Hex(alignment_hint));
 		return addr;
 	} catch (...) {
 		Genode::error(__PRETTY_FUNCTION__, " exception!");
@@ -4479,13 +4537,13 @@ char* os::pd_attempt_reserve_memory_at(size_t bytes, char* requested_addr)
 
 
 bool os::pd_release_memory(char* addr, size_t size) {
-  Genode::error(__PRETTY_FUNCTION__, "addr: ", (void *)addr, " size: ", (void *)size);
-  while (1);
+  Genode::warning(__PRETTY_FUNCTION__, "addr: ", (void *)addr, " size: ", (void *)size);
+  return vm_reg->release(addr, size);
 }
 
 
 bool os::pd_unmap_memory(char* addr, size_t bytes) {
-	Genode::warning(__func__, " addr: ", (void *)addr, " size: ", Genode::Hex(bytes));
+	Genode::warning(__func__, " CHECK semantic! addr: ", (void *)addr, " size: ", Genode::Hex(bytes));
   return vm_reg->release(addr, bytes);
 }
 

@@ -400,7 +400,6 @@ SRC_CC += cpu/zero/vm/abstractInterpreter_zero.cpp \
           share/vm/memory/metaspaceShared.cpp \
           share/vm/memory/metaspaceTracer.cpp \
           share/vm/memory/oopFactory.cpp \
-          share/vm/memory/operator_new.cpp \
           share/vm/memory/resourceArea.cpp \
           share/vm/memory/universe.cpp \
           share/vm/memory/universe_ext.cpp \
