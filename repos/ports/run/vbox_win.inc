@@ -322,8 +322,8 @@ append_if [expr !$use_rumpfs] boot_modules " ${raw_image} "
 
 build_boot_image $boot_modules
 
-run_genode_until {\[init -\> vbox.*].*Guest Additions capability report:.*seamless: no, hostWindowMapping: no, graphics: no} 70
-# run_genode_until forever 0 [output_spawn_id]
+#run_genode_until {\[init -\> vbox.*].*Guest Additions capability report:.*seamless: no, hostWindowMapping: no, graphics: no} 70
+run_genode_until forever 
 
 if {$use_rumpfs} {
 	set wait_timeout 170

@@ -105,7 +105,7 @@ append config {
 		</route>
 		<config>}
 append_if [expr $use_rumpfs] config {
-			<policy label_prefix="rump_fs" partition="4" writeable="yes"/>}
+			<policy label_prefix="rump_fs" partition="0" writeable="yes"/>}
 append_if [expr !$use_rumpfs] config {
 			<policy label_prefix="vbox1 -> raw" partition="3" writeable="yes"/>}
 append config {
@@ -121,7 +121,7 @@ append_if [expr $use_rumpfs] config {
 append_if [expr $use_rumpfs && $use_ram_fs && $use_overlay_from_disk] config {
 			<policy label_prefix="overlay_from_disk" root="/ram" writeable="no"/>}
 append_if [expr $use_rumpfs] config {
-			<default-policy root="/" writeable="no"/>
+			<default-policy root="/" writeable="yes"/>
 		</config>
 		<route>
 			<any-service><child name="part_blk"/> <parent/><any-child/></any-service>
