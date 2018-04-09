@@ -351,7 +351,6 @@ void device_unlock(struct device *dev) { TRACE; }
 void device_initialize(struct device *dev) { TRACE; }
 int  device_attach(struct device *dev) { TRACE; return 0; }
 int  device_bind_driver(struct device *dev) { TRACE; return 0; }
-void device_release_driver(struct device *dev) { TRACE; }
 void device_enable_async_suspend(struct device *dev) { TRACE; }
 void device_set_wakeup_capable(struct device *dev, bool capable) { TRACE; }
 int  device_create_bin_file(struct device *dev,

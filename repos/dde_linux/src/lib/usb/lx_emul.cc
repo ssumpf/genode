@@ -418,6 +418,16 @@ int device_is_registered(struct device *dev)
 }
 
 
+void device_release_driver(struct device *dev)
+{
+	/* is usb_unbind_interface(dev); */
+	if (dev->driver->remove)
+		dev->driver->remove(dev);
+
+	dev->driver = nullptr;
+}
+
+
 void put_device(struct device *dev)
 {
 	if (dev->ref) {
