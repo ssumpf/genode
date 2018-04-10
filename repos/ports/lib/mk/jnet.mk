@@ -8,6 +8,7 @@ SRC_C = bsd_close.c \
         net_util_md.c \
         InetAddress.c \
         Inet4Address.c \
+        Inet4AddressImpl.c \
         Inet6Address.c \
         InetAddressImplFactory.c
 
