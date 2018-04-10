@@ -1,0 +1,15 @@
+diff --git a/hotspot/src/share/vm/utilities/globalDefinitions.hpp b/hotspot/src/share/vm/utilities/globalDefinitions.hpp
+index dbb080e..51a2b67 100644
+--- a/hotspot/src/share/vm/utilities/globalDefinitions.hpp
++++ b/hotspot/src/share/vm/utilities/globalDefinitions.hpp
+@@ -285,8 +285,8 @@ inline size_t byte_size_in_exact_unit(size_t s) {
+ // intx and uintx are the 'extended' int and 'extended' unsigned int types;
+ // they are 32bit wide on a 32-bit platform, and 64bit wide on a 64bit platform.
+ 
+-typedef intptr_t  intx;
+-typedef uintptr_t uintx;
++typedef long  intx;
++typedef unsigned long uintx;
+ 
+ const intx  min_intx  = (intx)1 << (sizeof(intx)*BitsPerByte-1);
+ const intx  max_intx  = (uintx)min_intx - 1;
