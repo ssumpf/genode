@@ -44,7 +44,7 @@ set config {
 			</service>
 			<any-service> <parent/> <any-child/> </any-service>
 		</route>
-		<config ld_verbose="yes">
+		<config ld_verbose="no">
 			<arg value="/bin/java" />
 			<arg value="-jar" />
 			<arg value="hello.jar" />
