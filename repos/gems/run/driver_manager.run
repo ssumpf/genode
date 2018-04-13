@@ -3,7 +3,13 @@ if {![have_spec x86] || [have_spec linux]} {
 	exit 0
 }
 
-build { app/driver_manager test/driver_manager lib/ld }
+build {
+	app/driver_manager
+	test/driver_manager
+	lib/ld drivers/nic
+	test/lwip/http_srv
+	drivers/platform
+}
 
 create_boot_directory
 
@@ -60,6 +66,7 @@ install_config {
 			<service name="Input"/>
 			<service name="Framebuffer"/>
 			<service name="Block"/>
+			<service name="Platform"/>
 		</provides>
 	</start>
 
@@ -68,6 +75,7 @@ install_config {
 		<provides> <service name="ROM"/> </provides>
 		<config verbose="yes">
 			<rom name="capslock">
+				<sleep milliseconds="10000" />
 				<inline> <capslock enabled="no"/> </inline>
 				<sleep milliseconds="500" />
 				<inline> <capslock enabled="yes"/> </inline>
@@ -103,6 +111,81 @@ install_config {
 			<any-service> <parent/> <any-child/> </any-service>
 		</route>
 	</start>
+	
+	<start name="nic_rom">
+		<binary name="dynamic_rom" />
+		<resource name="RAM" quantum="8M"/>
+		<provides><service name="ROM"/></provides>
+		<config verbose="yes">
+			<rom name="subinit.config">
+				<inline description="initial">
+					<config>
+						<parent-provides>
+							<service name="ROM"/>
+							<service name="IRQ"/>
+							<service name="IO_MEM"/>
+							<service name="IO_PORT"/>
+							<service name="PD"/>
+							<service name="RM"/>
+							<service name="CPU"/>
+							<service name="LOG"/>
+							<service name="Timer"/>
+							<service name="Platform"/>
+						</parent-provides>
+						<default-route>
+							<any-service> <parent/> <any-child/> </any-service>
+						</default-route>
+						<default caps="100"/>
+
+						<start name="nic_drv" caps="130">
+							<resource name="RAM" quantum="20M"/>
+							<provides><service name="Nic" /></provides>
+						</start>
+						<start name="test-lwip_httpsrv">
+							<resource name="RAM" quantum="5M"/>
+							<config>
+								<libc stdout="/dev/log" stderr="/dev/log">
+									<vfs> <dir name="dev"> <log/> </dir> </vfs>
+								</libc>
+							</config>
+						</start>
+					</config>
+				</inline>
+				<sleep milliseconds="10000"/>
+				<inline description="second">
+					<config>
+						<parent-provides>
+							<service name="ROM"/>
+							<service name="IRQ"/>
+							<service name="IO_MEM"/>
+							<service name="IO_PORT"/>
+							<service name="PD"/>
+							<service name="RM"/>
+							<service name="CPU"/>
+							<service name="LOG"/>
+							<service name="Timer"/>
+							</parent-provides>
+						<default-route>
+							<any-service> <parent/> <any-child/> </any-service>
+						</default-route>
+						<default caps="100"/>
+					</config>
+				</inline>
+				<sleep milliseconds="1000"/>
+			</rom>
+		</config>
+	</start>
+
+	<start name="init" caps="500">
+		<resource name="RAM" quantum="64M" />
+		<configfile name="subinit.config"/>
+		<route>
+			<service name="ROM" label="subinit.config"> <child name="nic_rom"/> </service>
+			<service name="Platform"> <child name="drivers" label="driver -> nic"/> </service>
+			<service name="Timer"> <child name="timer"/>  </service>
+			<any-service> <parent/> </any-service>
+		</route>
+	</start>
 
 </config>}
 
@@ -123,7 +206,12 @@ close $fd
 file copy -force [genode_dir]/repos/gems/recipes/raw/drivers_managed-pc/drivers.config \
                  [run_dir]/genode/drivers.config
 
-build_boot_image { driver_manager test-driver_manager ld.lib.so }
+build_boot_image {
+	driver_manager test-driver_manager ld.lib.so
+	test-lwip_httpsrv lwip.lib.so nic_drv
+	libc.lib.so libm.lib.so posix.lib.so
+	platform_drv
+}
 
 #
 # Build ext2 file-system images to be supplied to Qemu

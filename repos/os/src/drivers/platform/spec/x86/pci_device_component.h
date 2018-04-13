@@ -263,8 +263,10 @@ class Platform::Device_component : public  Genode::Rpc_object<Platform::Device>,
 				}
 			}
 
-			if (_device_config.valid())
+			if (_device_config.valid()) {
 				_disable_bus_master_dma();
+				_function_level_reset();
+			}
 		}
 
 		/****************************************
