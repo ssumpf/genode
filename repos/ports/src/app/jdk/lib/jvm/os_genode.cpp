@@ -28,12 +28,12 @@
 
 #include <base/heap.h>
 #include <base/registry.h>
+#include <cpu/atomic.h>
 #include <libc/component.h>
 #include <region_map/client.h>
 #include <rm_session/connection.h>
 #include <util/retry.h>
 #include <base/debug.h>
-
 #ifdef ZERO_ENABLE
 #define ZERO
 #endif
@@ -4323,7 +4323,7 @@ class Genode::Vm_region_map
 
 	private:
 
-		enum { VM_SIZE = 256ul * 1024 * 1024 };
+		enum { VM_SIZE = 384ul * 1024 * 1024 };
 		Env               &_env;
 		Rm_connection      _rm_connection { _env };
 		Region_map_client  _rm { _rm_connection.create(VM_SIZE) };
@@ -4340,11 +4340,11 @@ class Genode::Vm_region_map
 
 		addr_t alloc_region(size_t size, int align)
 		{
-			addr_t addr;
+			addr_t addr = 0;
+			if (_range.alloc_aligned(size, (void **)&addr,
+			                         align > 12 ? align : 12).error())
+				throw -1;
 
-			_range.alloc_aligned(size, (void **)&addr,
-			                     align > 12 ? align : 12);
-			PDBG("ALLOC align: ", align, " addr: ", (void *)addr);
 			return addr;
 		}
 
@@ -4547,15 +4547,9 @@ bool os::pd_unmap_memory(char* addr, size_t bytes) {
   return vm_reg->release(addr, bytes);
 }
 
-extern "C" void wait_for_continue();
 
 bool os::pd_commit_memory(char* addr, size_t size, bool exec) {
 	Genode::warning(__func__, "addr: ", (void *)addr, " size: ", (void *)size, " exec: ", exec);
-
-	if (size == 0x400000) {
-		Genode::log("wait a second ;-)");
-		wait_for_continue();
-	}
 
 	if (!addr) {
 		Genode::error(__PRETTY_FUNCTION__, "  addr == 0");
@@ -4613,6 +4607,16 @@ bool os::pd_uncommit_memory(char* addr, size_t size) {
                                      MAP_PRIVATE|MAP_FIXED|MAP_NORESERVE|MAP_ANONYMOUS, -1, 0);
   return res  != (uintptr_t) MAP_FAILED;
 #endif
+}
+
+
+/************
+ ** atomic **
+ ************/
+
+int os::cmpxchg(int oldval, int newval, volatile int *ptr)
+{
+	return !Genode::cmpxchg(ptr, oldval, newval);
 }
 
 

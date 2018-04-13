@@ -2,7 +2,6 @@
 set build_components {
 	core init
 	drivers/timer
-	drivers/rtc
 	app/jdk/java
 }
 
@@ -29,10 +28,6 @@ set config {
 		<resource name="RAM" quantum="2M" />
 		<provides> <service name="Timer" /> </provides>
 	</start>
-	<start name="rtc_drv">
-		<resource name="RAM" quantum="2M" />
-		<provides> <service name="Rtc" /> </provides>
-	</start>
 	<start name="java" caps="300">
 		<resource name="RAM" quantum="96M" />
 		<route>
@@ -51,7 +46,8 @@ set config {
 			<libc stdin="/dev/null" stdout="/dev/log" stderr="/dev/log" rtc="/dev/rtc" />
 			<vfs rtc="/dev/rtc">
 				<dir name="dev">
-					<log/><rtc/><null/>
+					<log/><null/>
+					<inline name="rtc">2000-01-01 00:00</inline>
 				</dir>
 				<dir name="bin">
 					<rom name="java" />
@@ -68,7 +64,7 @@ set config {
 				<dir name="modules">
 					<tar name="classes.tar" />
 				</dir>
-				<rom name="hello.jar" />
+				<tar name="hello.tar" />
 				<rom name="zip.lib.so" />
 				<rom name="nio.lib.so" />
 				<rom name="net.lib.so" />
@@ -81,14 +77,17 @@ set config {
 install_config $config
 
 set boot_modules {
-	core init ld.lib.so timer rtc_drv
-	java jli.lib.so hello.jar
+	core init ld.lib.so timer
+	java jli.lib.so
 	java.lib.so jvm.lib.so jzip.lib.so jimage.lib.so
 	libc.lib.so libm.lib.so zlib.lib.so nio.lib.so jnet.lib.so
 	posix.lib.so pthread.lib.so stdcxx.lib.so ffi.lib.so
-	classes.tar
+	classes.tar hello.tar
 }
 
 build_boot_image $boot_modules
+
+append qemu_args " -nographic"
+#append qemu_args " -s -S"
 
 run_genode_until forever

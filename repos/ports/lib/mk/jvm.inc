@@ -11,7 +11,9 @@ CC_OLEVEL = -O0
 include $(REP_DIR)/lib/mk/jdk_version.inc
 
 CC_OPT += -fpermissive -Wno-comment -Wno-reorder -Wno-switch -Wno-unused-variable \
-          -Wno-delete-non-virtual-dtor
+          -Wno-delete-non-virtual-dtor -Wno-unused-function -Wno-format \
+          -Wno-unused-local-typedefs -Wno-unused-but-set-variable \
+          -Wno-parentheses
 
 CC_OPT += -D__GENODE__
 
@@ -22,6 +24,7 @@ CC_OPT += -DINCLUDE_SUFFIX_OS=_bsd -DTARGET_COMPILER_gcc -D_ALLBSD_SOURCE -DUSE_
 
 INC_DIR += $(JDK_GENERATED)/include \
            $(REP_DIR)/src/app/jdk/lib/include \
+           $(HOTSPOT_BASE)/os \
            $(HOTSPOT_BASE)/os/bsd/vm \
            $(HOTSPOT_BASE)/os/posix/vm \
            $(HOTSPOT_BASE)/os_cpu/bsd_zero/vm \
@@ -43,7 +46,7 @@ SRC_CC += jvmtiEnter.cpp jvmtiEnterTrace.cpp
 
 
 #
-# Hotspot 
+# Hotspot
 #
 SRC_CC += cpu/zero/vm/abstractInterpreter_zero.cpp \
           cpu/zero/vm/assembler_zero.cpp \
