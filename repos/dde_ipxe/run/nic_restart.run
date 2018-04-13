@@ -1,0 +1,173 @@
+#
+# Build
+#
+
+set build_components {
+	core init
+	drivers/timer drivers/nic
+	drivers/rtc
+	server/report_rom
+	server/dynamic_rom
+	test/lwip/http_srv
+}
+
+proc gpio_drv { } { if {[have_spec rpi] && [have_spec hw]}  { return hw_gpio_drv }
+                    if {[have_spec rpi] && [have_spec foc]} { return foc_gpio_drv }
+                    return gpio_drv }
+
+lappend_if [have_spec gpio]             build_components drivers/gpio
+
+source ${genode_dir}/repos/base/run/platform_drv.inc
+
+proc platform_drv_policy {} {
+	return {
+		<policy label_prefix="init -> nic_drv"><pci class="ETHERNET"/></policy>}
+}
+
+append_platform_drv_build_components
+
+build $build_components
+
+create_boot_directory
+
+#
+# Generate config
+#
+
+set config {
+<config verbose="yes">
+	<parent-provides>
+		<service name="ROM"/>
+		<service name="IRQ"/>
+		<service name="IO_MEM"/>
+		<service name="IO_PORT"/>
+		<service name="PD"/>
+		<service name="RM"/>
+		<service name="CPU"/>
+		<service name="LOG"/>
+	</parent-provides>
+	<default-route>
+		<any-service> <parent/> <any-child/> </any-service>
+	</default-route>
+	<default caps="100"/>
+	<start name="timer">
+		<resource name="RAM" quantum="1M"/>
+		<provides> <service name="Timer"/> </provides>
+	</start>
+	<start name="rtc_drv">
+		<resource name="RAM" quantum="1M"/>
+		<provides> <service name="Rtc"/> </provides>
+	</start>
+	<start name="dynamic_rom">
+		<resource name="RAM" quantum="8M"/>
+		<provides><service name="ROM"/></provides>
+		<config verbose="yes">
+			<rom name="subinit.config">
+				<inline description="initial">
+					<config>
+						<parent-provides>
+							<service name="ROM"/>
+							<service name="IRQ"/>
+							<service name="IO_MEM"/>
+							<service name="IO_PORT"/>
+							<service name="PD"/>
+							<service name="RM"/>
+							<service name="CPU"/>
+							<service name="LOG"/>
+							<service name="Timer"/>
+							<service name="Platform"/>
+						</parent-provides>
+						<default-route>
+							<any-service> <parent/> <any-child/> </any-service>
+						</default-route>
+						<default caps="100"/>
+						<start name="nic_drv" caps="130">
+							<resource name="RAM" quantum="20M"/>
+							<provides><service name="Nic" /></provides>
+						</start>
+						<start name="test-lwip_httpsrv">
+							<resource name="RAM" quantum="5M"/>
+							<config>
+								<libc stdout="/dev/log" stderr="/dev/log">
+									<vfs> <dir name="dev"> <log/> </dir> </vfs>
+								</libc>
+							</config>
+						</start>
+					</config>
+				</inline>
+				<sleep milliseconds="10000"/>
+				<inline description="second">
+					<config>
+						<parent-provides>
+							<service name="ROM"/>
+							<service name="IRQ"/>
+							<service name="IO_MEM"/>
+							<service name="IO_PORT"/>
+							<service name="PD"/>
+							<service name="RM"/>
+							<service name="CPU"/>
+							<service name="LOG"/>
+							<service name="Timer"/>
+						</parent-provides>
+						<default-route>
+							<any-service> <parent/> <any-child/> </any-service>
+						</default-route>
+						<default caps="100"/>
+					</config>
+				</inline>
+				<sleep milliseconds="1000"/>
+			</rom>
+		</config>
+	</start>
+
+	<start name="init" caps="500">
+		<resource name="RAM" quantum="64M" />
+		<configfile name="subinit.config"/>
+		<route>
+			<service name="ROM" label="subinit.config"> <child name="dynamic_rom"/> </service>
+			<service name="Platform"> <child name="platform_drv"/>  </service>
+			<service name="Timer"> <child name="timer"/>  </service>
+			<any-service> <parent/> </any-service>
+		</route>
+	</start>
+}
+
+append_platform_drv_config
+
+append_if [have_spec gpio] config "
+	<start name=\"[gpio_drv]\">
+		<resource name=\"RAM\" quantum=\"4M\"/>
+		<provides><service name=\"Gpio\"/></provides>
+		<config/>
+	</start>"
+
+append config {
+</config>
+}
+
+install_config $config
+
+#
+# Boot modules
+#
+
+# generic modules
+set boot_modules {
+	core ld.lib.so init timer rtc_drv report_rom dynamic_rom
+	posix.lib.so
+	libc.lib.so libm.lib.so
+	test-lwip_httpsrv lwip.lib.so
+	nic_drv
+}
+
+append qemu_args " -nographic"
+
+lappend_if [have_spec gpio] boot_modules [gpio_drv]
+
+append_platform_drv_boot_modules
+
+build_boot_image $boot_modules
+
+run_genode_until forever
+
+# vi: set ft=tcl :
