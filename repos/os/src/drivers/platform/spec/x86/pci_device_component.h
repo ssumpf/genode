@@ -110,9 +110,9 @@ class Platform::Device_component : public  Genode::Rpc_object<Platform::Device>,
 			Status::access_t status = Status::read(_device_config.read(_config_access,
 			                                       PCI_STATUS,
 			                                       Platform::Device::ACCESS_16BIT));
-			if (!Status::Capabilities::get(status))
-				return 0;
-
+//			if (!Status::Capabilities::get(status))
+//				return 0;
+log("HERE");
 			Genode::uint8_t cap = _device_config.read(_config_access,
 			                                          PCI_CAP_OFFSET,
 			                                          Platform::Device::ACCESS_8BIT);
@@ -120,6 +120,7 @@ class Platform::Device_component : public  Genode::Rpc_object<Platform::Device>,
 			for (Genode::uint16_t val = 0; cap; cap = val >> 8) {
 				val = _device_config.read(_config_access, cap,
 				                          Platform::Device::ACCESS_16BIT);
+				Genode::log("cap: ", Hex(val & 0xff));
 				if ((val & 0xff) != CAP_MSI)
 					continue;
 
@@ -175,8 +176,8 @@ class Platform::Device_component : public  Genode::Rpc_object<Platform::Device>,
 		/**
 		 * Disable bus master dma if already enabled.
 		 */
-		void _disable_bus_master_dma() {
-
+		void _disable_bus_master_dma()
+		{
 			/*
 			 * Disabling a bridge may make the devices behind non-functional,
 			 * as we have no driver which will switch it on again
@@ -190,6 +191,16 @@ class Platform::Device_component : public  Genode::Rpc_object<Platform::Device>,
 				_device_config.write(_config_access, PCI_CMD_REG,
 				                     cmd ^ PCI_CMD_DMA,
 				                     Platform::Device::ACCESS_16BIT);
+		}
+
+		void _function_level_reset()
+		{
+			Genode::warning("called");
+			_msi_cap();
+			if (_device_config.pci_bridge())
+				return;
+
+
 		}
 
 	public:

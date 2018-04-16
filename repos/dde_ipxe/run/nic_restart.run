@@ -160,7 +160,7 @@ set boot_modules {
 	nic_drv
 }
 
-append qemu_args " -nographic"
+append qemu_args " -nographic -device e1000,bus=pcie.0"
 
 lappend_if [have_spec gpio] boot_modules [gpio_drv]
 
