@@ -643,13 +643,11 @@ extern "C" int rmdir(const char *path)
 
 extern "C" int stat(const char *path, struct stat *buf)
 {
-	PDBG(path);
 	try {
 		Absolute_path resolved_path;
 		resolve_symlinks(path, resolved_path);
 		FNAME_FUNC_WRAPPER(stat, resolved_path.base(), buf);
 	} catch(Symlink_resolve_error) {
-		Genode::warning("stat failed");
 		return -1;
 	}
 }

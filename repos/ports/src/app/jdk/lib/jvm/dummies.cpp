@@ -10,7 +10,11 @@ extern "C" {
 #include <signal.h>
 }
 
+#if 0
 #define WARN_NOT_IMPL Genode::warning(__func__, " not implemented (jvm)");
+#else
+#define WARN_NOT_IMPL
+#endif
 
 extern "C" void collector_func_load(char* name,
                                    void* null_argument_1,
