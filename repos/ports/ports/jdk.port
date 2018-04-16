@@ -7,7 +7,14 @@ URL(jdk)  := https://api.github.com/repos/dmlloyd/openjdk/tarball/$(VERSION)
 SHA(jdk)  := 46a6bfab37216a8726bb55ab11743536678810ae
 DIR(jdk)  := src/app/jdk
 
-PATCHES   := $(addprefix src/app/jdk/patches/,jdk.patch ulong.patch)
+PATCHES   := $(addprefix src/app/jdk/patches/,jdk.patch arm.patch size.patch)
 PATCH_OPT := -p1 -d src/app/jdk
+
+gen_file := src/app/jdk/hotspot/src/share/vm/interpreter/bytecodeInterpreterWithChecks.cpp
+
+default: $(gen_file)
+
+$(gen_file):
+	$(VERBOSE)cp $(@D)/bytecodeInterpreter.cpp $(gen_file)
 
 # vi: set ft=make :
