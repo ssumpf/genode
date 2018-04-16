@@ -15,7 +15,7 @@ gen_file := src/app/jdk/hotspot/src/share/vm/interpreter/bytecodeInterpreterWith
 
 default: $(gen_file)
 
-$(gen_file):
+$(gen_file): _patch
 	$(VERBOSE)cp $(@D)/bytecodeInterpreter.cpp $(gen_file)
 
 # vi: set ft=make :
