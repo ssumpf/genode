@@ -129,10 +129,13 @@
   #include <elf.h>
 #endif
 
-
+#if 0
 #define NOT_IMPL ({ \
  PDBG("called not implmemented\n"); \
 })
+#else
+#define NOT_IMPL
+#endif
 
 extern "C" void backtrace();
 
@@ -1154,8 +1157,6 @@ extern "C" pid_t pthread_tid(pthread_t thread);
 // Information of current thread in variety of formats
 pid_t os::Bsd::gettid()
 {
-	printf("%s: pid: %d\n", __PRETTY_FUNCTION__, pthread_tid(pthread_self()));
-
 	pid_t p = pthread_tid(pthread_self());
 	if (p < 0) {
 		printf("error gettid called outside of POSIX thread\n");
@@ -1200,7 +1201,6 @@ int os::current_process_id() {
 
 const char* os::dll_file_extension()
 {
-	Genode::warning(__func__);
 	return JNI_LIB_SUFFIX;
 }
 
@@ -1237,8 +1237,6 @@ bool os::dll_build_name(char* buffer, size_t buflen,
   bool retval = false;
   // Copied from libhpi
   const size_t pnamelen = pname ? strlen(pname) : 0;
-
-	Genode::warning(__func__,": ", fname);
 
   // Return error on buffer overflow.
   if (pnamelen + strlen(fname) + strlen(JNI_LIB_PREFIX) + strlen(JNI_LIB_SUFFIX) + 2 > buflen) {
@@ -1392,7 +1390,7 @@ void * os::dll_load(const char *filename, char *ebuf, int ebuflen) {
 }
 #else
 void * os::dll_load(const char *filename, char *ebuf, int ebuflen) {
-	PDBG(filename);
+
 #ifdef STATIC_BUILD
   return os::get_default_process_handle();
 #else
@@ -2527,49 +2525,6 @@ static void SR_handler(int sig, siginfo_t* siginfo, ucontext_t* context) {
 
   errno = old_errno;
 }
-
-#if 0
-static int SR_initialize() {
-  struct sigaction act;
-  char *s;
-  // Get signal number to use for suspend/resume
-  if ((s = ::getenv("_JAVA_SR_SIGNUM")) != 0) {
-    int sig = ::strtol(s, 0, 10);
-    if (sig > MAX2(SIGSEGV, SIGBUS) &&  // See 4355769.
-        sig < NSIG) {                   // Must be legal signal and fit into sigflags[].
-      SR_signum = sig;
-    } else {
-      warning("You set _JAVA_SR_SIGNUM=%d. It must be in range [%d, %d]. Using %d instead.",
-              sig, MAX2(SIGSEGV, SIGBUS)+1, NSIG-1, SR_signum);
-    }
-  }
-
-  assert(SR_signum > SIGSEGV && SR_signum > SIGBUS,
-         "SR_signum must be greater than max(SIGSEGV, SIGBUS), see 4355769");
-
-  sigemptyset(&SR_sigset);
-  sigaddset(&SR_sigset, SR_signum);
-
-  // Set up signal handler for suspend/resume
-  act.sa_flags = SA_RESTART|SA_SIGINFO;
-  act.sa_handler = (void (*)(int)) SR_handler;
-
-  // SR_signum is blocked by default.
-  // 4528190 - We also need to block pthread restart signal (32 on all
-  // supported Bsd platforms). Note that BsdThreads need to block
-  // this signal for all threads to work properly. So we don't have
-  // to use hard-coded signal number when setting up the mask.
-  pthread_sigmask(SIG_BLOCK, NULL, &act.sa_mask);
-
-  if (sigaction(SR_signum, &act, 0) == -1) {
-    return -1;
-  }
-
-  // Save signal flag
-  os::Bsd::set_our_sigflags(SR_signum, act.sa_flags);
-  return 0;
-}
-#endif
 
 
 static int sr_notify(OSThread* osthread) {
@@ -4462,7 +4417,6 @@ class Genode::Vm_area_registry
 
 		addr_t reserve(size_t size, addr_t base, int align)
 		{
-			Genode::warning(__func__, " vm_size: ", (void *)size, " vm_start: ", (void *)base);
 			if (base) {
 				Genode::error("vm_start set");
 				while(1);
@@ -4516,8 +4470,6 @@ char* os::pd_reserve_memory(size_t bytes, char* requested_addr,
 	try {
 		Genode::addr_t addr =  vm_reg->reserve(bytes, requested_addr,
 		                       alignment_hint ? Genode::log2(alignment_hint) : 12);
-		Genode::warning(__func__, " mem: ", Genode::Hex(bytes), " req: ", (void *)requested_addr, 
-		                " addr: ", Genode::Hex(addr), " align: ", Genode::Hex(alignment_hint));
 		return addr;
 	} catch (...) {
 		Genode::error(__PRETTY_FUNCTION__, " exception!");
@@ -4537,19 +4489,16 @@ char* os::pd_attempt_reserve_memory_at(size_t bytes, char* requested_addr)
 
 
 bool os::pd_release_memory(char* addr, size_t size) {
-  Genode::warning(__PRETTY_FUNCTION__, "addr: ", (void *)addr, " size: ", (void *)size);
   return vm_reg->release(addr, size);
 }
 
 
 bool os::pd_unmap_memory(char* addr, size_t bytes) {
-	Genode::warning(__func__, " CHECK semantic! addr: ", (void *)addr, " size: ", Genode::Hex(bytes));
   return vm_reg->release(addr, bytes);
 }
 
 
 bool os::pd_commit_memory(char* addr, size_t size, bool exec) {
-	Genode::warning(__func__, "addr: ", (void *)addr, " size: ", (void *)size, " exec: ", exec);
 
 	if (!addr) {
 		Genode::error(__PRETTY_FUNCTION__, "  addr == 0");
