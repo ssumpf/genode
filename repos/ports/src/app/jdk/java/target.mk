@@ -1,6 +1,6 @@
 TARGET   = java
 SRC_C    = main.c
-LIBS     = jli java jvm libc posix
+LIBS     = jli java jvm libc posix libc_pipe
 
 CC_C_OPT = -DVERSION_STRING='"9-genode.openjdk"' -D__GENODE__
 
