@@ -4,6 +4,11 @@
 # \date   2016-06-05
 #
 
+if {[have_spec odroid_xu]} {
+	puts "Run script does not support this platform."
+	exit 0
+}
+
 set build_components {
 	app/fetchurl
 	core init
@@ -15,6 +20,9 @@ set build_components {
 
 source ${genode_dir}/repos/base/run/platform_drv.inc
 append_platform_drv_build_components
+
+lappend_if [expr {[nic_drv_binary] == "nic_drv"}] build_components drivers/nic
+lappend_if [expr {[nic_drv_binary] == "usb_drv"}] build_components drivers/usb
 
 build $build_components
 
@@ -50,6 +58,7 @@ append config {
 		<binary name="} [nic_drv_binary] {"/>
 		<resource name="RAM" quantum="4M"/>
 		<provides> <service name="Nic"/> </provides>
+		} [nic_drv_config] {
 	</start>
 	<start name="report_rom">
 		<resource name="RAM" quantum="4M"/>
@@ -90,7 +99,6 @@ set boot_modules {
 	libssh.lib.so
 	libssl.lib.so
 	lxip.lib.so
-	nic_drv
 	pthread.lib.so
 	timer
 	vfs_lxip.lib.so
