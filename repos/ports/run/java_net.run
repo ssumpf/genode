@@ -1,0 +1,225 @@
+source ${genode_dir}/repos/ports/run/api_key.inc
+
+proc check_config {bin xml_file xsd_file label avail_xsd_files nesting_level} { }
+
+set tap "tap0"
+set mkfs [check_installed mkfs.fat]
+set dd   [check_installed dd]
+
+
+catch { exec $dd if=/dev/zero of=bin/fat.raw bs=1M count=16 }
+catch { exec $mkfs -F16 bin/fat.raw }
+
+set build_components {
+	core init
+	drivers/timer
+	drivers/rtc
+	drivers/nic
+	lib/vfs/lxip
+	lib/vfs/rump
+	app/fetchurl
+	app/jdk/java
+	server/dynamic_rom
+	server/lx_block
+}
+
+source ${genode_dir}/repos/base/run/platform_drv.inc
+append_platform_drv_build_components
+
+build $build_components
+create_boot_directory
+
+append config {
+<config>
+	<parent-provides>
+		<service name="ROM"/>
+		<service name="LOG"/>
+		<service name="RM"/>
+		<service name="CPU"/>
+		<service name="PD"/>
+		<service name="IRQ"/>
+		<service name="IO_PORT"/>
+		<service name="IO_MEM"/>
+	</parent-provides>
+	<default-route>
+		<any-service> <parent/> <any-child/> </any-service>
+	</default-route>
+	<default caps="100" />
+	<start name="timer">
+		<resource name="RAM" quantum="2M" />
+		<provides> <service name="Timer" /> </provides>
+	</start>
+	<start name="rtc_drv">
+		<resource name="RAM" quantum="2M" />
+		<provides> <service name="Rtc" /> </provides>
+	</start>
+	<start name="nic_drv">
+		<binary name="} [nic_drv_binary] {"/>
+		<resource name="RAM" quantum="4M" />
+		<provides> <service name="Nic" /> </provides>
+		<config>
+			<nic tap="} $tap {"/>
+		</config>
+	</start>
+	<start name="disk">
+		<binary name="lx_block" />
+		<resource name="RAM" quantum="24M"/>
+		<provides><service name="Block"/></provides>
+		<config file="fat.raw" block_size="512" writeable="yes" />
+	</start>
+
+	<start name="dynamic_rom">
+		<resource name="RAM" quantum="8M" />
+		<provides><service name="ROM"/></provides>
+		<config>
+			<rom name="download.config">
+				<inline description="download">
+					<config>
+						<parent-provides>
+							<service name="ROM"/>
+							<service name="RAM"/>
+							<service name="PD"/>
+							<service name="RM"/>
+							<service name="CPU"/>
+							<service name="LOG"/>
+							<service name="Nic"/>
+							<service name="Timer"/>
+							<service name="Block"/>
+						</parent-provides>
+						<start name="fetchurl" caps="500">
+						<resource name="RAM" quantum="8M"/>
+							<config>
+								<vfs>
+									<dir name="dev">
+										<log/>
+										<null/>
+										<inline name="rtc">2000-01-01 00:00</inline>
+									</dir>
+									<dir name="download">
+										<rump fs="msdos" writeable="yes"/>
+									</dir>
+								</vfs>
+								<libc stdout="/dev/log" stderr="/dev/log" rtc="/dev/rtc"/>
+								<fetch url="http://api.openweathermap.org/data/2.5/weather?q=Dresden,de&mode=xml&appid=} $api_key {" path="/download/dresden.xml" />
+								<fetch url="http://api.openweathermap.org/data/2.5/weather?q=Hamburg,de&mode=xml&appid=} $api_key {" path="/download/hamburg.xml" />
+								<fetch url="http://api.openweathermap.org/data/2.5/weather?q=Leipzig,de&mode=xml&appid=} $api_key {" path="/download/leipzig.xml" />
+								<fetch url="http://api.openweathermap.org/data/2.5/weather?q=Nuremberg,de&mode=xml&appid=} $api_key {" path="/download/nuremberg.xml" />
+							</config>
+							<route> <any-service> <parent/> </any-service> </route>
+						</start>
+					</config>
+				</inline>
+				<sleep milliseconds="30000" />
+				<inline description="empty">
+					<config>
+						<parent-provides>
+							<service name="ROM"/>
+							<service name="RAM"/>
+							<service name="PD"/>
+							<service name="RM"/>
+							<service name="CPU"/>
+							<service name="LOG"/>
+							<service name="Nic"/>
+							<service name="Timer"/>
+							<service name="Block"/>
+						</parent-provides>
+					</config>
+				</inline>
+				<sleep milliseconds="60000" />
+			</rom>
+		</config>
+	</start>
+
+	<start name="download" caps="800">
+		<binary name="init" />
+		<resource name="RAM" quantum="40M" />
+		<configfile name="download.config" />
+		<route>
+			<service name="ROM" label="download.config"><child name="dynamic_rom"/></service>
+			<service name="Nic"><child name="nic_drv"/></service>
+			<service name="Timer"><child name="timer"/></service>
+			<service name="Block"><child name="disk"/></service>
+			<any-service><parent/><any-child/></any-service>
+		</route>
+	</start>
+
+<!--
+	<start name="java" caps="300">
+		<resource name="RAM" quantum="96M" />
+		<route>
+			<service name="ROM" label="zip.lib.so">
+				<parent label="jzip.lib.so" />
+			</service>
+			<service name="ROM" label="net.lib.so">
+				<parent label="jnet.lib.so" />
+			</service>
+			<any-service> <parent/> <any-child/> </any-service>
+		</route>
+		<config ld_verbose="no">
+			<arg value="/bin/java" />
+			<arg value="-jar" />
+			<arg value="httpserver.jar" />
+			<libc stdin="/dev/null" stdout="/dev/log" stderr="/dev/log" rtc="/dev/rtc" socket="/dev/socket" />
+			<vfs rtc="/dev/rtc">
+				<dir name="dev">
+					<dir name="socket"> <lxip ip_addr="10.0.10.55" netmask="255.255.255.0" gateway="10.0.10.1"/> </dir>
+					<log/><rtc/><null/>
+				</dir>
+				<dir name="bin">
+					<rom name="java" />
+				</dir>
+				<dir name="lib">
+					<rom name="java.lib.so" />
+					<inline name="jvm.cfg">-server KNOWN
+-client IGNORE
+</inline>
+					<dir name="server">
+						<rom name="jvm.lib.so" />
+					</dir>
+					<rom name="tzdb.dat"/>
+				</dir>
+				<dir name="modules">
+					<tar name="classes.tar" />
+				</dir>
+				<rom name="httpserver.jar" />
+				<rom name="zip.lib.so" />
+				<rom name="nio.lib.so" />
+				<rom name="net.lib.so" />
+				<inline name="index.html">index</inline>
+			</vfs>
+		</config>
+	</start>
+-->
+}
+
+append_platform_drv_config
+
+append config {
+</config>
+}
+
+install_config $config
+
+set boot_modules {
+	core init ld.lib.so timer rtc_drv
+	java jli.lib.so httpserver.jar
+	java.lib.so jvm.lib.so jzip.lib.so jimage.lib.so
+	libc.lib.so libm.lib.so zlib.lib.so nio.lib.so jnet.lib.so
+	posix.lib.so pthread.lib.so stdcxx.lib.so ffi.lib.so
+	vfs_lxip.lib.so lxip.lib.so libc_pipe.lib.so
+	classes.tar tzdb.dat
+
+	curl.lib.so libcrypto.lib.so libssh.lib.so libssl.lib.so
+	lwip.lib.so fetchurl
+
+	rump.lib.so rump_fs.lib.so vfs_rump.lib.so
+	lx_block fat.raw dynamic_rom
+}
+
+append boot_modules [nic_drv_binary]
+
+append_platform_drv_boot_modules
+
+build_boot_image $boot_modules
+
+run_genode_until forever
