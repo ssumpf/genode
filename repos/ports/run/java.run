@@ -80,7 +80,8 @@ set boot_modules {
 	core init ld.lib.so timer
 	java jli.lib.so
 	java.lib.so jvm.lib.so jzip.lib.so jimage.lib.so
-	libc.lib.so libm.lib.so zlib.lib.so nio.lib.so jnet.lib.so
+	libc.lib.so libm.lib.so libc_pipe.lib.so
+	zlib.lib.so nio.lib.so jnet.lib.so
 	posix.lib.so pthread.lib.so stdcxx.lib.so ffi.lib.so
 	classes.tar hello.tar
 }

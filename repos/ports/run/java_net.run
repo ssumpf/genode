@@ -13,7 +13,6 @@ catch { exec $mkfs -F16 bin/fat.raw }
 set build_components {
 	core init
 	drivers/timer
-	drivers/rtc
 	drivers/nic
 	lib/vfs/lxip
 	lib/vfs/rump
@@ -22,6 +21,8 @@ set build_components {
 	server/dynamic_rom
 	server/lx_block
 }
+
+lappend_if [have_spec gpio] build_components drivers/gpio
 
 source ${genode_dir}/repos/base/run/platform_drv.inc
 append_platform_drv_build_components
@@ -49,16 +50,33 @@ append config {
 		<resource name="RAM" quantum="2M" />
 		<provides> <service name="Timer" /> </provides>
 	</start>
-	<start name="rtc_drv">
-		<resource name="RAM" quantum="2M" />
-		<provides> <service name="Rtc" /> </provides>
-	</start>
+
+append_if [have_spec gpio] config "
+	<start name=\"[gpio_drv]\" caps=\"200\">
+		<resource name=\"RAM\" quantum=\"4M\"/>
+		<provides><service name=\"Gpio\"/></provides>
+		<config/>
+	</start>"
+
 	<start name="nic_drv">
 		<binary name="} [nic_drv_binary] {"/>
 		<resource name="RAM" quantum="4M" />
 		<provides> <service name="Nic" /> </provides>
-		<config>
-			<nic tap="} $tap {"/>
+		<config>}
+
+append_if [have_spec linux] config {
+			<nic tap="} $tap {"/> }
+
+append_if [have_spec nit6_solox] config {
+			<card name="fec0" type="fsl,imx6sx-fec" mii="rgmii" phy="phy0" irq="150" mmio="0x2188000">
+				<mdio>
+					<phy name="phy0" type="Atheros 8035 ethernet" gpio_irq="36" reg_num="4"/>
+					<phy name="phy1" type="Atheros 8035 ethernet" gpio_irq="40" reg_num="5"/>
+				</mdio>
+			</card>
+			<card name="fec1" type="fsl,imx6sx-fec" mii="rgmii" phy="phy1" irq="134" mmio="0x21b4000"/>}
+
+append config {
 		</config>
 	</start>
 	<start name="disk">
@@ -87,19 +105,24 @@ append config {
 							<service name="Block"/>
 						</parent-provides>
 						<start name="fetchurl" caps="500">
-						<resource name="RAM" quantum="8M"/>
+						<resource name="RAM" quantum="40M"/>
 							<config>
 								<vfs>
+									<dir name="etc">
+										<inline name="resolv.conf">nameserver 1.1.1.1</inline>
+									</dir>
 									<dir name="dev">
 										<log/>
 										<null/>
 										<inline name="rtc">2000-01-01 00:00</inline>
+										<inline name="random">01234567890123456789</inline>
 									</dir>
 									<dir name="download">
 										<rump fs="msdos" writeable="yes"/>
 									</dir>
+									<dir name="socket"> <lxip dhcp="yes"/> </dir>
 								</vfs>
-								<libc stdout="/dev/log" stderr="/dev/log" rtc="/dev/rtc"/>
+								<libc stdout="/dev/log" stderr="/dev/log" rtc="/dev/rtc" socket="/socket"/>
 								<fetch url="http://api.openweathermap.org/data/2.5/weather?q=Dresden,de&mode=xml&appid=} $api_key {" path="/download/dresden.xml" />
 								<fetch url="http://api.openweathermap.org/data/2.5/weather?q=Hamburg,de&mode=xml&appid=} $api_key {" path="/download/hamburg.xml" />
 								<fetch url="http://api.openweathermap.org/data/2.5/weather?q=Leipzig,de&mode=xml&appid=} $api_key {" path="/download/leipzig.xml" />
@@ -132,18 +155,17 @@ append config {
 
 	<start name="download" caps="800">
 		<binary name="init" />
-		<resource name="RAM" quantum="40M" />
+		<resource name="RAM" quantum="64M" />
 		<configfile name="download.config" />
 		<route>
 			<service name="ROM" label="download.config"><child name="dynamic_rom"/></service>
-			<service name="Nic"><child name="nic_drv"/></service>
+			<service name="Nic"><child name="nic_drv" label="fec0" /></service>
 			<service name="Timer"><child name="timer"/></service>
 			<service name="Block"><child name="disk"/></service>
 			<any-service><parent/><any-child/></any-service>
 		</route>
 	</start>
 
-<!--
 	<start name="java" caps="300">
 		<resource name="RAM" quantum="96M" />
 		<route>
@@ -153,6 +175,7 @@ append config {
 			<service name="ROM" label="net.lib.so">
 				<parent label="jnet.lib.so" />
 			</service>
+			<service name="Nic"><child name="nic_drv" label="fec1" /></service>
 			<any-service> <parent/> <any-child/> </any-service>
 		</route>
 		<config ld_verbose="no">
@@ -160,10 +183,13 @@ append config {
 			<arg value="-jar" />
 			<arg value="httpserver.jar" />
 			<libc stdin="/dev/null" stdout="/dev/log" stderr="/dev/log" rtc="/dev/rtc" socket="/dev/socket" />
-			<vfs rtc="/dev/rtc">
+			<vfs>
+				<dir name="etc">
+					<inline name="resolv.conf">nameserver 1.1.1.1</inline>
+				</dir>
 				<dir name="dev">
 					<dir name="socket"> <lxip ip_addr="10.0.10.55" netmask="255.255.255.0" gateway="10.0.10.1"/> </dir>
-					<log/><rtc/><null/>
+					<log/><null/><inline name="rtc">2000-01-01 00:00</inline>
 				</dir>
 				<dir name="bin">
 					<rom name="java" />
@@ -189,7 +215,6 @@ append config {
 			</vfs>
 		</config>
 	</start>
--->
 }
 
 append_platform_drv_config
@@ -210,13 +235,14 @@ set boot_modules {
 	classes.tar tzdb.dat
 
 	curl.lib.so libcrypto.lib.so libssh.lib.so libssl.lib.so
-	lwip.lib.so fetchurl
+	fetchurl
 
 	rump.lib.so rump_fs.lib.so vfs_rump.lib.so
 	lx_block fat.raw dynamic_rom
 }
 
 append boot_modules [nic_drv_binary]
+lappend_if [have_spec gpio] boot_modules gpio_drv
 
 append_platform_drv_boot_modules
 
