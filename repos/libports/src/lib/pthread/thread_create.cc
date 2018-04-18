@@ -22,7 +22,7 @@
 
 extern "C"
 {
-	enum { STACK_SIZE=512*1024 };
+	enum { STACK_SIZE=64*1024 };
 
 	int pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 	                   void *(*start_routine) (void *), void *arg)
