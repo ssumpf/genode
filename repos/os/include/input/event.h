@@ -194,7 +194,7 @@ void Input::Event::print(Genode::Output &out) const
 	switch (_type) {
 	case INVALID:       print(out, "INVALID"); break;
 	case PRESS:         print(out, "PRESS ",   key_name(_attr.press.key),
-						           " ", _attr.press.codepoint.value); break;
+	                               " ", _attr.press.codepoint.value); break;
 	case RELEASE:       print(out, "RELEASE ", key_name(_attr.release.key)); break;
 	case REL_MOTION:    print(out, "REL_MOTION ", _xy<int>(_attr.rel_motion)); break;
 	case ABS_MOTION:    print(out, "ABS_MOTION ", _xy<int>(_attr.abs_motion)); break;
