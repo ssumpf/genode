@@ -810,10 +810,14 @@ class Rump_factory : public Vfs::File_system_factory
 				config.attribute("ram").value(&memlimit);
 
 				rump_set_memlimit(memlimit);
-			} catch (...) { }
+			} catch (...) {
+				Genode::error("mandatory 'ram' attribute missing");
+				throw Genode::Exception();
+			}
 
 			/* start rump kernel */
-			rump_init();
+			try         { rump_init(); }
+			catch (...) { throw Genode::Exception(); }
 
 			/* register block device */
 			rump_pub_etfs_register(
