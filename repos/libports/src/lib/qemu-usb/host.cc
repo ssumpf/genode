@@ -435,17 +435,27 @@ static void usb_host_handle_data(USBDevice *udev, USBPacket *p)
 	USBHostDevice     *d = USB_HOST_DEVICE(udev);
 	Usb_host_device *dev = (Usb_host_device *)d->data;
 
-	Genode::size_t size = 0;
+	Genode::size_t size   = 0;
+	int number_of_packets = 0;
 	Usb::Packet_descriptor::Type type = Usb::Packet_descriptor::BULK;
 
 	switch (usb_ep_get_type(udev, p->pid, p->ep->nr)) {
 	case USB_ENDPOINT_XFER_BULK:
-		type = Usb::Packet_descriptor::BULK;
-		size = usb_packet_size(p);
+		type      = Usb::Packet_descriptor::BULK;
+		size      = usb_packet_size(p);
+		p->status = USB_RET_ASYNC;
 		break;
 	case USB_ENDPOINT_XFER_INT:
-		type = Usb::Packet_descriptor::IRQ;
-		size = p->iov.size;
+		type      = Usb::Packet_descriptor::IRQ;
+		size      = p->iov.size;
+		p->status = USB_RET_ASYNC;
+		break;
+	case USB_ENDPOINT_XFER_ISOC:
+		type      = Usb::Packet_descriptor::ISOC;
+		size      = p->iov.size;
+		/* FIXME: one per frame */
+		number_of_packets = 32;
+		warning("ISOC in: ", p->pid == USB_TOKEN_IN, " size: ", size, " host packets ");
 		break;
 	default:
 		error("not supported data request");
@@ -455,10 +465,11 @@ static void usb_host_handle_data(USBDevice *udev, USBPacket *p)
 	bool const in = p->pid == USB_TOKEN_IN;
 
 	try {
-		Usb::Packet_descriptor packet = dev->alloc_packet(size);
-		packet.type                      = type;
-		packet.transfer.ep               = p->ep->nr | (in ? USB_DIR_IN : 0);
-		packet.transfer.polling_interval = Usb::Packet_descriptor::DEFAULT_POLLING_INTERVAL;
+		Usb::Packet_descriptor packet     = dev->alloc_packet(size);
+		packet.type                       = type;
+		packet.transfer.ep                = p->ep->nr | (in ? USB_DIR_IN : 0);
+		packet.transfer.polling_interval  = Usb::Packet_descriptor::DEFAULT_POLLING_INTERVAL;
+		packet.transfer.number_of_packets = number_of_packets;
 
 		if (!in) {
 			char * const content = dev->usb_raw.source()->packet_content(packet);
@@ -471,7 +482,7 @@ static void usb_host_handle_data(USBDevice *udev, USBPacket *p)
 		c->data       = nullptr;
 
 		dev->submit(packet);
-		p->status = USB_RET_ASYNC;
+
 	} catch (...) {
 		/* submit queue full or packet larger than packet stream */
 		Genode::warning("xHCI: packet allocation failed (size ", Genode::Hex(size), ")");

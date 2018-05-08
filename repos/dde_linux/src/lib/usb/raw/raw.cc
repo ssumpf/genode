@@ -246,6 +246,7 @@ class Usb::Worker : public Genode::Weak_object<Usb::Worker>
 
 		static void _async_complete(urb *urb)
 		{
+			Genode::log(__func__, " urb: ", urb);
 			Complete_data *data = (Complete_data *)urb->context;
 
 			{
@@ -357,6 +358,45 @@ class Usb::Worker : public Genode::Weak_object<Usb::Worker>
 		}
 
 		/**
+		 * Isochronous transfer
+		 */
+		bool _isoc(Packet_descriptor &p, bool read)
+		{
+			unsigned pipe;
+			usb_host_endpoint *ep;
+			void    *buf = kmalloc(p.size(), GFP_LX_DMA);
+
+			if (read) {
+				Genode::warning("READ: ", Genode::Hex(p.transfer.ep));
+				pipe = usb_rcvintpipe(_device->udev, p.transfer.ep);
+				ep   = _device->udev->ep_in[p.transfer.ep & 0x0f];
+				Genode::memset(buf, 0, p.size());
+			}
+			else {
+				pipe = usb_sndintpipe(_device->udev, p.transfer.ep);
+				ep   = _device->udev->ep_out[p.transfer.ep & 0x0f];
+				Genode::memcpy(buf, _sink->packet_content(p), p.size());
+			}
+			
+			urb *urb = usb_alloc_urb(0, GFP_KERNEL);
+
+			urb->dev                    = _device->udev;
+			urb->pipe                   = pipe;
+			urb->transfer_buffer        = buf;
+			urb->transfer_buffer_length = p.size();
+			urb->number_of_packets      = p.transfer.number_of_packets;
+			urb->interval               = 1 << min(15, ep->desc.bInterval - 1);
+			urb->context                = (void *)alloc_complete_data(p);
+			urb->complete               = _async_complete;
+
+			int ret = usb_submit_urb(urb, GFP_KERNEL);
+			Genode::warning("SUBMIT ret: ", ret, " urb: ", urb);
+
+
+			return true;
+		}
+
+		/**
 		 * Change alternate settings for device
 		 */
 		void _alt_setting(Packet_descriptor &p)
@@ -447,6 +487,11 @@ class Usb::Worker : public Genode::Weak_object<Usb::Worker>
 
 					case Packet_descriptor::IRQ:
 						if (_irq(p, !!(p.transfer.ep & USB_DIR_IN)))
+							continue;
+						break;
+
+					case Packet_descriptor::ISOC:
+						if (_isoc(p, !!(p.transfer.ep & USB_DIR_IN)))
 							continue;
 						break;
 
