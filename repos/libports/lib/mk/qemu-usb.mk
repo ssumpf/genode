@@ -3,6 +3,8 @@ QEMU_USB_DIR = $(call select_from_ports,qemu-usb)/src/lib/qemu/hw/usb
 
 CC_WARN=
 
+CC_OLEVEL = -O0
+
 INC_DIR += $(LIB_DIR) $(QEMU_USB_DIR)
 
 LIBS = qemu-usb_include

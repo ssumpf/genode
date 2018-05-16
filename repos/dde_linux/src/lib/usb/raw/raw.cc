@@ -362,36 +362,54 @@ class Usb::Worker : public Genode::Weak_object<Usb::Worker>
 		 */
 		bool _isoc(Packet_descriptor &p, bool read)
 		{
-			unsigned pipe;
+			unsigned           pipe;
 			usb_host_endpoint *ep;
-			void    *buf = kmalloc(p.size(), GFP_LX_DMA);
+			void              *buf = dma_malloc(p.size());
 
 			if (read) {
 				Genode::warning("READ: ", Genode::Hex(p.transfer.ep));
-				pipe = usb_rcvintpipe(_device->udev, p.transfer.ep);
+				pipe = usb_rcvisocpipe(_device->udev, p.transfer.ep);
 				ep   = _device->udev->ep_in[p.transfer.ep & 0x0f];
 				Genode::memset(buf, 0, p.size());
 			}
 			else {
-				pipe = usb_sndintpipe(_device->udev, p.transfer.ep);
+				pipe = usb_sndisocpipe(_device->udev, p.transfer.ep);
 				ep   = _device->udev->ep_out[p.transfer.ep & 0x0f];
 				Genode::memcpy(buf, _sink->packet_content(p), p.size());
 			}
-			
-			urb *urb = usb_alloc_urb(0, GFP_KERNEL);
 
+			urb *urb = usb_alloc_urb(p.transfer.number_of_packets, GFP_KERNEL);
+			if (!urb) {
+				error("Failed to allocate isochronous URB");
+				dma_free(buf);
+				p.error = Usb::Packet_descriptor::SUBMIT_ERROR;
+				return false;
+			}
+
+			Complete_data *data         = alloc_complete_data(p);
 			urb->dev                    = _device->udev;
 			urb->pipe                   = pipe;
 			urb->transfer_buffer        = buf;
 			urb->transfer_buffer_length = p.size();
 			urb->number_of_packets      = p.transfer.number_of_packets;
 			urb->interval               = 1 << min(15, ep->desc.bInterval - 1);
-			urb->context                = (void *)alloc_complete_data(p);
+			urb->context                = (void *)data;
 			urb->complete               = _async_complete;
+
+			for (int i = 0; i < p.transfer.number_of_packets; i++)
+				urb->iso_frame_desc[i].length = p.transfer.packet_size;
 
 			int ret = usb_submit_urb(urb, GFP_KERNEL);
 			Genode::warning("SUBMIT ret: ", ret, " urb: ", urb);
+			if (ret != 0) {
+				error("Failed to submit URB, error: ", ret);
+				p.error = Usb::Packet_descriptor::SUBMIT_ERROR;
 
+				free_complete_data(data);
+				usb_free_urb(urb);
+				dma_free(buf);
+				return false;
+			}
 
 			return true;
 		}
