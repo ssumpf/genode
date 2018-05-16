@@ -16,7 +16,7 @@
 #include <qemu_emul.h>
 #include <hw/usb.h>
 #include <extern_c_end.h>
-
+#include <base/debug.h>
 
 using namespace Genode;
 
@@ -27,6 +27,16 @@ Lock _lock;
 
 static void update_ep(USBDevice *);
 static bool claim_interfaces(USBDevice *dev);
+
+
+struct Isoc_packet : Genode::Fifo<Isoc_packet>::Element
+{
+	Usb::Packet_descriptor packet;
+	char *content;
+
+	Isoc_packet(Usb::Packet_descriptor packet, char *content)
+	: packet(packet), content(content) { }
+};
 
 
 struct Completion : Usb::Completion
@@ -41,8 +51,10 @@ struct Completion : Usb::Completion
 
 	void complete(Usb::Packet_descriptor &packet, char *content)
 	{
-		if (state != VALID)
+		if (state != VALID) {
+			Genode::error("NOT VALIDi: ", p);
 			return;
+		}
 
 		int actual_size = 0;
 
@@ -59,9 +71,9 @@ struct Completion : Usb::Completion
 
 		if (actual_size < 0) actual_size = 0;
 
-		if (verbose_host)
-			log(__func__, ": packet.type: ", (int)packet.type, " "
-			    "actual_size: ", Hex(actual_size));
+		//if (verbose_host)
+			log(__func__, ": packet: ", p, " packet.type: ", (int)packet.type, " "
+			    "actual_size: ", Hex(actual_size), " from ", __builtin_return_address(0));
 
 		p->actual_length = 0;
 
@@ -147,6 +159,9 @@ struct Usb_host_device : List<Usb_host_device>::Element
 	USBHostDevice  *qemu_dev;
 	Completion      completion[Usb::Session::TX_QUEUE_SIZE];
 
+
+	Genode::Fifo<Isoc_packet> isoc;
+
 	Signal_receiver  &sig_rec;
 	Signal_dispatcher<Usb_host_device> state_dispatcher { sig_rec, *this, &Usb_host_device::state_change };
 
@@ -227,12 +242,30 @@ struct Usb_host_device : List<Usb_host_device>::Element
 
 		while (usb_raw.source()->ack_avail()) {
 			Usb::Packet_descriptor packet = usb_raw.source()->get_acked_packet();
-
 			char *packet_content = usb_raw.source()->packet_content(packet);
-			dynamic_cast<Completion *>(packet.completion)->complete(packet, packet_content);
-			free_packet(packet);
+
+			Completion *c = dynamic_cast<Completion *>(packet.completion);
+			if (c->state == Completion::CANCELED) {
+				free_packet(packet);
+				continue;
+			}
+
+			if (packet.type != Usb::Packet_descriptor::ISOC) {
+				Genode::log("complete packet offset: ", Genode::Hex(packet.offset()), " s: ", Genode::Hex(packet.size()), " completion: ", c);
+
+				c->complete(packet, packet_content);
+
+				free_packet(packet);
+			} else {
+				Genode::log("enqueue ISO packet offset: ", Genode::Hex(packet.offset()), " s: ", Genode::Hex(packet.size()));
+				c->state = Completion::FREE;
+				isoc.enqueue(new (_alloc) Isoc_packet(packet, packet_content));
+			}
+			Genode::warning(__func__, " leave");
 		}
 	}
+
+	Isoc_packet *isoc_packet() { return isoc.dequeue(); }
 
 	void _destroy()
 	{
@@ -275,8 +308,16 @@ struct Usb_host_device : List<Usb_host_device>::Element
 
 	void free_packet(Usb::Packet_descriptor &packet)
 	{
+		Genode::log("free packet offset: ", Genode::Hex(packet.offset()), " s: ", Genode::Hex(packet.size()));
 		dynamic_cast<Completion *>(packet.completion)->state = Completion::FREE;
 		usb_raw.source()->release_packet(packet);
+	}
+
+	void free_packet(Isoc_packet *packet)
+	{
+		Genode::log("free ISO packet offset: ", Genode::Hex(packet->packet.offset()), " s: ", Genode::Hex(packet->packet.size()));
+		free_packet(packet->packet);
+		Genode::destroy(_alloc, packet);
 	}
 
 	Completion *alloc_completion()
@@ -290,16 +331,19 @@ struct Usb_host_device : List<Usb_host_device>::Element
 		return nullptr;
 	}
 
-	Completion *find_completion(USBPacket *p)
+	Completion *find_valid_completion(USBPacket *p)
 	{
 		for (unsigned i = 0; i < Usb::Session::TX_QUEUE_SIZE; i++)
-			if (completion[i].p == p)
+			if (completion[i].p == p && completion[i].state == Completion::VALID)
 				return &completion[i];
 
 		return nullptr;
 	}
 
-	void submit(Usb::Packet_descriptor p) {
+	void submit(Usb::Packet_descriptor p)
+	{
+		Completion *c = dynamic_cast<Completion *>(p.completion);
+		Genode::log("SUBMIT: ", c->p);
 		usb_raw.source()->submit_packet(p); }
 
 	bool claim_interfaces() { return _claim_interfaces(); }
@@ -425,19 +469,22 @@ static void usb_host_cancel_packet(USBDevice *udev, USBPacket *p)
 {
 	USBHostDevice     *d = USB_HOST_DEVICE(udev);
 	Usb_host_device *dev = (Usb_host_device *)d->data;
-	Completion        *c = dev->find_completion(p);
-	c->state = Completion::CANCELED;
+	Completion        *c = dev->find_valid_completion(p);
+	Genode::log(__func__, " packet: ", p, " c ", c);
+	if (c)
+		c->state = Completion::CANCELED;
 }
 
 
 static void usb_host_handle_data(USBDevice *udev, USBPacket *p)
 {
-	USBHostDevice     *d = USB_HOST_DEVICE(udev);
-	Usb_host_device *dev = (Usb_host_device *)d->data;
-
-	Genode::size_t size   = 0;
-	int number_of_packets = 0;
-	Usb::Packet_descriptor::Type type = Usb::Packet_descriptor::BULK;
+	USBHostDevice               *d                  = USB_HOST_DEVICE(udev);
+	Usb_host_device             *dev                = (Usb_host_device *)d->data;
+	Genode::size_t               size               = 0;
+	Genode::size_t               packet_size        = 0;
+	int                          number_of_packets  = 0;
+	Usb::Packet_descriptor::Type type               = Usb::Packet_descriptor::BULK;
+	bool const                   in                 = p->pid == USB_TOKEN_IN;
 
 	switch (usb_ep_get_type(udev, p->pid, p->ep->nr)) {
 	case USB_ENDPOINT_XFER_BULK:
@@ -451,10 +498,21 @@ static void usb_host_handle_data(USBDevice *udev, USBPacket *p)
 		p->status = USB_RET_ASYNC;
 		break;
 	case USB_ENDPOINT_XFER_ISOC:
+
+	{
+		Isoc_packet *isoc = dev->isoc_packet();
+
+		if (isoc && in) {
+			Genode::log("copying ISOC");
+			usb_packet_copy(p, isoc->content, isoc->packet.transfer.actual_size);
+			dev->free_packet(isoc);
+		}
+	}
 		type      = Usb::Packet_descriptor::ISOC;
-		size      = p->iov.size;
 		/* FIXME: one per frame */
 		number_of_packets = 32;
+		packet_size       = p->iov.size;
+		size              = packet_size * number_of_packets;
 		warning("ISOC in: ", p->pid == USB_TOKEN_IN, " size: ", size, " host packets ");
 		break;
 	default:
@@ -462,7 +520,6 @@ static void usb_host_handle_data(USBDevice *udev, USBPacket *p)
 		break;
 	}
 
-	bool const in = p->pid == USB_TOKEN_IN;
 
 	try {
 		Usb::Packet_descriptor packet     = dev->alloc_packet(size);
@@ -470,6 +527,7 @@ static void usb_host_handle_data(USBDevice *udev, USBPacket *p)
 		packet.transfer.ep                = p->ep->nr | (in ? USB_DIR_IN : 0);
 		packet.transfer.polling_interval  = Usb::Packet_descriptor::DEFAULT_POLLING_INTERVAL;
 		packet.transfer.number_of_packets = number_of_packets;
+		packet.transfer.packet_size       = packet_size;
 
 		if (!in) {
 			char * const content = dev->usb_raw.source()->packet_content(packet);
@@ -481,6 +539,7 @@ static void usb_host_handle_data(USBDevice *udev, USBPacket *p)
 		c->dev        = udev;
 		c->data       = nullptr;
 
+		PDBG("submit: ", p, "  type: ", (int)packet.type, " packet offset: ", Genode::Hex(packet.offset()), " s: ", Genode::Hex(packet.size()), " completion: ", c);
 		dev->submit(packet);
 
 	} catch (...) {
@@ -541,6 +600,7 @@ static void usb_host_handle_control(USBDevice *udev, USBPacket *p,
 		Genode::memcpy(packet_content, data, length);
 	}
 
+	Genode::error("submit control: ", p, " type: ", (int)packet.type, " packet offset: ", Genode::Hex(packet.offset()), "  s: ", Genode::Hex(packet.size()), " completion: ", c);
 	dev->submit(packet);
 	p->status = USB_RET_ASYNC;
 }
