@@ -53,7 +53,7 @@ proc run_boot_dir {binaries} {
 	exec [cross_dev_prefix]objcopy -O elf32-i386 [run_dir]/genode/hypervisor [run_dir]/hypervisor
 	exec [cross_dev_prefix]strip [run_dir]/hypervisor
 
-	exec rm -rf [run_dir]/genode
+	remove_genode_dir
 
 	if {[have_include "image/iso"] || [have_include "image/disk"] || [have_include image/uefi]} {
 		#

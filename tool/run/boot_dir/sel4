@@ -43,7 +43,7 @@ proc run_boot_dir {binaries} {
 	# we can remove [run_dir]/genode after the core image has been built.
 	#
 	file copy -force [run_dir]/genode/sel4 [run_dir]/sel4
-	exec rm -r [run_dir]/genode
+	remove_genode_dir
 
 	if {[have_include "image/iso"] || [have_include "image/disk"] || [have_include image/uefi]} {
 		set serial_bender_opt ""

@@ -84,7 +84,7 @@ proc run_boot_dir_x86 {binaries} {
 	file copy -force [run_dir]/genode/foc           [run_dir]/kernel
 	file copy -force [run_dir]/genode/sigma0-foc    [run_dir]/sigma0
 	file copy -force [run_dir]/genode/bootstrap-foc [run_dir]/bootstrap
-	exec rm -r [run_dir]/genode
+	remove_genode_dir
 
 	if {[have_include "image/iso"] || [have_include "image/disk"]} {
 

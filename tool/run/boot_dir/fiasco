@@ -41,7 +41,7 @@ proc run_boot_dir {binaries} {
 	file copy -force [run_dir]/genode/fiasco           [run_dir]/kernel
 	file copy -force [run_dir]/genode/sigma0-fiasco    [run_dir]/sigma0
 	file copy -force [run_dir]/genode/bootstrap-fiasco [run_dir]/bootstrap
-	exec rm -r [run_dir]/genode
+	remove_genode_dir
 
 	if {[have_include "image/iso"] || [have_include "image/disk"]} {
 
