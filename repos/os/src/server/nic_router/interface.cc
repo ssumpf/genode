@@ -256,10 +256,15 @@ void Interface::_detach_from_domain_raw()
 }
 
 
-void Interface::_attach_to_domain(Domain_name const &domain_name)
+void Interface::attach_to_domain()
 {
-	_attach_to_domain_raw(_config().domains().find_by_name(domain_name));
-	attach_to_domain_finish();
+	try {
+		_attach_to_domain_raw(_config().domains().find_by_name(
+			_policy.determine_domain_name()));
+
+		attach_to_domain_finish();
+	}
+	catch (Domain_tree::No_match) { }
 }
 
 
@@ -1383,8 +1388,6 @@ Interface::Interface(Genode::Entrypoint     &ep,
 	_interfaces         { interfaces }
 {
 	_interfaces.insert(this);
-	try { _attach_to_domain(_policy.determine_domain_name()); }
-	catch (Domain_tree::No_match) { }
 }
 
 
