@@ -21,6 +21,7 @@
 #include <platform_thread.h>
 #include <platform.h>
 #include <core_env.h>
+#include <thread_collector.h>
 
 /* Fiasco includes */
 namespace Fiasco {
@@ -329,6 +330,8 @@ Platform_thread::Platform_thread(const char *name)
 
 Platform_thread::~Platform_thread()
 {
+	static Core::Thread_collector collector;
+
 	thread_cap_factory().free(_gate.local);
 
 	/*
@@ -337,4 +340,12 @@ Platform_thread::~Platform_thread()
 	 */
 	if (_platform_pd)
 		_platform_pd->unbind_thread(this);
+
+	/*
+	 * We keep a thread capability reference at the garbage collector
+	 * because when a thread gets destructed, which' timeslice is donated
+	 * to the core entrypoint, we regularily see problems including
+	 * kernel (kernel-debugger) not being responsive anymore.
+	 */
+	collector.add(_thread.local);
 }
