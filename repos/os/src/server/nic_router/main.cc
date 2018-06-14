@@ -38,13 +38,11 @@ class Net::Main
 		Timer::Connection               _timer          { _env };
 		Genode::Heap                    _heap           { &_env.ram(), &_env.rm() };
 		Genode::Attached_rom_dataspace  _config_rom     { _env, "config" };
-		Reference<Configuration>        _config         { _init_config() };
+		Reference<Configuration>        _config         { *new (_heap) Configuration { _config_rom.xml(), _heap } };
 		Signal_handler<Main>            _config_handler { _env.ep(), *this, &Main::_handle_config };
 		Root                            _root           { _env.ep(), _timer, _heap, _config(), _env.ram(), _interfaces, _env.rm()};
 
 		void _handle_config();
-
-		Configuration &_init_config();
 
 		template <typename FUNC>
 		void _for_each_interface(FUNC && functor)
@@ -65,23 +63,10 @@ class Net::Main
 };
 
 
-Configuration &Net::Main::_init_config()
-{
-	Configuration &dummy_config = *new (_heap)
-		Configuration(_config_rom.xml(), _heap);
-
-	Configuration &config = *new (_heap)
-		Configuration(_env, _config_rom.xml(), _heap, _timer, dummy_config,
-		              _interfaces);
-
-	destroy(_heap, &dummy_config);
-	return config;
-}
-
-
 Net::Main::Main(Env &env) : _env(env)
 {
 	_config_rom.sigh(_config_handler);
+	_handle_config();
 	env.parent().announce(env.ep().manage(_root));
 }
 
