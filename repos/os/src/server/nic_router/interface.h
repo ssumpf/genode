@@ -379,6 +379,8 @@ class Net::Interface : private Interface_list::Element
 
 		bool link_state() const;
 
+		void handle_link_state();
+
 
 		/***************
 		 ** Accessors **

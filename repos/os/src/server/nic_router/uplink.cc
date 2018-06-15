@@ -143,6 +143,5 @@ Net::Uplink_interface::Uplink_interface(Env                 &env,
 void Net::Uplink_interface::_handle_link_state()
 {
 	_link_state = link_state();
-	try { _interface.domain().discard_ip_config(); }
-	catch (Domain::Ip_config_static) { }
+	_interface.handle_link_state();
 }

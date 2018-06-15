@@ -28,6 +28,7 @@ using Genode::Deallocator;
 using Genode::size_t;
 using Genode::uint32_t;
 using Genode::log;
+using Genode::Exception;
 using Genode::construct_at;
 using Genode::Quota_guard;
 using Genode::Ram_quota;
@@ -268,6 +269,9 @@ void Interface::attach_to_domain()
 
 void Interface::attach_to_domain_finish()
 {
+	if (!link_state()) {
+		return; }
+
 	/* if domain has yet no IP config, participate in requesting one */
 	Domain &domain = _domain();
 	Ipv4_config const &ip_config = domain.ip_config();
@@ -759,6 +763,27 @@ void Interface::_send_icmp_dst_unreachable(Ipv4_address_prefix const &local_intf
 bool Interface::link_state() const
 {
 	return _domain.valid() && _session_link_state;
+}
+
+
+void Interface::handle_link_state()
+{
+	struct Keep_ip_config : Exception { };
+	try {
+		attach_to_domain_finish();
+
+		/* if the wholde domain became down, discard IP config */
+		Domain &domain_ = domain();
+		if (!link_state() && domain_.ip_config().valid) {
+			domain_.interfaces().for_each([&] (Interface &interface) {
+				if (interface.link_state()) {
+					throw Keep_ip_config(); }
+			});
+			domain_.discard_ip_config();
+		}
+	}
+	catch (Domain::Ip_config_static) { }
+	catch (Keep_ip_config) { }
 }
 
 
