@@ -51,11 +51,8 @@ extern "C" {
 
 	struct pthread_attr
 	{
-		void   *stack_addr;
-		size_t  stack_size;
-
-		pthread_attr() : stack_addr(nullptr),
-		                 stack_size(Libc::Component::stack_size()) { }
+		void   *stack_addr { nullptr };
+		size_t  stack_size { Libc::Component::stack_size() };
 	};
 
 	/*
