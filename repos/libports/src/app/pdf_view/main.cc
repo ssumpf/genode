@@ -188,6 +188,8 @@ class Pdf_view
 			typedef Nitpicker::Session::Command Command;
 			_nitpicker.enqueue<Command::Geometry>(
 				_view, Rect(Point(), Area(_nit_mode.width(), _nit_mode.height())));
+			_nitpicker.enqueue<Command::To_front>(_view, Nitpicker::Session::View_handle());
+			_nitpicker.execute();
 
 			show();
 		}
@@ -248,7 +250,6 @@ class Pdf_view
 
 		void _refresh()
 		{
-			_nitpicker.execute();
 			_framebuffer.refresh(0, 0, _nit_mode.width(), _nit_mode.height());
 
 			/* handle one sync signal only */
@@ -317,6 +318,7 @@ class Pdf_view
 		{
 			typedef Nitpicker::Session::Command Command;
 			_nitpicker.enqueue<Command::Title>(_view, msg);
+			_nitpicker.execute();
 		}
 
 		void show();
