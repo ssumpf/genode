@@ -167,9 +167,11 @@ inline void init_scan_code_set_1_0xe0()
 	scan_code_set_1_0xe0[0x1c] = Input::KEY_KPENTER;
 	scan_code_set_1_0xe0[0x1d] = Input::KEY_RIGHTCTRL;
 	scan_code_set_1_0xe0[0x20] = Input::KEY_MUTE;
+	scan_code_set_1_0xe0[0x2a] = Input::KEY_LEFTSHIFT; /* seen on Lenovo X250 */
 	scan_code_set_1_0xe0[0x2e] = Input::KEY_VOLUMEDOWN;
 	scan_code_set_1_0xe0[0x30] = Input::KEY_VOLUMEUP;
 	scan_code_set_1_0xe0[0x35] = Input::KEY_KPSLASH;
+	scan_code_set_1_0xe0[0x36] = Input::KEY_RIGHTSHIFT; /* seen on Lenovo X250 */
 	scan_code_set_1_0xe0[0x37] = Input::KEY_PRINT;
 	scan_code_set_1_0xe0[0x38] = Input::KEY_RIGHTALT;
 	scan_code_set_1_0xe0[0x46] = Input::KEY_PAUSE;     /* emitted if CTRL is pressed too */
