@@ -38,6 +38,10 @@ const char *asctimestamp(u32 stamp) { return "<sometime>"; }
 
 u32 make_timestamp() { return ~0; /* disarm key-creation time check */ }
 
+char * native_to_utf8(const char *s) { return s; }
+char * utf8_to_native(const char *string, size_t length, int delim) { return NULL; }
+
+void keydb_release (KEYDB_HANDLE hd) { }
 
 /***********************************************************
  ** Dummies that print a message when unexpectedly called **
@@ -76,19 +80,15 @@ DUMMY(char *, NULL, get_matching_datafile, (const char *sigfilename));
 DUMMY(gpg_error_t, 0, get_override_session_key, (DEK *dek, const char *string));
 DUMMY(void, , get_ownertrust_info, ());
 DUMMY(gpg_error_t, 0, get_session_key, (ctrl_t ctrl, PKT_pubkey_enc *k, DEK *dek));
-DUMMY(char*, NULL, get_user_id, (ctrl_t ctrl, u32 *keyid, size_t *rn));
-DUMMY(char*, NULL, get_user_id_native, (ctrl_t ctrl, u32 *keyid));
 DUMMY(void, , get_validity, ());
 DUMMY(void, , get_validity_info, ());
 DUMMY(void, , gpg_dirmngr_get_pka, ());
 DUMMY(int, 0, handle_compressed, (ctrl_t ctrl, void *ctx, PKT_compressed *cd, int (*callback)(iobuf_t, void *), void *passthru));
-DUMMY(int, 0, have_secret_key_with_kid, (u32 *keyid));
 DUMMY(void, , is_valid_mailbox, ());
 DUMMY(void, , keyserver_any_configured, ());
 DUMMY(void, , keyserver_import_fprint, ());
 DUMMY(void, , keyserver_import_keyid, ());
 DUMMY(void, , keyserver_import_wkd, ());
-DUMMY(void, , merge_keys_and_selfsig, (ctrl_t ctrl, kbnode_t keyblock));
 DUMMY(void, , parse_keyserver_uri, ());
 DUMMY(void, , parse_preferred_keyserver, ());
 DUMMY(void, , passphrase_clear_cache, (const char *cacheid));
@@ -100,13 +100,10 @@ DUMMY(void, , show_photos, ());
 DUMMY(struct notation *, NULL, sig_to_notation, (PKT_signature *sig));
 DUMMY(const char *, NULL, strtimestamp, (u32 stamp));
 DUMMY(void, , trust_value_to_string, ());
-DUMMY(char *, NULL, utf8_to_native, (const char *string, size_t length, int delim));
-DUMMY(int, 0, get_pubkey_byfprint, (ctrl_t ctrl, PKT_public_key *pk, kbnode_t *r_keyblock, const byte *fprint, size_t fprint_len));
 DUMMY(const char *, NULL, strtimevalue, (u32 stamp));
 DUMMY(char *, NULL, try_make_printable_string, (const void *p, size_t n, int delim));
 DUMMY(void, , zb32_encode, ());
 DUMMY(void, , image_type_to_string, ());
-DUMMY(int, 0, get_pubkey_fast, (PKT_public_key *pk, u32 *keyid));
 DUMMY(void, , parse_image_header, ());
 DUMMY(char *, NULL, make_outfile_name, (const char *iname));
 DUMMY(char *, NULL, ask_outfile_name, (const char *name, size_t namelen));

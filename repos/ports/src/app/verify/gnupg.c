@@ -34,55 +34,10 @@
 int g10_errors_seen = 0;
 
 
-enum Read_pubkey_result { READ_PUBKEY_OK,
-                          READ_PUBKEY_MISSING_FILE,
-                          READ_PUBKEY_INVALID_FORMAT };
-
-/**
- * Read public key into new packet
- *
- * The packet is allocated by this function and returned as 'packet_out_ptr'
- * whenever it returns with 'READ_PUBKEY_OK'.
- */
-static enum Read_pubkey_result
-read_pubkey_from_file(char const *pubkey_path, PACKET **packet_out_ptr)
-{
-	*packet_out_ptr = NULL;
-
-	/* set up parser context for parsing the public key data */
-	struct parse_packet_ctx_s parse_ctx;
-	memset(&parse_ctx, 0, sizeof(parse_ctx));
-
-	parse_ctx.inp = iobuf_open(pubkey_path);
-	if (!parse_ctx.inp)
-		return READ_PUBKEY_MISSING_FILE;
-
-	/* convert public key from ASCII-armored to binary representation */
-	armor_filter_context_t *afx = new_armor_context ();
-	push_armor_filter(afx, parse_ctx.inp);
-
-	/* parse public key data */
-	PACKET * const packet = xmalloc(sizeof(*packet));
-	memset(packet, 0, sizeof(*packet));
-	int const parse_ok = (parse_packet(&parse_ctx, packet) == 0);
-
-	release_armor_context(afx);
-	iobuf_close(parse_ctx.inp);
-
-	if (parse_ok && packet->pkt.public_key) {
-		*packet_out_ptr = packet;
-		return READ_PUBKEY_OK;
-	}
-
-	xfree(packet);
-	return READ_PUBKEY_INVALID_FORMAT;
-}
-
-
 /*
- * Emulation of a key ring with only one public key.
+ * Emulation of a key ring with only one keyblock.
  */
-static PACKET *_pubkey_packet;
+static kbnode_t _keyblock;
 
 
 
@@ -94,15 +49,6 @@ enum Gnupg_verify_result gnupg_verify_detached_signature(char const *pubkey_path
                                                          char const *data_path,
                                                          char const *sig_path)
 {
-	/*
-	 * Obtain pointer to public-key packet. The packet is allocated by
-	 * 'read_pubkey_from_file' and freed by 'verify_signatures'.
-	 */
-	switch (read_pubkey_from_file(pubkey_path, &_pubkey_packet)) {
-	case READ_PUBKEY_OK:              break;
-	case READ_PUBKEY_MISSING_FILE:    return GNUPG_VERIFY_PUBKEY_UNAVAILABLE;
-	case READ_PUBKEY_INVALID_FORMAT:  return GNUPG_VERIFY_PUBKEY_INVALID;
-	};
 
 	/*
 	 * Set up the GnuPG control context, which is normally the job of
@@ -112,6 +58,17 @@ enum Gnupg_verify_result gnupg_verify_detached_signature(char const *pubkey_path
 	memset(&control, 0, sizeof(control));
 	ctrl_t ctrl = &control;
 	ctrl->magic = SERVER_CONTROL_MAGIC;
+
+	/*
+	 * Parse pubkey file and store in global _keyblock.
+	 */
+	gpg_error_t err = read_key_from_file(ctrl, pubkey_path, &_keyblock);
+	if (err) {
+		if (gpg_err_code(err) == GPG_ERR_NO_PUBKEY)
+			return GNUPG_VERIFY_PUBKEY_UNAVAILABLE;
+
+		return GNUPG_VERIFY_PUBKEY_INVALID;
+	}
 
 	opt.quiet = 1; /* prevent disclaimer about key compliance */
 
@@ -124,29 +81,124 @@ enum Gnupg_verify_result gnupg_verify_detached_signature(char const *pubkey_path
 
 	/*
 	 * Call into GnuPG to verify the data with a detached signature. The
-	 * 'verify_signatures' function indirectly calls 'get_pubkey' and
-	 * 'get_pubkeyblock', which hand out our '_pubkey_packet'.
+	 * 'verify_signatures' function indirectly calls 'keydb_*' functions
+	 * implemented below.
 	 */
 	char *file_names[2] = { strdup(sig_path), strdup(data_path) };
-	int const err = verify_signatures(ctrl, 2, file_names);
+	err = verify_signatures(ctrl, 2, file_names);
 	for (unsigned i = 0; i < 2; i++)
 		free(file_names[i]);
+
+	log_debug(err, orig_errors_seen, g10_errors_seen);
 
 	return !err && (orig_errors_seen == g10_errors_seen) ? GNUPG_VERIFY_OK
 	                                                     : GNUPG_VERIFY_SIGNATURE_INVALID;
 }
 
+KEYDB_HANDLE keydb_new (void) { return (KEYDB_HANDLE)42; }
 
-int get_pubkey(ctrl_t ctrl, PKT_public_key *pk, u32 *keyid)
+gpg_error_t keydb_search (KEYDB_HANDLE hd, KEYDB_SEARCH_DESC *desc, size_t ndesc, size_t *descindex)
 {
-	copy_public_key(pk, _pubkey_packet->pkt.public_key);
-	pk->flags.valid = 1;
+	/* 
+	 * As we only store a global _keyblock, we also use a global handle.
+	 * This means, we also search perform the search in the global _keyblock.
+	 */
+
+	/* sanity check: check handle */
+	if (hd != (KEYDB_HANDLE)42) {
+		return -1;
+	}
+
+	/* check search modes */
+	unsigned n;
+	int need_kid = 0;
+	for (n=0; n < ndesc; n++)
+	{
+		if (desc[n].mode == KEYDB_SEARCH_MODE_SHORT_KID
+		 || desc[n].mode == KEYDB_SEARCH_MODE_LONG_KID) {
+			need_kid = 1;
+			break;
+		}
+	}
+
+	/* we expect to be called with a paritcular key id */
+	if (!need_kid) {
+		g10_errors_seen += 1;
+		return -1;
+	}
+
+	/* search for key id in keyblock */
+	kbnode_t k;
+	for (k = _keyblock; k; k = k->next) {
+
+		u32 aki[2]; /* key id buffer */
+		PKT_public_key *pk;
+
+		k->flag &= ~1;
+
+		if (   k->pkt->pkttype == PKT_PUBLIC_KEY
+		    || k->pkt->pkttype == PKT_PUBLIC_SUBKEY )
+		{
+			pk = k->pkt->pkt.public_key;
+			keyid_from_pk (pk, aki);
+		}
+		else {
+			continue;
+		}
+
+		for (n=0; n < ndesc; n++)
+		{
+			switch (desc[n].mode)
+			{
+				case KEYDB_SEARCH_MODE_SHORT_KID:
+					if (pk && desc[n].u.kid[1] == aki[1]) {
+						k->flag |= 1; /* mark this node (checked by 'finish_lookup') */
+						return 0;
+					}
+					break;
+				case KEYDB_SEARCH_MODE_LONG_KID:
+					if (pk && desc[n].u.kid[0] == aki[0]
+					       && desc[n].u.kid[1] == aki[1]) {
+						k->flag |= 1; /* mark this node (checked by 'finish_lookup') */
+						return 0;
+					}
+					break;
+				default:
+					break;
+			}
+		}
+	}
+
+	g10_errors_seen += 1;
+	return gpg_error(GPG_ERR_NO_PUBKEY);
+}
+
+
+gpg_error_t
+keydb_get_keyblock (KEYDB_HANDLE hd, KBNODE *ret_kb)
+{
+	/* sanity check: check handle */
+	if (hd != (KEYDB_HANDLE)42) {
+		return -1;
+	}
+
+	/* 
+	 * Copy all nodes in _keyblock as the caller will release these knodes.
+	 * It is important to copy the 'flag' attribute as well because this
+	 * stores the search result from 'keydb_search'.
+	 */
+
+	kbnode_t k;
+	*ret_kb = clone_kbnode(_keyblock);
+	(*ret_kb)->flag = _keyblock->flag;
+
+	if (_keyblock->next) {
+		for (k = _keyblock->next; k; k= k->next) {
+			kbnode_t copy = clone_kbnode(k);
+			copy->flag = k->flag;
+			add_kbnode(*ret_kb, copy);
+		}
+	}
+
 	return 0;
 }
-
-
-kbnode_t get_pubkeyblock(ctrl_t ctrl, u32 *keyid)
-{
-	return new_kbnode(_pubkey_packet);
-}
-
