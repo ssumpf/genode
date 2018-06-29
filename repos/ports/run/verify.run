@@ -36,6 +36,7 @@ install_config {
 			<verify path="expect_valid.txt"   pubkey="/dev/null"/>
 			<verify path="expect_valid.txt"   pubkey="/pubkey"/>
 			<verify path="expect_invalid.txt" pubkey="/pubkey"/>
+			<verify path="expect_subkey_valid.txt" pubkey="/subkey"/>
 		</config>
 	</start>
 </config>
@@ -62,5 +63,6 @@ compare_output_to {
 [init -> report_rom]   	<bad path="expect_valid.txt" reason="malformed public key"/>
 [init -> report_rom]   	<good path="expect_valid.txt"/>
 [init -> report_rom]   	<bad path="expect_invalid.txt" reason="bad signature"/>
+[init -> report_rom]   	<good path="expect_subkey_valid.txt"/>
 [init -> report_rom]   </result>
 }
