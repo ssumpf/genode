@@ -207,12 +207,6 @@ Thread::Thread(size_t weight, const char *name, size_t stack_size,
 	_join_lock(Lock::LOCKED)
 {
 	_init_platform_thread(weight, type);
-
-	if (_cpu_session) {
-		Dataspace_capability ds = _cpu_session->trace_control();
-		if (ds.valid())
-			_trace_control = env_deprecated()->rm_session()->attach(ds);
-	}
 }
 
 

@@ -71,6 +71,11 @@ void Thread::start()
 	if (!_cpu_session)
 		_cpu_session = env_deprecated()->cpu_session();
 
+	/* initialize trace control now that the CPU session must be valid */
+	Dataspace_capability ds = _cpu_session->trace_control();
+	if (ds.valid()) {
+		_trace_control = env_deprecated()->rm_session()->attach(ds); }
+
 	/* create thread at core */
 	addr_t const utcb = (addr_t)&_stack->utcb();
 	_thread_cap = _cpu_session->create_thread(env_deprecated()->pd_session_cap(), name(),
