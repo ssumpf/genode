@@ -86,7 +86,7 @@ class Cached_fs_rom::Rom_file final
 		/**
 		 * Dataspace to read into
 		 */
-		Attached_ram_dataspace _file_ds { _env.pd(), _env.rm(), _file_size };
+		Attached_ram_dataspace _file_ds { _env.pd(), _env.rm(), (size_t)_file_size };
 
 		/**
 		 * Read-only region map exposed as ROM module to the client
