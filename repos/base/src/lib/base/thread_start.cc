@@ -67,14 +67,7 @@ void Thread::_deinit_platform_thread()
 
 void Thread::start()
 {
-	/* if no CPU session is given, use it from the environment */
-	if (!_cpu_session)
-		_cpu_session = env_deprecated()->cpu_session();
-
-	/* initialize trace control now that the CPU session must be valid */
-	Dataspace_capability ds = _cpu_session->trace_control();
-	if (ds.valid()) {
-		_trace_control = env_deprecated()->rm_session()->attach(ds); }
+	_init_cpu_session_and_trace_control();
 
 	/* create thread at core */
 	addr_t const utcb = (addr_t)&_stack->utcb();

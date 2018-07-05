@@ -210,6 +210,19 @@ Thread::Thread(size_t weight, const char *name, size_t stack_size,
 }
 
 
+void Thread::_init_cpu_session_and_trace_control()
+{
+	/* if no CPU session is given, use it from the environment */
+	if (!_cpu_session) {
+		_cpu_session = env_deprecated()->cpu_session(); }
+
+	/* initialize trace control now that the CPU session must be valid */
+	Dataspace_capability ds = _cpu_session->trace_control();
+	if (ds.valid()) {
+		_trace_control = env_deprecated()->rm_session()->attach(ds); }
+}
+
+
 Thread::Thread(size_t weight, const char *name, size_t stack_size,
                Type type, Affinity::Location affinity)
 : Thread(weight, name, stack_size, type, nullptr, affinity) { }
