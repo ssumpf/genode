@@ -12,7 +12,7 @@ SRC_C := gnupg.c dummies.c
 SRC_C += verify.c armor.c iobuf.c stringhelp.c progress.c strlist.c \
          cpr.c status.c mainproc.c sig-check.c keyid.c kbnode.c parse-packet.c \
          misc.c logging.c compliance.c free-packet.c mdfilter.c plaintext.c \
-         seskey.c pkglue.c openpgp-oid.c getkey.c import.c xasprintf.c
+         seskey.c pkglue.c openpgp-oid.c
 
 CC_OPT += -DGPGRT_ENABLE_ES_MACROS \
           -DHAVE_ISASCII \
@@ -21,11 +21,7 @@ CC_OPT += -DGPGRT_ENABLE_ES_MACROS \
           -DGNUPG_NAME='"GnuPG"' \
           -DPRINTABLE_OS_NAME='"Genode"' \
           -DVERSION='"$(< $(GNUPG_SRC_DIR)/../VERSION)"' \
-          -DGPG_USE_RSA \
-          -DPK_UID_CACHE_SIZE='5'
-
-# ignore undefined references from gnupg because we compile lots of functions that are never called
-LD_OPT += --unresolved-symbols=ignore-in-object-files
+          -DGPG_USE_RSA
 
 CC_OPT_armor        += -Wno-pointer-sign
 CC_OPT_iobuf        += -Wno-pointer-sign
@@ -34,12 +30,6 @@ CC_OPT_progress     += -Wno-pointer-sign
 CC_OPT_mainproc     += -Wno-pointer-sign
 CC_OPT_sig-check    += -Wno-pointer-sign
 CC_OPT_parse-packet += -Wno-pointer-sign
-CC_OPT_getkey       += -Wno-pointer-sign
-CC_OPT_import       += -Wno-pointer-sign
-CC_OPT_plaintext    += -Wno-pointer-sign
-CC_OPT_openpgp-oid  += -Wno-pointer-sign
-CC_OPT_pkglue       += -Wno-pointer-sign
-CC_OPT_mdfilter     += -Wno-pointer-sign
 CC_OPT_misc         += -DSCDAEMON_NAME='"scdaemon"' -DEXTSEP_S='"."' -DPATHSEP_S='";"'
 
 vpath gnupg.c   $(PRG_DIR)
