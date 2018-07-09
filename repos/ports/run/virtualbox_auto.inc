@@ -23,10 +23,6 @@ if { [get_cmd_switch --autopilot] && [have_spec x86_32] } {
 	exit 0
 }
 
-if {[have_spec nova]} {
-	proc kernel_output { } { return "novga logmem" }
-}
-
 append build_components {
 	core init
 	server/part_blk
@@ -47,7 +43,6 @@ lappend_if [expr $use_ram_fs || $use_usb] build_components server/ram_fs
 lappend_if [expr $use_cpu_load] build_components app/trace_subject_reporter
 lappend_if [expr $use_cpu_load] build_components app/cpu_load_display
 lappend_if [expr $use_cpu_load] build_components app/top
-lappend_if [have_spec nova] build_components app/log_core
 
 source ${genode_dir}/repos/base/run/platform_drv.inc
 # override defaults of platform_drv.inc
@@ -110,27 +105,11 @@ append config {
 		</route>
 		<config>}
 append_if [expr $use_rumpfs] config {
-			<policy label_prefix="rump_fs" partition="4" writeable="yes"/>}
+			<policy label_prefix="rump_fs" partition="2" writeable="yes"/>}
 append_if [expr !$use_rumpfs] config {
 			<policy label_prefix="vbox1 -> raw" partition="3" writeable="yes"/>}
 append config {
 		</config>
-	</start>}
-
-append_if [have_spec nova] config {
-	<start name="log_kernel">
-		<binary name="log_core"/>
-		<resource name="RAM" quantum="10M"/>
-		<config period_ms="2000"/>
-		<route>
-			<service name="ROM" unscoped_label="log_core"> <parent/> </service>
-			<service name="ROM" unscoped_label="ld.lib.so"> <parent/> </service>
-			<service name="ROM" label="log"> <parent label="kernel_log"/> </service>
-			<service name="Timer"> <child name="timer"/> </service>
-			<service name="PD"> <parent/> </service>
-			<service name="CPU"> <parent/> </service>
-			<service name="LOG"> <parent/> </service>
-		</route>
 	</start>}
 
 append_if [expr $use_rumpfs] config {
@@ -142,7 +121,7 @@ append_if [expr $use_rumpfs] config {
 append_if [expr $use_rumpfs && $use_ram_fs && $use_overlay_from_disk] config {
 			<policy label_prefix="overlay_from_disk" root="/ram" writeable="no"/>}
 append_if [expr $use_rumpfs] config {
-			<default-policy root="/" writeable="no"/>
+			<default-policy root="/" writeable="yes"/>
 		</config>
 		<route>
 			<any-service><child name="part_blk"/> <parent/><any-child/></any-service>
@@ -258,7 +237,6 @@ append_if [expr $use_usb && [have_spec muen]] config {
 <config uhci="no" ehci="no" xhci="yes">}
 
 append_if [expr $use_usb] config {
-	<hid/>
 	<raw>
 		<report devices="yes"/>
 	</raw>
@@ -287,6 +265,8 @@ append_if [expr $use_usb] config {
 	<device vendor_id="0x046d" product_id="0xc00e"/> <!-- logitech mouse -->
 	<device vendor_id="0x0984" product_id="0x0066"/> <!-- lenovo DVDRW -->
 	<device vendor_id="0x174c" product_id="0x5106"/> <!-- delock SATA -->
+	<device vendor_id="0x046d" product_id="0x09c1"/> <!-- Logitech webcam -->
+	<device vendor_id="0x1395" product_id="0x0025"/> <!-- Sennheiser head-set -->
 </config>
 				</inline>
 			</content>
@@ -380,10 +360,9 @@ lappend_if [expr $use_vbox4] boot_modules $virtualbox_binary
 lappend_if [expr $use_vbox5] boot_modules $virtualbox5_binary
 lappend_if [expr $use_ram_fs || $use_usb] boot_modules ram_fs
 lappend_if [expr $use_ram_fs && !$use_overlay_from_disk] boot_modules $overlay_image
-lappend_if [expr $use_cpu_load] boot_modules trace_subject_reporter
-lappend_if [expr $use_cpu_load] boot_modules cpu_load_display
-lappend_if [expr $use_cpu_load] boot_modules top
-lappend_if [have_spec nova] boot_modules log_core
+lappend_if [expr    $use_cpu_load] boot_modules trace_subject_reporter
+lappend_if [expr    $use_cpu_load] boot_modules cpu_load_display
+lappend_if [expr    $use_cpu_load] boot_modules top
 
 # platform-specific modules
 lappend_if [expr         $use_ps2] boot_modules ps2_drv
