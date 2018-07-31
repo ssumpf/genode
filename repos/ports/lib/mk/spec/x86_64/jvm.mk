@@ -3,6 +3,8 @@ CC_OPT  = -DINCLUDE_SUFFIX_CPU=_x86 -DAMD64 -DHOTSPOT_LIB_ARCH='"amd64"'
 INC_DIR       = $(call select_from_ports,jdk)/src/app/jdk/hotspot/src/cpu/x86/vm
 JDK_GENERATED = $(call select_from_ports,jdk_generated)/src/app/jdk
 
+INC_DIR += $(HOTSPOT_BASE)/os_cpu/bsd_x86/vm
+
 SRC_CONE = cpu/x86/vm/c1_CodeStubs_x86.cpp \
            cpu/x86/vm/c1_FpuStackSim_x86.cpp \
            cpu/x86/vm/c1_FrameMap_x86.cpp \
