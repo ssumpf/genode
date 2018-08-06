@@ -14,27 +14,73 @@ extern "C" {
 
 #define WARN_NOT_IMPL Genode::warning(__func__, " not implemented (jvm)");
 
-typedef jlong load_long_func_t(volatile jlong*);
-load_long_func_t* os::atomic_load_long_func;
-
-typedef jint cmpxchg_func_t(jint, jint, volatile jint*);
-cmpxchg_func_t* os::atomic_cmpxchg_func;
-
-typedef jint  atomic_xchg_func_t(jint exchange_value, volatile jint *dest);
-atomic_xchg_func_t * os::atomic_xchg_func;
-
-typedef jlong cmpxchg_long_func_t(jlong, jlong, volatile jlong*);
-cmpxchg_long_func_t* os::atomic_cmpxchg_long_func;
-
-typedef jint  atomic_add_func_t(jint add_value, volatile jint *dest);
-atomic_add_func_t * os::atomic_add_func;
-
-typedef void store_long_func_t(jlong, volatile jlong*);
-store_long_func_t* os::atomic_store_long_func;
-
 size_t os::Posix::_vm_internal_thread_min_stack_allowed = 64 * K;
 size_t os::Posix::_compiler_thread_min_stack_allowed = 64 * K;
 size_t os::Posix::_java_thread_min_stack_allowed = 64 * K;
+
+
+/**********************
+ ** Atomic functions **
+ **********************/
+
+typedef jlong load_long_func_t(volatile jlong*);
+load_long_func_t* os::atomic_load_long_func = os::atomic_load_long_bootstrap;
+
+typedef void store_long_func_t(jlong, volatile jlong*);
+store_long_func_t* os::atomic_store_long_func = os::atomic_store_long_bootstrap;
+
+typedef jint cmpxchg_func_t(jint, jint, volatile jint*);
+cmpxchg_func_t* os::atomic_cmpxchg_func = os::atomic_cmpxchg_bootstrap;
+
+typedef jint  atomic_xchg_func_t(jint exchange_value, volatile jint *dest);
+atomic_xchg_func_t *os::atomic_xchg_func = os::atomic_xchg_bootstrap;
+
+typedef jlong cmpxchg_long_func_t(jlong, jlong, volatile jlong*);
+cmpxchg_long_func_t* os::atomic_cmpxchg_long_func = os::atomic_cmpxchg_long_bootstrap;
+
+typedef jint  atomic_add_func_t(jint add_value, volatile jint *dest);
+atomic_add_func_t * os::atomic_add_func = os::atomic_add_bootstrap;
+
+
+jlong os::atomic_load_long_bootstrap(volatile jlong *src)
+{
+	return __atomic_load_n(src, __ATOMIC_ACQUIRE);
+}
+
+
+void os::atomic_store_long_bootstrap(jlong val, volatile jlong *dest)
+{
+	__atomic_store_n(dest, val, __ATOMIC_ACQUIRE);
+}
+
+
+jint os::atomic_xchg_bootstrap(jint exchange_value, volatile jint *dest)
+{
+	return __atomic_exchange_n(dest, exchange_value, __ATOMIC_ACQUIRE);
+}
+
+
+jint os::atomic_cmpxchg_bootstrap(jint compare_value,
+                                  jint exchange_value,
+                                  volatile jint *dest)
+{
+	return __atomic_compare_exchange_n(dest, &compare_value, exchange_value, false, __ATOMIC_ACQUIRE, __ATOMIC_ACQUIRE);
+}
+
+
+jlong os::atomic_cmpxchg_long_bootstrap(jlong compare_value,
+                                        jlong exchange_value,
+                                        volatile jlong *dest)
+{
+	return __atomic_compare_exchange_n(dest, &compare_value, exchange_value, false, __ATOMIC_ACQUIRE, __ATOMIC_ACQUIRE);
+}
+
+
+jint os::atomic_add_bootstrap(jint add_value, volatile jint *dest)
+{
+	return __atomic_add_fetch(dest, add_value, __ATOMIC_ACQUIRE);
+}
+
 
 void os::print_context(outputStream* st, const void* context)
 {
