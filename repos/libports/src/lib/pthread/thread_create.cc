@@ -19,6 +19,7 @@
 #include <errno.h>
 #include <pthread.h>
 #include "thread.h"
+#include <base/debug.h>
 
 extern "C"
 {
@@ -33,6 +34,8 @@ extern "C"
 		                                   "pthread", nullptr,
 		                                   Genode::Affinity::Location());
 
+
+		PDBG("start ", start_routine);
 		if (!thread_obj)
 			return EAGAIN;
 

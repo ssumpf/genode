@@ -12,7 +12,7 @@ extern "C" {
 #include <os_bsd.hpp>
 
 
-#define WARN_NOT_IMPL Genode::warning(__func__, " not implemented (jvm)");
+#define WARN_NOT_IMPL Genode::warning(__func__, " not implemented (jvm_arm) from ", __builtin_return_address(0));
 
 size_t os::Posix::_vm_internal_thread_min_stack_allowed = 64 * K;
 size_t os::Posix::_compiler_thread_min_stack_allowed = 64 * K;
@@ -50,7 +50,7 @@ jlong os::atomic_load_long_bootstrap(volatile jlong *src)
 
 void os::atomic_store_long_bootstrap(jlong val, volatile jlong *dest)
 {
-	__atomic_store_n(dest, val, __ATOMIC_ACQUIRE);
+	__atomic_store_n(dest, val, __ATOMIC_RELEASE);
 }
 
 
@@ -64,7 +64,11 @@ jint os::atomic_cmpxchg_bootstrap(jint compare_value,
                                   jint exchange_value,
                                   volatile jint *dest)
 {
-	return __atomic_compare_exchange_n(dest, &compare_value, exchange_value, false, __ATOMIC_ACQUIRE, __ATOMIC_ACQUIRE);
+	bool exchanged = __atomic_compare_exchange_n(dest, &compare_value,
+	                                             exchange_value, false,
+	                                             __ATOMIC_ACQUIRE,
+	                                             __ATOMIC_ACQUIRE);
+	return exchanged ? 0 : 1;
 }
 
 
@@ -72,7 +76,11 @@ jlong os::atomic_cmpxchg_long_bootstrap(jlong compare_value,
                                         jlong exchange_value,
                                         volatile jlong *dest)
 {
-	return __atomic_compare_exchange_n(dest, &compare_value, exchange_value, false, __ATOMIC_ACQUIRE, __ATOMIC_ACQUIRE);
+	bool exchanged = __atomic_compare_exchange_n(dest, &compare_value,
+	                                             exchange_value, false,
+	                                             __ATOMIC_ACQUIRE,
+	                                             __ATOMIC_ACQUIRE);
+	return exchanged ? 0 : 1;
 }
 
 
@@ -121,8 +129,7 @@ char* os::non_memory_address_word()
 
 bool os::is_allocatable(size_t bytes)
 {
-	WARN_NOT_IMPL;
-	return false;
+	return true;
 }
 
 
@@ -210,12 +217,15 @@ address os::Bsd::ucontext_get_pc(const ucontext_t* uc)
 
 void VM_Version::get_os_cpu_info()
 {
-	WARN_NOT_IMPL;
+	static bool done = false;
+	if (done) return;
+
+	_arm_arch = 7;
 }
 
 void VM_Version::early_initialize()
 {
-	WARN_NOT_IMPL;
+	get_os_cpu_info();
 }
 
 

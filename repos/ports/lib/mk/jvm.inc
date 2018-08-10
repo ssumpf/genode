@@ -142,6 +142,7 @@ CC_OPT_share/vm/runtime/vm_version += $(JDK_VERSION) \
               -DDEBUG_LEVEL='"release"' -DHOTSPOT_VM_DISTRO='"OpenJDK"' \
               -DHOTSPOT_BUILD_USER='"genode"'
 
+CC_OPT_cpu/arm/vm/vm_version_arm_32 += -DKUSER_HELPER_VERSION_ADDR=0x0
 
 SRC_CC += $(SRC_CONE) $(SRC_CTWO) \
           os/bsd/dtrace/generateJvmOffsets.cpp \
