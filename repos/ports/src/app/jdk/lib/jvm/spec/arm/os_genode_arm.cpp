@@ -4,6 +4,7 @@ extern "C" {
 #include <stdlib.h>
 #include <signal.h>
 #include <pthread.h>
+#include <pthread_np.h>
 }
 
 #include <runtime/frame.inline.hpp>
@@ -68,7 +69,8 @@ jint os::atomic_cmpxchg_bootstrap(jint compare_value,
 	                                             exchange_value, false,
 	                                             __ATOMIC_ACQUIRE,
 	                                             __ATOMIC_ACQUIRE);
-	return exchanged ? 0 : 1;
+	//Genode::log(__func__, " called ", exchanged);
+	return exchanged ? compare_value : 0;;
 }
 
 
@@ -80,7 +82,7 @@ jlong os::atomic_cmpxchg_long_bootstrap(jlong compare_value,
 	                                             exchange_value, false,
 	                                             __ATOMIC_ACQUIRE,
 	                                             __ATOMIC_ACQUIRE);
-	return exchanged ? 0 : 1;
+	return exchanged ? compare_value : 0;
 }
 
 
@@ -161,31 +163,49 @@ frame os::fetch_frame_from_context(const void* ucVoid)
 }
 
 
-size_t os::current_stack_size()
-{
-	WARN_NOT_IMPL;
-	return 0;
-}
-
-
 void os::verify_stack_alignment()
 {
-	WARN_NOT_IMPL;
 }
 
 
 address os::current_stack_pointer()
 {
-	WARN_NOT_IMPL;
-	return 0;
+	address dummy = (address)&dummy;
+	return dummy;
+}
+
+
+size_t os::current_stack_size()
+{
+	pthread_attr_t attr;
+
+	pthread_attr_init(&attr);
+	pthread_attr_get_np(pthread_self(), &attr);
+
+	size_t size; void *addr;
+	pthread_attr_getstack(&attr, &addr, &size);
+
+	pthread_attr_destroy(&attr);
+
+	return size;
 }
 
 
 address os::current_stack_base()
 {
-	WARN_NOT_IMPL;
-	return 0;
+	pthread_attr_t attr;
+
+	pthread_attr_init(&attr);
+	pthread_attr_get_np(pthread_self(), &attr);
+
+	size_t size; void *addr;
+	pthread_attr_getstack(&attr, &addr, &size);
+
+	pthread_attr_destroy(&attr);
+
+	return (address)addr;
 }
+
 
 /**
  * POSIX
@@ -194,7 +214,7 @@ address os::current_stack_base()
 size_t os::Posix::default_stack_size(os::ThreadType thr_type)
 {
 	WARN_NOT_IMPL;
-	return 0;
+	return 64*1024;
 }
 
 

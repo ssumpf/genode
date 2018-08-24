@@ -256,7 +256,7 @@ void os::Bsd::initialize_system_info() {
   int mib[2];
   size_t len;
   int cpu_val;
-  julong mem_val;
+  julong mem_val = 0;
 
   // get processors count via hw.ncpus sysctl
   mib[0] = CTL_HW;
@@ -618,20 +618,23 @@ void os::Bsd::signal_sets_init() {
 // These are signals that are unblocked while a thread is running Java.
 // (For some reason, they get blocked by default.)
 sigset_t* os::Bsd::unblocked_signals() {
-  assert(signal_sets_initialized, "Not initialized");
+  //assert(signal_sets_initialized, "Not initialized");
+  Genode::warning(__func__, ": signal_sets_initialized Not initialized");
   return &unblocked_sigs;
 }
 
 // These are the signals that are blocked while a (non-VM) thread is
 // running Java. Only the VM thread handles these signals.
 sigset_t* os::Bsd::vm_signals() {
-  assert(signal_sets_initialized, "Not initialized");
+  //assert(signal_sets_initialized, "Not initialized");
+  Genode::warning(__func__, ": signal_sets_initialized Not initialized");
   return &vm_sigs;
 }
 
 // These are signals that are blocked during cond_wait to allow debugger in
 sigset_t* os::Bsd::allowdebug_blocked_signals() {
-  assert(signal_sets_initialized, "Not initialized");
+  //assert(signal_sets_initialized, "Not initialized");
+  Genode::warning(__func__,": signal_sets_initialized Not initialized");
   return &allowdebug_blocked_sigs;
 }
 
@@ -2215,17 +2218,8 @@ static bool bsd_mprotect(char* addr, size_t size, int prot) {
 // Set protections specified
 bool os::protect_memory(char* addr, size_t bytes, ProtType prot,
                         bool is_committed) {
-  unsigned int p = 0;
-  switch (prot) {
-  case MEM_PROT_NONE: p = PROT_NONE; break;
-  case MEM_PROT_READ: p = PROT_READ; break;
-  case MEM_PROT_RW:   p = PROT_READ|PROT_WRITE; break;
-  case MEM_PROT_RWX:  p = PROT_READ|PROT_WRITE|PROT_EXEC; break;
-  default:
-    ShouldNotReachHere();
-  }
-  // is_committed is unused.
-  return bsd_mprotect(addr, bytes, p);
+  NOT_IMPL;
+  return true;
 }
 
 bool os::guard_memory(char* addr, size_t size) {
@@ -4315,7 +4309,7 @@ class Genode::Vm_region_map
 
 	private:
 
-		enum { VM_SIZE = 384ul * 1024 * 1024 };
+		enum { VM_SIZE = 512ul * 1024 * 1024 };
 		Env               &_env;
 		Rm_connection      _rm_connection { _env };
 		Region_map_client  _rm { _rm_connection.create(VM_SIZE) };
@@ -4454,7 +4448,7 @@ class Genode::Vm_area_registry
 		{
 			if (base) {
 				Genode::error("vm_start set");
-				while(1);
+				return 0;
 			}
 			base = _rm.alloc_region(size, align);
 			Vm_area *vm = new (&_heap) Vm_area_handle(_registry, _env, _heap, _rm, base, size);
