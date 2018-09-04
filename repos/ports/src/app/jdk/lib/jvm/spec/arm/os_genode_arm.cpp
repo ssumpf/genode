@@ -203,7 +203,7 @@ address os::current_stack_base()
 
 	pthread_attr_destroy(&attr);
 
-	return (address)addr;
+	return (address)addr + size;
 }
 
 
