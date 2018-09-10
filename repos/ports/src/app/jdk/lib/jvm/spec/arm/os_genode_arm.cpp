@@ -65,12 +65,11 @@ jint os::atomic_cmpxchg_bootstrap(jint compare_value,
                                   jint exchange_value,
                                   volatile jint *dest)
 {
-	bool exchanged = __atomic_compare_exchange_n(dest, &compare_value,
-	                                             exchange_value, false,
-	                                             __ATOMIC_ACQUIRE,
-	                                             __ATOMIC_ACQUIRE);
-	//Genode::log(__func__, " called ", exchanged);
-	return exchanged ? compare_value : 0;;
+	__atomic_compare_exchange_n(dest, &compare_value,
+	                            exchange_value, false,
+	                            __ATOMIC_ACQUIRE,
+	                            __ATOMIC_ACQUIRE);
+	return compare_value;
 }
 
 
@@ -78,11 +77,11 @@ jlong os::atomic_cmpxchg_long_bootstrap(jlong compare_value,
                                         jlong exchange_value,
                                         volatile jlong *dest)
 {
-	bool exchanged = __atomic_compare_exchange_n(dest, &compare_value,
-	                                             exchange_value, false,
-	                                             __ATOMIC_ACQUIRE,
-	                                             __ATOMIC_ACQUIRE);
-	return exchanged ? compare_value : 0;
+	__atomic_compare_exchange_n(dest, &compare_value,
+	                            exchange_value, false,
+	                            __ATOMIC_ACQUIRE,
+	                            __ATOMIC_ACQUIRE);
+	return compare_value;
 }
 
 
