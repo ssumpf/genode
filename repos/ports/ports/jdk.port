@@ -7,7 +7,7 @@ URL(jdk)  := https://api.github.com/repos/dmlloyd/openjdk/tarball/$(VERSION)
 SHA(jdk)  := 46a6bfab37216a8726bb55ab11743536678810ae
 DIR(jdk)  := src/app/jdk
 
-PATCHES   := src/app/jdk/patches/jdk.patch
+PATCHES   := src/app/jdk/patches/jdk.patch src/app/jdk/pachtes/arm.patch
 PATCH_OPT := -p1 -d src/app/jdk
 
 # vi: set ft=make :
