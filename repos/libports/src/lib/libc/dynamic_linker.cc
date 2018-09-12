@@ -56,7 +56,7 @@ void *dlopen(const char *name, int mode)
 {
 	int supported = RTLD_LAZY | RTLD_NOW | RTLD_LOCAL | RTLD_GLOBAL | RTLD_NODELETE;
 
-	Genode::warning("dlopen ", name);
+//	Genode::warning("dlopen ", name);
 
 	/* error on unsupported mode values */
 	if (mode & ~supported) {
@@ -94,7 +94,7 @@ void *dlsym(void *handle, const char *name)
 		return nullptr;
 	}
 
-	Genode::warning("dlsym: ", name);
+//	Genode::warning("dlsym: ", name);
 
 	try {
 		if (handle == RTLD_DEFAULT) {
@@ -103,7 +103,7 @@ void *dlsym(void *handle, const char *name)
 			void *ptr =  Shared_object(*genode_env, global_alloc, nullptr,
 			                     Shared_object::BIND_LAZY,
 			                     Shared_object::KEEP).lookup(name);
-			Genode::warning("dlsym ", ptr);
+//			Genode::warning("dlsym ", ptr);
 			return ptr;
 		}
 
