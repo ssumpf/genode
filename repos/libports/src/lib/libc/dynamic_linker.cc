@@ -107,8 +107,7 @@ void *dlsym(void *handle, const char *name)
 			return ptr;
 		}
 
-		void *ptr =  to_object(handle)->lookup(name);
-		Genode::warning("dlsym2 ", ptr);
+		return to_object(handle)->lookup(name);
 	} catch (...) {
 		snprintf(err_str, MAX_ERR, "Symbol '%s' not found\n", name);
 	}
