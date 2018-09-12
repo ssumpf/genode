@@ -1,6 +1,6 @@
 source ${genode_dir}/repos/ports/run/api_key.inc
 
-proc check_config {bin xml_file xsd_file label avail_xsd_files nesting_level} { }
+proc check_config {bin xml_file xsd_file label avail_xsd_files xsd_inc nesting_level} { }
 
 set tap "tap0"
 set mkfs [installed_command mkfs.fat]
@@ -60,7 +60,7 @@ append_if [have_spec nit6_solox] config {
 		<config/>
 	</start>
 }
-append config {:
+append config {
 	<start name="nic_drv" caps="300">
 		<binary name="} [nic_drv_binary] {"/>
 		<resource name="RAM" quantum="64M" />
@@ -256,14 +256,13 @@ set boot_modules {
 	java jli.lib.so httpserver.tar
 	java.lib.so jvm.lib.so jzip.lib.so jimage.lib.so
 	libc.lib.so libm.lib.so zlib.lib.so nio.lib.so jnet.lib.so
-	posix.lib.so pthread.lib.so stdcxx.lib.so ffi.lib.so
+	pthread.lib.so stdcxx.lib.so vfs.lib.so
 	vfs_lxip.lib.so lxip.lib.so libc_pipe.lib.so
-	tzdb.dat
 
 	curl.lib.so libcrypto.lib.so libssh.lib.so libssl.lib.so
 	fetchurl
 
-	classes.tar dresden hamburg leipzig nuremberg
+	classes.tar dresden hamburg leipzig nuremberg tzdb.dat
 }
 
 append boot_modules [nic_drv_binary]
