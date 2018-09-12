@@ -2,8 +2,6 @@ LIBS       = libc zlib
 SHARED_LIB = yes
 JDK_BASE   = $(call select_from_ports,jdk)/src/app/jdk/jdk/src/java.base
 
-CC_OLEVEL = -O0
-
 SRC_C  = args.c \
          java.c \
          java_md_common.c \

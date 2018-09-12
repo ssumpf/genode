@@ -20,3 +20,25 @@ index 10a2408..b35d68f 100644
  
  #ifdef COMPILER2
    // C2 is only supported on v7+ VFP at this time
+
+diff --git a/hotspot/src/cpu/arm/vm/assembler_arm_32.hpp b/hotspot/src/cpu/arm/vm/assembler_arm_32.hpp
+index e32f6a9..2f1411e 100644
+--- a/hotspot/src/cpu/arm/vm/assembler_arm_32.hpp
++++ b/hotspot/src/cpu/arm/vm/assembler_arm_32.hpp
+@@ -1234,10 +1234,17 @@ extern int  __aeabi_dcmpgt(double, double);
+
+ // Imported code from glibc soft-fp bundle for
+ // calculation accuracy improvement. See CR 6757269.
++
++/*
+ extern double __aeabi_fadd_glibc(float, float);
+ extern double __aeabi_fsub_glibc(float, float);
+ extern double __aeabi_dadd_glibc(double, double);
+ extern double __aeabi_dsub_glibc(double, double);
++*/
++#define __aeabi_dadd_glibc __aeabi_dadd
++#define __aeabi_dsub_glibc __aeabi_dsub
++#define __aeabi_fadd_glibc __aeabi_fadd
++#define __aeabi_fsub_glibc __aeabi_fsub
+ };
+ #endif // __SOFTFP__

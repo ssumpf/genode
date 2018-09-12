@@ -1147,16 +1147,33 @@ size_t os::lasterror(char *buf, size_t len) {
 extern "C" pid_t pthread_tid(pthread_t thread);
 
 // Information of current thread in variety of formats
-pid_t os::Bsd::gettid()
-{
-	printf("%s: pid: %d\n", __PRETTY_FUNCTION__, pthread_tid(pthread_self()));
+pid_t os::Bsd::gettid() {
+  int retval = -1;
 
-	pid_t p = pthread_tid(pthread_self());
-	if (p < 0) {
-		printf("error gettid called outside of POSIX thread\n");
-	}
+#ifdef __APPLE__ //XNU kernel
+  // despite the fact mach port is actually not a thread id use it
+  // instead of syscall(SYS_thread_selfid) as it certainly fits to u4
+  retval = ::pthread_mach_thread_np(::pthread_self());
+  guarantee(retval != 0, "just checking");
+  return retval;
 
-	return p;
+#else
+  #ifdef __FreeBSD__
+  retval = syscall(SYS_thr_self);
+  #else
+    #ifdef __OpenBSD__
+  retval = syscall(SYS_getthrid);
+    #else
+      #ifdef __NetBSD__
+  retval = (pid_t) syscall(SYS__lwp_self);
+      #endif
+    #endif
+  #endif
+#endif
+
+  if (retval == -1) {
+    return getpid();
+  }
 }
 
 intx os::current_thread_id() {
@@ -1189,7 +1206,8 @@ int os::current_process_id() {
 #define JNI_LIB_PREFIX ""
 #ifdef __APPLE__
   #define JNI_LIB_SUFFIX ".dylib"
-#else
+#elif (defined __GENODE__)
+	#undef JNI_LIB_SUFFIX
   #define JNI_LIB_SUFFIX ".lib.so"
 #endif
 
@@ -4309,7 +4327,7 @@ class Genode::Vm_region_map
 
 	private:
 
-		enum { VM_SIZE = 512ul * 1024 * 1024 };
+		enum { VM_SIZE = (sizeof(long) == 8 ? 1512ul : 512ul) * 1024 * 1024 };
 		Env               &_env;
 		Rm_connection      _rm_connection { _env };
 		Region_map_client  _rm { _rm_connection.create(VM_SIZE) };

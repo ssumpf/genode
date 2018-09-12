@@ -5,8 +5,6 @@ JDK_GENERATED = $(call select_from_ports,jdk_generated)/src/app/jdk
 JAVA_BASE     = $(JDK_BASE)/share/native/libjava
 VERIFY_BASE   = $(JDK_BASE)/share/native/libverify
 
-CC_OLEVEL = -O0
-
 SRC_C  = $(notdir $(wildcard $(JAVA_BASE)/*.c))
 SRC_C += unix/native/libjava/canonicalize_md.c \
          unix/native/libjava/FileDescriptor_md.c \

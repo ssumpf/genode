@@ -80,7 +80,7 @@ set boot_modules {
 	java jli.lib.so hello.tar
 	java.lib.so jvm.lib.so jzip.lib.so jimage.lib.so
 	libc.lib.so libm.lib.so zlib.lib.so nio.lib.so jnet.lib.so
-	pthread.lib.so stdcxx.lib.so
+	vfs.lib.so pthread.lib.so stdcxx.lib.so
 	classes.tar
 }
 

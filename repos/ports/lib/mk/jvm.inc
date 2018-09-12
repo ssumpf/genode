@@ -2,13 +2,16 @@ LIBS         = stdcxx pthread jzip jimage nio jnet libc
 SHARED_LIB   = yes
 HOTSPOT_BASE = $(call select_from_ports,jdk)/src/app/jdk/hotspot/src
 
+CC_CXX_WARN_STRICT =
+
 include $(REP_DIR)/lib/mk/jdk_version.inc
 
-CC_OPT += -fpermissive -Wno-comment -Wno-reorder -Wno-switch -Wno-unused-variable
+CC_OPT += -fpermissive -Wno-comment -Wno-reorder -Wno-switch -Wno-unused-variable \
+          -Wno-delete-non-virtual-dtor -Wno-unused-function -Wno-format \
+          -Wno-unused-local-typedefs -Wno-unused-but-set-variable \
+          -Wno-parentheses
+
 CC_OPT += -D__GENODE__
-
-
-CC_OLEVEL = -O0
 
 ##XXX: may have to use our own
 CC_OPT += -DINCLUDE_SUFFIX_OS=_bsd -DTARGET_COMPILER_gcc -D_ALLBSD_SOURCE -DUSE_LIBRARY_BASED_TLS_ONLY \
