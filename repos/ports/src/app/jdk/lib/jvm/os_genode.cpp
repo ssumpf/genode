@@ -258,6 +258,7 @@ void os::Bsd::initialize_system_info() {
   int cpu_val;
   julong mem_val = 0;
 
+
   // get processors count via hw.ncpus sysctl
   mib[0] = CTL_HW;
   mib[1] = HW_NCPU;
@@ -4691,6 +4692,12 @@ static void construct_component(Libc::Env &env)
 		genode_argv = argv;
 		genode_envp = environ = envp;
 	});
+
+  /*
+   * From hotspot/src/share/vm/runtime/globals.hpp:
+   * We assume SMP because of Genode Linux and the necessary cmpxchg prefixes
+   */
+  AssumeMP = true;
 
 	exit(main(genode_argc, genode_argv, genode_envp));
 }

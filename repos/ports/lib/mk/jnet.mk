@@ -8,8 +8,10 @@ SRC_C = bsd_close.c \
         net_util_md.c \
         InetAddress.c \
         Inet4Address.c \
+        Inet4AddressImpl.c \
         Inet6Address.c \
         InetAddressImplFactory.c \
+        NetworkInterface.c \
         PlainSocketImpl.c
 
 INC_DIR += $(JDK_GENERATED)/include/java.base \
@@ -24,7 +26,8 @@ INC_DIR += $(JDK_GENERATED)/include/java.base \
            $(JDK_BASE)/unix/native/libnio
 
 CC_C_OPT = -D_ALLBSD_SOURCE -include netinet/in.h
-CC_OPT_net_util_md += -include sys/socket.h
+CC_OPT_net_util_md       += -include sys/socket.h
+CC_OPT_NetworkInterface  += -include sys/socket.h
 
 vpath %.c $(JDK_BASE)/unix/native/libnet
 vpath %.c $(JDK_BASE)/share/native/libnet

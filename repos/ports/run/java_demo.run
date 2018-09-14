@@ -61,14 +61,14 @@ append_if [have_spec nit6_solox] config {
 	</start>
 }
 append config {
-	<start name="nic_drv" caps="300">
+	<start name="nic_drv" caps="300" ld="no">
 		<binary name="} [nic_drv_binary] {"/>
-		<resource name="RAM" quantum="64M" />
+		<resource name="RAM" quantum="32M" />
 		<provides> <service name="Nic" /> </provides>
-		<config>}
+		<config ld_verbose="yes">}
 
-append_if [have_spec linux] config {
-			<nic tap="} $tap {"/> }
+#append_if [have_spec linux] config {
+#			<nic tap="} $tap {"/> }
 
 append_if [have_spec nit6_solox] config {
 			<card name="fec0" type="fsl,imx6sx-fec" mii="rgmii" phy="phy0" irq="150" mmio="0x2188000">
@@ -188,8 +188,8 @@ append config {
 	</start>
 -->
 
-	<start name="java" caps="300">
-		<resource name="RAM" quantum="96M" />
+	<start name="java" caps="500">
+		<resource name="RAM" quantum="256M" />
 		<route>
 			<service name="ROM" label="zip.lib.so">
 				<parent label="jzip.lib.so" />
@@ -204,7 +204,7 @@ append config {
 		<config ld_verbose="no">
 			<arg value="/bin/java" />
 			<arg value="-jar" />
-			<arg value="httpserver.jar" />
+			<arg value="servlet.jar" />
 			<libc stdin="/dev/null" stdout="/dev/log" stderr="/dev/log" rtc="/dev/rtc" socket="/dev/socket" />
 			<vfs>
 				<dir name="etc">
@@ -226,15 +226,21 @@ append config {
 					<dir name="server">
 						<rom name="jvm.lib.so" />
 					</dir>
+					<dir name="security">
+						<rom name="default.policy" />
+					</dir>
 					<rom name="tzdb.dat"/>
 				</dir>
 				<dir name="modules">
 					<tar name="classes.tar" />
 				</dir>
+				<dir name="var">
+					<dir name="tmp"> <ram/> </dir>
+				</dir>
 				<rom name="zip.lib.so" />
 				<rom name="nio.lib.so" />
 				<rom name="net.lib.so" />
-				<tar name="httpserver.tar"/>
+				<tar name="servlet.tar"/>
 			</vfs>
 		</config>
 	</start>
@@ -253,7 +259,7 @@ set boot_modules {
 
 	dynamic_rom vfs ram_fs fs_log
 
-	java jli.lib.so httpserver.tar
+	java jli.lib.so servlet.tar
 	java.lib.so jvm.lib.so jzip.lib.so jimage.lib.so
 	libc.lib.so libm.lib.so zlib.lib.so nio.lib.so jnet.lib.so
 	pthread.lib.so stdcxx.lib.so vfs.lib.so
@@ -263,6 +269,7 @@ set boot_modules {
 	fetchurl
 
 	classes.tar dresden hamburg leipzig nuremberg tzdb.dat
+	default.policy
 }
 
 append boot_modules [nic_drv_binary]

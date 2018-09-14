@@ -38,6 +38,19 @@ int getpwnam_r(const char *name, struct passwd *pwd,
 }
 
 
+extern "C" int getifaddrs(struct ifaddrs **pif)
+{
+	WARN_NOT_IMPL;
+	return -1;
+}
+
+
+extern "C" void freeifaddrs(struct ifaddrs *ifp)
+{
+	WARN_NOT_IMPL;
+}
+
+
 int mincore(const void *, size_t, char *)
 {
 	WARN_NOT_IMPL;
