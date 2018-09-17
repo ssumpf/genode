@@ -121,10 +121,13 @@
   #include <elf.h>
 #endif
 
-
+#if 0
 #define NOT_IMPL ({ \
- PDBG("called not implmemented\n"); \
+ PDBG("called not implmemented"); \
 })
+#else
+#define NOT_IMPL
+#endif
 
 extern "C" void backtrace();
 
