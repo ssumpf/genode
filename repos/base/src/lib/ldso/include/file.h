@@ -183,18 +183,32 @@ struct Linker::Elf_file : File
 	 */
 	void loadable_segments(Phdr &result)
 	{
+		bool dynamic = false;
 		for (unsigned i = 0; i < phdr.count; i++) {
 			Elf::Phdr *ph = &phdr.phdr[i];
+
+			if (ph->p_type == PT_DYNAMIC)
+				dynamic = true;
 
 			if (ph->p_type != PT_LOAD)
 				continue;
 
-			if (ph->p_align & (0x1000 - 1)) {
-				error("LD: Unsupported alignment ", (void *)ph->p_align);
+			if ((ph->p_offset & 0xfff) && ph->p_filesz > 0) {
+				error("LD: Unaligned segment offset ", (void *)ph->p_offset);
 				throw Incompatible();
 			}
 
 			result.phdr[result.count++] = *ph;
+		}
+
+		/*
+		 * Check for 'DYNAMIC' segment which should be present in all dynamic ELF
+		 * files.
+		 */
+		if (!dynamic) {
+			error("LD: ELF without DYNAMIC segment appears to be statically linked ",
+			      "(ld=\"no\")");
+			throw Incompatible();
 		}
 	}
 
