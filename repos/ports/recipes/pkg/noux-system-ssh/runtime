@@ -1,0 +1,37 @@
+<runtime ram="100M" caps="1000" binary="init" config="init.config">
+
+	<requires>
+		<nitpicker/>
+		<timer/>
+		<file_system label="config" writeable="yes"/>
+		<file_system label="report" writeable="no"/>
+		<file_system label="target" writeable="yes"/>
+		<file_system label="fonts"  writeable="no"/>
+		<rom label="vimrc"/>
+	</requires>
+
+	<content>
+		<rom label="bash-minimal.tar"/>
+		<rom label="coreutils-minimal.tar"/>
+		<rom label="init"/>
+		<rom label="init.config"/>
+		<rom label="ld.lib.so"/>
+		<rom label="libc.lib.so"/>
+		<rom label="libc_noux.lib.so"/>
+		<rom label="libc_pipe.lib.so"/>
+		<rom label="libcrypto.lib.so"/>
+		<rom label="libm.lib.so"/>
+		<rom label="libssh.lib.so"/>
+		<rom label="lxip.lib.so" />
+		<rom label="ncurses.lib.so"/>
+		<rom label="noux"/>
+		<rom label="posix.lib.so"/>
+		<rom label="pthread.lib.so"/>
+		<rom label="ssh_terminal"/>
+		<rom label="vfs.lib.so"/>
+		<rom label="vfs_lxip.lib.so"/>
+		<rom label="vim-minimal.tar"/>
+		<rom label="zlib.lib.so"/>
+	</content>
+
+</runtime>

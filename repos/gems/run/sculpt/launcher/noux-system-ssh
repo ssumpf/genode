@@ -1,0 +1,24 @@
+<launcher pkg="buildbot/pkg/noux-system-ssh/2018-10-24">
+	<route>
+		<service name="File_system" label="target">
+			<child name="default_fs_rw"/>
+		</service>
+		<service name="File_system" label="config">
+			<parent label="config"/>
+		</service>
+		<service name="File_system" label="report">
+			<parent label="report"/>
+		</service>
+		<service name="File_system" label="ssh">
+			<child name="ssh_fs"/>
+		</service>
+		<service name="ROM" label_last="vimrc">
+			<parent label="config -> vimrc"/>
+		</service>
+		<service name="RM"> <parent/> </service>
+		<service name="Nic">
+			<child name="nic_router"/>
+		</service>
+	</route>
+</launcher>
+

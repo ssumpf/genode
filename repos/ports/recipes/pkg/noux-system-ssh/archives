@@ -1,0 +1,15 @@
+_/raw/noux-system-ssh
+_/src/noux
+_/src/bash-minimal
+_/src/vim-minimal
+_/src/coreutils-minimal
+_/src/libc
+_/src/libcrypto
+_/src/libssh
+_/src/posix
+_/src/ncurses
+_/src/ssh_terminal
+_/src/init
+_/src/vfs
+_/src/vfs_lxip
+_/src/zlib
