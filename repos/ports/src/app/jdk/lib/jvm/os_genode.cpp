@@ -123,7 +123,7 @@
 
 
 #define NOT_IMPL ({ \
- PDBG("called not implmemented\n"); \
+ PDBG("called not implmemented"); \
 })
 
 extern "C" void backtrace();

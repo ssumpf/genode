@@ -65,7 +65,7 @@ append config {
 		<binary name="} [nic_drv_binary] {"/>
 		<resource name="RAM" quantum="32M" />
 		<provides> <service name="Nic" /> </provides>
-		<config ld_verbose="yes">}
+		<config ld_verbose="no">}
 
 #append_if [have_spec linux] config {
 #			<nic tap="} $tap {"/> }
@@ -188,7 +188,7 @@ append config {
 	</start>
 -->
 
-	<start name="java" caps="500">
+	<start name="java" caps="750">
 		<resource name="RAM" quantum="256M" />
 		<route>
 			<service name="ROM" label="zip.lib.so">
@@ -240,6 +240,7 @@ append config {
 				<rom name="zip.lib.so" />
 				<rom name="nio.lib.so" />
 				<rom name="net.lib.so" />
+				<rom name="management.lib.so" />
 				<tar name="servlet.tar"/>
 			</vfs>
 		</config>
@@ -259,9 +260,12 @@ set boot_modules {
 
 	dynamic_rom vfs ram_fs fs_log
 
-	java jli.lib.so servlet.tar
+	java jli.lib.so servlet.tar httpserver.tar
 	java.lib.so jvm.lib.so jzip.lib.so jimage.lib.so
 	libc.lib.so libm.lib.so zlib.lib.so nio.lib.so jnet.lib.so
+
+	management.lib.so
+
 	pthread.lib.so stdcxx.lib.so vfs.lib.so
 	vfs_lxip.lib.so lxip.lib.so libc_pipe.lib.so
 
