@@ -31,6 +31,7 @@
 
 /* libc-internal includes */
 #include <internal/call_func.h>
+#include <internal/signal.h>
 #include <base/internal/unmanaged_singleton.h>
 #include "vfs_plugin.h"
 #include "libc_init.h"
@@ -709,6 +710,8 @@ struct Libc::Kernel
 				if (_scheduled_select_handler)
 					_scheduled_select_handler->dispatch_select();
 			} else {
+				Libc::dispatch_pending_signals(_user_context);
+
 				if (_main_context())
 					_resume_main();
 				else
