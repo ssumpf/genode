@@ -1,4 +1,4 @@
-<launcher pkg="buildbot/pkg/noux-system-ssh/2018-10-24">
+<launcher pkg="noux-system-ssh">
 	<route>
 		<service name="File_system" label="target">
 			<child name="default_fs_rw"/>
