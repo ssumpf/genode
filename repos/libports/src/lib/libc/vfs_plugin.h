@@ -43,6 +43,20 @@ class Libc::Vfs_plugin : public Libc::Plugin
 
 		Vfs::File_system &_root_dir;
 
+		struct Tty_watch_handle;
+		using Tty_watch_handle_registry = Genode::Registry<Tty_watch_handle>;
+
+		struct Tty_watch_handle
+		{
+			typename Tty_watch_handle_registry::Element elem;
+			Vfs::Vfs_watch_handle &watch_handle;
+
+			Tty_watch_handle(Tty_watch_handle_registry &reg,
+			                 Vfs::Vfs_watch_handle &watch_handle)
+			: elem(reg, *this), watch_handle(watch_handle) { }
+		};
+		Tty_watch_handle_registry _tty_watch_handle_registry;
+
 		void _open_stdio(Genode::Xml_node const &node, char const *attr,
 		                 int libc_fd, unsigned flags)
 		{
@@ -73,6 +87,10 @@ class Libc::Vfs_plugin : public Libc::Plugin
 				 */
 				if (fd->fd_path) { Genode::warning("may leak former FD path memory"); }
 				fd->fd_path = strdup(path.string());
+
+				if (isatty(fd->libc_fd)) {
+					_install_tty_size_watcher(*fd);
+				}
 
 			} catch (Xml_node::Nonexistent_attribute) {
 				/*  fill the stdio number with a EBADF */
@@ -149,6 +167,8 @@ class Libc::Vfs_plugin : public Libc::Plugin
 
 			return result == Result::SYNC_OK ? 0 : Libc::Errno(EIO);
 		}
+
+		void _install_tty_size_watcher(Libc::File_descriptor &fd);
 
 	public:
 

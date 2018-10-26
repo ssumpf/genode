@@ -405,6 +405,9 @@ struct Libc::Watch_response_handler : Vfs::Watch_response_handler
 {
 	void handle_watch_response(Vfs::Vfs_watch_handle::Context *) override
 	{
+		Libc::submit_signal(Libc::Signal::SIG_WINCH);
+
+		Libc::resume_all();
 	}
 };
 

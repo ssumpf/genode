@@ -16,6 +16,7 @@
 /* Genode includes */
 #include <base/env.h>
 #include <base/log.h>
+#include <file_system/util.h>
 #include <vfs/dir_file_system.h>
 
 /* libc includes */
@@ -177,6 +178,33 @@ namespace Libc {
 	}
 
 }
+
+
+void Libc::Vfs_plugin::_install_tty_size_watcher(Libc::File_descriptor &fd)
+{
+	Vfs::Vfs_handle *handle = vfs_handle(&fd);
+
+	char const *base_path = File_system::basename(fd.fd_path);
+	Genode::String<64> winsize_path { "/.", base_path, "/window_size" };
+
+	Vfs::Vfs_watch_handle *watch_handle = nullptr;
+
+	using Watch_result = Vfs::Directory_service::Watch_result;
+	Watch_result res = handle->ds().watch(winsize_path.string(), &watch_handle, _alloc);
+	if (res != Watch_result::WATCH_OK) {
+		Genode::warning("could install TTY watch handle for ", fd.fd_path,
+		                " ", fd.libc_fd);
+		return;
+	}
+
+	try {
+		new (_alloc) Tty_watch_handle(_tty_watch_handle_registry, *watch_handle);
+	} catch (...) {
+		Genode::warning("could not register TTY watch handle, close handle");
+		handle->ds().close(watch_handle);
+	}
+}
+
 
 int Libc::Vfs_plugin::access(const char *path, int amode)
 {
