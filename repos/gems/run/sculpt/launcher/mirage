@@ -1,0 +1,6 @@
+<launcher ram="128M" pkg="ehmry/pkg/mirage_www/2018-10-26">
+       <route>
+               <service name="Nic"> <child name="nic_router"/> </service>
+               <service name="Rtc"> <parent/> </service>
+       </route>
+</launcher> 
