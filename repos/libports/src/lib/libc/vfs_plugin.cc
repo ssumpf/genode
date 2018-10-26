@@ -42,7 +42,7 @@
 #include "libc_errno.h"
 #include "task.h"
 
-static Genode::Lock &vfs_lock()
+Genode::Lock &Libc::vfs_lock()
 {
 	static Genode::Lock _vfs_lock;
 	return _vfs_lock;
@@ -50,7 +50,7 @@ static Genode::Lock &vfs_lock()
 
 
 #define VFS_THREAD_SAFE(code) ({ \
-	Genode::Lock::Guard g(vfs_lock()); \
+	Genode::Lock::Guard g(Libc::vfs_lock()); \
 	code; \
 })
 

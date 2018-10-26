@@ -32,7 +32,11 @@
 #include "libc_errno.h"
 
 
-namespace Libc { class Vfs_plugin; }
+namespace Libc {
+
+	class Vfs_plugin;
+	Genode::Lock &vfs_lock();
+}
 
 
 class Libc::Vfs_plugin : public Libc::Plugin
