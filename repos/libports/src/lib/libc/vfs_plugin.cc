@@ -814,7 +814,7 @@ int Libc::Vfs_plugin::ioctl(Libc::File_descriptor *fd, int request, char *argp)
 
 	case TIOCGWINSZ:
 		{
-			::winsize *winsize = (::winsize *)arg;
+			::winsize *winsize = (::winsize *)argp;
 			winsize->ws_row = out.tiocgwinsz.rows;
 			winsize->ws_col = out.tiocgwinsz.columns;
 			return 0;
