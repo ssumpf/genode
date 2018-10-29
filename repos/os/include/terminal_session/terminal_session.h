@@ -51,6 +51,11 @@ struct Terminal::Session : Genode::Session
 
 			unsigned columns() const { return _columns; }
 			unsigned lines()   const { return _lines; }
+
+			void print(Genode::Output &out) const
+			{
+				Genode::print(out, _columns, "x", _lines);
+			}
 	};
 
 	/**
