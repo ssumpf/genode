@@ -84,13 +84,30 @@ class Vfs::Readonly_value_file_system : public Vfs::Single_file_system
 			return Config(Genode::Cstring(buf));
 		}
 
+		struct Watch_handle;
+		using Watch_handle_registry = Genode::Registry<Watch_handle>;
+
+		struct Watch_handle : Vfs_watch_handle
+		{
+			typename Watch_handle_registry::Element elem;
+
+			Watch_handle(Watch_handle_registry &registry,
+			                     Vfs::File_system      &fs,
+			                     Allocator             &alloc)
+			: Vfs_watch_handle(fs, alloc), elem(registry, *this) { }
+		};
+
+		Watch_handle_registry _watch_handle_registry { };
+
+		Watch_response_handler &_watch_handler;
+
 	public:
 
-		Readonly_value_file_system(Name const &name, T const &initial_value)
+		Readonly_value_file_system(Vfs::Env &env, Name const &name, T const &initial_value)
 		:
 			Single_file_system(NODE_TYPE_CHAR_DEVICE, type(),
 			                   Xml_node(_config(name).string())),
-			_file_name(name)
+			_file_name(name), _watch_handler(env.watch_handler())
 		{
 			value(initial_value);
 		}
@@ -99,7 +116,14 @@ class Vfs::Readonly_value_file_system : public Vfs::Single_file_system
 
 		char const *type() override { return type_name(); }
 
-		void value(T const &value) { _buffer = Buffer(value); }
+		void value(T const &value)
+		{
+			_buffer = Buffer(value);
+
+			_watch_handle_registry.for_each([&] (Watch_handle &wh) {
+				_watch_handler.handle_watch_response(wh.context());
+			});
+		}
 
 		bool matches(Xml_node node) const
 		{
@@ -134,6 +158,29 @@ class Vfs::Readonly_value_file_system : public Vfs::Single_file_system
 			out.mode |= 0444;
 			out.size = _buffer.length();
 			return result;
+		}
+
+		Watch_result watch(char const      *path,
+		                   Vfs_watch_handle **handle,
+		                   Allocator        &alloc) override
+		{
+			if (!_single_file(path))
+				return WATCH_ERR_UNACCESSIBLE;
+
+			try {
+				Watch_handle *wh = new (alloc)
+					Watch_handle(_watch_handle_registry, *this, alloc);
+				*handle = wh;
+				return WATCH_OK;
+			}
+			catch (Genode::Out_of_ram)  { return WATCH_ERR_OUT_OF_RAM;  }
+			catch (Genode::Out_of_caps) { return WATCH_ERR_OUT_OF_CAPS; }
+		}
+
+		void close(Vfs_watch_handle *handle) override
+		{
+			if (handle && (&handle->fs() == this))
+				destroy(handle->alloc(), handle);
 		}
 };
 
