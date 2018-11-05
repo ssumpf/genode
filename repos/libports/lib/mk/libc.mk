@@ -17,7 +17,7 @@ SRC_CC = atexit.cc dummies.cc rlimit.cc sysctl.cc \
          pread_pwrite.cc readv_writev.cc poll.cc \
          libc_pdbg.cc vfs_plugin.cc rtc.cc dynamic_linker.cc signal.cc \
          socket_operations.cc task.cc socket_fs_plugin.cc syscall.cc \
-	getpwent.cc
+         getpwent.cc vfs_plugin_ioctl.cc
 
 #
 # Pthreads

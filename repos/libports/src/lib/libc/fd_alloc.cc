@@ -83,6 +83,9 @@ void File_descriptor_allocator::free(File_descriptor *fdo)
 {
 	Lock::Guard guard(_lock);
 	::free((void *)fdo->fd_path);
+	fdo->fd_path = 0;
+	::free((void *)fdo->ioctl_path);
+	fdo->ioctl_path = 0;
 	Allocator_avl_base::free(reinterpret_cast<void*>(fdo->libc_fd));
 }
 

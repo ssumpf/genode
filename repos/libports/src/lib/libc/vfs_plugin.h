@@ -202,6 +202,9 @@ class Libc::Vfs_plugin : public Libc::Plugin
 
 		~Vfs_plugin() final { }
 
+		Vfs::File_system &root_dir() { return _root_dir; }
+		Genode::Allocator &alloc()   { return _alloc; }
+
 		bool supports_access(const char *, int)                override { return true; }
 		bool supports_mkdir(const char *, mode_t)              override { return true; }
 		bool supports_open(const char *, int)                  override { return true; }

@@ -41,6 +41,7 @@ namespace Libc {
 	{
 		int             libc_fd = -1;
 		char     const *fd_path = 0;  /* for 'fchdir', 'fstat' */
+		char     const *ioctl_path = 0; /* for 'ioctl' */
 		Plugin         *plugin  = 0;
 		Plugin_context *context = 0;
 		int             flags   = 0;  /* for 'fcntl' */
