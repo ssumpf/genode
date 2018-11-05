@@ -6,7 +6,7 @@
  */
 
 /*
- * Copyright (C) 2013-2017 Genode Labs GmbH
+ * Copyright (C) 2013-2018 Genode Labs GmbH
  *
  * This file is part of the Genode OS framework, which is distributed
  * under the terms of the GNU Affero General Public License version 3.
@@ -17,12 +17,13 @@
 
 #include <base/allocator_avl.h>
 #include <block_session/connection.h>
-#include <vfs/single_file_system.h>
+#include <vfs/device_file_system.h>
+#include <vfs/readonly_value_file_system.h>
 
 namespace Vfs { class Block_file_system; }
 
 
-class Vfs::Block_file_system : public Single_file_system
+class Vfs::Block_file_system : public Device_file_system
 {
 	private:
 
@@ -60,7 +61,7 @@ class Vfs::Block_file_system : public Single_file_system
 		Block_file_system(Block_file_system const &);
 		Block_file_system &operator = (Block_file_system const &);
 
-		class Block_vfs_handle : public Single_vfs_handle
+		class Block_vfs_handle : public Device_vfs_handle
 		{
 			private:
 
@@ -164,7 +165,7 @@ class Vfs::Block_file_system : public Single_file_system
 				                 Genode::Signal_receiver           &signal_receiver,
 				                 Genode::Signal_context            &signal_context,
 				                 Genode::Signal_context_capability &source_submit_cap)
-				: Single_vfs_handle(ds, fs, alloc, 0),
+				: Device_vfs_handle(ds, fs, alloc, 0),
 				  _alloc(alloc),
 				  _label(label),
 				  _lock(lock),
@@ -333,11 +334,41 @@ class Vfs::Block_file_system : public Single_file_system
 				bool read_ready() { return true; }
 		};
 
+		using Config = Genode::String<256>;
+		static Config _dir_config(Genode::Xml_node node)
+		{
+			char buf[Config::capacity()] { };
+
+			Genode::Xml_generator xml(buf, sizeof(buf), "dir", [&] {
+
+				using Name = Genode::String<64>;
+				Name dir_name = node.attribute_value("name", Name(name()));
+
+				xml.attribute("name", Name(".", dir_name));
+
+				xml.node("readonly_value", [&] {
+					xml.attribute("name", "media_size");
+				});
+			});
+			return Config(Genode::Cstring(buf));
+		}
+
+		Readonly_value_file_system<Genode::uint64_t> _media_size_fs {
+			_env, "media_size", 0 };
+
+		Vfs::File_system *create(Vfs::Env &, Genode::Xml_node node) override
+		{
+			if (node.has_type(Readonly_value_file_system<Genode::uint64_t>::type_name())) {
+				return _media_size_fs.matches(node) ? &_media_size_fs : nullptr;
+			}
+			return nullptr;
+		}
+
 	public:
 
 		Block_file_system(Vfs::Env &env, Genode::Xml_node config)
 		:
-			Single_file_system(NODE_TYPE_BLOCK_DEVICE, name(), config),
+			Device_file_system(NODE_TYPE_BLOCK_DEVICE, name(), config),
 			_env(env),
 			_label(config.attribute_value("label", Label())),
 			_block_buffer(0),
@@ -347,6 +378,8 @@ class Vfs::Block_file_system : public Single_file_system
 			_writeable(false),
 			_source_submit_cap(_signal_receiver.manage(&_signal_context))
 		{
+			Device_file_system::construct(env, Genode::Xml_node(_dir_config(config).string()), *this);
+
 			try { config.attribute("block_buffer_count").value(&_block_buffer_count); }
 			catch (...) { }
 
@@ -358,6 +391,8 @@ class Vfs::Block_file_system : public Single_file_system
 			_block_buffer = new (_env.alloc()) char[_block_buffer_count * _block_size];
 
 			_block.tx_channel()->sigh_ready_to_submit(_source_submit_cap);
+
+			_media_size_fs.value(_block_count * _block_size);
 		}
 
 		~Block_file_system()
@@ -365,6 +400,8 @@ class Vfs::Block_file_system : public Single_file_system
 			_signal_receiver.dissolve(&_signal_context);
 
 			destroy(_env.alloc(), _block_buffer);
+
+			Device_file_system::destruct();
 		}
 
 		static char const *name()   { return "block"; }
@@ -378,34 +415,39 @@ class Vfs::Block_file_system : public Single_file_system
 		                 Vfs_handle **out_handle,
 		                 Allocator   &alloc) override
 		{
-			if (!_single_file(path))
-				return OPEN_ERR_UNACCESSIBLE;
-
 			try {
-				*out_handle = new (alloc) Block_vfs_handle(*this, *this, alloc,
-				                                           _label, _lock,
-				                                           _block_buffer,
-				                                           _block_buffer_count,
-				                                           _tx_block_alloc,
-				                                           _block,
-				                                           _block_size,
-				                                           _block_count,
-				                                           _block_ops,
-				                                           _tx_source,
-				                                           _readable,
-				                                           _writeable,
-				                                           _signal_receiver,
-				                                           _signal_context,
-				                                           _source_submit_cap);
-				return OPEN_OK;
+				if (!_device_file(path)) {
+					*out_handle = new (alloc) Block_vfs_handle(*this, *this, alloc,
+					                                           _label, _lock,
+					                                           _block_buffer,
+					                                           _block_buffer_count,
+					                                           _tx_block_alloc,
+					                                           _block,
+					                                           _block_size,
+					                                           _block_count,
+					                                           _block_ops,
+					                                           _tx_source,
+					                                           _readable,
+					                                           _writeable,
+					                                           _signal_receiver,
+					                                           _signal_context,
+					                                           _source_submit_cap);
+					return OPEN_OK;
+				} else
+
+				if (_device_dir_file(path)) {
+					return Device_file_system::open(path, 0, out_handle, alloc);
+				}
 			}
 			catch (Genode::Out_of_ram)  { return OPEN_ERR_OUT_OF_RAM; }
 			catch (Genode::Out_of_caps) { return OPEN_ERR_OUT_OF_CAPS; }
+
+			return OPEN_ERR_UNACCESSIBLE;
 		}
 
 		Stat_result stat(char const *path, Stat &out) override
 		{
-			Stat_result const result = Single_file_system::stat(path, out);
+			Stat_result const result = Device_file_system::stat(path, out);
 			out.size = _block_count * _block_size;
 			return result;
 		}
@@ -418,25 +460,6 @@ class Vfs::Block_file_system : public Single_file_system
 		Ftruncate_result ftruncate(Vfs_handle *, file_size) override
 		{
 			return FTRUNCATE_OK;
-		}
-
-		Ioctl_result ioctl(Vfs_handle *, Ioctl_opcode opcode, Ioctl_arg,
-		                   Ioctl_out &out) override
-		{
-			switch (opcode) {
-			case IOCTL_OP_DIOCGMEDIASIZE:
-
-				out.diocgmediasize.size = _block_count * _block_size;
-				return IOCTL_OK;
-
-			default:
-
-				Genode::warning("invalid ioctl request ", (int)opcode);
-				break;
-			}
-
-			/* never reached */
-			return IOCTL_ERR_INVALID;
 		}
 };
 
