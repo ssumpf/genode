@@ -1,0 +1,137 @@
+assert_spec x86
+
+#
+# Check used commands
+#
+
+set wget [installed_command wget]
+
+#
+# Configure
+#
+
+set use_mixer 0
+
+#
+# Build
+#
+
+set build_components {
+	core init
+	drivers/timer
+	drivers/audio
+	test/vfs_oss
+	lib/vfs/oss
+}
+
+lappend_if $use_mixer build_components server/mixer
+
+source ${genode_dir}/repos/base/run/platform_drv.inc
+append_platform_drv_build_components
+
+build $build_components
+
+create_boot_directory
+
+#
+# Config
+#
+
+append config {
+<config>
+	<parent-provides>
+		<service name="ROM"/>
+		<service name="IRQ"/>
+		<service name="IO_MEM"/>
+		<service name="IO_PORT"/>
+		<service name="PD"/>
+		<service name="RM"/>
+		<service name="CPU"/>
+		<service name="LOG"/>
+	</parent-provides>
+	<default-route>
+		<any-service> <parent/> <any-child/> </any-service>
+	</default-route>
+	<default caps="100"/>
+	<start name="timer">
+		<resource name="RAM" quantum="1M"/>
+		<provides><service name="Timer"/></provides>
+	</start>}
+
+append_platform_drv_config
+
+append_if $use_mixer config {
+	<start name="mixer">
+		<resource name="RAM" quantum="2M"/>
+		<provides><service name="Audio_out"/></provides>
+		<route>
+			<service name="Audio_out"> <child name="audio_drv"/> </service>
+			<any-service> <parent/> <any-child/> </any-service>
+		</route>
+	</start>}
+
+append config {
+	<start name="audio_drv" ld="yes">
+		<binary name="} [audio_drv_binary] {"/>
+		<resource name="RAM" quantum="8M"/>
+		<provides> <service name="Audio_out"/> </provides>
+		<config />
+	</start>
+
+	<start name="test-vfs_oss">
+		<resource name="RAM" quantum="16M"/>
+		<config>
+			<vfs>
+				<dir name="dev"> <log/> <oss name="dsp"/> </dir>
+			</vfs>
+			<libc stdout="/dev/log" stderr="/dev/log"/>
+		</config>
+		<route>}
+append_if $use_mixer config {
+			<service name="Audio_out"><child name="mixer"/></service>}
+append config {
+			<any-service><parent/><any-child/></any-service>
+		</route>
+	</start>
+</config>}
+
+install_config $config
+
+
+#
+# Get sample file
+#
+
+if {[info exists env(GENODE_SAMPLE_RAW)]} {
+	catch { exec $wget $::env(GENODE_SAMPLE_RAW) -O bin/sample.raw }
+}
+
+if {![file exists bin/sample.raw]} {
+	puts ""
+	puts "The sample file is missing. Please take a look at"
+	puts "repos/dde_bsd/README, create 'sample.raw' and put"
+	puts "the file into './bin'. afterwards"
+	puts ""
+	exit 1
+}
+
+#
+# Boot modules
+#
+
+append boot_modules {
+	core ld.lib.so init timer } [audio_drv_binary] {
+	libc.lib.so libm.lib.so posix.lib.so
+	vfs.lib.so vfs_oss.lib.so
+	test-vfs_oss sample.raw
+}
+
+lappend_if $use_mixer boot_modules mixer
+
+append_platform_drv_boot_modules
+
+build_boot_image $boot_modules
+
+append qemu_args "  -nographic -soundhw es1370 "
+
+run_genode_until forever
