@@ -29,6 +29,7 @@
 #include <sys/mman.h>
 #include <sys/ioctl.h>
 #include <sys/disk.h>
+#include <sys/soundcard.h>
 #include <dlfcn.h>
 
 /* libc plugin interface */
@@ -74,22 +75,81 @@ namespace Util {
 	}
 
 	bool read_file(Genode::Allocator &alloc, Vfs::File_system &root,
-	               char const *path, char *buffer, size_t buffer_len)
+	               char const *path, char *buf, size_t buf_len)
 	{
-			Vfs::Vfs_handle *handle = 0;
-			typedef Vfs::Directory_service::Open_result Dir_result;
-			typedef Vfs::File_io_service::Read_result File_result;
+		Vfs::Vfs_handle *handle = 0;
+		typedef Vfs::Directory_service::Open_result Dir_result;
+		typedef Vfs::File_io_service::Read_result File_result;
 
-			Dir_result dres = VFS_THREAD_SAFE(root.open(path, O_RDONLY, &handle, alloc));
-			if (dres != Dir_result::OPEN_OK) { return false; }
+		Dir_result dres = VFS_THREAD_SAFE(root.open(path, O_RDONLY, &handle, alloc));
+		if (dres != Dir_result::OPEN_OK) { return false; }
 
-			Vfs::file_size out_count = 0;
-			File_result fres = VFS_THREAD_SAFE(handle->fs().complete_read(handle, buffer,
-			                                   buffer_len - 1, out_count));
-			handle->close();
-			buffer[out_count] = 0;
+		typedef Vfs::File_io_service::Read_result Result;
 
-			return fres == File_result::READ_OK;
+		{
+			struct Check : Libc::Suspend_functor
+			{
+				bool             retry { false };
+
+				Vfs::Vfs_handle *handle;
+				::size_t         count;
+
+				Check(Vfs::Vfs_handle *handle, ::size_t count)
+				: handle(handle), count(count) { }
+
+				bool suspend() override
+				{
+					retry = !VFS_THREAD_SAFE(handle->fs().queue_read(handle, count));
+					return retry;
+				}
+			} check (handle, buf_len - 1);
+
+			do {
+				Libc::suspend(check);
+			} while (check.retry);
+		}
+
+		Vfs::file_size out_count = 0;
+		Result         out_result;
+
+		{
+			struct Check : Libc::Suspend_functor
+			{
+				bool             retry { false };
+
+				Vfs::Vfs_handle *handle;
+				void            *buf;
+				::size_t         count;
+				Vfs::file_size  &out_count;
+				Result          &out_result;
+
+				Check(Vfs::Vfs_handle *handle, void *buf, ::size_t count,
+					  Vfs::file_size &out_count, Result &out_result)
+				: handle(handle), buf(buf), count(count), out_count(out_count),
+				  out_result(out_result) { }
+
+				bool suspend() override
+				{
+					out_result = VFS_THREAD_SAFE(handle->fs().complete_read(handle, (char *)buf,
+					                            count, out_count));
+					/* suspend me if read is still queued */
+					retry = (out_result == Result::READ_QUEUED);
+					return retry;
+				}
+			} check (handle, buf, buf_len - 1, out_count, out_result);
+
+			do {
+				Libc::suspend(check);
+			} while (check.retry);
+		}
+
+		/* wake up threads blocking for 'queue_*()' or 'write()' */
+		Libc::resume_all();
+
+		handle->close();
+		buf[out_count] = 0;
+
+		return out_result == File_result::READ_OK;
 	}
 } /* anonymous namespace */
 
@@ -124,16 +184,16 @@ static int terminal_ioctl(Genode::Allocator &alloc, Vfs::File_system &root,
 
 	char buffer[4096];
 
-	/* XXX handle ENOTTY? */
+	Util::Ioctl_path const file { dir, "/window_size" };
+	if (!Util::read_file(alloc, root, file.string(),
+	                     buffer, sizeof(buffer))) {
+		return Libc::Errno(ENOTTY);
+	}
+
 	if (request == TIOCSETAW) {
 		/* do nothing */
 		return 0;
-	}
-
-	Util::Ioctl_path const file { dir, "/window_size" };
-	bool const read_ok = Util::read_file(alloc, root, file.string(),
-	                                     buffer, sizeof(buffer));
-	if (!read_ok) { return Libc::Errno(ENOTTY); }
+	} else
 
 	if (request == TIOCGWINSZ) {
 
@@ -177,13 +237,14 @@ static int block_ioctl(Genode::Allocator &alloc, Vfs::File_system &root,
 	if (request == DIOCGMEDIASIZE && argp) {
 
 		Util::Ioctl_path const file { dir, "/media_size" };
-		bool const read_ok = Util::read_file(alloc, root, file.string(),
-		                                     buffer, sizeof(buffer));
-		if (!read_ok) { return Libc::Errno(EINVAL); }
+		if (!Util::read_file(alloc, root, file.string(),
+		                     buffer, sizeof(buffer))) {
+			return Libc::Errno(EINVAL);
+		}
 
 		using Genode::int64_t;
 
-		int64_t size = strtoull(buffer, nullptr, 10);
+		int64_t size = strtoull(buffer, NULL, 10);
 		if (size > 0 && (Genode::uint64_t)size != ULLONG_MAX) {
 			int64_t *disk_size = (int64_t*)argp;
 			*disk_size = size;
@@ -195,24 +256,147 @@ static int block_ioctl(Genode::Allocator &alloc, Vfs::File_system &root,
 }
 
 
+static int audio_ioctl(Genode::Allocator &alloc, Vfs::File_system &root,
+                       char const *dir, unsigned request, char *argp)
+{
+	char buffer[4096];
+
+	/*
+	 * Normally used to request the number of channels, we just check if
+	 * if number is equal to the available number.
+	 */
+	if (request == SNDCTL_DSP_CHANNELS && argp) {
+
+		Util::Ioctl_path const file { dir, "/channels" };
+		if (!Util::read_file(alloc, root, file.string(),
+		                     buffer, sizeof(buffer))) {
+			return Libc::Errno(EINVAL);
+		}
+
+		int const num_channels   = *(int const*)argp;
+		int const avail_channels = atoi(buffer);
+		if (num_channels != avail_channels) {
+			return Libc::Errno(ENOTSUP);
+		}
+
+		return 0;
+	} else
+
+	if (request == SNDCTL_DSP_SAMPLESIZE && argp) {
+
+		int const fmt = *(int const*)argp;
+		/* only support format currently */
+		return fmt == AFMT_S16_LE ? 0 : Libc::Errno(ENOTSUP);
+	} else
+
+	if (request == SNDCTL_DSP_SPEED && argp) {
+
+		Util::Ioctl_path const file { dir, "/sample_rate" };
+		if (!Util::read_file(alloc, root, file.string(),
+		                     buffer, sizeof(buffer))) {
+			return Libc::Errno(EINVAL);
+		}
+
+		int const speed = *(int const*)argp;
+		int const rate  = atoi(buffer);
+
+		return speed == rate ? 0 : Libc::Errno(ENOTSUP);
+	} else
+
+	if (request == SNDCTL_DSP_SETFRAGMENT && argp) {
+
+		int frag_size = 0, frag_size_log2 = 0;
+		{
+			Util::Ioctl_path const file { dir, "/frag_size" };
+			if (!Util::read_file(alloc, root, file.string(),
+			                     buffer, sizeof(buffer))) {
+				return Libc::Errno(EINVAL);
+			}
+			frag_size = atoi(buffer);
+		}
+
+		if (frag_size > 0) {
+			frag_size_log2 = Genode::log2(frag_size);
+		}
+
+		/* XXX total */
+		int total = 0;
+		{
+			Util::Ioctl_path const file { dir, "/queue_size" };
+			if (!Util::read_file(alloc, root, file.string(),
+			                     buffer, sizeof(buffer))) {
+				return Libc::Errno(EINVAL);
+			}
+			total = atoi(buffer);
+		}
+
+		if (!total || !frag_size_log2) {
+			return Libc::Errno(ENOTSUP);
+		}
+
+		*argp = ((unsigned)total << 16)|frag_size_log2;
+		return 0;
+	} else
+
+	if (request == SNDCTL_DSP_POST) {
+		/* do nothing, buffer will be drained eventually */
+		return 0;
+	} else
+
+	if (request == SNDCTL_DSP_GETOSPACE && argp) {
+
+		int frag_size = 0;
+		{
+			Util::Ioctl_path const file { dir, "/frag_size" };
+			if (!Util::read_file(alloc, root, file.string(),
+			                     buffer, sizeof(buffer))) {
+				return Libc::Errno(EINVAL);
+			}
+			frag_size = atoi(buffer);
+		}
+
+		int frag_avail = 0;
+		{
+			Util::Ioctl_path const file { dir, "/frag_avail" };
+			if (!Util::read_file(alloc, root, file.string(),
+			                     buffer, sizeof(buffer))) {
+				return Libc::Errno(EINVAL);
+			}
+			frag_avail = atoi(buffer);
+		}
+
+		if (!frag_avail || !frag_size) {
+			return Libc::Errno(ENOTSUP);
+		}
+
+		audio_buf_info *bi = (audio_buf_info*)argp;
+		bi->fragments = frag_avail;
+		bi->fragsize  = frag_size;
+		bi->bytes     = frag_size * frag_avail;
+
+		return 0;
+	}
+
+	return Libc::Errno(EINVAL);
+}
+
+
 int Libc::Vfs_plugin::ioctl(Libc::File_descriptor *fd, int request, char *argp)
 {
-	/*
-	 * Only fds with fd_path set can be used for ioctl.
-	 */
 	if (!fd->ioctl_path) {
 
+		/* only fd's with an fd_path can be used for ioctl requests */
 		Util::Ioctl_path const &ioctl_dir = Util::construct_ioctl_path(fd->fd_path);
 		if (!ioctl_dir.valid() ||
 			!VFS_THREAD_SAFE(_root_dir.directory(ioctl_dir.string()))) {
 			return Libc::Errno(EINVAL);
 		}
 
-		if (!fd->ioctl_path) { fd->ioctl_path = strdup(ioctl_dir.string()); }
+		fd->ioctl_path = strdup(ioctl_dir.string());
 	}
 
 	typedef int(*ioctl_func_t)(Genode::Allocator&, Vfs::File_system&,
-	                          char const*, unsigned, char*);
+	                           char const*, unsigned, char*);
 	ioctl_func_t ioctl_func = nullptr;
 
 	switch (request) {
@@ -223,6 +407,14 @@ int Libc::Vfs_plugin::ioctl(Libc::File_descriptor *fd, int request, char *argp)
 		break;
 	case DIOCGMEDIASIZE:
 		ioctl_func = block_ioctl;
+		break;
+	case SNDCTL_DSP_CHANNELS:
+	case SNDCTL_DSP_SAMPLESIZE:
+	case SNDCTL_DSP_SPEED:
+	case SNDCTL_DSP_SETFRAGMENT:
+	case SNDCTL_DSP_POST:
+	case SNDCTL_DSP_GETOSPACE:
+		ioctl_func = audio_ioctl;
 		break;
 	default:
 		return Libc::Errno(EINVAL);
