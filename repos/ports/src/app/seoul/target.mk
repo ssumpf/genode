@@ -3,10 +3,8 @@ TARGET = seoul
 SEOUL_CONTRIB_DIR = $(call select_from_ports,seoul)/src/app/seoul
 SEOUL_GENODE_DIR  = $(SEOUL_CONTRIB_DIR)/genode
 
-REQUIRES += nova
-
-LIBS   += base-nova blit seoul_libc_support
-SRC_CC  = main.cc nova_user_env.cc device_model_registry.cc
+LIBS   += base blit seoul_libc_support
+SRC_CC  = component.cc user_env.cc device_model_registry.cc state.cc
 SRC_CC += console.cc keyboard.cc network.cc disk.cc
 SRC_BIN = mono.tff
 
