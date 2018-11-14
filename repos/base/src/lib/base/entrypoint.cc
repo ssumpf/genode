@@ -289,6 +289,8 @@ namespace {
 			 */
 			init_parent_resource_requests(env);
 
+			init_heartbeat_monitoring(env);
+
 			Component::construct(env);
 		}
 	};

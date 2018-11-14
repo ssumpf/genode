@@ -37,6 +37,7 @@ namespace Genode {
 	void init_root_proxy(Env &);
 	void init_log();
 	void init_parent_resource_requests(Env &);
+	void init_heartbeat_monitoring(Env &);
 	void exec_static_constructors();
 
 	void destroy_signal_thread();
