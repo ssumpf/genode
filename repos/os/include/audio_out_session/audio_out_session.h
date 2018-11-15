@@ -89,12 +89,12 @@ class Audio_out::Packet
 		 * \param  data  frames to copy in
 		 * \param  size  number of frames to copy
 		 */
-		void content(float *data, Genode::size_t samples)
+		void content(float const *data, Genode::size_t samples)
 		{
 			Genode::memcpy(_data, data, (samples > PERIOD ? PERIOD : samples) * SAMPLE_SIZE);
 
 			if (samples < PERIOD)
-				Genode::memset(data + samples, 0, (PERIOD - samples) * SAMPLE_SIZE);
+				Genode::memset(_data + samples, 0, (PERIOD - samples) * SAMPLE_SIZE);
 		}
 
 		/**
