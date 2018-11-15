@@ -408,6 +408,8 @@ int Libc::Vfs_plugin::stat(char const *path, struct stat *buf)
 ssize_t Libc::Vfs_plugin::write(Libc::File_descriptor *fd, const void *buf,
                                 ::size_t count)
 {
+	Libc::dispatch_pending_io_signals();
+
 	typedef Vfs::File_io_service::Write_result Result;
 
 	Vfs::Vfs_handle *handle = vfs_handle(fd);
