@@ -396,12 +396,30 @@ void QNitpickerPlatformWindow::_adjust_and_set_geometry(const QRect &rect)
 	emit framebuffer_changed();
 }
 
+
+QString QNitpickerPlatformWindow::_sanitize_label(QString label)
+{
+	enum { MAX_LABEL = 25 };
+
+	/* remove any occurences of '"' */
+	label.remove("\"");
+
+	/* truncate label and append '..' */
+	if (label.length() > MAX_LABEL) {
+		label.truncate(MAX_LABEL - 2);
+		label.append("..");
+	}
+
+	return label;
+}
+
+
 QNitpickerPlatformWindow::QNitpickerPlatformWindow(Genode::Env &env, QWindow *window,
                                                    Genode::Signal_receiver &signal_receiver,
                                                    int screen_width, int screen_height)
 : QPlatformWindow(window),
   _env(env),
-  _nitpicker_session(env),
+  _nitpicker_session(env, _sanitize_label(window->title()).toStdString().c_str()),
   _framebuffer_session(_nitpicker_session.framebuffer_session()),
   _framebuffer(0),
   _framebuffer_changed(false),
