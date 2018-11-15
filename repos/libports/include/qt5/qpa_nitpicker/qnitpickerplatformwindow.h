@@ -76,6 +76,8 @@ class QNitpickerPlatformWindow : public QObject, public QPlatformWindow
 		Nitpicker::Session::View_handle _create_view();
 		void _adjust_and_set_geometry(const QRect &rect);
 
+		QString _sanitize_label(QString label);
+
 	private Q_SLOTS:
 
 		void _handle_input(unsigned int);
