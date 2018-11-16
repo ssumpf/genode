@@ -58,7 +58,8 @@ class Net::Mac_allocator
 			return _base.addr[0] == mac.addr[0] &&
 			       _base.addr[1] == mac.addr[1] &&
 			       _base.addr[2] == mac.addr[2] &&
-			       _base.addr[3] == mac.addr[3];
+			       _base.addr[3] == mac.addr[3] &&
+			       _base.addr[4] == mac.addr[4];
 		}
 };
 
