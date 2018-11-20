@@ -1,0 +1,10 @@
++++ src/lib/libc/sys/sys/mman.h
+@@ -57,7 +57,7 @@
+  * Flags contain sharing type and options.
+  * Sharing types; choose one.
+  */
+-#define	MAP_SHARED	0x0001		/* share changes */
++#undef	MAP_SHARED	      		/* share changes */
+ #define	MAP_PRIVATE	0x0002		/* changes are private */
+ #if __BSD_VISIBLE
+ #define	MAP_COPY	MAP_PRIVATE	/* Obsolete */
