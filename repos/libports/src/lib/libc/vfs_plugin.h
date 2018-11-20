@@ -43,6 +43,7 @@ class Libc::Vfs_plugin : public Libc::Plugin
 {
 	private:
 
+		Libc::Env         &_env;
 		Genode::Allocator &_alloc;
 
 		Vfs::File_system &_root_dir;
@@ -177,13 +178,14 @@ class Libc::Vfs_plugin : public Libc::Plugin
 	public:
 
 		Vfs_plugin(Libc::Env &env, Genode::Allocator &alloc)
-		:
-			_alloc(alloc), _root_dir(env.vfs())
+		: _env(env), _alloc(alloc), _root_dir(env.vfs()) { }
+
+		bool init_io()
 		{
 			using Genode::Xml_node;
 
 			if (_root_dir.num_dirent("/"))
-				env.config([&] (Xml_node const &top) {
+				_env.config([&] (Xml_node const &top) {
 					try {
 						Xml_node const node = top.sub_node("libc");
 
@@ -198,6 +200,8 @@ class Libc::Vfs_plugin : public Libc::Plugin
 						_open_stdio(node, "stderr", 2, O_WRONLY);
 					} catch (Xml_node::Nonexistent_sub_node) { }
 				});
+
+			return true;
 		}
 
 		~Vfs_plugin() final { }

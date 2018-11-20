@@ -654,6 +654,8 @@ struct Libc::Kernel
 
 		~Kernel() { Genode::error(__PRETTY_FUNCTION__, " should not be executed!"); }
 
+		bool init_io() { return _vfs.init_io(); }
+
 		Libc::Env & libc_env() { return _libc_env; }
 
 		/**
@@ -1014,6 +1016,13 @@ void Component::construct(Genode::Env &env)
 
 	/* finish static construction of component and libraries */
 	Libc::with_libc([&] () { env.exec_static_constructors(); });
+
+	/*
+	 * Since I/O (stdin/out/err) might be provided remotely, e.g. vfs_terminal
+	 * running in a VFS server, we have to initialize it in a user context which
+	 * which can be suspended.
+	 */
+	Libc::with_libc([&] () { kernel->init_io(); });
 
 	/* initialize plugins that require Genode::Env */
 	auto init_plugin = [&] (Libc::Plugin &plugin) {
