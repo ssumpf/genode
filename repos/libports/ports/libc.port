@@ -129,7 +129,7 @@ DIR_CONTENT(include/libc/sys) := \
                 cpuset.h socket.h un.h ttydefaults.h imgact_aout.h elf32.h \
                 elf64.h elf_generic.h elf_common.h nlist_aout.h ipc.h sem.h \
                 exec.h _lock.h _mutex.h statvfs.h ucontext.h syslog.h times.h \
-                utsname.h elf.h mtio.h)
+                utsname.h elf.h mtio.h soundcard.h)
 
 
 #
