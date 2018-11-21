@@ -19,6 +19,13 @@
 #include <util/xml_generator.h>
 #include <vfs/device_file_system.h>
 #include <vfs/readonly_value_file_system.h>
+#include <vfs/value_file_system.h>
+
+/* include libc */
+#include <stdlib.h>
+
+/* local speex includdes */
+#include "contrib/speex_resampler.h"
 
 
 namespace Vfs_oss {
@@ -59,6 +66,9 @@ class Vfs_oss::File_system : public Device_file_system
 
 				Readonly_value_file_system<unsigned> &_avail_fs;
 
+				Genode::int16_t _srbuffer[81920] { };
+				SpeexResamplerState *_srstate { nullptr };
+
 			public:
 
 				enum { CHANNELS = 2, };
@@ -84,6 +94,23 @@ class Vfs_oss::File_system : public Device_file_system
 					_out[0]->progress_sigh(progress_sigh);
 
 					_avail_fs.value(Audio_out::QUEUE_SIZE);
+				}
+
+				bool request_rate(int rate)
+				{
+					if (_started) { return false; }
+
+					if (_srstate) {
+						speex_resampler_destroy(_srstate);
+						_srstate = nullptr;
+					}
+
+					if (rate == Audio_out::SAMPLE_RATE) { return true; }
+
+					int err = 0;
+					_srstate = speex_resampler_init(Audio::CHANNELS, rate,
+					                                Audio_out::SAMPLE_RATE, 5, &err);
+					return !err && _srstate;
 				}
 
 				void pause()
@@ -115,14 +142,29 @@ class Vfs_oss::File_system : public Device_file_system
 						block_write = true;
 					} else {
 
-						Genode::size_t const samples = Genode::min(_left_buffer.write_avail(), buf_size/2);
+						Genode::size_t samples = Genode::min(_left_buffer.write_avail(), buf_size/2);
 
 						float *dest[2] = { _left_buffer.write_addr(), _right_buffer.write_addr() };
+
+						char const *src = buf;
+						if (samples && _srstate) {
+							unsigned in_len  = samples / 2;
+							unsigned out_len = sizeof(_srbuffer);
+#define SRSPII speex_resampler_process_interleaved_int
+							int const err = SRSPII(_srstate, (Genode::int16_t*)src, &in_len,
+							                       _srbuffer, &out_len);
+#undef SRSPII
+							if (!err) {
+								src     = (char const*)_srbuffer;
+								samples = out_len * 2;
+
+							} else { Genode::error("could not resample"); }
+						}
 
 						for (Genode::size_t i = 0; i < samples/2; i++) {
 							for (int c = 0; c < CHANNELS; c++) {
 								float *p = dest[c];
-								Genode::int16_t const v = ((Genode::int16_t const*)buf)[i * CHANNELS + c];
+								Genode::int16_t const v = ((Genode::int16_t const*)src)[i * CHANNELS + c];
 								p[i] = ((float)v) / 32768.0f;
 							}
 						}
@@ -186,6 +228,11 @@ class Vfs_oss::File_system : public Device_file_system
 			                    Genode::Allocator    &alloc,
 			                    Audio &audio, int flags)
 			: Device_vfs_handle(ds, fs, alloc, flags), _audio(audio) { }
+
+			~Oss_vfs_file_handle()
+			{
+				_audio.pause();
+			}
 
 			/* not supported */
 			Read_result read(char *, file_size, file_size &) {
@@ -291,6 +338,8 @@ class Vfs_oss::File_system : public Device_file_system
 
 				xml.node("readonly_value", [&] { xml.attribute("name", "frag_size"); });
 				xml.node("readonly_value", [&] { xml.attribute("name", "frag_avail"); });
+
+				xml.node("value", [&] { xml.attribute("name", "ctl"); });
 			});
 			return Config(Genode::Cstring(buf));
 		}
@@ -303,6 +352,24 @@ class Vfs_oss::File_system : public Device_file_system
 		Readonly_value_file_system<unsigned> _ofrag_size_fs  { _env, "frag_size",  Audio_out::PERIOD * sizeof (Genode::int16_t) };
 		Readonly_value_file_system<unsigned> _ofrag_avail_fs { _env, "frag_avail", 0 };
 
+		Genode::Io_signal_handler<Vfs_oss::File_system> _ctl_notify_handler {
+			_env.env().ep(), *this, &Vfs_oss::File_system::_handle_ctl_notify };
+
+		void _handle_ctl_notify()
+		{
+			char const * cmd = _ctl_fs.buffer();
+
+			Genode::error(__func__, " ", cmd);
+			if (Genode::strcmp(cmd, "sample_rate ", 12) == 0) {
+				unsigned rate = atoi(cmd+12);
+				if (_audio.request_rate(rate)) {
+					_sample_rate_fs.value(rate);
+				} else { Genode::error("could not set rate"); }
+			}
+		}
+
+		Value_file_system<unsigned> _ctl_fs { _env, "ctl", 0, _ctl_notify_handler };
+
 		Vfs::File_system *create(Vfs::Env &, Genode::Xml_node node) override
 		{
 			if (node.has_type(Readonly_value_file_system<unsigned>::type_name())) {
@@ -313,7 +380,12 @@ class Vfs_oss::File_system : public Device_file_system
 				     : _ofrag_size_fs.matches(node)  ? &_ofrag_size_fs
 				     : _ofrag_avail_fs.matches(node) ? &_ofrag_avail_fs
 				     : nullptr;
-			}
+			} else
+
+			if (node.has_type(Value_file_system<unsigned>::type_name())) {
+				return _ctl_fs.matches(node) ? &_ctl_fs : nullptr;
+			} else
+
 			return nullptr;
 		}
 
