@@ -79,7 +79,6 @@ namespace Util {
 	{
 		Vfs::Vfs_handle *handle = 0;
 		typedef Vfs::Directory_service::Open_result Dir_result;
-		typedef Vfs::File_io_service::Read_result File_result;
 
 		Dir_result dres = VFS_THREAD_SAFE(root.open(path, O_RDONLY, &handle, alloc));
 		if (dres != Dir_result::OPEN_OK) { return false; }
@@ -149,7 +148,64 @@ namespace Util {
 		handle->close();
 		buf[out_count] = 0;
 
-		return out_result == File_result::READ_OK;
+		return out_result == Result::READ_OK;
+	}
+
+	bool write_file(Genode::Allocator &alloc, Vfs::File_system &root,
+	                char const *path, char const *buf, size_t buf_len)
+	{
+		Vfs::Vfs_handle *handle = 0;
+		typedef Vfs::Directory_service::Open_result Dir_result;
+
+		Dir_result dres = VFS_THREAD_SAFE(root.open(path, O_RDONLY, &handle, alloc));
+		if (dres != Dir_result::OPEN_OK) { return false; }
+
+		typedef Vfs::File_io_service::Write_result Result;
+
+		Vfs::file_size out_count = 0;
+		Result         out_result;
+
+		struct Check : Libc::Suspend_functor
+		{
+			bool             retry { false };
+
+			Vfs::Vfs_handle *handle;
+			void const      *buf;
+			::size_t         count;
+			Vfs::file_size  &out_count;
+			Result          &out_result;
+
+			Check(Vfs::Vfs_handle *handle, void const *buf,
+			      ::size_t count, Vfs::file_size &out_count,
+			      Result &out_result)
+			: handle(handle), buf(buf), count(count), out_count(out_count),
+			  out_result(out_result)
+			{ }
+
+			bool suspend() override
+			{
+				try {
+					out_result = VFS_THREAD_SAFE(handle->fs().write(handle, (char const *)buf,
+					                                              count, out_count));
+					retry = false;
+				} catch (Vfs::File_io_service::Insufficient_buffer) {
+					retry = true;
+				}
+
+				return retry;
+			}
+		} check(handle, buf, buf_len, out_count, out_result);
+
+		do {
+			Libc::suspend(check);
+		} while (check.retry);
+
+		/* wake up threads blocking for 'queue_*()' or 'write()' */
+		Libc::resume_all();
+
+		handle->close();
+
+		return out_result == Result::WRITE_OK;
 	}
 } /* anonymous namespace */
 
@@ -299,8 +355,19 @@ static int audio_ioctl(Genode::Allocator &alloc, Vfs::File_system &root,
 
 		int const speed = *(int const*)argp;
 		int const rate  = atoi(buffer);
+		if (speed != rate) {
+			Genode::error("speed: ", speed, " rate: ", rate);
 
-		return speed == rate ? 0 : Libc::Errno(ENOTSUP);
+			Util::Ioctl_path const ctl_file { dir, "/ctl" };
+			Genode::String<64> new_rate("sample_rate ", speed);
+			if (!Util::write_file(alloc, root, ctl_file.string(),
+			                      new_rate.string(), new_rate.length())) {
+				return Libc::Errno(ENOTSUP);
+			}
+			/* XXX block for sample_rate watch_handle update */
+		}
+
+		return 0;
 	} else
 
 	if (request == SNDCTL_DSP_SETFRAGMENT && argp) {
