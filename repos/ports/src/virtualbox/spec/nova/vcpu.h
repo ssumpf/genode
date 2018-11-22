@@ -39,9 +39,6 @@
 #include "guest_memory.h"
 #include "vmm_memory.h"
 
-/* Genode libc pthread binding */
-#include "thread.h"
-
 /* LibC includes */
 #include <setjmp.h>
 

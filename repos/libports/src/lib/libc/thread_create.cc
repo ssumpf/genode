@@ -14,11 +14,28 @@
  * under the terms of the GNU Affero General Public License version 3.
  */
 
-#include <base/thread.h>
-
-#include <errno.h>
-#include <pthread.h>
+#include "thread_create.h"
 #include "thread.h"
+#include <errno.h>
+
+
+int Libc::pthread_create(pthread_t *thread,
+                         void *(*start_routine) (void *), void *arg,
+                         size_t stack_size, char const * name,
+                         Genode::Cpu_session * cpu, Genode::Affinity::Location location)
+{
+		pthread_t thread_obj = new pthread(start_routine, arg,
+		                                   stack_size, name, cpu, location);
+		if (!thread_obj)
+			return EAGAIN;
+
+		*thread = thread_obj;
+
+		thread_obj->start();
+
+		return 0;
+}
+
 
 extern "C"
 {
@@ -29,17 +46,8 @@ extern "C"
 		                        ? (*attr)->stack_size
 		                        : Libc::Component::stack_size();
 
-		pthread_t thread_obj = new pthread(start_routine, arg, stack_size,
-		                                   "pthread", nullptr,
-		                                   Genode::Affinity::Location());
-
-		if (!thread_obj)
-			return EAGAIN;
-
-		*thread = thread_obj;
-
-		thread_obj->start();
-
-		return 0;
+		return Libc::pthread_create(thread, start_routine, arg, stack_size,
+		                            "pthread", nullptr,
+		                            Genode::Affinity::Location());
 	}
 }

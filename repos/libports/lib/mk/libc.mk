@@ -49,5 +49,3 @@ vpath % $(LIBC_DIR)/lib/libc/string
 #
 SHARED_LIB  = yes
 LD_OPT     += --version-script=$(REP_DIR)/src/lib/libc/Version.def
-
-CC_CXX_WARN_STRICT =
