@@ -9,8 +9,7 @@ set feature(Timer) 1
 
 create_boot_directory
 
-import_from_depot [depot_user]/src/[base_src] \
-                  [depot_user]/src/expat \
+import_from_depot [depot_user]/src/expat \
                   [depot_user]/src/freetype \
                   [depot_user]/src/init \
                   [depot_user]/src/jpeg \
@@ -19,10 +18,7 @@ import_from_depot [depot_user]/src/[base_src] \
                   [depot_user]/src/mesa \
                   [depot_user]/src/nitpicker \
                   [depot_user]/src/pcre16 \
-                  [depot_user]/src/qt5_core \
-                  [depot_user]/src/qt5_gui \
                   [depot_user]/src/qt5_qjpeg \
-                  [depot_user]/src/qt5_qpa_nitpicker \
                   [depot_user]/src/report_rom \
                   [depot_user]/src/stdcxx \
                   [depot_user]/src/vfs \
@@ -112,7 +108,7 @@ proc qt5_start_nodes { feature_arg } {
 				<report focus="yes" hover="yes" xray="yes"/>
 
 				<domain name="pointer" layer="1" label="no" content="client" origin="pointer" />
-				<domain name="default" layer="2" label="no" content="client" focus="click" hover="always" />
+				<domain name="default" layer="2" label="yes" content="client" focus="click" hover="always" />
 
 				<policy label_prefix="pointer" domain="pointer"/>
 				<default-policy domain="default"/>

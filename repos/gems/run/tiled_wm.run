@@ -40,13 +40,22 @@ proc qt5_decorator_config { } {
 }
 
 append config {
-<config>
+<config verbose="yes">
 	<parent-provides>} [qt5_parent_provides feature] {
+	<service name="TRACE"/>
 	</parent-provides>
 	<default caps="100"/>
 	<default-route>
 		<any-service> <parent/> <any-child/> </any-service>
-	</default-route>} [qt5_start_nodes feature] {
+	</default-route>} 
+	
+	append config [qt5_start_nodes feature] 
+
+append config {
+	<start name="top">
+		<resource name="RAM" quantum="2M"/>
+		<config period_ms="2000"/>
+	</start>
 
 	<start name="test_reports">
 		<binary name="report_rom"/>
@@ -157,7 +166,7 @@ append config {
 	<start name="test-tiled_wm-app-1" caps="250">
 		<binary name="test-tiled_wm-app"/>
 		<resource name="RAM" quantum="32M"/>
-		<config name="app1">
+		<config name="app1" ld_verbose="yes">
 			<libc stdout="/dev/log" stderr="/dev/log" rtc="/dev/rtc"/>
 			<vfs>
 				<dir name="dev">
@@ -177,6 +186,7 @@ append config {
 			<any-service> <parent /> <any-child/> </any-service>
 		</route>
 	</start>
+<!--
 	<start name="test-tiled_wm-app-2" caps="250">
 		<binary name="test-tiled_wm-app"/>
 		<resource name="RAM" quantum="32M"/>
@@ -199,7 +209,7 @@ append config {
 			<service name="ROM" label="egl_drv.lib.so"> <parent label="egl_swrast.lib.so" /> </service>
 			<any-service> <parent /> <any-child/> </any-service>
 		</route>
-	</start>
+	</start> -->
 	<start name="textedit" caps="250">
 		<resource name="RAM" quantum="70M"/>
 		<config>
@@ -231,14 +241,19 @@ append build_components [qt5_build_components feature]
 
 # for debugging only
 #append build_components { app/window_layouter app/themed_decorator }
-
+append build_components { app/top test/tiled_wm/app init core 
+drivers/timer
+}
 build $build_components
 
 append boot_modules [qt5_boot_modules feature]
 
 # for debugging only
 #append boot_modules { window_layouter themed_decorator }
-
+append boot_modules { top  test-tiled_wm-app qt5_qpa_nitpicker.lib.so 
+init core ld.lib.so timer qt5_gui.lib.so qt5_core.lib.so libc_pipe.lib.so
+qt5_widgets.lib.so
+}
 build_boot_image $boot_modules
 
 append qemu_args "  -usbdevice tablet "

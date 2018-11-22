@@ -17,7 +17,9 @@
 /* local includes */
 #include <util.h>
 #include "app.h"
+#include <QWindow>
 
+extern "C" void wait_for_continue();
 
 struct Main
 {
@@ -38,7 +40,11 @@ struct Main
 
 	Main(Libc::Env &env) : env(env)
 	{
+		qDebug() << "TEST";
+		widget->setWindowTitle("TE\"S\"T");
+		qDebug() << "widget: " << widget << "Window: " << widget->windowHandle();
 		widget->show();
+		qDebug() << "Show done:" << widget->windowHandle();
 	}
 };
 
