@@ -499,6 +499,7 @@ pthread_attr_destroy T
 pthread_attr_getdetachstate T
 pthread_attr_getguardsize T
 pthread_attr_getinheritsched T
+pthread_attr_get_np T
 pthread_attr_getschedparam T
 pthread_attr_getschedpolicy T
 pthread_attr_getscope T
