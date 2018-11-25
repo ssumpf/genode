@@ -503,6 +503,7 @@ pthread_attr_get_np T
 pthread_attr_getschedparam T
 pthread_attr_getschedpolicy T
 pthread_attr_getscope T
+pthread_attr_getstack T
 pthread_attr_getstackaddr T
 pthread_attr_getstacksize T
 pthread_attr_init T
