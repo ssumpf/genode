@@ -1379,6 +1379,7 @@ void Interface::_handle_pkt()
 		_ack_packet(pkt);
 	}
 	catch (Packet_postponed) { }
+	catch (Genode::Packet_descriptor::Invalid_packet) { }
 }
 
 
@@ -1410,6 +1411,7 @@ void Interface::_continue_handle_eth(Domain            const &domain,
 		if (domain.verbose_packet_drop()) {
 			log("[", domain, "] drop packet (handling postponed twice)"); }
 	}
+	catch (Genode::Packet_descriptor::Invalid_packet) { return; }
 	_ack_packet(pkt);
 }
 

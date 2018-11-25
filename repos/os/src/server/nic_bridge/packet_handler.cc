@@ -29,7 +29,11 @@ void Packet_handler::_ready_to_submit()
 	while (sink()->packet_avail()) {
 		_packet = sink()->get_packet();
 		if (!_packet.size()) continue;
-		handle_ethernet(sink()->packet_content(_packet), _packet.size());
+		try { handle_ethernet(sink()->packet_content(_packet), _packet.size()); }
+		catch (Genode::Packet_descriptor::Invalid_packet) {
+			Genode::error("dropping invalid Nic packet");
+			continue;
+		}
 
 		if (!sink()->ready_to_ack()) {
 			Genode::warning("ack state FULL");
