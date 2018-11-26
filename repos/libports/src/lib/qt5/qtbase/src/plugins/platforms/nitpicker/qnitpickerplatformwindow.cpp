@@ -401,6 +401,8 @@ void QNitpickerPlatformWindow::_adjust_and_set_geometry(const QRect &rect)
 
 QString QNitpickerPlatformWindow::_sanitize_label(QString label)
 {
+	static unsigned int untitled_window_id = 1;
+
 	enum { MAX_LABEL = 25 };
 
 	/* remove any occurences of '"' */
@@ -411,6 +413,10 @@ QString QNitpickerPlatformWindow::_sanitize_label(QString label)
 		label.truncate(MAX_LABEL - 2);
 		label.append("..");
 	}
+
+	/* Make sure that the window is distinguishable by the layouter */
+	if (label.isEmpty())
+		label = QString("Untitled Window #") + QString::number(untitled_window_id++);
 
 	return label;
 }
