@@ -39,7 +39,7 @@ struct Genode::Microseconds
 	void print(Output &out) const
 	{
 		Genode::print(out, value);
-		out.out_string("µs");
+		out.out_string(" us");
 	}
 };
 
@@ -56,7 +56,7 @@ struct Genode::Milliseconds
 	void print(Output &out) const
 	{
 		Genode::print(out, value);
-		out.out_string("ms");
+		out.out_string(" ms");
 	}
 };
 
