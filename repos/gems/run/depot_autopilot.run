@@ -396,6 +396,7 @@ proc prepare_to_run_genode { } {
 		<parent-provides>
 			<service name="ROM"/>
 			<service name="IRQ"/>
+			<service name="IO_PORT"/>
 			<service name="PD"/>
 			<service name="RM"/>
 			<service name="CPU"/>
