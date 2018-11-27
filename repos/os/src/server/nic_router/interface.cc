@@ -1411,7 +1411,11 @@ void Interface::_continue_handle_eth(Domain            const &domain,
 		if (domain.verbose_packet_drop()) {
 			log("[", domain, "] drop packet (handling postponed twice)"); }
 	}
-	catch (Genode::Packet_descriptor::Invalid_packet) { return; }
+	catch (Genode::Packet_descriptor::Invalid_packet) {
+		if (domain.verbose_packet_drop()) {
+			log("[", domain, "] invalid Nic packet received");
+		}
+	}
 	_ack_packet(pkt);
 }
 
