@@ -27,6 +27,8 @@ QT_BEGIN_NAMESPACE
 
 static const bool qnpw_verbose = false/*true*/;
 
+QStringList QNitpickerPlatformWindow::_nitpicker_session_label_list;
+
 QTouchDevice * QNitpickerPlatformWindow::_init_touch_device()
 {
 	QVector<QWindowSystemInterface::TouchPoint>::iterator i = _touch_points.begin();
@@ -401,8 +403,6 @@ void QNitpickerPlatformWindow::_adjust_and_set_geometry(const QRect &rect)
 
 QString QNitpickerPlatformWindow::_sanitize_label(QString label)
 {
-	static unsigned int untitled_window_id = 1;
-
 	enum { MAX_LABEL = 25 };
 
 	/* remove any occurences of '"' */
@@ -416,7 +416,16 @@ QString QNitpickerPlatformWindow::_sanitize_label(QString label)
 
 	/* Make sure that the window is distinguishable by the layouter */
 	if (label.isEmpty())
-		label = QString("Untitled Window #") + QString::number(untitled_window_id++);
+		label = QString("Untitled Window");
+
+	if (_nitpicker_session_label_list.contains(label))
+		for (unsigned int i = 2; ; i++) {
+			QString versioned_label = label + "." + QString::number(i);
+			if (!_nitpicker_session_label_list.contains(versioned_label)) {
+				label = versioned_label;
+				break;
+			}
+		}
 
 	return label;
 }
@@ -427,7 +436,8 @@ QNitpickerPlatformWindow::QNitpickerPlatformWindow(Genode::Env &env, QWindow *wi
                                                    int screen_width, int screen_height)
 : QPlatformWindow(window),
   _env(env),
-  _nitpicker_session(env, _sanitize_label(window->title()).toStdString().c_str()),
+  _nitpicker_session_label(_sanitize_label(window->title())),
+  _nitpicker_session(env, _nitpicker_session_label.toStdString().c_str()),
   _framebuffer_session(_nitpicker_session.framebuffer_session()),
   _framebuffer(0),
   _framebuffer_changed(false),
@@ -448,6 +458,8 @@ QNitpickerPlatformWindow::QNitpickerPlatformWindow(Genode::Env &env, QWindow *wi
 	if (qnpw_verbose)
 		if (window->transientParent())
 			qDebug() << "QNitpickerPlatformWindow(): child window of" << window->transientParent();
+
+	_nitpicker_session_label_list.append(_nitpicker_session_label);
 
 	_input_session.sigh(_input_signal_dispatcher);
 
@@ -470,6 +482,11 @@ QNitpickerPlatformWindow::QNitpickerPlatformWindow(Genode::Env &env, QWindow *wi
 	connect(this, SIGNAL(_mode_changed(unsigned int)),
 	        this, SLOT(_handle_mode_changed(unsigned int)),
 	        Qt::QueuedConnection);
+}
+
+QNitpickerPlatformWindow::~QNitpickerPlatformWindow()
+{
+	_nitpicker_session_label_list.removeOne(_nitpicker_session_label);
 }
 
 QWindow *QNitpickerPlatformWindow::window() const
