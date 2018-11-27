@@ -546,6 +546,8 @@ class Genode::Packet_stream_base
 		template<typename CONTENT_TYPE>
 		CONTENT_TYPE *packet_content(Packet_descriptor packet)
 		{
+			if (!packet.size()) return nullptr;
+
 			if (!packet_valid(packet) || packet.size() < sizeof(CONTENT_TYPE))
 				throw Packet_descriptor::Invalid_packet();
 
