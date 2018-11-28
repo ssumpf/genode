@@ -36,7 +36,7 @@ static void end_element(void *userdata, const char *name)
 
 int main(int argc, char *argv[])
 {
-	char buf[128];
+	char buf[256];
 
 	XML_Parser parser = XML_ParserCreate(NULL);
 	XML_SetElementHandler(parser, start_element, end_element);
