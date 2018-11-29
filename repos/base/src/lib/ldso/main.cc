@@ -588,6 +588,7 @@ Elf::Sym const *Linker::lookup_symbol(char const *name, Dependency const &dep,
 		if (binary_ptr && &dep != binary_ptr->first_dep()) {
 			return lookup_symbol(name, *binary_ptr->first_dep(), base, undef, other);
 		} else {
+			log("LD: Not_found: ", name);
 			throw Not_found(name);
 		}
 	}
@@ -595,8 +596,10 @@ Elf::Sym const *Linker::lookup_symbol(char const *name, Dependency const &dep,
 	if (dep.root() && verbose_lookup)
 		log("LD: return ", weak_symbol);
 
-	if (!weak_symbol)
+	if (!weak_symbol) {
+		log("LD: !weak_symbol: ", name);
 		throw Not_found(name);
+	}
 
 	*base = weak_base;
 	return weak_symbol;

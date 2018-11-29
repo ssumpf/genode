@@ -50,9 +50,12 @@ struct Linker::Init : List<Object>
 
 	Object *contains(char const *file)
 	{
-		for (Object *elf = first(); elf; elf = elf->next_init())
+		for (Object *elf = first(); elf; elf = elf->next_init()) {
+
+			Genode::error(__func__, ":", __LINE__, " file: '", file, "' elf: '", elf->name(), "'");
 			if (!strcmp(file, elf->name()))
 				return elf;
+		}
 
 		return nullptr;
 	}

@@ -79,6 +79,7 @@ void *dlopen(const char *name, int mode)
 		return new (global_alloc)
 			Shared_object(*genode_env, global_alloc, name, bind, keep);
 	} catch (...) {
+		Genode::error("le fuck is kaputt");
 		snprintf(err_str, MAX_ERR, "Unable to open file %s\n", name);
 	}
 	return nullptr;

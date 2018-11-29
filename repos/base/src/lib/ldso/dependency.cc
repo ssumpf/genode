@@ -28,8 +28,11 @@ Linker::Dependency::Dependency(Env &env, Allocator &md_alloc,
 	_root(root),
 	_md_alloc(&md_alloc)
 {
+	Genode::error(__func__, ":", __LINE__, " path: '", path, "'");
 	deps.enqueue(this);
+	Genode::error(__func__, ":", __LINE__, " path: '", path, "'");
 	load_needed(env, *_md_alloc, deps, keep);
+	Genode::error(__func__, ":", __LINE__, " path: '", path, "'");
 }
 
 
@@ -38,7 +41,7 @@ Linker::Dependency::~Dependency()
 	if (!_obj.unload())
 		return;
 
-	if (verbose_loading)
+	// if (verbose_loading)
 		log("Destroy: ", _obj.name());
 
 	destroy(_md_alloc, &_obj);
@@ -47,10 +50,13 @@ Linker::Dependency::~Dependency()
 
 bool Linker::Dependency::in_dep(char const *file, Fifo<Dependency> const &dep)
 {
-	for (Dependency const *d = dep.head(); d; d = d->next())
+	for (Dependency const *d = dep.head(); d; d = d->next()) {
+		Genode::error(__func__, ":", __LINE__, " file: '", file, "' dep: '", d->obj().name(), "'");
 		if (!strcmp(file, d->obj().name()))
 			return true;
+	}
 
+	Genode::error(__func__, ":", __LINE__, " file: '", file, "' not found");
 	return false;
 }
 
@@ -60,12 +66,38 @@ void Linker::Dependency::load_needed(Env &env, Allocator &md_alloc,
 {
 	_obj.dynamic().for_each_dependency([&] (char const *path) {
 
-		if (!in_dep(Linker::file(path), deps))
-			new (md_alloc) Dependency(env, md_alloc, path, _root, deps, keep);
+		Genode::error("load_needed", ":", __LINE__, " path: '", path, "'");
 
-		/* re-order initializer list, if needed object has been already added */
-		else if (Object *o = Init::list()->contains(Linker::file(path)))
-			Init::list()->reorder(o);
+		if (!in_dep(Linker::file(path), deps)) {
+			Genode::error("load_needed", ":", __LINE__, " path: '", path, "'");
+			new (md_alloc) Dependency(env, md_alloc, path, _root, deps, keep);
+			Genode::error("load_needed", ":", __LINE__, " path: '", path, "'");
+		} else {
+
+			/* re-order initializer list, if needed object has been already added */
+
+			try {
+				Genode::error("load_needed", ":", __LINE__, " path: '", path, "'");
+
+				Object *o = Init::list()->contains(Linker::file(path));
+				if (o) {
+					Genode::error("load_needed", ":", __LINE__, " path: '", path, "'");
+					try {
+						Init::list()->reorder(o);
+					} catch (...) {
+						Genode::error("le fsck is tis");
+						throw;
+					}
+					Genode::error("load_needed", ":", __LINE__, " path: '", path, "'");
+				}
+				Genode::error("load_needed", ":", __LINE__, " path: '", path, "'");
+			} catch (...) {
+				Genode::error("le foo is dat");
+				throw;
+			}
+		}
+
+		Genode::error("load_needed", ":", __LINE__, " path: '", path, "'");
 	});
 }
 
@@ -85,11 +117,21 @@ Linker::Root_object::Root_object(Env &env, Allocator &md_alloc,
 	 * The life time of 'Dependency' objects is managed via reference
 	 * counting. Hence, we don't need to remember them here.
 	 */
-	new (md_alloc) Dependency(env, md_alloc, path, this, _deps, keep);
+	Genode::error(__func__, ":", __LINE__);
+	Dependency *d1 = new (md_alloc) Dependency(env, md_alloc, path, this, _deps, keep);
 
+	Genode::error(__func__, ":", __LINE__);
 	/* provide Genode base library access */
-	new (md_alloc) Dependency(env, md_alloc, linker_name(), this, _deps, DONT_KEEP);
+	Dependency *d2 = new (md_alloc) Dependency(env, md_alloc, linker_name(), this, _deps, DONT_KEEP);
 
+	Genode::error(__func__, ":", __LINE__);
 	/* relocate and call constructors */
-	Init::list()->initialize(bind, STAGE_SO);
+	try {
+		Init::list()->initialize(bind, STAGE_SO);
+	} catch (...) {
+		destroy(md_alloc, d1);
+		destroy(md_alloc, d2);
+		throw;
+	}
+	Genode::error(__func__, ":", __LINE__);
 }

@@ -57,7 +57,7 @@ Genode::Shared_object::Shared_object(Env &env, Allocator &md_alloc,
 {
 	using namespace Linker;
 
-	if (verbose_shared)
+	// if (verbose_shared)
 		log("LD: open '", file ? file : "binary", "'");
 
 	try {
