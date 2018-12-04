@@ -594,7 +594,10 @@ if {[expr ![have_spec x86] && \
 }
 
 # remember initial qemu args in case we have to re-boot later
-set initial_qemu_args $qemu_args
+set initial_qemu_args ""
+if {[info exists qemu_args]} {
+	set initial_qemu_args $qemu_args
+}
 
 #
 # Initialize the lists of test package-archives, source-archives,
