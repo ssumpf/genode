@@ -262,6 +262,12 @@ struct Hw::Arm_cpu
 
 	static void clean_invalidate_data_cache();
 	static void invalidate_data_cache();
+
+	static inline void synchronization_barrier()
+	{
+		asm volatile("dsb\n"
+		             "isb\n");
+	}
 };
 
 #endif /* _SRC__LIB__HW__SPEC__ARM__CPU_H_ */
