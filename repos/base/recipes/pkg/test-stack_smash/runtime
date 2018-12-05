@@ -1,0 +1,17 @@
+<runtime ram="32M" caps="1000" binary="test-stack_smash">
+
+	<events>
+		<timeout meaning="failed" sec="20" />
+		<log meaning="succeeded">
+			[init] Error: stack protector check failed
+		</log>
+	</events>
+
+	<content>
+		<rom label="ld.lib.so"/>
+		<rom label="test-stack_smash"/>
+	</content>
+
+	<config/>
+
+</runtime>
