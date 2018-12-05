@@ -118,19 +118,21 @@ Linker::Root_object::Root_object(Env &env, Allocator &md_alloc,
 	 * counting. Hence, we don't need to remember them here.
 	 */
 	Genode::error(__func__, ":", __LINE__);
-	Dependency *d1 = new (md_alloc) Dependency(env, md_alloc, path, this, _deps, keep);
+	new (md_alloc) Dependency(env, md_alloc, path, this, _deps, keep);
 
 	Genode::error(__func__, ":", __LINE__);
 	/* provide Genode base library access */
-	Dependency *d2 = new (md_alloc) Dependency(env, md_alloc, linker_name(), this, _deps, DONT_KEEP);
+	new (md_alloc) Dependency(env, md_alloc, linker_name(), this, _deps, DONT_KEEP);
 
 	Genode::error(__func__, ":", __LINE__);
 	/* relocate and call constructors */
 	try {
 		Init::list()->initialize(bind, STAGE_SO);
 	} catch (...) {
-		destroy(md_alloc, d1);
-		destroy(md_alloc, d2);
+		Init::list()->flush();
+		while (Dependency *d = _deps.dequeue())
+			destroy(_md_alloc, d);
+
 		throw;
 	}
 	Genode::error(__func__, ":", __LINE__);
