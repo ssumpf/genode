@@ -1,0 +1,203 @@
+source ${genode_dir}/repos/base/run/platform_drv.inc
+
+build {
+	core init
+	drivers/nic
+	drivers/timer
+	drivers/gpio
+	drivers/sd_card
+	server/part_blk
+	server/fatfs_fs
+	app/lighttpd
+	lib/vfs/lwip
+}
+
+create_boot_directory
+
+install_config {
+<config>
+	<parent-provides>
+		<service name="ROM"/>
+		<service name="LOG"/>
+		<service name="RM"/>
+		<service name="CPU"/>
+		<service name="PD"/>
+		<service name="IRQ"/>
+		<service name="IO_PORT"/>
+		<service name="IO_MEM"/>
+	</parent-provides>
+	<default-route>
+		<any-service> <parent/> <any-child/> </any-service>
+	</default-route>
+	<default caps="100"/>
+
+	<start name="timer">
+		<resource name="RAM" quantum="1M"/>
+		<provides><service name="Timer"/></provides>
+	</start>
+
+	<start name="gpio_drv" caps="140">
+		<resource name="RAM" quantum="4M"/>
+		<provides><service name="Gpio"/></provides>
+		<config/>
+	</start>
+
+	<start name="sd_card_drv">
+		<resource name="RAM" quantum="1M"/>
+		<provides><service name="Block"/></provides>
+	</start>
+
+	<start name="part_blk">
+		<resource name="RAM" quantum="5M"/>
+		<provides><service name="Block"/></provides>
+		<route>
+			<service name="Block"><child name="sd_card_drv" /></service>
+			<any-service> <parent/> <any-child/> </any-service>
+		</route>
+		<config> <default-policy partition="1"/> </config>
+	</start>
+
+	<start name="nic_drv" caps="200">
+		<resource name="RAM" quantum="16M"/>
+		<provides><service name="Nic"/></provides>
+		<config>
+			<card name="fec0" type="fsl,imx6sx-fec" mii="rgmii" phy="phy0" irq="150" mmio="0x2188000">
+				<mdio>
+					<phy name="phy0" type="Atheros 8035 ethernet" gpio_irq="36" reg_num="4"/>
+					<phy name="phy1" type="Atheros 8035 ethernet" gpio_irq="40" reg_num="5"/>
+				</mdio>
+			</card>
+			<card name="fec1" type="fsl,imx6sx-fec" mii="rgmii" phy="phy1" irq="134" mmio="0x21b4000"/>
+		</config>
+	</start>
+
+	<start name="fs">
+		<binary name="fatfs_fs"/>
+		<resource name="RAM" quantum="4M"/>
+		<provides> <service name="File_system"/> </provides>
+		<config>
+			<default-policy root="/" writeable="yes" />
+			<vfs>
+				<dir name="dev">
+					<log/>
+				</dir>
+			</vfs>
+			<libc stdout="/dev/log" stderr="/dev/log" />
+		</config>
+		<route>
+			<service name="Block"><child name="part_blk" /></service>
+			<any-service> <parent/> <any-child/> </any-service>
+		</route>
+	</start>
+
+	<start name="lighttpd" caps="200">
+		<resource name="RAM" quantum="100M" />
+		<config>
+			<arg value="lighttpd" />
+			<arg value="-f" />
+			<arg value="/etc/lighttpd/lighttpd.conf" />
+			<arg value="-D" />
+			<vfs>
+				<dir name="dev">
+					<log/>
+					<null/>
+				</dir>
+				<dir name="socket">
+					<lwip dhcp="yes"/> </dir>
+				<dir name="etc">
+					<dir name="lighttpd">
+						<inline name="lighttpd.conf">
+# lighttpd configuration
+server.port          = 80
+server.document-root = "/website"
+server.event-handler = "select"
+server.network-backend = "write"
+index-file.names     = (
+  "index.xhtml", "index.html", "index.htm"
+)
+mimetype.assign      = (
+  ".html"         =>      "text/html",
+  ".htm"          =>      "text/html"
+)
+						</inline>
+					</dir>
+				</dir>
+				<dir name="website">
+					<fs/>
+				</dir>
+			</vfs>
+			<libc stdin="/dev/null" stdout="/dev/log" stderr="/dev/log"
+			      socket="/socket" />
+		</config>
+		<route>
+			<service name="Nic">   <child name="nic_drv" label="fec0"/> </service>
+			<any-service> <parent/> <any-child/> </any-service>
+		</route>
+	</start>
+
+	<start name="lighttpd2" caps="200">
+		<binary name="lighttpd"/>
+		<resource name="RAM" quantum="100M" />
+		<config>
+			<arg value="lighttpd" />
+			<arg value="-f" />
+			<arg value="/etc/lighttpd/lighttpd.conf" />
+			<arg value="-D" />
+			<vfs>
+				<dir name="dev">
+					<log/>
+					<null/>
+				</dir>
+				<dir name="socket">
+					<lwip dhcp="yes"/> </dir>
+				<dir name="etc">
+					<dir name="lighttpd">
+						<inline name="lighttpd.conf">
+# lighttpd configuration
+server.port          = 80
+server.document-root = "/website"
+server.event-handler = "select"
+server.network-backend = "write"
+index-file.names     = (
+  "index.xhtml", "index.html", "index.htm"
+)
+mimetype.assign      = (
+  ".html"         =>      "text/html",
+  ".htm"          =>      "text/html"
+)
+						</inline>
+					</dir>
+				</dir>
+				<dir name="website">
+					<inline name="index.html">
+<html>
+	<head>
+		<title>Hello</title>
+	</head>
+	<body>
+		<p>Hello Genode!</p>
+		<b>I am server 2 ;-)</b>
+	</body>
+</html>
+					</inline>
+				</dir>
+			</vfs>
+			<libc stdin="/dev/null" stdout="/dev/log" stderr="/dev/log"
+			      socket="/socket" />
+		</config>
+		<route>
+			<service name="Nic"> <child name="nic_drv" label="fec1"/> </service>
+			<any-service> <parent/> <any-child/> </any-service>
+		</route>
+	</start>
+</config>
+}
+
+build_boot_image {
+	core init timer ld.lib.so nic_drv gpio_drv sd_card_drv
+	libc.lib.so libm.lib.so posix.lib.so
+	vfs.lib.so vfs_lwip.lib.so zlib.lib.so
+	lighttpd fatfs_fs part_blk
+}
+
+run_genode_until forever
