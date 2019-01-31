@@ -138,12 +138,20 @@ bool Pthread_registry::contains(pthread_t thread)
 }
 
 
+void Pthread_registry::cleanup()
+{
+	for (unsigned int i = 0; i < MAX_NUM_PTHREADS; i++)
+		if (_array[i] && _array[i]->_exiting) {
+			Genode::warning("clean ", _array[i]);
+			delete _array[i];
+		}
+}
+
 Pthread_registry &pthread_registry()
 {
 	static Pthread_registry instance;
 	return instance;
 }
-
 
 extern "C" {
 
@@ -191,6 +199,7 @@ extern "C" {
 
 	void pthread_exit(void *value_ptr)
 	{
+		pthread_registry().cleanup();
 		pthread_self()->exit(value_ptr);
 		Genode::sleep_forever();
 	}

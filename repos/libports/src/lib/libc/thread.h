@@ -41,6 +41,8 @@ class Pthread_registry
 		void remove(pthread_t thread);
 
 		bool contains(pthread_t thread);
+
+		void cleanup();
 };
 
 
@@ -95,7 +97,7 @@ struct Genode::Thread::Tls::Base
 struct pthread : Genode::Noncopyable, Genode::Thread::Tls::Base
 {
 	typedef void *(*start_routine_t) (void *);
-
+	friend Pthread_registry;
 	private:
 
 		struct Thread_object : Genode::Thread
