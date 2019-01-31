@@ -37,8 +37,12 @@ void Thread::exception(Cpu & cpu)
 		_interrupt(cpu.id());
 		return;
 	case Cpu::Context::UNDEFINED_INSTRUCTION:
+	{
+		unsigned long *ip = (unsigned long *)regs->ip;
 		Genode::warning(*this, ": undefined instruction at ip=",
-		                Genode::Hex(regs->ip));
+		                Genode::Hex(regs->ip), " instr: ", Genode::Hex(*ip));
+
+	}
 		_die();
 		return;
 	case Cpu::Context::RESET:
