@@ -14,7 +14,7 @@
 /* Genode includes */
 #define Framebuffer Fb_Genode
 #include <framebuffer_session/connection.h>
-#include <nitpicker_session/nitpicker_session.h>
+#include <nitpicker_session/connection.h>
 #undef Framebuffer
 
 #include <os/texture_rgb565.h>
@@ -32,7 +32,7 @@ class Genodefb :
 	private:
 
 		Genode::Env           &_env;
-		Fb_Genode::Connection  _fb;
+		Fb_Genode::Session    &_fb;
 
 		/* The mode matching the currently attached dataspace */
 		Fb_Genode::Mode        _fb_mode;
@@ -56,13 +56,36 @@ class Genodefb :
 			_fb.refresh(0, 0, _virtual_fb_mode.width(), _virtual_fb_mode.height());
 		}
 
+
+		Fb_Genode::Mode _initial_setup(Nitpicker::Connection &nitpicker)
+		{
+			unsigned const width  = 1024U;
+			unsigned const height = 768U;
+
+			nitpicker.buffer(Fb_Genode::Mode(width, height,
+			                                 Fb_Genode::Mode::RGB565), false);
+
+			typedef Nitpicker::Session::View_handle View_handle;
+			typedef Nitpicker::Session::Command Command;
+
+			View_handle view = nitpicker.create_view();
+			Nitpicker::Rect rect(Nitpicker::Point(0, 0),
+			                     Nitpicker::Area(width, height));
+
+			nitpicker.enqueue<Command::Geometry>(view, rect);
+			nitpicker.enqueue<Command::To_front>(view, View_handle());
+			nitpicker.execute();
+
+			return _fb.mode();
+		}
+
 	public:
 
-		Genodefb (Genode::Env &env)
+		Genodefb (Genode::Env &env, Nitpicker::Connection &nitpicker)
 		:
 			_env(env),
-			_fb(env, Fb_Genode::Mode(0, 0, Fb_Genode::Mode::INVALID)),
-			_fb_mode(_fb.mode()),
+			_fb(*nitpicker.framebuffer()),
+			_fb_mode(_initial_setup(nitpicker)),
 			_next_fb_mode(_fb_mode),
 			_virtual_fb_mode(_fb_mode),
 			_fb_base(env.rm().attach(_fb.dataspace()))
