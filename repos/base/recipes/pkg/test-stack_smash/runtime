@@ -1,10 +1,8 @@
-<runtime ram="32M" caps="1000" binary="test-stack_smash">
+<runtime ram="16M" caps="1000" binary="init">
 
 	<events>
 		<timeout meaning="failed" sec="20" />
-		<log meaning="succeeded">
-			[init] Error: stack protector check failed
-		</log>
+		<log meaning="succeeded">Error: stack protector check failed</log>
 	</events>
 
 	<content>
@@ -12,6 +10,19 @@
 		<rom label="test-stack_smash"/>
 	</content>
 
-	<config/>
-
+	<config>
+		<parent-provides>
+			<service name="LOG"/>
+			<service name="CPU"/>
+			<service name="ROM"/>
+			<service name="PD"/>
+		</parent-provides>
+		<default-route>
+			<any-service> <parent/> </any-service>
+		</default-route>
+		<default caps="100"/>
+		<start name="test-stack_smash">
+			<resource name="RAM" quantum="4M"/>
+		</start>
+	</config>
 </runtime>
