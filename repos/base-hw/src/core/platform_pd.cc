@@ -157,6 +157,7 @@ Platform_pd::Platform_pd(Allocator &, char const *label)
 	Kernel_object<Kernel::Pd>(true, *(Page_table*)translation_table_phys(), *this),
 	_label(label)
 {
+	Genode::raw("pd: ", label, " ptbr: ", Genode::Hex(translation_table_phys()), " virt: ",&translation_table());
 	if (!_cap.valid()) {
 		error("failed to create kernel object");
 		throw Service_denied();
