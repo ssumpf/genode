@@ -139,15 +139,20 @@ struct Genode::Arm_cpu : public Hw::Arm_cpu
 	{
 		if (asid) Tlbiasid::write(asid);
 		else      Tlbiall::write(0);
+		Bpiall::write(0);
+		asm volatile("isb; dsb;" : : : "memory");
 	}
 
 	void switch_to(Context&, Mmu_context & o)
 	{
 		if (o.cidr == 0) return;
 
+
 		Cidr::access_t cidr = Cidr::read();
 		if (cidr != o.cidr) {
+			invalidate_tlb(cidr);
 			Cidr::write(o.cidr);
+			asm volatile("isb;" : : : "memory");
 			Ttbr0::write(o.ttbr0);
 		}
 	}
