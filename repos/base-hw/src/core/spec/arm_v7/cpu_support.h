@@ -49,6 +49,10 @@ struct Genode::Arm_v7_cpu : Arm_cpu
 		if (multi_processor()) {
 			if (asid) Tlbiasidis::write(asid);
 			else      Tlbiallis::write(0);
+
+			Bpiall::write(0);
+			asm volatile("dsb; isb;" : : : "memory");
+
 		} else Arm_cpu::invalidate_tlb(asid);
 	}
 };
