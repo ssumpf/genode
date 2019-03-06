@@ -230,11 +230,9 @@ class Hw::Page_table
 							Small_page::create(flags, pa);
 
 						/* check if it is a good idea to override the entry */
-						if (Descriptor::valid(_entries[i]) && _entries[i] != e)
-							Genode::log(" entry: ", Genode::Hex(_entries[i]));
-
 						assert(!Descriptor::valid(_entries[i]) ||
 								_entries[i] == e);
+
 						/* override entry */
 						_entries[i] = e;
 					}
@@ -485,10 +483,6 @@ class Hw::Page_table
 		void insert_translation(addr_t vo, addr_t pa, size_t size,
 		                        Page_flags const & f, Allocator & alloc)
 		{
-			
-			if (vo <= 0x10e5000 && 0x10e5000 < (vo + size)) {
-				Genode::log("insert: ptbr: ", this, " pa: ", Genode::Hex(pa), " flags: ", f, " vo: ", (void*)vo);
-			}
 			/* check sanity */
 			assert(!(vo & Page_table_level_2::Descriptor::VIRT_OFFSET_MASK) &&
 			       size >= Page_table_level_2::Descriptor::VIRT_SIZE);

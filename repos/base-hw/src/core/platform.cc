@@ -110,7 +110,6 @@ Platform::Platform()
 	_boot_info().elf_mappings.for_each([this] (Hw::Mapping const & m) {
 		_core_mem_alloc.virt_alloc().remove_range(m.virt(), m.size()); });
 	_boot_info().ram_regions.for_each([this] (Hw::Memory_region const & region) {
-		Genode::log("region: ", region);
 		_core_mem_alloc.phys_alloc().add_range(region.base, region.size); });
 
 	_init_io_port_alloc();

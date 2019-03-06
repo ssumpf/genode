@@ -692,21 +692,6 @@ void Thread::_mmu_exception()
 	Cpu::mmu_fault(*regs, _fault);
 	_fault.ip = regs->ip;
 
-	if (regs->ip == 0x10e5ef0) {
-		unsigned long *ip = (unsigned long *)regs->ip;
-		Genode::raw("1: ip ", ip, " opcode: ", Genode::Hex(*ip), " ptbr: ",
-		             (void *)Cpu::Ttbr0::read());
-		
-		Cpu::Tlbiallis::write(0);
-		Cpu::Bpiall::write(0);
-		asm volatile("dsb; isb;" : : : "memory");
-		Genode::raw("2: ip ", ip, " opcode: ", Genode::Hex(*ip), " ptbr: ",
-		             (void *)Cpu::Ttbr0::read());
-		_pd->platform_pd().insert_translation(0x0, 0x8816e000, 0x1000, Hw::PAGE_FLAGS_KERN_DATA);
-		unsigned long *map = (unsigned long *)0xef0;
-		Genode::raw("0xef0: ", Genode::Hex(*map));
-	}
-
 	if (_fault.type == Thread_fault::UNKNOWN) {
 		Genode::error(*this, " raised unhandled MMU fault ", _fault);
 		return;
