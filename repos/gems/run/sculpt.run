@@ -626,8 +626,8 @@ exec sh -c "tar cf [run_dir]/genode/depot_users.tar -C [genode_dir] \
 # Create boot image
 #
 
-build { app/menu_view drivers/framebuffer/vesa app/depot_download_manager app/sculpt_manager }
+build { server/wm app/menu_view drivers/framebuffer/vesa app/depot_download_manager app/sculpt_manager }
 
-append boot_modules { menu_view menu_view_styles.tar fb_drv depot_download_manager sculpt_manager }
+append boot_modules { wm menu_view menu_view_styles.tar fb_drv depot_download_manager sculpt_manager }
 
 build_boot_image $boot_modules
