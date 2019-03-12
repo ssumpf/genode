@@ -189,9 +189,8 @@ Signal Signal_receiver::pending_signal()
 	{
 		/* update signal context */
 		Lock::Guard lock_guard(context->_lock);
-		unsigned const num    = context->_curr_signal.num + data->num;
 		context->_pending     = false;
-		context->_curr_signal = Signal::Data(context, num);
+		context->_curr_signal = Signal::Data(context, data->num);
 		result                = context->_curr_signal;
 	}
 
