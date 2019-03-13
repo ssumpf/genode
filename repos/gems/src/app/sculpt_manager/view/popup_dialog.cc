@@ -26,7 +26,12 @@ void Popup_dialog::_gen_pkg_info(Xml_generator &xml,
 
 		_gen_info_label(xml, "pad1", "");
 	}
-	_gen_info_label(xml, "path", component.path);
+	Path const path = component.path;
+
+	Path const printed_path("genodelabs/pkg/", Depot::Archive::name(path),
+	                        "/", Depot::Archive::version(path));
+
+	_gen_info_label(xml, "path", printed_path);
 }
 
 
@@ -128,7 +133,7 @@ void Popup_dialog::_gen_menu_elements(Xml_generator &xml) const
 			bool const selected = (_selected_user == name);
 
 			if (_index_avail(name))
-				_gen_menu_entry(xml, name, User(name, " ..."), selected);
+				_gen_menu_entry(xml, name, User("genodelabs", " ..."), selected);
 		});
 
 		/*
@@ -163,7 +168,7 @@ void Popup_dialog::_gen_menu_elements(Xml_generator &xml) const
 	 * Title of index
 	 */
 	if (_state >= INDEX_SHOWN && _state < PKG_SHOWN) {
-		Menu::Name title("Depot  ", _selected_user);
+		Menu::Name title("Depot  ", "genodelabs");
 		if (_menu._level)
 			title = Menu::Name(title, "  ", _menu, " ");
 
