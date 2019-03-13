@@ -119,7 +119,7 @@ class Window_layouter::Assign : public List_model<Assign>::Element
 			 * bottom-right resize corner of a Qt application is handled by the
 			 * application, not the window manager, but it should still work as
 			 * expected by the user. Note that the ability of the application
-			 * to influence the layout is restricted its the window size. The
+			 * to influence the layout is restricted to its window size. The
 			 * window position cannot be influenced. This limits the ability of
 			 * an application to impersonate other applications.
 			 */
