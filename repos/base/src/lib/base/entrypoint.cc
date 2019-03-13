@@ -46,18 +46,22 @@ void Entrypoint::Signal_proxy_component::signal()
 	ep._process_deferred_signals();
 
 	bool io_progress = false;
+
+	/*
+	 * Try to dispatch one pending signal picked-up by the signal-proxy thread.
+	 * Note, we handle only one signal here to ensure fairness between RPCs and
+	 * signals.
+	 */
 	try {
-		for (;;) {
-			Signal sig = ep._sig_rec->pending_signal();
-			ep._dispatch_signal(sig);
+		Signal sig = ep._sig_rec->pending_signal();
+		ep._dispatch_signal(sig);
 
-			if (sig.context()->level() == Signal_context::Level::Io) {
-				/* trigger the progress handler */
-				io_progress = true;
+		if (sig.context()->level() == Signal_context::Level::Io) {
+			/* trigger the progress handler */
+			io_progress = true;
 
-				/* execute deprecated per-signal hook */
-				ep._execute_post_signal_hook();
-			}
+			/* execute deprecated per-signal hook */
+			ep._execute_post_signal_hook();
 		}
 	} catch (Signal_receiver::Signal_not_pending) { }
 
