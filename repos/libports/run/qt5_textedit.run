@@ -15,6 +15,8 @@ if {[have_spec odroid_xu]} {
 }
 
 append build_components [qt5_build_components feature]
+lappend build_components app/window_layouter
+
 
 set use_sd_card_driver [expr [have_spec omap4] || [have_spec arndale]]
 set use_ahci_driver    [expr [have_spec x86] && ![have_spec linux]]
@@ -132,6 +134,7 @@ install_config $config
 #
 
 append boot_modules [qt5_boot_modules feature]
+lappend boot_modules window_layouter
 
 # platform-specific modules
 lappend_if [have_spec linux]         boot_modules ram_fs
