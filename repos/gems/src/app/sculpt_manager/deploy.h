@@ -74,38 +74,45 @@ struct Sculpt::Deploy
 
 	void update_managed_deploy_config(Xml_node deploy)
 	{
-		_managed_deploy_config.generate([&] (Xml_generator &xml) {
+		try {
+			_managed_deploy_config.generate([&] (Xml_generator &xml) {
 
-			Arch const arch = deploy.attribute_value("arch", Arch());
-			if (arch.valid())
-				xml.attribute("arch", arch);
+				Arch const arch = deploy.attribute_value("arch", Arch());
+				if (arch.valid())
+					xml.attribute("arch", arch);
 
-			auto append_xml_node = [&] (Xml_node node) {
-				xml.append("\t");
-				node.with_raw_node([&] (char const *start, size_t length) {
-					xml.append(start, length); });
-				xml.append("\n");
-			};
+				auto append_xml_node = [&] (Xml_node node) {
+					xml.append("\t");
+					node.with_raw_node([&] (char const *start, size_t length) {
+						xml.append(start, length); });
+					xml.append("\n");
+				};
 
-			/* copy <common_routes> from manual deploy config */
-			deploy.for_each_sub_node("common_routes", [&] (Xml_node node) {
-				append_xml_node(node); });
+				/* copy <common_routes> from manual deploy config */
+				deploy.for_each_sub_node("common_routes", [&] (Xml_node node) {
+					append_xml_node(node); });
 
+				/*
+				 * Copy the <start> node from manual deploy config, unless the
+				 * component was interactively killed by the user.
+				 */
+				deploy.for_each_sub_node("start", [&] (Xml_node node) {
+					Start_name const name = node.attribute_value("name", Start_name());
+					if (!_runtime_info.abandoned_by_user(name))
+						append_xml_node(node);
+				});
+
+				/*
+				 * Add start nodes for interactively launched components.
+				 */
+				_runtime_info.gen_launched_deploy_start_nodes(xml);
+			}); }
+		catch (Xml_node::Exception) {
 			/*
-			 * Copy the <start> node from manual deploy config, unless the
-			 * component was interactively killed by the user.
+			 * Any Xml_node exception (like Invalid_syntax) is catched because
+			 * otherise the sculpt_manager aborts
 			 */
-			deploy.for_each_sub_node("start", [&] (Xml_node node) {
-				Start_name const name = node.attribute_value("name", Start_name());
-				if (!_runtime_info.abandoned_by_user(name))
-					append_xml_node(node);
-			});
-
-			/*
-			 * Add start nodes for interactively launched components.
-			 */
-			_runtime_info.gen_launched_deploy_start_nodes(xml);
-		});
+		}
 	}
 
 	bool _manual_installation_scheduled = false;
