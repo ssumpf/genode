@@ -4,9 +4,10 @@
 
 proc test_timeout { } {
 	if {[have_spec foc] && [have_spec x86_64] && [have_include power_on/qemu]} {
-		return 150 }
-	else {
-		return 60 }
+		return 150
+	} else {
+		return 60
+	}
 }
 
 proc enable_test_1 { } { return 1 }
