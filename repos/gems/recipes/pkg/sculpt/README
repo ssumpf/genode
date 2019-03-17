@@ -113,7 +113,7 @@ relationships. On the right, diagnostic messages are presented. Consider
 the following steps as a warm-up with Sculpt OS.
 
 Select the in-memory file system as *default storage location* by clicking
-on the "ram" item of the "Storage" dialog and enabling the "Use" button.
+on the "ram" item of the "Storage" dialog and pressing the "Use" button.
 This way, software will be installed solely into memory without accessing any
 real storage device.
 
@@ -128,7 +128,7 @@ button of the runtime view. Select "Depot ..." from the menu.
 
 [image sculpt_ce_menu]
 
-The depot hosts installed software, which can be obtained by different
+The depot contains installed software, which can be obtained by different
 independent software providers. The selection of software providers is
 completely up to the user and can be defined in the "Selection ..." sub menu.
 
@@ -143,7 +143,7 @@ their components access to sensitive parts of your system. The judgement
 of trust is entirely your's.
 
 When now going back to the depot menu, a new menu item "genodelabs ..."
-appears. It leads us to a catalogue of software browsable via hierarchically
+appears. It leads to a catalogue of software browsable via hierarchically
 structured menus. As a starter, let's add a desktop background.
 In the "GUI ..." sub menu, a click on the first item named "sticks blue
 backdrop" reveals the option to install the package.
@@ -223,7 +223,7 @@ dialog is a bit more elaborate this time.
   the instance to look at the state of various parts of the system.
 
 :File system (target): defines a file system to be mounted at _/rw/_.
-  This can be any file system you'd like work with or explore, for
+  This can be any file system you'd like to work with or explore, for
   example the "ram fs".
 
 :File system (fonts): defines the place where to obtain the font used by
@@ -580,6 +580,8 @@ as options.
   ----------------------------------------------------------------------------
                             |                | platform information
   ----------------------------------------------------------------------------
+                            |                | system status
+  ----------------------------------------------------------------------------
    Report                   | 'Report'       | system reports
   ----------------------------------------------------------------------------
    File system              | 'File_system'  | writeable system configuration
@@ -643,7 +645,7 @@ trusted and untrusted alike - to the low-level GUI server without fear.
 
 However, in typical scenarios, applications don't use the bare-bone system GUI
 server directly but rather employ a window manager that sits in-between the
-system GUI server and the applications, and equips the applications with the
+system GUI server and the applications, and equips the system with the
 notion of windows.
 
 The base system provides three different GUI options.
@@ -753,7 +755,7 @@ The Sculpt base system has two built-in file systems.
   that are suspected of information leakage.
 
 The two built-in file systems reside in memory. In order to access persistent
-storage, additional file-system services can be hosted as regular components
+storage, additional file-system services can be started as regular components
 within the runtime subsystem. Those components, in turn, need to be connected to
 the corresponding block devices.
 
@@ -867,7 +869,7 @@ wired (nic drv) networking as well as the user-level network routing component
 (nic router). So you usually see those options. The drivers should not be
 used directly while the NIC router is running because they only accept
 one client at a time. However, the NIC router multiplexes the network access
-for us. So network applications can be connected to the NIC router to
+and multiple network applications can be connected to the NIC router to
 reach the network.
 
 
