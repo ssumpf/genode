@@ -886,6 +886,10 @@ void Sculpt::Main::_handle_window_layout()
 			});
 		}
 
+		if (_last_clicked == Hovered::STORAGE)
+			_with_window(window_list, inspect_label, [&] (Xml_node win) {
+				gen_window(win, Rect(inspect_p1, inspect_p2)); });
+
 		/*
 		 * Position runtime view centered within the inspect area, but allow
 		 * the overlapping of the log area. (use the menu view's 'win_size').
@@ -895,10 +899,6 @@ void Sculpt::Main::_handle_window_layout()
 
 		_with_window(window_list, Label("log"), [&] (Xml_node win) {
 			gen_window(win, Rect(log_p1, log_p2)); });
-
-		if (_last_clicked == Hovered::STORAGE)
-			_with_window(window_list, inspect_label, [&] (Xml_node win) {
-				gen_window(win, Rect(inspect_p1, inspect_p2)); });
 	});
 
 	/* define window-manager focus */
