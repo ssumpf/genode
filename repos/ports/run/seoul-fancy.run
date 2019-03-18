@@ -21,7 +21,7 @@ set use_block_sata    0
 set use_nic_session   1
 set use_nic_bridge    1
 
-set use_usb           0
+set use_usb           1
 
 set use_framebuffer   1
 set use_fancy_stuff   1

@@ -25,6 +25,7 @@ set build_components {
 	drivers/rtc
 	drivers/input
 	app/seoul
+	server/nit_fb
 }
 
 if {$use_fancy_stuff} { set use_framebuffer 1 }
@@ -368,7 +369,7 @@ if {$use_fancy_stuff} {
 			</parent-provides>
 
 			<start name="fb.seoul" priority="-1" caps="100">
-				<binary name="liquid_fb"/>
+				<binary name="nit_fb"/>
 				<resource name="RAM" quantum="16M"/>
 				<provides>
 					<service name="Framebuffer"/>
@@ -380,7 +381,7 @@ if {$use_fancy_stuff} {
 				<config xpos="10" ypos="10" width="800" height="600" animate="off"/>
 			</start>
 
-			<start name="seoul" priority="-1" caps="200">
+			<start name="seoul" priority="-1" caps="200" ld="no">
 				<binary name="seoul"/>
 				<resource name="RAM" quantum="256M"/>
 				<route>
@@ -411,6 +412,7 @@ set boot_modules {
 	rtc_drv
 	seoul
 	vm_seoul.cfg
+	nit_fb
 }
 
 lappend_if [expr !$use_usb]   boot_modules ps2_drv
