@@ -31,7 +31,7 @@ Sculpt system will cover the following topics:
 Community
 ---------
 
-The best place to learn more about using and tweaking Sculpt, to follow the
+The best place to learn more about using and tweaking Sculpt, follow the
 work of the developers, and to get hold of announcements of new software and
 features is the federated Genodians blog:
 
@@ -65,7 +65,7 @@ Hardware requirements and preparations
 ######################################
 
 Sculpt CE should be compatible with recent Intel-based PC hardware featuring
-Intel graphics, E1000 networking, Intel wireless, and AHCI.
+Intel graphics, E1000 networking, Intel wireless, and AHCI/NVMe.
 
 It is tested best on laptops of the Lenovo X and T series (X220, X250, X260,
 T430, T460, T470). For experimenting with Sculpt, we recommend getting a
@@ -105,11 +105,11 @@ Getting a first impression
 
 Sculpt is best explored by first booting the prebuilt disk image downloadable
 from [https://genode.org/download/sculpt].
-Right after booting the system, Sculpt's system-management user interface
+Right after system boot, Sculpt's system-management user interface
 ("Leitzentrale") appears. The menu on the left provides convenient access to
 the connected storage devices and the network configuration. The center
-displays a live graph (runtime view) of the running components and their
-relationships. On the right, diagnostic messages are presented. Consider
+displays a live graph (runtime view) of components running and their
+relationships. On the right side, diagnostic messages are presented. Consider
 the following steps as a warm-up with Sculpt OS.
 
 Select the in-memory file system as *default storage location* by clicking
@@ -119,16 +119,16 @@ real storage device.
 
 Enable *networking* in the "Network" dialog by selecting the "Wired" or
 "Wifi" option. In the latter case, select an access point and enter the
-corresponding passphrase (if needed). The successful network connection is
+corresponding passphrase (if needed). A successful network connection is
 indicated by the IP address displayed at the bottom of the network dialog.
 
-With a storage location selected and network connectivity, it is
+With a storage location selected and established network connectivity, it is
 time to *install and start* additional components by clicking on the '+'
 button of the runtime view. Select "Depot ..." from the menu.
 
 [image sculpt_ce_menu]
 
-The depot contains installed software, which can be obtained by different
+The depot contains installable software, which can be obtained by different
 independent software providers. The selection of software providers is
 completely up to the user and can be defined in the "Selection ..." sub menu.
 
@@ -144,7 +144,7 @@ of trust is entirely your's.
 
 When now going back to the depot menu, a new menu item "genodelabs ..."
 appears. It leads to a catalogue of software browsable via hierarchically
-structured menus. As a starter, let's add a desktop background.
+structured menus. As a start, let's add a desktop background.
 In the "GUI ..." sub menu, a click on the first item named "sticks blue
 backdrop" reveals the option to install the package.
 
@@ -640,7 +640,7 @@ The GUI service interface is provided by the low-level system GUI server
 the ability to perform graphical output and the reception of user input. Note
 that the low-level GUI server keeps it client applications isolated by
 default. One application cannot see the output of other applications nor can
-it sniff user input globally. So one can connect multiple applications -
+it sniff user input globally. This way one can connect multiple applications -
 trusted and untrusted alike - to the low-level GUI server without fear.
 
 However, in typical scenarios, applications don't use the bare-bone system GUI
@@ -686,7 +686,7 @@ the following built-in ROM resources:
 :default vim configuration: the configuration of the Vim text
   editor as used in the Leitzentrale's inspect window and managed at
   _/config/vimrc_. It allows you to customize one vim configuration at a
-  central place and use this configuration consistently across the Sculpt's
+  central place and use this configuration consistently across Sculpt's
   inspect window and manually deployed components.
 
 :system font configuration: is the default font configuration managed
@@ -714,7 +714,7 @@ includes a report service that aggregates incoming reports into the in-memory
 report file system. The incoming reports are organized according to their
 origin (their session labels). By granting a component access to the _system_
 _reports_, the component can contribute to this knowledge base. However,
-keep in mind that the Sculpt's built-in report file system is limited in size.
+keep in mind that Sculpt's built-in report file system is limited in size.
 A misbehaving component may put the system in jeopardy by producing overly
 sized reports.
 
@@ -869,7 +869,7 @@ wired (nic drv) networking as well as the user-level network routing component
 (nic router). So you usually see those options. The drivers should not be
 used directly while the NIC router is running because they only accept
 one client at a time. However, the NIC router multiplexes the network access
-and multiple network applications can be connected to the NIC router to
+and multiple network applications can be connected to the NIC router in order to
 reach the network.
 
 
@@ -955,7 +955,7 @@ configuration.
 
 Each time the _/config/deploy_ file or a launcher file is written, the change
 takes immediate effect. In particular, the Sculpt manager will automatically
-kick off the download of the referenced packages and its dependencies and
+kick off the download of referenced packages and its dependencies and
 thereby populates the depot. Once the download has completed, the packages are
 started.
 
