@@ -19,7 +19,6 @@
 #include <base/attached_rom_dataspace.h>
 #include <init/child_policy.h>
 #include <timer_session/connection.h>
-#include <timer_session/timer_session.h>
 #include <os/child_policy_dynamic_rom.h>
 #include <os/static_parent_services.h>
 
@@ -267,10 +266,9 @@ struct Bomb
 
 		log("--- bomb started ---");
 
-		/* try to create timer session, if it fails, bomb is our parent */
-		try { timer.construct(env); } catch (Service_denied) { }
-
 		if (master) {
+			timer.construct(env);
+
 			timer->sigh(signal_timeout);
 
 			log("rounds=", rounds, " generations=", generation, " children=",
