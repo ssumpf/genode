@@ -9,6 +9,27 @@
 #include <util/string.h>
 
 
+/*
+ * FIXME
+ *
+ * There's a strange optimization implemented in GCC for x86_32 bit using
+ * __stack_chk_fail_local() which must be a local hidden symbol (and therefore
+ * part of a static library linked to the target. For more info see
+ * https://github.com/gcc-mirror/gcc/blob/master/libssp/ssp.c#L195 and
+ * https://raw.githubusercontent.com/gcc-mirror/gcc/master/gcc/config/i386/i386.c
+ * line 45261.
+ */
+extern "C" {
+	__attribute__((noreturn)) void __stack_chk_fail(void);
+
+	extern "C" __attribute__((noreturn)) __attribute__((visibility("hidden")))
+	void __stack_chk_fail_local(void)
+	{
+		__stack_chk_fail();
+	}
+}
+
+
 void Component::construct(Genode::Env &)
 {
 	using namespace Genode;
