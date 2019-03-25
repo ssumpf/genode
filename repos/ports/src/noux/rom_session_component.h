@@ -77,52 +77,50 @@ struct Noux::Vfs_dataspace
 					          alloc) != Vfs::Directory_service::OPEN_OK)
 				return;
 
-			Vfs_handle_context read_context;
 			Vfs::Vfs_handle::Guard guard(file);
-			file->context(&read_context);
 
 			ds = ram.alloc(stat_out.size);
 
 			char *addr = rm.attach(static_cap_cast<Genode::Ram_dataspace>(ds));
 
-			for (Vfs::file_size bytes_read = 0; bytes_read < stat_out.size; ) {
+			{
+				Vfs_handle_context read_context { vfs_io_waiter_registry, *file };
 
-				Registered_no_delete<Vfs_io_waiter>
-					vfs_io_waiter(vfs_io_waiter_registry);
+				for (Vfs::file_size bytes_read = 0; bytes_read < stat_out.size; ) {
 
-				while (!file->fs().queue_read(file, stat_out.size - bytes_read))
-					vfs_io_waiter.wait_for_io();
+					while (!file->fs().queue_read(file, stat_out.size - bytes_read))
+						read_context.vfs_io_waiter.wait_for_io();
 
-				Vfs::File_io_service::Read_result read_result;
+					Vfs::File_io_service::Read_result read_result;
 
-				Vfs::file_size out_count;
+					Vfs::file_size out_count = 0;
 
-				for (;;) {
-					read_result = file->fs().complete_read(file, addr + bytes_read,
-					                                       stat_out.size,
-					                                       out_count);
-					if (read_result != Vfs::File_io_service::READ_QUEUED)
-						break;
+					for (;;) {
+						read_result = file->fs().complete_read(file, addr + bytes_read,
+						                                       stat_out.size,
+						                                       out_count);
+						if (read_result != Vfs::File_io_service::READ_QUEUED)
+							break;
 
-					read_context.vfs_io_waiter.wait_for_io();
+						read_context.vfs_io_waiter.wait_for_io();
+					}
+
+					/* wake up threads blocking for 'queue_*()' or 'write()' */
+					vfs_io_waiter_registry.for_each([] (Vfs_io_waiter &r) {
+						r.wakeup();
+					});
+
+					if (read_result != Vfs::File_io_service::READ_OK) {
+						Genode::error("Error reading dataspace from VFS");
+						rm.detach(addr);
+						ram.free(static_cap_cast<Genode::Ram_dataspace>(ds));
+						return;
+					}
+
+					bytes_read += out_count;
+					file->advance_seek(out_count);
 				}
-
-				/* wake up threads blocking for 'queue_*()' or 'write()' */
-				vfs_io_waiter_registry.for_each([] (Vfs_io_waiter &r) {
-					r.wakeup();
-				});
-
-				if (read_result != Vfs::File_io_service::READ_OK) {
-					Genode::error("Error reading dataspace from VFS");
-					rm.detach(addr);
-					ram.free(static_cap_cast<Genode::Ram_dataspace>(ds));
-					root_dir.close(file);
-					return;
-				}
-
-				bytes_read += out_count;
-				file->advance_seek(out_count);
-			}
+}
 
 			rm.detach(addr);
 		}

@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright (C) 2011-2017 Genode Labs GmbH
+ * Copyright (C) 2011-2019 Genode Labs GmbH
  *
  * This file is part of the Genode OS framework, which is distributed
  * under the terms of the GNU Affero General Public License version 3.
@@ -213,26 +213,9 @@ struct Noux::Main
 	/* initialize virtual file system */
 	Vfs::Global_file_system_factory _global_file_system_factory { _heap };
 
-	struct Io_response_handler : Vfs::Io_response_handler
-	{
-		Vfs_io_waiter_registry io_waiter_registry { };
+	Vfs_io_waiter_registry _io_waiter_registry { };
 
-		void handle_io_response(Vfs::Vfs_handle::Context *context) override
-		{
-			if (context) {
-				Vfs_handle_context *vfs_handle_context = static_cast<Vfs_handle_context*>(context);
-				vfs_handle_context->vfs_io_waiter.wakeup();
-				return;
-			}
-
-			io_waiter_registry.for_each([] (Vfs_io_waiter &r) {
-				r.wakeup();
-			});
-		}
-
-	} _io_response_handler { };
-
-	struct Vfs_env : Vfs::Env, Vfs::Watch_response_handler
+	struct Vfs_env : Vfs::Env
 	{
 		Main &_main;
 
@@ -243,18 +226,11 @@ struct Noux::Main
 		: _main(main), _root_dir(*this, config, _fs_factory) { }
 
 		/**
-		 * Vfs::Watch_response_handler interface
-		 */
-		void handle_watch_response(Vfs::Vfs_watch_handle::Context*) override { }
-
-		/**
 		 * Vfs::Env interface
 		 */
 		Genode::Env                 &env()           override { return _main._env; }
 		Allocator                   &alloc()         override { return _main._heap; }
 		Vfs::File_system            &root_dir()      override { return _root_dir; }
-		Vfs::Io_response_handler    &io_handler()    override { return _main._io_response_handler; }
-		Vfs::Watch_response_handler &watch_handler() override { return *this; }
 
 	} _vfs_env { *this, _config.xml().sub_node("fstab") };
 
@@ -306,7 +282,7 @@ struct Noux::Main
 	                          _pid_allocator.alloc(),
 	                          _env,
 	                          _root_dir,
-	                          _io_response_handler.io_waiter_registry,
+	                          _io_waiter_registry,
 	                          _args_of_init_process(),
 	                          env_string_of_init_process(_config.xml()),
 	                          _heap,
@@ -325,15 +301,15 @@ struct Noux::Main
 	typedef Terminal_io_channel Tio; /* just a local abbreviation */
 
 	Shared_pointer<Io_channel>
-		_channel_0 { &connect_stdio(_env, _terminal, _config.xml(), _root_dir,
-		             _io_response_handler.io_waiter_registry,
-		             Tio::STDIN,  _heap), _heap },
-		_channel_1 { &connect_stdio(_env, _terminal, _config.xml(), _root_dir,
-		            _io_response_handler.io_waiter_registry,
-		             Tio::STDOUT, _heap), _heap },
-		_channel_2 { &connect_stdio(_env, _terminal, _config.xml(), _root_dir,
-		             _io_response_handler.io_waiter_registry,
-		             Tio::STDERR, _heap), _heap };
+		_channel_0 { &connect_stdio(
+			_env, _terminal, _config.xml(), _root_dir,
+			_io_waiter_registry, Tio::STDIN,  _heap), _heap },
+		_channel_1 { &connect_stdio(
+			_env, _terminal, _config.xml(), _root_dir,
+			_io_waiter_registry, Tio::STDOUT, _heap), _heap },
+		_channel_2 { &connect_stdio(
+			_env, _terminal, _config.xml(), _root_dir,
+			_io_waiter_registry, Tio::STDERR, _heap), _heap };
 
 	Main(Env &env) : _env(env)
 	{

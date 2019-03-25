@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright (C) 2011-2017 Genode Labs GmbH
+ * Copyright (C) 2011-2019 Genode Labs GmbH
  *
  * This file is part of the Genode OS framework, which is distributed
  * under the terms of the GNU Affero General Public License version 3.
@@ -16,6 +16,7 @@
 
 /* Noux includes */
 #include <io_channel.h>
+#include <vfs/vfs_handle.h>
 #include <vfs/dir_file_system.h>
 
 namespace Noux {
@@ -40,9 +41,42 @@ class Noux::Vfs_io_waiter
 		void wakeup() { _sem.up(); }
 };
 
-struct Noux::Vfs_handle_context : Vfs::Vfs_handle::Context
+struct Noux::Vfs_handle_context final : Vfs::Io_response_handler
 {
+	/* TODO: shall these nest? */
+
+	Vfs_io_waiter_registry &vfs_io_waiter_registry;
+	Vfs::Vfs_handle        &vfs_handle;
+
 	Vfs_io_waiter vfs_io_waiter { };
+
+	Vfs_handle_context(Vfs_io_waiter_registry &registry,
+	                   Vfs::Vfs_handle &handle)
+	: vfs_io_waiter_registry(registry), vfs_handle(handle)
+	{
+		vfs_handle.handler(this);
+	}
+
+	~Vfs_handle_context()
+	{
+		vfs_handle.handler(nullptr);
+	}
+
+
+	/*************************************
+	 ** Vfs::Response_handler interface **
+	 *************************************/
+
+	void read_ready_response() override { }
+
+	void io_progress_response() override
+	{
+		vfs_io_waiter.wakeup();
+
+		/* TODO: must everything wake up? */
+		vfs_io_waiter_registry.for_each([] (Vfs_io_waiter &r) {
+			r.wakeup(); });
+	}
 };
 
 struct Noux::Vfs_io_channel : Io_channel
@@ -65,14 +99,13 @@ struct Noux::Vfs_io_channel : Io_channel
 
 	void _sync()
 	{
-		Registered_no_delete<Vfs_io_waiter>
-			vfs_io_waiter(_vfs_io_waiter_registry);
+		Vfs_handle_context context(_vfs_io_waiter_registry, _fh);
 
 		while (!_fh.fs().queue_sync(&_fh))
-			vfs_io_waiter.wait_for_io();
+			context.vfs_io_waiter.wait_for_io();
 
 		while (_fh.fs().complete_sync(&_fh) == Vfs::File_io_service::SYNC_QUEUED)
-			vfs_io_waiter.wait_for_io();
+			context.vfs_io_waiter.wait_for_io();
 
 		/* wake up threads blocking for 'queue_*()' or 'write()' */
 		_vfs_io_waiter_registry.for_each([] (Vfs_io_waiter &r) {
@@ -96,7 +129,7 @@ struct Noux::Vfs_io_channel : Io_channel
 	{
 		_sync();
 
-		_fh.ds().close(&_fh);
+		_fh.close();
 	}
 
 	bool write(Sysio &sysio) override
@@ -109,8 +142,7 @@ struct Noux::Vfs_io_channel : Io_channel
 		Vfs::file_size count = sysio.write_in.count;
 		Vfs::file_size out_count = 0;
 
-		Registered_no_delete<Vfs_io_waiter>
-			vfs_io_waiter(_vfs_io_waiter_registry);
+		Vfs_handle_context context(_vfs_io_waiter_registry, _fh);
 
 		for (;;) {
 			try {
@@ -118,7 +150,7 @@ struct Noux::Vfs_io_channel : Io_channel
 				                                   count, out_count);
 				break;
 			} catch (Vfs::File_io_service::Insufficient_buffer) {
-				vfs_io_waiter.wait_for_io();
+				context.vfs_io_waiter.wait_for_io();
 			}
 		}
 
@@ -148,11 +180,10 @@ struct Noux::Vfs_io_channel : Io_channel
 
 		Vfs::file_size out_count = 0;
 
-		Registered_no_delete<Vfs_io_waiter>
-			vfs_io_waiter(_vfs_io_waiter_registry);
+		Vfs_handle_context context(_vfs_io_waiter_registry, _fh);
 
 		while (!_fh.fs().queue_read(&_fh, count))
-			vfs_io_waiter.wait_for_io();
+			context.vfs_io_waiter.wait_for_io();
 
 		for (;;) {
 
@@ -161,7 +192,7 @@ struct Noux::Vfs_io_channel : Io_channel
 			if (sysio.error.read != Vfs::File_io_service::READ_QUEUED)
 				break;
 
-			vfs_io_waiter.wait_for_io();
+			context.vfs_io_waiter.wait_for_io();
 		}
 
 		/* wake up threads blocking for 'queue_*()' or 'write()' */
@@ -260,11 +291,10 @@ struct Noux::Vfs_io_channel : Io_channel
 
 		Vfs::file_size const count = sizeof(dirent);
 
-		Registered_no_delete<Vfs_io_waiter>
-			vfs_io_waiter(_vfs_io_waiter_registry);
+		Vfs_handle_context context(_vfs_io_waiter_registry, _fh);
 
 		while (!_fh.fs().queue_read(&_fh, count))
-			vfs_io_waiter.wait_for_io();
+			context.vfs_io_waiter.wait_for_io();
 
 		Vfs::File_io_service::Read_result read_result;
 		Vfs::file_size out_count = 0;
@@ -277,7 +307,7 @@ struct Noux::Vfs_io_channel : Io_channel
 			if (read_result != Vfs::File_io_service::READ_QUEUED)
 				break;
 
-			vfs_io_waiter.wait_for_io();
+			context.vfs_io_waiter.wait_for_io();
 		}
 
 		/* wake up threads blocking for 'queue_*()' or 'write()' */

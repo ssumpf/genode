@@ -636,33 +636,32 @@ bool Noux::Child::syscall(Noux::Session::Syscall sc)
 			if (openlink_result != Vfs::Directory_service::OPENLINK_OK)
 				break;
 
-			Vfs::file_size count = min(_sysio.readlink_in.bufsiz,
-			                           sizeof(_sysio.readlink_out.chunk));
-
-			Registered_no_delete<Vfs_io_waiter>
-				vfs_io_waiter(_vfs_io_waiter_registry);
-
-			while (!symlink_handle->fs().queue_read(symlink_handle, count))
-				vfs_io_waiter.wait_for_io();
-
-			Vfs_handle_context read_context;
 			Vfs::Vfs_handle::Guard guard(symlink_handle);
 
-			symlink_handle->context(&read_context);
-
+			Vfs::file_size count = min(_sysio.readlink_in.bufsiz,
+			                           sizeof(_sysio.readlink_out.chunk));
 			Vfs::file_size out_count = 0;
-			Vfs::File_io_service::Read_result read_result;
 
-			for (;;) {
-				read_result = symlink_handle->fs().complete_read(symlink_handle,
-				                                                 _sysio.readlink_out.chunk,
-				                                                 count,
-				                                                 out_count);
+			{
+				Vfs_handle_context context {
+					_vfs_io_waiter_registry, *symlink_handle };
 
-				if (read_result != Vfs::File_io_service::READ_QUEUED)
-					break;
+				while (!symlink_handle->fs().queue_read(symlink_handle, count))
+					context.vfs_io_waiter.wait_for_io();
 
-				read_context.vfs_io_waiter.wait_for_io();
+				Vfs::File_io_service::Read_result read_result;
+
+				for (;;) {
+					read_result = symlink_handle->fs().complete_read(symlink_handle,
+					                                                 _sysio.readlink_out.chunk,
+					                                                 count,
+					                                                 out_count);
+
+					if (read_result != Vfs::File_io_service::READ_QUEUED)
+						break;
+
+					context.vfs_io_waiter.wait_for_io();
+				}
 			}
 
 			/* wake up threads blocking for 'queue_*()' or 'write()' */
@@ -694,7 +693,7 @@ bool Noux::Child::syscall(Noux::Session::Syscall sc)
 
 			switch (opendir_result) {
 			case Opendir_result::OPENDIR_OK:
-				dir_handle->ds().close(dir_handle);
+				dir_handle->close();
 				result = true;
 				break;
 			case Opendir_result::OPENDIR_ERR_LOOKUP_FAILED:
@@ -749,44 +748,43 @@ bool Noux::Child::syscall(Noux::Session::Syscall sc)
 			if (openlink_result != Openlink_result::OPENLINK_OK)
 				break;
 
+			Vfs::Vfs_handle::Guard guard(symlink_handle);
+
 			Vfs::file_size count = strlen(_sysio.symlink_in.oldpath) + 1;
 			Vfs::file_size out_count;
 
-			Registered_no_delete<Vfs_io_waiter>
-				vfs_io_waiter(_vfs_io_waiter_registry);
+			{
+				Vfs_handle_context context {
+					_vfs_io_waiter_registry, *symlink_handle };
 
-			for (;;) {
-				try {
-					symlink_handle->fs().write(symlink_handle, _sysio.symlink_in.oldpath,
-					                           strlen(_sysio.symlink_in.oldpath) + 1,
-					                           out_count);
-					break;
-				} catch (Vfs::File_io_service::Insufficient_buffer) {
-					vfs_io_waiter.wait_for_io();
+				for (;;) {
+					try {
+						symlink_handle->fs().write(symlink_handle, _sysio.symlink_in.oldpath,
+						                           strlen(_sysio.symlink_in.oldpath) + 1,
+						                           out_count);
+						break;
+					} catch (Vfs::File_io_service::Insufficient_buffer) {
+						context.vfs_io_waiter.wait_for_io();
+					}
 				}
+
+				/* wake up threads blocking for 'queue_*()' or 'write()' */
+				_vfs_io_waiter_registry.for_each([] (Vfs_io_waiter &r) {
+					r.wakeup();
+				});
+
+				if (out_count != count) {
+					_sysio.error.symlink = Sysio::SYMLINK_ERR_NAME_TOO_LONG;
+					result = false;
+				}
+
+				while (!symlink_handle->fs().queue_sync(symlink_handle))
+					context.vfs_io_waiter.wait_for_io();
+
+				while (symlink_handle->fs().complete_sync(symlink_handle) ==
+					   Vfs::File_io_service::SYNC_QUEUED)
+					context.vfs_io_waiter.wait_for_io();
 			}
-
-			/* wake up threads blocking for 'queue_*()' or 'write()' */
-			_vfs_io_waiter_registry.for_each([] (Vfs_io_waiter &r) {
-				r.wakeup();
-			});
-
-			if (out_count != count) {
-				_sysio.error.symlink = Sysio::SYMLINK_ERR_NAME_TOO_LONG;
-				result = false;
-			}
-
-			while (!symlink_handle->fs().queue_sync(symlink_handle))
-				vfs_io_waiter.wait_for_io();
-
-			Vfs_handle_context sync_context;
-			Vfs::Vfs_handle::Guard guard(symlink_handle);
-
-			symlink_handle->context(&sync_context);
-
-			while (symlink_handle->fs().complete_sync(symlink_handle) ==
-				   Vfs::File_io_service::SYNC_QUEUED)
-				sync_context.vfs_io_waiter.wait_for_io();
 
 			/* wake up threads blocking for 'queue_*()' or 'write()' */
 			_vfs_io_waiter_registry.for_each([] (Vfs_io_waiter &r) {
@@ -904,25 +902,24 @@ bool Noux::Child::syscall(Noux::Session::Syscall sc)
 				if (opendir_result != Vfs::Directory_service::OPENDIR_OK)
 					break;
 
-				Registered_no_delete<Vfs_io_waiter>
-					vfs_io_waiter(_vfs_io_waiter_registry);
-
-				while (!sync_handle->fs().queue_sync(sync_handle))
-					vfs_io_waiter.wait_for_io();
-
-				Vfs_handle_context sync_context;
 				Vfs::Vfs_handle::Guard guard(sync_handle);
 
-				sync_handle->context(&sync_context);
+				{
+					Vfs_handle_context context {
+						_vfs_io_waiter_registry, *sync_handle };
 
-				while (sync_handle->fs().complete_sync(sync_handle) ==
-				   Vfs::File_io_service::SYNC_QUEUED)
-					sync_context.vfs_io_waiter.wait_for_io();
+					while (!sync_handle->fs().queue_sync(sync_handle))
+						context.vfs_io_waiter.wait_for_io();
 
-				/* wake up threads blocking for 'queue_*()' or 'write()' */
-				_vfs_io_waiter_registry.for_each([] (Vfs_io_waiter &r) {
-					r.wakeup();
-				});
+					while (sync_handle->fs().complete_sync(sync_handle) ==
+					   Vfs::File_io_service::SYNC_QUEUED)
+						context.vfs_io_waiter.wait_for_io();
+
+					/* wake up threads blocking for 'queue_*()' or 'write()' */
+					_vfs_io_waiter_registry.for_each([] (Vfs_io_waiter &r) {
+						r.wakeup();
+					});
+				}
 
 				break;
 			}
