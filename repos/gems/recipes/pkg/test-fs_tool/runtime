@@ -1,7 +1,7 @@
 <runtime ram="32M" caps="1000" binary="init">
 
 	<events>
-		<timeout meaning="failed" sec="10" />
+		<timeout meaning="failed" sec="20" />
 		<log meaning="succeeded">
 			[init -> test -> remove] *file/items cannot be removed because it is a directory*
 			[init -> test -> remove] remove file /items/2*
