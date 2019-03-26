@@ -1,4 +1,4 @@
-<runtime ram="8400M" caps="1500" binary="init" config="init.config">
+<runtime ram="1400M" caps="1500" binary="init" config="init.config">
 
 	<requires>
 		<file_system label="vm"/>
@@ -21,6 +21,7 @@
 		<rom label="init"/>
 		<rom label="nit_fb"/>
 		<rom label="timer"/>
+		<rom label="file_terminal"/>
 		<rom label="virtualbox5-nova"/>
 		<rom label="libc.lib.so"/>
 		<rom label="libc_pipe.lib.so"/>
