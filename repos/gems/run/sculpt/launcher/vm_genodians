@@ -1,4 +1,4 @@
-<launcher pkg="local/pkg/vbox5-nova-serial/2019-03-18">
+<launcher pkg="vbox5-nova-serial">
 	<route>
 		<service name="File_system" label="vm">
 			<child name="genodians_fs"/>

@@ -1,4 +1,4 @@
-<launcher pkg="checker/pkg/chroot/2019-03-17">
+<launcher pkg="chroot">
 	<route>
 		<service name="File_system"> <child name="default_fs_rw"/> </service>
 	</route>
