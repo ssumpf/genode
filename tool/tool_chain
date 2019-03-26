@@ -29,7 +29,7 @@ help:
 # User interface
 #
 
-SUPPORTED_PLATFORMS := x86 arm riscv
+SUPPORTED_PLATFORMS := x86 arm riscv aarch64
 
 PLATFORM := $(firstword $(filter $(SUPPORTED_PLATFORMS),$(MAKECMDGOALS)))
 
@@ -182,6 +182,7 @@ LOCAL_LIB_INSTALL_LOCATION = $(shell pwd)/build/lib-install
 TARGET_NAME_x86        = x86_64-pc-elf
 TARGET_NAME_arm        = arm-none-eabi
 TARGET_NAME_riscv      = riscv64-unknown-elf
+TARGET_NAME_aarch64    = aarch64-none-elf
 
 GCC_CONFIG_riscv       = --with-arch=rv64imac
 
@@ -322,7 +323,7 @@ GCC_INSTALLED_BINARIES      = $(LOCAL_INSTALL_LOCATION)/bin/genode-$(PLATFORM)-g
 GDB_BINARIES                = build/$(PLATFORM)/gdb/gdb/gdb
 
 
-build_all: $(GCC_INSTALLED_BINARIES) $(GDB_INSTALLED_BINARIES)
+build_all: $(GCC_INSTALLED_BINARIES)
 
 GMP_CONTRIB_DIR = $(shell $(GENODE_DIR)/tool/ports/current gmp)/src/lib/gmp
 
