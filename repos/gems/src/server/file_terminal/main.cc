@@ -67,7 +67,12 @@ class Open_file
 
 		Open_file(const char *filename) : _fd(-1)
 		{
-			Libc::with_libc([&] () { _fd = ::open(filename, O_CREAT|O_RDWR); });
+			Libc::with_libc([&] () {
+				_fd = ::open(filename, O_CREAT|O_RDWR);
+				if (_fd != -1)
+					lseek(_fd, 0, SEEK_END);
+			});
+
 			if (_fd == -1)
 				::perror("open");
 		}
