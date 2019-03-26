@@ -13,3 +13,4 @@ noux_build.patch
 arm.patch
 ubsan.patch
 ucontext_t.patch
+aarch64.patch
