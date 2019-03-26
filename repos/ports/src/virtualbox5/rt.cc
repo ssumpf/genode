@@ -365,6 +365,21 @@ void * RTMemTCGAllocZ(size_t cb)
 	return ptr;
 }
 
+void RTMemTCGFree(void *pv)
+{
+	Genode::Lock::Guard guard(lock_ds);
+
+	Genode::addr_t const ptr = reinterpret_cast<Genode::addr_t>(pv);
+	for (Tcg_slab * tcg = list.first(); tcg; tcg = tcg->next()) {
+		if (!tcg->contains(ptr))
+			continue;
+
+		Genode::warning("could not free up TCG memory ", pv);
+		return;
+	}
+	Avl_ds::free_memory(pv, Avl_ds::max_size_at(pv));
+}
+
 void * RTMemTCGRealloc(void *ptr, size_t size)
 {
 	if (!ptr && size)
@@ -400,21 +415,6 @@ void * RTMemTCGRealloc(void *ptr, size_t size)
 	RTMemTCGFree(ptr);
 
 	return new_ptr;
-}
-
-void RTMemTCGFree(void *pv)
-{
-	Genode::Lock::Guard guard(lock_ds);
-
-	Genode::addr_t const ptr = reinterpret_cast<Genode::addr_t>(pv);
-	for (Tcg_slab * tcg = list.first(); tcg; tcg = tcg->next()) {
-		if (!tcg->contains(ptr))
-			continue;
-
-		Genode::warning("could not free up TCG memory ", pv);
-		return;
-	}
-	Avl_ds::free_memory(pv, Avl_ds::max_size_at(pv));
 }
 
 #include <iprt/buildconfig.h>
