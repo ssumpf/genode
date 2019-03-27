@@ -115,7 +115,7 @@ append config_of_app {
 		</config>
 	</start>
 
-	<start name="nitpicker" priority="-1">
+	<start name="nitpicker" priority="-1" caps="150">
 		<resource name="RAM" quantum="12M"/>
 		<provides><service name="Nitpicker"/></provides>
 		<route>
