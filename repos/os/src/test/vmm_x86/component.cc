@@ -13,6 +13,7 @@
  */
 
 #include <base/attached_dataspace.h>
+#include <base/attached_rom_dataspace.h>
 #include <base/component.h>
 #include <base/heap.h>
 #include <base/signal.h>
@@ -53,6 +54,9 @@ class Vcpu {
 		Genode::Attached_dataspace          _state_ds;
 		Genode::Vm_state                   &_state;
 
+		bool                                _svm;
+		bool                                _vmx;
+
 		/* test state start - some status information to steer the test */
 		unsigned                            _exit_count     { 0 };
 		unsigned                            _pause_count    { 0 };
@@ -68,21 +72,6 @@ class Vcpu {
 		/* test state end */
 
 		void _handle_vm_exception();
-
-		bool _cpu_name(char const * name) {
-			/* XXX better read platform info rom about whether virtualisation is available or not */
-			using Genode::uint32_t;
-
-			uint32_t cpuid = 0, edx = 0, ebx = 0, ecx = 0;
-			asm volatile ("cpuid" : "+a" (cpuid), "=d" (edx), "=b"(ebx), "=c"(ecx));
-
-			return ebx == *reinterpret_cast<uint32_t const *>(name) &&
-			       edx == *reinterpret_cast<uint32_t const *>(name + 4) &&
-			       ecx == *reinterpret_cast<uint32_t const *>(name + 8);
-		}
-
-		bool _amd() { return _cpu_name("AuthenticAMD"); }
-		bool _intel() { return _cpu_name("GenuineIntel"); }
 
 		void _cpu_init()
 		{
@@ -117,12 +106,12 @@ class Vcpu {
 			_state.idtr. value(Range  {0, _state.gdtr.value().limit});
 			_state.dr7.  value(0x400);
 
-			if (_intel()) {
+			if (_vmx) {
 				_state.ctrl_primary.value(INTEL_CTRL_PRIMARY_HLT);
 				/* required for seL4 */
 				_state.ctrl_secondary.value(INTEL_CTRL_SECOND_UG);
 			}
-			if (_amd()) {
+			if (_svm) {
 				/* required for native AMD hardware (!= Qemu) for NOVA */
 				_state.ctrl_secondary.value(AMD_CTRL_SECOND_VMRUN);
 			}
@@ -144,7 +133,8 @@ class Vcpu {
 	public:
 
 		Vcpu(Genode::Entrypoint &ep, Genode::Vm_connection &vm_con,
-		     Genode::Allocator &alloc, Genode::Env &env, Vm &vm)
+		     Genode::Allocator &alloc, Genode::Env &env, Vm &vm,
+		     bool svm, bool vmx)
 		:
 			_vm(vm), _vm_con(vm_con),
 			_handler(ep, *this, &Vcpu::_handle_vm_exception, &Vcpu::_exit_config),
@@ -153,7 +143,8 @@ class Vcpu {
 				return _vm_con.create_vcpu(alloc, env, _handler); })),
 			/* get state of vcpu */
 			_state_ds(env.rm(), _vm_con.cpu_state(_vcpu)),
-			_state(*_state_ds.local_addr<Genode::Vm_state>())
+			_state(*_state_ds.local_addr<Genode::Vm_state>()),
+			_svm(svm), _vmx(vmx)
 		{
 			Genode::log("vcpu ", _vcpu.id, " : created");
 		}
@@ -209,6 +200,8 @@ class Vm {
 
 		Genode::Vm_connection        _vm_con;
 		Genode::Heap                 _heap;
+		bool                         _svm;
+		bool                         _vmx;
 		Genode::Entrypoint          &_ep_first;  /* running on first CPU */
 		Genode::Entrypoint           _ep_second; /* running on second CPU */
 		Vcpu                         _vcpu0;
@@ -223,23 +216,57 @@ class Vm {
 
 		void _handle_timer();
 
+		bool _cpu_name(char const * name)
+		{
+			using Genode::uint32_t;
+
+			uint32_t cpuid = 0, edx = 0, ebx = 0, ecx = 0;
+			asm volatile ("cpuid" : "+a" (cpuid), "=d" (edx), "=b"(ebx), "=c"(ecx));
+
+			return ebx == *reinterpret_cast<uint32_t const *>(name) &&
+			       edx == *reinterpret_cast<uint32_t const *>(name + 4) &&
+			       ecx == *reinterpret_cast<uint32_t const *>(name + 8);
+		}
+
+		bool _amd() { return _cpu_name("AuthenticAMD"); }
+		bool _intel() { return _cpu_name("GenuineIntel"); }
+
+		/* lookup which hardware assisted feature the CPU supports */
+		bool _vm_feature(Genode::Env &env, char const *name)
+		{
+			try {
+				Genode::Attached_rom_dataspace info { env, "platform_info"};
+
+				return info.xml().sub_node("hardware").sub_node("features").attribute_value(name, false);
+			} catch (...) { }
+
+			return false;
+		}
+
 	public:
 
 		Vm(Genode::Env &env)
 		:
 			_vm_con(env),
 			_heap(env.ram(), env.rm()),
+			_svm(_amd() && _vm_feature(env, "svm")),
+			_vmx(_intel() && _vm_feature(env, "vmx")),
 			_ep_first(env.ep()),
 			_ep_second(env, STACK_SIZE, "second ep",
 			           env.cpu().affinity_space().location_of_index(1)),
-			_vcpu0(_ep_first, _vm_con, _heap, env, *this),
-			_vcpu1(_ep_first, _vm_con, _heap, env, *this),
-			_vcpu2(_ep_second, _vm_con, _heap, env, *this),
-			_vcpu3(_ep_second, _vm_con, _heap, env, *this),
+			_vcpu0(_ep_first, _vm_con, _heap, env, *this, _svm, _vmx),
+			_vcpu1(_ep_first, _vm_con, _heap, env, *this, _svm, _vmx),
+			_vcpu2(_ep_second, _vm_con, _heap, env, *this, _svm, _vmx),
+			_vcpu3(_ep_second, _vm_con, _heap, env, *this, _svm, _vmx),
 			_memory(env.ram().alloc(4096)),
 			_timer(env),
 			_timer_handler(_ep_first, *this, &Vm::_handle_timer)
 		{
+			if (!_svm && !_vmx) {
+				Genode::error("no SVM nor VMX support detected");
+				throw 0;
+			}
+
 			/* prepare guest memory with some instructions for testing */
 			Genode::uint8_t * guest = env.rm().attach(_memory);
 #if 0
