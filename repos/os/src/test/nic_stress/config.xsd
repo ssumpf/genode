@@ -1,6 +1,8 @@
 <?xml version="1.0"?>
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
 
+	<xs:include schemaLocation="base_types.xsd"/>
+
 	<xs:element name="config">
 		<xs:complexType>
 			<xs:choice minOccurs="0" maxOccurs="unbounded">
@@ -13,6 +15,9 @@
 				</xs:element><!-- construct_destruct -->
 
 			</xs:choice>
+
+			<xs:attribute name="exit_support" type="Boolean" />
+
 		</xs:complexType>
 	</xs:element><!-- config -->
 

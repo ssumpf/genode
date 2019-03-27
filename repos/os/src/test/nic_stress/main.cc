@@ -121,6 +121,9 @@ struct Local::Main
 	Xml_node                          const _config     { _config_rom.xml() };
 	Constructible<Construct_destruct_test>  _test_1     { };
 
+	bool const _exit_support {
+		_config.attribute_value("exit_support", true) };
+
 	Signal_handler<Main> _test_completed_handler {
 		_env.ep(), *this, &Main::_handle_test_completed };
 
@@ -129,7 +132,9 @@ struct Local::Main
 		if (_test_1.constructed()) {
 			_test_1.destruct();
 			log("--- finished NIC stress test ---");
-			_env.parent().exit(0);
+			if (_exit_support) {
+				_env.parent().exit(0); }
+			return;
 		}
 	}
 
