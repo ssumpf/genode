@@ -52,7 +52,7 @@ void Genode::Platform::_init_core_page_table_registry()
 	}
 
 	/* initialize 16k memory allocator */
-	phys_alloc_16k(core_mem_alloc());
+	phys_alloc_16k(&core_mem_alloc());
 
 	/* reserve some memory for VCPUs - must be 16k */
 	enum { MAX_VCPU_COUNT = 16 };
