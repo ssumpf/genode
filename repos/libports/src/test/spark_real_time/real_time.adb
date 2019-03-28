@@ -20,11 +20,11 @@ begin
    Sleep (5);
    Diff := Clock - Start;
 
-   if Diff > Microseconds (5050000)
+   if Diff > Microseconds (5500000)
    then
       GNAT.IO.Put_Line ("Error: Slept too long");
       Ada.Command_Line.Set_Exit_Status (1);
-   elsif Diff < Microseconds (4950000)
+   elsif Diff < Microseconds (4500000)
    then
       GNAT.IO.Put_Line ("Error: Slept too short");
       Ada.Command_Line.Set_Exit_Status (2);
