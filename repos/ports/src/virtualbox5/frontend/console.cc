@@ -281,7 +281,7 @@ void GenodeConsole::handle_mode_change()
 
 	Genodefb *fb = dynamic_cast<Genodefb *>(pFramebuffer);
 
-	fb->update_mode();
+	fb->update_mode(_nitpicker.mode());
 	update_video_mode();
 }
 
@@ -330,8 +330,7 @@ void GenodeConsole::init_backends(IKeyboard * gKeyboard, IMouse * gMouse)
 	HRESULT rc = i_getDisplay()->QueryFramebuffer(0, &pFramebuffer);
 	Assert(SUCCEEDED(rc) && pFramebuffer);
 
-	Genodefb *fb = dynamic_cast<Genodefb *>(pFramebuffer);
-	fb->mode_sigh(_mode_change_signal_dispatcher);
+	_nitpicker.mode_sigh(_mode_change_signal_dispatcher);
 
 	handle_mode_change();
 }

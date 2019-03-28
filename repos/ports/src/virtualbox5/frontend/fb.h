@@ -26,19 +26,23 @@
 #include "Global.h"
 #include "VirtualBoxBase.h"
 
+typedef Nitpicker::Session::View_handle View_handle;
+
 class Genodefb :
 	VBOX_SCRIPTABLE_IMPL(IFramebuffer)
 {
 	private:
 
 		Genode::Env           &_env;
+		Nitpicker::Connection &_nitpicker;
 		Fb_Genode::Session    &_fb;
+		View_handle            _view;
+
+		/* The mode at the time when the mode change signal was received */
+		Fb_Genode::Mode        _next_fb_mode { 1024, 768, Fb_Genode::Mode::RGB565 };
 
 		/* The mode matching the currently attached dataspace */
 		Fb_Genode::Mode        _fb_mode;
-
-		/* The mode at the time when the mode change signal was received */
-		Fb_Genode::Mode        _next_fb_mode;
 
 		/*
 		 * The mode currently used by the VM. Can be smaller than the
@@ -56,27 +60,32 @@ class Genodefb :
 			_fb.refresh(0, 0, _virtual_fb_mode.width(), _virtual_fb_mode.height());
 		}
 
-
-		Fb_Genode::Mode _initial_setup(Nitpicker::Connection &nitpicker)
+		void _adjust_buffer()
 		{
-			unsigned const width  = 1024U;
-			unsigned const height = 768U;
+			_nitpicker.buffer(Fb_Genode::Mode(_next_fb_mode.width(), _next_fb_mode.height(),
+			                                  Fb_Genode::Mode::RGB565), false);
 
-			nitpicker.buffer(Fb_Genode::Mode(width, height,
-			                                 Fb_Genode::Mode::RGB565), false);
-
-			typedef Nitpicker::Session::View_handle View_handle;
 			typedef Nitpicker::Session::Command Command;
 
-			View_handle view = nitpicker.create_view();
 			Nitpicker::Rect rect(Nitpicker::Point(0, 0),
-			                     Nitpicker::Area(width, height));
+			                     Nitpicker::Area(_next_fb_mode.width(), _next_fb_mode.height()));
 
-			nitpicker.enqueue<Command::Geometry>(view, rect);
-			nitpicker.enqueue<Command::To_front>(view, View_handle());
-			nitpicker.execute();
+			_nitpicker.enqueue<Command::Geometry>(_view, rect);
+			_nitpicker.execute();
+		}
 
-			return _fb.mode();
+		Fb_Genode::Mode _initial_setup()
+		{
+			typedef Nitpicker::Session::Command Command;
+
+			_view = _nitpicker.create_view();
+
+			_adjust_buffer();
+
+			_nitpicker.enqueue<Command::To_front>(_view, View_handle());
+			_nitpicker.execute();
+
+			return _next_fb_mode;
 		}
 
 	public:
@@ -84,9 +93,9 @@ class Genodefb :
 		Genodefb (Genode::Env &env, Nitpicker::Connection &nitpicker)
 		:
 			_env(env),
+			_nitpicker(nitpicker),
 			_fb(*nitpicker.framebuffer()),
-			_fb_mode(_initial_setup(nitpicker)),
-			_next_fb_mode(_fb_mode),
+			_fb_mode(_initial_setup()),
 			_virtual_fb_mode(_fb_mode),
 			_fb_base(env.rm().attach(_fb.dataspace()))
 		{
@@ -98,15 +107,10 @@ class Genodefb :
 		int w() const { return _next_fb_mode.width(); }
 		int h() const { return _next_fb_mode.height(); }
 
-		void mode_sigh(Genode::Signal_context_capability sigh)
-		{
-			_fb.mode_sigh(sigh);
-		}
-
-		void update_mode()
+		void update_mode(Fb_Genode::Mode mode)
 		{
 			Lock();
-			_next_fb_mode = _fb.mode();
+			_next_fb_mode = mode;
 			Unlock();
 		}
 
@@ -134,7 +138,9 @@ class Genodefb :
 				Genode::log("fb resize : [", screen, "] ",
 				            _virtual_fb_mode.width(), "x",
 				            _virtual_fb_mode.height(), " -> ",
-				            w, "x", h);
+				            w, "x", h,
+				            " (host: ", _next_fb_mode.width(), "x",
+				             _next_fb_mode.height(), ")");
 
 				if ((w < (ULONG)_next_fb_mode.width()) ||
 				    (h < (ULONG)_next_fb_mode.height())) {
@@ -148,6 +154,8 @@ class Genodefb :
 
 				_env.rm().detach(_fb_base);
 
+				_adjust_buffer();
+
 				_fb_base = _env.rm().attach(_fb.dataspace());
 
 				result = S_OK;
@@ -156,7 +164,9 @@ class Genodefb :
 				Genode::log("fb resize : [", screen, "] ",
 				            _virtual_fb_mode.width(), "x",
 				            _virtual_fb_mode.height(), " -> ",
-				            w, "x", h, " ignored");
+				            w, "x", h, " ignored"
+				            " (host: ", _next_fb_mode.width(), "x",
+				             _next_fb_mode.height(), ")");
 
 			Unlock();
 
