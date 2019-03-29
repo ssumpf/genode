@@ -108,7 +108,7 @@ void GenodeConsole::update_video_mode()
 	if (!fb)
 		return;
 
-	if ((fb->w() == 0) && (fb->h() == 0)) {
+	if ((fb->w() <= 1) && (fb->h() <= 1)) {
 		/* interpret a size of 0x0 as indication to quit VirtualBox */
 		if (PowerButton() != S_OK)
 			Genode::error("ACPI shutdown failed");

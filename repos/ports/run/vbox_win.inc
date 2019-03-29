@@ -118,23 +118,14 @@ append config_of_app {
 	<start name="nitpicker" priority="-1" caps="150">
 		<resource name="RAM" quantum="12M"/>
 		<provides><service name="Nitpicker"/></provides>
+		<configfile name="nitpicker.config"/>
 		<route>
 			<service name="Framebuffer"> <child name="fb_drv" /> </service>
 			<service name="Input"> <child name="input_merger" /> </service>
 			<service name="Report"> <child name="report_rom" /> </service>
+			<service name="ROM" label="nitpicker.config"> <child name="dynamic-config"/> </service>
 			<any-service> <parent/> <any-child /> </any-service>
 		</route>
-		<config>
-			<report focus="yes" hover="yes" />
-
-			<domain name="pointer"  layer="1" content="client" label="no" origin="pointer" />
-			<domain name="cpu_load" layer="2" content="client" label="no" />
-			<domain name=""         layer="3" content="client" label="no" focus="click" hover="always" />
-
-			<policy label_prefix="pointer"          domain="pointer"/>
-			<policy label_prefix="cpu_load_display" domain="cpu_load"/>
-			<default-policy domain=""/>
-		</config>
 	</start>
 
 	<start name="pointer" priority="-1">
@@ -168,7 +159,7 @@ append config_of_app {
 		<binary name="dynamic_rom"/>
 		<resource name="RAM" quantum="1M"/>
 		<provides> <service name="ROM"/> </provides>
-		<config>
+		<config verbose="yes">
 			<rom name="capslock">
 				<inline>
 					<capslock enabled="yes"/>
@@ -178,6 +169,40 @@ append config_of_app {
 					<capslock enabled="no"/>
 				</inline>
 				<sleep milliseconds="5000"/>
+			</rom>
+			<rom name="nitpicker.config">
+				<inline description="standard_mode">
+					<config>
+						<report focus="yes" hover="yes" />
+
+						<domain name="pointer"  layer="1" content="client" label="no" origin="pointer" />
+						<domain name="cpu_load" layer="2" content="client" label="no" />
+						<domain name=""         layer="3" content="client" label="no" focus="click" hover="always"/>
+
+						<policy label_prefix="pointer"          domain="pointer"/>
+						<policy label_prefix="cpu_load_display" domain="cpu_load"/>
+						<default-policy domain=""/>
+					</config>
+				</inline>
+				<sleep milliseconds="50000"/>}
+
+append_if [expr !$use_rumpfs] config_of_app {
+				<inline description="shutdown">
+					<config>
+						<report focus="yes" hover="yes" />
+
+						<domain name="pointer"  layer="1" content="client" label="no" origin="pointer" />
+						<domain name="cpu_load" layer="2" content="client" label="no" />
+						<domain name=""         layer="3" content="client" label="no" focus="click" hover="always" width="1" height="1" />
+
+						<policy label_prefix="pointer"          domain="pointer"/>
+						<policy label_prefix="cpu_load_display" domain="cpu_load"/>
+						<default-policy domain=""/>
+					</config>
+				</inline>
+				<sleep milliseconds="500000"/>}
+
+append config_of_app {
 			</rom>
 		</config>
 		<route>
