@@ -148,6 +148,8 @@ class Vfs::Vfs_handle
 
 		/**
 		 * Apply to response handler if present
+		 *
+		 * XXX: may not be necesarry if the method above is virtual.
 		 */
 		template <typename FUNC>
 		void apply_handler(FUNC const &func) const {
@@ -206,12 +208,6 @@ class Vfs::Vfs_watch_handle
 		 */
 		virtual void handler(Watch_response_handler *handler) {
 			_handler = handler; }
-
-		/**
-		 * Get response handler, may be nullptr
-		 */
-		Watch_response_handler *handler() const {
-			return _handler; }
 
 		/**
 		 * Notify application through response handler
