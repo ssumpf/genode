@@ -240,6 +240,7 @@ struct Lwip::Lwip_file_handle final : Lwip_handle, private Lwip_handle_list::Ele
 	Socket_dir *socket;
 
 	typedef Genode::Fifo_element<Lwip_file_handle> Fifo_element;
+	typedef Genode::Fifo<Lwip_file_handle::Fifo_element> Fifo;
 	Fifo_element  _read_ready_waiter { *this };
 	Fifo_element _io_progress_waiter { *this };
 
@@ -285,8 +286,8 @@ struct Lwip::Socket_dir : Lwip::Directory
 		/* lists of handles opened at this socket */
 		Lwip_handle_list handles { };
 
-		Genode::Fifo<Lwip_file_handle::Fifo_element>  read_ready_queue { };
-		Genode::Fifo<Lwip_file_handle::Fifo_element> io_progress_queue { };
+		Lwip_file_handle::Fifo  read_ready_queue { };
+		Lwip_file_handle::Fifo io_progress_queue { };
 
 		enum State {
 			NEW,
@@ -1609,6 +1610,30 @@ class Lwip::File_system final : public Vfs::File_system, public Lwip::Directory
 
 			Nameserver_registry nameserver_handles { };
 
+			typedef Genode::Fifo_element<Vfs_handle> Handle_element;
+			typedef Genode::Fifo<Vfs_netif::Handle_element> Handle_queue;
+
+			Handle_queue blocked_handles { };
+
+			Vfs_netif(Vfs::Env &vfs_env,
+			          Genode::Xml_node config)
+			: Lwip::Nic_netif(vfs_env.env(), vfs_env.alloc(), config),
+			  tcp_dir(vfs_env), udp_dir(vfs_env)
+			{ }
+
+			~Vfs_netif()
+			{
+				/* free the allocated qeueue elements */
+				status_callback();
+			}
+
+			void enqueue(Vfs_handle &handle)
+			{
+				Handle_element *elem = new (handle.alloc())
+					Handle_element(handle);
+				blocked_handles.enqueue(*elem);
+			}
+
 			/**
 			 * Wake the application when the interface changes.
 			 */
@@ -1619,13 +1644,24 @@ class Lwip::File_system final : public Vfs::File_system, public Lwip::Directory
 
 				nameserver_handles.for_each([&] (Lwip_nameserver_handle &h) {
 					h.io_progress_response(); });
+
+				blocked_handles.dequeue_all([] (Handle_element &elem) {
+					Vfs_handle &handle = elem.object();
+					destroy(elem.object().alloc(), &elem);
+					handle.io_progress_response();
+				});
 			}
 
-			Vfs_netif(Vfs::Env &vfs_env,
-			          Genode::Xml_node config)
-			: Lwip::Nic_netif(vfs_env.env(), vfs_env.alloc(), config),
-			  tcp_dir(vfs_env), udp_dir(vfs_env)
-			{ }
+			void drop(Vfs_handle &handle)
+			{
+				blocked_handles.for_each([&] (Handle_element &elem) {
+					if (&elem.object() == &handle) {
+						blocked_handles.remove(elem);
+						destroy(elem.object().alloc(), &elem);
+					}
+				});
+			}
+
 		} _netif;
 
 		/**
@@ -1771,6 +1807,10 @@ class Lwip::File_system final : public Vfs::File_system, public Lwip::Directory
 		void close(Vfs_handle *vfs_handle) override
 		{
 			Socket_dir *socket = nullptr;
+
+			/* if the inteface is down this handle may be queued */
+			_netif.drop(*vfs_handle);
+
 			if (Lwip_handle *handle = dynamic_cast<Lwip_handle*>(vfs_handle)) {
 				if (Lwip_file_handle *file_handle = dynamic_cast<Lwip_file_handle*>(handle)) {
 					socket = file_handle->socket;
@@ -1844,8 +1884,14 @@ class Lwip::File_system final : public Vfs::File_system, public Lwip::Directory
 		/**
 		 * All reads are unavailable while the network is down
 		 */
-		bool queue_read(Vfs_handle *, file_size) override {
-			return _netif.ready(); }
+		bool queue_read(Vfs_handle *vfs_handle, file_size) override
+		{
+			if (_netif.ready()) return true;
+
+			/* handle must be woken when the interface comes up */
+			_netif.enqueue(*vfs_handle);
+			return false;
+		}
 
 		bool read_ready(Vfs_handle *vfs_handle) override
 		{
