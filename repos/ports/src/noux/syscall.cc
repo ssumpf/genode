@@ -647,7 +647,7 @@ bool Noux::Child::syscall(Noux::Session::Syscall sc)
 					_vfs_io_waiter_registry, *symlink_handle };
 
 				while (!symlink_handle->fs().queue_read(symlink_handle, count))
-					context.vfs_io_waiter.wait_for_io();
+					context.wait_for_io();
 
 				Vfs::File_io_service::Read_result read_result;
 
@@ -660,14 +660,9 @@ bool Noux::Child::syscall(Noux::Session::Syscall sc)
 					if (read_result != Vfs::File_io_service::READ_QUEUED)
 						break;
 
-					context.vfs_io_waiter.wait_for_io();
+					context.wait_for_io();
 				}
 			}
-
-			/* wake up threads blocking for 'queue_*()' or 'write()' */
-			_vfs_io_waiter_registry.for_each([] (Vfs_io_waiter &r) {
-				r.wakeup();
-			});
 
 			_sysio.readlink_out.count = out_count;
 
@@ -764,14 +759,9 @@ bool Noux::Child::syscall(Noux::Session::Syscall sc)
 						                           out_count);
 						break;
 					} catch (Vfs::File_io_service::Insufficient_buffer) {
-						context.vfs_io_waiter.wait_for_io();
+						context.wait_for_io();
 					}
 				}
-
-				/* wake up threads blocking for 'queue_*()' or 'write()' */
-				_vfs_io_waiter_registry.for_each([] (Vfs_io_waiter &r) {
-					r.wakeup();
-				});
 
 				if (out_count != count) {
 					_sysio.error.symlink = Sysio::SYMLINK_ERR_NAME_TOO_LONG;
@@ -779,17 +769,12 @@ bool Noux::Child::syscall(Noux::Session::Syscall sc)
 				}
 
 				while (!symlink_handle->fs().queue_sync(symlink_handle))
-					context.vfs_io_waiter.wait_for_io();
+					context.wait_for_io();
 
 				while (symlink_handle->fs().complete_sync(symlink_handle) ==
 					   Vfs::File_io_service::SYNC_QUEUED)
-					context.vfs_io_waiter.wait_for_io();
+					context.wait_for_io();
 			}
-
-			/* wake up threads blocking for 'queue_*()' or 'write()' */
-			_vfs_io_waiter_registry.for_each([] (Vfs_io_waiter &r) {
-				r.wakeup();
-			});
 
 			break;
 		}
@@ -909,16 +894,11 @@ bool Noux::Child::syscall(Noux::Session::Syscall sc)
 						_vfs_io_waiter_registry, *sync_handle };
 
 					while (!sync_handle->fs().queue_sync(sync_handle))
-						context.vfs_io_waiter.wait_for_io();
+						context.wait_for_io();
 
 					while (sync_handle->fs().complete_sync(sync_handle) ==
 					   Vfs::File_io_service::SYNC_QUEUED)
-						context.vfs_io_waiter.wait_for_io();
-
-					/* wake up threads blocking for 'queue_*()' or 'write()' */
-					_vfs_io_waiter_registry.for_each([] (Vfs_io_waiter &r) {
-						r.wakeup();
-					});
+						context.wait_for_io();
 				}
 
 				break;

@@ -213,7 +213,7 @@ struct Noux::Main
 	/* initialize virtual file system */
 	Vfs::Global_file_system_factory _global_file_system_factory { _heap };
 
-	Vfs_io_waiter_registry _io_waiter_registry { };
+	Vfs_io_waiter_registry _io_waiter_registry { _env.ep() };
 
 	struct Vfs_env : Vfs::Env
 	{

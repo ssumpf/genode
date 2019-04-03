@@ -89,7 +89,7 @@ struct Noux::Vfs_dataspace
 				for (Vfs::file_size bytes_read = 0; bytes_read < stat_out.size; ) {
 
 					while (!file->fs().queue_read(file, stat_out.size - bytes_read))
-						read_context.vfs_io_waiter.wait_for_io();
+						read_context.wait_for_io();
 
 					Vfs::File_io_service::Read_result read_result;
 
@@ -102,13 +102,8 @@ struct Noux::Vfs_dataspace
 						if (read_result != Vfs::File_io_service::READ_QUEUED)
 							break;
 
-						read_context.vfs_io_waiter.wait_for_io();
+						read_context.wait_for_io();
 					}
-
-					/* wake up threads blocking for 'queue_*()' or 'write()' */
-					vfs_io_waiter_registry.for_each([] (Vfs_io_waiter &r) {
-						r.wakeup();
-					});
 
 					if (read_result != Vfs::File_io_service::READ_OK) {
 						Genode::error("Error reading dataspace from VFS");
