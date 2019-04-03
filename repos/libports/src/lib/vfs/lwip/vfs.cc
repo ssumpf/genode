@@ -383,8 +383,6 @@ struct Lwip::Socket_dir : Lwip::Directory
 			io_progress_queue.dequeue_all([] (Lwip_file_handle::Fifo_element &elem) {
 				elem.object().io_progress_response(); });
 		}
-
-		virtual Sync_result complete_sync() = 0;
 };
 
 
@@ -990,8 +988,6 @@ class Lwip::Udp_socket_dir final :
 
 			return Write_result::WRITE_ERR_INVALID;
 		}
-
-		Sync_result complete_sync() override { return Sync_result::SYNC_OK; };
 };
 
 
@@ -1462,20 +1458,6 @@ class Lwip::Tcp_socket_dir final :
 
 			return Write_result::WRITE_ERR_INVALID;
 		}
-
-		Sync_result complete_sync() override
-		{
-			switch (state) {
-			case CONNECT:
-				/* sync will queue until the socket is connected and ready */
-				return Sync_result::SYNC_QUEUED;
-			case CLOSED:
-				/* assumed to be caused by error */
-				return Sync_result::SYNC_ERR_INVALID;
-			default:
-				return Sync_result::SYNC_OK;
-			}
-		}
 };
 
 
@@ -1894,15 +1876,8 @@ class Lwip::File_system final : public Vfs::File_system, public Lwip::Directory
 
 		Sync_result complete_sync(Vfs_handle *vfs_handle) override
 		{
-			Lwip_file_handle *h = dynamic_cast<Lwip_file_handle*>(vfs_handle);
-			if (h) {
-				if (h->socket) {
-					return h->socket->complete_sync();
-				} else {
-					return SYNC_QUEUED;
-				}
-			}
-			return SYNC_OK;
+			return (dynamic_cast<Lwip_file_handle*>(vfs_handle))
+				? SYNC_OK : SYNC_ERR_INVALID;
 		}
 
 		/***********************

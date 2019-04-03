@@ -324,6 +324,8 @@ Libc::File_descriptor *Libc::Vfs_plugin::open(char const *path, int flags,
 int Libc::Vfs_plugin::close(Libc::File_descriptor *fd)
 {
 	Vfs::Vfs_handle *handle = vfs_handle(fd);
+	/* XXX: mark the handle as requiring sync or not */
+	_vfs_sync(handle);
 	VFS_THREAD_SAFE(handle->close());
 	Libc::file_descriptor_allocator()->free(fd);
 	return 0;
