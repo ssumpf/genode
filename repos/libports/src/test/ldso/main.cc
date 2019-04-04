@@ -15,7 +15,7 @@
 #include <rom_session/connection.h>
 #include <base/env.h>
 #include <base/heap.h>
-#include <libc/component.h>
+#include <base/component.h>
 #include <base/shared_object.h>
 
 using namespace Genode;
@@ -23,11 +23,13 @@ using namespace Genode;
 /* shared-lib includes */
 #include "test-ldso.h"
 
+#if 0
 namespace Libc {
 #include <stdlib.h>
 #include <unistd.h>
 #include <math.h>
 }
+#endif
 
 
 /********************************************************************
@@ -190,7 +192,7 @@ static void test_shared_object_api(Env &env, Allocator &alloc)
 /**
  * Main function of LDSO test
  */
-void Libc::Component::construct(Libc::Env &env)
+void Component::construct(Env &env)
 {
 	static Heap heap(env.ram(), env.rm());
 
@@ -216,7 +218,7 @@ void Libc::Component::construct(Libc::Env &env)
 	lib_2_global.lib_2_global();
 	lib_1_local_3()->lib_1_local_3();
 	log("lib_1_pod_1 ", Hex(--pod_1));
-
+#if 0
 	int fd = STDERR_FILENO + 1;
 	char buf[2] { };
 	log("Libc::read:");
@@ -225,7 +227,7 @@ void Libc::Component::construct(Libc::Env &env)
 	int i = Libc::abs(-10);
 	log("Libc::abs(-10): ", i);
 	log("");
-
+#endif
 	log("Catch exceptions in program");
 	log("---------------------------");
 	try {
@@ -277,5 +279,4 @@ void Libc::Component::construct(Libc::Env &env)
 	log("Destruction");
 	log("-----------");
 
-	Libc::exit(123);
 }
