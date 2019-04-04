@@ -31,7 +31,7 @@ struct Noux::Terminal_io_channel : Io_channel
 {
 	Terminal::Session &_terminal;
 
-	Io_signal_handler<Terminal_io_channel> _read_avail_handler;
+	Signal_handler<Terminal_io_channel> _read_avail_handler;
 
 	Signal_handler<Terminal_io_channel> _resize_handler;
 

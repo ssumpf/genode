@@ -216,7 +216,7 @@ class Noux::Pipe_sink_io_channel : public Io_channel
 {
 	private:
 
-		Io_signal_handler<Pipe_sink_io_channel> _write_ready_handler;
+		Signal_handler<Pipe_sink_io_channel> _write_ready_handler;
 
 		void _handle_write_ready() { Io_channel::invoke_all_notifiers(); }
 
@@ -271,7 +271,7 @@ class Noux::Pipe_source_io_channel : public Io_channel
 {
 	private:
 
-		Io_signal_handler<Pipe_source_io_channel> _read_avail_handler;
+		Signal_handler<Pipe_source_io_channel> _read_avail_handler;
 
 		void _handle_read_avail() { Io_channel::invoke_all_notifiers(); }
 
