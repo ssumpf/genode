@@ -489,7 +489,6 @@ namespace Genode
 				/* 16.3.9 Receiving Frames */
 				/* read interrupt status, to detect the interrupt reasone */
 				const Interrupt_status::access_t status = read<Interrupt_status>();
-				const Rx_status::access_t rxStatus = read<Rx_status>();
 
 				if ( Interrupt_status::Rx_complete::get(status) ) {
 

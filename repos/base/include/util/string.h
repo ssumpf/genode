@@ -442,8 +442,8 @@ namespace Genode {
 		/* handle suffixes */
 		if (i > 0)
 			switch (s[i]) {
-			case 'G': res *= 1024;
-			case 'M': res *= 1024;
+			case 'G': res *= 1024; [[gnu::fallthrough]];
+			case 'M': res *= 1024; [[gnu::fallthrough]];
 			case 'K': res *= 1024; i++;
 			default: break;
 			}
@@ -690,7 +690,7 @@ class Genode::String
 		/**
 		 * Copy constructor
 		 */
-		template <unsigned N>
+		template <size_t N>
 		String(String<N> const &other) : _len(min(other.length(), CAPACITY))
 		{
 			Genode::strncpy(_buf, other.string(), _len);

@@ -111,7 +111,7 @@ void Dhcp_client::_handle_timeout(Duration)
 	switch (_state) {
 	case State::BOUND:  _rerequest(State::RENEW);  break;
 	case State::RENEW:  _rerequest(State::REBIND); break;
-	case State::REBIND: _domain().discard_ip_config();
+	case State::REBIND: _domain().discard_ip_config(); [[gnu::fallthrough]];
 	default:            discover();
 	}
 }

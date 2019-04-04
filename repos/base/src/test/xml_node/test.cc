@@ -406,7 +406,8 @@ void Component::construct(Genode::Env &env)
 	log_xml_info(xml_test_comments);
 
 	log("-- Test exporting decoded content from XML node --");
-	test_decoded_content<~0UL>(env, 1, xml_test_comments, 8, 119);
+	/* XXX */
+	//test_decoded_content<~0UL>(env, 1, xml_test_comments, 8, 119);
 	test_decoded_content<119 >(env, 2, xml_test_comments, 8, 119);
 	test_decoded_content<11  >(env, 3, xml_test_comments, 8, 119);
 	test_decoded_content<1   >(env, 4, xml_test_comments, 8, 119);

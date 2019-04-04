@@ -4,6 +4,9 @@ SHARED_LIB = yes
 
 CC_OPT += -D__SOLO5_BINDINGS__ -Drestrict=__restrict__
 
+# GCC 8 complains about a mismatch of the 'log()' function declaration
+CC_OPT += -Wno-error=builtin-declaration-mismatch
+
 SRC_CC = bindings.cc
 
 SOLO5_PORT_DIR := $(call select_from_ports,solo5)

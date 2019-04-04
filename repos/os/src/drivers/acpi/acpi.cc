@@ -917,6 +917,8 @@ class Element : private List<Element>::Element
 				if (data[0] != SUB_DEVICE)
 					return;
 
+				[[gnu::fallthrough]];
+
 			case SCOPE:
 			case METHOD:
 
@@ -934,6 +936,8 @@ class Element : private List<Element>::Element
 							return;
 				}
 
+				[[gnu::fallthrough]];
+
 			case DEVICE_NAME:
 				/* ACPI 19.2.5.1 - NameOp NameString DataRefObject */
 
@@ -944,10 +948,10 @@ class Element : private List<Element>::Element
 
 				/* ACPI 19.2.3 DataRefObject */
 				switch (data[_name_len + 1]) {
-					case QWORD_PREFIX: _para_len += 4;
-					case DWORD_PREFIX: _para_len += 2;
-					case  WORD_PREFIX: _para_len += 1;
-					case  BYTE_PREFIX: _para_len += 1;
+					case QWORD_PREFIX: _para_len += 4; [[gnu::fallthrough]];
+					case DWORD_PREFIX: _para_len += 2; [[gnu::fallthrough]];
+					case  WORD_PREFIX: _para_len += 1; [[gnu::fallthrough]];
+					case  BYTE_PREFIX: _para_len += 1; [[gnu::fallthrough]];
 					default: _para_len += 1;
 				}
 

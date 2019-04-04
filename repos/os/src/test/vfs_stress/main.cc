@@ -240,6 +240,8 @@ struct Populate_test : public Stress_test
 			path.append("a");
 			populate(depth);
 
+			[[gnu::fallthrough]];
+
 		case 'b':
 			path.base()[path_len] = '\0';
 			path.append("b");
@@ -311,6 +313,8 @@ struct Write_test : public Stress_test
 			path.base()[path_len] = '\0';
 			path.append("a");
 			write(depth);
+
+			[[gnu::fallthrough]];
 
 		case 'b':
 			path.base()[path_len] = '\0';
@@ -393,6 +397,8 @@ struct Read_test : public Stress_test
 			path.append("a");
 			read(depth);
 
+			[[gnu::fallthrough]];
+
 		case 'b':
 			path.base()[path_len] = '\0';
 			path.append("/b");
@@ -462,6 +468,8 @@ struct Unlink_test : public Stress_test
 			case Vfs::Directory_service::DIRENT_TYPE_DIRECTORY:
 				empty_dir(subpath.base());
 
+				[[gnu::fallthrough]];
+
 			default:
 				try {
 					assert_unlink(vfs.unlink(subpath.base()));
@@ -489,6 +497,8 @@ struct Unlink_test : public Stress_test
 				log("recursive unlink not supported");
 				empty_dir(path.base());
 				r = vfs.unlink(path.base());
+
+				[[gnu::fallthrough]];
 
 			case Result::UNLINK_OK:
 				log("recursive unlink supported");

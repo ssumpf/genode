@@ -8,6 +8,13 @@ CONFIGURE_ARGS += --without-expat
 CPPFLAGS += -DHAVE_LIBEXPAT=1
 CFLAGS += -Wno-error=sizeof-pointer-memaccess -Wno-error=unused-value
 
+# prevent errors when compiling GDB 7.3 with GCC 8
+CFLAGS += -Wno-error=cast-function-type
+CFLAGS += -Wno-error=format-overflow
+CFLAGS += -Wno-error=implicit-fallthrough
+CFLAGS += -Wno-error=stringop-truncation
+CFLAGS += -Wno-error=int-in-bool-context
+
 LIBS += ncurses expat
 
 # workaround for problems with makeinfo version 5

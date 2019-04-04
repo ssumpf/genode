@@ -147,9 +147,13 @@ class Genode::Arg
 				if (ascii_to(_value.start(), result) ==  _value.len())
 					return result;
 
+				[[gnu::fallthrough]];
+
 			case Token::STRING:
 				if (ascii_to(_value.start()+1, result) == _value.len()-2)
 					return result;
+
+				[[gnu::fallthrough]];
 
 			default:
 				/* read values 0 (false) / !0 (true) */
