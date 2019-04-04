@@ -58,7 +58,7 @@ struct Main
 		log("We have ", blk_cnt, " blocks with a size of ", blk_sz, " bytes");
 		for (size_t i = 0; i < blk_cnt; i += REQ_PARALLEL) {
 			size_t cnt = (blk_cnt - i > REQ_PARALLEL) ? REQ_PARALLEL : blk_cnt - i;
-			Packet_descriptor pkt(src.alloc_packet(cnt * blk_sz),
+			Packet_descriptor pkt(block.alloc_packet(cnt * blk_sz),
 			                      Packet_descriptor::READ, i, cnt);
 
 			log("Check blocks ", i, "..", i + cnt - 1);
