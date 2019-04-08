@@ -1,0 +1,22 @@
+Fix GCC 8 compile errors
+
+From: Christian Prochaska <christian.prochaska@genode-labs.com>
+
+
+---
+ user/include/l4/kip.h |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/user/include/l4/kip.h b/user/include/l4/kip.h
+index 63e5b62..4a8bd6e 100644
+--- a/user/include/l4/kip.h
++++ b/user/include/l4/kip.h
+@@ -558,7 +558,7 @@ L4_INLINE L4_Bool_t L4_HasFeature (const char *feature_name)
+     void *kip = L4_GetKernelInterface();
+     char *name;
+ 
+-    for( L4_Word_t i = 0; (name = L4_Feature(kip,i)) != '\0'; i++ )
++    for( L4_Word_t i = 0; (name = L4_Feature(kip,i)) != 0; i++ )
+     {
+         const char *n = name;
+         const char *fn = feature_name;
