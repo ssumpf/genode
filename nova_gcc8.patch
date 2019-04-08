@@ -1,0 +1,140 @@
+Fix GCC 8 compile errors
+
+From: Christian Prochaska <christian.prochaska@genode-labs.com>
+
+
+---
+ src/console.cpp |    3 ++-
+ src/cpu.cpp     |    7 +++++++
+ src/ec_svm.cpp  |    2 ++
+ src/ec_vmx.cpp  |    1 +
+ src/lapic.cpp   |    5 +++++
+ src/pd.cpp      |    2 ++
+ 6 files changed, 19 insertions(+), 1 deletion(-)
+
+diff --git a/src/console.cpp b/src/console.cpp
+index fc20d2b..192ac59 100644
+--- a/src/console.cpp
++++ b/src/console.cpp
+@@ -105,7 +105,7 @@ void Console::vprintf (char const *format, va_list args)
+                                 flags |= FLAG_ZERO_PAD;
+                                 break;
+                             }
+-                            mode = MODE_WIDTH;
++                            mode = MODE_WIDTH; [[gnu::fallthrough]];
+                         case MODE_WIDTH: width = width * 10 + *format - '0'; break;
+                         case MODE_PRECS: precs = precs * 10 + *format - '0'; break;
+                     }
+@@ -157,6 +157,7 @@ void Console::vprintf (char const *format, va_list args)
+ 
+                 case 0:
+                     format--;
++                    [[gnu::fallthrough]];
+ 
+                 default:
+                     putc (*format);
+diff --git a/src/cpu.cpp b/src/cpu.cpp
+index 1aa6562..6ccb866 100644
+--- a/src/cpu.cpp
++++ b/src/cpu.cpp
+@@ -101,11 +101,14 @@ void Cpu::check_features()
+     switch (static_cast<uint8>(eax)) {
+         default:
+             cpuid (0x7, 0, eax, features[3], ecx, edx);
++            [[gnu::fallthrough]];
+         case 0x6:
+             cpuid (0x6, features[2], ebx, ecx, edx);
++            [[gnu::fallthrough]];
+         case 0x4 ... 0x5:
+             cpuid (0x4, 0, eax, ebx, ecx, edx);
+             cpp = (eax >> 26 & 0x3f) + 1;
++            [[gnu::fallthrough]];
+         case 0x1 ... 0x3:
+             cpuid (0x1, eax, ebx, features[1], features[0]);
+             family[Cpu::id]   = ((eax >> 8 & 0xf) + (eax >> 20 & 0xff)) & 0xff;
+@@ -124,12 +127,16 @@ void Cpu::check_features()
+         switch (static_cast<uint8>(eax)) {
+             default:
+                 cpuid (0x8000000a, Vmcb::svm_version, ebx, ecx, Vmcb::svm_feature);
++                [[gnu::fallthrough]];
+             case 0x4 ... 0x9:
+                 cpuid (0x80000004, name[8], name[9], name[10], name[11]);
++                [[gnu::fallthrough]];
+             case 0x3:
+                 cpuid (0x80000003, name[4], name[5], name[6], name[7]);
++                [[gnu::fallthrough]];
+             case 0x2:
+                 cpuid (0x80000002, name[0], name[1], name[2], name[3]);
++                [[gnu::fallthrough]];
+             case 0x1:
+                 cpuid (0x80000001, eax, ebx, features[5], features[4]);
+         }
+diff --git a/src/ec_svm.cpp b/src/ec_svm.cpp
+index 25df939..eb6a03b 100644
+--- a/src/ec_svm.cpp
++++ b/src/ec_svm.cpp
+@@ -71,6 +71,7 @@ void Ec::svm_exception (mword reason)
+                 case Vtlb::GLA_GPA:
+                     current->regs.vmcb->cr2 = cr2;
+                     current->regs.vmcb->inj_control = static_cast<uint64>(err) << 32 | 0x80000b0e;
++                    [[gnu::fallthrough]];
+ 
+                 case Vtlb::SUCCESS:
+                     ret_user_vmrun();
+@@ -141,6 +142,7 @@ void Ec::svm_cr(mword const reason)
+                 current->regs.dst_portal = reason;
+                 send_msg<ret_user_vmrun>();
+             }
++            [[gnu::fallthrough]];
+         }
+         default:
+             die ("SVM decode failure");
+diff --git a/src/ec_vmx.cpp b/src/ec_vmx.cpp
+index 087746f..e266350 100644
+--- a/src/ec_vmx.cpp
++++ b/src/ec_vmx.cpp
+@@ -71,6 +71,7 @@ void Ec::vmx_exception()
+                     current->regs.cr2 = cr2;
+                     Vmcs::write (Vmcs::ENT_INTR_INFO,  intr_info & ~0x1000);
+                     Vmcs::write (Vmcs::ENT_INTR_ERROR, err);
++                    [[gnu::fallthrough]];
+ 
+                 case Vtlb::SUCCESS:
+                     ret_user_vmresume();
+diff --git a/src/lapic.cpp b/src/lapic.cpp
+index 57b0e71..e8791e0 100644
+--- a/src/lapic.cpp
++++ b/src/lapic.cpp
+@@ -56,14 +56,19 @@ void Lapic::init(bool invariant_tsc)
+     switch (lvt_max()) {
+         default:
+             set_lvt (LAPIC_LVT_THERM, DLV_FIXED, VEC_LVT_THERM);
++            [[gnu::fallthrough]];
+         case 4:
+             set_lvt (LAPIC_LVT_PERFM, DLV_FIXED, VEC_LVT_PERFM);
++            [[gnu::fallthrough]];
+         case 3:
+             set_lvt (LAPIC_LVT_ERROR, DLV_FIXED, VEC_LVT_ERROR);
++            [[gnu::fallthrough]];
+         case 2:
+             set_lvt (LAPIC_LVT_LINT1, DLV_NMI, 0);
++            [[gnu::fallthrough]];
+         case 1:
+             set_lvt (LAPIC_LVT_LINT0, DLV_EXTINT, 0, 1U << 16);
++            [[gnu::fallthrough]];
+         case 0:
+             set_lvt (LAPIC_LVT_TIMER, DLV_FIXED, VEC_LVT_TIMER, dl ? 2U << 17 : 0);
+     }
+diff --git a/src/pd.cpp b/src/pd.cpp
+index 0008bd2..a71874d 100644
+--- a/src/pd.cpp
++++ b/src/pd.cpp
+@@ -383,6 +383,8 @@ void Pd::xfer_items (Pd *src, Crd xlt, Crd del, Xfer *s, Xfer *d, unsigned long
+                 crd = *s;
+                 set_as_del = 1;
+ 
++                [[gnu::fallthrough]];
++
+             case 1: {
+                 bool r = src == &root && s->flags() & 0x800;
+                 del_crd (r? &kern : src, del, crd, (s->flags() >> 8) & (r ? 7 : 3), s->hotspot());
