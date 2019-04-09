@@ -1,5 +1,5 @@
 /*
- * \brief  Terminal programm sending 'ls' when receiving a prompt
+ * \brief  Send terminal output on specified input (like expect)
  * \author Stefan Kalkowski
  * \date   2019-04-03
  */
@@ -46,7 +46,7 @@ struct Main
 			}
 
 			/* check for expected line-start string, if found send line */
-			if (expect.valid() && expect.valid() && expect == line) {
+			if (expect.valid() && expect == line) {
 				terminal.write(send.string(), send.length()-1);
 				terminal.write("\r\n", 2);
 			}
