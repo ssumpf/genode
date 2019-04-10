@@ -800,6 +800,30 @@ class Genode::Packet_stream_source : private Packet_stream_base
 		}
 
 		/**
+		 * Submit the specified packet to the server if possible
+		 *
+		 * \return false if the submit queue is congested
+		 *
+		 * This method never blocks.
+		 */
+		bool try_submit_packet(Packet_descriptor packet)
+		{
+			return _submit_transmitter.try_tx(packet);
+		}
+
+		/**
+		 * Wake up the packet sink if needed
+		 *
+		 * This method assumes that the same signal handler is used for
+		 * the submit transmitter and the ack receiver.
+		 */
+		void wakeup()
+		{
+			/* submit only one signal */
+			_submit_transmitter.tx_wakeup() || _ack_receiver.rx_wakeup();
+		}
+
+		/**
 		 * Returns true if one or more packet acknowledgements are available
 		 */
 		bool ack_avail() { return _ack_receiver.ready_for_rx(); }
@@ -812,6 +836,16 @@ class Genode::Packet_stream_source : private Packet_stream_base
 			Packet_descriptor packet;
 			_ack_receiver.rx(&packet);
 			return packet;
+		}
+
+		/**
+		 * Return next acknowledgement from sink, or an invalid packet
+		 *
+		 * This method never blocks.
+		 */
+		Packet_descriptor try_get_acked_packet()
+		{
+			return _ack_receiver.try_rx();
 		}
 
 		/**
