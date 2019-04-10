@@ -31,6 +31,9 @@
 #include <lx_kit/timer.h>
 #include <lx_kit/work.h>
 
+#include <os/backtrace.h>
+
+extern "C" void _backtrace() { Genode::backtrace(); }
 
 using namespace Genode;
 

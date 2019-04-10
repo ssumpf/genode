@@ -87,7 +87,7 @@ create_boot_directory
 #
 
 append config {
-<config>
+<config prio_levels="2">
 	<parent-provides>
 		<service name="ROM"/>
 		<service name="IRQ"/>
@@ -116,19 +116,20 @@ append_platform_drv_config
 append config {
 	<start name="timer">
 		<resource name="RAM" quantum="1M"/>
+		<resource name="CPU" quantum="20"/>
 		<provides><service name="Timer"/></provides>
 	</start>
 
-	<start name="top">
+	<start name="top" priority="-1">
 		<resource name="RAM" quantum="2M"/>
 		<config period_ms="2000"/>
 	</start>
 
-	<start name="usb_drv" caps="150">
+	<start name="usb_drv" caps="150" priority="-1">
 		<resource name="RAM" quantum="12M"/>
 		<provides><service name="Input"/></provides>
 		<config uhci="yes" ohci="yes" ehci="yes" xhci="yes"
-		        capslock_led="rom" numlock_led="rom" scrlock_led="rom"
+		        capslock_led="no" numlock_led="no" scrlock_led="no"
 		        bios_handoff="yes">
 			<hid/>
 		</config>
@@ -149,7 +150,7 @@ append config {
 			<service name="Timer">     <child name="timer"/> </service>
 		</route>
 	</start>
-
+<!--
 	<start name="dynamic_rom">
 		<resource name="RAM" quantum="4M"/>
 		<provides> <service name="ROM"/> </provides>
@@ -181,9 +182,10 @@ append config {
 			<service name="Timer"> <child name="timer"/> </service>
 		</route>
 	</start>
-
+-->
 	<start name="test-input">
 		<resource name="RAM" quantum="1M"/>
+		<resource name="CPU" quantum="10"/>
 	</start>
 </config>}
 

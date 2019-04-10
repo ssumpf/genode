@@ -140,7 +140,6 @@ class Lx_kit::Scheduler : public Lx::Scheduler
 		void schedule() override
 		{
 			bool at_least_one = false;
-
 			/*
 			 * Iterate over all tasks and run first runnable.
 			 *
@@ -158,7 +157,6 @@ class Lx_kit::Scheduler : public Lx::Scheduler
 				for (Lx::Task *t = _present_list.first(); t; t = t->next()) {
 					/* update current before running task */
 					_current = t;
-
 					if ((was_run = t->run())) {
 						at_least_one = true;
 						break;

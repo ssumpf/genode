@@ -43,7 +43,7 @@
 #include <linux/input/mt.h>
 #include <linux/usb.h>
 #include <lx_emul/extern_c_end.h>
-
+#include <os/backtrace.h>
 
 /* Callback function to Genode subsystem */
 static genode_input_event_cb handler;
@@ -287,7 +287,10 @@ extern "C" void genode_evdev_event(input_handle *handle, unsigned int type,
 
 	/* filter EV_SYN and EV_MSC */
 	if (type == EV_SYN || type == EV_MSC) return;
-
+/*
+	Genode::log("type: ", type);
+	Genode::backtrace();
+*/
 	switch (type) {
 	case EV_KEY: handle_key(dev, code, value);      return;
 	case EV_REL: handle_relative(code, value);      return;

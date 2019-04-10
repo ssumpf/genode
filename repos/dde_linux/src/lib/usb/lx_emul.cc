@@ -1048,7 +1048,7 @@ void tasklet_schedule(struct tasklet_struct *tasklet)
 
 void tasklet_hi_schedule(struct tasklet_struct *tasklet)
 {
-	tasklet_schedule(tasklet);
+	tasklet->func(tasklet->data);
 }
 
 

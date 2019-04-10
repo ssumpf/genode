@@ -1,4 +1,4 @@
-build "core init test/log"
+build "core init timer test/log app/top"
 
 create_boot_directory
 
@@ -9,22 +9,31 @@ install_config {
 			<service name="PD"/>
 			<service name="CPU"/>
 			<service name="ROM"/>
+			<service name="TRACE"/>
 		</parent-provides>
 		<default-route>
-			<any-service> <parent/> </any-service>
+			<any-service> <parent/> <any-child/> </any-service>
 		</default-route>
 		<default caps="50"/>
+		<start name="timer">
+			<resource name="RAM" quantum="2M"/>
+			<provides> <service name="Timer"/> </provides>
+		</start>
 		<start name="test-log">
 			<resource name="RAM" quantum="10M"/>
+		</start>
+		<start name="top">
+			<resource name="RAM" quantum="2M"/>
+			<config period_ms="2000"/>
 		</start>
 	</config>
 }
 
-build_boot_image "core ld.lib.so init test-log"
+build_boot_image "core ld.lib.so init timer test-log top"
 
 append qemu_args "-nographic "
 append xen_args  { sdl="0" }
-
+run_genode_until forever
 run_genode_until "Test done.*\n" 20
 
 grep_output {\[init -\> test-log}
