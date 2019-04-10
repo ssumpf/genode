@@ -14,3 +14,5 @@ INC_DIR += $(REP_DIR)/include/solo5
 
 vpath %.cc $(SOLO5_PORT_DIR)/src/lib/solo5/bindings/genode
 vpath %.cc $(REP_DIR)/src/lib/solo5/bindings/genode
+
+REQUIRES = adaptation_to_block_session_api_change
