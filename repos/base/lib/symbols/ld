@@ -540,6 +540,7 @@ _ZTVN10__cxxabiv120__si_class_type_infoE D 88
 _ZTVN10__cxxabiv121__vmi_class_type_infoE D 88
 _ZTVN10__cxxabiv123__fundamental_type_infoE D 64
 _ZTVN5Timer10ConnectionE D 320
+_ZTVN6Genode10Vm_sessionE D 56
 _ZTVN6Genode11Sliced_heapE D 72
 _ZTVN6Genode14Rpc_entrypointE D 80
 _ZTVN6Genode14Signal_contextE D 32
