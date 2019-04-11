@@ -270,7 +270,7 @@ void Vm_session_component::_attach_vm_memory(Dataspace_component &dsc,
 			if (full.reason == Page_table_registry::Mapping_cache_full::CAPS)
 				throw Out_of_caps();
 			return;
-		} catch (Genode::Bit_allocator<4096u>::Out_of_indices) {
+		} catch (Vm_space::Selector_allocator::Out_of_indices) {
 			Genode::warning("run out of indices - flush all");
 			_vm_space.map_guest(page.addr, page.hotspot,
 			                    (1 << page.log2_order) / 4096,

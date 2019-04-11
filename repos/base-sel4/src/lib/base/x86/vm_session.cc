@@ -54,7 +54,7 @@ struct Vcpu : Genode::Thread
 
 		enum { EXIT_ON_HLT = 1U << 7, EXIT_ON_RDTSC = 1U << 12 };
 
-		addr_t const                _vmcs_ctrl0 = EXIT_ON_HLT; // | EXIT_ON_RDTSC;
+		addr_t const                _vmcs_ctrl0 = EXIT_ON_HLT;
 
 		enum { STACK_SIZE = 0x3000 };
 
@@ -438,7 +438,9 @@ struct Vcpu : Genode::Thread
 			}
 
 			if (state.inj_info.valid()) {
-				addr_t ctrl_0 = _read_vmcs(service, Vmcs::CTRL_0);
+				addr_t ctrl_0 = state.ctrl_primary.valid() ?
+				                state.ctrl_primary.value() :
+				                _read_vmcs(service, Vmcs::CTRL_0);
 
 				if (state.inj_info.value() & 0x2000)
 					Genode::warning("inj_info for NMI not supported");
@@ -589,7 +591,7 @@ struct Vcpu : Genode::Thread
 		uint16_t _read_vmcs_16(seL4_X86_VCPU const service, enum Vmcs const field) {
 			return _read_vmcsX<uint16_t>(service, field); }
 
-		uint16_t _read_vmcs_32(seL4_X86_VCPU const service, enum Vmcs const field) {
+		uint32_t _read_vmcs_32(seL4_X86_VCPU const service, enum Vmcs const field) {
 			return _read_vmcsX<uint32_t>(service, field); }
 
 		void _read_sel4_state_async(seL4_X86_VCPU const service, Vm_state &state)
@@ -630,10 +632,8 @@ struct Vcpu : Genode::Thread
 				addr_t const cr0_shadow = _read_vmcs(service, Vmcs::CR0_SHADOW);
 				state.cr0.value((cr0 & ~cr0_mask) | (cr0_shadow & cr0_mask));
 
-				if (state.cr0.value() != cr0_shadow) {
-					Genode::error("reset cr0_shadow to cr0 ", Genode::Hex(cr0), " ", Genode::Hex(cr0_shadow), "->", Genode::Hex(state.cr0.value()));
+				if (state.cr0.value() != cr0_shadow)
 					_write_vmcs(service, Vmcs::CR0_SHADOW, state.cr0.value());
-				}
 			}
 
 			/* cr2 not supported on seL4 */
@@ -644,10 +644,8 @@ struct Vcpu : Genode::Thread
 				addr_t const cr4_shadow = _read_vmcs(service, Vmcs::CR4_SHADOW);
 				state.cr4.value((cr4 & ~cr4_mask) | (cr4_shadow & cr4_mask));
 
-				if (state.cr4.value() != cr4_shadow) {
-					Genode::error("reset cr4_shadow to cr4 ", Genode::Hex(cr4), " ", Genode::Hex(cr4_shadow), "->", Genode::Hex(state.cr4.value()));
+				if (state.cr4.value() != cr4_shadow)
 					_write_vmcs(service, Vmcs::CR4_SHADOW, state.cr4.value());
-				}
 			}
 
 			typedef Genode::Vm_state::Segment Segment;

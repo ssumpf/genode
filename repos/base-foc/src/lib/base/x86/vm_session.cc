@@ -295,6 +295,11 @@ struct Vcpu : Genode::Thread
 				Fiasco::l4_vm_vmx_write(vmcs, Vmcs::ENTRY_CTRL, ENTRY_LOAD_EFER);
 			}
 
+			if (_vm_type == Virt::SVM)
+				_write_amd_state(state, vmcb, vcpu);
+			if (_vm_type == Virt::VMX)
+				_write_intel_state(state, vmcs, vcpu);
+
 			State local_state { NONE };
 
 			while (true) {
@@ -468,12 +473,8 @@ struct Vcpu : Genode::Thread
 				addr_t const cr0 = Fiasco::l4_vm_vmx_read(vmcs, Vmcs::CR0);
 				addr_t const cr0_shadow = Fiasco::l4_vm_vmx_read(vmcs, Vmcs::CR0_SHADOW);
 				state.cr0.value((cr0 & ~vmcs_cr0_mask) | (cr0_shadow & vmcs_cr0_mask));
-				if (state.cr0.value() != cr0_shadow) {
-					Genode::error("reset cr0_shadow to cr0 ", Genode::Hex(cr0),
-					              " ", Genode::Hex(cr0_shadow), "->",
-					              Genode::Hex(state.cr0.value()));
+				if (state.cr0.value() != cr0_shadow)
 					Fiasco::l4_vm_vmx_write(vmcs, Vmcs::CR0_SHADOW, state.cr0.value());
-				}
 			}
 
 			unsigned const cr2 = Fiasco::l4_vm_vmx_get_cr2_index(vmcs);
@@ -484,19 +485,11 @@ struct Vcpu : Genode::Thread
 				addr_t const cr4 = Fiasco::l4_vm_vmx_read(vmcs, Vmcs::CR4);
 				addr_t const cr4_shadow = Fiasco::l4_vm_vmx_read(vmcs, Vmcs::CR4_SHADOW);
 				state.cr4.value((cr4 & ~vmcs_cr4_mask) | (cr4_shadow & vmcs_cr4_mask));
-				if (state.cr4.value() != cr4_shadow) {
-					Genode::error("reset cr0_shadow to cr4 ", Genode::Hex(cr4),
-					              " ", Genode::Hex(cr4_shadow), "->",
-					              Genode::Hex(state.cr4.value()));
+				if (state.cr4.value() != cr4_shadow)
 					Fiasco::l4_vm_vmx_write(vmcs, Vmcs::CR4_SHADOW,
 					                        state.cr4.value());
-				}
 			}
 
-/*
-			state.cs.value(Segment{utcb.cs.sel, utcb.cs.ar, utcb.cs.limit,
-			                       utcb.cs.base});
-*/
 			using Fiasco::l4_vm_vmx_read;
 			using Fiasco::l4_vm_vmx_read_16;
 			using Fiasco::l4_vm_vmx_read_32;
@@ -825,9 +818,10 @@ struct Vcpu : Genode::Thread
 				l4_vm_vmx_write(vmcs, Vmcs::CR4_SHADOW, state.cr4.value());
 			}
 
-#if 1
 			if (state.inj_info.valid() || state.inj_error.valid()) {
-				addr_t ctrl_0 = Fiasco::l4_vm_vmx_read(vmcs, Vmcs::CTRL_0);
+				addr_t ctrl_0 = state.ctrl_primary.valid() ?
+				                state.ctrl_primary.value() :
+				                Fiasco::l4_vm_vmx_read(vmcs, Vmcs::CTRL_0);
 
 				if (state.inj_info.value() & 0x2000)
 					Genode::warning("unimplemented ", state.inj_info.value() & 0x1000, " ", state.inj_info.value() & 0x2000, " ", Genode::Hex(ctrl_0), " ", Genode::Hex(state.ctrl_secondary.value()));
@@ -844,7 +838,6 @@ struct Vcpu : Genode::Thread
 				l4_vm_vmx_write(vmcs, Vmcs::INTR_ERROR,
 				                      state.inj_error.value());
 			}
-#endif
 
 			if (state.flags.valid())
 				l4_vm_vmx_write(vmcs, Vmcs::FLAGS, state.flags.value());
@@ -860,19 +853,19 @@ struct Vcpu : Genode::Thread
 
 			if (state.ctrl_primary.valid())
 				l4_vm_vmx_write(vmcs, Vmcs::CTRL_0,
-				                        _vmcs_ctrl0 | state.ctrl_primary.value());
+				                _vmcs_ctrl0 | state.ctrl_primary.value());
 
 			if (state.ctrl_secondary.valid())
 				l4_vm_vmx_write(vmcs, Vmcs::CTRL_1,
-				                        state.ctrl_secondary.value());
+				                state.ctrl_secondary.value());
 
 			if (state.intr_state.valid())
 				l4_vm_vmx_write(vmcs, Vmcs::STATE_INTR,
-				                        state.intr_state.value());
+				                state.intr_state.value());
 
 			if (state.actv_state.valid())
 				l4_vm_vmx_write(vmcs, Vmcs::STATE_ACTV,
-				                        state.actv_state.valid());
+				                state.actv_state.value());
 
 			if (state.cs.valid()) {
 				l4_vm_vmx_write(vmcs, Vmcs::CS_SEL, state.cs.value().sel);

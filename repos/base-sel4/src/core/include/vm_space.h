@@ -127,10 +127,15 @@ class Genode::Vm_space
 
 		Leaf_cnode _vm_cnodes[NUM_LEAF_CNODES];
 
+	public:
+
 		/**
 		 * Allocator for the selectors within '_vm_cnodes'
 		 */
 		using Selector_allocator = Bit_allocator<1UL << NUM_VM_SEL_LOG2>;
+
+	private:
+
 		Selector_allocator _sel_alloc { };
 
 		/**
@@ -188,7 +193,7 @@ class Genode::Vm_space
 				 * wasting of resources (idx selectors, creating kernel
 				 * capabilities, causing kernel warning ...).
 				 */
-				return false;
+				return true;
 			}
 			/* allocate page-table-entry selector */
 			addr_t pte_idx;
