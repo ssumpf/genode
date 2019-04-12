@@ -77,11 +77,8 @@ class Block::Request_stream : Genode::Noncopyable
 						return false;
 
 					/* check for proper alignment */
-					if (!Genode::aligned(request.offset, _info.align_log2)) {
-						Genode::warning("alignment(", _info.align_log2, ") violation "
-						                "offset=", Genode::Hex(request.offset));
+					if (!Genode::aligned(request.offset, _info.align_log2))
 						return false;
-					}
 
 					return true;
 				}
