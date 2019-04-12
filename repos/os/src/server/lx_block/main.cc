@@ -91,10 +91,10 @@ class Lx_block_driver : public Block::Driver
 			_info(_init_info(config))
 		{
 			/* open file */
-			File_name const file_name(config);
+			File_name const file_name = _file_name(config);
 			_fd = open(file_name.string(), _info.writeable ? O_RDWR : O_RDONLY);
 			if (_fd == -1) {
-				perror("open");
+				Genode::error("open ", file_name.string());
 				throw Could_not_open_file();
 			}
 
