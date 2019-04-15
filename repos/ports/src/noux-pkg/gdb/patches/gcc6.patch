@@ -16,10 +16,10 @@ Subject: [PATCH] Fixes a compile time warnng about left shifting a negative
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/opcodes/arm-dis.c b/opcodes/arm-dis.c
-index e987140..b185bb0 100644
+index 0b1ed1a..3c6fb98 100644
 --- a/opcodes/arm-dis.c
 +++ b/opcodes/arm-dis.c
-@@ -1994,7 +1994,7 @@ print_insn_coprocessor (bfd_vma pc,
+@@ -2103,7 +2103,7 @@ print_insn_coprocessor (bfd_vma pc,
  
  		    /* Is ``imm'' a negative number?  */
  		    if (imm & 0x40)

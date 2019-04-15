@@ -25,7 +25,7 @@ extern "C" int  sigsuspend()  { return -1; }
 /*
  * version.c
  */
-extern "C" const char version[] = "7.5.1";
+extern "C" const char version[] = "7.6.2";
 extern "C" const char host_name[] = "";
 
 

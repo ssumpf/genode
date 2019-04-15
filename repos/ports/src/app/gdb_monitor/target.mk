@@ -24,6 +24,7 @@ SRC_C   =  agent.c \
            i387-fp.c \
            inferiors.c \
            mem-break.c \
+           notif.c \
            ptid.c \
            remote-utils.c \
            regcache.c \
@@ -36,7 +37,9 @@ SRC_C   =  agent.c \
 
 SRC_C  +=  linux-low.c
 
-CC_OPT += -DGDBSERVER -DPKGVERSION="\"7.5.1\"" -DREPORT_BUGS_TO="\"\""
+CC_OPT += -DGDBSERVER -DPKGVERSION="\"7.6.2\"" -DREPORT_BUGS_TO="\"\""
+
+CC_OPT += -DHAVE_SYS_WAIT_H
 
 CC_OPT_linux-low += -Wno-unused-function
 
