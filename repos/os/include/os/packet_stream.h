@@ -784,11 +784,11 @@ class Genode::Packet_stream_source : private Packet_stream_base
 			return Packet_stream_base::packet_content<Content_type>(packet); }
 
 		/**
-		 * Return true if submit queue can hold another packet
+		 * Return true if submit queue can hold 'count' additional packets
 		 */
-		bool ready_to_submit()
+		bool ready_to_submit(unsigned count = 1)
 		{
-			return _submit_transmitter.ready_for_tx();
+			return _submit_transmitter.tx_slots_free() >= count;
 		}
 
 		/**
