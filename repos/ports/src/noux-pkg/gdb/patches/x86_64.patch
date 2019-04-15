@@ -11,10 +11,10 @@ From: Christian Prochaska <christian.prochaska@genode-labs.com>
  4 files changed, 17 insertions(+)
 
 diff --git a/gdb/amd64-tdep.c b/gdb/amd64-tdep.c
-index 6d20cee..94509c3 100644
+index 1b656c1..a6641df 100644
 --- a/gdb/amd64-tdep.c
 +++ b/gdb/amd64-tdep.c
-@@ -2700,6 +2700,11 @@ void _initialize_amd64_tdep (void);
+@@ -2963,6 +2963,11 @@ void _initialize_amd64_tdep (void);
  void
  _initialize_amd64_tdep (void)
  {
@@ -25,24 +25,24 @@ index 6d20cee..94509c3 100644
 +
    initialize_tdesc_amd64 ();
    initialize_tdesc_amd64_avx ();
- }
+   initialize_tdesc_x32 ();
 diff --git a/gdb/defs.h b/gdb/defs.h
-index e4c2483..39ec6d5 100644
+index 04ced04..d3ad457 100644
 --- a/gdb/defs.h
 +++ b/gdb/defs.h
-@@ -915,6 +915,7 @@ enum gdb_osabi
-   GDB_OSABI_DICOS,
+@@ -898,6 +898,7 @@ enum gdb_osabi
    GDB_OSABI_DARWIN,
    GDB_OSABI_SYMBIAN,
+   GDB_OSABI_OPENVMS,
 +  GDB_OSABI_GENODE,
  
    GDB_OSABI_INVALID		/* keep this last */
  };
 diff --git a/gdb/i386-tdep.c b/gdb/i386-tdep.c
-index 6da7733..6f83382 100644
+index 8679aff..1abadd0 100644
 --- a/gdb/i386-tdep.c
 +++ b/gdb/i386-tdep.c
-@@ -7589,6 +7589,11 @@ is \"default\"."),
+@@ -7945,6 +7945,11 @@ is \"default\"."),
    gdbarch_register_osabi (bfd_arch_i386, 0, GDB_OSABI_GO32,
  			  i386_go32_init_abi);
  
@@ -55,18 +55,18 @@ index 6da7733..6f83382 100644
    i386_init_reggroups ();
  
 diff --git a/gdb/osabi.c b/gdb/osabi.c
-index aba9842..4c2b2fc 100644
+index faffe30..cca137d 100644
 --- a/gdb/osabi.c
 +++ b/gdb/osabi.c
-@@ -72,6 +72,7 @@ static const char * const gdb_osabi_names[] =
-   "DICOS",
+@@ -73,6 +73,7 @@ static const char * const gdb_osabi_names[] =
    "Darwin",
    "Symbian",
+   "OpenVMS",
 +  "Genode",
  
    "<invalid>"
  };
-@@ -525,6 +526,11 @@ generic_elf_osabi_sniffer (bfd *abfd)
+@@ -526,6 +527,11 @@ generic_elf_osabi_sniffer (bfd *abfd)
        bfd_map_over_sections (abfd,
  			     generic_elf_osabi_sniff_abi_tag_sections,
  			     &osabi);
