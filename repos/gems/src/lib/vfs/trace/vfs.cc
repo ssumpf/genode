@@ -33,6 +33,7 @@ struct Vfs_trace::Content : Vfs::Single_file_system
 
 	unsigned char  _buf[1024*1024];
 	unsigned long  _buf_len = 0;
+	Directory_tree _directory { _vfs_env.alloc()};
 
 	struct Vfs_handle : Single_vfs_handle
 	{
@@ -92,14 +93,12 @@ struct Vfs_trace::Content : Vfs::Single_file_system
 			}
 		}
 
-		Directory_tree dir { _vfs_env.alloc()};
 
 		for (unsigned i = 0; i < _subject_count; i++) {
 			Trace::Subject_info info = _trace.subject_info(_subjects[i]);
 			PDBG("subject: ", info.session_label());
-			dir.insert(info, _subjects[i]);
+			_directory.insert(info, _subjects[i]);
 		}
-		dir.xml();
 
 		PDBG("subject count: ", _subject_count);
 		return;
@@ -156,7 +155,31 @@ struct Vfs_trace::Local_factory : File_system_factory
 
 		return nullptr;
 	}
+
+	Directory_tree &directory_tree() { return _content._directory; }
 };
+#if 0
+class Current_exception
+{
+	private:
+
+		enum { CAPACITY = 128 };
+		char _buf[CAPACITY];
+
+	public:
+
+		Current_exception() : _buf("<unkown>")
+		{
+			Genode::cxx_current_exception(_buf, CAPACITY);
+		}
+
+		void print(Genode::Output &out) const
+		{
+			Genode::print(out, Genode::Cstring(_buf, CAPACITY));
+		}
+};
+#endif
+
 
 class Vfs_trace::File_system : private Local_factory,
                                public Vfs::Dir_file_system
@@ -164,12 +187,16 @@ class Vfs_trace::File_system : private Local_factory,
 	private:
 
 
-		typedef String<200> Config;
+		typedef String<512*1024> Config;
 
-		static Config _config(Xml_node node)
+		static char const *_config(Vfs::Env &vfs_env, Directory_tree &tree, Xml_node node)
 		{
-			char buf[Config::capacity()] { };
+			char *buf = (char *)vfs_env.alloc().alloc(Config::capacity());
 			PDBG("node: ", node);
+			Xml_generator xml(buf, Config::capacity(), "node", [&] () {
+				tree.xml(xml);
+			});
+#if 0
 			Xml_generator xml(buf, sizeof(buf), "node", [&] () {
 				xml.node("trace_out", [&] () {});
 				xml.node("dir", [&] () {
@@ -185,8 +212,9 @@ class Vfs_trace::File_system : private Local_factory,
 					});
 				});
 			});
-			PDBG("config: ", Config(Cstring(buf)));
-			return Config(Cstring(buf));
+#endif
+			PDBG("config: ",(char const *)buf);
+			return buf;
 		}
 
 	public:
@@ -195,10 +223,8 @@ class Vfs_trace::File_system : private Local_factory,
 		File_system(Vfs::Env &vfs_env, Genode::Xml_node node)
 		:
 			Local_factory(vfs_env, node),
-			Vfs::Dir_file_system(vfs_env, Xml_node(_config(node).string()), *this)
-		{ 
-			unlink("test/level2/");
-		}
+			Vfs::Dir_file_system(vfs_env, Xml_node(_config(vfs_env, directory_tree(), node)), *this)
+		{ }
 
 		char const *type() override { PDBG("CALLED"); return "trace"; }
 

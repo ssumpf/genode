@@ -5,6 +5,7 @@
 
 #include "session_label.h"
 
+
 namespace Vfs {
 	class  Directory_tree;
 	class  Trace_node;
@@ -82,12 +83,17 @@ class Vfs::Trace_node : public Vfs::Label,
 			return node->insert(label.suffix());
 		}
 
-		void xml(unsigned level)
+		void xml(Genode::Xml_generator &xml)
 		{
-			_tree.for_each([&] (Genode::Avl_string_base const &node) {
-				Trace_node &n = const_cast<Trace_node &>(static_cast<Trace_node const &>(node));
-				Genode::warning("(", level, ") xml: ", node.name(), " id: ", n._id.id);
-				n.xml(level + 1);});
+			_tree.for_each([&] (Genode::Avl_string_base const &name) {
+				Trace_node &node = const_cast<Trace_node &>(static_cast<Trace_node const &>(name));
+
+				xml.node("dir", [&] () {
+					xml.attribute("name", node.name());
+					node.xml(xml);
+				});
+			});
+
 		}
 };
 
@@ -110,9 +116,9 @@ class Vfs::Directory_tree : public Genode::Avl_tree<Trace_node>
 			leaf.Avl_node_tree::insert(node);
 		}
 
-		void xml()
+		void xml(Genode::Xml_generator &xml)
 		{
-			_root.xml(0);
+			_root.xml(xml);
 		}
 };
 
