@@ -98,8 +98,8 @@ struct Vfs_trace::Content : Vfs::Single_file_system
 			Trace::Subject_info info = _trace.subject_info(_subjects[i]);
 			PDBG("subject: ", info.session_label());
 			dir.insert(info, _subjects[i]);
-			PDBG("return");
 		}
+		dir.xml();
 
 		PDBG("subject count: ", _subject_count);
 		return;

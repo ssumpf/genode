@@ -11,6 +11,8 @@ namespace Vfs {
 
 	class String_node;
 	class Trace_node;
+
+	typedef Genode::Avl_string<32> Label;
 }
 
 namespace Genode {
@@ -23,7 +25,7 @@ class Genode::Avl_node_tree : public NT
 	protected:
 
 		using Tree = Avl_tree<NT>;
-		using Node = Avl_node<NT>;
+		using Node = NT;
 
 		Tree _tree;
 
@@ -32,9 +34,11 @@ class Genode::Avl_node_tree : public NT
 		using NT::NT;
 
 		void insert(Node *node) { _tree.insert(node); }
+
+		Tree &tree() { return _tree; }
 };
 
-class Vfs::Trace_node : public Avl_node<Genode::Avl_string_base>
+class Vfs::Trace_node : public Vfs::Label
 {
 	private:
 
@@ -42,11 +46,13 @@ class Vfs::Trace_node : public Avl_node<Genode::Avl_string_base>
 
 	public:
 
-		Trace_node(Trace::Subject_id const id)
-		: _id(id) { }
+		Trace_node(Trace::Subject_id const id, char const *name)
+		: Avl_string(name),
+		  _id(id) { }
 };
 
-class Vfs::String_node : public Avl_node_tree<Genode::Avl_string_base>
+
+class Vfs::String_node : public Avl_node_tree<Vfs::Label>
 {
 	private:
 
@@ -56,7 +62,7 @@ class Vfs::String_node : public Avl_node_tree<Genode::Avl_string_base>
 		{
 			if (!_tree.first()) return nullptr;
 
-			Node *node = find_by_name(name);
+			Avl_string_base *node = _tree.first()->find_by_name(name);
 			if (!node) return nullptr;
 
 			return static_cast<String_node *>(node);
@@ -66,25 +72,27 @@ class Vfs::String_node : public Avl_node_tree<Genode::Avl_string_base>
 
 		String_node(Genode::Allocator &alloc, Session_label const &label)
 		: Avl_node_tree(label.string()),
-		  _alloc(alloc) { }
+		  _alloc(alloc) { Genode::warning("NEW node: ", label); }
 
 		String_node &insert(Session_label const &label)
 		{
-			if (!label.valid()) return *this;
+			if (!label.valid()) { log("NOT VALID"); return *this; }
 
 			String_node *node = _find_by_name(label.first_element().string());
-
+			Genode::warning("search: ", label.first_element(), " node: ", node, " node name: ", node ? node->name() : "<empty>");
 			if (!node) {
 				node = new(_alloc) String_node(_alloc, label.first_element());
-				_tree.insert(node);
+				Avl_node_tree::insert(node);
+				Genode::log("insert: ", label.first_element());
 			}
 
+			Genode::error("suffix: ", label.suffix(), " node: ", node->name());
 			return node->insert(label.suffix());
 		}
 };
 
 
-class Vfs::Directory_tree : public Genode::Avl_tree<String_node>
+class Vfs::Directory_tree
 {
 	private:
 
@@ -100,10 +108,19 @@ class Vfs::Directory_tree : public Genode::Avl_tree<String_node>
 		{
 			String_node &leaf = _root.insert(info.session_label());
 
-			Trace_node *node = new (_alloc) Trace_node(id);
-			leaf.insert(info.thread_name());
+			Trace_node *node = new (_alloc) Trace_node(id, info.thread_name().string());
+			Genode::warning("insert leaf tree: ", &leaf.tree(), " thread: ", info.thread_name());
+			leaf.insert(node);
+			Genode::warning("leaf done");
 		}
 
+		void xml()
+		{
+			_root.tree().for_each([&] (Genode::Avl_string_base const &node) {
+				Genode::warning("node ", &node);
+				Genode::warning("for: ", node.name());
+			});
+		}
 };
 
 #if 0
