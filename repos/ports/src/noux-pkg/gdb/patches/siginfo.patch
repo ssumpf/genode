@@ -26,10 +26,10 @@ Signed-off-by: Chris Webb <chris@arachsys.com>
  10 files changed, 26 insertions(+), 27 deletions(-)
 
 diff --git a/gdb/amd64-linux-nat.c b/gdb/amd64-linux-nat.c
-index a869f85..7bae36d 100644
+index 0df06fc..9f33da7 100644
 --- a/gdb/amd64-linux-nat.c
 +++ b/gdb/amd64-linux-nat.c
-@@ -684,13 +684,13 @@ siginfo_from_compat_siginfo (siginfo_t *to, compat_siginfo_t *from)
+@@ -671,13 +671,13 @@ siginfo_from_compat_siginfo (siginfo_t *to, compat_siginfo_t *from)
     INF.  */
  
  static int
@@ -46,10 +46,10 @@ index a869f85..7bae36d 100644
        if (direction == 0)
  	compat_siginfo_from_siginfo ((struct compat_siginfo *) inf, native);
 diff --git a/gdb/arm-linux-nat.c b/gdb/arm-linux-nat.c
-index 43f4fde..3ec2bfc 100644
+index 411f7f4..bbd8439 100644
 --- a/gdb/arm-linux-nat.c
 +++ b/gdb/arm-linux-nat.c
-@@ -1203,7 +1203,7 @@ arm_linux_remove_watchpoint (CORE_ADDR addr, int len, int rw,
+@@ -1137,7 +1137,7 @@ arm_linux_remove_watchpoint (CORE_ADDR addr, int len, int rw,
  static int
  arm_linux_stopped_data_address (struct target_ops *target, CORE_ADDR *addr_p)
  {
@@ -59,10 +59,10 @@ index 43f4fde..3ec2bfc 100644
  
    /* This must be a hardware breakpoint.  */
 diff --git a/gdb/gdbserver/linux-low.c b/gdb/gdbserver/linux-low.c
-index 81b8540..e597e2f 100644
+index 1a1b39a..1925fd5 100644
 --- a/gdb/gdbserver/linux-low.c
 +++ b/gdb/gdbserver/linux-low.c
-@@ -4693,7 +4693,7 @@ linux_qxfer_osdata (const char *annex,
+@@ -4522,7 +4522,7 @@ linux_qxfer_osdata (const char *annex,
     layout of the inferiors' architecture.  */
  
  static void
@@ -71,7 +71,7 @@ index 81b8540..e597e2f 100644
  {
    int done = 0;
  
-@@ -4705,9 +4705,9 @@ siginfo_fixup (struct siginfo *siginfo, void *inf_siginfo, int direction)
+@@ -4534,9 +4534,9 @@ siginfo_fixup (struct siginfo *siginfo, void *inf_siginfo, int direction)
    if (!done)
      {
        if (direction == 1)
@@ -83,7 +83,7 @@ index 81b8540..e597e2f 100644
      }
  }
  
-@@ -4716,8 +4716,8 @@ linux_xfer_siginfo (const char *annex, unsigned char *readbuf,
+@@ -4545,8 +4545,8 @@ linux_xfer_siginfo (const char *annex, unsigned char *readbuf,
  		    unsigned const char *writebuf, CORE_ADDR offset, int len)
  {
    int pid;
@@ -95,7 +95,7 @@ index 81b8540..e597e2f 100644
    if (current_inferior == NULL)
      return -1;
 diff --git a/gdb/gdbserver/linux-low.h b/gdb/gdbserver/linux-low.h
-index 6635bc6..d449e1b 100644
+index 2befc48..0cf58ae 100644
 --- a/gdb/gdbserver/linux-low.h
 +++ b/gdb/gdbserver/linux-low.h
 @@ -21,6 +21,7 @@
@@ -115,7 +115,7 @@ index 6635bc6..d449e1b 100644
  struct process_info_private
  {
    /* Arch-specific additions.  */
-@@ -100,7 +99,7 @@ struct linux_target_ops
+@@ -103,7 +102,7 @@ struct linux_target_ops
       Returns true if any conversion was done; false otherwise.
       If DIRECTION is 1, then copy from INF to NATIVE.
       If DIRECTION is 0, copy from NATIVE to INF.  */
@@ -125,7 +125,7 @@ index 6635bc6..d449e1b 100644
    /* Hook to call when a new process is created or attached to.
       If extra per-process architecture-specific data is needed,
 diff --git a/gdb/gdbserver/linux-x86-low.c b/gdb/gdbserver/linux-x86-low.c
-index 69c6b57..82dcf83 100644
+index 85ffa52..c7f59b3 100644
 --- a/gdb/gdbserver/linux-x86-low.c
 +++ b/gdb/gdbserver/linux-x86-low.c
 @@ -906,13 +906,13 @@ siginfo_from_compat_siginfo (siginfo_t *to, compat_siginfo_t *from)
@@ -145,10 +145,10 @@ index 69c6b57..82dcf83 100644
  
        if (direction == 0)
 diff --git a/gdb/ia64-linux-nat.c b/gdb/ia64-linux-nat.c
-index 0f88e14..02482b2 100644
+index 5aaaed9..69db957 100644
 --- a/gdb/ia64-linux-nat.c
 +++ b/gdb/ia64-linux-nat.c
-@@ -640,7 +640,7 @@ static int
+@@ -637,7 +637,7 @@ static int
  ia64_linux_stopped_data_address (struct target_ops *ops, CORE_ADDR *addr_p)
  {
    CORE_ADDR psr;
@@ -158,10 +158,10 @@ index 0f88e14..02482b2 100644
  
    siginfo_p = linux_nat_get_siginfo (inferior_ptid);
 diff --git a/gdb/linux-nat.c b/gdb/linux-nat.c
-index 44a2a21..791d7b2 100644
+index 373d1ca..4bbe550 100644
 --- a/gdb/linux-nat.c
 +++ b/gdb/linux-nat.c
-@@ -214,7 +214,7 @@ static void (*linux_nat_new_thread) (ptid_t);
+@@ -179,7 +179,7 @@ static void (*linux_nat_new_thread) (ptid_t);
  /* The method to call, if any, when the siginfo object needs to be
     converted between the layout returned by ptrace, and the layout in
     the architecture of the inferior.  */
@@ -170,7 +170,7 @@ index 44a2a21..791d7b2 100644
  				       gdb_byte *,
  				       int);
  
-@@ -3945,7 +3945,7 @@ linux_nat_mourn_inferior (struct target_ops *ops)
+@@ -4138,7 +4138,7 @@ linux_nat_mourn_inferior (struct target_ops *ops)
     layout of the inferiors' architecture.  */
  
  static void
@@ -179,7 +179,7 @@ index 44a2a21..791d7b2 100644
  {
    int done = 0;
  
-@@ -3957,9 +3957,9 @@ siginfo_fixup (struct siginfo *siginfo, gdb_byte *inf_siginfo, int direction)
+@@ -4150,9 +4150,9 @@ siginfo_fixup (struct siginfo *siginfo, gdb_byte *inf_siginfo, int direction)
    if (!done)
      {
        if (direction == 1)
@@ -191,7 +191,7 @@ index 44a2a21..791d7b2 100644
      }
  }
  
-@@ -3969,8 +3969,8 @@ linux_xfer_siginfo (struct target_ops *ops, enum target_object object,
+@@ -4162,8 +4162,8 @@ linux_xfer_siginfo (struct target_ops *ops, enum target_object object,
  		    const gdb_byte *writebuf, ULONGEST offset, LONGEST len)
  {
    int pid;
@@ -202,7 +202,7 @@ index 44a2a21..791d7b2 100644
  
    gdb_assert (object == TARGET_OBJECT_SIGNAL_INFO);
    gdb_assert (readbuf || writebuf);
-@@ -5784,7 +5784,7 @@ linux_nat_set_new_thread (struct target_ops *t, void (*new_thread) (ptid_t))
+@@ -5852,7 +5852,7 @@ linux_nat_set_new_thread (struct target_ops *t, void (*new_thread) (ptid_t))
     inferior.  */
  void
  linux_nat_set_siginfo_fixup (struct target_ops *t,
@@ -211,7 +211,7 @@ index 44a2a21..791d7b2 100644
  						   gdb_byte *,
  						   int))
  {
-@@ -5793,7 +5793,7 @@ linux_nat_set_siginfo_fixup (struct target_ops *t,
+@@ -5861,7 +5861,7 @@ linux_nat_set_siginfo_fixup (struct target_ops *t,
  }
  
  /* Return the saved siginfo associated with PTID.  */
@@ -221,10 +221,10 @@ index 44a2a21..791d7b2 100644
  {
    struct lwp_info *lp = find_lwp_pid (ptid);
 diff --git a/gdb/linux-nat.h b/gdb/linux-nat.h
-index 42cb2fc..422db28 100644
+index 2d4503e..0e64e25 100644
 --- a/gdb/linux-nat.h
 +++ b/gdb/linux-nat.h
-@@ -60,7 +60,7 @@ struct lwp_info
+@@ -76,7 +76,7 @@ struct lwp_info
  
    /* Non-zero si_signo if this LWP stopped with a trap.  si_addr may
       be the address of a hardware watchpoint.  */
@@ -233,7 +233,7 @@ index 42cb2fc..422db28 100644
  
    /* STOPPED_BY_WATCHPOINT is non-zero if this LWP stopped with a data
       watchpoint trap.  */
-@@ -160,7 +160,7 @@ void linux_nat_set_new_thread (struct target_ops *, void (*) (ptid_t));
+@@ -171,7 +171,7 @@ void linux_nat_set_new_thread (struct target_ops *, void (*) (ptid_t));
     that ptrace returns, and the layout in the architecture of the
     inferior.  */
  void linux_nat_set_siginfo_fixup (struct target_ops *,
@@ -242,7 +242,7 @@ index 42cb2fc..422db28 100644
  					   gdb_byte *,
  					   int));
  
-@@ -169,7 +169,7 @@ void linux_nat_set_siginfo_fixup (struct target_ops *,
+@@ -180,7 +180,7 @@ void linux_nat_set_siginfo_fixup (struct target_ops *,
  void linux_nat_switch_fork (ptid_t new_ptid);
  
  /* Return the saved siginfo associated with PTID.  */
@@ -252,10 +252,10 @@ index 42cb2fc..422db28 100644
  /* Compute and return the processor core of a given thread.  */
  int linux_nat_core_of_thread_1 (ptid_t ptid);
 diff --git a/gdb/ppc-linux-nat.c b/gdb/ppc-linux-nat.c
-index 6f11715..3a3de07 100644
+index e42fa62..96f755c 100644
 --- a/gdb/ppc-linux-nat.c
 +++ b/gdb/ppc-linux-nat.c
-@@ -2161,7 +2161,7 @@ ppc_linux_thread_exit (struct thread_info *tp, int silent)
+@@ -2213,7 +2213,7 @@ ppc_linux_thread_exit (struct thread_info *tp, int silent)
  static int
  ppc_linux_stopped_data_address (struct target_ops *target, CORE_ADDR *addr_p)
  {
@@ -265,10 +265,10 @@ index 6f11715..3a3de07 100644
    siginfo_p = linux_nat_get_siginfo (inferior_ptid);
  
 diff --git a/gdb/procfs.c b/gdb/procfs.c
-index 5d7cb23..ea52d97 100644
+index 14d923d..fff432b 100644
 --- a/gdb/procfs.c
 +++ b/gdb/procfs.c
-@@ -263,7 +263,7 @@ typedef struct sigaction gdb_sigaction_t;
+@@ -262,7 +262,7 @@ typedef struct sigaction gdb_sigaction_t;
  #ifdef HAVE_PR_SIGINFO64_T
  typedef pr_siginfo64_t gdb_siginfo_t;
  #else

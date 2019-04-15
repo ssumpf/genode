@@ -1,8 +1,19 @@
+
+
+From: Christian Prochaska <christian.prochaska@genode-labs.com>
+
+
+---
+ gdb/configure             |   10 +++++-----
+ missing                   |    2 +-
+ sim/common/Make-common.in |    2 +-
+ 3 files changed, 7 insertions(+), 7 deletions(-)
+
 diff --git a/gdb/configure b/gdb/configure
-index 30e5e45..9c5ed7f 100755
+index 7d11e98..37919fa 100755
 --- a/gdb/configure
 +++ b/gdb/configure
-@@ -7917,11 +7917,11 @@ fi
+@@ -7956,11 +7956,11 @@ fi
  # configuration.
  gdb_host_obs=posix-hdep.o
  
@@ -18,7 +29,7 @@ index 30e5e45..9c5ed7f 100755
  
  . $srcdir/configure.host
  
-@@ -12919,7 +12919,7 @@ sigjmp_buf env; while (! sigsetjmp (env, 1)) siglongjmp (env, 1);
+@@ -13203,7 +13203,7 @@ sigjmp_buf env; while (! sigsetjmp (env, 1)) siglongjmp (env, 1);
    return 0;
  }
  _ACEOF
@@ -41,10 +52,10 @@ index 28055d2..031956f 100755
      ;;
  
 diff --git a/sim/common/Make-common.in b/sim/common/Make-common.in
-index 351f4a0..9b68c87 100644
+index c11e51e..6cd3b92 100644
 --- a/sim/common/Make-common.in
 +++ b/sim/common/Make-common.in
-@@ -237,7 +237,7 @@ CSEARCH = -I. -I$(srcdir) -I../common -I$(srccom) \
+@@ -248,7 +248,7 @@ CSEARCH = -I. -I$(srcdir) -I../common -I$(srccom) \
    -I../../bfd -I$(srcroot)/bfd \
    -I../../opcodes -I$(srcroot)/opcodes \
    @INCINTL@

@@ -1,5 +1,7 @@
 gcc6.patch
 
+From: Christian Prochaska <christian.prochaska@genode-labs.com>
+
 ChangeLog part removed to make the patch apply on Genode.
 
 From 24b4cf66a626566e7903813a2e0156778f4903f9 Mon Sep 17 00:00:00 2001
@@ -10,15 +12,14 @@ Subject: [PATCH] Fixes a compile time warnng about left shifting a negative
 
 	* arm-dis.c (print_insn_coprocessor): Avoid negative shift.
 ---
- opcodes/ChangeLog | 4 ++++
- opcodes/arm-dis.c | 2 +-
- 2 files changed, 5 insertions(+), 1 deletion(-)
+ opcodes/arm-dis.c |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/opcodes/arm-dis.c b/opcodes/arm-dis.c
-index e9f4425..818847d 100644
+index 03062ad..7c8b466 100644
 --- a/opcodes/arm-dis.c
 +++ b/opcodes/arm-dis.c
-@@ -3352,7 +3352,7 @@ print_insn_coprocessor (bfd_vma pc,
+@@ -1960,7 +1960,7 @@ print_insn_coprocessor (bfd_vma pc,
  
  		    /* Is ``imm'' a negative number?  */
  		    if (imm & 0x40)
