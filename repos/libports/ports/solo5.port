@@ -4,9 +4,9 @@ DOWNLOADS := solo5.archive
 
 OWNER := ehmry
 REPO  := solo5
-REV   := 6131a7ae9f56bb578c8a24614db930b443003247
+REV   := 7dca1a677f548ea0bc911a209f34ceb55d8f10fd
 URL(solo5) := https://github.com/$(OWNER)/$(REPO)/archive/$(REV).tar.gz
-SHA(solo5) := 65eaf767bb43d2be46f4ce62e196df167ada367b21d8ac2368e1a8d8435c9b27
+SHA(solo5) := 87a8e8e047bc6fffe0384f1cbb2bfde1e4c88c545287899be29444ec9a4d6b95
 DIR(solo5) := src/lib/solo5
 
 DIRS := include/solo5
