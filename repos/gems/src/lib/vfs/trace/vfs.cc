@@ -1,7 +1,6 @@
 
 /* Genode includes */
 #include <vfs/dir_file_system.h>
-#include <vfs/readonly_value_file_system.h>
 #include <vfs/single_file_system.h>
 
 
@@ -11,6 +10,7 @@
 #include <trace_session/connection.h>
 
 #include "directory_tree.h"
+#include "value_file_system.h"
 
 #include <base/debug.h>
 
@@ -21,8 +21,8 @@ namespace Vfs_trace {
 
 	struct File_system;
 	class  Local_factory;
-	class  Content;
-	struct Content_factory;
+	class  Subject;
+	struct Subject_factory;
 }
 
 #if 0
@@ -105,21 +105,25 @@ struct Vfs_trace::Content : Vfs::Single_file_system
 };
 #endif
 
-struct Vfs_trace::Content_factory : File_system_factory
+struct Vfs_trace::Subject_factory : File_system_factory
 {
-	Readonly_value_file_system<unsigned> _id_fs   { "id",   0 };
+	Vfs::Env                   &_env;
+	Value_file_system<unsigned> _enabled_fs { _env, "enable", 0u, Genode::Signal_context_capability() };
+
+	Subject_factory(Vfs::Env &env)
+	: _env(env) { }
 
 	Vfs::File_system *create(Vfs::Env &env, Xml_node node) override
 	{
 		PDBG("called: ", node);
-		if (node.has_type(Readonly_value_file_system<unsigned>::type_name()))
-			return _id_fs.matches(node)   ? &_id_fs : nullptr;
+		if (node.has_type(Value_file_system<unsigned>::type_name()))
+			return _enabled_fs.matches(node)   ? &_enabled_fs : nullptr;
 
 		return nullptr;
 	}
 };
 
-class Vfs_trace::Content : private Content_factory,
+class Vfs_trace::Subject : private Subject_factory,
                            public  Vfs::Dir_file_system
 {
 	private:
@@ -135,7 +139,7 @@ class Vfs_trace::Content : private Content_factory,
 			Xml_generator xml(buf, sizeof(buf), "dir", [&] () {
 				typedef String<32> Name;
 				xml.attribute("name", node.attribute_value("name", Name()));
-				xml.node("readonly_value", [&] () { xml.attribute("name", "id");   });
+				xml.node("value", [&] () { xml.attribute("name", "enable");   });
 			});
 
 			return Config(Cstring(buf));
@@ -143,8 +147,9 @@ class Vfs_trace::Content : private Content_factory,
 
 	public:
 
-		Content(Vfs::Env &env, Xml_node node)
-		: Dir_file_system(env, Xml_node(_config(node).string()), *this)
+		Subject(Vfs::Env &env, Xml_node node)
+		: Subject_factory(env),
+		  Dir_file_system(env, Xml_node(_config(node).string()), *this)
 		{
 			_id = node.attribute_value("id", 0u);
 		}
@@ -190,8 +195,8 @@ struct Vfs_trace::Local_factory : File_system_factory
 	Vfs::File_system *create(Vfs::Env&, Xml_node node) override
 	{
 		PDBG(node);
-		if (node.has_type(Content::type_name()))
-			return new (_env.alloc()) Content(_env, node);
+		if (node.has_type(Subject::type_name()))
+			return new (_env.alloc()) Subject(_env, node);
 
 		return nullptr;
 	}
@@ -199,7 +204,7 @@ struct Vfs_trace::Local_factory : File_system_factory
 
 
 class Vfs_trace::File_system : private Local_factory,
-                               public Vfs::Dir_file_system
+                               public  Vfs::Dir_file_system
 {
 	private:
 
