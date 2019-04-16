@@ -58,7 +58,7 @@ extern "C" {
 
 	struct Drive : private Block::Connection<>
 	{
-		Info const info = Block::Connection::info();
+		Info const info = Block::Connection<>::info();
 
 		using Block::Connection<>::tx;
 		using Block::Connection<>::alloc_packet;
