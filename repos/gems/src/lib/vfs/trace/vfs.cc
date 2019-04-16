@@ -1,7 +1,9 @@
 
 /* Genode includes */
 #include <vfs/dir_file_system.h>
+#include <vfs/readonly_value_file_system.h>
 #include <vfs/single_file_system.h>
+
 
 #include <gems/vfs.h>
 #include <util/xml_generator.h>
@@ -19,10 +21,11 @@ namespace Vfs_trace {
 
 	struct File_system;
 	class  Local_factory;
-	struct  Content;
-
+	class  Content;
+	struct Content_factory;
 }
 
+#if 0
 struct Vfs_trace::Content : Vfs::Single_file_system
 {
 	Vfs::Env          &_vfs_env;
@@ -82,6 +85,90 @@ struct Vfs_trace::Content : Vfs::Single_file_system
 	  _vfs_env(env)
 	{
 
+	}
+
+	static char const *type_name() { return "trace_node"; }
+	char const *type() override { return type_name(); }
+
+
+	Open_result open(char const  *path, unsigned,
+	                 Vfs::Vfs_handle **out_handle,
+	                 Allocator   &alloc) override
+	{
+		PDBG("OPEN: ", path);
+		if (!_single_file(path))
+			return OPEN_ERR_UNACCESSIBLE;
+
+		*out_handle = new (alloc) Vfs_handle(*this, *this, alloc, _buf, _buf_len);
+		return OPEN_OK;
+	}
+};
+#endif
+
+struct Vfs_trace::Content_factory : File_system_factory
+{
+	Readonly_value_file_system<unsigned> _id_fs   { "id",   0 };
+
+	Vfs::File_system *create(Vfs::Env &env, Xml_node node) override
+	{
+		PDBG("called: ", node);
+		if (node.has_type(Readonly_value_file_system<unsigned>::type_name()))
+			return _id_fs.matches(node)   ? &_id_fs : nullptr;
+
+		return nullptr;
+	}
+};
+
+class Vfs_trace::Content : private Content_factory,
+                           public  Vfs::Dir_file_system
+{
+	private:
+
+		Trace::Subject_id _id;
+
+		typedef String<200> Config;
+
+		static Config _config(Xml_node node)
+		{
+			char buf[Config::capacity()] { };
+
+			Xml_generator xml(buf, sizeof(buf), "dir", [&] () {
+				typedef String<32> Name;
+				xml.attribute("name", node.attribute_value("name", Name()));
+				xml.node("readonly_value", [&] () { xml.attribute("name", "id");   });
+			});
+
+			return Config(Cstring(buf));
+		}
+
+	public:
+
+		Content(Vfs::Env &env, Xml_node node)
+		: Dir_file_system(env, Xml_node(_config(node).string()), *this)
+		{
+			_id = node.attribute_value("id", 0u);
+		}
+
+
+	static char const *type_name() { return "trace_node"; }
+	char const *type() override { return type_name(); }
+};
+
+
+struct Vfs_trace::Local_factory : File_system_factory
+{
+	Vfs::Env          &_env;
+
+	enum { MAX_SUBJECTS = 32 };
+	Trace::Connection  _trace { _env.env(), 10*4096, 32*1024, 0 };
+	Trace::Subject_id  _subjects[MAX_SUBJECTS];
+	unsigned           _subject_count;
+
+	Directory_tree     _tree { _env.alloc() };
+
+	Local_factory(Vfs::Env &env, Xml_node config)
+	: _env(env)
+	{
 		bool success = false;
 		while (!success) {
 			try {
@@ -93,92 +180,22 @@ struct Vfs_trace::Content : Vfs::Single_file_system
 			}
 		}
 
-
 		for (unsigned i = 0; i < _subject_count; i++) {
-			Trace::Subject_info info = _trace.subject_info(_subjects[i]);
-			PDBG("subject: ", info.session_label());
-			_directory.insert(info, _subjects[i]);
+			_tree.insert(_trace.subject_info(_subjects[i]), _subjects[i]);
 		}
 
 		PDBG("subject count: ", _subject_count);
-		return;
-
-		unsigned char *buf = _buf;
-
-		for (unsigned i = 0; i < _subject_count; i++) {
-			Trace::Subject_info info = _trace.subject_info(_subjects[i]);
-			int written = Genode::snprintf((char *)buf, 1024*1024 - _buf_len, "%s %s: %s ex: %lld\n",
-			                               info.session_label().string(),
-			                               info.thread_name().string(),
-			                               Trace::Subject_info::state_name(info.state()),
-			                               info.execution_time().value);
-			buf += written;
-			_buf_len += written;
-		}
-		_buf[_buf_len++] = 0;
-
-		Genode::log((char const *)_buf);
 	}
-
-	static char const *type_name() { return "trace_out"; }
-	char const *type() override { return type_name(); }
-
-
-	Open_result open(char const  *path, unsigned,
-	                 Vfs::Vfs_handle **out_handle,
-	                 Allocator   &alloc) override
-	{
-		if (!_single_file(path))
-			return OPEN_ERR_UNACCESSIBLE;
-
-		PDBG("OPEN: ", path);
-		*out_handle = new (alloc) Vfs_handle(*this, *this, alloc, _buf, _buf_len);
-		return OPEN_OK;
-	}
-};
-
-
-struct Vfs_trace::Local_factory : File_system_factory
-{
-	Vfs::Env &_env;
-	Content   _content { _env };
-
-	Local_factory(Vfs::Env &env, Xml_node config)
-	: _env(env)
-	{ }
 
 	Vfs::File_system *create(Vfs::Env&, Xml_node node) override
 	{
 		PDBG(node);
 		if (node.has_type(Content::type_name()))
-			return &_content;
+			return new (_env.alloc()) Content(_env, node);
 
 		return nullptr;
 	}
-
-	Directory_tree &directory_tree() { return _content._directory; }
 };
-#if 0
-class Current_exception
-{
-	private:
-
-		enum { CAPACITY = 128 };
-		char _buf[CAPACITY];
-
-	public:
-
-		Current_exception() : _buf("<unkown>")
-		{
-			Genode::cxx_current_exception(_buf, CAPACITY);
-		}
-
-		void print(Genode::Output &out) const
-		{
-			Genode::print(out, Genode::Cstring(_buf, CAPACITY));
-		}
-};
-#endif
 
 
 class Vfs_trace::File_system : private Local_factory,
@@ -186,48 +203,27 @@ class Vfs_trace::File_system : private Local_factory,
 {
 	private:
 
-
 		typedef String<512*1024> Config;
 
-		static char const *_config(Vfs::Env &vfs_env, Directory_tree &tree, Xml_node node)
+		static char const *_config(Vfs::Env &vfs_env, Directory_tree &tree)
 		{
 			char *buf = (char *)vfs_env.alloc().alloc(Config::capacity());
-			PDBG("node: ", node);
 			Xml_generator xml(buf, Config::capacity(), "node", [&] () {
 				tree.xml(xml);
 			});
-#if 0
-			Xml_generator xml(buf, sizeof(buf), "node", [&] () {
-				xml.node("trace_out", [&] () {});
-				xml.node("dir", [&] () {
-					xml.attribute("name", "test");
-					xml.node("dir", [&] () {
-						xml.attribute("name", "level2");
-					});
-				});
-				xml.node("dir", [&] () {
-					xml.attribute("name", "test");
-					xml.node("dir", [&] () {
-						xml.attribute("name", "level3");
-					});
-				});
-			});
-#endif
+
 			PDBG("config: ",(char const *)buf);
 			return buf;
 		}
 
 	public:
 
-
 		File_system(Vfs::Env &vfs_env, Genode::Xml_node node)
-		:
-			Local_factory(vfs_env, node),
-			Vfs::Dir_file_system(vfs_env, Xml_node(_config(vfs_env, directory_tree(), node)), *this)
+		: Local_factory(vfs_env, node),
+			Vfs::Dir_file_system(vfs_env, Xml_node(_config(vfs_env, _tree)), *this)
 		{ }
 
 		char const *type() override { PDBG("CALLED"); return "trace"; }
-
 };
 
 
@@ -242,7 +238,7 @@ extern "C" Vfs::File_system_factory *vfs_file_system_factory(void)
 		Vfs::File_system *create(Vfs::Env &vfs_env,
 		                         Genode::Xml_node node) override
 		{
-			PDBG("called");
+			PDBG("called: ", node);
 			try { return new (vfs_env.alloc())
 				Vfs_trace::File_system(vfs_env, node); }
 			catch (...) { PDBG("ERROR"); }

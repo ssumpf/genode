@@ -49,7 +49,7 @@ struct Vfs::Label : Genode::String<32>
 };
 
 class Vfs::Trace_node : public Vfs::Label,
-                         public Avl_node_tree<Genode::Avl_string_base>
+                        public Avl_node_tree<Genode::Avl_string_base>
 {
 	private:
 
@@ -83,18 +83,26 @@ class Vfs::Trace_node : public Vfs::Label,
 			return node->insert(label.suffix());
 		}
 
-		void xml(Genode::Xml_generator &xml)
+		void xml(Genode::Xml_generator &xml) const
 		{
 			_tree.for_each([&] (Genode::Avl_string_base const &name) {
-				Trace_node &node = const_cast<Trace_node &>(static_cast<Trace_node const &>(name));
+				Trace_node const &node = static_cast<Trace_node const &>(name);
 
-				xml.node("dir", [&] () {
-					xml.attribute("name", node.name());
-					node.xml(xml);
+				if (node.id() == 0)
+					xml.node("dir", [&] () {
+						xml.attribute("name", node.name());
+						node.xml(xml);
+					});
+				else
+					xml.node("trace_node", [&] () {
+						xml.attribute("name", node.name());
+						xml.attribute("id", node.id().id);
+						node.xml(xml);
+					});
 				});
-			});
-
 		}
+
+		Trace::Subject_id const &id() const { return _id; }
 };
 
 class Vfs::Directory_tree : public Genode::Avl_tree<Trace_node>
