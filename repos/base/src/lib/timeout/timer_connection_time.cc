@@ -88,37 +88,12 @@ void Timer::Connection::_update_real_time()
 	 * Update timestamp-to-time factor and its shift
 	 */
 
-	unsigned  factor_shift        = _us_to_ts_factor_shift;
-	uint64_t  old_factor          = _us_to_ts_factor;
-	Timestamp max_ts_diff         = ~(Timestamp)0ULL >> factor_shift;
-	Timestamp min_ts_diff_shifted = ~(Timestamp)0ULL >> 1;
+	unsigned  factor_shift = _us_to_ts_factor_shift;
+	uint64_t  old_factor   = _us_to_ts_factor;
+	Timestamp max_ts_diff  = ~(Timestamp)0ULL >> factor_shift;
 
-	/*
-	 * If the calculation type is bigger than the resulting factor type,
-	 * we have to apply further limitations to avoid a loss at the final cast.
-	 */
-	if (sizeof(Timestamp) > sizeof(uint64_t)) {
-
-		Timestamp       limit_ts_diff_shifted = (Timestamp)~0UL * us_diff;
-		Timestamp const limit_ts_diff         = limit_ts_diff_shifted >>
-		                                        factor_shift;
-
-		/*
-		 * Avoid that we leave the factor shift on such a high level that
-		 * casting the factor to its final type causes a loss.
-		 */
-		if (max_ts_diff > limit_ts_diff) {
-			max_ts_diff = limit_ts_diff;
-		}
-		/*
-		 * Avoid that we raise the factor shift such that casting the factor
-		 * to its final type causes a loss.
-		 */
-		limit_ts_diff_shifted >>= 1;
-		if (min_ts_diff_shifted > limit_ts_diff_shifted) {
-			min_ts_diff_shifted = limit_ts_diff_shifted;
-		}
-	}
+	/* too big timestamps could cause a loss at the final cast */
+	enum { ASSERT_TIMESTAMP_RANGE_OK = 1 / (sizeof(Timestamp) <= sizeof(uint64_t)) };
 
 	struct Factor_update_failed : Genode::Exception { };
 	try {
