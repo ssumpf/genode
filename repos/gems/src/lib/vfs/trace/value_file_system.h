@@ -1,7 +1,8 @@
 /*
- * \brief  File system for providing a read-only value as a file
- * \author Norman Feske
- * \date   2018-03-27
+ * \brief  File system for providing a value as a file
+ * \author Josef Soentgen
+ * \author Sebastian Sumpf
+ * \date   2018-11-24
  */
 
 /*
@@ -33,35 +34,23 @@ class Vfs::Value_file_system : public Vfs::Single_file_system
 
 	private:
 
-		struct Buffer {
-			char space[BUF_SIZE + 1];
-
-			size_t length() const { return BUF_SIZE + 1; }
-
-			char *operator+(size_t addend)
-			{
-				return space + addend;
-			}
-		};
+		typedef Genode::String<BUF_SIZE + 1> Buffer;
 
 		Name const _file_name;
 
 		Buffer _buffer { };
-		Genode::Signal_context_capability _notify { };
 
 		struct Vfs_handle : Single_vfs_handle
 		{
 			Buffer  &_buffer;
-			Genode::Signal_context_capability _notify { };
 
 			Vfs_handle(Directory_service &ds,
 			           File_io_service   &fs,
 			           Allocator         &alloc,
-			           Buffer            &buffer,
-			           Genode::Signal_context_capability notify)
+			           Buffer            &buffer)
 			:
 				Single_vfs_handle(ds, fs, alloc, 0),
-				_buffer(buffer), _notify(notify)
+				_buffer(buffer)
 			{ }
 
 			Read_result read(char *dst, file_size count,
@@ -72,7 +61,7 @@ class Vfs::Value_file_system : public Vfs::Single_file_system
 				if (seek() > _buffer.length())
 					return READ_ERR_INVALID;
 
-				char const *   const src = _buffer + seek();
+				char const *   const src = _buffer.string() + seek();
 				Genode::size_t const len = min(_buffer.length() - seek(), count);
 				Genode::memcpy(dst, src, len);
 
@@ -82,17 +71,14 @@ class Vfs::Value_file_system : public Vfs::Single_file_system
 
 			Write_result write(char const *src, file_size count, file_size &out_count) override
 			{
-				Genode::warning(__func__, ":", __LINE__, " src: ", src, " count: ", count, " seek: ", seek());
 				out_count = 0;
 				if (seek() > BUF_SIZE)
 					return WRITE_ERR_INVALID;
 
 				Genode::size_t const len = min(BUF_SIZE- seek(), count);
-				Genode::memcpy(&_buffer, src, len);
+				_buffer = Buffer(Cstring(src, len));
 				out_count = len;
 
-				if (_notify.valid())
-					Genode::Signal_transmitter(_notify).submit();
 				return WRITE_OK;
 			}
 
@@ -132,12 +118,11 @@ class Vfs::Value_file_system : public Vfs::Single_file_system
 
 	public:
 
-		Value_file_system(Vfs::Env &env, Name const &name, T const &initial_value,
-		                  Genode::Signal_context_capability notify_sigh)
+		Value_file_system(Vfs::Env &env, Name const &name, T const &initial_value)
 		:
 			Single_file_system(NODE_TYPE_CHAR_DEVICE, type(),
 			                   Xml_node(_config(name).string())),
-			_file_name(name), _notify(notify_sigh),
+			_file_name(name),
 			_watch_handler(env.watch_handler())
 		{
 			value(initial_value);
@@ -149,8 +134,7 @@ class Vfs::Value_file_system : public Vfs::Single_file_system
 
 		void value(T const &value)
 		{
-			Genode::String<sizeof(T)> val (value);
-			Genode::memcpy(&_buffer, val.string(), val.length());
+			_buffer = Buffer(value);
 
 			_watch_handle_registry.for_each([&] (Watch_handle &wh) {
 				_watch_handler.handle_watch_response(wh.context());
@@ -173,7 +157,6 @@ class Vfs::Value_file_system : public Vfs::Single_file_system
 			if (size >= BUF_SIZE)
 				return FTRUNCATE_ERR_NO_SPACE;
 
-			handle->seek(size);
 			return FTRUNCATE_OK;
 		}
 
@@ -186,14 +169,11 @@ class Vfs::Value_file_system : public Vfs::Single_file_system
 		                 Vfs::Vfs_handle **out_handle,
 		                 Allocator   &alloc) override
 		{
-			Genode::warning(__func__, " path: ", path);
 			if (!_single_file(path))
 				return OPEN_ERR_UNACCESSIBLE;
-			Genode::warning("done");
+
 			try {
-				*out_handle = new (alloc)
-					Vfs_handle(*this, *this, alloc, _buffer, _notify);
-				Genode::warning("return ok");
+				*out_handle = new (alloc) Vfs_handle(*this, *this, alloc, _buffer);
 				return OPEN_OK;
 			}
 			catch (Genode::Out_of_ram)  { Genode::error("out of ram"); return OPEN_ERR_OUT_OF_RAM; }
@@ -202,7 +182,6 @@ class Vfs::Value_file_system : public Vfs::Single_file_system
 
 		Stat_result stat(char const *path, Stat &out) override
 		{
-			Genode::warning(__func__, " path: ", path);
 			Stat_result result = Single_file_system::stat(path, out);
 			out.mode |= 0666;
 			out.size = BUF_SIZE + 1;

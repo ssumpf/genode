@@ -108,7 +108,7 @@ struct Vfs_trace::Content : Vfs::Single_file_system
 struct Vfs_trace::Subject_factory : File_system_factory
 {
 	Vfs::Env                   &_env;
-	Value_file_system<unsigned> _enabled_fs { _env, "enable", 0u, Genode::Signal_context_capability() };
+	Value_file_system<bool, 1> _enabled_fs { _env, "enable", 0u};
 
 	Subject_factory(Vfs::Env &env)
 	: _env(env) { }
