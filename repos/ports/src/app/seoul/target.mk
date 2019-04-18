@@ -1,4 +1,5 @@
 TARGET = seoul
+REQUIRES = x86
 
 SEOUL_CONTRIB_DIR = $(call select_from_ports,seoul)/src/app/seoul
 SEOUL_GENODE_DIR  = $(SEOUL_CONTRIB_DIR)/genode
