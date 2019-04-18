@@ -306,7 +306,7 @@ append_if $use_usb config {
 	</start>}
 
 append config {
-	<start name="nitpicker" priority="-1">
+	<start name="nitpicker" priority="-1" caps="120">
 		<resource name="RAM" quantum="8M"/>
 		<config>
 			<report focus="yes" />
