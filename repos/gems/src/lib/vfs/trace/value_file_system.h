@@ -6,7 +6,7 @@
  */
 
 /*
- * Copyright (C) 2018 Genode Labs GmbH
+ * Copyright (C) 2018-2019 Genode Labs GmbH
  *
  * This file is part of the Genode OS framework, which is distributed
  * under the terms of the GNU Affero General Public License version 3.
@@ -42,15 +42,15 @@ class Vfs::Value_file_system : public Vfs::Single_file_system
 
 		struct Vfs_handle : Single_vfs_handle
 		{
-			Buffer  &_buffer;
+			//Buffer  &_buffer;
+			Value_file_system &_value_fs;
+			Buffer            &_buffer{ _value_fs._buffer };
 
-			Vfs_handle(Directory_service &ds,
-			           File_io_service   &fs,
-			           Allocator         &alloc,
-			           Buffer            &buffer)
+			Vfs_handle(Value_file_system &value_fs,
+			           Allocator         &alloc)
 			:
-				Single_vfs_handle(ds, fs, alloc, 0),
-				_buffer(buffer)
+				Single_vfs_handle(value_fs, value_fs, alloc, 0),
+				_value_fs(value_fs)
 			{ }
 
 			Read_result read(char *dst, file_size count,
@@ -79,6 +79,9 @@ class Vfs::Value_file_system : public Vfs::Single_file_system
 				_buffer = Buffer(Cstring(src, len));
 				out_count = len;
 
+				/* inform watchers */
+				_value_fs._watch_response();
+
 				return WRITE_OK;
 			}
 
@@ -86,9 +89,31 @@ class Vfs::Value_file_system : public Vfs::Single_file_system
 
 			private:
 
-			Vfs_handle(Vfs_handle const &); 
+			Vfs_handle(Vfs_handle const &);
 			Vfs_handle &operator = (Vfs_handle const &); 
 		};
+
+		struct Watch_handle;
+		using Watch_handle_registry = Genode::Registry<Watch_handle>;
+
+		struct Watch_handle : Vfs_watch_handle
+		{
+			typename Watch_handle_registry::Element elem;
+
+			Watch_handle(Watch_handle_registry &registry,
+			             Vfs::File_system      &fs,
+			             Allocator             &alloc)
+			: Vfs_watch_handle(fs, alloc), elem(registry, *this) { }
+		};
+
+		Watch_handle_registry _watch_handle_registry { };
+
+
+		void _watch_response() {
+			_watch_handle_registry.for_each([&] (Watch_handle &h) {
+				h.watch_response();
+			});
+		}
 
 		typedef Genode::String<200> Config;
 		Config _config(Name const &name) const
@@ -99,22 +124,6 @@ class Vfs::Value_file_system : public Vfs::Single_file_system
 			return Config(Genode::Cstring(buf));
 		}
 
-		struct Watch_handle;
-		using Watch_handle_registry = Genode::Registry<Watch_handle>;
-
-		struct Watch_handle : Vfs_watch_handle
-		{
-			typename Watch_handle_registry::Element elem;
-
-			Watch_handle(Watch_handle_registry &registry,
-			                     Vfs::File_system      &fs,
-			                     Allocator             &alloc)
-			: Vfs_watch_handle(fs, alloc), elem(registry, *this) { }
-		};
-
-		Watch_handle_registry _watch_handle_registry { };
-
-		Watch_response_handler &_watch_handler;
 
 	public:
 
@@ -122,8 +131,7 @@ class Vfs::Value_file_system : public Vfs::Single_file_system
 		:
 			Single_file_system(NODE_TYPE_CHAR_DEVICE, type(),
 			                   Xml_node(_config(name).string())),
-			_file_name(name),
-			_watch_handler(env.watch_handler())
+			_file_name(name)
 		{
 			value(initial_value);
 		}
@@ -135,10 +143,13 @@ class Vfs::Value_file_system : public Vfs::Single_file_system
 		void value(T const &value)
 		{
 			_buffer = Buffer(value);
+		}
 
-			_watch_handle_registry.for_each([&] (Watch_handle &wh) {
-				_watch_handler.handle_watch_response(wh.context());
-			});
+		T value()
+		{
+			T value;
+			Genode::ascii_to(_buffer.string(), value);
+			return value;
 		}
 
 		bool matches(Xml_node node) const
@@ -173,7 +184,7 @@ class Vfs::Value_file_system : public Vfs::Single_file_system
 				return OPEN_ERR_UNACCESSIBLE;
 
 			try {
-				*out_handle = new (alloc) Vfs_handle(*this, *this, alloc, _buffer);
+				*out_handle = new (alloc) Vfs_handle(*this, alloc);
 				return OPEN_OK;
 			}
 			catch (Genode::Out_of_ram)  { Genode::error("out of ram"); return OPEN_ERR_OUT_OF_RAM; }

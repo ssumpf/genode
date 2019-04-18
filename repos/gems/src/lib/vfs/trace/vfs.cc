@@ -108,7 +108,7 @@ struct Vfs_trace::Content : Vfs::Single_file_system
 struct Vfs_trace::Subject_factory : File_system_factory
 {
 	Vfs::Env                   &_env;
-	Value_file_system<bool, 1> _enabled_fs { _env, "enable", 0u};
+	Value_file_system<bool, 1>  _enabled_fs { _env, "enable", 0u};
 
 	Subject_factory(Vfs::Env &env)
 	: _env(env) { }
@@ -123,14 +123,21 @@ struct Vfs_trace::Subject_factory : File_system_factory
 	}
 };
 
+
 class Vfs_trace::Subject : private Subject_factory,
                            public  Vfs::Dir_file_system
 {
 	private:
 
+		typedef String<200> Config;
+
 		Trace::Subject_id _id;
 
-		typedef String<200> Config;
+		Watch_handler<Subject> _enable_handler {
+		  _enabled_fs, "/enable",
+		  Subject_factory::_env.alloc(),
+		  *this, &Subject::_enable_subject };
+
 
 		static Config _config(Xml_node node)
 		{
@@ -145,14 +152,22 @@ class Vfs_trace::Subject : private Subject_factory,
 			return Config(Cstring(buf));
 		}
 
+		void _enable_subject()
+		{
+			bool enable = _enabled_fs.value();
+			Genode::log(__func__, " value: ", enable);
+
+			/* set value to 1 or 0 */
+			_enabled_fs.value(enable);
+		}
+
 	public:
 
 		Subject(Vfs::Env &env, Xml_node node)
 		: Subject_factory(env),
-		  Dir_file_system(env, Xml_node(_config(node).string()), *this)
-		{
-			_id = node.attribute_value("id", 0u);
-		}
+		  Dir_file_system(env, Xml_node(_config(node).string()), *this),
+			_id(node.attribute_value("id", 0u))
+		{ }
 
 
 	static char const *type_name() { return "trace_node"; }
