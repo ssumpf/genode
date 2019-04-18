@@ -252,6 +252,12 @@ void Vm_session_component::_attach_vm_memory(Dataspace_component &dsc,
 	while (page.valid()) {
 		try {
 			_vm_space.alloc_guest_page_tables(page.hotspot, 1 << page.log2_order);
+		} catch (Page_table_registry::Mapping_cache_full full) {
+			if (full.reason == Page_table_registry::Mapping_cache_full::MEMORY)
+				throw Out_of_ram();
+			if (full.reason == Page_table_registry::Mapping_cache_full::CAPS)
+				throw Out_of_caps();
+			throw;
 		} catch (...) {
 			// Alloc_page_table_failed
 			Genode::error("alloc_guest_page_table exception");

@@ -282,6 +282,15 @@ class Genode::Vm_space
 			return Cap_sel(idx);
 		}
 
+		void _unmap_and_free(Cap_sel const idx, addr_t const paddr)
+		{
+			_leaf_cnode(idx.value()).remove(idx);
+
+			_sel_alloc.free(idx.value());
+
+			Untyped_memory::free_page(_phys_alloc, paddr);
+		}
+
 	public:
 
 		/**
@@ -353,12 +362,7 @@ class Genode::Vm_space
 
 				return true;
 			}, [&] (Cap_sel const &idx, addr_t const paddr) {
-
-				_leaf_cnode(idx.value()).remove(idx);
-
-				_sel_alloc.free(idx.value());
-
-				Untyped_memory::free_page(_phys_alloc, paddr);
+				_unmap_and_free(idx, paddr);
 			});
 
 			for (unsigned i = 0; i < NUM_LEAF_CNODES; i++) {
