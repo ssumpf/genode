@@ -1,5 +1,6 @@
 
 /* Genode includes */
+#include <base/attached_rom_dataspace.h>
 #include <vfs/dir_file_system.h>
 #include <vfs/single_file_system.h>
 
@@ -23,87 +24,36 @@ namespace Vfs_trace {
 	class  Local_factory;
 	class  Subject;
 	struct Subject_factory;
+	class  Trace_buffer_file_system;
 }
 
-#if 0
-struct Vfs_trace::Content : Vfs::Single_file_system
+
+class Vfs_trace::Trace_buffer_file_system : public Single_file_system
 {
-	Vfs::Env          &_vfs_env;
-	Trace::Connection  _trace { _vfs_env.env(), 10*4096, 32*1024, 0 };
-	enum { MAX_SUBJECTS = 32 };
-	Trace::Subject_id  _subjects[MAX_SUBJECTS];
-	unsigned           _subject_count;
+	private:
 
-	unsigned char  _buf[1024*1024];
-	unsigned long  _buf_len = 0;
-	Directory_tree _directory { _vfs_env.alloc()};
+		typedef String<32> Config;
 
-	struct Vfs_handle : Single_vfs_handle
-	{
-		unsigned char  *_buf     = nullptr;
-		unsigned long   _buf_len = 0;
-
-		Vfs_handle(Directory_service &ds,
-		           File_io_service   &fs,
-		           Genode::Allocator &alloc,
-		           unsigned char     *buf,
-		           unsigned long      buf_len)
-		: Single_vfs_handle(ds, fs, alloc, 0),
-		  _buf(buf), _buf_len(buf_len)  { }
-
-
-		Read_result read(char *dst, file_size count,
-		                 file_size &out_count) override
+		static Config _config(Xml_node node)
 		{
-			file_size const max_size = _buf_len;
-			file_size const read_offset = seek();
-			file_size const end_offset = min(count + read_offset, max_size);
-			out_count = 0;
+			char buf[Config::capacity()] { };
 
-			if (read_offset > end_offset)
-				return READ_OK;
+			Xml_generator xml(buf, sizeof(buf), type(), [&] () { });
 
-			file_size const num_bytes = end_offset - read_offset;
-			memcpy(dst, _buf + read_offset, num_bytes);
-			out_count = num_bytes;
-
-			return READ_OK;
+			return Config(Cstring(buf));
 		}
 
-		Write_result write(char const *, file_size,
-		                   file_size &out_count) override
-		{
-			out_count = 0;
-			return WRITE_ERR_INVALID;
-		}
+	public:
 
-		bool read_ready() override { return true; }
-	};
+		Trace_buffer_file_system()
+		: Single_file_system(NODE_TYPE_CHAR_DEVICE,
+		                     type(), Xml_node(_config(name.string()),
+		  _file_name(name) { }
 
-	Content(Vfs::Env &env)
-	: Single_file_system(NODE_TYPE_FILE, type_name(), Xml_node("<trace_out/>")),
-	  _vfs_env(env)
-	{
+		static char const *type_name() { return "trace_buffer"; }
+		char const *type() override { return type_name(); }
 
-	}
-
-	static char const *type_name() { return "trace_node"; }
-	char const *type() override { return type_name(); }
-
-
-	Open_result open(char const  *path, unsigned,
-	                 Vfs::Vfs_handle **out_handle,
-	                 Allocator   &alloc) override
-	{
-		PDBG("OPEN: ", path);
-		if (!_single_file(path))
-			return OPEN_ERR_UNACCESSIBLE;
-
-		*out_handle = new (alloc) Vfs_handle(*this, *this, alloc, _buf, _buf_len);
-		return OPEN_OK;
-	}
 };
-#endif
 
 struct Vfs_trace::Subject_factory : File_system_factory
 {
@@ -115,7 +65,6 @@ struct Vfs_trace::Subject_factory : File_system_factory
 
 	Vfs::File_system *create(Vfs::Env &env, Xml_node node) override
 	{
-		PDBG("called: ", node);
 		if (node.has_type(Value_file_system<unsigned>::type_name()))
 			return _enabled_fs.matches(node)   ? &_enabled_fs : nullptr;
 
@@ -131,7 +80,9 @@ class Vfs_trace::Subject : private Subject_factory,
 
 		typedef String<200> Config;
 
-		Trace::Subject_id _id;
+		Trace::Connection &_trace;
+		Trace::Policy_id   _policy;
+		Trace::Subject_id  _id;
 
 		Watch_handler<Subject> _enable_handler {
 		  _enabled_fs, "/enable",
@@ -146,32 +97,52 @@ class Vfs_trace::Subject : private Subject_factory,
 			Xml_generator xml(buf, sizeof(buf), "dir", [&] () {
 				typedef String<32> Name;
 				xml.attribute("name", node.attribute_value("name", Name()));
-				xml.node("value", [&] () { xml.attribute("name", "enable");   });
+				xml.node("value", [&] () { xml.attribute("name", "enable"); });
 			});
 
 			return Config(Cstring(buf));
 		}
 
+		void _setup_and_trace() { }
+
+		/********************
+		 ** Watch handlers **
+		 ********************/
+
+		enum State { OFF, TRACE, PAUSED } _state { OFF };
+
 		void _enable_subject()
 		{
-			bool enable = _enabled_fs.value();
-			Genode::log(__func__, " value: ", enable);
-
-			/* set value to 1 or 0 */
-			_enabled_fs.value(enable);
+			if (_enabled_fs.value()) {
+				switch (_state) {
+					case TRACE:  break;
+					case OFF:    _setup_and_trace(); break;
+					case PAUSED: _trace.resume(_id); break;
+				}
+				_state = TRACE;
+			} else {
+				switch (_state) {
+					case OFF:    return;
+					case PAUSED: return;
+					case TRACE:  _trace.pause(_id); _state = PAUSED; return;
+				}
+			}
 		}
 
 	public:
 
-		Subject(Vfs::Env &env, Xml_node node)
+		Subject(Vfs::Env &env, Trace::Connection &trace,
+		        Trace::Policy_id policy, Xml_node node)
 		: Subject_factory(env),
 		  Dir_file_system(env, Xml_node(_config(node).string()), *this),
-			_id(node.attribute_value("id", 0u))
+		  _trace(trace),
+		  _policy(policy),
+		  _id(node.attribute_value("id", 0u))
 		{ }
 
 
-	static char const *type_name() { return "trace_node"; }
-	char const *type() override { return type_name(); }
+		static char const *type_name() { return "trace_node"; }
+		char const *type() override { return type_name(); }
 };
 
 
@@ -180,11 +151,34 @@ struct Vfs_trace::Local_factory : File_system_factory
 	Vfs::Env          &_env;
 
 	enum { MAX_SUBJECTS = 32 };
-	Trace::Connection  _trace { _env.env(), 10*4096, 32*1024, 0 };
+	Trace::Connection  _trace { _env.env(), 32*4096, 64*1024, 0 };
 	Trace::Subject_id  _subjects[MAX_SUBJECTS];
 	unsigned           _subject_count;
+	Trace::Policy_id   _policy_id;
 
 	Directory_tree     _tree { _env.alloc() };
+
+	void _install_null_policy()
+	{
+		using namespace Genode;
+		Constructible<Attached_rom_dataspace> null_policy;
+
+		try {
+			null_policy.construct(_env.env(), "null");
+			_policy_id = _trace.alloc_policy(null_policy->size());
+		} catch (Out_of_caps) { error("out of CAPS"); throw; }
+			catch (Out_of_ram)  { error(" out of RAM"); throw; }
+			catch (...) {
+				error("failed to attach 'null' trace policy."
+			        "Please make sure it is provided as a ROM module.");
+				throw;
+		}
+
+		/* copy policy into trace session */
+		void *dst = _env.env().rm().attach(_trace.policy(_policy_id));
+		memcpy(dst, null_policy->local_addr<void*>(), null_policy->size());
+		_env.env().rm().detach(dst);
+	}
 
 	Local_factory(Vfs::Env &env, Xml_node config)
 	: _env(env)
@@ -204,14 +198,14 @@ struct Vfs_trace::Local_factory : File_system_factory
 			_tree.insert(_trace.subject_info(_subjects[i]), _subjects[i]);
 		}
 
-		PDBG("subject count: ", _subject_count);
+		_install_null_policy();
 	}
 
 	Vfs::File_system *create(Vfs::Env&, Xml_node node) override
 	{
 		PDBG(node);
 		if (node.has_type(Subject::type_name()))
-			return new (_env.alloc()) Subject(_env, node);
+			return new (_env.alloc()) Subject(_env, _trace, Trace::Policy_id(), node);
 
 		return nullptr;
 	}

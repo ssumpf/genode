@@ -42,7 +42,6 @@ class Vfs::Value_file_system : public Vfs::Single_file_system
 
 		struct Vfs_handle : Single_vfs_handle
 		{
-			//Buffer  &_buffer;
 			Value_file_system &_value_fs;
 			Buffer            &_buffer{ _value_fs._buffer };
 
@@ -147,9 +146,12 @@ class Vfs::Value_file_system : public Vfs::Single_file_system
 
 		T value()
 		{
-			T value;
-			Genode::ascii_to(_buffer.string(), value);
-			return value;
+			T val;
+			Genode::ascii_to(_buffer.string(), val);
+			/* in case of simple types like 'bool' set to 1 or 0 */
+			value(val);
+
+			return val;
 		}
 
 		bool matches(Xml_node node) const
