@@ -31,8 +31,6 @@ if {[have_spec sel4]} {
 }
 
 if {[have_spec foc]} {
-	set rdtsc_exit yes
-
 	# Qemu SVM has no EPT support
 	if {[have_include "power_on/qemu"]} {
 		puts "\n Run script is not supported on this platform. \n";

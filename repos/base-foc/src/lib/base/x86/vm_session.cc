@@ -300,6 +300,8 @@ struct Vcpu : Genode::Thread
 			if (_vm_type == Virt::VMX)
 				_write_intel_state(state, vmcs, vcpu);
 
+			vcpu->saved_state = L4_VCPU_F_USER_MODE | L4_VCPU_F_FPU_ENABLED;
+
 			State local_state { NONE };
 
 			while (true) {
@@ -325,6 +327,7 @@ struct Vcpu : Genode::Thread
 					Fiasco::l4_cap_idx_t tid = native_thread().kcap;
 					Fiasco::l4_cap_idx_t irq = tid + Fiasco::TASK_VCPU_IRQ_CAP;
 					l4_irq_receive(irq, L4_IPC_RECV_TIMEOUT_0);
+					/* vcpu->sticky_flags checks required ? */
 
 					state.exit_reason = VMEXIT_PAUSED;
 
@@ -354,8 +357,6 @@ struct Vcpu : Genode::Thread
 					_write_amd_state(state, vmcb, vcpu);
 				if (_vm_type == Virt::VMX)
 					_write_intel_state(state, vmcs, vcpu);
-
-				vcpu->saved_state = L4_VCPU_F_USER_MODE | L4_VCPU_F_FPU_ENABLED;
 
 				/* tell Fiasco.OC to run the vCPU */
 				l4_msgtag_t tag = l4_thread_vcpu_resume_start();
