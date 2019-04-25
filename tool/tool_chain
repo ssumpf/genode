@@ -200,6 +200,9 @@ TARGET_NAME_arm        = arm-none-eabi
 TARGET_NAME_riscv      = riscv64-unknown-elf
 
 GCC_CONFIG_riscv       = --with-arch=rv64imac --with-abi=lp64
+INSTALL_riscv          = cd $(INSTALL_LOCATION)/lib/gcc/riscv64-unknown-elf/$(GCC_VERSION)/rv64imac/lp64 && \
+                         $(SUDO) ln -sf ../../include include
+
 
 ifneq ($(VERBOSE),)
 CONFIG_QUIET = --quiet
@@ -522,3 +525,4 @@ install: build_all
 	$(ECHO) "$(BRIGHT_COL)installing tool chain to '$(INSTALL_LOCATION)'...$(DEFAULT_COL)"
 	$(VERBOSE)$(SUDO) cp -a --remove-destination --no-target-directory $(LOCAL_INSTALL_LOCATION) $(INSTALL_LOCATION)
 	$(VERBOSE)$(INSTALL_ADA)
+	$(VERBOSE)$(INSTALL_$(PLATFORM))
