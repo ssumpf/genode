@@ -140,7 +140,6 @@ class Vcpu : public StaticReceiver<Vcpu>
 	private:
 
 		Genode::Vm_connection              &_vm_con;
-		Genode::String<16>                 &_ep_name;
 		Genode::Vm_handler<Vcpu>            _handler;
 		bool const                          _vmx;
 		bool const                          _svm;
@@ -160,14 +159,14 @@ class Vcpu : public StaticReceiver<Vcpu>
 
 	public:
 
-		Vcpu(Genode::Entrypoint &ep, Genode::String<16> &ep_name,
+		Vcpu(Genode::Entrypoint &ep,
 		     Genode::Vm_connection &vm_con,
 		     Genode::Allocator &alloc, Genode::Env &env,
 		     Genode::Lock &vcpu_lock, VCpu *unsynchronized_vcpu,
 		     Seoul::Guest_memory &guest_memory, Synced_motherboard &motherboard,
 		     bool vmx, bool svm, bool map_small, bool rdtsc)
 		:
-			_vm_con(vm_con), _ep_name(ep_name),
+			_vm_con(vm_con),
 			_handler(ep, *this, &Vcpu::_handle_vm_exception,
 			         vmx ? &Vcpu::exit_config_intel :
 			         svm ? &Vcpu::exit_config_amd : nullptr),
@@ -201,17 +200,7 @@ class Vcpu : public StaticReceiver<Vcpu>
 		void block() { _block.down(); }
 		void unblock() { _block.up(); }
 
-		void recall()
-		{
-			if (!running_in_my_ep())
-				_vm_con.pause(id());
-			else
-				_vm_con.run(id());
-
-		}
-
-		bool running_in_my_ep() {
-			return  Genode::Thread::myself()->name() == _ep_name; }
+		void recall() { _vm_con.pause(id()); }
 
 		void _handle_vm_exception()
 		{
@@ -871,7 +860,7 @@ class Machine : public StaticReceiver<Machine>
 					                                 ep_name->string(),
 					                                 _env.cpu().affinity_space().location_of_index(_vcpus_up + 1));
 
-					Vcpu * vcpu = new Vcpu(*ep, *ep_name, _vm_con, _heap, _env,
+					Vcpu * vcpu = new Vcpu(*ep, _vm_con, _heap, _env,
 					                       _motherboard_lock, msg.vcpu,
 					                       _guest_memory, _motherboard,
 					                       has_vmx, has_svm, _map_small,
