@@ -238,6 +238,7 @@ class Sv39::Level_x_translation_table
 						E & table = alloc.construct<E>();
 						desc = Td::create((void*)alloc.phys_addr(table));
 					}
+					[[gnu::fallthrough]];
 
 				case Descriptor::TABLE: /* table already available */
 					{
@@ -277,7 +278,8 @@ class Sv39::Level_x_translation_table
 						if (!table.empty()) break;
 						alloc.destruct<E>(table);
 					}
-				case Descriptor::BLOCK:
+					[[gnu::fallthrough]];
+				case Descriptor::BLOCK: [[gnu::fallthrough]];
 				case Descriptor::INVALID:
 					desc = 0;
 				}
