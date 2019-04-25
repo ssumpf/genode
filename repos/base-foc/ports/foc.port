@@ -2,5 +2,5 @@ LICENSE   := GPLv2
 VERSION   := git
 DOWNLOADS := foc.git
 URL(foc)  := https://github.com/alex-ab/foc.git
-REV(foc)  := 293d874eba91285c9497f213d1c4f3c36301390c
+REV(foc)  := a8411389dffc3c55dc5809d2e849b3afac94ee5d
 DIR(foc)  := src/kernel/foc

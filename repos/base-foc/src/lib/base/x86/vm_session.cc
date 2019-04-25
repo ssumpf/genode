@@ -211,7 +211,7 @@ struct Vcpu : Genode::Thread
 			PAUSE = 1,
 			RUN = 2,
 			TERMINATE = 3,
-		}                                  _remote      { PAUSE };
+		}                                  _remote      { NONE };
 		Lock                               _remote_lock { Lock::UNLOCKED };
 
 		void entry() override
@@ -310,6 +310,15 @@ struct Vcpu : Genode::Thread
 					Lock::Guard guard(_remote_lock);
 					local_state      = _remote;
 					_remote          = NONE;
+
+					if (local_state == PAUSE) {
+						while (vcpu->sticky_flags) {
+							/* consume spurious notifications */
+							Fiasco::l4_cap_idx_t tid = native_thread().kcap;
+							Fiasco::l4_cap_idx_t irq = tid + Fiasco::TASK_VCPU_IRQ_CAP;
+							l4_irq_receive(irq, L4_IPC_RECV_TIMEOUT_0);
+						}
+					}
 				}
 
 				if (local_state == NONE) {
@@ -322,12 +331,6 @@ struct Vcpu : Genode::Thread
 						_write_amd_state(state, vmcb, vcpu);
 					if (_vm_type == Virt::VMX)
 						_write_intel_state(state, vmcs, vcpu);
-
-					/* consume spurious notifications */
-					Fiasco::l4_cap_idx_t tid = native_thread().kcap;
-					Fiasco::l4_cap_idx_t irq = tid + Fiasco::TASK_VCPU_IRQ_CAP;
-					l4_irq_receive(irq, L4_IPC_RECV_TIMEOUT_0);
-					/* vcpu->sticky_flags checks required ? */
 
 					state.exit_reason = VMEXIT_PAUSED;
 
@@ -406,9 +409,11 @@ struct Vcpu : Genode::Thread
 						}
 
 						/* consume notification */
-						Fiasco::l4_cap_idx_t tid = native_thread().kcap;
-						Fiasco::l4_cap_idx_t irq = tid + Fiasco::TASK_VCPU_IRQ_CAP;
-						l4_irq_receive(irq, L4_IPC_RECV_TIMEOUT_0);
+						while (vcpu->sticky_flags) {
+							Fiasco::l4_cap_idx_t tid = native_thread().kcap;
+							Fiasco::l4_cap_idx_t irq = tid + Fiasco::TASK_VCPU_IRQ_CAP;
+							l4_irq_receive(irq, L4_IPC_RECV_TIMEOUT_0);
+						}
 					}
 
 					state.exit_reason = reason & 0xff;
@@ -1156,7 +1161,7 @@ struct Vcpu : Genode::Thread
 		void resume() {
 			Lock::Guard guard(_remote_lock);
 
-			if (_remote == RUN)
+			if (_remote == RUN || _remote == PAUSE)
 				return;
 
 			_remote = RUN;
