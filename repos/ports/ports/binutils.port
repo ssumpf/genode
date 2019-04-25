@@ -8,9 +8,11 @@ SIG(binutils) := ${URL(binutils)}.sig
 KEY(binutils) := GNU
 DIR(binutils) := src/noux-pkg/binutils
 
-aPATCHES   := $(addprefix ${DIR(binutils)}/patches/, \
+PATCHES   := $(addprefix ${DIR(binutils)}/patches/, \
                          $(shell cat $(REP_DIR)/${DIR(binutils)}/patches/series))
-aPATCH_OPT := -p1 -d ${DIR(binutils)}
+PATCH_OPT := -p1 -d ${DIR(binutils)}
+
+HASH_INPUT += $(REP_DIR)/${DIR(binutils)}/patches/series
 
 AUTOCONF := autoconf
 
