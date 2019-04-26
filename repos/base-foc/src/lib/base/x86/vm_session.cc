@@ -137,6 +137,7 @@ struct Vcpu : Genode::Thread
 
 			INTR_INFO  = 0x4016,
 			INTR_ERROR = 0x4018,
+			ENTRY_INST_LEN = 0x401a,
 
 			IDT_INFO  = 0x4408,
 			IDT_ERROR = 0x440a,
@@ -853,6 +854,9 @@ struct Vcpu : Genode::Thread
 
 			if (state.ip.valid())
 				l4_vm_vmx_write(vmcs, Vmcs::IP, state.ip.value());
+
+			if (state.ip_len.valid())
+				l4_vm_vmx_write(vmcs, Vmcs::ENTRY_INST_LEN, state.ip_len.value());
 
 			if (state.efer.valid())
 				l4_vm_vmx_write(vmcs, Vmcs::EFER, state.efer.value());

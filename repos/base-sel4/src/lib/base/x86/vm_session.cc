@@ -132,6 +132,18 @@ struct Vcpu : Genode::Thread
 
 					local_state      = _remote;
 					_remote          = NONE;
+
+					if (local_state == PAUSE) {
+						_write_sel4_state(service, state);
+
+						seL4_Word badge = 0;
+						/* consume spurious notification - XXX better way ? */
+						seL4_SetMR(0, state.ip.value());
+						seL4_SetMR(1, _vmcs_ctrl0 | state.ctrl_primary.value());
+						seL4_SetMR(2, state.inj_info.value() & ~0x3000U);
+						if (seL4_VMEnter(&badge) == SEL4_VMENTER_RESULT_FAULT)
+							Genode::error("invalid state ahead ", badge);
+					}
 				}
 
 				if (local_state == NONE) {
@@ -140,16 +152,6 @@ struct Vcpu : Genode::Thread
 				}
 
 				if (local_state == PAUSE) {
-
-					_write_sel4_state(service, state);
-
-					seL4_Word badge = 0;
-					/* consume spurious notification - XXX better way ? */
-					seL4_SetMR(0, state.ip.value());
-					seL4_SetMR(1, _vmcs_ctrl0 | state.ctrl_primary.value());
-					seL4_SetMR(2, state.inj_info.value() & ~0x3000);
-					if (seL4_VMEnter(&badge) == SEL4_VMENTER_RESULT_FAULT)
-						Genode::error("invalid state ahead ", badge);
 
 					state = Vm_state {};
 
@@ -180,7 +182,7 @@ struct Vcpu : Genode::Thread
 
 				seL4_SetMR(0, state.ip.value());
 				seL4_SetMR(1, _vmcs_ctrl0 | state.ctrl_primary.value());
-				seL4_SetMR(2, state.inj_info.value() & ~0x3000);
+				seL4_SetMR(2, state.inj_info.value() & ~0x3000U);
 
 				seL4_Word badge = 0;
 				seL4_Word res = seL4_VMEnter(&badge);
@@ -255,8 +257,6 @@ struct Vcpu : Genode::Thread
 			RSP = 0x681c,
 			RIP = 0x681e,
 
-			INST_LEN = 0x440c,
-
 			EFER = 0x2806,
 
 			CTRL_0 = 0x4002,
@@ -322,9 +322,11 @@ struct Vcpu : Genode::Thread
 
 			INTR_INFO  = 0x4016,
 			INTR_ERROR = 0x4018,
+			ENTRY_INST_LEN = 0x401a,
 
 			IDT_INFO = 0x4408,
 			IDT_ERROR = 0x440a,
+			EXIT_INST_LEN = 0x440c,
 
 			TSC_OFF_LO = 0x2010,
 			TSC_OFF_HI = 0x2011,
@@ -453,10 +455,8 @@ struct Vcpu : Genode::Thread
 				state.ctrl_primary.value(ctrl_0);
 			}
 
-			if (state.inj_error.valid()) {
-				/* not supported by seL4 */
-				//_write_vmcs(service, Vmcs::INTR_ERROR, state.inj_error.value());
-			}
+			if (state.inj_error.valid())
+				_write_vmcs(service, Vmcs::INTR_ERROR, state.inj_error.value());
 
 			if (state.flags.valid())
 				_write_vmcs(service, Vmcs::RFLAGS, state.flags.value());
@@ -466,6 +466,9 @@ struct Vcpu : Genode::Thread
 
 			if (state.ip.valid())
 				_write_vmcs(service, Vmcs::RIP, state.ip.value());
+
+			if (state.ip_len.valid())
+				_write_vmcs(service, Vmcs::ENTRY_INST_LEN, state.ip_len.value());
 
 			if (state.efer.valid())
 				_write_vmcs(service, Vmcs::EFER, state.efer.value());
@@ -596,6 +599,7 @@ struct Vcpu : Genode::Thread
 
 		void _read_sel4_state_async(seL4_X86_VCPU const service, Vm_state &state)
 		{
+#if 0
 			state.ax.value(state.ax.value()); /* XXX ? */
 			state.cx.value(state.cx.value());
 			state.dx.value(state.dx.value());
@@ -604,11 +608,12 @@ struct Vcpu : Genode::Thread
 			state.di.value(state.di.value()); /* XXX ? */
 			state.si.value(state.si.value());
 			state.bp.value(state.bp.value());
+#endif
 
 			state.flags.value(_read_vmcs(service, Vmcs::RFLAGS));
 
 			state.ip.value(_read_vmcs(service, Vmcs::RIP));
-			state.ip_len.value(_read_vmcs(service, Vmcs::INST_LEN));
+			state.ip_len.value(_read_vmcs(service, Vmcs::EXIT_INST_LEN));
 
 			state.cr3.value(_read_vmcs(service, Vmcs::CR3));
 
@@ -709,9 +714,7 @@ struct Vcpu : Genode::Thread
 			    state.exit_reason == VMEXIT_RECALL)
 			{
 				state.inj_info.value(_read_vmcs(service, Vmcs::INTR_INFO));
-				/* no support by seL4 to read this value */
-				state.inj_error.value(0);
-				//state.inj_error.value(_read_vmcs(service, Vmcs::INTR_ERROR));
+				state.inj_error.value(_read_vmcs(service, Vmcs::INTR_ERROR));
 			} else {
 				state.inj_info.value(_read_vmcs(service, Vmcs::IDT_INFO));
 				state.inj_error.value(_read_vmcs(service, Vmcs::IDT_ERROR));
@@ -766,7 +769,7 @@ struct Vcpu : Genode::Thread
 		{
 			Lock::Guard guard(_remote_lock);
 
-			if (_remote == RUN)
+			if (_remote == RUN || _remote == PAUSE)
 				return;
 
 			_remote = RUN;
