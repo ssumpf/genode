@@ -217,7 +217,7 @@ static void print(Genode::Output &output, timeval *tv)
 
 extern "C" int
 __attribute__((weak))
-_select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
+__sys_select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
         struct timeval *tv)
 {
 	fd_set in_readfds, in_writefds, in_exceptfds;
@@ -304,13 +304,13 @@ __attribute__((weak))
 select(int nfds, fd_set *readfds, fd_set *writefds,
        fd_set *exceptfds, struct timeval *timeout)
 {
-	return _select(nfds, readfds, writefds, exceptfds, timeout);
+	return __sys_select(nfds, readfds, writefds, exceptfds, timeout);
 }
 
 
 extern "C" int
 __attribute__((weak))
-_pselect(int nfds, fd_set *readfds, fd_set *writefds,
+__sys_pselect(int nfds, fd_set *readfds, fd_set *writefds,
          fd_set *exceptfds, const struct timespec *timeout,
          const sigset_t *sigmask)
 {
@@ -339,7 +339,7 @@ pselect(int nfds, fd_set *readfds, fd_set *writefds,
         fd_set *exceptfds, const struct timespec *timeout,
         const sigset_t *sigmask)
 {
-	return _pselect(nfds, readfds, writefds, exceptfds, timeout, sigmask);
+	return __sys_pselect(nfds, readfds, writefds, exceptfds, timeout, sigmask);
 }
 
 

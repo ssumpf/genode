@@ -111,3 +111,10 @@ poll(struct pollfd fds[], nfds_t nfds, int timeout)
 	*/
 	return ret;
 }
+
+extern "C" int
+__attribute__((weak))
+__sys_poll(struct pollfd fds[], nfds_t nfds, int timeout)
+{
+	return poll(fds, nfds, timeout);
+}

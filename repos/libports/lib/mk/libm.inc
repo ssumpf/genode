@@ -1,5 +1,11 @@
-LIBM_PORT_DIR := $(call select_from_ports,openlibm)
-LIBM_SRC_DIR  := $(LIBM_PORT_DIR)/src/lib/openlibm
+PORT_DIR := $(call select_from_ports,openlibm)
+
+# Depot hack
+ifneq ($(PORT_DIR),)
+LIBM_PORT_DIR = $(PORT_DIR)/
+endif
+
+LIBM_SRC_DIR := $(LIBM_PORT_DIR)src/lib/openlibm
 
 SHARED_LIB = yes
 LIBS += libc
@@ -10,7 +16,8 @@ CC_OPT += -std=c99 -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaratio
 INC_DIR += $(REP_DIR)/include/openlibm
 INC_DIR += $(LIBM_SRC_DIR)
 INC_DIR += $(LIBM_SRC_DIR)/src
-INC_DIR += $(LIBM_PORT_DIR)/include/openlibm
+INC_DIR += $(LIBM_PORT_DIR)include/openlibm
+INC_DIR += $(LIBM_SRC_DIR)/include
 
 SUBDIRS = src $(ARCH) bsdsrc
 # Add ld80 directory on x86 and x64

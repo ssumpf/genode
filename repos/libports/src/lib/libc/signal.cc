@@ -41,3 +41,8 @@ extern "C" int __attribute__((weak)) _sigprocmask(int how, const sigset_t *set, 
 {
 	return sigprocmask(how, set, old_set);
 }
+
+extern "C" int __attribute__((weak)) __sys_sigprocmask(int how, const sigset_t *set, sigset_t *old_set)
+{
+	return sigprocmask(how, set, old_set);
+}

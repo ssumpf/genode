@@ -17,7 +17,7 @@
 #include "task.h"
 
 extern "C" __attribute__((weak))
-int _nanosleep(const struct timespec *req, struct timespec *rem)
+int nanosleep(const struct timespec *req, struct timespec *rem)
 {
 	Genode::uint64_t sleep_ms = (uint64_t)req->tv_sec*1000 + req->tv_nsec/1000000;
 
@@ -36,7 +36,7 @@ int _nanosleep(const struct timespec *req, struct timespec *rem)
 
 
 extern "C" __attribute__((weak))
-int nanosleep(const struct timespec *req, struct timespec *rem)
+int __sys_nanosleep(const struct timespec *req, struct timespec *rem)
 {
-	return _nanosleep(req, rem);
+	return nanosleep(req, rem);
 }

@@ -23,6 +23,7 @@
 #include <libc-plugin/plugin_registry.h>
 #include <libc-plugin/plugin.h>
 
+extern "C" {
 /* libc includes */
 #include <dirent.h>
 #include <errno.h>
@@ -31,7 +32,10 @@
 #include <string.h>
 #include <sys/mman.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 #include <unistd.h>
+#include <libc_private.h>
+}
 
 /* libc-internal includes */
 #include "libc_file.h"
@@ -196,6 +200,7 @@ static void resolve_symlinks_except_last_element(char const *path, Absolute_path
 
 extern "C" int access(const char *path, int amode)
 {
+	Genode::warning("POSIX ", __func__, " is deprecated");
 	try {
 		Absolute_path resolved_path;
 		resolve_symlinks(path, resolved_path);
@@ -232,6 +237,7 @@ extern "C" int _close(int libc_fd)
 		: fd->plugin->close(fd);
 }
 
+extern "C" int __sys_close(int libc_fd) { return _close(libc_fd); }
 
 extern "C" int close(int libc_fd) { return _close(libc_fd); }
 
@@ -315,7 +321,7 @@ extern "C" int fchdir(int libc_fd)
 }
 
 
-extern "C" int fcntl(int libc_fd, int cmd, ...)
+extern "C" int _fcntl(int libc_fd, int cmd, ...)
 {
 	va_list ap;
 	int res;
@@ -326,18 +332,38 @@ extern "C" int fcntl(int libc_fd, int cmd, ...)
 }
 
 
-extern "C" int _fcntl(int libc_fd, int cmd, long arg) {
-	return fcntl(libc_fd, cmd, arg); }
+extern "C" int fcntl(int libc_fd, int cmd, ...)
+{
+	va_list ap;
+	int res;
+	va_start(ap, cmd);
+	res = __sys_fcntl(libc_fd, cmd, va_arg(ap, long));
+	va_end(ap);
+	return res;
+}
 
 
-extern "C" int _fstat(int libc_fd, struct stat *buf) {
+extern "C" int __sys_fcntl(int libc_fd, int cmd, ...)
+{
+	va_list ap;
+	int res;
+	va_start(ap, cmd);
+	res = _fcntl(libc_fd, cmd, va_arg(ap, long));
+	va_end(ap);
+	return res;
+}
+
+
+extern "C" int __sys_fstat(int libc_fd, struct stat *buf) {
 	FD_FUNC_WRAPPER(fstat, libc_fd, buf); }
 
 
-extern "C" int fstat(int libc_fd, struct stat *buf)
-{
-	return _fstat(libc_fd, buf);
-}
+extern "C" int _fstat(int libc_fd, struct stat *buf) {
+	return __sys_fstat(libc_fd, buf); }
+
+
+extern "C" int fstat(int libc_fd, struct stat *buf) {
+	return __sys_fstat(libc_fd, buf); }
 
 
 extern "C" int fstatat(int libc_fd, char const *path, struct stat *buf, int flags)
@@ -373,7 +399,15 @@ extern "C" int _fstatfs(int libc_fd, struct statfs *buf) {
 	FD_FUNC_WRAPPER(fstatfs, libc_fd, buf); }
 
 
+extern "C" int __sys_fsync(int libc_fd) {
+	FD_FUNC_WRAPPER(fsync, libc_fd); }
+
+
 extern "C" int fsync(int libc_fd) {
+	FD_FUNC_WRAPPER(fsync, libc_fd); }
+
+
+extern "C" int fdatasync(int libc_fd) {
 	FD_FUNC_WRAPPER(fsync, libc_fd); }
 
 
@@ -381,9 +415,16 @@ extern "C" int ftruncate(int libc_fd, ::off_t length) {
 	FD_FUNC_WRAPPER(ftruncate, libc_fd, length); }
 
 
+extern "C" int __sys_ftruncate(int libc_fd, ::off_t length) {
+	return ftruncate(libc_fd, length); }
+
+
 extern "C" ssize_t _getdirentries(int libc_fd, char *buf, ::size_t nbytes, ::off_t *basep) {
 	FD_FUNC_WRAPPER(getdirentries, libc_fd, buf, nbytes, basep); }
 
+
+extern "C" ssize_t __sys_getdirentries(int libc_fd, char *buf, ::size_t nbytes, ::off_t *basep) {
+	return _getdirentries(libc_fd, buf, nbytes, basep); }
 
 
 extern "C" int ioctl(int libc_fd, int request, char *argp) {
@@ -482,7 +523,7 @@ extern "C" int munmap(void *start, ::size_t length)
 }
 
 
-extern "C" int msync(void *start, ::size_t len, int flags)
+extern "C" int __sys_msync(void *start, ::size_t len, int flags)
 {
 	if (!mmap_registry()->registered(start)) {
 		Genode::warning("munmap: could not lookup plugin for address ", start);
@@ -560,6 +601,47 @@ extern "C" int open(const char *pathname, int flags, ...)
 }
 
 
+extern "C" int _openat(int libc_fd, const char *path, int flags, ...)
+{
+	va_list ap;
+	va_start(ap, flags);
+	mode_t mode = va_arg(ap, unsigned);
+	va_end(ap);
+
+
+	if (*path == '/') {
+		return _open(path, flags, mode);
+	}
+
+	Libc::Absolute_path abs_path;
+
+	if (libc_fd == AT_FDCWD) {
+		abs_path = cwd();
+		abs_path.append_element(path);
+	} else {
+		Libc::File_descriptor *fd =
+			Libc::file_descriptor_allocator()->find_by_libc_fd(libc_fd);
+		if (!fd) {
+			errno = EBADF;
+			return -1;
+		}
+		abs_path.import(path, fd->fd_path);
+	}
+
+	return _open(abs_path.base(), flags, mode);
+}
+
+
+extern "C" int openat(int fd, const char *path, int flags, ...)
+{
+	va_list ap;
+	va_start(ap, flags);
+	int res = _openat(fd, path, flags, va_arg(ap, unsigned));
+	va_end(ap);
+	return res;
+}
+
+
 extern "C" int pipe(int pipefd[2])
 {
 	Plugin *plugin;
@@ -587,6 +669,12 @@ extern "C" int pipe(int pipefd[2])
 extern "C" ssize_t _read(int libc_fd, void *buf, ::size_t count)
 {
 	FD_FUNC_WRAPPER(read, libc_fd, buf, count);
+}
+
+
+extern "C" ssize_t __sys_read(int libc_fd, void *buf, ::size_t count)
+{
+	return _read(libc_fd, buf, count);
 }
 
 
@@ -679,7 +767,7 @@ extern "C" int unlink(const char *path)
 }
 
 
-extern "C" ssize_t _write(int libc_fd, const void *buf, ::size_t count)
+extern "C" ssize_t __sys_write(int libc_fd, const void *buf, ::size_t count)
 {
 	int flags = fcntl(libc_fd, F_GETFL);
 
@@ -689,9 +777,12 @@ extern "C" ssize_t _write(int libc_fd, const void *buf, ::size_t count)
 	FD_FUNC_WRAPPER(write, libc_fd, buf, count);
 }
 
+extern "C" ssize_t _write(int libc_fd, const void *buf, ::size_t count) {
+	return __sys_write(libc_fd, buf, count); }
+
 
 extern "C" ssize_t write(int libc_fd, const void *buf, ::size_t count) {
-	return _write(libc_fd, buf, count); }
+	return __sys_write(libc_fd, buf, count); }
 
 
 extern "C" int __getcwd(char *dst, ::size_t dst_size)

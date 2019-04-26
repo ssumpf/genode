@@ -1,4 +1,4 @@
-build { core init timer noux server/log_terminal
+build { core init timer noux
         lib/libc_noux noux-pkg/coreutils }
 
 create_boot_directory
@@ -23,15 +23,10 @@ install_config {
 			<resource name="RAM" quantum="1M"/>
 			<provides><service name="Timer"/></provides>
 		</start>
-		<start name="terminal">
-			<binary name="log_terminal" />
-			<resource name="RAM" quantum="1M"/>
-			<provides><service name="Terminal"/></provides>
-		</start>
 		<start name="noux" caps="500">
 			<resource name="RAM" quantum="1G"/>
-			<config verbose="yes">
-				<fstab> <tar name="coreutils.tar" /> </fstab>
+			<config verbose="yes" stdin="/null" stdout="/log" stderr="/log">
+				<fstab> <null/> <log/> <tar name="coreutils.tar" /> </fstab>
 				<start name="/bin/ls"> <arg value="-Rla"/> </start>
 			</config>
 		</start>
@@ -39,7 +34,7 @@ install_config {
 }
 
 build_boot_image {
-	core init timer log_terminal ld.lib.so noux libc.lib.so vfs.lib.so libm.lib.so
+	core init timer ld.lib.so noux libc.lib.so vfs.lib.so libm.lib.so
 	libc_noux.lib.so coreutils.tar posix.lib.so
 }
 

@@ -17,6 +17,7 @@ __inet_ntop T
 __inet_pton T
 __isthreaded B 4
 __mb_cur_max D 8
+___mb_cur_max D 50
 __res_init T
 __res_query T
 __res_state T
@@ -29,6 +30,11 @@ __xuname T
 _exit T
 _getlong T
 _getshort T
+MD5Final W
+MD5Init W
+MD5Pad W
+MD5Transform W
+MD5Update W
 a64l T
 abort T
 abs T
@@ -145,6 +151,7 @@ fchown W
 fclose T
 fcloseall W
 fcntl T
+fdatasync T
 fdevname T
 fdevname_r T
 fdopen T
@@ -769,7 +776,7 @@ swprintf T
 swscanf T
 symlink T
 sync W
-sys_errlist D 752
+sys_errlist D 776
 sys_nerr R 4
 sys_nsig R 4
 sys_siglist D 256
@@ -927,8 +934,8 @@ xsi_sigpause T
 __mb_sb_limit D 4
 _DefaultRuneLocale D 4224
 _CurrentRuneLocale D 8
-__isinff T
-__isinfl T
+__isinf T
+
 
 #
 # Public interface between Genode-component code and the libc runtime

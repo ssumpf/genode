@@ -19,7 +19,11 @@
 #include <util/token.h>
 
 /* libc includes */
+extern "C" {
+#include <sys/wait.h>
+#include <libc_private.h>
 #include <errno.h>
+}
 
 /* libc-internal includes */
 #include "libc_file.h"
@@ -68,7 +72,7 @@ extern "C" int getsockname(int libc_fd, sockaddr *addr, socklen_t *addrlen)
  ** Socket transport API **
  **************************/
 
-extern "C" int _accept(int libc_fd, sockaddr *addr, socklen_t *addrlen)
+extern "C" int accept(int libc_fd, sockaddr *addr, socklen_t *addrlen)
 {
 	if (*Libc::config_socket())
 		return socket_fs_accept(libc_fd, addr, addrlen);
@@ -79,9 +83,15 @@ extern "C" int _accept(int libc_fd, sockaddr *addr, socklen_t *addrlen)
 }
 
 
-extern "C" int accept(int libc_fd, sockaddr *addr, socklen_t *addrlen)
+extern "C" int __sys_accept(int libc_fd, sockaddr *addr, socklen_t *addrlen)
 {
-	return _accept(libc_fd, addr, addrlen);
+	return accept(libc_fd, addr, addrlen);
+}
+
+
+extern "C" int __sys_accept4(int libc_fd, sockaddr *addr, socklen_t *addrlen, int flags)
+{
+	return __sys_accept(libc_fd, addr, addrlen);
 }
 
 
@@ -100,7 +110,7 @@ extern "C" int bind(int libc_fd, sockaddr const *addr, socklen_t addrlen)
 }
 
 
-extern "C" int _connect(int libc_fd, sockaddr const *addr, socklen_t addrlen)
+extern "C" int __sys_connect(int libc_fd, sockaddr const *addr, socklen_t addrlen)
 {
 	if (*Libc::config_socket())
 		return socket_fs_connect(libc_fd, addr, addrlen);
@@ -111,7 +121,7 @@ extern "C" int _connect(int libc_fd, sockaddr const *addr, socklen_t addrlen)
 
 extern "C" int connect(int libc_fd, sockaddr const *addr, socklen_t addrlen)
 {
-    return _connect(libc_fd, addr, addrlen);
+    return __sys_connect(libc_fd, addr, addrlen);
 }
 
 
@@ -130,7 +140,7 @@ extern "C" int listen(int libc_fd, int backlog)
 }
 
 
-extern "C" ssize_t _recvfrom(int libc_fd, void *buf, ::size_t len, int flags,
+extern "C" ssize_t __sys_recvfrom(int libc_fd, void *buf, ::size_t len, int flags,
                              sockaddr *src_addr, socklen_t *src_addrlen)
 {
 	if (*Libc::config_socket())
@@ -143,7 +153,7 @@ extern "C" ssize_t _recvfrom(int libc_fd, void *buf, ::size_t len, int flags,
 extern "C" ssize_t recvfrom(int libc_fd, void *buf, ::size_t len, int flags,
                             sockaddr *src_addr, socklen_t *src_addrlen)
 {
-	return _recvfrom(libc_fd, buf, len, flags, src_addr, src_addrlen);
+	return __sys_recvfrom(libc_fd, buf, len, flags, src_addr, src_addrlen);
 }
 
 
@@ -156,7 +166,7 @@ extern "C" ssize_t recv(int libc_fd, void *buf, ::size_t len, int flags)
 }
 
 
-extern "C" ssize_t _recvmsg(int libc_fd, msghdr *msg, int flags)
+extern "C" ssize_t __sys_recvmsg(int libc_fd, msghdr *msg, int flags)
 {
 	if (*Libc::config_socket())
 		return socket_fs_recvmsg(libc_fd, msg, flags);
@@ -167,11 +177,11 @@ extern "C" ssize_t _recvmsg(int libc_fd, msghdr *msg, int flags)
 
 extern "C" ssize_t recvmsg(int libc_fd, msghdr *msg, int flags)
 {
-	return _recvmsg(libc_fd, msg, flags);
+	return __sys_recvmsg(libc_fd, msg, flags);
 }
 
 
-extern "C" ssize_t _sendto(int libc_fd, void const *buf, ::size_t len, int flags,
+extern "C" ssize_t __sys_sendto(int libc_fd, void const *buf, ::size_t len, int flags,
                            sockaddr const *dest_addr, socklen_t dest_addrlen)
 {
 	if (*Libc::config_socket())
@@ -184,7 +194,7 @@ extern "C" ssize_t _sendto(int libc_fd, void const *buf, ::size_t len, int flags
 extern "C" ssize_t sendto(int libc_fd, void const *buf, ::size_t len, int flags,
                           sockaddr const *dest_addr, socklen_t dest_addrlen)
 {
-	return _sendto(libc_fd, buf, len, flags, dest_addr, dest_addrlen);
+	return __sys_sendto(libc_fd, buf, len, flags, dest_addr, dest_addrlen);
 }
 
 
