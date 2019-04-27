@@ -208,6 +208,8 @@ class Vcpu : public StaticReceiver<Vcpu>
 
 			if (_svm) {
 				switch (exit) {
+				case 0x00 ... 0x1f: _svm_cr(); break;
+				case 0x62: _irqwin(); break;
 				case 0x64: _irqwin(); break;
 				case 0x72: _svm_cpuid(); break;
 				case 0x78: _svm_hlt(); break;
@@ -320,6 +322,9 @@ class Vcpu : public StaticReceiver<Vcpu>
 			/* touch the register state required for the specific vm exit */
 
 			switch (exit) {
+			case 0x00 ... 0x1f: /* _svm_cr */
+				mtd = MTD_RIP_LEN | MTD_CS_SS | MTD_GPR_ACDB | MTD_GPR_BSD | MTD_CR;
+				break;
 			case 0x72: /* _svm_cpuid */
 				mtd = MTD_RIP_LEN | MTD_GPR_ACDB | MTD_IRQ;
 				break;
@@ -327,7 +332,8 @@ class Vcpu : public StaticReceiver<Vcpu>
 				mtd = MTD_RIP_LEN | MTD_IRQ;
 				break;
 			case 0xff: /*_recall */
-			case 0x64: /* _vmx_irqwin */
+			case 0x62: /* _irqwin - SMI */
+			case 0x64: /* _irqwin */
 				mtd = MTD_IRQ;
 				break;
 			case 0x7b: /* _svm_ioio */
@@ -405,6 +411,11 @@ class Vcpu : public StaticReceiver<Vcpu>
 					Logging::panic("nobody to execute %s at %x:%x\n",
 					               __func__, msg.cpu->cs.sel, msg.cpu->eip);
 			}
+
+			if (~mtd & msg.mtr_out)
+				Genode::error("mtd issue !? exit=", Genode::Hex(_state.exit_reason),
+				              " ", Genode::Hex(mtd), "->", Genode::Hex(msg.mtr_out),
+				              " ", Genode::Hex(~mtd & msg.mtr_out));
 
 			/* convert Seoul state to Genode VM state */
 			Seoul::write_vm_state(_seoul_state, msg.mtr_out, _state);
@@ -523,6 +534,11 @@ class Vcpu : public StaticReceiver<Vcpu>
 		{
 			if (!_handle_map_memory(_state.qual_primary.value() & 1))
 				_svm_invalid();
+		}
+
+		void _svm_cr()
+		{
+			_handle_vcpu(NO_SKIP, CpuMessage::TYPE_SINGLE_STEP);
 		}
 
 		void _svm_invalid()

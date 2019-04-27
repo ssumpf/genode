@@ -27,7 +27,7 @@ include $(call select_from_repositories,lib/mk/libc-common.inc)
 CC_CXX_WARN_STRICT = -Wextra -Weffc++ -Werror
 CC_WARN += -Wno-parentheses -Wall -Wno-unused
 CC_CXX_OPT += -march=core2
-CC_CXX_OPT += -mssse3
+CXX_OPT_model_intel82576vf-ssse3 := -mssse3
 CC_OPT_PIC :=
 
 vpath %.cc  $(SEOUL_CONTRIB_DIR)
