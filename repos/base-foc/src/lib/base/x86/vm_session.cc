@@ -46,7 +46,6 @@ static uint32_t svm_features()
 }
 
 static bool svm_np() { return svm_features() & (1U << 0); }
-static bool svm_instr_decode_support() { return svm_features() & (1U << 7); }
 
 struct Vcpu;
 
@@ -155,39 +154,44 @@ struct Vcpu : Genode::Thread
 
 		enum Vmcb
 		{
-			CTRL0_INTR        = 1u << 0,
-			CTRL0_NMI         = 1u << 1,
-			CTRL0_INIT        = 1u << 3,
-			CTRL0_INVD        = 1u << 22,
-			CTRL0_HLT         = 1u << 24,
+			CTRL0_VINTR       = 1u << 4,
 			CTRL0_IO          = 1u << 27,
 			CTRL0_MSR         = 1u << 28,
-			CTRL0_SHUTDOWN    = 1u << 31,
 
-			AMD_EXIT_INVALID  = 0xfd
+			AMD_SVM_ENABLE    = 1 << 12,
+
+			AMD_EXIT_INVALID  = 0xfd,
 		};
 
 		enum {
 			CR0_PE = 0, /* 1U << 0 - not needed in case of UG */
 			CR0_CP = 1U << 1,
+			CR0_TS = 1u << 3,
 			CR0_NE = 1U << 5,
 			CR0_NM = 1U << 29,
 			CR0_CD = 1U << 30,
 			CR0_PG = 0 /* 1U << 31 - not needed in case of UG */
 		};
 
-		addr_t const vmcb_ctrl0 = CTRL0_INTR | CTRL0_NMI | CTRL0_INIT |
-		                          CTRL0_INVD | CTRL0_HLT | CTRL0_IO   |
-		                          CTRL0_MSR  | CTRL0_SHUTDOWN;
+		addr_t const _cr0_mask       { CR0_CP | CR0_NM | CR0_NE | CR0_CD };
+		addr_t const vmcb_ctrl0      { CTRL0_IO | CTRL0_MSR };
+		addr_t const vmcb_ctrl1      { 0 };
+
+		addr_t       vmcb_cr0_shadow { 0 };
+		addr_t       vmcb_cr4_shadow { 0 };
+		addr_t const vmcb_cr0_mask   { _cr0_mask | CR0_TS };
+		addr_t const vmcb_cr0_set    { 0 };
+		addr_t const vmcb_cr4_mask   { 0 };
+		addr_t const vmcb_cr4_set    { 0 };
 
 		enum { EXIT_ON_HLT = 1U << 7 };
-		addr_t const _vmcs_ctrl0 = EXIT_ON_HLT;
+		addr_t const _vmcs_ctrl0     { EXIT_ON_HLT };
 
-		addr_t const vmcs_cr0_mask = CR0_PE | CR0_CP | CR0_NM | CR0_NE | CR0_CD | CR0_PG;
-		addr_t const vmcs_cr0_set  = 0;
+		addr_t const vmcs_cr0_mask   { _cr0_mask | CR0_PE | CR0_PG };
+		addr_t const vmcs_cr0_set    { 0 };
 
-		addr_t const vmcs_cr4_mask = CR4_VMX;
-		addr_t const vmcs_cr4_set  = CR4_VMX;
+		addr_t const vmcs_cr4_mask   { CR4_VMX };
+		addr_t const vmcs_cr4_set    { CR4_VMX };
 
 		Signal_context_capability   _signal;
 		Semaphore                   _wake_up { 0 };
@@ -266,7 +270,6 @@ struct Vcpu : Genode::Thread
 			 * Fiasoc.OC peculiarities
 			 */
 			if (_vm_type == Virt::SVM) {
-				enum { AMD_SVM_ENABLE = 1 << 12 };
 				state.efer.value(state.efer.value() | AMD_SVM_ENABLE);
 			}
 			if (_vm_type == Virt::SVM) {
@@ -275,12 +278,9 @@ struct Vcpu : Genode::Thread
 				if (!vmcb->control_area.np_enable)
 					vmcb->control_area.intercept_exceptions |= 1 << 14;
 
-				/* XXX - further stuff needed .. */
-				if (!svm_instr_decode_support()) {
-					vmcb->control_area.intercept_instruction0 = vmcb_ctrl0;
-					vmcb->control_area.intercept_rd_crX = 0x0001; /* cr0 */
-					vmcb->control_area.intercept_wr_crX = 0x0001; /* cr0 */
-				}
+				vmcb->control_area.intercept_instruction0 = vmcb_ctrl0;
+				vmcb->control_area.intercept_rd_crX = 0x0001; /* cr0 */
+				vmcb->control_area.intercept_wr_crX = 0x0001; /* cr0 */
 			}
 			if (_vm_type == Virt::VMX) {
 				Fiasco::l4_vm_vmx_write(vmcs, Vmcs::CR0_MASK, vmcs_cr0_mask);
@@ -651,10 +651,20 @@ struct Vcpu : Genode::Thread
 			state.r15.value(vcpu->r.r15);
 #endif
 
-			state.cr0.value(vmcb->state_save_area.cr0);
+			{
+				addr_t const cr0 = vmcb->state_save_area.cr0;
+				state.cr0.value((cr0 & ~vmcb_cr0_mask) | (vmcb_cr0_shadow & vmcb_cr0_mask));
+				if (state.cr0.value() != vmcb_cr0_shadow)
+					vmcb_cr0_shadow = state.cr0.value();
+			}
 			state.cr2.value(vmcb->state_save_area.cr2);
 			state.cr3.value(vmcb->state_save_area.cr3);
-			state.cr4.value(vmcb->state_save_area.cr4);
+			{
+				addr_t const cr4 = vmcb->state_save_area.cr4;
+				state.cr4.value((cr4 & ~vmcb_cr4_mask) | (vmcb_cr4_shadow & vmcb_cr4_mask));
+				if (state.cr4.value() != vmcb_cr4_shadow)
+					vmcb_cr4_shadow = state.cr4.value();
+			}
 
 			typedef Genode::Vm_state::Segment Segment;
 
@@ -733,9 +743,7 @@ struct Vcpu : Genode::Thread
 			state.tsc.value(Trace::timestamp());
 			state.tsc_offset.value(_tsc_offset);
 
-			if (state.efer.valid()) {
-				Genode::error("efer not implemented");
-			}
+			state.efer.value(vmcb->state_save_area.efer);
 
 			if (state.pdpte_0.valid() || state.pdpte_1.valid() ||
 			    state.pdpte_2.valid() || state.pdpte_3.valid()) {
@@ -1010,7 +1018,8 @@ struct Vcpu : Genode::Thread
 				vmcb->state_save_area.dr7 = state.dr7.value();
 
 			if (state.cr0.valid()) {
-				vmcb->state_save_area.cr0 = state.cr0.value();
+				vmcb->state_save_area.cr0 = vmcb_cr0_set | (~vmcb_cr0_mask & state.cr0.value());
+				vmcb_cr0_shadow           = state.cr0.value();
 #if 0
 				vmcb->state_save_area.xcr0 = state.cr0();
 #endif
@@ -1022,13 +1031,36 @@ struct Vcpu : Genode::Thread
 			if (state.cr3.valid())
 				vmcb->state_save_area.cr3 = state.cr3.value();
 
-			if (state.cr4.valid())
-				vmcb->state_save_area.cr4 = state.cr4.value();
+			if (state.cr4.valid()) {
+				vmcb->state_save_area.cr4 = vmcb_cr4_set | (~vmcb_cr4_mask & state.cr4.value());
+				vmcb_cr4_shadow           = state.cr4.value();
+			}
 
-			if (state.inj_info.valid())
-				Genode::error(__LINE__, " not implemented ");
-			if (state.inj_error.valid())
-				Genode::error(__LINE__, " not implemented ");
+			if (state.ctrl_primary.valid())
+				vmcb->control_area.intercept_instruction0 = vmcb_ctrl0 |
+				                                            state.ctrl_primary.value();
+
+			if (state.ctrl_secondary.valid())
+				vmcb->control_area.intercept_instruction1 = vmcb_ctrl1 |
+				                                            state.ctrl_secondary.value();
+
+			if (state.inj_info.valid()) {
+				if (state.inj_info.value() & 0x1000) {
+					vmcb->control_area.interrupt_ctl |=  (1ul << 8 | 1ul << 20);
+					vmcb->control_area.intercept_instruction0 |= Vmcb::CTRL0_VINTR;
+				} else {
+					vmcb->control_area.interrupt_ctl &= ~(1ul << 8 | 1ul << 20);
+					vmcb->control_area.intercept_instruction0 &= ~Vmcb::CTRL0_VINTR;
+				}
+				vmcb->control_area.eventinj  = 0;
+				vmcb->control_area.eventinj |= ~0x3000U & state.inj_info.value();
+			}
+
+			if (state.inj_error.valid()) {
+				vmcb->control_area.eventinj &= ((1ULL << 32) - 1);
+				uint64_t value = (0ULL + state.inj_error.value()) << 32;
+				vmcb->control_area.eventinj |= value;
+			}
 
 			if (state.flags.valid())
 				vmcb->state_save_area.rflags = state.flags.value();
@@ -1040,14 +1072,7 @@ struct Vcpu : Genode::Thread
 				vmcb->state_save_area.rip = state.ip.value();
 
 			if (state.efer.valid())
-				vmcb->state_save_area.efer = state.efer.value();
-
-			if (state.ctrl_primary.valid())
-				vmcb->control_area.intercept_instruction0 = vmcb_ctrl0 |
-				                                            state.ctrl_primary.value();
-
-			if (state.ctrl_secondary.valid())
-				vmcb->control_area.intercept_instruction1 = state.ctrl_secondary.value();
+				vmcb->state_save_area.efer = state.efer.value() | AMD_SVM_ENABLE;
 
 			if (state.intr_state.valid())
 				vmcb->control_area.interrupt_shadow = state.intr_state.value();
