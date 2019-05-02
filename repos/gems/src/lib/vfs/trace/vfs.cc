@@ -11,6 +11,7 @@
 #include <trace_session/connection.h>
 
 #include "directory_tree.h"
+#include "trace_buffer.h"
 #include "value_file_system.h"
 
 #include <base/debug.h>
@@ -34,9 +35,12 @@ class Vfs_trace::Trace_buffer_file_system : public Single_file_system
 
 		enum State { OFF, TRACE, PAUSED } _state { OFF };
 
+		Vfs::Env          &_env;
 		Trace::Connection &_trace;
 		Trace::Policy_id   _policy;
 		Trace::Subject_id  _id;
+
+		Constructible<Trace_buffer> _buffer;
 
 		typedef String<32> Config;
 
@@ -49,16 +53,70 @@ class Vfs_trace::Trace_buffer_file_system : public Single_file_system
 			return Config(Cstring(buf));
 		}
 
-		void _setup_and_trace() { }
+		void _setup_and_trace()
+		{
+			/* TODO: make buffer size configurable, handle exceptions */
+			_trace.trace(_id, _policy, 512*1024);
+
+			if (_buffer.constructed()) _buffer.destruct();
+
+			_buffer.construct(*((Trace::Buffer *)_env.env().rm().attach(_trace.buffer(_id))));
+		}
 
 	public:
 
-		Trace_buffer_file_system(Trace::Connection &trace,
+		struct Vfs_handle : Single_vfs_handle
+		{
+			Constructible<Trace_buffer> &_buffer;
+
+			Vfs_handle(Directory_service &ds,
+			           File_io_service   &fs,
+			           Genode::Allocator &alloc,
+			           Constructible<Trace_buffer> &buffer)
+			: Single_vfs_handle(ds, fs, alloc, 0), _buffer(buffer)
+			{ }
+
+			Read_result read(char *dst, file_size count,
+			                 file_size &out_count) override
+			{
+				if (!_buffer.constructed()) {
+					out_count = 0;
+					return READ_OK;
+				}
+
+				out_count = 0;
+				_buffer->for_each_new_entry([&](Trace::Buffer::Entry entry) {
+					file_size size = min(count - out_count, entry.length());
+					memcpy(dst + out_count, entry.data(), size);
+					out_count += size;
+
+					if (out_count == count) // || entry.next(entry).length() + out_count > count)
+						return false;
+
+					return true;
+				});
+
+				Genode::warning("read: ", count, " out: ", out_count);
+				return READ_OK;
+			}
+
+			Write_result write(char const *, file_size,
+			                   file_size &out_count) override
+			{
+				out_count = 0;
+				return WRITE_ERR_INVALID;
+			}
+
+			bool read_ready() override { return true; }
+		};
+
+		Trace_buffer_file_system(Vfs::Env &env,
+		                         Trace::Connection &trace,
 		                         Trace::Policy_id policy,
 		                         Trace::Subject_id id)
 		: Single_file_system(NODE_TYPE_CHAR_DEVICE,
 		                     type_name(), Xml_node(_config().string())),
-		  _trace(trace), _policy(policy), _id(id)
+		  _env(env), _trace(trace), _policy(policy), _id(id)
 		{ }
 
 		static char const *type_name() { return "trace_buffer"; }
@@ -72,6 +130,7 @@ class Vfs_trace::Trace_buffer_file_system : public Single_file_system
 				return OPEN_ERR_UNACCESSIBLE;
 
 			PDBG(path);
+			*out_handle = new (alloc) Vfs_handle(*this, *this, alloc, _buffer);
 			return OPEN_OK;
 		}
 
@@ -92,7 +151,6 @@ class Vfs_trace::Trace_buffer_file_system : public Single_file_system
 				}
 			}
 		}
-
 };
 
 
@@ -106,7 +164,7 @@ struct Vfs_trace::Subject_factory : File_system_factory
 	                Trace::Connection &trace,
 	                Trace::Policy_id policy,
 	                Trace::Subject_id id)
-	: _env(env), _trace_fs(trace, policy, id) { }
+	: _env(env), _trace_fs(env, trace, policy, id) { }
 
 	Vfs::File_system *create(Vfs::Env &env, Xml_node node) override
 	{
@@ -176,8 +234,8 @@ struct Vfs_trace::Local_factory : File_system_factory
 {
 	Vfs::Env          &_env;
 
-	enum { MAX_SUBJECTS = 32 };
-	Trace::Connection  _trace { _env.env(), 32*4096, 64*1024, 0 };
+	enum { MAX_SUBJECTS = 64 };
+	Trace::Connection  _trace { _env.env(), 1024*1024, 64*1024, 0 };
 	Trace::Subject_id  _subjects[MAX_SUBJECTS];
 	unsigned           _subject_count;
 	Trace::Policy_id   _policy_id;
@@ -231,7 +289,7 @@ struct Vfs_trace::Local_factory : File_system_factory
 	{
 		PDBG(node);
 		if (node.has_type(Subject::type_name()))
-			return new (_env.alloc()) Subject(_env, _trace, Trace::Policy_id(), node);
+			return new (_env.alloc()) Subject(_env, _trace, _policy_id, node);
 
 		return nullptr;
 	}
