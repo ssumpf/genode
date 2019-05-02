@@ -19,6 +19,7 @@ namespace Vfs_trace {
 
 	using namespace Vfs;
 	using namespace Genode;
+	using Name = String<32>;
 
 	struct File_system;
 	class  Local_factory;
@@ -27,93 +28,56 @@ namespace Vfs_trace {
 	class  Trace_buffer_file_system;
 }
 
-
 class Vfs_trace::Trace_buffer_file_system : public Single_file_system
 {
 	private:
 
-		typedef String<32> Config;
-
-		static Config _config(Xml_node node)
-		{
-			char buf[Config::capacity()] { };
-
-			Xml_generator xml(buf, sizeof(buf), type(), [&] () { });
-
-			return Config(Cstring(buf));
-		}
-
-	public:
-
-		Trace_buffer_file_system()
-		: Single_file_system(NODE_TYPE_CHAR_DEVICE,
-		                     type(), Xml_node(_config(name.string()),
-		  _file_name(name) { }
-
-		static char const *type_name() { return "trace_buffer"; }
-		char const *type() override { return type_name(); }
-
-};
-
-struct Vfs_trace::Subject_factory : File_system_factory
-{
-	Vfs::Env                   &_env;
-	Value_file_system<bool, 1>  _enabled_fs { _env, "enable", 0u};
-
-	Subject_factory(Vfs::Env &env)
-	: _env(env) { }
-
-	Vfs::File_system *create(Vfs::Env &env, Xml_node node) override
-	{
-		if (node.has_type(Value_file_system<unsigned>::type_name()))
-			return _enabled_fs.matches(node)   ? &_enabled_fs : nullptr;
-
-		return nullptr;
-	}
-};
-
-
-class Vfs_trace::Subject : private Subject_factory,
-                           public  Vfs::Dir_file_system
-{
-	private:
-
-		typedef String<200> Config;
+		enum State { OFF, TRACE, PAUSED } _state { OFF };
 
 		Trace::Connection &_trace;
 		Trace::Policy_id   _policy;
 		Trace::Subject_id  _id;
 
-		Watch_handler<Subject> _enable_handler {
-		  _enabled_fs, "/enable",
-		  Subject_factory::_env.alloc(),
-		  *this, &Subject::_enable_subject };
+		typedef String<32> Config;
 
-
-		static Config _config(Xml_node node)
+		static Config _config()
 		{
 			char buf[Config::capacity()] { };
 
-			Xml_generator xml(buf, sizeof(buf), "dir", [&] () {
-				typedef String<32> Name;
-				xml.attribute("name", node.attribute_value("name", Name()));
-				xml.node("value", [&] () { xml.attribute("name", "enable"); });
-			});
+			Xml_generator xml(buf, sizeof(buf), type_name(), [&] () { });
 
 			return Config(Cstring(buf));
 		}
 
 		void _setup_and_trace() { }
 
-		/********************
-		 ** Watch handlers **
-		 ********************/
+	public:
 
-		enum State { OFF, TRACE, PAUSED } _state { OFF };
+		Trace_buffer_file_system(Trace::Connection &trace,
+		                         Trace::Policy_id policy,
+		                         Trace::Subject_id id)
+		: Single_file_system(NODE_TYPE_CHAR_DEVICE,
+		                     type_name(), Xml_node(_config().string())),
+		  _trace(trace), _policy(policy), _id(id)
+		{ }
 
-		void _enable_subject()
+		static char const *type_name() { return "trace_buffer"; }
+		char const *type() override { return type_name(); }
+
+		Open_result open(char const  *path, unsigned,
+		                 Vfs::Vfs_handle **out_handle,
+		                 Allocator   &alloc) override
 		{
-			if (_enabled_fs.value()) {
+			if (!_single_file(path))
+				return OPEN_ERR_UNACCESSIBLE;
+
+			PDBG(path);
+			return OPEN_OK;
+		}
+
+		void trace(bool enable)
+		{
+			if (enable) {
 				switch (_state) {
 					case TRACE:  break;
 					case OFF:    _setup_and_trace(); break;
@@ -129,15 +93,77 @@ class Vfs_trace::Subject : private Subject_factory,
 			}
 		}
 
+};
+
+
+struct Vfs_trace::Subject_factory : File_system_factory
+{
+	Vfs::Env                   &_env;
+	Value_file_system<bool, 1>  _enabled_fs { _env, "enable", 0u};
+	Trace_buffer_file_system    _trace_fs;
+
+	Subject_factory(Vfs::Env &env,
+	                Trace::Connection &trace,
+	                Trace::Policy_id policy,
+	                Trace::Subject_id id)
+	: _env(env), _trace_fs(trace, policy, id) { }
+
+	Vfs::File_system *create(Vfs::Env &env, Xml_node node) override
+	{
+		if (node.has_type(Value_file_system<unsigned>::type_name()))
+			return _enabled_fs.matches(node)   ? &_enabled_fs : nullptr;
+
+		if (node.has_type(Trace_buffer_file_system::type_name()))
+			return &_trace_fs;
+
+		return nullptr;
+	}
+};
+
+
+class Vfs_trace::Subject : private Subject_factory,
+                           public  Vfs::Dir_file_system
+{
+	private:
+
+		typedef String<200> Config;
+
+
+		Watch_handler<Subject> _enable_handler {
+		  _enabled_fs, "/enable",
+		  Subject_factory::_env.alloc(),
+		  *this, &Subject::_enable_subject };
+
+
+		static Config _config(Xml_node node)
+		{
+			char buf[Config::capacity()] { };
+
+			Xml_generator xml(buf, sizeof(buf), "dir", [&] () {
+				xml.attribute("name", node.attribute_value("name", Vfs_trace::Name()));
+				xml.node("value", [&] () { xml.attribute("name", "enable"); });
+				xml.node(Trace_buffer_file_system::type_name(), [&] () {});
+			});
+
+			return Config(Cstring(buf));
+		}
+
+
+		/********************
+		 ** Watch handlers **
+		 ********************/
+
+		void _enable_subject()
+		{
+			_trace_fs.trace(_enabled_fs.value());
+		}
+
 	public:
 
 		Subject(Vfs::Env &env, Trace::Connection &trace,
 		        Trace::Policy_id policy, Xml_node node)
-		: Subject_factory(env),
-		  Dir_file_system(env, Xml_node(_config(node).string()), *this),
-		  _trace(trace),
-		  _policy(policy),
-		  _id(node.attribute_value("id", 0u))
+		: Subject_factory(env, trace, policy, node.attribute_value("id", 0u)),
+		  Dir_file_system(env, Xml_node(_config(node).string()), *this)
 		{ }
 
 
