@@ -7,8 +7,9 @@ __error T
 __flt_rounds T
 __fpclassifyd T
 __fpclassifyf T
-__h_errno T
+__has_sse D 4
 __h_errno_set T
+__h_errno T
 __inet_addr T
 __inet_aton T
 __inet_nsap_ntoa T
@@ -26,6 +27,7 @@ __stderrp D 8
 __stdinp D 8
 __stdoutp D 8
 __swbuf T
+__test_sse T
 __xuname T
 _exit T
 _getlong T
