@@ -475,6 +475,7 @@ pipe T
 poll W
 popen T
 posix2time T
+posix_fadvise T
 posix_madvise T
 posix_spawn T
 posix_spawn_file_actions_addclose T
