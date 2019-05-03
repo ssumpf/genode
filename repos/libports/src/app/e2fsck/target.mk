@@ -3,8 +3,10 @@ LIBS   := posix e2fsprogs
 
 E2FSCK_TOP_DIR := $(call select_from_ports,e2fsprogs-lib)
 E2FSCK_DIR     := $(E2FSCK_TOP_DIR)/src/lib/e2fsprogs/e2fsck
+SUPPORT_DIR     := $(E2FSCK_TOP_DIR)/src/lib/e2fsprogs/lib/support
 
 INC_DIR += $(E2FSCK_DIR)/include/e2fsprogs
+INC_DIR += $(SUPPORT_DIR)
 
 CC_DEF += -DHAVE_CONFIG_H
 CC_DEF += -DROOT_SYSCONFDIR=\"/etc\"
@@ -14,25 +16,24 @@ CC_OPT += -Wno-unused-variable -Wno-parentheses
 # e2fsck/dict.c
 SRC_C := \
          badblocks.c \
-         crc32.c \
          dirinfo.c \
          dx_dirinfo.c \
          e2fsck.c \
          ea_refcount.c \
          ehandler.c \
+	extents.c \
          journal.c \
          logfile.c \
          message.c \
-         pass1.c \
          pass1b.c \
+         pass1.c \
          pass2.c \
          pass3.c \
          pass4.c \
          pass5.c \
          problem.c \
-         prof_err.c \
-         profile.c \
          quota.c \
+	readahead.c \
          recovery.c \
          region.c \
          rehash.c \
@@ -45,6 +46,7 @@ SRC_C := \
 INC_DIR += $(PRG_DIR)
 
 vpath %.c $(E2FSCK_DIR)
+vpath %.c $(SUPPORT_DIR)
 
 #
 # Generate CRC32 header

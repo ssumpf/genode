@@ -1,5 +1,5 @@
 LICENSE   := GPLv2
-VERSION   := 1.42.9
+VERSION   := 1.45.0
 DOWNLOADS := e2fsprogs.git
 
 E2FSPROGS_DIR := src/lib/e2fsprogs
@@ -7,8 +7,6 @@ E2FSPROGS_DIR := src/lib/e2fsprogs
 URL(e2fsprogs) := http://git.kernel.org/pub/scm/fs/ext2/e2fsprogs.git
 REV(e2fsprogs) := v$(VERSION)
 DIR(e2fsprogs) := $(E2FSPROGS_DIR)
-
-PATCHES := src/lib/e2fsprogs/patches/*.patch
 
 INCLUDE_DIR := include/e2fsprogs
 
@@ -67,7 +65,7 @@ $(EXT2FS_HEADER):
 	$(VERBOSE)sed -e 's,@''E2FSPROGS_VERSION''@,$(VERSION),g' \
 		      < $(E2FSPROGS_DIR)/lib/ext2fs/ext2_err.et.in \
 		      > $(E2FSPROGS_DIR)/lib/ext2fs/ext2_err.et && \
-	for file in lib/ext2fs/ext2_err e2fsck/prof_err; do \
+	for file in lib/ext2fs/ext2_err lib/support/prof_err; do \
 		$(MSG_GENERATE)$${file}.h && \
 		gawk -f $(E2FSPROGS_DIR)/lib/et/et_h.awk \
 		                  "outfile=$(E2FSPROGS_DIR)/$${file}.h" \
