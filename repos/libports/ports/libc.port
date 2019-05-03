@@ -205,7 +205,7 @@ DIR_CONTENT(include/spec/arm/libc) := \
 DIRS += include/spec/arm/libc/machine
 DIR_CONTENT(include/spec/arm/libc/machine) := \
     $(call common_include_libc_arch_machine_content,arm) \
-    $(addprefix $(D)/sys/arm/include/, armreg.h ieee.h)
+    $(addprefix $(D)/sys/arm/include/, armreg.h atomic-v6.h ieee.h sysreg.h)
 
 
 #

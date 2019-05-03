@@ -10,6 +10,7 @@ ifeq ($(filter-out $(SPECS),x86_64),)
 endif # x86_64
 
 ifeq ($(filter-out $(SPECS),arm),)
+	CC_OPT += -D__ARM_PCS_VFP
 	LIBC_ARCH_INC_DIR := include/spec/arm/libc
 endif # ARM
 
