@@ -13,6 +13,8 @@ LIBS += libc
 CC_OPT += -fno-gnu89-inline
 CC_OPT += -std=c99 -DASSEMBLER -D__BSD_VISIBLE -Wno-implicit-function-declaration
 
+CC_OPT += -include sys/cdefs.h
+
 INC_DIR += $(REP_DIR)/include/openlibm
 INC_DIR += $(LIBM_SRC_DIR)
 INC_DIR += $(LIBM_SRC_DIR)/src
