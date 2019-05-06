@@ -79,19 +79,18 @@ class Genode::Trace::Subject
 
 				/**
 				 * Allocate new dataspace
-				 *
-				 * \return true on success, false on the attempt to call setup
-				 *         twice.
 				 */
-				bool setup(Ram_allocator &ram, size_t size)
+				void setup(Ram_allocator &ram, size_t size)
 				{
+					if (_size && _size == size)
+						return;
+
 					if (_size)
-						return false;
+						_ram_ptr->free(_ds);
 
 					_ram_ptr = &ram;
 					_size    = size;
 					_ds      = ram.alloc(size);
-					return true;
 				}
 
 				/**
@@ -162,6 +161,17 @@ class Genode::Trace::Subject
 			return Subject_info::UNTRACED;
 		}
 
+		void _traceable_or_throw()
+		{
+			switch(_state()) {
+				case Subject_info::DEAD   : throw Source_is_dead();
+				case Subject_info::TRACED : throw Already_traced();
+				case Subject_info::FOREIGN: throw Traced_by_other_session();
+				case Subject_info::ERROR  : throw Source_is_dead();
+				case Subject_info::UNTRACED: return;
+			}
+		}
+
 	public:
 
 		/**
@@ -199,6 +209,9 @@ class Genode::Trace::Subject
 		           size_t policy_size, Ram_allocator &ram,
 		           Region_map &local_rm, size_t size)
 		{
+			/* check state and throw error in case subject is not traceable */
+			_traceable_or_throw();
+
 			_policy_id = policy_id;
 
 			if (!_buffer.setup(ram, size)
@@ -207,9 +220,6 @@ class Genode::Trace::Subject
 
 			/* inform trace source about the new buffer */
 			Locked_ptr<Source> source(_source);
-
-			if (!source.valid())
-				throw Source_is_dead();
 
 			if (!source->try_acquire(*this))
 				throw Traced_by_other_session();
