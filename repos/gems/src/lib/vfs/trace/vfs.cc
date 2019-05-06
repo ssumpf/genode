@@ -55,11 +55,14 @@ class Vfs_trace::Trace_buffer_file_system : public Single_file_system
 
 		void _setup_and_trace()
 		{
+			if (_buffer.constructed()) {
+				_buffer.destruct();
+			}
+
 			/* TODO: make buffer size configurable, handle exceptions */
+			warning("start trace");
 			_trace.trace(_id, _policy, 512*1024);
-
-			if (_buffer.constructed()) _buffer.destruct();
-
+			warning("tracing started");
 			_buffer.construct(*((Trace::Buffer *)_env.env().rm().attach(_trace.buffer(_id))));
 		}
 
@@ -141,6 +144,7 @@ class Vfs_trace::Trace_buffer_file_system : public Single_file_system
 					case TRACE:  break;
 					case OFF:    _setup_and_trace(); break;
 					case PAUSED: _trace.resume(_id); break;
+
 				}
 				_state = TRACE;
 			} else {
@@ -235,7 +239,7 @@ struct Vfs_trace::Local_factory : File_system_factory
 	Vfs::Env          &_env;
 
 	enum { MAX_SUBJECTS = 64 };
-	Trace::Connection  _trace { _env.env(), 1024*1024, 64*1024, 0 };
+	Trace::Connection  _trace { _env.env(), 6*1024*1024, 512*1024, 0 };
 	Trace::Subject_id  _subjects[MAX_SUBJECTS];
 	unsigned           _subject_count;
 	Trace::Policy_id   _policy_id;
