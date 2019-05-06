@@ -19,6 +19,7 @@ TAR_OPT(libc) += usr/src/lib/libmd
 TAR_OPT(libc) += usr/src/lib/msun
 TAR_OPT(libc) += usr/src/sys/amd64
 TAR_OPT(libc) += usr/src/sys/arm
+TAR_OPT(libc) += usr/src/sys/arm64
 TAR_OPT(libc) += usr/src/sys/bsm
 TAR_OPT(libc) += usr/src/sys/i386
 TAR_OPT(libc) += usr/src/sys/libkern
@@ -147,12 +148,12 @@ DIR_CONTENT(include/libc/xlocale) := $(D)/include/xlocale/*.h
 
 common_include_libc_arch_content = \
     $(addprefix $(D)/sys/$1/include/, stdarg.h float.h) \
-    $(addprefix $(D)/lib/libc/$1/, arith.h _fpmath.h SYS.h gd_qnan.h)
+    $(addprefix $(D)/lib/libc/$2/, arith.h _fpmath.h SYS.h gd_qnan.h)
 
 common_include_libc_arch_machine_content = \
     $(addprefix $(D)/sys/$1/include/,\
                 _types.h endian.h _limits.h signal.h trap.h _stdint.h \
-                sysarch.h ieeefp.h frame.h sigframe.h vm.h \
+                sysarch.h ieeefp.h frame.h vm.h \
                 cpufunc.h vmparam.h atomic.h elf.h exec.h reloc.h pmap.h \
                 ucontext.h setjmp.h asm.h param.h _inttypes.h _align.h \
                 float.h)
@@ -173,12 +174,12 @@ DIR_CONTENT(include/libc/x86) := \
 #
 DIRS += include/spec/x86_32/libc
 DIR_CONTENT(include/spec/x86_32/libc) := \
-    $(call common_include_libc_arch_content,i386)
+    $(call common_include_libc_arch_content,i386,i386)
 
 DIRS += include/spec/x86_32/libc/machine
 DIR_CONTENT(include/spec/x86_32/libc/machine) := \
     $(call common_include_libc_arch_machine_content,i386) \
-    $(addprefix $(D)/sys/i386/include/, specialreg.h npx.h)
+    $(addprefix $(D)/sys/i386/include/, specialreg.h npx.h sigframe.h)
 
 
 #
@@ -186,12 +187,12 @@ DIR_CONTENT(include/spec/x86_32/libc/machine) := \
 #
 DIRS += include/spec/x86_64/libc
 DIR_CONTENT(include/spec/x86_64/libc) := \
-    $(call common_include_libc_arch_content,amd64)
+    $(call common_include_libc_arch_content,amd64,amd64)
 
 DIRS += include/spec/x86_64/libc/machine
 DIR_CONTENT(include/spec/x86_64/libc/machine) := \
     $(call common_include_libc_arch_machine_content,amd64) \
-    $(addprefix $(D)/sys/amd64/include/, specialreg.h fpu.h)
+    $(addprefix $(D)/sys/amd64/include/, specialreg.h fpu.h sigframe.h)
 
 
 #
@@ -199,13 +200,27 @@ DIR_CONTENT(include/spec/x86_64/libc/machine) := \
 #
 DIRS += include/spec/arm/libc
 DIR_CONTENT(include/spec/arm/libc) := \
-    $(call common_include_libc_arch_content,arm) \
+    $(call common_include_libc_arch_content,arm,arm) \
     $(D)/lib/msun/arm/fenv.h
 
 DIRS += include/spec/arm/libc/machine
 DIR_CONTENT(include/spec/arm/libc/machine) := \
     $(call common_include_libc_arch_machine_content,arm) \
-    $(addprefix $(D)/sys/arm/include/, armreg.h atomic-v6.h ieee.h sysreg.h)
+    $(addprefix $(D)/sys/arm/include/, armreg.h atomic-v6.h ieee.h sysreg.h sigframe.h)
+
+
+#
+# ARM64-specific headers
+#
+DIRS += include/spec/arm_64/libc
+DIR_CONTENT(include/spec/arm_64/libc) := \
+    $(call common_include_libc_arch_content,arm64,aarch64) \
+    $(D)/lib/msun/aarch64/fenv.h
+
+DIRS += include/spec/arm_64/libc/machine
+DIR_CONTENT(include/spec/arm_64/libc/machine) := \
+    $(call common_include_libc_arch_machine_content,arm64) \
+    $(addprefix $(D)/sys/arm64/include/, armreg.h)
 
 
 #

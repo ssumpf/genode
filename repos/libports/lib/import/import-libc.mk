@@ -14,6 +14,10 @@ ifeq ($(filter-out $(SPECS),arm),)
 	LIBC_ARCH_INC_DIR := include/spec/arm/libc
 endif # ARM
 
+ifeq ($(filter-out $(SPECS),arm_64),)
+	LIBC_ARCH_INC_DIR := include/spec/arm_64/libc
+endif # ARM64
+
 #
 # If we found no valid include path for the configured target platform,
 # we have to prevent the build system from building the target. This is
