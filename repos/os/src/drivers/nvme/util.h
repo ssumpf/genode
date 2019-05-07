@@ -42,7 +42,7 @@ namespace Util {
 		Genode::Bit_array<BITS> _array { };
 		size_t                  _used  { 0 };
 
-		addr_t _find_free(size_t const bits)
+		addr_t find_free(size_t const bits) const
 		{
 			for (size_t i = 0; i < BITS; i += bits) {
 				if (_array.get(i, bits)) { continue; }
@@ -60,7 +60,7 @@ namespace Util {
 		 */
 		addr_t alloc(size_t const bits)
 		{
-			addr_t const start = _find_free(bits);
+			addr_t const start = find_free(bits);
 			_array.set(start, bits);
 			_used += bits;
 			return start;
@@ -117,10 +117,21 @@ namespace Util {
 		}
 
 		/**
+		 * Check free slot availability
+		 */
+		bool available() const
+		{
+			for (size_t i = 0; i < CAP; i++) {
+				if (!_entries[i].valid()) { return true; }
+			}
+			return false;
+		}
+
+		/**
 		 * Iterate over all slots until FUNC returns true
 		 */
 		template <typename FUNC>
-		bool for_each(FUNC const &func)
+		bool for_each(FUNC const &func) const
 		{
 			for (size_t i = 0; i < CAP; i++) {
 				if (!_entries[i].valid()) { continue; }
