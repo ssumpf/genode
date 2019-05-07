@@ -35,7 +35,7 @@ endif
 define INC_template
 TEST=test
 override CUR_SRCS = $(1)_SRCS
-include $(LIBM_SRC_DIR)/$(1)/Make.files
+-include $(LIBM_SRC_DIR)/$(1)/Make.files
 SRCS += $$(addprefix $(1)/,$$($(1)_SRCS))
 endef
 
