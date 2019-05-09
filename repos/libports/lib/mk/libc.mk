@@ -1,7 +1,7 @@
 #
 # C Library including string, locale
 #
-LIBS   = libc-string libc-locale libc-stdlib libc-stdio libc-gen libc-gdtoa \
+LIBS  += libc-string libc-locale libc-stdlib libc-stdio libc-gen libc-gdtoa \
          libc-inet libc-stdtime libc-regex libc-compat libc-setjmp libc-mem \
          libc-resolv libc-isc libc-nameser libc-net libc-rpc libc-sys libc-tzcode \
          libc-libmd libc-libkern

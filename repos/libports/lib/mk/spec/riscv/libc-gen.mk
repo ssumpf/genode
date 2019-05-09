@@ -1,3 +1,5 @@
+LIBS = libc-softfloat
+
 include $(REP_DIR)/lib/mk/libc-gen.inc
 
 LIBC_GEN_RISCV_DIR = $(LIBC_DIR)/lib/libc/riscv/gen
