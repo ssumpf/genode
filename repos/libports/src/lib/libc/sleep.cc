@@ -100,3 +100,6 @@ int usleep(useconds_t useconds)
 		millisleep(useconds / 1000);
 	return 0;
 }
+
+extern "C" __attribute__((alias("usleep")))
+int _usleep(useconds_t useconds);

@@ -301,6 +301,10 @@ extern "C" __attribute__((alias("select")))
 int __sys_select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
                  struct timeval *tv);
 
+extern "C" __attribute__((alias("select")))
+int _select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
+            struct timeval *tv);
+
 
 extern "C" __attribute__((weak))
 int pselect(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,

@@ -197,6 +197,11 @@ extern "C" int setsockopt(int libc_fd, int level, int optname,
 }
 
 
+extern "C" __attribute__((alias("setsockopt")))
+int _setsockopt(int libc_fd, int level, int optname,
+                void const *optval, socklen_t optlen);
+
+
 extern "C" int shutdown(int libc_fd, int how)
 {
 	if (*Libc::config_socket())

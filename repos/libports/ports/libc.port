@@ -20,6 +20,7 @@ TAR_OPT(libc) += usr/src/sys/amd64
 TAR_OPT(libc) += usr/src/sys/arm
 TAR_OPT(libc) += usr/src/sys/arm64
 TAR_OPT(libc) += usr/src/sys/bsm
+TAR_OPT(libc) += usr/src/sys/crypto/chacha20
 TAR_OPT(libc) += usr/src/sys/i386
 TAR_OPT(libc) += usr/src/sys/libkern
 TAR_OPT(libc) += usr/src/sys/net

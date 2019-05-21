@@ -11,9 +11,6 @@ FILTER_OUT_C += \
 # the following is a wrapper over rusage, which we cannot provide
 FILTER_OUT_C += clock.c
 
-# avoid chacha20 dependency for simplicity's sake
-FILTER_OUT_C += arc4random.c
-
 # we implement this ourselves
 FILTER_OUT_C += isatty.c
 
@@ -62,6 +59,9 @@ INC_DIR += $(REP_DIR)/src/lib/libc/stdtime
 
 # '_pthread_stubs.c' includes the local 'libc_pdbg.h'
 INC_DIR += $(REP_DIR)/src/lib/libc
+
+INC_DIR += $(LIBC_DIR)/sys/crypto/chacha20
+INC_DIR += $(LIBC_DIR)/sys
 
 include $(REP_DIR)/lib/mk/libc-common.inc
 
