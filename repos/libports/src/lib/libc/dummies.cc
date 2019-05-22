@@ -178,7 +178,6 @@ __SYS_DUMMY(int, -1, truncate, (const char *, off_t))
 #include <signal.h>
 #include <sys/thr.h>
 DUMMY(int, -1, sigblock, (int))
-DUMMY(int, -1, sigpause, (int))
 DUMMY(int, -1, thr_kill2, (pid_t pid, long id, int sig));
 
 __SYS_DUMMY(int, -1, sigaction, (int, const struct sigaction *, struct sigaction *));
