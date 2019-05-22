@@ -194,6 +194,7 @@ free T
 freeaddrinfo T
 freebsd7___semctl W
 freebsd7_semctl T
+freelocale T
 freopen T
 fscanf T
 fseek T
@@ -453,6 +454,7 @@ msync T
 munmap T
 nanosleep W
 clock_nanosleep W
+newlocale T
 nextwctype T
 nftw T
 nice T
@@ -841,6 +843,7 @@ unlink T
 unlockpt T
 unsetenv T
 unvis T
+uselocale T
 user_from_uid T
 usleep W
 utimes W

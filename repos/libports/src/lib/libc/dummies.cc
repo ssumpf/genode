@@ -156,7 +156,7 @@ __SYS_DUMMY(int, -1, system, (const char *string));
 
 DUMMY(int,  0, fchmod, (int, mode_t))
 DUMMY(int, -1, lockf, (int, int, off_t))
-DUMMY(int,  0, posix_fadvise, (int, off_t, off_t, int))
+DUMMY_SILENT(int,  0, posix_fadvise, (int, off_t, off_t, int))
 DUMMY(int, -1, chmod, (const char *, mode_t))
 DUMMY(int, -1, chown, (const char *, uid_t, gid_t))
 DUMMY(int, -1, fchown, (int, uid_t, gid_t))
