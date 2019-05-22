@@ -1,7 +1,7 @@
 content: include/libc-plugin src/lib/libc/target.mk lib/mk LICENSE src/lib/openlibm
 
 LIBC_PORT_DIR := $(call port_dir,$(REP_DIR)/ports/libc)
-LIBM_PORT_DIR := $(call port_dir,$(REP_DIR)/ports/openlibm)
+LIBM_PORT_DIR := $(LIBC_PORT_DIR)
 
 src/lib/libc:
 	mkdir -p $@
