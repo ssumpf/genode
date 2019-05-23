@@ -62,6 +62,7 @@ Platform::Pd::Pd(Platform::Ram_allocator & alloc)
   array(*Genode::construct_at<Table_array>(array_base))
 {
 	using namespace Genode;
+
 	addr_t const table_virt_base = Hw::Mm::core_page_tables().base;
 	map_insert(Mapping((addr_t)table_base, table_virt_base,
 	                   sizeof(Table),       Hw::PAGE_FLAGS_KERN_DATA));
@@ -72,9 +73,13 @@ Platform::Pd::Pd(Platform::Ram_allocator & alloc)
 
 void Platform::Pd::map(Mapping m)
 {
+	Genode::log("map: ", m);
+
 	try {
 		table.insert_translation(m.virt(), m.phys(), m.size(), m.flags(),
 		                         array.alloc());
+		Genode::log("inserted");
+		//while (1) ;
 	} catch (Hw::Out_of_tables &) {
 		Genode::error("translation table needs to much RAM");
 	} catch (...) {

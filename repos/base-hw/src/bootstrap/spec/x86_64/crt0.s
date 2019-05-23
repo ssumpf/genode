@@ -15,7 +15,7 @@
  * under the terms of the GNU Affero General Public License version 3.
  */
 
-.set STACK_SIZE, 4096
+.set STACK_SIZE, 64*1024
 
 .section ".text.crt0"
 

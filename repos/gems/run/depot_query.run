@@ -119,7 +119,9 @@ install_config {
 
 build_boot_image { init depot_query depot_deploy vfs.lib.so }
 
-append qemu_args " -nographic "
+#append qemu_args " -nographic "
 
-run_genode_until {.*child "test-fs_report" exited with exit value 0.*\n} 30
+
+run_genode_until forever
+#run_genode_until {.*child "test-fs_report" exited with exit value 0.*\n} 30
 

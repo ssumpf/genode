@@ -88,6 +88,8 @@ class Bootstrap::Platform
 		};
 
 
+		struct L { L(char const *str) { Genode::log(str); while (1) ; } };
+
 		struct Pd
 		{
 			using Table = Hw::Page_table;

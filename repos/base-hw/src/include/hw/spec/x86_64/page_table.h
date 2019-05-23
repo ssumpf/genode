@@ -84,10 +84,16 @@ namespace Hw
 
 		static access_t create(Page_flags const &flags)
 		{
-			return P::bits(1)
+		 return P::bits(1)
 				| Rw::bits(flags.writeable)
 				| Us::bits(!flags.privileged)
 				| Xd::bits(!flags.executable);
+/*
+			addr_t ip = 0;
+			asm volatile ("movq %%rsp, %0\n"
+			              : "=r"(ip));
+			Genode::log("access: ", sizeof(access_t), " sp: ", (void*)ip); while (1); */
+			//return a;
 		}
 
 		/**
@@ -520,7 +526,11 @@ class Hw::Pml4_table
 				/* XXX: Set memory type depending on active PAT */
 				static Page_flags flags { RW, EXEC, USER, NO_GLOBAL,
 				                          RAM, Genode::CACHED };
-				return Common_descriptor::create(flags) | Pa::masked(pa);
+				volatile access_t a1 = Common_descriptor::create(flags);
+				Genode::log("1:"); 
+				volatile access_t a2 = Pa::masked(pa);
+				Genode::log("2:");
+				return a1 | a2;
 			}
 		};
 
@@ -545,7 +555,8 @@ class Hw::Pml4_table
 				if (!Descriptor::present(desc)) {
 					/* create and link next level table */
 					ENTRY & table = alloc.construct<ENTRY>();
-					desc = Descriptor::create(alloc.phys_addr(table));
+					addr_t addr = alloc.phys_addr(table);
+					desc = Descriptor::create(addr);
 				}
 
 				/* insert translation */
