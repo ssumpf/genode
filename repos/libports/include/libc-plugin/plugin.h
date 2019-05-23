@@ -43,6 +43,9 @@ namespace Libc {
 
 			typedef Genode::size_t size_t;
 
+			/* Resume all libc threads blocked for I/O */
+			void resume_all();
+
 		public:
 
 			Plugin(int priority = 0);

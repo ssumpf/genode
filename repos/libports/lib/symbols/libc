@@ -1047,6 +1047,7 @@ _ZN4Libc6Plugin8recvfromEPNS_15File_descriptorEPvmiP8sockaddrPj T
 _ZN4Libc6Plugin8shutdownEPNS_15File_descriptorEi T
 _ZN4Libc6Plugin9ftruncateEPNS_15File_descriptorEl T
 _ZN4Libc6Plugin9ftruncateEPNS_15File_descriptorEx T
+_ZN4Libc6Plugin10resume_allEv T
 _ZN4Libc6PluginC1Ei T
 _ZN4Libc6PluginC2Ei T
 _ZN4Libc6PluginD0Ev T

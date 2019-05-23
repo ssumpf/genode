@@ -452,6 +452,7 @@ namespace Libc_pipe {
 
 				if (libc_select_notify)
 					libc_select_notify();
+				Plugin::resume_all();
 			}
 
 			context(fdo)->write_avail_sem()->down();
@@ -462,6 +463,7 @@ namespace Libc_pipe {
 
 		if (libc_select_notify)
 			libc_select_notify();
+		Plugin::resume_all();
 
 		return num_bytes_written;
 	}

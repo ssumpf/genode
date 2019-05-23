@@ -19,8 +19,17 @@
 #include <libc-plugin/plugin_registry.h>
 #include <libc-plugin/plugin.h>
 
+/* local includes */
+#include "task.h"
+
 using namespace Genode;
 using namespace Libc;
+
+
+void Plugin::resume_all()
+{
+	Libc::resume_all();
+}
 
 
 Plugin::Plugin(int priority)

@@ -18,6 +18,7 @@
 #include <sys/poll.h>
 
 /* internal includes */
+#include "libc_errno.h"
 #include "libc_file.h"
 #include "task.h"
 
@@ -26,6 +27,8 @@ extern "C" __attribute__((weak))
 int poll(struct pollfd fds[], nfds_t nfds, int timeout_ms)
 {
 	using namespace Libc;
+
+	if (!fds || nfds == 0) return Errno(EINVAL);
 
 	struct Check : Libc::Suspend_functor
 	{
