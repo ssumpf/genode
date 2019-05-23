@@ -10,28 +10,28 @@ MAKEOVERRIDES =
 
 PLATFORM = $(MAKECMDGOALS)
 
-PLATFORMS = arm_v6 arm_v7 arm_v8 riscv x86_32 x86_64 linux
+PLATFORMS = arm_v6 arm_v7a arm_v8 riscv x86_32 x86_64 linux
 
 PLATFORMS_DEPR = arndale imx53_qsb imx53_qsb_tz imx6q_sabrelite imx7d_sabre \
                  nit6_solox odroid_x2 odroid_xu panda pbxa9 riscv_spike rpi \
                  usb_armory wand_quad zynq_qemu muen
 
-PLATFORM_ALT(arndale)         = arm_v7
-PLATFORM_ALT(imx53_qsb)       = arm_v7
-PLATFORM_ALT(imx53_qsb_tz)    = arm_v7
-PLATFORM_ALT(imx6q_sabrelite) = arm_v7
-PLATFORM_ALT(imx7d_sabre)     = arm_v7
+PLATFORM_ALT(arndale)         = arm_v7a
+PLATFORM_ALT(imx53_qsb)       = arm_v7a
+PLATFORM_ALT(imx53_qsb_tz)    = arm_v7a
+PLATFORM_ALT(imx6q_sabrelite) = arm_v7a
+PLATFORM_ALT(imx7d_sabre)     = arm_v7a
 PLATFORM_ALT(muen)            = x86_64
-PLATFORM_ALT(nit6_solox)      = arm_v7
-PLATFORM_ALT(odroid_x2)       = arm_v7
-PLATFORM_ALT(odroid_xu)       = arm_v7
-PLATFORM_ALT(panda)           = arm_v7
-PLATFORM_ALT(pbxa9)           = arm_v7
+PLATFORM_ALT(nit6_solox)      = arm_v7a
+PLATFORM_ALT(odroid_x2)       = arm_v7a
+PLATFORM_ALT(odroid_xu)       = arm_v7a
+PLATFORM_ALT(panda)           = arm_v7a
+PLATFORM_ALT(pbxa9)           = arm_v7a
 PLATFORM_ALT(riscv_spike)     = riscv
 PLATFORM_ALT(rpi)             = arm_v6
-PLATFORM_ALT(usb_armory)      = arm_v7
-PLATFORM_ALT(wand_quad)       = arm_v7
-PLATFORM_ALT(zynq_qemu)       = arm_v7
+PLATFORM_ALT(usb_armory)      = arm_v7a
+PLATFORM_ALT(wand_quad)       = arm_v7a
+PLATFORM_ALT(zynq_qemu)       = arm_v7a
 
 
 usage:
@@ -117,7 +117,7 @@ BUILD_CONF_X86      := run_x86 run_boot_dir repos repos_x86
 BUILD_CONF_ARM_V6   := run_arm_v6 run_boot_dir repos
 BUILD_CONF_ARM_V7   := run_arm_v7 run_boot_dir repos
 BUILD_CONF(arm_v6)  := $(BUILD_CONF_ARM_V6)
-BUILD_CONF(arm_v7)  := $(BUILD_CONF_ARM_V7)
+BUILD_CONF(arm_v7a) := $(BUILD_CONF_ARM_V7)
 BUILD_CONF(arm_v8)  := run_arm_v8 run_boot_dir repos
 BUILD_CONF(riscv)   := run_riscv run_boot_dir repos
 BUILD_CONF(x86_32)  := run_x86_32 $(BUILD_CONF_X86)
@@ -186,7 +186,7 @@ HOST_SPEC_ARCH := ${SPEC_ARCH(${UNAME_MACHINE})}
 #
 
 SPECS(arm_v6)          := arm_v6
-SPECS(arm_v7)          := arm_v7a
+SPECS(arm_v7a)         := arm_v7a
 SPECS(arm_v8)          := arm_v8a
 SPECS(riscv)           := riscv
 SPECS(x86_32)          := x86_32
