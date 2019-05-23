@@ -39,11 +39,8 @@
 
 
 .macro SETUP_PAGING
-	/*
-	 * Enable PAE (prerequisite for IA-32e mode)
-	 * OSFXSR and OSXMMEXCPT for SSE FPU support
-	 */
-	movl $0x6b8, %eax
+	/* Enable PAE (prerequisite for IA-32e mode) */
+	movl $0x20, %eax
 	movl %eax, %cr4
 
 	/* Enable IA-32e mode and execute-disable */
@@ -53,11 +50,11 @@
 	btsl $11, %eax
 	wrmsr
 
-	/*
-	 * Enable paging and FPU:
-	 * PE, MP, NE, WP, PG
-	 */
-	movl $0x80010023, %eax
+	/* Enable paging, write protection and caching */
+	xorl %eax, %eax
+	btsl  $0, %eax /* protected mode */
+	btsl $16, %eax /* write protect */
+	btsl $31, %eax /* paging */
 	movl %eax, %cr0
 .endm
 
@@ -159,7 +156,21 @@ __gdt:
 	movq (%rax), %rsp
 	addq %rcx, %rsp
 
-	/* bring FPU into a clean state */
+	/*
+	 * Enable paging and FPU:
+	 * PE, MP, NE, WP, PG
+	 */
+	mov $0x80010023, %rax
+	mov %rax, %cr0
+
+	/*
+	 * OSFXSR and OSXMMEXCPT for SSE FPU support
+	 */
+	mov %cr4, %rax
+	bts $9,   %rax
+	bts $10,  %rax
+	mov %rax, %cr4
+
 	fninit
 
 	/* kernel-initialization */
