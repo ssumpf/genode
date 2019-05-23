@@ -1,5 +1,5 @@
 /*
- * \brief  C-library back end
+ * \brief  C-library back end for getrandom/getentropy
  * \author Emery Hemingway
  * \date   2019-05-07
  */
@@ -16,6 +16,7 @@ extern "C" {
 #include <fcntl.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <string.h>
 #include <sys/random.h>
 }
 
@@ -40,8 +41,8 @@ ssize_t read_rng(char *buf, size_t buflen)
 		while (off < buflen) {
 			/* collect 31 bits of random */
 			unsigned const nonce = random();
-			size_t n = Genode::min(4, buflen-off);
-			Genode::memcpy(buf+off, &nonce, n);
+			size_t n = Genode::min(4U, buflen-off);
+			memcpy(buf+off, &nonce, n);
 			off += n;
 		}
 		return buflen;
@@ -85,6 +86,7 @@ getrandom(void *buf, size_t buflen, unsigned int flags)
 extern "C" int __attribute__((weak))
 getentropy(void *buf, size_t buflen)
 {
+	/* maximum permitted value for the length argument is 256 */
 	if (256 < buflen) return Libc::Errno(EIO);
 
 	size_t off = 0;
