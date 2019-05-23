@@ -2,7 +2,6 @@
  * \brief  POSIX thread implementation
  * \author Christian Prochaska
  * \date   2012-03-12
- *
  */
 
 /*
@@ -19,17 +18,12 @@
 
 #include <errno.h>
 #include <pthread.h>
-#include <stdlib.h> /* malloc, free */
 #include "thread.h"
 #include "task.h"
 #include "timed_semaphore.h"
 #include "libc_init.h"
 
 using namespace Genode;
-
-
-void * operator new(__SIZE_TYPE__ size) { return malloc(size); }
-void operator delete (void * p) { return free(p); }
 
 
 static Env *_env_ptr;  /* solely needed to spawn the timeout thread for the
