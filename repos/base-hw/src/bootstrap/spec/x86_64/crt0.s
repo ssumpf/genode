@@ -155,7 +155,6 @@ __gdt:
 	inc  %rcx
 	mulq %rcx
 	movq %rax, %rcx
-	subq $8, %rcx
 	leaq __bootstrap_stack@GOTPCREL(%rip),%rax
 	movq (%rax), %rsp
 	addq %rcx, %rsp
