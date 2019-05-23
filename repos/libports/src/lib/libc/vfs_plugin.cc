@@ -131,6 +131,13 @@ namespace Libc {
 		return rtc.string();
 	}
 
+	char const *config_rng() __attribute__((weak));
+	char const *config_rng()
+	{
+		static Config_attr rng("rng", "");
+		return rng.string();
+	}
+
 	char const *config_socket() __attribute__((weak));
 	char const *config_socket()
 	{

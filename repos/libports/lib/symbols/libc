@@ -241,6 +241,7 @@ getdiskbyname T
 getdomainname T
 getdtablesize W
 getegid W
+getentropy W
 getenv T
 geteuid W
 getfsent T

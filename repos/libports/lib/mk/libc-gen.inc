@@ -37,6 +37,7 @@ FILTER_OUT_C += \
 	daemon.c \
 	disklabel.c \
 	exect.c \
+	getentropy.c \
 	getutxent.c \
 	pututxline.c \
 	readpassphrase.c \
