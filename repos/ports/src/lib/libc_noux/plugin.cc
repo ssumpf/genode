@@ -1593,6 +1593,7 @@ namespace {
 		sysio()->fcntl_in.fd = noux_fd(fd->context);
 		switch (cmd) {
 
+		case F_DUPFD_CLOEXEC:
 		case F_DUPFD:
 			{
 				/*

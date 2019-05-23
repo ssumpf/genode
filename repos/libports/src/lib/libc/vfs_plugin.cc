@@ -894,6 +894,7 @@ int Libc::Vfs_plugin::ftruncate(Libc::File_descriptor *fd, ::off_t length)
 int Libc::Vfs_plugin::fcntl(Libc::File_descriptor *fd, int cmd, long arg)
 {
 	switch (cmd) {
+	case F_DUPFD_CLOEXEC:
 	case F_DUPFD:
 		{
 			/*
