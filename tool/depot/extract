@@ -166,7 +166,7 @@ handle_missing_ports = $(if $1,$(VERBOSE)( \
 endif
 
 #
-# Check wether all required ports exist and if not, abort or prepare them
+# Check whether all required ports exist and if not, abort or prepare them
 #
 checked_ports_exist: update_missing_ports_file
 	$(call handle_missing_ports,$(call sorted_file_content,$(MISSING_PORTS_FILE)),$(MAKE))

@@ -15,7 +15,7 @@ define HELP_MESSAGE
     $(firstword $(MAKEFILE_LIST)) <archive-path>...
 
   The <archive-path> argument denotes the archive to process in the
-  form of a path. The first path element correponds to the identity
+  form of a path. The first path element corresponds to the identity
   of the archive creator, the second element corresponds to the type
   of the archive, and the third element refers to the recipe of
   the archive description.

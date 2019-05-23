@@ -12,7 +12,7 @@
 #
 
 #
-# Functions for disabeling and re-enabeling evaluation of $(shell ...)
+# Functions for disabling and re-enabling evaluation of $(shell ...)
 #
 ORIGINAL_SHELL := $(SHELL)
 enable_shell  = $(eval SHELL:=$(ORIGINAL_SHELL))
