@@ -63,7 +63,6 @@ namespace {
 
 					if (libc_select_notify)
 						libc_select_notify();
-					Plugin::resume_all();
 				}
 			}
 
