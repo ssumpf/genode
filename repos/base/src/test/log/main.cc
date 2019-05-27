@@ -16,46 +16,33 @@
 #include <base/log.h>
 #include <log_session/connection.h>
 
+#include <libc/component.h>
+#include <time.h>
 
-void Component::construct(Genode::Env &env)
+char const *get_time()
 {
-	using namespace Genode;
+	static char buffer[32];
 
-	log("hex range:          ", Hex_range<uint16_t>(0xe00, 0x880));
-	log("empty hex range:    ", Hex_range<uint32_t>(0xabc0000, 0));
-	log("hex range to limit: ", Hex_range<uint8_t>(0xf8, 8));
-	log("invalid hex range:  ", Hex_range<uint8_t>(0xf8, 0x10));
-	log("negative hex char:  ", Hex((char)-2LL, Hex::PREFIX, Hex::PAD));
-	log("positive hex char:  ", Hex((char) 2LL, Hex::PREFIX, Hex::PAD));
+	char const *p = "<invalid date>";
+	Libc::with_libc([&] {
+		struct timespec ts;
+		if (clock_gettime(CLOCK_MONOTONIC, &ts)) { Genode::log("1"); return; }
+	
+		struct tm *tm = localtime((time_t*)&ts.tv_sec);
+		if (!tm) { Genode::log("2");return; }
 
-	log("floating point:     ", 1700.0 / 1000);
+		mktime(tm);
 
-	typedef String<128> Label;
-	log("multiarg string:    ", Label(Char('"'), "parent -> child.", 7, Char('"')));
+		size_t const n = strftime(buffer, sizeof(buffer), "%F %H:%M:%S", tm);
+		if (n > 0 && n < sizeof(buffer)) { p = buffer; }
+	}); /* Libc::with_libc */
 
-	String<32> hex(Hex(3));
-	log("String(Hex(3)):     ", hex);
+	return p;
+}
 
-	log("Very long messages:");
 
-	static char buf[2*Log_session::MAX_STRING_LEN];
-
-	/* test writing of message with length = MAX_STRING_LEN with LOG connection */
-	for (char &c : buf) c = '.';
-	buf[0] = '1';                                /* begin of line */
-	buf[Log_session::MAX_STRING_LEN - 2] = '2';  /* last visible */
-	buf[Log_session::MAX_STRING_LEN - 1] = '\0'; /* end of line */
-	Log_connection log_connection { env, "log" };
-	log_connection.write(buf);
-
-	/* test splitting of message with length > MAX_STRING_LEN with 'Genode::log()' */ 
-	for (char &c : buf) c = '.';
-	buf[0] = '3';                                  /* begin of first line */
-	buf[Log_session::MAX_STRING_LEN - 2]   = '4';  /* last visible before flushed */
-	buf[Log_session::MAX_STRING_LEN - 1]   = '5';  /* first after flush */
-	buf[2*Log_session::MAX_STRING_LEN - 3] = '6';  /* last visible before flushed */
-	buf[2*Log_session::MAX_STRING_LEN - 2] = '\0'; /* end of second line */
-	log(Cstring(buf));
-
-	log("Test done.");
+void Libc::Component::construct(Libc::Env &)
+{
+	char const *t = get_time();
+	Genode::log("time: ", t);
 }

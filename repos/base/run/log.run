@@ -1,26 +1,43 @@
-build "core init test/log"
+build "core init test/log drivers/rtc timer"
 
 create_boot_directory
 
 install_config {
-	<config>
+	<config verbose="yes">
 		<parent-provides>
 			<service name="LOG"/>
 			<service name="PD"/>
 			<service name="CPU"/>
 			<service name="ROM"/>
+			<service name="IO_PORT"/>
 		</parent-provides>
 		<default-route>
-			<any-service> <parent/> </any-service>
+			<any-service> <parent/> <any-child/> </any-service>
 		</default-route>
-		<default caps="50"/>
+		<default caps="100"/>
+		<start name="timer">
+			<resource name="RAM" quantum="2M" />
+			<provides> <service name="Timer" /> </provides>
+		</start>
+		<start name="rtc_drv">
+			<resource name="RAM" quantum="1M"/>
+			<provides> <service name="Rtc"/> </provides>
+ 		</start>
 		<start name="test-log">
 			<resource name="RAM" quantum="10M"/>
+			<config>
+				<libc stdin="/dev/null" stdout="/dev/log" stderr="/dev/log" rtc="/dev/rtc"/>
+				<vfs>
+					<dir name="dev">
+						<log/><null/><rtc/>
+					</dir>
+				</vfs>
+			</config>
 		</start>
 	</config>
 }
 
-build_boot_image "core ld.lib.so init test-log"
+build_boot_image "core ld.lib.so init test-log libc.lib.so vfs.lib.so timer rtc_drv"
 
 append qemu_args "-nographic "
 append xen_args  { sdl="0" }
@@ -38,6 +55,8 @@ compare_output_to {
 [init -> test-log] positive hex char:  0x02
 [init -> test-log] floating point:     1.70
 [init -> test-log] multiarg string:    "parent -> child.7"
+
+
 [init -> test-log] String(Hex(3)):     0x3
 [init -> test-log] Very long messages:
 [init -> test-log -> log] 1.....................................................................................................................................................................................................................................2
