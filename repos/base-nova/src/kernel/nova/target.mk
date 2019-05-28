@@ -18,13 +18,13 @@ CC_WARN          = -Wall -Wextra -Waggregate-return -Wcast-align -Wcast-qual \
                    -Wstrict-overflow=5 -Wvolatile-register-var
 
 # XXX fix the warnings and remove this option
-CC_WARN         += -Wno-error=implicit-fallthrough
+#CC_WARN         += -Wno-error=implicit-fallthrough
 
 CC_OPT          += -pipe \
                    -fdata-sections -fomit-frame-pointer -freg-struct-return \
                    -freorder-blocks -funit-at-a-time -fno-exceptions -fno-rtti \
                    -fno-stack-protector -fvisibility-inlines-hidden \
-                   -fno-asynchronous-unwind-tables -std=gnu++0x -mgeneral-regs-only
+                   -fno-asynchronous-unwind-tables -std=gnu++0x
 # kernel memory: 28M minimum dynamic or 10 pro mill of the system memory
 CC_OPT          += -DCONFIG_MEMORY_DYN_MIN=0x1c00000 \
                    -DCONFIG_MEMORY_DYN_PER_MILL=10

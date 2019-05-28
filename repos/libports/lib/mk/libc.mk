@@ -35,7 +35,7 @@ CXX_DEF += -Drestrict=__restrict
 # Extra include path for internal dummies
 #
 CC_OPT_dummies += -I$(LIBC_DIR)/sys
-
+CC_OPT += -fwrapv
 INC_DIR += $(REP_DIR)/src/lib/libc
 INC_DIR += $(REP_DIR)/src/lib/libc/include
 

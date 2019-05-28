@@ -1,4 +1,4 @@
-build "core init test/log drivers/rtc timer"
+build "core init test/log timer"
 
 create_boot_directory
 
@@ -19,17 +19,13 @@ install_config {
 			<resource name="RAM" quantum="2M" />
 			<provides> <service name="Timer" /> </provides>
 		</start>
-		<start name="rtc_drv">
-			<resource name="RAM" quantum="1M"/>
-			<provides> <service name="Rtc"/> </provides>
- 		</start>
 		<start name="test-log">
 			<resource name="RAM" quantum="10M"/>
 			<config>
 				<libc stdin="/dev/null" stdout="/dev/log" stderr="/dev/log" rtc="/dev/rtc"/>
 				<vfs>
 					<dir name="dev">
-						<log/><null/><rtc/>
+						<log/><null/><inline name="rtc">2000-01-01 00:00</inline>
 					</dir>
 				</vfs>
 			</config>
@@ -37,7 +33,7 @@ install_config {
 	</config>
 }
 
-build_boot_image "core ld.lib.so init test-log libc.lib.so vfs.lib.so timer rtc_drv"
+build_boot_image "core ld.lib.so init test-log libc.lib.so vfs.lib.so timer"
 
 append qemu_args "-nographic "
 append xen_args  { sdl="0" }
