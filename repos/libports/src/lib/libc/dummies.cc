@@ -117,7 +117,7 @@ DUMMY(int   , -1, sched_setparam, (pid_t, const sched_param *))
 DUMMY(int   , -1, sched_setscheduler, (pid_t, int, const sched_param *))
 DUMMY(int   , -1, sched_yield, (void))
 DUMMY(int   , -1, __semctl, (void))
-DUMMY(sig_t, SIG_ERR, signal, (int, sig_t));
+DUMMY_SILENT(sig_t, SIG_ERR, signal, (int, sig_t));
 DUMMY(int   , -1, setegid, (uid_t))
 DUMMY(int   , -1, seteuid, (uid_t))
 DUMMY(int   , -1, setgid, (gid_t))
