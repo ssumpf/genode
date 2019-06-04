@@ -105,7 +105,7 @@ extern "C" {
 		                               struct pbuf *p, err_t err);
 		static err_t tcp_delayed_recv_callback(void *arg, struct tcp_pcb *tpcb,
 		                                       struct pbuf *p, err_t err);
-		/* static err_t tcp_sent_callback(void *arg, struct tcp_pcb *tpcb, u16_t len); */
+		static err_t tcp_sent_callback(void *arg, struct tcp_pcb *tpcb, u16_t len);
 		static void  tcp_err_callback(void *arg, err_t err);
 	}
 
@@ -423,9 +423,15 @@ Lwip::Read_result Lwip::Lwip_file_handle::read(char *dst, file_size count,
 Lwip::Write_result Lwip::Lwip_file_handle::write(char const *src, file_size count,
 	                                             file_size &out_count)
 {
-	return (socket)
-		? socket->write(*this, src, count, out_count)
-		: Write_result::WRITE_ERR_INVALID;
+	if (!socket) return Write_result::WRITE_ERR_INVALID;
+
+	Lwip::Write_result res = socket->write(*this, src, count, out_count);
+
+	/* if the write is partial, notify the handle when the write is ACKed */
+	if (res == Write_result::WRITE_OK && out_count < count)
+		socket->io_progress_queue.enqueue(_io_progress_waiter);
+
+	return res;
 }
 
 bool Lwip::Lwip_file_handle::notify_read_ready()
@@ -833,6 +839,7 @@ class Lwip::Udp_socket_dir final :
 					}
 					result = Read_result::READ_OK;
 				});
+				break;
 			}
 
 			case Lwip_file_handle::PEEK:
@@ -1059,10 +1066,7 @@ class Lwip::Tcp_socket_dir final :
 			tcp_arg(_pcb, this);
 
 			tcp_recv(_pcb, tcp_recv_callback);
-
-			/* Disabled, do not track acknowledgements */
-			/* tcp_sent(_pcb, tcp_sent_callback); */
-
+			tcp_sent(_pcb, tcp_sent_callback);
 			tcp_err(_pcb, tcp_err_callback);
 		}
 
@@ -1361,7 +1365,7 @@ class Lwip::Tcp_socket_dir final :
 			switch(handle.kind) {
 			case Lwip_file_handle::DATA:
 				if (state == READY) {
-					Write_result res = Write_result::WRITE_ERR_WOULD_BLOCK;
+					Write_result res = Write_result::WRITE_OK;
 					file_size out = 0;
 					/*
 					 * write in a loop to account for LwIP chunking
@@ -1381,8 +1385,6 @@ class Lwip::Tcp_socket_dir final :
 						count -= n;
 						src += n;
 						out += n;
-						/* pending_ack += n; */
-						res = Write_result::WRITE_OK;
 					}
 
 					/* send queued data */
@@ -1555,12 +1557,8 @@ err_t tcp_delayed_recv_callback(void *arg, struct tcp_pcb *pcb, struct pbuf *buf
 };
 
 
-/**
- * This would be the ACK callback, we could defer sync completion
- * until then, but performance is expected to be unacceptable.
- *
 static
-err_t tcp_sent_callback(void *arg, struct tcp_pcb*, u16_t len)
+err_t tcp_sent_callback(void *arg, struct tcp_pcb *pcb, u16_t)
 {
 	if (!arg) {
 		tcp_abort(pcb);
@@ -1568,12 +1566,11 @@ err_t tcp_sent_callback(void *arg, struct tcp_pcb*, u16_t len)
 	}
 
 	Lwip::Tcp_socket_dir *socket_dir = static_cast<Lwip::Tcp_socket_dir *>(arg);
-	socket_dir->pending_ack -= len;
+
+	/* unblock partial writers */
 	socket_dir->process_io();
-	socket_dir->process_write_ready();
 	return ERR_OK;
 }
-*/
 
 
 static
@@ -1838,25 +1835,14 @@ class Lwip::File_system final : public Vfs::File_system, public Lwip::Directory
 		                   char const *src, file_size count,
 		                   file_size &out_count) override
 		{
-			Write_result res = Write_result::WRITE_ERR_INVALID;
 			out_count = 0;
 
 			if ((vfs_handle->status_flags() & OPEN_MODE_ACCMODE) == OPEN_MODE_RDONLY)
 				return Write_result::WRITE_ERR_INVALID;
-			if (Lwip_handle *handle = dynamic_cast<Lwip_handle*>(vfs_handle)) {
-				while (true) {
-					res = handle->write(src, count, out_count);
-					if (res != WRITE_ERR_WOULD_BLOCK || out_count) break;
+			if (Lwip_handle *handle = dynamic_cast<Lwip_handle*>(vfs_handle))
+				return handle->write(src, count, out_count);
 
-					/*
-					 * XXX: block for signals until the write completes
-					 * or fails, this is not how it should be done, but
-					 * it's how lxip does it
-					 */
-					_ep.wait_and_dispatch_one_io_signal();
-				}
-			}
-			return res;
+			return Write_result::WRITE_ERR_INVALID;
 		}
 
 		Read_result complete_read(Vfs_handle *vfs_handle,

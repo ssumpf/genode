@@ -251,6 +251,8 @@ class Vfs_server::Io_node : public Vfs_server::Node,
 				if (result == Write_result::WRITE_OK) {
 					mark_as_updated();
 					_packet.succeeded(true);
+				} else {
+					_packet.succeeded(false);
 				}
 			}
 			catch (Vfs::File_io_service::Insufficient_buffer)
@@ -609,6 +611,8 @@ class Vfs_server::File : public Io_node
 
 		char const *_leaf_path = nullptr; /* offset pointer to Node::_path */
 
+		file_size _write_offset { 0 };
+
 		inline
 		seek_off_t seek_tail(file_size count)
 		{
@@ -648,9 +652,15 @@ class Vfs_server::File : public Io_node
 			if (seek_offset == (seek_off_t)SEEK_TAIL)
 				seek_offset = seek_tail(count);
 
-			bool result = _vfs_write(_stream.packet_content(_packet),
-			                         count, seek_offset, out_count);
+			bool result = _vfs_write(_stream.packet_content(_packet)+_write_offset,
+			                         count-_write_offset, seek_offset, out_count);
 			if (result) {
+				/* loop until the write completes or produces an error */
+				if (_packet.succeeded() && ((out_count+_write_offset) < count)) {
+					_write_offset += out_count;
+					return false;
+				}
+				_write_offset = 0;
 				_ack_packet(out_count);
 				if (out_count > 0) {
 					mark_as_updated();
