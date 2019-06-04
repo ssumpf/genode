@@ -1,0 +1,37 @@
+From a4077990a1f30fc16f1408ce31dce46df3a0bf31 Mon Sep 17 00:00:00 2001
+From: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date: Tue, 4 Jun 2019 11:50:23 +0200
+Subject: [PATCH] Revert "bootstrap: Fix build failure"
+
+This reverts commit 61c59ecf8793fc2d3cdbbe4fe78caa854db46cc5.
+---
+ server/src/Make.rules | 3 ---
+ 1 file changed, 3 deletions(-)
+
+diff --git a/server/src/Make.rules b/server/src/Make.rules
+index 1c2a414..6109a56 100644
+--- a/server/src/Make.rules
++++ b/server/src/Make.rules
+@@ -453,19 +453,16 @@ bootstrap32.bin: $(BOOTSTRAP_ELF_NAME)
+ 
+ %.o32: %.c $(SRC_DIR)/Makefile $(SRC_DIR)/Make.rules
+ 	@$(COMP_MESSAGE)
+-	$(eval $(call BID_MAKE_RULE_CREATE_SUBDIR))
+ 	$(VERBOSE)$(CC32) -o $@ -c $(DEPEND_FLAG) \
+ 	  $(CPPFLAGS) $(CFLAGS32) $(call absfilename,$<)
+ 
+ %.o32: %.cc $(SRC_DIR)/Makefile $(SRC_DIR)/Make.rules
+ 	@$(COMP_MESSAGE)
+-	$(eval $(call BID_MAKE_RULE_CREATE_SUBDIR))
+ 	$(VERBOSE)$(CXX32) -o $@ -c $(DEPEND_FLAG) \
+ 	  $(CPPFLAGS) $(CXXFLAGS32) $(call absfilename,$<)
+ 
+ %.o32: %.S $(SRC_DIR)/Makefile $(SRC_DIR)/Make.rules
+ 	@$(COMP_MESSAGE)
+-	$(eval $(call BID_MAKE_RULE_CREATE_SUBDIR))
+ 	$(VERBOSE)$(CC32) -o $@ -c $(DEPEND_FLAG) \
+ 	  $(CPPFLAGS) $(CFLAGS32) $(call absfilename,$<)
+ 
+-- 
+2.11.0
+
