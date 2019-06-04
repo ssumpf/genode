@@ -177,7 +177,7 @@ proc qt5_start_nodes { feature_arg } {
 				<report name="numlock">      <bool name="numlock"/>      </report>
 			</config>
 			<route>
-				<service name="Report">    <child name="report_rom"/> </service>
+				<service name="Report">    <child name="wm_report_rom"/> </service>
 				<service name="Nitpicker"> <child name="nitpicker"/>  </service>
 				<service name="Timer">     <child name="timer"/>      </service>
 				<any-service> <parent/> <any-child/> </any-service>

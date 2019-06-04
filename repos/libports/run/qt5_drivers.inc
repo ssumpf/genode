@@ -239,7 +239,7 @@ proc drivers_start_nodes { feature_arg } {
 					</output>
 				</config>
 				<route>
-					<service name="ROM" label="numlock"> <child name="report_rom"/> </service>
+					<service name="ROM" label="numlock"> <child name="wm_report_rom"/> </service>
 					<any-service> <parent/> </any-service>
 				</route>
 			</start>
@@ -293,7 +293,7 @@ proc drivers_start_nodes { feature_arg } {
 				<route>
 					<service name="LOG"> <parent/> </service>
 					<service name="CPU"> <parent/> </service>
-					<service name="ROM" label="capslock"> <child name="report_rom"/> </service>
+					<service name="ROM" label="capslock"> <child name="wm_report_rom"/> </service>
 					<service name="ROM" label="numlock.remap"> <child name="numlock_remap_rom"/> </service>
 					<service name="ROM"> <parent/> </service>
 					<service name="PD">  <parent/> </service>
@@ -330,8 +330,8 @@ proc drivers_start_nodes { feature_arg } {
 			<provides><service name="Input"/></provides>
 			<config capslock_led="rom" numlock_led="rom"/>
 			<route>
-				<service name="ROM" label="capslock"> <child name="report_rom"/> </service>
-				<service name="ROM" label="numlock"> <child name="report_rom"/> </service>
+				<service name="ROM" label="capslock"> <child name="wm_report_rom"/> </service>
+				<service name="ROM" label="numlock"> <child name="wm_report_rom"/> </service>
 				<any-service> <parent/> <any-child/> </any-service>
 			</route>
 		</start>
@@ -365,8 +365,8 @@ proc drivers_start_nodes { feature_arg } {
 		append start_nodes {
 				</config>
 			<route>
-				<service name="ROM" label="capslock"> <child name="report_rom"/> </service>
-				<service name="ROM" label="numlock"> <child name="report_rom"/> </service>
+				<service name="ROM" label="capslock"> <child name="wm_report_rom"/> </service>
+				<service name="ROM" label="numlock"> <child name="wm_report_rom"/> </service>
 				<any-service> <parent/> <any-child/> </any-service>
 			</route>
 			</start>
