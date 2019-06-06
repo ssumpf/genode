@@ -214,9 +214,9 @@ class Genode::Trace::Subject
 
 			_policy_id = policy_id;
 
-			if (!_buffer.setup(ram, size)
-			 || !_policy.setup(ram, local_rm, policy_ds, policy_size))
-				throw Already_traced();
+			_buffer.setup(ram, size);
+			if(!_policy.setup(ram, local_rm, policy_ds, policy_size))
+					throw Already_traced();
 
 			/* inform trace source about the new buffer */
 			Locked_ptr<Source> source(_source);
