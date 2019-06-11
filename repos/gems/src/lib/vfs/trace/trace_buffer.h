@@ -69,6 +69,8 @@ class Trace_buffer
 			/* remember the last processed entry in _curr */
 			_curr = e1;
 		}
+
+		void * address() const { return &_buffer; }
 };
 
 

@@ -152,6 +152,8 @@ class Vfs::Value_file_system : public Vfs::Single_file_system
 			return val;
 		}
 
+		Buffer buffer() const  { return _buffer; }
+
 		bool matches(Xml_node node) const
 		{
 			return node.has_type(type_name()) &&

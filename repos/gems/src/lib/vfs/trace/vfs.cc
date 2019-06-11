@@ -39,6 +39,7 @@ class Vfs_trace::Trace_buffer_file_system : public Single_file_system
 		Trace::Connection &_trace;
 		Trace::Policy_id   _policy;
 		Trace::Subject_id  _id;
+		size_t             _buffer_size { 1024 * 1024 };
 
 		Constructible<Trace_buffer> _buffer;
 
@@ -56,12 +57,13 @@ class Vfs_trace::Trace_buffer_file_system : public Single_file_system
 		void _setup_and_trace()
 		{
 			if (_buffer.constructed()) {
+				_env.env().rm().detach(_buffer->address());
 				_buffer.destruct();
 			}
 
 			/* TODO: make buffer size configurable, handle exceptions */
 			warning("start trace");
-			_trace.trace(_id, _policy, 512*1024);
+			_trace.trace(_id, _policy, _buffer_size);
 			warning("tracing started");
 			_buffer.construct(*((Trace::Buffer *)_env.env().rm().attach(_trace.buffer(_id))));
 		}
@@ -137,6 +139,27 @@ class Vfs_trace::Trace_buffer_file_system : public Single_file_system
 			return OPEN_OK;
 		}
 
+
+		bool resize_buffer(size_t size)
+		{
+			if (size == 0) return false;
+
+			_buffer_size = size;
+
+			switch (_state) {
+				case TRACE:
+					_trace.pause(_id);
+					_setup_and_trace();
+					break;
+				case PAUSED:
+					_state = OFF;
+					break;
+				case OFF:
+					break;
+			}
+			return true;
+		}
+
 		void trace(bool enable)
 		{
 			if (enable) {
@@ -160,9 +183,14 @@ class Vfs_trace::Trace_buffer_file_system : public Single_file_system
 
 struct Vfs_trace::Subject_factory : File_system_factory
 {
-	Vfs::Env                   &_env;
-	Value_file_system<bool, 6>  _enabled_fs { _env, "enable", "false\n"};
-	Trace_buffer_file_system    _trace_fs;
+	Vfs::Env                               &_env;
+	Value_file_system<bool, 6>             _enabled_fs
+	  { _env, "enable", "false\n"};
+	Value_file_system<Number_of_bytes, 16> _buffer_size_fs
+	  { _env, "buffer_size", "1M\n"};
+	String<17>                             _buffer_string
+	  { _buffer_size_fs.buffer() };
+	Trace_buffer_file_system               _trace_fs;
 
 	Subject_factory(Vfs::Env &env,
 	                Trace::Connection &trace,
@@ -172,8 +200,10 @@ struct Vfs_trace::Subject_factory : File_system_factory
 
 	Vfs::File_system *create(Vfs::Env &env, Xml_node node) override
 	{
-		if (node.has_type(Value_file_system<unsigned>::type_name()))
-			return _enabled_fs.matches(node)   ? &_enabled_fs : nullptr;
+		if (node.has_type(Value_file_system<unsigned>::type_name())) {
+			if (_enabled_fs.matches(node))     return &_enabled_fs;
+			if (_buffer_size_fs.matches(node)) return &_buffer_size_fs;
+		}
 
 		if (node.has_type(Trace_buffer_file_system::type_name()))
 			return &_trace_fs;
@@ -196,6 +226,11 @@ class Vfs_trace::Subject : private Subject_factory,
 		  Subject_factory::_env.alloc(),
 		  *this, &Subject::_enable_subject };
 
+		Watch_handler<Subject> _buffer_size_handler {
+		  _buffer_size_fs, "/buffer_size",
+		  Subject_factory::_env.alloc(),
+		  *this, &Subject::_buffer_size };
+
 
 		static Config _config(Xml_node node)
 		{
@@ -204,6 +239,7 @@ class Vfs_trace::Subject : private Subject_factory,
 			Xml_generator xml(buf, sizeof(buf), "dir", [&] () {
 				xml.attribute("name", node.attribute_value("name", Vfs_trace::Name()));
 				xml.node("value", [&] () { xml.attribute("name", "enable"); });
+				xml.node("value", [&] () { xml.attribute("name", "buffer_size"); });
 				xml.node(Trace_buffer_file_system::type_name(), [&] () {});
 			});
 
@@ -220,6 +256,21 @@ class Vfs_trace::Subject : private Subject_factory,
 			_enabled_fs.value(_enabled_fs.value() ? "true\n" : "false\n");
 			log("ENABLE: ", _enabled_fs.value());
 			_trace_fs.trace(_enabled_fs.value());
+		}
+
+		void _buffer_size()
+		{
+			Number_of_bytes size = _buffer_size_fs.value();
+
+			log("BUFFER SIZE: ", size);
+
+			if (_trace_fs.resize_buffer(size) == false) {
+				/* restore old value */
+				_buffer_size_fs.value(_buffer_string);
+				return;
+			}
+
+			_buffer_string = _buffer_size_fs.buffer();
 		}
 
 	public:
