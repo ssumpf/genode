@@ -161,7 +161,7 @@ class Vfs_trace::Trace_buffer_file_system : public Single_file_system
 struct Vfs_trace::Subject_factory : File_system_factory
 {
 	Vfs::Env                   &_env;
-	Value_file_system<bool, 1>  _enabled_fs { _env, "enable", 0u};
+	Value_file_system<bool, 6>  _enabled_fs { _env, "enable", "false\n"};
 	Trace_buffer_file_system    _trace_fs;
 
 	Subject_factory(Vfs::Env &env,
@@ -217,6 +217,8 @@ class Vfs_trace::Subject : private Subject_factory,
 
 		void _enable_subject()
 		{
+			_enabled_fs.value(_enabled_fs.value() ? "true\n" : "false\n");
+			log("ENABLE: ", _enabled_fs.value());
 			_trace_fs.trace(_enabled_fs.value());
 		}
 

@@ -126,7 +126,7 @@ class Vfs::Value_file_system : public Vfs::Single_file_system
 
 	public:
 
-		Value_file_system(Vfs::Env &env, Name const &name, T const &initial_value)
+		Value_file_system(Vfs::Env &env, Name const &name, Buffer const &initial_value)
 		:
 			Single_file_system(NODE_TYPE_CHAR_DEVICE, type(),
 			                   Xml_node(_config(name).string())),
@@ -139,17 +139,15 @@ class Vfs::Value_file_system : public Vfs::Single_file_system
 
 		char const *type() override { return type_name(); }
 
-		void value(T const &value)
+		void value(Buffer const &value)
 		{
 			_buffer = Buffer(value);
 		}
 
 		T value()
 		{
-			T val;
+			T val { 0 };
 			Genode::ascii_to(_buffer.string(), val);
-			/* in case of simple types like 'bool' set to 1 or 0 */
-			value(val);
 
 			return val;
 		}
