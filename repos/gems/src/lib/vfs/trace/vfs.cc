@@ -61,9 +61,13 @@ class Vfs_trace::Trace_buffer_file_system : public Single_file_system
 				_buffer.destruct();
 			}
 
-			/* TODO: make buffer size configurable, handle exceptions */
 			warning("start trace");
-			_trace.trace(_id, _policy, _buffer_size);
+			try {
+				_trace.trace(_id, _policy, _buffer_size);
+			} catch (...) {
+				error("Failed to start tracing");
+				return;
+			}
 			warning("tracing started");
 			_buffer.construct(*((Trace::Buffer *)_env.env().rm().attach(_trace.buffer(_id))));
 		}

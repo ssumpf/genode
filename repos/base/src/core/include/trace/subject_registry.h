@@ -102,6 +102,9 @@ class Genode::Trace::Subject
 					if (!from_ds.valid())
 						return false;
 
+					if (_size)
+						flush();
+
 					_ram_ptr = &ram;
 					_size    = size;
 					_ds      = ram.alloc(_size);
@@ -143,6 +146,7 @@ class Genode::Trace::Subject
 		Ram_dataspace       _buffer { };
 		Ram_dataspace       _policy { };
 		Policy_id           _policy_id { };
+		size_t              _allocated_memory { 0 };
 
 		Subject_info::State _state()
 		{
@@ -164,11 +168,12 @@ class Genode::Trace::Subject
 		void _traceable_or_throw()
 		{
 			switch(_state()) {
-				case Subject_info::DEAD   : throw Source_is_dead();
-				case Subject_info::TRACED : throw Already_traced();
-				case Subject_info::FOREIGN: throw Traced_by_other_session();
-				case Subject_info::ERROR  : throw Source_is_dead();
+				case Subject_info::DEAD    : throw Source_is_dead();
+				case Subject_info::FOREIGN : throw Traced_by_other_session();
+				case Subject_info::ERROR   : throw Source_is_dead();
+				case Subject_info::INVALID : throw Nonexistent_subject();
 				case Subject_info::UNTRACED: return;
+				case Subject_info::TRACED  : return;
 			}
 		}
 
@@ -193,6 +198,8 @@ class Genode::Trace::Subject
 		 * Test if subject belongs to the specified unique source ID
 		 */
 		bool has_source_id(unsigned id) const { return id == _source_id; }
+
+		size_t allocated_memory() const  { return _allocated_memory; }
 
 		/**
 		 * Start tracing
@@ -223,6 +230,8 @@ class Genode::Trace::Subject
 
 			if (!source->try_acquire(*this))
 				throw Traced_by_other_session();
+
+			_allocated_memory = policy_size + size;
 
 			source->trace(_policy.dataspace(), _buffer.dataspace());
 		}

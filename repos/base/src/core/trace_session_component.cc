@@ -82,6 +82,11 @@ void Session_component::trace(Subject_id subject_id, Policy_id policy_id,
 	size_t const  policy_size = _policies.size(*this, policy_id);
 	size_t const required_ram = buffer_size + policy_size;
 
+	Trace::Subject &subject = _subjects.lookup_by_id(subject_id);
+	/* revert quota from previous call to trace */
+	if (subject.allocated_memory())
+		_md_alloc.upgrade(subject.allocated_memory());
+
 	/*
 	 * Account RAM needed for trace buffer and policy buffer to the trace
 	 * session.
@@ -92,16 +97,13 @@ void Session_component::trace(Subject_id subject_id, Policy_id policy_id,
 	}
 
 	try {
-		Genode::error(__func__, ":", __LINE__, " id: ", subject_id.id);
-		Trace::Subject &subject = _subjects.lookup_by_id(subject_id);
-		Genode::error(__func__, ":", __LINE__);
 		subject.trace(policy_id, _policies.dataspace(*this, policy_id),
 		              policy_size, _ram, _local_rm, buffer_size);
 	} catch (...) {
 		/* revert withdrawal or quota */
 		_md_alloc.upgrade(required_ram);
 		Genode::error(__func__, ":", __LINE__);
-		throw Out_of_ram();
+		throw; //Out_of_ram();
 	}
 }
 
