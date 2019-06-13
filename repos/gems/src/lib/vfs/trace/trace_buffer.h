@@ -37,7 +37,7 @@ class Trace_buffer
 		 * Call functor for each entry that wasn't yet processed
 		 */
 		template <typename FUNC>
-		void for_each_new_entry(FUNC && functor)
+		void for_each_new_entry(FUNC && functor, bool update = true)
 		{
 			using namespace Genode;
 
@@ -46,14 +46,14 @@ class Trace_buffer
 				_wrapped_count = _buffer.wrapped();
 
 			/* initialize _curr if _buffer was empty until now */
+			Trace::Buffer::Entry curr { _curr };
 			if (_curr.last())
-				_curr = _buffer.first();
+				curr = _buffer.first();
 
 			/* iterate over all entries that were not processed yet */
-			     Trace::Buffer::Entry e1 = _curr;
-			for (Trace::Buffer::Entry e2 = _curr; wrapped || !e2.last();
-			                          e2 = _buffer.next(e2))
-			{
+			Trace::Buffer::Entry e1 = curr;
+			for (Trace::Buffer::Entry e2 = curr; wrapped || !e2.last();
+			                          e2 = _buffer.next(e2)) {
 				/* if buffer wrapped, we pass the last entry once and continue at first entry */
 				if (wrapped && e2.last()) {
 					wrapped = false;
@@ -66,11 +66,13 @@ class Trace_buffer
 				if (!functor(e1))
 					break;
 			}
+
 			/* remember the last processed entry in _curr */
-			_curr = e1;
+			curr = e1;
+			if (update) _curr = curr;
 		}
 
-		void * address() const { return &_buffer; }
+		void * address()        const { return &_buffer; }
 };
 
 

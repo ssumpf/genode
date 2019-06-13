@@ -1,3 +1,15 @@
+/*
+ * \brief  File system for trace buffer access
+ * \author Sebastian Sumpf
+ * \date   2019-06-13
+ */
+
+/*
+ * Copyright (C) 2019 Genode Labs GmbH
+ *
+ * This file is part of the Genode OS framework, which is distributed
+ * under the terms of the GNU Affero General Public License version 3.
+ */
 
 /* Genode includes */
 #include <base/attached_rom_dataspace.h>
@@ -14,7 +26,6 @@
 #include "trace_buffer.h"
 #include "value_file_system.h"
 
-#include <base/debug.h>
 
 namespace Vfs_trace {
 
@@ -40,6 +51,7 @@ class Vfs_trace::Trace_buffer_file_system : public Single_file_system
 		Trace::Policy_id   _policy;
 		Trace::Subject_id  _id;
 		size_t             _buffer_size { 1024 * 1024 };
+		size_t             _stat_size { 0 };
 
 		Constructible<Trace_buffer> _buffer;
 
@@ -61,14 +73,13 @@ class Vfs_trace::Trace_buffer_file_system : public Single_file_system
 				_buffer.destruct();
 			}
 
-			warning("start trace");
 			try {
 				_trace.trace(_id, _policy, _buffer_size);
 			} catch (...) {
-				error("Failed to start tracing");
+				error("failed to start tracing");
 				return;
 			}
-			warning("tracing started");
+
 			_buffer.construct(*((Trace::Buffer *)_env.env().rm().attach(_trace.buffer(_id))));
 		}
 
@@ -99,13 +110,12 @@ class Vfs_trace::Trace_buffer_file_system : public Single_file_system
 					memcpy(dst + out_count, entry.data(), size);
 					out_count += size;
 
-					if (out_count == count) // || entry.next(entry).length() + out_count > count)
+					if (out_count == count)
 						return false;
 
 					return true;
 				});
 
-				Genode::warning("read: ", count, " out: ", out_count);
 				return READ_OK;
 			}
 
@@ -138,11 +148,24 @@ class Vfs_trace::Trace_buffer_file_system : public Single_file_system
 			if (!_single_file(path))
 				return OPEN_ERR_UNACCESSIBLE;
 
-			PDBG(path);
 			*out_handle = new (alloc) Vfs_handle(*this, *this, alloc, _buffer);
 			return OPEN_OK;
 		}
 
+		Stat_result stat(char const *path, Stat &out) override
+		{
+			Stat_result res = Single_file_system::stat(path, out);
+			if (res != STAT_OK) return res;
+
+			/* update file size */
+			if (_state == TRACE)
+				_buffer->for_each_new_entry([&](Trace::Buffer::Entry entry) {
+					_stat_size += entry.length(); return true; }, false);
+
+			out.size = _stat_size;
+
+			return res;
+		}
 
 		bool resize_buffer(size_t size)
 		{
@@ -258,15 +281,12 @@ class Vfs_trace::Subject : private Subject_factory,
 		void _enable_subject()
 		{
 			_enabled_fs.value(_enabled_fs.value() ? "true\n" : "false\n");
-			log("ENABLE: ", _enabled_fs.value());
 			_trace_fs.trace(_enabled_fs.value());
 		}
 
 		void _buffer_size()
 		{
 			Number_of_bytes size = _buffer_size_fs.value();
-
-			log("BUFFER SIZE: ", size);
 
 			if (_trace_fs.resize_buffer(size) == false) {
 				/* restore old value */
@@ -311,8 +331,8 @@ struct Vfs_trace::Local_factory : File_system_factory
 		try {
 			null_policy.construct(_env.env(), "null");
 			_policy_id = _trace.alloc_policy(null_policy->size());
-		} catch (Out_of_caps) { error("out of CAPS"); throw; }
-			catch (Out_of_ram)  { error(" out of RAM"); throw; }
+		} catch (Out_of_caps) { throw; }
+			catch (Out_of_ram)  { throw; }
 			catch (...) {
 				error("failed to attach 'null' trace policy."
 			        "Please make sure it is provided as a ROM module.");
@@ -348,7 +368,6 @@ struct Vfs_trace::Local_factory : File_system_factory
 
 	Vfs::File_system *create(Vfs::Env&, Xml_node node) override
 	{
-		PDBG(node);
 		if (node.has_type(Subject::type_name()))
 			return new (_env.alloc()) Subject(_env, _trace, _policy_id, node);
 
@@ -371,7 +390,6 @@ class Vfs_trace::File_system : private Local_factory,
 				tree.xml(xml);
 			});
 
-			PDBG("config: ",(char const *)buf);
 			return buf;
 		}
 
@@ -382,7 +400,7 @@ class Vfs_trace::File_system : private Local_factory,
 			Vfs::Dir_file_system(vfs_env, Xml_node(_config(vfs_env, _tree)), *this)
 		{ }
 
-		char const *type() override { PDBG("CALLED"); return "trace"; }
+		char const *type() override { return "trace"; }
 };
 
 
@@ -397,10 +415,9 @@ extern "C" Vfs::File_system_factory *vfs_file_system_factory(void)
 		Vfs::File_system *create(Vfs::Env &vfs_env,
 		                         Genode::Xml_node node) override
 		{
-			PDBG("called: ", node);
 			try { return new (vfs_env.alloc())
 				Vfs_trace::File_system(vfs_env, node); }
-			catch (...) { PDBG("ERROR"); }
+			catch (...) { Genode::error("could not create 'trace_fs' "); }
 			return nullptr;
 		}
 	};
