@@ -84,8 +84,10 @@ void Session_component::trace(Subject_id subject_id, Policy_id policy_id,
 
 	Trace::Subject &subject = _subjects.lookup_by_id(subject_id);
 	/* revert quota from previous call to trace */
-	if (subject.allocated_memory())
+	if (subject.allocated_memory()) {
 		_md_alloc.upgrade(subject.allocated_memory());
+		subject.reset_allocated_memory();
+	}
 
 	/*
 	 * Account RAM needed for trace buffer and policy buffer to the trace

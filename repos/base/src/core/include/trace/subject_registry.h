@@ -199,7 +199,8 @@ class Genode::Trace::Subject
 		 */
 		bool has_source_id(unsigned id) const { return id == _source_id; }
 
-		size_t allocated_memory() const  { return _allocated_memory; }
+		size_t allocated_memory() const { return _allocated_memory; }
+		void   reset_allocated_memory() { _allocated_memory = 0; }
 
 		/**
 		 * Start tracing
