@@ -50,7 +50,7 @@ class Vfs_trace::Trace_buffer_file_system : public Single_file_system
 		struct Trace_entries
 		{
 			Vfs::Env                   &_env;
-			Constructible<Trace_buffer> _buffer;
+			Constructible<Trace_buffer> _buffer { };
 
 			Trace_entries(Vfs::Env &env) : _env(env) { }
 
@@ -244,10 +244,10 @@ struct Vfs_trace::Subject_factory : File_system_factory
 {
 	Vfs::Env                               &_env;
 	Value_file_system<bool, 6>             _enabled_fs
-	  { _env, "enable", "false\n"};
+	  { "enable", "false\n"};
 
 	Value_file_system<Number_of_bytes, 16> _buffer_size_fs
-	  { _env, "buffer_size", "1M\n"};
+	  { "buffer_size", "1M\n"};
 
 	String<17>                             _buffer_string
 	  { _buffer_size_fs.buffer() };
@@ -260,7 +260,7 @@ struct Vfs_trace::Subject_factory : File_system_factory
 	                Trace::Subject_id id)
 	: _env(env), _trace_fs(env, trace, policy, id) { }
 
-	Vfs::File_system *create(Vfs::Env &env, Xml_node node) override
+	Vfs::File_system *create(Vfs::Env &, Xml_node node) override
 	{
 		if (node.has_type(Value_file_system<unsigned>::type_name())) {
 			if (_enabled_fs.matches(node))     return &_enabled_fs;
@@ -352,8 +352,8 @@ struct Vfs_trace::Local_factory : File_system_factory
 	Trace::Connection  _trace;
 	enum { MAX_SUBJECTS = 128 };
 	Trace::Subject_id  _subjects[MAX_SUBJECTS];
-	unsigned           _subject_count;
-	Trace::Policy_id   _policy_id;
+	unsigned           _subject_count { 0 };
+	Trace::Policy_id   _policy_id { 0 };
 
 	Directory_tree     _tree { _env.alloc() };
 

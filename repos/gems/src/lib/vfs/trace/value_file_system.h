@@ -126,7 +126,7 @@ class Vfs::Value_file_system : public Vfs::Single_file_system
 
 	public:
 
-		Value_file_system(Vfs::Env &env, Name const &name, Buffer const &initial_value)
+		Value_file_system(Name const &name, Buffer const &initial_value)
 		:
 			Single_file_system(NODE_TYPE_CHAR_DEVICE, type(),
 			                   Xml_node(_config(name).string())),
@@ -165,7 +165,7 @@ class Vfs::Value_file_system : public Vfs::Single_file_system
 		 ** File I/O service interface **
 		 ********************************/
 
-		Ftruncate_result ftruncate(Vfs::Vfs_handle *handle, file_size size) override
+		Ftruncate_result ftruncate(Vfs::Vfs_handle *, file_size size) override
 		{
 			if (size >= BUF_SIZE)
 				return FTRUNCATE_ERR_NO_SPACE;

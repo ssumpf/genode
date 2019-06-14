@@ -38,7 +38,7 @@ class Genode::Avl_node_tree : public NT
 		using Tree = Avl_tree<NT>;
 		using Node = Avl_node<NT>;
 
-		Tree _tree;
+		Tree _tree { };
 
 	public:
 
