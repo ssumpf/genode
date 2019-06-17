@@ -6,10 +6,10 @@
 
 assert_spec hw
 
-if { ![have_spec imx7d_sabre] && ![have_spec arndale] } {
-	puts "Run script is not supported on this platform"
-	exit 0
-}
+#if { ![have_spec imx7d_sabre] && ![have_spec arndale] } {
+#	puts "Run script is not supported on this platform"
+#	exit 0
+#}
 
 set build_components {
 	core init timer
