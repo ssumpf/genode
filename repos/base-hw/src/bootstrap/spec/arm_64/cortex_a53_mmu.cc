@@ -83,10 +83,12 @@ static inline void prepare_hypervisor()
 unsigned Bootstrap::Platform::enable_mmu()
 {
 	while (Cpu::current_privilege_level() > Cpu::Current_el::EL1) {
-		if (Cpu::current_privilege_level() == Cpu::Current_el::EL3)
+		if (Cpu::current_privilege_level() == Cpu::Current_el::EL3) {
 			prepare_non_secure_world();
-		else
+		} else {
+			board.pic.init_cpu_local();
 			prepare_hypervisor();
+		}
 	}
 
 	/* enable performance counter for user-land */
