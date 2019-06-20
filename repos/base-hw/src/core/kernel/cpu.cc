@@ -56,7 +56,10 @@ void Cpu_job::_interrupt(unsigned const /* cpu_id */)
 {
 	/* determine handling for specific interrupt */
 	unsigned irq_id;
-	if (pic().take_request(irq_id))
+	Genode::log("irq");
+	if (pic().take_request(irq_id)) {
+
+		Genode::log("irq ", irq_id);
 
 		/* is the interrupt a cpu-local one */
 		if (!_cpu->interrupt(irq_id)) {
@@ -66,6 +69,7 @@ void Cpu_job::_interrupt(unsigned const /* cpu_id */)
 			if (irq) irq->occurred();
 			else Genode::raw("Unknown interrupt ", irq_id);
 		}
+	}
 
 	/* end interrupt request at controller */
 	pic().finish_request();

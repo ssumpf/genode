@@ -30,6 +30,7 @@ void Thread::exception(Cpu & cpu)
 	case Cpu::IRQ_LEVEL_EL1: [[fallthrough]]
 	case Cpu::FIQ_LEVEL_EL0: [[fallthrough]]
 	case Cpu::FIQ_LEVEL_EL1:
+		Genode::raw("irq");
 		_interrupt(cpu.id());
 		return;
 	case Cpu::SYNC_LEVEL_EL0: [[fallthrough]]

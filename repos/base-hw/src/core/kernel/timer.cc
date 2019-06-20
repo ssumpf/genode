@@ -20,7 +20,9 @@
 using namespace Kernel;
 
 
-void Timer::Irq::occurred() { _cpu.scheduler().timeout(); }
+void Timer::Irq::occurred() {
+	Genode::log(__func__);
+ _cpu.scheduler().timeout(); }
 
 
 Timer::Irq::Irq(unsigned id, Cpu &cpu)
