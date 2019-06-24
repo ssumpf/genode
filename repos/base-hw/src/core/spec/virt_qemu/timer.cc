@@ -19,7 +19,7 @@ using namespace Kernel;
 
 /* XXX ? -> qemu-3.1.0/include/hw/arm/virt.h */
 
-unsigned Timer::interrupt_id() const { return 14; }
+unsigned Timer::interrupt_id() const { return 14 + 16; /* is PPI */ }
 
 
 unsigned long Timer_driver::_freq() { return Genode::Cpu::Cntfrq_el0::read(); }

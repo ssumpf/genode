@@ -17,14 +17,22 @@
 #include <hw/spec/arm_64/virt_qemu_board.h>
 #include <hw/spec/arm_64/cpu.h>
 #include <hw/spec/arm/lpae.h>
+#include <spec/gicv3/pic.h>
 
 namespace Bootstrap {
 	using Cpu = Hw::Arm_64_cpu;
-	struct Pic {};
 };
 
 namespace Board {
 	using namespace Hw::Virt_qemu_board;
 };
+
+
+namespace Bootstrap { struct Pic; }
+struct Bootstrap::Pic : Hw::Pic
+{
+	void init_cpu_local();
+};
+
 
 #endif /* _BOOTSTRAP__SPEC__VIRT_QEMU__BOARD_H_ */

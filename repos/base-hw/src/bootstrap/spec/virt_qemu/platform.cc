@@ -27,9 +27,9 @@ Bootstrap::Platform::Board::Board()
   core_mmio(Memory_region { ::Board::UART_BASE, ::Board::UART_SIZE },
             Memory_region { ::Board::Cpu_mmio::IRQ_CONTROLLER_DISTR_BASE,
                             ::Board::Cpu_mmio::IRQ_CONTROLLER_DISTR_SIZE },
-            Memory_region { ::Board::Cpu_mmio::IRQ_CONTROLLER_CPU_BASE,
-                            ::Board::Cpu_mmio::IRQ_CONTROLLER_CPU_SIZE }) {}
-
+            Memory_region { ::Board::Cpu_mmio::IRQ_CONTROLLER_REDIST_BASE,
+                            ::Board::Cpu_mmio::IRQ_CONTROLLER_REDIST_SIZE }) {}
+/* XXX: make REDIST multi core aware */
 
 static inline void prepare_non_secure_world()
 {
@@ -98,8 +98,10 @@ static inline void prepare_hypervisor()
 unsigned Bootstrap::Platform::enable_mmu()
 {
 	while (Cpu::current_privilege_level() > Cpu::Current_el::EL1) {
-		if (Cpu::current_privilege_level() == Cpu::Current_el::EL3)
+		if (Cpu::current_privilege_level() == Cpu::Current_el::EL3) {
+			pic.init_cpu_local();
 			prepare_non_secure_world();
+		}
 		else
 			prepare_hypervisor();
 	}

@@ -1,6 +1,7 @@
 INC_DIR += $(REP_DIR)/src/core/spec/virt_qemu
 INC_DIR += $(REP_DIR)/src/core/spec/arm_v8
-INC_DIR += $(REP_DIR)/src/core/spec/arm_gic
+INC_DIR += $(REP_DIR)/src/core/spec/arm_gicv3
+INC_DIR += $(REP_DIR)/include/spec/gicv3
 
 # add C++ sources
 SRC_CC += platform_services.cc
@@ -11,7 +12,7 @@ SRC_CC += spec/arm_v8/cpu.cc
 SRC_CC += spec/arm_v8/kernel/thread.cc
 SRC_CC += spec/arm_v8/kernel/cpu.cc
 SRC_CC += spec/arm/platform_support.cc
-SRC_CC += spec/arm_gic/pic.cc
+SRC_CC += spec/gicv3/pic.cc
 SRC_CC += spec/virt_qemu/timer.cc
 SRC_CC += spec/64bit/memory_map.cc
 

@@ -170,7 +170,7 @@ Platform::Platform()
 				kernel_resource = true;
 			}
 		});
-		if (i == Pic::IPI) {
+		if (i == Kernel::Pic::IPI) {
 			kernel_resource = true;
 		}
 		if (kernel_resource) {
