@@ -84,6 +84,8 @@ class Genode::Ring_buffer
 
 	public:
 
+		constexpr static size_t size() { return QUEUE_SIZE; }
+
 		class Overflow : public Exception { };
 
 		/**

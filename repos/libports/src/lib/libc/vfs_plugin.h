@@ -115,6 +115,7 @@ class Libc::Vfs_plugin : public Libc::Plugin
 		bool supports_access(const char *, int)                override { return true; }
 		bool supports_mkdir(const char *, mode_t)              override { return true; }
 		bool supports_open(const char *, int)                  override { return true; }
+		bool supports_pipe()                                   override { return true; }
 		bool supports_poll()                                   override { return true; }
 		bool supports_readlink(const char *, char *, ::size_t) override { return true; }
 		bool supports_rename(const char *, const char *)       override { return true; }
@@ -147,6 +148,7 @@ class Libc::Vfs_plugin : public Libc::Plugin
 		int     ioctl(Libc::File_descriptor *, int , char *) override;
 		::off_t lseek(Libc::File_descriptor *fd, ::off_t offset, int whence) override;
 		int     mkdir(const char *, mode_t) override;
+		int     pipe(Libc::File_descriptor *pipefdo[2]) override;
 		bool    poll(File_descriptor &fdo, struct pollfd &pfd) override;
 		ssize_t read(Libc::File_descriptor *, void *, ::size_t) override;
 		ssize_t readlink(const char *, char *, ::size_t) override;
