@@ -61,7 +61,8 @@ class Genode::Kernel_object
 			if (!syscall) construct_at<T>(&_data, args...);
 		}
 
-		~Kernel_object() { T::syscall_destroy(kernel_object()); }
+		~Kernel_object() {
+			if (_cap.valid()) T::syscall_destroy(kernel_object()); }
 
 		T * kernel_object() { return reinterpret_cast<T*>(_data); }
 
