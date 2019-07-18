@@ -93,7 +93,8 @@ class Vcpu {
 				_initial_state.r[i]  = 0x100 + i;
 
 			_initial_state.ip        = 0x1000;
-			_initial_state.sp        = _initial_state.ip + 0x1000;
+			_initial_state.sp_el1    = _initial_state.ip + 0x1000;
+			_initial_state.pstate    = 0x3c5;
 
 			_initial_state.far_el1   = ~0UL;
 			_initial_state.esr_el1   = ~0U;
@@ -109,14 +110,9 @@ class Vcpu {
 			_initial_state.afsr0_el1 = 0; /* hw implementation defined, see spec */
 			_initial_state.afsr1_el1 = 0; /* hw implementation defined, see spec */
 			_initial_state.contextidr_el1 = 0;
-			_initial_state.csselr_el1 = 0;
 
 			_initial_state.sctlr_el1 = 0;
-			_initial_state.sp_el0    = ~0UL;
-			_initial_state.spsel     = 0x1;
 			_initial_state.spsr_el1  = ~0U;
-			_initial_state.daif      = 0x3c0;
-			_initial_state.nzcv      = 0;
 			_initial_state.fpcr      = 0;
 			_initial_state.fpsr      = 0;
 
@@ -422,88 +418,68 @@ void Vcpu::_dump_vm_state(Genode::Vm_state &state)
 	Genode::log(size_dump, ": ip=", Genode::Hex(state.ip));
 	size_dump += sizeof(state.ip);
 
+	Genode::log(size_dump, ": pstate=", Genode::Hex(state.pstate));
+	size_dump += sizeof(state.pstate);
+	Genode::log(size_dump, ": exception_type=", Genode::Hex(state.exception_type));
+	size_dump += sizeof(state.exception_type);
+	Genode::log(size_dump, ": esr_el2=", Genode::Hex(_state.esr_el2));
+	size_dump += sizeof(state.esr_el2);
+
+	for (unsigned i = 0; i < sizeof(state.q) / sizeof(state.q[0]); i++) {
+		Genode::log(size_dump, ": q", i, "=", Genode::Hex(state.q[i]));
+		size_dump += sizeof(state.q[i]);
+	}
+
+	Genode::log(size_dump, ": fpcr=", Genode::Hex(_state.fpcr));
+	size_dump += sizeof(state.fpcr);
+	Genode::log(size_dump, ": fpsr=", Genode::Hex(_state.fpsr));
+	size_dump += sizeof(state.fpsr);
+
+	Genode::log(size_dump, ": elr_el1=", Genode::Hex(_state.elr_el1));
+	size_dump += sizeof(state.elr_el1);
+	Genode::log(size_dump, ": sp_el1=", Genode::Hex(_state.sp_el1));
+	size_dump += sizeof(state.sp_el1);
+	Genode::log(size_dump, ": spsr_el1=", Genode::Hex(_state.spsr_el1));
+	size_dump += sizeof(state.spsr_el1);
+	Genode::log(size_dump, ": esr_el1=", Genode::Hex(_state.esr_el1));
+	size_dump += sizeof(state.esr_el1);
+
 	Genode::log(size_dump, ": sctlr_el1=", Genode::Hex(_state.sctlr_el1));
 	size_dump += sizeof(state.sctlr_el1);
+	Genode::log(size_dump, ": actlr_el1=", Genode::Hex(_state.actlr_el1));
+	size_dump += sizeof(state.actlr_el1);
+	Genode::log(size_dump, ": vbar_el1=", Genode::Hex(_state.vbar_el1));
+	size_dump += sizeof(state.vbar_el1);
+	Genode::log(size_dump, ": cpacr_el1=", Genode::Hex(_state.cpacr_el1));
+	size_dump += sizeof(state.cpacr_el1);
+	Genode::log(size_dump, ": afsr0_el1=", Genode::Hex(_state.afsr0_el1));
+	size_dump += sizeof(state.afsr0_el1);
+	Genode::log(size_dump, ": afsr1_el1=", Genode::Hex(_state.afsr1_el1));
+	size_dump += sizeof(state.afsr1_el1);
+	Genode::log(size_dump, ": contextidr_el1=", Genode::Hex(_state.contextidr_el1));
+	size_dump += sizeof(state.contextidr_el1);
+
 	Genode::log(size_dump, ": ttbr0_el1=", Genode::Hex(_state.ttbr0_el1));
 	size_dump += sizeof(state.ttbr0_el1);
 	Genode::log(size_dump, ": ttbr1_el1=", Genode::Hex(_state.ttbr1_el1));
 	size_dump += sizeof(state.ttbr1_el1);
 	Genode::log(size_dump, ": tcr_el1=", Genode::Hex(_state.tcr_el1));
 	size_dump += sizeof(state.tcr_el1);
-
-	Genode::log(size_dump, ": elr_el1=", Genode::Hex(_state.elr_el1));
-	size_dump += sizeof(state.elr_el1);
-	Genode::log(size_dump, ": sp_el0=", Genode::Hex(_state.sp_el0));
-	size_dump += sizeof(state.sp_el0);
-
-	Genode::log(size_dump, ": far_el1=", Genode::Hex(_state.far_el1));
-	size_dump += sizeof(state.far_el1);
-
 	Genode::log(size_dump, ": mair_el1=", Genode::Hex(_state.mair_el1));
 	size_dump += sizeof(state.mair_el1);
-
-	Genode::log(size_dump, ": vbar_el1=", Genode::Hex(_state.vbar_el1));
-	size_dump += sizeof(state.vbar_el1);
-
-	Genode::log(size_dump, ": actlr_el1=", Genode::Hex(_state.actlr_el1));
-	size_dump += sizeof(state.actlr_el1);
-
 	Genode::log(size_dump, ": amair_el1=", Genode::Hex(_state.amair_el1));
 	size_dump += sizeof(state.amair_el1);
-
+	Genode::log(size_dump, ": far_el1=", Genode::Hex(_state.far_el1));
+	size_dump += sizeof(state.far_el1);
 	Genode::log(size_dump, ": par_el1=", Genode::Hex(_state.par_el1));
 	size_dump += sizeof(state.par_el1);
 
 	Genode::log(size_dump, ": tpidrro_el0=", Genode::Hex(_state.tpidrro_el0));
 	size_dump += sizeof(state.tpidrro_el0);
-
 	Genode::log(size_dump, ": tpidr_el0=", Genode::Hex(_state.tpidr_el0));
 	size_dump += sizeof(state.tpidr_el0);
-
 	Genode::log(size_dump, ": tpidr_el1=", Genode::Hex(_state.tpidr_el1));
 	size_dump += sizeof(state.tpidr_el1);
-
-	Genode::log(size_dump, ": spsel=", Genode::Hex(_state.spsel));
-	size_dump += sizeof(state.spsel);
-	Genode::log(size_dump, ": spsr_el1=", Genode::Hex(_state.spsr_el1));
-	size_dump += sizeof(state.spsr_el1);
-
-	Genode::log(size_dump, ": daif=", Genode::Hex(_state.daif));
-	size_dump += sizeof(state.daif);
-	Genode::log(size_dump, ": nzcv=", Genode::Hex(_state.nzcv));
-	size_dump += sizeof(state.nzcv);
-	Genode::log(size_dump, ": fpcr=", Genode::Hex(_state.fpcr));
-	size_dump += sizeof(state.fpcr);
-	Genode::log(size_dump, ": fpsr=", Genode::Hex(_state.fpsr));
-	size_dump += sizeof(state.fpsr);
-
-	Genode::log(size_dump, ": esr_el1=", Genode::Hex(_state.esr_el1));
-	size_dump += sizeof(state.esr_el1);
-
-	Genode::log(size_dump, ": cpacr_el1=", Genode::Hex(_state.cpacr_el1));
-	size_dump += sizeof(state.cpacr_el1);
-
-	Genode::log(size_dump, ": afsr0_el1=", Genode::Hex(_state.afsr0_el1));
-	size_dump += sizeof(state.afsr0_el1);
-
-	Genode::log(size_dump, ": afsr1_el1=", Genode::Hex(_state.afsr1_el1));
-	size_dump += sizeof(state.afsr1_el1);
-
-	Genode::log(size_dump, ": contextidr_el1=", Genode::Hex(_state.contextidr_el1));
-	size_dump += sizeof(state.contextidr_el1);
-
-	Genode::log(size_dump, ": csselr_el1=", Genode::Hex(_state.csselr_el1));
-	size_dump += sizeof(state.csselr_el1);
-
-	Genode::log(size_dump, ": esr_el2=", Genode::Hex(_state.esr_el2));
-	size_dump += sizeof(state.esr_el2);
-
-	size_dump += sizeof(state.unused);
-
-	for (unsigned i = 0; i < sizeof(state.q) / sizeof(state.q[0]); i++) {
-		Genode::log(size_dump, ": q", i, "=", Genode::Hex(state.q[i]));
-		size_dump += sizeof(state.q[i]);
-	}
 
 	if (size_dump != sizeof(state)) {
 		Genode::error("dump incomplete, missing fields ",
@@ -534,9 +510,10 @@ void Vcpu::_handle_vm_exception()
 		for (int i = 0; i < reg; i++)
 			expected_state.r[i] += 1;
 
-		expected_state.esr_el2 = 0x5a000000;
-		expected_state.sp += 0x4;
-		expected_state.ip += 0x104;
+		expected_state.esr_el2        = 0x5a000000;
+		expected_state.sp_el1        += 0x4;
+		expected_state.ip            += 0x104;
+		expected_state.exception_type = 0x400;
 
 		int const qreg = sizeof(_initial_state.q) / sizeof(_initial_state.q[0]);
 		for (int i = 0; i < qreg; i++)
