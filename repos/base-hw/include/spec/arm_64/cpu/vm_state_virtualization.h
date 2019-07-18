@@ -29,46 +29,39 @@ namespace Genode
 
 struct Genode::Vm_state : Genode::Cpu_state
 {
-	Genode::uint64_t sctlr_el1;
-	Genode::uint64_t ttbr0_el1;
-	Genode::uint64_t ttbr1_el1;
-	Genode::uint64_t tcr_el1;
+	Genode::uint64_t pstate { 0 };
+	Genode::uint64_t exception_type { 0 };
+	Genode::uint64_t esr_el2 { 0 };
 
-	Genode::uint64_t elr_el1;
-	Genode::uint64_t sp_el0;
+	/** Fpu registers **/
+	Genode::uint128_t q[32] { 0 };
+	Genode::uint32_t fpcr   { 0 };
+	Genode::uint32_t fpsr   { 0 };
 
-	Genode::uint64_t far_el1;
-	Genode::uint64_t mair_el1;
-	Genode::uint64_t vbar_el1;
-	Genode::uint64_t actlr_el1;
-	Genode::uint64_t amair_el1;
-	Genode::uint64_t par_el1;
-	Genode::uint64_t tpidrro_el0;
-	Genode::uint64_t tpidr_el0;
-	Genode::uint64_t tpidr_el1;
+	Genode::uint64_t elr_el1  { 0 };
+	Genode::uint64_t sp_el1   { 0 };
+	Genode::uint32_t spsr_el1 { 0 };
+	Genode::uint32_t esr_el1  { 0 };
 
-	Genode::uint32_t spsel;
-	Genode::uint32_t spsr_el1;
-	Genode::uint32_t daif;
-	Genode::uint32_t nzcv;
-	Genode::uint32_t fpcr;
-	Genode::uint32_t fpsr;
+	Genode::uint64_t sctlr_el1 { 0 };
+	Genode::uint64_t actlr_el1 { 0 };
+	Genode::uint64_t vbar_el1  { 0 };
+	Genode::uint32_t cpacr_el1 { 0 };
+	Genode::uint32_t afsr0_el1 { 0 };      /* check */
+	Genode::uint32_t afsr1_el1 { 0 };      /* check */
+	Genode::uint32_t contextidr_el1 { 0 }; /* check */
 
-	Genode::uint32_t esr_el1;
-	Genode::uint32_t cpacr_el1;
-	Genode::uint32_t afsr0_el1;
-	Genode::uint32_t afsr1_el1;
-	Genode::uint32_t contextidr_el1;
-	Genode::uint32_t csselr_el1;
+	Genode::uint64_t ttbr0_el1 { 0 };
+	Genode::uint64_t ttbr1_el1 { 0 };
+	Genode::uint64_t tcr_el1   { 0 };
+	Genode::uint64_t mair_el1  { 0 };
+	Genode::uint64_t amair_el1 { 0 };
+	Genode::uint64_t far_el1   { 0 };
+	Genode::uint64_t par_el1   { 0 }; /* check */
 
-	Genode::uint64_t esr_el2;
-	Genode::uint64_t unused; /* to make q[32] 16 byte aligned */
-
-	Genode::uint128_t q[32];
-#if 0
-	Genode::uint64_t dlr_el0; /* invalid on qemu - and on hw ? */
-	Genode::uint32_t dspsr_el0; /* strange things happens on read in qemu XXX */
-#endif
+	Genode::uint64_t tpidrro_el0 { 0 };
+	Genode::uint64_t tpidr_el0   { 0 };
+	Genode::uint64_t tpidr_el1   { 0 };
 
 #if 0
 	/**

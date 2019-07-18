@@ -31,8 +31,6 @@ namespace Hw {
 		Memory_region const system_exception_vector();
 		Memory_region const hypervisor_exception_vector();
 		Memory_region const hypervisor_stack();
-		Memory_region const hypervisor_host_context();
-		Memory_region const hypervisor_vm_state();
 		Memory_region const supervisor_exception_vector();
 		Memory_region const boot_info();
 	}

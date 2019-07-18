@@ -1,6 +1,7 @@
 /*
  * \brief  Transition between virtual/host mode
  * \author Alexander Boettcher
+ * \author Stefan Kalkowski
  * \date   2019-06-25
  */
 
@@ -11,150 +12,107 @@
  * under the terms of the GNU Affero General Public License version 3.
  */
 
-.macro _host_ptr
-# XXX evil
-	ldr x4, _vt_host_context_ptr
-	and x4, x4, 0xfff
-
-	mov x3, 0x7fffff0000
-	add x3, x3, 0x4000
-
-	add x3, x3, x4
-# XXX evil
-.endm
-
-.macro _vm_exit exception_type
-	str x1, [sp, #-0*8]
-	str x3, [sp, #-1*8]
-	str x4, [sp, #-2*8]
-
-	mrs   x1, hcr_el2  /* read HCR register */
-	tst   x1, #1       /* check VM bit      */
-	beq   _host_to_vm
-
-	_host_ptr          /* in x3 - x3, x4 changed */
-	add x3, x3, #6*8   /* Host_context->vm_state */
-
-	ldr x1, [sp, #-0*8]
-	str x0, [sp, #-0*8]
-
-	ldr x0, [x3]       /* x0 contains vm_state pointer */
-
-	ldr x3, [sp, #-1*8]
-	ldr x4, [sp, #-2*8]
-
-	b     _vm_to_host
-.endm
-
 
 .section .text
-
-_unknown_exception:
-	1: yield
-	b 1b
 
 /*
  * see D1.10.2 Exception vectors chapter
  */
 .p2align 12
-.global el2_exception_vector
-el2_exception_vector:
-	.rept 0x100
-		b _unknown_exception /* 4 bytes each branch */
+.global hypervisor_exception_vector
+hypervisor_exception_vector:
+	.rept 16
+	add sp, sp, #-16   /* push x0, x1 to stack               */
+	stp x0, x1, [sp]
+	mrs x1, hcr_el2    /* read HCR register                  */
+	tst x1, #1         /* check VM bit                       */
+	beq _host_to_vm    /* if VM bit is not set, switch to VM */
+	ldr x0, [sp, #16]  /* otherwise, load vm_state pointer   */
+	adr x1, .          /* hold exception vector offset in x1 */
+	and x1, x1, #0xf80
+	b   _vm_to_host
+	.balign 128
 	.endr
-	_vm_exit 0   /* offset at 0x400 */
-	.rept 0x3fc - 1 /* 0x1000 - 4 - (0x100 * 4) */
-		b _unknown_exception /* 4 bytes each branch */
-	.endr
-
 
 _host_to_vm:
 
-	add        x0, x0, #31*8  /* skip x0...x30, loaded later */
+	msr vttbr_el2, x2   /* stage2 table pointer was arg2 */
 
-	/* 64 bit values */
-	ldr  x1, [x0], #1*8       /* Cpu_state->sp */
-	ldp  x2,  x3, [x0, #0*8]  /* Cpu_state->ip,       Vm_state->sctlr_el1 */
-	ldp  x4,  x5, [x0, #2*8]  /* Vm_state->ttbr0_el1, Vm_state->ttbr1_el1 */
-	ldp  x6,  x7, [x0, #4*8]  /* Vm_state->tcr_el1,   Vm_state->elr_el1 */
-	ldp  x8,  x9, [x0, #6*8]  /* Vm_state->sp_el0,    Vm_state->far_el1 */
-	ldp x10, x11, [x0, #8*8]  /* Vm_state->mair_el1,  Vm_state->vbar_el1 */
-	ldp x12, x13, [x0, #10*8] /* Vm_state->actlr_el1, Vm_state->amair_el1 */
-	ldp x14, x15, [x0, #12*8] /* Vm_state->par_el1,   Vm_state->tpidrro_el0 */
-	ldp x16, x17, [x0, #14*8] /* Vm_state->tpidr_el0, Vm_state->tpidr_el1 */
+	add  x0, x0, #31*8  /* skip x0...x30, loaded later */
 
-	/* 32 bit values */
-	ldp w18, w19, [x0, #16*8] /* Vm_state->spsel,     Vm_state->spsr_el1 */
-	ldp w20, w21, [x0, #17*8] /* Vm_state->daif,      Vm_state->nzcv */
-	ldp w22, w23, [x0, #18*8] /* Vm_state->fpcr,      Vm_state->fpsr */
-	ldp w24, w25, [x0, #19*8] /* Vm_state->esr_el1,   Vm_state->cpacr_el1 */
-	ldp w26, w27, [x0, #20*8] /* Vm_state->afsr0_el1, Vm_state->afsr1_el1 */
-	ldp w28, w29, [x0, #21*8] /* Vm_state->contextidr_el1, Vm_state->csselr_el1 */
+	ldr  x1,      [x0], #1*8  /* sp         */
+	ldp  x2,  x3, [x0], #2*8  /* ip, pstate */
+	msr  sp_el0,   x1
+	msr  elr_el2,  x2
+	msr  spsr_el2, x3
 
-	/* 64 bit values */
-	msr sp_el1,      x1
-	msr elr_el2,     x2
-	msr sctlr_el1,   x3
-	msr ttbr0_el1,   x4
-	msr ttbr1_el1,   x5
-	msr tcr_el1,     x6
-	msr elr_el1,     x7
-	msr sp_el0,      x8
-	msr far_el1,     x9
-	msr mair_el1,    x10
-	msr vbar_el1,    x11
-	msr actlr_el1,   x12
-	msr amair_el1,   x13
-	msr par_el1,     x14
-	msr tpidrro_el0, x15
-	msr tpidr_el0,   x16
-	msr tpidr_el1,   x17
+	add  x0, x0, #2*8 /* skip exception_type and esr_el2 */
 
-	/* 32 bit values */
-	msr spsel,          x18
-	msr spsr_el1,       x19
-	msr daif,           x20
-	msr nzcv,           x21
-	msr fpcr,           x22
-	msr fpsr,           x23
-	msr esr_el1,        x24
-	msr cpacr_el1,      x25
-	msr afsr0_el1,      x26
-	msr afsr1_el1,      x27
-	msr contextidr_el1, x28
-	msr csselr_el1,     x29
+	/** FPU register **/
+	ldp  q0,  q1,  [x0], #2*16
+	ldp  q2,  q3,  [x0], #2*16
+	ldp  q4,  q5,  [x0], #2*16
+	ldp  q6,  q7,  [x0], #2*16
+	ldp  q8,  q9,  [x0], #2*16
+	ldp  q10, q11, [x0], #2*16
+	ldp  q12, q13, [x0], #2*16
+	ldp  q14, q15, [x0], #2*16
+	ldp  q16, q17, [x0], #2*16
+	ldp  q18, q19, [x0], #2*16
+	ldp  q20, q21, [x0], #2*16
+	ldp  q22, q23, [x0], #2*16
+	ldp  q24, q25, [x0], #2*16
+	ldp  q26, q27, [x0], #2*16
+	ldp  q28, q29, [x0], #2*16
+	ldp  q30, q31, [x0], #2*16
+	ldp  w1,  w2,  [x0], #2*4
+	msr  fpcr, x1
+	msr  fpsr, x2
 
-	add  x0,  x0, #24 * 8
-	ldp  q0,  q1,  [x0, #32 * 0]
-	ldp  q2,  q3,  [x0, #32 * 1]
-	ldp  q4,  q5,  [x0, #32 * 2]
-	ldp  q6,  q7,  [x0, #32 * 3]
-	ldp  q8,  q9,  [x0, #32 * 4]
-	ldp  q10, q11, [x0, #32 * 5]
-	ldp  q12, q13, [x0, #32 * 6]
-	ldp  q14, q15, [x0, #32 * 7]
-	ldp  q16, q17, [x0, #32 * 8]
-	ldp  q18, q19, [x0, #32 * 9]
-	ldp  q20, q21, [x0, #32 * 10]
-	ldp  q22, q23, [x0, #32 * 11]
-	ldp  q24, q25, [x0, #32 * 12]
-	ldp  q26, q27, [x0, #32 * 13]
-	ldp  q28, q29, [x0, #32 * 14]
-	ldp  q30, q31, [x0, #32 * 15]
-	sub  x0,  x0, #24 * 8
+	/** system register **/
+	ldp  x1,  x2,  [x0], #2*8  /* elr_el1,   sp_el1         */
+	ldp  w3,  w4,  [x0], #2*4  /* spsr_el1,  esr_el1        */
+	ldp  x5,  x6,  [x0], #2*8  /* sctlr_el1, actlr_el1      */
+	ldr  x7,       [x0], #8    /* vbar_el1                  */
+	ldp  w8,  w9,  [x0], #2*4  /* cpacr_el1, afsr0_el1      */
+	ldp  w10, w11, [x0], #2*4  /* afsr1_el1, contextidr_el1 */
+	ldp  x12, x13, [x0], #2*8  /* ttbr0_el1, ttbr1_el1      */
+	ldp  x14, x15, [x0], #2*8  /* tcr_el1,   mair_el1       */
+	ldp  x16, x17, [x0], #2*8  /* amair_el1, far_el1        */
+	ldp  x18, x19, [x0], #2*8  /* par_el1,   tpidrro_el0    */
+	ldp  x20, x21, [x0], #2*8  /* tpidr_el0, tpidr_el1      */
+	msr  elr_el1,        x1
+	msr  sp_el1,         x2
+	msr  spsr_el1,       x3
+	msr  esr_el1,        x4
+	msr  sctlr_el1,      x5
+	msr  actlr_el1,      x6
+	msr  vbar_el1,       x7
+	msr  cpacr_el1,      x8
+	msr  afsr0_el1,      x9
+	msr  afsr1_el1,      x10
+	msr  contextidr_el1, x11
+	msr  ttbr0_el1,      x12
+	msr  ttbr1_el1,      x13
+	msr  tcr_el1,        x14
+	msr  mair_el1,       x15
+	msr  amair_el1,      x16
+	msr  far_el1,        x17
+	msr  par_el1,        x18
+	msr  tpidrro_el0,    x19
+	msr  tpidr_el0,      x20
+	msr  tpidr_el1,      x21
 
-	_host_ptr                 /* in x3 - x3, x4 changed */
-	add        x3, x3, #7*8   /* vttbr_el2 address in x3 */
-	ldr        x1, [x3]       /* Host_context->vttbr_el2 */
-	msr vttbr_el2, x1
+	/** enable VM mode **/
+	movz x1, #0b1110000000111001
+	movk x1, #0b10111, lsl 16
+	mrs  x0, hcr_el2
+	orr  x0, x0, x1
+	msr  hcr_el2, x0
 
-	mrs        x1, hcr_el2     /* enable VM mode */
-	orr        x1, x1, #1
-	msr   hcr_el2, x1
+	ldr  x30, [sp]  /* load head of Vm_state again */
 
-	sub        x0, x0, #32*8   /* mov to head of Cpu_state */
-	mov       x30, x0
-
+	/** general-purpose registers **/
 	ldp   x0,  x1, [x30], #2*8
 	ldp   x2,  x3, [x30], #2*8
 	ldp   x4,  x5, [x30], #2*8
@@ -176,10 +134,14 @@ _host_to_vm:
 
 _vm_to_host:
 
-	add        x0,   x0, #1*8    /* Cpu_state->r0 skip, later, see below */
-	str        x1, [x0], #1*8    /* Cpu_state->r1 */
-	stp   x2,  x3, [x0], #2*8    /* Cpu_state->r2 & r3 */
-	stp   x4,  x5, [x0], #2*8    /* ... */
+	/*********************
+	 ** Save vm context **
+	 *********************/
+
+	/** general-purpose register **/
+	add        x0,   x0, #2*8    /* skip x0 and x1 for now */
+	stp   x2,  x3, [x0], #2*8
+	stp   x4,  x5, [x0], #2*8
 	stp   x6,  x7, [x0], #2*8
 	stp   x8,  x9, [x0], #2*8
 	stp  x10, x11, [x0], #2*8
@@ -190,67 +152,20 @@ _vm_to_host:
 	stp  x20, x21, [x0], #2*8
 	stp  x22, x23, [x0], #2*8
 	stp  x24, x25, [x0], #2*8
-	stp  x26, x27, [x0], #2*8    /* ... */
-	stp  x28, x29, [x0], #2*8    /* Cpu_state->r28 & r29 */
-	str       x30, [x0], #1*8    /* Cpu_state->r30 */
+	stp  x26, x27, [x0], #2*8
+	stp  x28, x29, [x0], #2*8
+	str       x30, [x0], #1*8
 
-	ldr x1, [sp]                 /* move guest x0 on stack to Cpu_state->r0 */
-	str x1, [x0, #-31*8]
+	/** save sp, ip, pstate and exception reason **/
+	mrs  x2, sp_el0
+	mrs  x3, elr_el2
+	mrs  x4, spsr_el2
+	mrs  x5, esr_el2
+	stp  x2, x3, [x0], #2*8
+	stp  x4, x1, [x0], #2*8
+	str      x5, [x0], #1*8
 
-	mrs x1, sp_el1               /* Cpu_state->sp */
-	str x1, [x0], #1*8
-
-	/* 64 bit registers */
-	mrs  x1, elr_el2
-	mrs  x2, sctlr_el1
-	mrs  x3, ttbr0_el1
-	mrs  x4, ttbr1_el1
-	mrs  x5, tcr_el1
-	mrs  x6, elr_el1
-	mrs  x7, sp_el0
-	mrs  x8, far_el1
-	mrs  x9, mair_el1
-	mrs x10, vbar_el1
-	mrs x11, actlr_el1
-	mrs x12, amair_el1
-	mrs x13, par_el1
-	mrs x14, tpidrro_el0
-	mrs x15, tpidr_el0
-	mrs x16, tpidr_el1
-
-	/* 32 bit registers */
-	mrs x17, spsel
-	mrs x18, spsr_el1
-	mrs x19, daif
-	mrs x20, nzcv
-	mrs x21, fpcr
-	mrs x22, fpsr
-	mrs x23, esr_el1
-	mrs x24, cpacr_el1
-	mrs x25, afsr0_el1
-	mrs x26, afsr1_el1
-	mrs x27, contextidr_el1
-	mrs x28, csselr_el1
-
-	/* 64 bit registers */
-	stp  x1,  x2, [x0, #0*8]  /* Cpu_state->ip, Vm_state->sctlr_el1 */
-	stp  x3,  x4, [x0, #2*8]  /* Vm_state->ttbr0_el1, Vm_state->ttbr1_el1 */
-	stp  x5,  x6, [x0, #4*8]  /* Vm_state->tcr_el1, Vm_state->elr_el1 */
-	stp  x7,  x8, [x0, #6*8]  /* Vm_state->sp_el0, Vm_state->far_el1 */
-	stp  x9, x10, [x0, #8*8]  /* Vm_state->mair_el1, Vm_state->vbar_el1 */
-	stp x11, x12, [x0, #10*8] /* Vm_state->actlr_el1, Vm_state->amair_el1 */
-	stp x13, x14, [x0, #12*8] /* Vm_state->par_el1, Vm_state->tpidrro_el0 */
-	stp x15, x16, [x0, #14*8] /* Vm_state->tpidr_el0, Vm_state->tpidr_el1 */
-
-	/* 32 bit registers */
-	stp w17, w18, [x0, #16*8] /* Vm_state->spsel, Vm_state->spsr_el1 */
-	stp w19, w20, [x0, #17*8] /* Vm_state->daif, Vm_state->nzcv */
-	stp w21, w22, [x0, #18*8] /* Vm_state->fpcr, Vm_state->fpsr */
-	stp w23, w24, [x0, #19*8] /* Vm_state->esr_el1, Vm_state->cpacr_el1 */
-	stp w25, w26, [x0, #20*8] /* Vm_state->afsr0_el1, Vm_state->afsr1_el1 */
-	stp w27, w28, [x0, #21*8] /* Vm_state->contextidr_el1, Vm_state->csselr_el1 */
-
-	add  x0,  x0, #24 * 8
+	/** fpu registers **/
 	stp  q0,  q1,  [x0], #32
 	stp  q2,  q3,  [x0], #32
 	stp  q4,  q5,  [x0], #32
@@ -268,62 +183,82 @@ _vm_to_host:
 	stp  q28, q29, [x0], #32
 	stp  q30, q31, [x0], #32
 
-	_host_ptr                 /* in x3 */
-	ldp x4, x5, [x3], #2*8    /* Host_context->sp, Host_context->ip */
-	mov sp, x4
-	msr elr_el2, x5
+	mrs  x1, fpcr
+	mrs  x2, fpsr
+	mrs  x3, elr_el1
+	mrs  x4, sp_el1
+	mrs  x5, spsr_el1
+	mrs  x6, esr_el1
+	mrs  x7, sctlr_el1
+	mrs  x8, actlr_el1
+	mrs  x9, vbar_el1
+	mrs x10, cpacr_el1
+	mrs x11, afsr0_el1
+	mrs x12, afsr1_el1
+	mrs x13, contextidr_el1
+	mrs x14, ttbr0_el1
+	mrs x15, ttbr1_el1
+	mrs x16, tcr_el1
+	mrs x17, mair_el1
+	mrs x18, amair_el1
+	mrs x19, far_el1
+	mrs x20, par_el1
+	mrs x21, tpidrro_el0
+	mrs x22, tpidr_el0
+	mrs x23, tpidr_el1
+	stp  w1,  w2, [x0], #2*4
+	stp  x3,  x4, [x0], #2*8
+	stp  w5,  w6, [x0], #2*4
+	stp  x7,  x8, [x0], #2*8
+	str       x9, [x0], #1*8
+	stp w10, w11, [x0], #2*4
+	stp w12, w13, [x0], #2*4
+	stp x14, x15, [x0], #2*8
+	stp x16, x17, [x0], #2*8
+	stp x18, x19, [x0], #2*8
+	stp x20, x21, [x0], #2*8
+	stp x22, x23, [x0], #2*8
 
-	ldp  x4,  x5, [x3], #2*8  /* Host_context->ttbr0, Host_context->ttbr1 */
-	ldp  x6,  x7, [x3], #4*8  /* sctlr, tcr + skip vmstate, vttbr_el2 */
+	ldp x0,  x1, [sp], #2*8    /* pop x0, x1 from stack             */
+	ldp x2, x30, [sp], #2*8    /* pop vm, and host state from stack */
+	stp x0,  x1, [x2]          /* save x0, x1 to vm state           */
 
-	mrs x8, esr_el2           /* write to Host_context->esr_el2 */
-	str x8, [x3], #1*8
+	/***********************
+	 ** Load host context **
+	 ***********************/
 
-	ldp  x8,  x9, [x3], #2*8  /* Host_context->elr_el1, sp_el0 */
+	add x30, x30,        #32*8  /* skip general-purpose regs, sp    */
+	ldp  x0,  x1, [x30]         /* host state ip, and pstate        */
+	add x30, x30,        #34*16 /* skip fpu regs etc.               */
+	ldp  w2,  w3, [x30], #4*4   /* fpcr and fpsr                    */
+	ldr       x4, [x30], #2*8   /* sp_el1                           */
+	ldp  x5,  x6, [x30], #2*8   /* sctlr_el1, actlr_el1             */
+	ldr       x7, [x30], #1*8   /* vbar_el1                         */
+	ldr       w8, [x30], #4*4   /* cpacr_el1                        */
+	ldp  x9, x10, [x30], #2*8   /* ttbr0_el1, ttbr1_el1             */
+	ldp x11, x12, [x30], #2*8   /* tcr_el1, mair_el1                */
+	ldr      x13, [x30]         /* amair_el1                        */
 
-	ldp x10, x11, [x3], #2*8  /* Host_context->mair_el1, vbar_el1 */
-	ldp x12, x13, [x3], #2*8  /* Host_context->actlr_el1, amair_el1 */
-	ldp x14, x15, [x3], #2*8  /* Host_context->par_el1, tpidrro_el0 */
-	ldp x16, x17, [x3], #2*8  /* Host_context->tpidr_el0, tpidr_el1 */
+	msr elr_el2,   x0
+	msr spsr_el2,  x1
+	msr fpcr,      x2
+	msr fpsr,      x3
+	msr sp_el1,    x4
+	msr sctlr_el1, x5
+	msr actlr_el1, x6
+	msr vbar_el1,  x7
+	msr cpacr_el1, x8
+	msr ttbr0_el1, x9
+	msr ttbr1_el1, x10
+	msr tcr_el1,   x11
+	msr mair_el1,  x12
+	msr amair_el1, x13
 
-	ldp w18, w19, [x3], #2*4  /* Host_context->spsel, spsr_el1 */
-	ldp w20, w21, [x3], #2*4  /* Host_context->daif, nzcv */
-	ldp w22, w23, [x3], #2*4  /* Host_context->fpcr, fpsr */
-	ldp w24, w25, [x3], #2*4  /* Host_context->cpacr_el1, afsr0_el1 */
-	ldp w26, w27, [x3], #2*4  /* Host_context->afsr1_el1, contextidr_el1 */
-	ldr      w28, [x3], #2*4  /* Host_context->csselr_el1 */
-
-	msr ttbr0_el1,      x4
-	msr ttbr1_el1,      x5
-	msr sctlr_el1,      x6
-	msr tcr_el1  ,      x7
-	msr elr_el1  ,      x8
-	msr sp_el0   ,      x9
-	msr mair_el1 ,      x10
-	msr vbar_el1 ,      x11
-	msr actlr_el1,      x12
-	msr amair_el1,      x13
-	msr par_el1  ,      x14
-	msr tpidrro_el0,    x15
-	msr tpidr_el0,      x16
-	msr tpidr_el1,      x17
-	msr spsel    ,      x18
-	msr spsr_el1 ,      x19
-	msr daif     ,      x20
-	msr nzcv     ,      x21
-	msr fpcr     ,      x22
-	msr fpsr     ,      x23
-	msr cpacr_el1,      x24
-	msr afsr0_el1,      x25
-	msr afsr1_el1,      x26
-	msr contextidr_el1, x27
-	msr csselr_el1,     x28
-
-	# far_el1 not restored for hw kernel
-	# esr_el1 not restored for hw kernel
-
-	mrs x0, hcr_el2     /* switch VM bit off */
-	bic x0, x0, #1
+	/** disable VM mode **/
+	movz x1, #0b1110000000111001
+	movk x1, #0b10111, lsl 16
+	mrs  x0, hcr_el2
+	bic  x0, x0, x1
 	msr hcr_el2, x0
 
 	eret
@@ -332,5 +267,3 @@ _vm_to_host:
 .global hypervisor_enter_vm
 hypervisor_enter_vm:
 	hvc #0
-
-_vt_host_context_ptr: .quad vt_host_context

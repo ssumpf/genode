@@ -82,18 +82,7 @@ struct Hw::Arm_64_cpu
 	SYSTEM_REGISTER(64, Far_el1, far_el1);
 
 	SYSTEM_REGISTER(64, Hcr_el2, hcr_el2,
-		struct Fmo  : Bitfield< 3, 1> {};
-		struct Imo  : Bitfield< 4, 1> {};
-		struct Amo  : Bitfield< 5, 1> {};
-
-		struct Tid0  : Bitfield<15, 1> {};
-		struct Tid1  : Bitfield<16, 1> {};
-		struct Tid2  : Bitfield<17, 1> {};
-		struct Tid3  : Bitfield<18, 1> {};
-		struct Tidcp : Bitfield<20, 1> {};
-
-		struct Rw   : Bitfield<31, 1> {};
-		struct Tlor : Bitfield<35, 1> {};
+		struct Rw : Bitfield<31, 1> {};
 	);
 
 	SYSTEM_REGISTER(64, Mair, mair_el1,

@@ -14,9 +14,9 @@ SRC_CC += spec/arm_v8/cpu.cc
 SRC_CC += spec/arm_v8/kernel/cpu.cc
 SRC_CC += spec/arm_v8/kernel/thread.cc
 SRC_CC += spec/arm_v8/virtualization/kernel/vm.cc
+SRC_CC += spec/arm/virtualization/platform_services.cc
 SRC_CC += spec/arm/virtualization/vm_session_component.cc
 SRC_CC += spec/arm/vm_session_component.cc
-SRC_CC += spec/virt_qemu/platform_services.cc
 SRC_CC += vm_session_common.cc
 
 #add assembly sources

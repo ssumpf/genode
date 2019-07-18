@@ -59,26 +59,14 @@ static inline void prepare_non_secure_world()
 static inline void prepare_hypervisor(Cpu::Ttbr::access_t const ttbr)
 {
 	Cpu::Hcr_el2::access_t hcr = Cpu::Hcr_el2::read();
-
-#if 0
-	Cpu::Hcr_el2::Imo::set(hcr, 1);
-	Cpu::Hcr_el2::Fmo::set(hcr, 1);
-	Cpu::Hcr_el2::Amo::set(hcr, 1);
-#endif
-
-	Cpu::Hcr_el2::Tid0::set(hcr, 1);
-	Cpu::Hcr_el2::Tid1::set(hcr, 1);
-	Cpu::Hcr_el2::Tid2::set(hcr, 1);
-	Cpu::Hcr_el2::Tid3::set(hcr, 1);
-	Cpu::Hcr_el2::Tidcp::set(hcr, 1);
 	Cpu::Hcr_el2::Rw::set(hcr, 1); /* exec in aarch64 */
-	Cpu::Hcr_el2::Tlor::set(hcr, 1); /* trap lorc_el1 and co - not saved/restored on VM switch */
 	Cpu::Hcr_el2::write(hcr);
 
 	/* set hypervisor exception vector */
-	Cpu::Vbar_el2::write(Hw::Mm::hypervisor_exception_vector().base);
+	static constexpr Genode::addr_t OFF = 0xffffff8000000000UL;
+	Cpu::Vbar_el2::write(Hw::Mm::hypervisor_exception_vector().base - OFF);
 	Genode::addr_t const stack_el2 = Hw::Mm::hypervisor_stack().base +
-	                                 Hw::Mm::hypervisor_stack().size - 0x10; /* XXX */
+	                                 Hw::Mm::hypervisor_stack().size - OFF;
 
 	/* set hypervisor's translation table */
 	Cpu::Ttbr0_el2::write(ttbr);
@@ -144,7 +132,8 @@ static inline void prepare_hypervisor(Cpu::Ttbr::access_t const ttbr)
 
 unsigned Bootstrap::Platform::enable_mmu()
 {
-	Cpu::Ttbr::access_t ttbr = Cpu::Ttbr::Baddr::masked((Genode::addr_t)core_pd->table_base);
+	Cpu::Ttbr::access_t ttbr =
+		Cpu::Ttbr::Baddr::masked((Genode::addr_t)core_pd->table_base);
 
 	while (Cpu::current_privilege_level() > Cpu::Current_el::EL1) {
 		if (Cpu::current_privilege_level() == Cpu::Current_el::EL3)
