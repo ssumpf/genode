@@ -206,6 +206,8 @@ _vm_to_host:
 	mrs x21, tpidrro_el0
 	mrs x22, tpidr_el0
 	mrs x23, tpidr_el1
+	mrs x24, far_el2
+	mrs x25, hpfar_el2
 	stp  w1,  w2, [x0], #2*4
 	stp  x3,  x4, [x0], #2*8
 	stp  w5,  w6, [x0], #2*4
@@ -218,6 +220,7 @@ _vm_to_host:
 	stp x18, x19, [x0], #2*8
 	stp x20, x21, [x0], #2*8
 	stp x22, x23, [x0], #2*8
+	stp x24, x25, [x0]
 
 	ldp x0,  x1, [sp], #2*8    /* pop x0, x1 from stack             */
 	ldp x2, x30, [sp], #2*8    /* pop vm, and host state from stack */
