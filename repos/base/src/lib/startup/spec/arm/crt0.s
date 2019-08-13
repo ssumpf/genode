@@ -26,13 +26,9 @@
 	_start_initial_stack:
 
 	/* make initial value of some registers available to higher-level code */
-	ldr sl, .LGOT
-	ldr r4, .LGOT + 4
-	add sl, pc, sl
-	ldr r4, [sl, r4]
+	ldr r4, =__initial_sp
 	str sp, [r4]
-	ldr r4, .LGOT + 8
-	ldr r4, [sl, r4]
+	ldr r4, =__initial_r0
 	str r0, [r4]
 
 	/*
@@ -54,10 +50,6 @@
 	/* jump into init C code instead of calling it as it should never return */
 	b _main
 
-.LGOT:
-	.word _GLOBAL_OFFSET_TABLE_ - (_start + 8)
-	.word __initial_sp(GOT)
-	.word __initial_r0(GOT)
 
 /*********************************
  ** .bss (non-initialized data) **
