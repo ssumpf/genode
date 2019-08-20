@@ -84,9 +84,9 @@
 	 * Apply environment that was created by init_main_thread from
 	 * init_main_thread_result
 	 */
-	_got sl
 	ldr r4, .LGOT + 12
 	ldr sp, [sl, r4]
+	ldr sp, [sp]
 
 	/* jump into init C code instead of calling it as it should never return */
 	b _main
@@ -109,6 +109,7 @@
 	.global __initial_stack_base
 	__initial_stack_base:
 	.space 4*1024
+	.global _stack_high
 	_stack_high:
 
 	/* initial value of the SP register */
