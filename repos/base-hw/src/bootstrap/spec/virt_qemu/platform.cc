@@ -24,5 +24,7 @@ Bootstrap::Platform::Board::Board()
   core_mmio(Memory_region { ::Board::UART_BASE, ::Board::UART_SIZE },
             Memory_region { ::Board::Cpu_mmio::IRQ_CONTROLLER_DISTR_BASE,
                             ::Board::Cpu_mmio::IRQ_CONTROLLER_DISTR_SIZE },
+            Memory_region { ::Board::Cpu_mmio::IRQ_CONTROLLER_VT_CTRL_BASE,
+                            ::Board::Cpu_mmio::IRQ_CONTROLLER_VT_CTRL_SIZE },
             Memory_region { ::Board::Cpu_mmio::IRQ_CONTROLLER_CPU_BASE,
                             ::Board::Cpu_mmio::IRQ_CONTROLLER_CPU_SIZE }) {}
