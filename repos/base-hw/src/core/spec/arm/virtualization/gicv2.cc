@@ -56,7 +56,7 @@ void Pic::insert_virtual_irq(Pic::Virtual_context & c, unsigned irq)
 {
 	enum { SPURIOUS = 1023 };
 
-	if (irq != SPURIOUS) {
+	if (irq != SPURIOUS && !c.lr) {
 		c.elrsr &= 0x7ffffffe;
 		c.lr     = irq | 1 << 28 | 1 << 19;
 	}
