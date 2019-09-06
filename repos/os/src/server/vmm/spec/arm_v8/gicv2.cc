@@ -151,10 +151,12 @@ void Gic::Gicd_banked::handle_irq()
 
 bool Gic::Gicd_banked::pending_irq()
 {
+	if (cpu.state().irqs.virtual_irq != 1023) return true;
+
 	Irq * i = gic._pending_list.highest_enabled();
 	Irq * j = pending_list.highest_enabled();
 	Irq * n = j;
-	if (i && j && j->priority() > i->priority()) n = i;
+	if (i && ((j && j->priority() > i->priority()) || !j)) n = i;
 	if (!n) return false;
 	cpu.state().irqs.virtual_irq = n->number();
 	n->activate();

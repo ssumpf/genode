@@ -67,7 +67,7 @@ Vmm::Vmm(Genode::Env & env)
   _cpu(*this, _vm, _gic, env, _heap, _vm_handler,
        _ram.base() + KERNEL_OFFSET,
        _ram.base() + DTB_OFFSET),
-  _uart("Pl011", 0x9000000, 0x1000, _cpu, _gic.spi(33), env)
+  _uart("Pl011", 0x9000000, 0x1000, _cpu, _gic.spi(1), env)
 {
 	_device_tree.insert(&_gic);
 	_device_tree.insert(&_uart);

@@ -93,7 +93,7 @@ install_config {
 	<start name="vm">
 		<binary name="test-terminal_expect_send"/>
 		<resource name="RAM" quantum="1M"/>
-		<config expect="/bin/sh: can't access tty;" send="ls" verbose="yes"/>
+		<config expect="/ #" send="ls" verbose="yes"/>
 	</start>
 </config>
 }

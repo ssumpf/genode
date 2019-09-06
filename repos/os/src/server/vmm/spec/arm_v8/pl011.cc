@@ -21,8 +21,11 @@ void Pl011::_out_char(unsigned char c) {
 
 unsigned char Pl011::_get_char()
 {
-	if (_rx_buf.empty()) return 0;
-	return _rx_buf.get();
+	_ris &= ~RX_MASK;
+
+	if (!_rx_buf.empty()) return _rx_buf.get();
+
+	return 0;
 }
 
 
@@ -41,6 +44,7 @@ Genode::uint16_t Pl011::_get(Genode::uint64_t off)
 	case UARTFR:        return _rx_buf.empty() ? 16 : 64;
 	case UARTCR:        return _cr;
 	case UARTIMSC:      return _imsc;
+	case UARTRIS:       return _ris;
 	case UARTMIS:       return _ris & _imsc;
 	case UARTFBRD:      return _fbrd;
 	case UARTIBRD:      return _ibrd;
@@ -53,18 +57,8 @@ Genode::uint16_t Pl011::_get(Genode::uint64_t off)
 
 void Pl011::_mask_irqs(Genode::uint32_t mask)
 {
-	/* TX IRQ unmask */
-	if (mask & (1 << 5) && !(_imsc & (1 << 5))) {
+	if ((mask & RX_MASK) && !(_imsc & RX_MASK) && (_ris & RX_MASK))
 		_irq.assert();
-		_ris |= 1 << 5;
-	}
-
-	/* RX IRQ unmask */
-	if (mask & (1 << 4) && !(_imsc & (1 << 4)) &&
-		!_rx_buf.empty()) {
-		_irq.assert();
-		_ris |= 1 << 4;
-	}
 
 	_imsc = mask;
 }
@@ -80,8 +74,8 @@ void Pl011::_read()
 		_rx_buf.add(c);
 	}
 
-	_irq.assert();
-	_ris |= 1 << 4;
+	_ris |= RX_MASK;
+	if (_imsc & RX_MASK) _irq.assert();
 }
 
 

@@ -48,13 +48,13 @@ void Device::handle_memory_access(Cpu & cpu)
 	switch (Iss::Access_size::get(state.esr_el2)) {
 	case Iss::Access_size::BYTE:
 		{
-			uint8_t * p = (uint8_t*) ((uint64_t)&state.r[idx]) + (off & 0b11);
+			uint8_t * p = (uint8_t*) &state.r[idx];
 			wr ? write(p, off, cpu) : read(p, off, cpu);
 			break;
 		}
 	case Iss::Access_size::HALFWORD:
 		{
-			uint16_t * p = (uint16_t*) ((uint64_t)&state.r[idx]) + + (off & 0b1);
+			uint16_t * p = (uint16_t*) &state.r[idx];
 			wr ? write(p, off, cpu) : read(p, off, cpu);
 			break;
 		}

@@ -40,6 +40,7 @@ class Pl011 : public Device
 			UARTCR        = 0x30,
 			UARTIFLS      = 0x34,
 			UARTIMSC      = 0x38,
+			UARTRIS       = 0x3c,
 			UARTMIS       = 0x40,
 			UARTICR       = 0x44,
 			UARTPERIPHID0 = 0xfe0,
@@ -50,6 +51,11 @@ class Pl011 : public Device
 			UARTPCELLID1  = 0xff4,
 			UARTPCELLID2  = 0xff8,
 			UARTPCELLID3  = 0xffc,
+		};
+
+		enum Mask : Genode::uint16_t {
+			RX_MASK = 1 << 4,
+			TX_MASK = 1 << 5
 		};
 
 		Terminal::Connection       _terminal;
