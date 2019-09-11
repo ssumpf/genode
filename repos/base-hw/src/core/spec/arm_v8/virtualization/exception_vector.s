@@ -125,9 +125,19 @@ _host_to_vm:
 	msr  cnthctl_el2, x0
 
 
+	/************************
+	 ** debug/perfm access **
+	 ************************/
+
+	mrs  x0, mdcr_el2
+	movz x1, #0b111101100000
+	orr  x0, x0, x1
+	msr  mdcr_el2, x0
+
+
 	/** enable VM mode **/
-	movz x1, #0b0110000000111001
-	movk x1, #0b10010, lsl 16
+	movz x1, #0b1110000000111001
+	movk x1, #0b10111, lsl 16
 	mrs  x0, hcr_el2
 	orr  x0, x0, x1
 	msr  hcr_el2, x0
@@ -296,6 +306,16 @@ _vm_to_host:
 	msr tcr_el1,   x11
 	msr mair_el1,  x12
 	msr amair_el1, x13
+
+
+	/************************
+	 ** debug/perfm access **
+	 ************************/
+
+	mrs  x0, mdcr_el2
+	movz x1, #0b111101100000
+	bic  x0, x0, x1
+	msr  mdcr_el2, x0
 
 
 	/** disable VM mode **/

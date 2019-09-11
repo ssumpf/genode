@@ -142,6 +142,33 @@ Vm::Vm(Genode::Vm_state       & state,
 	affinity(cpu_pool().primary_cpu());
 
 	static Pic_maintainance_irq pic_irq;
+
+	_state.id_aa64isar0_el1 = Cpu::Id_aa64isar0_el1::read();
+	_state.id_aa64isar1_el1 = Cpu::Id_aa64isar1_el1::read();
+	_state.id_aa64mmfr0_el1 = Cpu::Id_aa64mmfr0_el1::read();
+	_state.id_aa64mmfr1_el1 = Cpu::Id_aa64mmfr1_el1::read();
+	_state.id_aa64mmfr2_el1 = /* FIXME Cpu::Id_aa64mmfr2_el1::read(); */ 0;
+
+	Cpu::Clidr_el1::access_t clidr = Cpu::Clidr_el1::read();
+	for (unsigned i = 0; i < 7; i++) {
+		unsigned level = clidr >> (i*3) & 0b111;
+
+		if (level == Cpu::Clidr_el1::NO_CACHE) break;
+
+		if ((level == Cpu::Clidr_el1::INSTRUCTION_CACHE) ||
+		    (level == Cpu::Clidr_el1::SEPARATE_CACHE)) {
+			Cpu::Csselr_el1::access_t csselr = 0;
+			Cpu::Csselr_el1::Instr::set(csselr, 1);
+			Cpu::Csselr_el1::Level::set(csselr, level);
+			Cpu::Csselr_el1::write(csselr);
+			_state.ccsidr_inst_el1[level] = Cpu::Ccsidr_el1::read();
+		}
+
+		if (level != Cpu::Clidr_el1::INSTRUCTION_CACHE) {
+			Cpu::Csselr_el1::write(Cpu::Csselr_el1::Level::bits(level));
+			_state.ccsidr_data_el1[level] = Cpu::Ccsidr_el1::read();
+		}
+	}
 }
 
 

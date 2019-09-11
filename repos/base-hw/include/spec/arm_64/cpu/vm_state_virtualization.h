@@ -85,6 +85,23 @@ struct Genode::Vm_state : Genode::Cpu_state
 		unsigned last_irq    { 1023 };
 		unsigned virtual_irq { 1023 };
 	} irqs {};
+
+	/**************************
+	 ** Platform information **
+	 **************************/
+
+	Genode::uint64_t id_aa64isar0_el1 { 0 };
+	Genode::uint64_t id_aa64isar1_el1 { 0 };
+	Genode::uint64_t id_aa64mmfr0_el1 { 0 };
+	Genode::uint64_t id_aa64mmfr1_el1 { 0 };
+	Genode::uint64_t id_aa64mmfr2_el1 { 0 };
+	Genode::uint64_t id_aa64pfr0_el1  { 0 };
+	Genode::uint64_t id_aa64pfr1_el1  { 0 };
+	Genode::uint64_t id_aa64zfr0_el1  { 0 };
+
+	Genode::uint32_t ccsidr_inst_el1[7] { 0 };
+	Genode::uint32_t ccsidr_data_el1[7] { 0 };
+	Genode::uint64_t clidr_el1          { 0 };
 };
 
 #endif /* _INCLUDE__SPEC__ARM_64__CPU__VM_STATE_VIRTUALIZATION_H_ */
