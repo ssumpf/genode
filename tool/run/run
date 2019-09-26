@@ -308,7 +308,9 @@ proc run_genode_until {{wait_for_re forever} {timeout_value 0} {running_spawn_id
 			# kill the spawned load process if there is one
 			if {[load_spawn_id] != -1} {
 				set pid [exp_pid -i [load_spawn_id]]
+				close -i [load_spawn_id]
 				exec kill -9 $pid
+				wait -i [load_spawn_id]
 			}
 
 			incr retry -1;
