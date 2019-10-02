@@ -92,7 +92,7 @@ class Vmm::Pl011 : public Vmm::Mmio_device
 			Mmio_register::Register read(Address_range&, Cpu&) override;
 
 			Uartfr(Ring_buffer & rx)
-			: Mmio_register("UARTFR", Mmio_register::RO, 0x18, 2), rx(rx) {}
+			: Mmio_register("UARTFR", Mmio_register::RO, 0x18, 4), rx(rx) {}
 		} _uart_fr { _rx_buf };
 
 		struct Uartimsc : Mmio_register
