@@ -66,7 +66,7 @@ Vm::Vm(Genode::Env & env)
        _ram.base() + KERNEL_OFFSET,
        _ram.base() + DTB_OFFSET),
   _uart("Pl011", 0x9000000, 0x1000, 33, _cpu, env),
-  _virtio("HVC", 0xa000000, 0x200, _ram)
+  _virtio("HVC", 0xa000000, 0x200,  16, _cpu, _ram)
 {
 	_bus.add(_gic);
 	_bus.add(_uart);

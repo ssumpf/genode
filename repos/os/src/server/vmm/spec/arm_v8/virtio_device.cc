@@ -1,4 +1,6 @@
+#include <cpu.h>
 #include <virtio_device.h>
+
 #include <base/log.h>
 
 using Vmm::Virtio_device;
@@ -7,8 +9,11 @@ using Register = Vmm::Mmio_register::Register;
 Virtio_device::Virtio_device(const char * const     name,
                              const Genode::uint64_t addr,
                              const Genode::uint64_t size,
+                             unsigned irq,
+                             Cpu &cpu,
                              Ram &ram)
 : Mmio_device(name, addr, size),
+  _irq(cpu.gic().irq(irq)),
   _ram(ram)
 {
 	for (unsigned i = 0; i < (sizeof(Dummy::regs) / sizeof(Mmio_register)); i++)
