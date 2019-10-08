@@ -11,10 +11,12 @@ Virtio_device::Virtio_device(const char * const     name,
                              const Genode::uint64_t size,
                              unsigned irq,
                              Cpu &cpu,
-                             Ram &ram)
+                             Ram &ram,
+                             Genode::Env &env)
 : Mmio_device(name, addr, size),
   _irq(cpu.gic().irq(irq)),
-  _ram(ram)
+  _ram(ram), _terminal(env, "console"),
+  _handler(cpu, env.ep(), *this, &Virtio_device::_read)
 {
 	for (unsigned i = 0; i < (sizeof(Dummy::regs) / sizeof(Mmio_register)); i++)
 		add(_reg_container.regs[i]);
@@ -31,7 +33,11 @@ Virtio_device::Virtio_device(const char * const     name,
 	add(_queue_driver_high);
 	add(_queue_device_low);
 	add(_queue_device_high);
+	add(_interrupt_status);
+	add(_interrupt_ack);
 	add(_status);
+
+	_terminal.read_avail_sigh(_handler);
 }
 
 

@@ -1,4 +1,5 @@
 #include <base/log.h>
+#include <terminal_session/connection.h>
 #include <util/mmio.h>
 #include <util/reconstructible.h>
 
@@ -39,7 +40,7 @@ class Vmm::Virtio_descriptor : Genode::Mmio
 	public:
 
 		Virtio_descriptor(Genode::addr_t base)
-		: Mmio(base) { Genode::log("BASE: ", Genode::Hex(base)); }
+		: Mmio(base) {  }
 
 
 		struct Address : Register<0x0, 64> { };
@@ -117,8 +118,11 @@ class Vmm::Virtio_queue
 		Virtio_queue(Virtio_queue_data &data, Ram &ram)
 		: _data(data), _ram(ram) { }
 
-	void notify()
+
+	template <typename FUNC>
+	void notify(FUNC func, bool tx)
 	{
+#if 0
 		for (unsigned idx = 0; idx < 8; idx++) {
 		Virtio_descriptor descr = _descr.index(idx);
 
@@ -134,27 +138,27 @@ class Vmm::Virtio_queue
 			Genode::log("avail: i: ", i, " f: ", Genode::Hex(flags),
 			            " idx: ", idx, " r: ", Genode::Hex(ring));
 		}
-
-		_used.write<Virtio_used::Flags>(0);
-		_used.write<Virtio_used::Idx>(_avail.read<Virtio_avail::Idx>());
-		Virtio_used::Elem::access_t elem = 0;
-		Virtio_used::Elem::Id::set(elem,  0);
-		Virtio_used::Elem::Length::set(elem, 16);
-		Genode::log("Set elem: ", Genode::Hex((Genode::uint64_t)elem));
-		_used.write<Virtio_used::Elem>(0, elem);
-		//return;
-#if 1
+#endif
 		Virtio_descriptor descr = _descr.index(0);
 		if (!descr.address()) return;
 
-		char buf[17];
-		Genode::addr_t l = _ram.local_address(descr.address());
-		Genode::memcpy(buf, (void *)l, 16);
-		buf[16] = 0;
-		Genode::log((char const *)buf);
-		for (unsigned i = 0; i < 16; i++)
-			Genode::log("i: ", i, " data: ", Genode::Hex(buf[i]));
-#endif
+		Genode::addr_t data   = _ram.local_address(descr.address());
+		Genode::size_t length = func(data, descr.length());
+
+		if (length == 0) return;
+
+		Genode::uint16_t idx = 0;
+		if (tx)
+			idx = _avail.read<Virtio_avail::Idx>();
+		else
+			idx = _used.read<Virtio_used::Idx>() + 1;
+
+		_used.write<Virtio_used::Flags>(0);
+		Virtio_used::Elem::access_t elem = 0;
+		Virtio_used::Elem::Id::set(elem,  0);
+		Virtio_used::Elem::Length::set(elem, length);
+		_used.write<Virtio_used::Elem>(elem, 0);
+		_used.write<Virtio_used::Idx>(idx);
 	}
 };
 
@@ -169,6 +173,8 @@ class Vmm::Virtio_device : public Vmm::Mmio_device
 		Genode::Constructible<Virtio_queue> _queue[NUM];
 		Gic::Irq                           &_irq;
 		Ram                                &_ram;
+		Terminal::Connection                _terminal;
+		Cpu::Signal_handler<Virtio_device>  _handler;
 
 		struct Dummy {
 			Mmio_register regs[7];
@@ -195,23 +201,44 @@ class Vmm::Virtio_device : public Vmm::Mmio_device
 				_queue[_current].destruct();
 		}
 
+		void _assert_irq()
+		{
+			_interrupt_status.set(0x1);
+			_irq.assert();
+		}
+
 		void _deassert_irq()
 		{
 			_interrupt_status.set(0);
 			_irq.deassert();
 		}
 
+		void _read()
+		{
+			auto read = [&] (Genode::addr_t data, Genode::size_t size)
+			{
+				Genode::size_t length = _terminal.read((void *)data, size);
+				return length;
+			};
+
+			if (!_terminal.avail()) return;
+
+			_queue[RX]->notify(read, false);
+			_assert_irq();
+		}
 
 		void notify(unsigned idx)
 		{
-			if (idx >= NUM) return;
+			if (idx != TX) return;
 
-			_queue[idx]->notify();
+			auto write = [&] (Genode::addr_t data, Genode::size_t size)
+			{
+				_terminal.write((void *)data, size);
+				return size;
+			};
 
-			if (idx == 1) {
-				_interrupt_status.set(0x1);
-				_irq.assert();
-			}
+			_queue[TX]->notify(write, true);
+			_assert_irq();
 		}
 
 	private:
@@ -329,7 +356,7 @@ class Vmm::Virtio_device : public Vmm::Mmio_device
 
 			void write(Address_range&, Cpu&, Register reg) override
 			{
-				Genode::log("QueueNotify: ", reg);
+				//Genode::log("QueueNotify: ", reg);
 				device.notify(reg);
 			}
 
@@ -432,7 +459,7 @@ class Vmm::Virtio_device : public Vmm::Mmio_device
 		{
 			Register read(Address_range&,  Cpu&) override
 			{
-				Genode::log("InterruptStatus: ", Genode::Hex(value()));
+				//Genode::log("InterruptStatus: ", Genode::Hex(value()));
 				return value();
 			}
 
@@ -447,7 +474,7 @@ class Vmm::Virtio_device : public Vmm::Mmio_device
 
 			void write(Address_range&, Cpu&, Register reg) override
 			{
-				Genode::log("InterruptAck: ", Genode::Hex(reg));
+				//Genode::log("InterruptAck: ", Genode::Hex(reg));
 				device._deassert_irq();
 			}
 
@@ -463,5 +490,6 @@ class Vmm::Virtio_device : public Vmm::Mmio_device
 		              const Genode::uint64_t size,
 		              unsigned irq,
 		              Cpu &cpu,
-		              Ram &ram);
+		              Ram &ram,
+		              Genode::Env &env);
 };
