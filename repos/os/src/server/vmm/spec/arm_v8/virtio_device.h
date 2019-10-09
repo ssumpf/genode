@@ -120,7 +120,7 @@ class Vmm::Virtio_queue
 
 
 	template <typename FUNC>
-	void notify(FUNC func, bool tx)
+	void notify(FUNC func)
 	{
 #if 0
 		for (unsigned idx = 0; idx < 8; idx++) {
@@ -130,7 +130,6 @@ class Vmm::Virtio_queue
 		            " l: ", descr.length(), " f: ", Genode::Hex(descr.flags()),
 		            " next: ", Genode::Hex(descr.next()));
 		}
-
 		for (unsigned i = 0; i < 8; i++) {
 			unsigned flags = _avail.read<Virtio_avail::Flags>();
 			unsigned idx  = _avail.read<Virtio_avail::Idx>();
@@ -139,6 +138,7 @@ class Vmm::Virtio_queue
 			            " idx: ", idx, " r: ", Genode::Hex(ring));
 		}
 #endif
+
 		Virtio_descriptor descr = _descr.index(0);
 		if (!descr.address()) return;
 
@@ -147,12 +147,7 @@ class Vmm::Virtio_queue
 
 		if (length == 0) return;
 
-		Genode::uint16_t idx = 0;
-		if (tx)
-			idx = _avail.read<Virtio_avail::Idx>();
-		else
-			idx = _used.read<Virtio_used::Idx>() + 1;
-
+		Genode::uint16_t idx = _avail.read<Virtio_avail::Idx>();
 		_used.write<Virtio_used::Flags>(0);
 		Virtio_used::Elem::access_t elem = 0;
 		Virtio_used::Elem::Id::set(elem,  0);
@@ -223,7 +218,7 @@ class Vmm::Virtio_device : public Vmm::Mmio_device
 
 			if (!_terminal.avail()) return;
 
-			_queue[RX]->notify(read, false);
+			_queue[RX]->notify(read);
 			_assert_irq();
 		}
 
@@ -237,7 +232,7 @@ class Vmm::Virtio_device : public Vmm::Mmio_device
 				return size;
 			};
 
-			_queue[TX]->notify(write, true);
+			_queue[TX]->notify(write);
 			_assert_irq();
 		}
 
