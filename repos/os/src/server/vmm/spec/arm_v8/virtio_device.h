@@ -1,5 +1,4 @@
 #include <base/log.h>
-#include <terminal_session/connection.h>
 #include <util/mmio.h>
 #include <util/reconstructible.h>
 
@@ -159,7 +158,7 @@ class Vmm::Virtio_queue
 
 class Vmm::Virtio_device : public Vmm::Mmio_device
 {
-	private:
+	protected:
 
 		enum { RX = 0, TX = 1, NUM = 2 };
 		Virtio_queue_data _data[NUM];
@@ -168,15 +167,13 @@ class Vmm::Virtio_device : public Vmm::Mmio_device
 		Genode::Constructible<Virtio_queue> _queue[NUM];
 		Gic::Irq                           &_irq;
 		Ram                                &_ram;
-		Terminal::Connection                _terminal;
-		Cpu::Signal_handler<Virtio_device>  _handler;
 
 		struct Dummy {
 			Mmio_register regs[7];
 		} _reg_container { .regs = {
 			{ "MagicValue", Mmio_register::RO, 0x0, 4, 0x74726976            },
 			{ "Version",    Mmio_register::RO, 0x4, 4, 0x2                   },
-			{ "DeviceID",   Mmio_register::RO, 0x8, 4, 0x3 /* console */     },
+			{ "DeviceID",   Mmio_register::RO, 0x8, 4, 0x0                   },
 			{ "VendorID",   Mmio_register::RO, 0xc, 4, 0x554d4551 /* QEMU */ },
 			{ "DeviceFeatureSel", Mmio_register::RW, 0x14, 4, 0 },
 			{ "DriverFeatureSel", Mmio_register::RW, 0x24, 4, 0 },
@@ -208,59 +205,7 @@ class Vmm::Virtio_device : public Vmm::Mmio_device
 			_irq.deassert();
 		}
 
-		void _read()
-		{
-			auto read = [&] (Genode::addr_t data, Genode::size_t size)
-			{
-				Genode::size_t length = _terminal.read((void *)data, size);
-				return length;
-			};
-
-			if (!_terminal.avail()) return;
-
-			_queue[RX]->notify(read);
-			_assert_irq();
-		}
-
-		void notify(unsigned idx)
-		{
-			if (idx != TX) return;
-
-			auto write = [&] (Genode::addr_t data, Genode::size_t size)
-			{
-				_terminal.write((void *)data, size);
-				return size;
-			};
-
-			_queue[TX]->notify(write);
-			_assert_irq();
-		}
-
-	private:
-
-		struct DeviceFeatures : Mmio_register
-		{
-			enum {
-				VIRTIO_F_VERSION_1    = 1,
-				VIRTIO_CONSOLE_F_SIZE = 1
-			};
-
-			Mmio_register &_selector;
-
-			Register read(Address_range&,  Cpu&) override
-			{
-				/* lower 32 bit */
-				if (_selector.value() == 0) return VIRTIO_CONSOLE_F_SIZE;
-
-				/* upper 32 bit */
-				return VIRTIO_F_VERSION_1;
-			}
-
-			DeviceFeatures(Mmio_register &selector)
-			: Mmio_register("DeviceFeatures", Mmio_register::RO, 0x10, 4),
-			  _selector(selector)
-			{ }
-		} _device_features { _reg_container.regs[4] };
+		virtual void _notify(unsigned idx) = 0;
 
 		struct DriverFeatures : Mmio_register
 		{
@@ -352,7 +297,7 @@ class Vmm::Virtio_device : public Vmm::Mmio_device
 			void write(Address_range&, Cpu&, Register reg) override
 			{
 				//Genode::log("QueueNotify: ", reg);
-				device.notify(reg);
+				device._notify(reg);
 			}
 
 			QueueNotify(Virtio_device &device)
@@ -485,6 +430,5 @@ class Vmm::Virtio_device : public Vmm::Mmio_device
 		              const Genode::uint64_t size,
 		              unsigned irq,
 		              Cpu &cpu,
-		              Ram &ram,
-		              Genode::Env &env);
+		              Ram &ram);
 };
