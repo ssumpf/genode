@@ -20,6 +20,7 @@
 #include <gic.h>
 #include <pl011.h>
 #include <virtio_console.h>
+#include <virtio_net.h>
 
 #include <base/attached_ram_dataspace.h>
 #include <base/attached_rom_dataspace.h>
@@ -52,6 +53,7 @@ class Vmm::Vm
 		Cpu                            _cpu;
 		Pl011                          _uart;
 		Virtio_console                 _virtio_console;
+		Virtio_net                     _virtio_net;
 
 		void _load_kernel();
 		void _load_dtb();

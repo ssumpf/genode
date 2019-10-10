@@ -1,3 +1,6 @@
+#ifndef _VIRTIO_DEVICE_H_
+#define _VIRTIO_DEVICE_H_
+
 #include <base/log.h>
 #include <util/mmio.h>
 #include <util/reconstructible.h>
@@ -27,10 +30,13 @@ struct Vmm::Virtio_queue_data
 	uint32_t device_high   { 0 };
 	uint32_t num           { 0 };
 	uint32_t ready         { 0 };
+	bool     tx            { false };
 
 	Genode::addr_t descr()  const { return ((Genode::addr_t)descr_high  << 32) | descr_low; }
 	Genode::addr_t driver() const { return ((Genode::addr_t)driver_high << 32) | driver_low; }
 	Genode::addr_t device() const { return ((Genode::addr_t)device_high << 32) | device_low; }
+
+	enum { MAX_QUEUE_SIZE = 1 << 15 };
 };
 
 
@@ -77,7 +83,7 @@ class Vmm::Virtio_avail : public Genode::Mmio
 
 		struct Flags : Register<0x0, 16> { };
 		struct Idx   : Register<0x2, 16> { };
-		struct Ring  : Register_array<0x4, 16, 8, 16> { };
+		struct Ring  : Register_array<0x4, 16, Virtio_queue_data::MAX_QUEUE_SIZE, 16> { };
 };
 
 
@@ -91,7 +97,7 @@ class Vmm::Virtio_used : public Genode::Mmio
 		struct Flags : Register<0x0, 16> { };
 		struct Idx   : Register<0x2, 16> { };
 
-		struct Elem : Register_array<0x4, 64, 8, 64>
+		struct Elem : Register_array<0x4, 64, Virtio_queue_data::MAX_QUEUE_SIZE, 64>
 		{
 			struct Id     : Bitfield<0, 32> { };
 			struct Length : Bitfield<32,32> { };
@@ -112,6 +118,10 @@ class Vmm::Virtio_queue
 		Virtio_avail      _avail { _ram.local_address(_data.driver())};
 		Virtio_used       _used  { _ram.local_address(_data.device())};
 
+		Genode::uint16_t  _idx    { 0 };
+		Genode::uint32_t  _length { _data.num };
+		bool              _tx     { _data.tx  };
+
 	public:
 
 		Virtio_queue(Virtio_queue_data &data, Ram &ram)
@@ -119,9 +129,9 @@ class Vmm::Virtio_queue
 
 
 	template <typename FUNC>
-	void notify(FUNC func)
+	bool notify(FUNC func)
 	{
-#if 0
+#if 1
 		for (unsigned idx = 0; idx < 8; idx++) {
 		Virtio_descriptor descr = _descr.index(idx);
 
@@ -136,23 +146,37 @@ class Vmm::Virtio_queue
 			Genode::log("avail: i: ", i, " f: ", Genode::Hex(flags),
 			            " idx: ", idx, " r: ", Genode::Hex(ring));
 		}
+
+		Genode::log("used: idx: ", _used.read<Virtio_used::Idx>());
 #endif
 
-		Virtio_descriptor descr = _descr.index(0);
-		if (!descr.address()) return;
+		Genode::uint16_t used_idx  = _used.read<Virtio_used::Idx>();
+		Genode::uint16_t avail_idx = _avail.read<Virtio_avail::Idx>();
+		Genode::uint16_t queue_idx = _tx ? avail_idx : used_idx + 1;
 
-		Genode::addr_t data   = _ram.local_address(descr.address());
-		Genode::size_t length = func(data, descr.length());
+		Genode::uint16_t written = 0;
+		while (_idx != queue_idx && written < _length)  {
+			Genode::uint16_t id = _avail.read<Virtio_avail::Ring>(_idx % _length);
+			Virtio_descriptor descr = _descr.index(id);
+			if (!descr.address() || !descr.length()) break;
 
-		if (length == 0) return;
+			Genode::addr_t data   = _ram.local_address(descr.address());
+			Genode::size_t length = func(data, descr.length());
 
-		Genode::uint16_t idx = _avail.read<Virtio_avail::Idx>();
-		_used.write<Virtio_used::Flags>(0);
-		Virtio_used::Elem::access_t elem = 0;
-		Virtio_used::Elem::Id::set(elem,  0);
-		Virtio_used::Elem::Length::set(elem, length);
-		_used.write<Virtio_used::Elem>(elem, 0);
-		_used.write<Virtio_used::Idx>(idx);
+			if (length == 0) break;
+
+			_used.write<Virtio_used::Flags>(0);
+			Virtio_used::Elem::access_t elem = 0;
+			Virtio_used::Elem::Id::set(elem,  id);
+			Virtio_used::Elem::Length::set(elem, length);
+			_used.write<Virtio_used::Elem>(elem, id);
+			written++; _idx++;
+		}
+
+		Genode::log("next used: idx: ", used_idx + written);
+		_used.write<Virtio_used::Idx>(used_idx + written);
+
+		return written > 0;
 	}
 };
 
@@ -186,8 +210,10 @@ class Vmm::Virtio_device : public Vmm::Mmio_device
 
 		void _queue_state(bool const construct)
 		{
-			if (construct && !_queue[_current].constructed())
+			if (construct && !_queue[_current].constructed()) {
+				_queue_data().tx = (_current == TX);
 				_queue[_current].construct(_queue_data(), _ram);
+			}
 
 			if (!construct && _queue[_current].constructed())
 				_queue[_current].destruct();
@@ -432,3 +458,5 @@ class Vmm::Virtio_device : public Vmm::Mmio_device
 		              Cpu &cpu,
 		              Ram &ram);
 };
+
+#endif /* _VIRTIO_DEVICE_H_ */
