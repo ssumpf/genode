@@ -1,3 +1,16 @@
+/*
+ * \brief  Virtio console implementation
+ * \author Sebastian Sumpf
+ * \date   2019-10-10
+ */
+
+/*
+ * Copyright (C) 2019 Genode Labs GmbH
+ *
+ * This file is part of the Genode OS framework, which is distributed
+ * under the terms of the GNU Affero General Public License version 3.
+ */
+
 #ifndef _VIRTIO_CONSOLE_H_
 #define _VIRTIO_CONSOLE_H_
 
@@ -19,9 +32,9 @@ class Vmm::Virtio_console : public Virtio_device
 
 		void _read()
 		{
-			auto read = [&] (Genode::addr_t data, Genode::size_t size)
+			auto read = [&] (addr_t data, size_t size)
 			{
-				Genode::size_t length = _terminal.read((void *)data, size);
+				size_t length = _terminal.read((void *)data, size);
 				return length;
 			};
 
@@ -35,7 +48,7 @@ class Vmm::Virtio_console : public Virtio_device
 		{
 			if (idx != TX) return;
 
-			auto write = [&] (Genode::addr_t data, Genode::size_t size)
+			auto write = [&] (addr_t data, size_t size)
 			{
 				_terminal.write((void *)data, size);
 				return size;
@@ -45,35 +58,11 @@ class Vmm::Virtio_console : public Virtio_device
 			_assert_irq();
 		}
 
-		struct DeviceFeatures : Mmio_register
-		{
-			enum {
-				VIRTIO_F_VERSION_1    = 1,
-				VIRTIO_CONSOLE_F_SIZE = 1
-			};
-
-			Mmio_register &_selector;
-
-			Register read(Address_range&,  Cpu&) override
-			{
-				/* lower 32 bit */
-				if (_selector.value() == 0) return VIRTIO_CONSOLE_F_SIZE;
-
-				/* upper 32 bit */
-				return VIRTIO_F_VERSION_1;
-			}
-
-			DeviceFeatures(Mmio_register &selector)
-			: Mmio_register("DeviceFeatures", Mmio_register::RO, 0x10, 4),
-			  _selector(selector)
-			{ }
-		} _device_features { _reg_container.regs[4] };
-
 	public:
 
-		Virtio_console(const char * const     name,
-		               const Genode::uint64_t addr,
-		               const Genode::uint64_t size,
+		Virtio_console(const char * const name,
+		               const uint64_t addr,
+		               const uint64_t size,
 		               unsigned irq,
 		               Cpu &cpu,
 		               Ram &ram,
@@ -83,9 +72,7 @@ class Vmm::Virtio_console : public Virtio_device
 		  _handler(cpu, env.ep(), *this, &Virtio_console::_read)
 		{
 			/* set device ID to console */
-			_reg_container.regs[2].set(0x3);
-
-			add(_device_features);
+			_device_id(0x3);
 
 			_terminal.read_avail_sigh(_handler);
 		}

@@ -1,3 +1,16 @@
+/*
+ * \brief  Generic and simple virtio device
+ * \author Sebastian Sumpf
+ * \date   2019-10-10
+ */
+
+/*
+ * Copyright (C) 2019 Genode Labs GmbH
+ *
+ * This file is part of the Genode OS framework, which is distributed
+ * under the terms of the GNU Affero General Public License version 3.
+ */
+
 #include <cpu.h>
 #include <virtio_device.h>
 
@@ -11,7 +24,8 @@ Virtio_device::Virtio_device(const char * const     name,
                              const Genode::uint64_t size,
                              unsigned irq,
                              Cpu &cpu,
-                             Ram &ram)
+                             Ram &ram,
+                             unsigned queue_size)
 : Mmio_device(name, addr, size),
   _irq(cpu.gic().irq(irq)),
   _ram(ram)
@@ -19,6 +33,7 @@ Virtio_device::Virtio_device(const char * const     name,
 	for (unsigned i = 0; i < (sizeof(Dummy::regs) / sizeof(Mmio_register)); i++)
 		add(_reg_container.regs[i]);
 
+	add(_device_features);
 	add(_driver_features);
 	add(_queue_sel);
 	add(_queue_ready);
@@ -34,16 +49,6 @@ Virtio_device::Virtio_device(const char * const     name,
 	add(_interrupt_ack);
 	add(_status);
 
-}
-
-Register Virtio_device::Status::read(Address_range&,  Cpu&)
-{
-	Genode::log("Status read: ", _value);
-	return value();
-}
-
-void Virtio_device::Status::write(Address_range&, Cpu&, Register reg)
-{
-	Genode::log("Status write: ", reg);
-	set(reg);
+	/* set queue size */
+	_reg_container.regs[6].set(queue_size);
 }

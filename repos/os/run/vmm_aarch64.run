@@ -59,6 +59,7 @@ set build_components {
 	server/log_terminal
 	test/terminal_expect_send
 	server/vmm
+	server/nic_router
 }
 build $build_components
 create_boot_directory
@@ -92,11 +93,23 @@ install_config {
 		<resource name="RAM" quantum="1M"/>
 		<provides> <service name="Terminal"/> </provides>
 	</start>
+	<start name="nic_drv">
+		<binary name="nic_router" />
+		<resource name="RAM" quantum="8M"/>
+		<provides> <service name="Nic"/> </provides>
+		<config verbose_packets="yes">
+			<default-policy domain="default"/>
+			<domain name="default" interface="10.0.1.1/24">
+				<dhcp-server ip_first="10.0.1.2" ip_last="10.0.1.2" />
+			</domain>
+		</config>
+	</start>
 	<start name="vmm" caps="200" priority="-1">
 		<resource name="RAM" quantum="256M"/>
 		<route>
 			<service name="Terminal" label="earlycon"> <child name="log_terminal"/> </service>
 			<service name="Terminal" label="console"> <child name="terminal_crosslink"/> </service>
+			<service name="Nic"> <child name="nic_drv"/> </service>
 			<any-service><parent/><any-child/></any-service>
 		</route>
 	</start>
@@ -118,6 +131,7 @@ set boot_modules {
 	log_terminal
 	terminal_crosslink
 	test-terminal_expect_send
+	nic_router
 	vmm
 	linux
 	dtb

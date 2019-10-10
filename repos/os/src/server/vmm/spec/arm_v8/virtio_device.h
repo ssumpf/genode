@@ -1,3 +1,16 @@
+/*
+ * \brief  Generic and simple virtio device
+ * \author Sebastian Sumpf
+ * \date   2019-10-10
+ */
+
+/*
+ * Copyright (C) 2019 Genode Labs GmbH
+ *
+ * This file is part of the Genode OS framework, which is distributed
+ * under the terms of the GNU Affero General Public License version 3.
+ */
+
 #ifndef _VIRTIO_DEVICE_H_
 #define _VIRTIO_DEVICE_H_
 
@@ -18,7 +31,11 @@ namespace Vmm {
 	class  Virtio_used;
 }
 
+using uint16_t = Genode::uint16_t;
 using uint32_t = Genode::uint32_t;
+using uint64_t = Genode::uint64_t;
+using addr_t   = Genode::addr_t;
+using size_t   = Genode::size_t;
 
 struct Vmm::Virtio_queue_data
 {
@@ -32,9 +49,9 @@ struct Vmm::Virtio_queue_data
 	uint32_t ready         { 0 };
 	bool     tx            { false };
 
-	Genode::addr_t descr()  const { return ((Genode::addr_t)descr_high  << 32) | descr_low; }
-	Genode::addr_t driver() const { return ((Genode::addr_t)driver_high << 32) | driver_low; }
-	Genode::addr_t device() const { return ((Genode::addr_t)device_high << 32) | device_low; }
+	addr_t descr()  const { return ((addr_t)descr_high  << 32) | descr_low; }
+	addr_t driver() const { return ((addr_t)driver_high << 32) | driver_low; }
+	addr_t device() const { return ((addr_t)device_high << 32) | device_low; }
 
 	enum { MAX_QUEUE_SIZE = 1 << 15 };
 };
@@ -44,7 +61,7 @@ class Vmm::Virtio_descriptor : Genode::Mmio
 {
 	public:
 
-		Virtio_descriptor(Genode::addr_t base)
+		Virtio_descriptor(addr_t base)
 		: Mmio(base) {  }
 
 
@@ -60,17 +77,17 @@ class Vmm::Virtio_descriptor : Genode::Mmio
 
 		struct Next  : Register<0xe, 16> { };
 
-		constexpr Genode::size_t size() { return 16; }
+		constexpr size_t size() { return 16; }
 
 		Virtio_descriptor index(unsigned idx)
 		{
 			return Virtio_descriptor(base() + (size() * idx));
 		}
 
-		Genode::addr_t address() const { return read<Address>(); }
-		Genode::size_t length () const { return read<Length>(); }
-		Genode::uint16_t flags() const { return read<Flags>(); }
-		Genode::uint16_t next() const { return read<Next>(); }
+		addr_t address() const { return read<Address>(); }
+		size_t length () const { return read<Length>(); }
+		uint16_t flags() const { return read<Flags>(); }
+		uint16_t next()  const { return read<Next>(); }
 };
 
 
@@ -78,7 +95,7 @@ class Vmm::Virtio_avail : public Genode::Mmio
 {
 	public:
 
-		Virtio_avail(Genode::addr_t base)
+		Virtio_avail(addr_t base)
 		: Mmio(base) { };
 
 		struct Flags : Register<0x0, 16> { };
@@ -91,7 +108,7 @@ class Vmm::Virtio_used : public Genode::Mmio
 {
 	public:
 
-		Virtio_used(Genode::addr_t base)
+		Virtio_used(addr_t base)
 		: Mmio(base) { };
 
 		struct Flags : Register<0x0, 16> { };
@@ -118,28 +135,27 @@ class Vmm::Virtio_queue
 		Virtio_avail      _avail { _ram.local_address(_data.driver())};
 		Virtio_used       _used  { _ram.local_address(_data.device())};
 
-		Genode::uint16_t  _idx    { 0 };
-		Genode::uint32_t  _length { _data.num };
-		bool              _tx     { _data.tx  };
+		uint16_t  _idx    { 0 };
+		uint32_t  _length { _data.num };
+		bool      _tx     { _data.tx  };
 
 	public:
 
 		Virtio_queue(Virtio_queue_data &data, Ram &ram)
 		: _data(data), _ram(ram) { }
 
-
 	template <typename FUNC>
 	bool notify(FUNC func)
 	{
 #if 1
-		for (unsigned idx = 0; idx < 8; idx++) {
+		for (unsigned idx = 0; idx < _length; idx++) {
 		Virtio_descriptor descr = _descr.index(idx);
 
 		Genode::log("notify: idx: ", idx, " a: ", Genode::Hex(descr.address()), 
 		            " l: ", descr.length(), " f: ", Genode::Hex(descr.flags()),
 		            " next: ", Genode::Hex(descr.next()));
 		}
-		for (unsigned i = 0; i < 8; i++) {
+		for (unsigned i = 0; i < _length; i++) {
 			unsigned flags = _avail.read<Virtio_avail::Flags>();
 			unsigned idx  = _avail.read<Virtio_avail::Idx>();
 			unsigned ring = _avail.read<Virtio_avail::Ring>(i);
@@ -150,18 +166,18 @@ class Vmm::Virtio_queue
 		Genode::log("used: idx: ", _used.read<Virtio_used::Idx>());
 #endif
 
-		Genode::uint16_t used_idx  = _used.read<Virtio_used::Idx>();
-		Genode::uint16_t avail_idx = _avail.read<Virtio_avail::Idx>();
-		Genode::uint16_t queue_idx = _tx ? avail_idx : used_idx + 1;
+		uint16_t used_idx  = _used.read<Virtio_used::Idx>();
+		uint16_t avail_idx = _avail.read<Virtio_avail::Idx>();
+		uint16_t queue_idx = _tx ? avail_idx : used_idx + 1;
 
-		Genode::uint16_t written = 0;
+		uint16_t written = 0;
 		while (_idx != queue_idx && written < _length)  {
-			Genode::uint16_t id = _avail.read<Virtio_avail::Ring>(_idx % _length);
+			uint16_t id = _avail.read<Virtio_avail::Ring>(_idx % _length);
 			Virtio_descriptor descr = _descr.index(id);
 			if (!descr.address() || !descr.length()) break;
 
-			Genode::addr_t data   = _ram.local_address(descr.address());
-			Genode::size_t length = func(data, descr.length());
+			addr_t data   = _ram.local_address(descr.address());
+			size_t length = func(data, descr.length());
 
 			if (length == 0) break;
 
@@ -171,6 +187,8 @@ class Vmm::Virtio_queue
 			Virtio_used::Elem::Length::set(elem, length);
 			_used.write<Virtio_used::Elem>(elem, id);
 			written++; _idx++;
+
+			if (used_idx + written == avail_idx)  break;
 		}
 
 		Genode::log("next used: idx: ", used_idx + written);
@@ -179,6 +197,7 @@ class Vmm::Virtio_queue
 		return written > 0;
 	}
 };
+
 
 class Vmm::Virtio_device : public Vmm::Mmio_device
 {
@@ -204,6 +223,11 @@ class Vmm::Virtio_device : public Vmm::Mmio_device
 			{ "QueueNumMax", Mmio_register::RO, 0x34, 4, 8 }
 		}};
 
+
+		void _device_id(unsigned id)
+		{
+			_reg_container.regs[2].set(id);
+		}
 
 		void               _queue_select(uint32_t sel) { _current = sel; }
 		Virtio_queue_data &_queue_data() { return _data[_current]; }
@@ -233,11 +257,39 @@ class Vmm::Virtio_device : public Vmm::Mmio_device
 
 		virtual void _notify(unsigned idx) = 0;
 
+
+		/***************
+		 ** Registers **
+		 ***************/
+
+		struct DeviceFeatures : Mmio_register
+		{
+			enum {
+				VIRTIO_F_VERSION_1 = 1,
+			};
+
+			Mmio_register &_selector;
+
+			Register read(Address_range&,  Cpu&) override
+			{
+				/* lower 32 bit */
+				if (_selector.value() == 0) return 0;
+
+				/* upper 32 bit */
+				return VIRTIO_F_VERSION_1;
+			}
+
+			DeviceFeatures(Mmio_register &selector)
+			: Mmio_register("DeviceFeatures", Mmio_register::RO, 0x10, 4),
+			  _selector(selector)
+			{ }
+		} _device_features { _reg_container.regs[4] };
+
 		struct DriverFeatures : Mmio_register
 		{
 			Mmio_register    &_selector;
-			Genode::uint32_t  _lower { 0 };
-			Genode::uint32_t  _upper { 0 };
+			uint32_t  _lower { 0 };
+			uint32_t  _upper { 0 };
 
 			void write(Address_range&, Cpu&, Register reg) override
 			{
@@ -254,8 +306,17 @@ class Vmm::Virtio_device : public Vmm::Mmio_device
 
 		struct Status : Mmio_register
 		{
-			Register read(Address_range&,  Cpu&)           override;
-			void     write(Address_range&, Cpu&, Register) override;
+			Register read(Address_range&,  Cpu&) override
+			{
+				Genode::log("Status read: ", _value);
+				return value();
+			}
+
+			void write(Address_range&, Cpu&, Register reg) override
+			{
+				Genode::log("Status write: ", reg);
+				set(reg);
+			}
 
 			Status()
 			: Mmio_register("Status", Mmio_register::RW, 0x70, 4, 0)
@@ -451,12 +512,13 @@ class Vmm::Virtio_device : public Vmm::Mmio_device
 
 	public:
 
-		Virtio_device(const char * const     name,
-		              const Genode::uint64_t addr,
-		              const Genode::uint64_t size,
+		Virtio_device(const char * const name,
+		              const uint64_t addr,
+		              const uint64_t size,
 		              unsigned irq,
 		              Cpu &cpu,
-		              Ram &ram);
+		              Ram &ram,
+		              unsigned queue_size = 8);
 };
 
 #endif /* _VIRTIO_DEVICE_H_ */
