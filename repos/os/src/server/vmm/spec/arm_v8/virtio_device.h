@@ -147,7 +147,7 @@ class Vmm::Virtio_queue
 	template <typename FUNC>
 	bool notify(FUNC func)
 	{
-#if 1
+#if 0
 		for (unsigned idx = 0; idx < _length; idx++) {
 		Virtio_descriptor descr = _descr.index(idx);
 
@@ -191,7 +191,7 @@ class Vmm::Virtio_queue
 			if (used_idx + written == avail_idx)  break;
 		}
 
-		Genode::log("next used: idx: ", used_idx + written);
+		//Genode::log("next used: idx: ", used_idx + written);
 		_used.write<Virtio_used::Idx>(used_idx + written);
 
 		return written > 0;
