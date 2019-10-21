@@ -82,7 +82,7 @@ Pl011::Pl011(const char * const       name,
              Cpu                     &cpu,
              Genode::Env             &env)
 : Mmio_device(name, addr, size),
-  _terminal(env),
+  _terminal(env, "earlycon"),
   _handler(cpu, env.ep(), *this, &Pl011::_read),
   _irq(cpu.gic().irq(irq))
 {
