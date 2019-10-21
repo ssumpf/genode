@@ -65,10 +65,14 @@ Vm::Vm(Genode::Env & env)
   _cpu(*this, _vm, _gic, env, _heap, _vm_handler,
        _ram.base() + KERNEL_OFFSET,
        _ram.base() + DTB_OFFSET),
-  _uart("Pl011", 0x9000000, 0x1000, 33, _cpu, env)
+  _uart("Pl011", 0x9000000, 0x1000, 33, _cpu, env),
+  _virtio_console("HVC", 0xa000000, 0x200,  48, _cpu, _ram, env),
+  _virtio_net("Net", 0xa000200, 0x200,  49, _cpu, _ram, env)
 {
 	_bus.add(_gic);
 	_bus.add(_uart);
+	_bus.add(_virtio_console);
+	_bus.add(_virtio_net);
 	_vm.attach(_vm_ram.cap(), RAM_ADDRESS);
 	_vm.attach_pic(0x8010000);
 	_load_kernel();
