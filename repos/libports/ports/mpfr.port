@@ -10,9 +10,9 @@ DIR(mpfr) := src/lib/mpfr
 
 TAR_OPT(mpfr) := --strip-components=1
 
-DIRS := include/mpfr
+DIRS := include/mpfr include/generic
 DIR_CONTENT(include/mpfr) := src/lib/mpfr/src/mpfr.h
-
+DIR_CONTENT(include/generic) := src/lib/mpfr/src/generic/*
 default: include/mpfr/mparam.h
 
 include/mpfr/mparam.h: _dirs
