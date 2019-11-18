@@ -1,0 +1,85 @@
+diff --git a/code/q3_ui/ui_video.c b/code/q3_ui/ui_video.c
+index d37a8149..470f00c1 100644
+--- a/code/q3_ui/ui_video.c
++++ b/code/q3_ui/ui_video.c
+@@ -323,7 +323,7 @@ static const char *builtinResolutions[ ] =
+ 	"320x240",
+ 	"400x300",
+ 	"512x384",
+-	"640x480",
++	"1920x1080",
+ 	"800x600",
+ 	"960x720",
+ 	"1024x768",
+diff --git a/code/qcommon/net_ip.c b/code/qcommon/net_ip.c
+index 9d2a01f6..542b1ab0 100644
+--- a/code/qcommon/net_ip.c
++++ b/code/qcommon/net_ip.c
+@@ -983,7 +983,7 @@ void NET_SetMulticast6(void)
+ #ifdef _WIN32
+ 		curgroup.ipv6mr_interface = net_mcast6iface->integer;
+ #else
+-		curgroup.ipv6mr_interface = if_nametoindex(net_mcast6iface->string);
++		curgroup.ipv6mr_interface = 0;
+ #endif
+ 	}
+ 	else
+@@ -1275,9 +1275,9 @@ static void NET_GetLocalAddress(void)
+ 
+ 	numIP = 0;
+ 
+-	if(getifaddrs(&ifap))
+-		Com_Printf("NET_GetLocalAddress: Unable to get list of network interfaces: %s\n", NET_ErrorString());
+-	else
++	//if(getifaddrs(&ifap))
++	//	Com_Printf("NET_GetLocalAddress: Unable to get list of network interfaces: %s\n", NET_ErrorString());
++	//else
+ 	{
+ 		for(search = ifap; search; search = search->ifa_next)
+ 		{
+@@ -1286,7 +1286,7 @@ static void NET_GetLocalAddress(void)
+ 				NET_AddLocalAddress(search->ifa_name, search->ifa_addr, search->ifa_netmask);
+ 		}
+ 	
+-		freeifaddrs(ifap);
++		//freeifaddrs(ifap);
+ 		
+ 		Sys_ShowIP();
+ 	}
+diff --git a/code/qcommon/vm_x86_64.c b/code/qcommon/vm_x86_64.c
+index e91bf0e3..21f48d3e 100644
+--- a/code/qcommon/vm_x86_64.c
++++ b/code/qcommon/vm_x86_64.c
+@@ -443,7 +443,7 @@ void VM_Compile( vm_t *vm, vmHeader_t *header ) {
+ 		vm->codeLength = compiledOfs;
+ 
+ 		#ifdef VM_X86_64_MMAP
+-			vm->codeBase = mmap(NULL, compiledOfs, PROT_WRITE, MAP_SHARED|MAP_ANONYMOUS, -1, 0);
++			vm->codeBase = mmap(NULL, compiledOfs, PROT_WRITE|PROT_EXEC, MAP_SHARED, -1, 0);
+ 			if(vm->codeBase == MAP_FAILED)
+ 				Com_Error(ERR_FATAL, "VM_CompileX86_64: can't mmap memory");
+ 		#elif __WIN64__
+@@ -945,8 +945,8 @@ void VM_Compile( vm_t *vm, vmHeader_t *header ) {
+ 	assembler_init(0);
+ 
+ 	#ifdef VM_X86_64_MMAP
+-		if(mprotect(vm->codeBase, compiledOfs, PROT_READ|PROT_EXEC))
+-			Com_Error(ERR_FATAL, "VM_CompileX86_64: mprotect failed");
++	//	if(mprotect(vm->codeBase, compiledOfs, PROT_READ|PROT_EXEC))
++	//		Com_Error(ERR_FATAL, "VM_CompileX86_64: mprotect failed");
+ 	#elif __WIN64__
+ 		{
+ 			DWORD oldProtect = 0;
+diff --git a/code/renderer/tr_init.c b/code/renderer/tr_init.c
+index a36e6f58..c8bf7236 100644
+--- a/code/renderer/tr_init.c
++++ b/code/renderer/tr_init.c
+@@ -277,7 +277,7 @@ vidmode_t r_vidModes[] =
+ 	{ "Mode  0: 320x240",		320,	240,	1 },
+ 	{ "Mode  1: 400x300",		400,	300,	1 },
+ 	{ "Mode  2: 512x384",		512,	384,	1 },
+-	{ "Mode  3: 640x480",		640,	480,	1 },
++	{ "Mode  3: 1920x1080",		1920,	1080,	1 },
+ 	{ "Mode  4: 800x600",		800,	600,	1 },
+ 	{ "Mode  5: 960x720",		960,	720,	1 },
+ 	{ "Mode  6: 1024x768",		1024,	768,	1 },

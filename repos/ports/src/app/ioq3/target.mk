@@ -17,6 +17,6 @@ CC_OPT      = -Wimplicit -pipe -DUSE_ICON -DNO_GZIP \
 
 INC_DIR   +=$(call select_from_repositories,src/lib/mesa/include)
 
-REQUIRES = narf
+#REQUIRES = narf
 
 vpath %.c $(call select_from_ports,ioq3)/src/app/ioq3/code/sys

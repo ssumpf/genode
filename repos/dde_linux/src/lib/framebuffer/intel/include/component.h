@@ -116,7 +116,7 @@ class Framebuffer::Session_component : public Genode::Rpc_object<Session>
 
 			_driver.update_mode();
 
-			Genode::log("CONFIG CHANGE w: %d h: %d session %p", _driver.width(), _driver.height(), this);
+			Genode::log("CONFIG CHANGE w: ", _driver.width(), " h: ", _driver.height(), " session ", this);
 			if (_mode_sigh.valid())
 				Genode::Signal_transmitter(_mode_sigh).submit();
 			else Genode::log("not valid");

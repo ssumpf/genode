@@ -59,7 +59,7 @@ void terminate_handler()
 
 	if (!t)
 		return;
-
+#if 0
 	char *demangled_name = __cxa_demangle(t->name(), nullptr, nullptr, nullptr);
 	if (demangled_name) {
 		Genode::error("Uncaught exception of type "
@@ -69,6 +69,7 @@ void terminate_handler()
 		Genode::error("Uncaught exception of type '", t->name(), "' "
 		              "(use 'c++filt -t' to demangle)");
 	}
+#endif
 }
 
 

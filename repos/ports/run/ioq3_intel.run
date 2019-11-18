@@ -9,7 +9,6 @@ set build_components {
 	drivers/input
 	drivers/usb
 	drivers/nic
-	server/rump_fs
 	lib/vfs/lxip
 	server/input_filter
 	drivers/usb
@@ -60,7 +59,6 @@ append config {
 		<resource name="RAM" quantum="20M"/>
 		<config xhci="yes"><storage/><hid/></config>
 		<provides>
-			<service name="Block" />
 			<service name="Input" />
 		</provides>
 	</start>
@@ -69,18 +67,16 @@ append config {
 		<provides><service name="Input"/></provides>
 		<config verbose_keyboard="no" verbose_mouse="no" verbose_scancodes="no"/>
 	</start>
-	<start name="rump_fs">
-		<resource name="RAM" quantum="20M" />
-		<provides><service name="File_system"/></provides>
-		<config fs="ext2fs"><policy label_prefix="ioq3" root="/" writeable="yes"/></config>
-	</start>
 	<start name="nic_drv">
 		<resource name="RAM" quantum="10M" />
 		<provides><service name="Nic" /></provides>
 	</start>
 	<start name="audio_drv">
 		<resource name="RAM" quantum="8M"/>
-		<provides> <service name="Audio_out"/> </provides>
+		<provides>
+			<service name="Audio_out"/>
+			<service name="Audio_in"/>
+		</provides>
 		<config>
 			<mixer field="outputs.master" value="128,128"/>
 		</config>
@@ -121,9 +117,13 @@ append config {
 			<vfs>
 				<dir name="dev"> <log/> </dir>
 				<dir name="socket">
-					<lxip ip_addr="10.0.0.16" netmask="255.255.255.0" gateway="10.0.0.1"/>
+					<lxip ip_addr="10.0.0.16" netmask="255.255.255.0" gateway="10.0.0.1" nameserver="10.0.0.1"/>
 				</dir>
-				<fs />
+				<tar name="ioq3_assets.tar"/>
+				<dir name="foobar">
+					<ram/>
+				</dir>
+				<ram/>
 			</vfs>
 		</config>
 		<route>
@@ -144,9 +144,9 @@ set boot_modules {
 	expat.lib.so glapi.lib.so swrast.lib.so
 	drm.lib.so libc_resolv.lib.so lxip.lib.so
 	i965.lib.so sdl.lib.so vfs_lxip.lib.so
-	rump_fs rump.lib.so rump_fs.lib.so
 	intel_fb_drv usb_drv ps2_drv nic_drv
 	input_filter audio_drv
+	ioq3_assets.tar
 }
 
 append_platform_drv_boot_modules
