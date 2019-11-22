@@ -56,32 +56,6 @@ struct Filters
 };
 
 
-static Filters<7> log_filters
-{
-	{
-		{ "\x9", "" },
-		{ "\xa", "" },
-		{ "\x1b[0m", "" },
-		{ "\x1b[31m", "" },
-		{ "\x1b[32m", "" },
-		{ "\x1b[33m", "" },
-		{ "\x1b[34m", "" }
-	}
-};
-
-
-static Filters<5> pattern_filters
-{
-	{
-		{ "\x9", "" },
-		{ "\xa", "" },
-		{ "&lt;", "<" },
-		{ "&amp;", "&" },
-		{ "&#42;", "*" }
-	}
-};
-
-
 template <typename FILTERS>
 static Filter const *filter_to_apply(FILTERS const &filters,
                                      char    const *curr,
@@ -104,6 +78,16 @@ static Filter const *filter_to_apply(FILTERS const &filters,
 static size_t sanitize_pattern(char *const base,
                                size_t      size)
 {
+	static Filters<5> pattern_filters
+	{
+		{
+			{ "\x9", "" },
+			{ "\xa", "" },
+			{ "&lt;", "<" },
+			{ "&amp;", "&" },
+			{ "&#42;", "*" }
+		}
+	};
 	struct Bad_filter : Exception { };
 	char const *end { base + size };
 	for (char *curr { base }; curr < end; ) {
@@ -161,7 +145,7 @@ static void c_string_append(char       * &dst,
                             size_t const  src_size)
 {
 	struct Bad_args : Exception { };
-	char const *src_end = dst + src_size + 1;
+	char const *src_end = dst + src_size;
 	if (src_end < dst ||
 	    src_end > dst_end)
 	{
@@ -169,7 +153,6 @@ static void c_string_append(char       * &dst,
 	}
 	memcpy(dst, src, src_size);
 	dst += src_size;
-	*dst = 0;
 }
 
 
@@ -178,6 +161,18 @@ static size_t sanitize_log(char                      *dst,
                            Log_session::String const &str,
                            Session_label       const &label)
 {
+	static Filters<7> log_filters
+	{
+		{
+			{ "\x9", "" },
+			{ "\xa", "" },
+			{ "\x1b[0m", "" },
+			{ "\x1b[31m", "" },
+			{ "\x1b[32m", "" },
+			{ "\x1b[33m", "" },
+			{ "\x1b[34m", "" }
+		}
+	};
 	/* first, write the label prefix to the buffer */
 	char const *const dst_base { dst };
 	char const *const dst_end { dst + dst_sz };
@@ -585,7 +580,8 @@ size_t Child::log_session_write(Log_session::String const &str,
 	if (_skip || finished()) {
 		return 0;
 	}
-	enum { LOG_BUF_SZ = Log_session::MAX_STRING_LEN + 160 + 4 };
+	/* max log string size + max label size + size of label framing "[ ]" */
+	enum { LOG_BUF_SZ = Log_session::MAX_STRING_LEN + 160 + 3 };
 
 	char               log_buf[LOG_BUF_SZ];
 	size_t      const  log_len { sanitize_log(log_buf, LOG_BUF_SZ, str, label) };
@@ -824,29 +820,12 @@ void Child::_finished(State           state,
 	memcpy(name_padded, _name.string(), min(_name.length() - 1, sizeof(name_padded) - 1));
 
 	if (event.has_type(Event::Type::LOG)) {
-/*
-		enum { MAX_EXPL_SZ = 32 };
 
-		Log_event const &log_event = *static_cast<Log_event const *>(&event);
-
-		char const *const pattern_base = log_event.base();
-		size_t      const pattern_sz   = log_event.size();
-		char const *const pattern_end  = pattern_base + pattern_sz;
-
-		char const *expl_base = pattern_base;
-		for (; expl_base < pattern_end && *expl_base < 33; expl_base++) ;
-
-		char const *expl_end = expl_base;
-		for (; expl_end < pattern_end && *expl_end > 31; expl_end++) ;
-
-		size_t const expl_sz = min((size_t)(expl_end - expl_base), (size_t)MAX_EXPL_SZ);
-*/
 		_conclusion = Conclusion {
 			Cstring(name_padded), " ", _padded_state_name(), "  ",
 			time_sec < 10 ? "  " : time_sec < 100 ? " " : "", time_sec, ".",
 			time_ms  < 10 ? "00" : time_ms  < 100 ? "0" : "", time_ms,
 			"  log"
-// "\"", Cstring(expl_base, expl_sz), expl_sz < MAX_EXPL_SZ ? "" : " ...", "\""
 		};
 
 	} else if (event.has_type(Event::Type::TIMEOUT)) {

@@ -240,9 +240,8 @@ struct Depot_deploy::Main
 };
 
 
-void Component::construct(Genode::Env &env) {
-
-	env.exec_static_constructors();
+void Component::construct(Genode::Env &env)
+{
 	static Depot_deploy::Main main(env);
 }
 
