@@ -36,6 +36,7 @@ static bool vm_down = false;
 static Genode::Attached_rom_dataspace *clipboard_rom = nullptr;
 static Genode::Reporter               *clipboard_reporter = nullptr;
 static char                           *decoded_clipboard_content = nullptr;
+uint64_t trace_line;
 
 
 void Console::uninit()
@@ -154,6 +155,8 @@ void GenodeConsole::_handle_input()
 			Scan_code scan_code(key);
 
 			unsigned char const release_bit = release ? 0x80 : 0;
+			if (key == Input::Keycode::KEY_ESC && release_bit)
+				Genode::log("line: ", trace_line);
 
 			if (scan_code.normal())
 				_vbox_keyboard->PutScancode(scan_code.code() | release_bit);
