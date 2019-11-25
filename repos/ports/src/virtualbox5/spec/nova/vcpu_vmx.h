@@ -69,10 +69,8 @@ class Vcpu_handler_vmx : public Vcpu_handler
 			next_utcb.ctrl[0] = VMX_VMCS_CTRL_PROC_EXEC_HLT_EXIT |
 			                    VMX_VMCS_CTRL_PROC_EXEC_MOV_DR_EXIT |
 			                    VMX_VMCS_CTRL_PROC_EXEC_UNCOND_IO_EXIT |
-/* XXX commented out because TinyCore Linux won't run as guest otherwise
 			                    VMX_VMCS_CTRL_PROC_EXEC_MONITOR_EXIT |
 			                    VMX_VMCS_CTRL_PROC_EXEC_MWAIT_EXIT |
-*/
 /*			                    VMX_VMCS_CTRL_PROC_EXEC_CR8_LOAD_EXIT |
 			                    VMX_VMCS_CTRL_PROC_EXEC_CR8_STORE_EXIT |*/
 			                    VMX_VMCS_CTRL_PROC_EXEC_USE_TPR_SHADOW |
@@ -203,6 +201,10 @@ class Vcpu_handler_vmx : public Vcpu_handler
 				&This::_vmx_default> (exc_base, Mtd::ALL | Mtd::FPU);
 			register_handler<VMX_EXIT_HLT, This,
 				&This::_vmx_default> (exc_base, Mtd::ALL | Mtd::FPU);
+			register_handler<VMX_EXIT_MWAIT, This,
+				&This::_vmx_default> (exc_base, Mtd::ALL | Mtd::FPU);
+			register_handler<VMX_EXIT_MONITOR, This,
+				&This::_vmx_default> (exc_base, Mtd::ALL | Mtd::FPU);
 
 			/* we don't support tsc offsetting for now - so let the rdtsc exit */
 			register_handler<VMX_EXIT_RDTSC, This,
@@ -251,6 +253,9 @@ class Vcpu_handler_vmx : public Vcpu_handler
 		int vm_exit_requires_instruction_emulation(PCPUMCTX pCtx)
 		{
 			switch (exit_reason) {
+			case VMX_EXIT_MWAIT:
+			case VMX_EXIT_MONITOR:
+				return VINF_EM_RAW_EMULATE_INSTR;
 			case VMX_EXIT_HLT:
 				pCtx->rip++;
 				return VINF_EM_HALT;
