@@ -435,7 +435,7 @@ void Driver_manager::Main::_handle_pci_devices_update()
 		if (vendor_id == VENDOR_INTEL && class_code == CLASS_VGA)
 			has_intel_graphics = true;
 
-		if (vendor_id == VENDOR_INTEL && class_code == CLASS_AHCI)
+		if (class_code == CLASS_AHCI)
 			has_ahci = true;
 
 		if (vendor_id == VENDOR_VBOX)
