@@ -2,6 +2,8 @@ TARGET        = core-linux
 REQUIRES      = linux
 LIBS          = cxx base-linux-common syscall-linux startup-linux
 
+BOARD        ?= unknown
+
 GEN_CORE_DIR  = $(BASE_DIR)/src/core
 
 SRC_CC        = main.cc \
