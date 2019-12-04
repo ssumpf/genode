@@ -27,18 +27,18 @@ void connect(int ctr) {
 	}
 
 	if (connect(sock, (sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
-		printf("\nConnection Failed \n");
+		printf("\nConnection Failed sock: %d errno: %d\n", sock, errno);
 		return;
 	}
-
+	printf("connected sock: %d\n", sock);
 	memset(buffer, 0, 1024);
 	snprintf(buffer, 1023, "%s %i", "echo", ctr);
-	send(sock, buffer, strlen(buffer), 0);
-
+	int bytes = send(sock, buffer, strlen(buffer), 0);
+	printf("send done bytes: %d\n", bytes);
 	memset(buffer, 0, 1024);
 	valread = read(sock, buffer, 1023);
 	if (valread > 0) {
-		printf("%s\n", buffer);
+		printf("read %s\n", buffer);
 	} else {
 		printf("received nothing\n");
 	}
@@ -47,6 +47,8 @@ void connect(int ctr) {
 
 	return;
 }
+
+extern "C" void wait_for_continue();
 
 int main(int argc, char** argv)
 {

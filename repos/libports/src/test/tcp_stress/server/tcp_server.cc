@@ -53,7 +53,7 @@ void RunServer() {
 		printf("written\n");
 
 		close(new_socket);
-		printf("closed\n");
+		printf("closed %d\n", new_socket);
 	}
 
 	return;
