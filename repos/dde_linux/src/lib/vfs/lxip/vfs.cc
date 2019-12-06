@@ -1630,6 +1630,8 @@ class Vfs::Lxip_file_system : public Vfs::File_system,
 		                  Vfs::file_size count,
 		                  Vfs::file_size &out_count)
 		{
+			Genode::Lock::Guard g { Lxip::lock() };
+
 			Vfs::Lxip_vfs_handle *handle =
 				static_cast<Vfs::Lxip_vfs_handle*>(vfs_handle);
 
@@ -1904,6 +1906,7 @@ class Vfs::Lxip_file_system : public Vfs::File_system,
 		                   file_size count,
 		                   file_size &out_count) override
 		{
+			Genode::Lock::Guard g { Lxip::lock() };
 			Vfs::Lxip_vfs_handle *handle =
 				static_cast<Vfs::Lxip_vfs_handle*>(vfs_handle);
 

@@ -73,6 +73,8 @@ namespace Lxip {
 		LINUX_EALREADY    = -37,
 		LINUX_EISCONN     = -56,
 	};
+
+	Genode::Lock &lock();
 }
 
 #endif /* _INCLUDE_LXIP_LXIP_H_ */
