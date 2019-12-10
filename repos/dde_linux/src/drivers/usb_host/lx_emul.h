@@ -1152,9 +1152,6 @@ int    is_vmalloc_addr(const void *x);
  ** asm-generic/io.h **
  **********************/
 
-#define iowmb dma_wmb
-#define iormb dma_rmb
-
 #include <lx_emul/mmio.h>
 
 void *ioremap(phys_addr_t addr, unsigned long size);

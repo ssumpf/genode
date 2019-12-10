@@ -19,6 +19,9 @@
  ** asm-generic/io.h **
  **********************/
 
+#define iowmb dma_wmb
+#define iormb dma_rmb
+
 #define writeq(value, addr) ({ iowmb(); *(volatile uint64_t *)(addr) = (value); })
 #define writel(value, addr) ({ iowmb(); *(volatile uint32_t *)(addr) = (value); })
 #define writew(value, addr) ({ iowmb(); *(volatile uint16_t *)(addr) = (value); })
