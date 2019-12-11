@@ -181,6 +181,11 @@ struct Libc::Pthread : Noncopyable, Thread::Tls::Base
 	public:
 
 		/**
+		 * Libc errno support (pthread local)
+		 */
+		int error = 0;
+
+		/**
 		 * Constructor for threads created via 'pthread_create'
 		 */
 		Pthread(start_routine_t start_routine,
