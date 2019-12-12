@@ -311,7 +311,9 @@ class Lx::Timer
 			if (timeo > 0)
 				_wait_one_shot.schedule(Genode::Microseconds(jiffies_to_usecs(timeo)));
 
+			Lxip::lock().unlock();
 			_ep.wait_and_dispatch_one_io_signal();
+			Lxip::lock().lock();
 		}
 
 		void wait_uninterruptible(unsigned long timeo)
