@@ -191,19 +191,14 @@ struct Ata_driver : Port_driver
 	Io_command               *io_cmd = nullptr;
 	Block::Packet_descriptor  pending[32];
 
-	Signal_context_capability device_identified;
-
 	Ata_driver(Genode::Allocator     &alloc,
 	           Genode::Ram_allocator &ram,
-	           Ahci_root             &root,
-	           unsigned              &sem,
 	           Genode::Region_map    &rm,
 	           Hba                   &hba,
 	           Platform::Hba         &platform_hba,
-	           unsigned               number,
-	           Genode::Signal_context_capability device_identified)
-	: Port_driver(ram, root, sem, rm, hba, platform_hba, number),
-	  alloc(alloc), device_identified(device_identified)
+	           unsigned               number)
+	: Port_driver(ram, rm, hba, platform_hba, number),
+	  alloc(alloc)
 	{
 		Port::init();
 		identify_device();
@@ -297,46 +292,10 @@ struct Ata_driver : Port_driver
 
 	void handle_irq() override
 	{
+		Genode::log("ATA irq");
 		Is::access_t status = Port::read<Is>();
-
-		switch (state) {
-
-		case IDENTIFY:
-
-			if (Port::Is::Dss::get(status)
-			    || Port::Is::Pss::get(status)
-			    || Port::Is::Dhrs::get(status)) {
-				identity.construct(device_info);
-				serial.construct(*identity);
-				model.construct(*identity);
-
-				if (verbose) {
-					Genode::log("  model number: ",  Genode::Cstring(model->buf));
-					Genode::log("  serial number: ", Genode::Cstring(serial->buf));
-					identity->info();
-				}
-
-				check_device();
-				if (ncq_support())
-					io_cmd = new (&alloc) Ncq_command();
-				else
-					io_cmd = new (&alloc) Dma_ext_command();
-
-				ack_irq();
-
-				Genode::Signal_transmitter(device_identified).submit();
-			}
-			break;
-
-		case READY:
-
-			io_cmd->handle_irq(*this, status);
-			ack_packets();
-
-		default:
-			break;
-		}
-
+		io_cmd->handle_irq(*this, status);
+		ack_packets();
 		stop();
 	}
 
@@ -355,17 +314,33 @@ struct Ata_driver : Port_driver
 			cmd_slots = 1;
 
 		state = READY;
-		state_change();
 	}
 
 	void identify_device()
 	{
-		state       = IDENTIFY;
 		addr_t phys = (addr_t)Dataspace_client(device_info_ds).phys_addr();
 
 		Command_table table(command_table_addr(0), phys, 0x1000);
 		table.fis.identify_device();
 		execute(0);
+
+		wait_for_any(hba.delayer(), Port::Is::Dss::Equal(1),
+		                            Port::Is::Pss::Equal(1),
+		                            Port::Is::Dhrs::Equal(1));
+
+		Genode::error("Identified ATA device: ", (unsigned)Port::read<Is>());
+		identity.construct(device_info);
+		serial.construct(*identity);
+		model.construct(*identity);
+
+		if (verbose) {
+			Genode::log("  model number: ",  Genode::Cstring(model->buf));
+			Genode::log("  serial number: ", Genode::Cstring(serial->buf));
+			identity->info();
+		}
+
+		check_device();
+		ack_irq();
 	}
 
 

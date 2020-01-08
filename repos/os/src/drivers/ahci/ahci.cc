@@ -14,16 +14,15 @@
 
 /* Genode includes */
 #include <timer_session/connection.h>
-
+#include <ahci.h>
 /* local includes */
-#include <ata_driver.h>
-#include <atapi_driver.h>
+//#include <ata_driver.h>
+//#include <atapi_driver.h>
 
 
 struct Ahci
 {
 	Genode::Env       &env;
-	Genode::Allocator &alloc;
 
 	/* read device signature */
 	enum Signature {
@@ -31,6 +30,8 @@ struct Ahci
 		ATAPI_SIG      = 0xeb140101,
 		ATAPI_SIG_QEMU = 0xeb140000, /* will be fixed in Qemu */
 	};
+
+	enum {  MAX_PORTS = Ahci_driver::MAX_PORTS };
 
 	struct Timer_delayer : Mmio::Delayer, Timer::Connection
 	{
@@ -40,28 +41,18 @@ struct Ahci
 		void usleep(uint64_t us) override { Timer::Connection::usleep(us); }
 	} _delayer { env };
 
-	Ahci_root     &root;
 	Platform::Hba &platform_hba = Platform::init(env, _delayer);
 	Hba            hba          { env, platform_hba, _delayer };
 
-	enum { MAX_PORTS = 32 };
-	Port_driver   *ports[MAX_PORTS];
+	Constructible<Port_driver> ports[MAX_PORTS];
 	bool           port_claimed[MAX_PORTS];
 
-	Signal_handler<Ahci> irq;
-	unsigned             ready_count = 0;
+	Signal_handler<Ahci> irq { env.ep(), *this, &Ahci::handle_irq };
 	bool                 enable_atapi;
 
-	Signal_context_capability device_identified;
-
-	Ahci(Genode::Env &env, Genode::Allocator &alloc,
-	     Ahci_root &root, bool support_atapi,
-	     Genode::Signal_context_capability device_identified)
+	Ahci(Genode::Env &env, bool support_atapi)
 	:
-		env(env), alloc(alloc),
-		root(root), irq(root.entrypoint(), *this, &Ahci::handle_irq),
-		enable_atapi(support_atapi),
-		device_identified(device_identified)
+		env(env), enable_atapi(support_atapi)
 	{
 		info();
 
@@ -138,9 +129,7 @@ struct Ahci
 			switch (Port_base(index, hba).read<Port_base::Sig>()) {
 				case ATA_SIG:
 					try {
-						ports[index] = new (&alloc)
-							Ata_driver(alloc, ram, root, ready_count, rm, hba,
-							           platform_hba, index, device_identified);
+						ports[index].construct(rm, hba, platform_hba, index);
 						enabled = true;
 					} catch (...) { }
 
@@ -150,12 +139,13 @@ struct Ahci
 				case ATAPI_SIG:
 				case ATAPI_SIG_QEMU:
 					if (enable_atapi)
+					/*
 						try {
 							ports[index] = new (&alloc)
 								Atapi_driver(ram, root, ready_count, rm, hba,
 								             platform_hba, index);
 							enabled = true;
-						} catch (...) { }
+						} catch (...) { }*/
 
 					log("\t\t#", index, ":", enabled ? " ATAPI" : " off (ATAPI)");
 					break;
@@ -221,11 +211,9 @@ static Ahci *sata_ahci(Ahci *ahci = 0)
 }
 
 
-void Ahci_driver::init(Genode::Env &env, Genode::Allocator &alloc,
-                       Ahci_root &root, bool support_atapi,
-                       Genode::Signal_context_capability device_identified)
+void Ahci_driver::init(Genode::Env &env, bool support_atapi)
 {
-	static Ahci ahci(env, alloc, root, support_atapi, device_identified);
+	static Ahci ahci(env, support_atapi);
 	sata_ahci(&ahci);
 }
 

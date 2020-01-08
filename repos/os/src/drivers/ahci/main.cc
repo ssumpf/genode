@@ -16,7 +16,7 @@
 #include <base/component.h>
 #include <base/heap.h>
 #include <base/log.h>
-#include <block/component.h>
+#include <block/request_stream.h>
 #include <os/session_policy.h>
 #include <util/xml_node.h>
 #include <os/reporter.h>
@@ -25,13 +25,13 @@
 #include <ahci.h>
 
 
-namespace Block {
-	class Factory;
-	class Root_multiple_clients;
-	class Main;
+namespace Ahci {
+	using namespace Genode;
+	struct Main;
+	struct Block_session_component;
 }
 
-
+#if 0
 struct Block::Factory : Driver_factory
 {
 	long device_num;
@@ -48,7 +48,6 @@ struct Block::Factory : Driver_factory
 
 	Factory(long device_num) : device_num(device_num) { }
 };
-
 
 class Session_component : public Block::Session_component
 {
@@ -160,38 +159,110 @@ class Block::Root_multiple_clients : public Root_component< ::Session_component>
 		}
 };
 
-
-struct Block::Main
+#endif
+struct Ahci::Block_session_component : Rpc_object<Block::Session>,
+                                       Block::Request_stream
 {
-	Genode::Env  &env;
-	Genode::Heap  heap { env.ram(), env.rm() };
+	Env &_env;
 
-	Genode::Attached_rom_dataspace config { env, "config" };
-
-	Genode::Constructible<Genode::Reporter> reporter { };
-
-	Block::Root_multiple_clients root;
-
-	Signal_handler<Main> device_identified {
-		env.ep(), *this, &Main::handle_device_identified };
-
-	Main(Genode::Env &env)
-	: env(env), root(env, heap, config.xml())
+	Block_session_component(Env &env, Dataspace_capability ds,
+	                        Signal_context_capability sigh,
+	                        Block::Session::Info info)
+	:
+		Request_stream(env.rm(), ds, env.ep(), sigh, info),
+		_env(env)
 	{
-		Genode::log("--- Starting AHCI driver ---");
-		bool support_atapi  = config.xml().attribute_value("atapi", false);
-		try {
-			Ahci_driver::init(env, heap, root, support_atapi, device_identified);
-		} catch (Ahci_driver::Missing_controller) {
-			Genode::error("no AHCI controller found");
-			env.parent().exit(~0);
-		} catch (Genode::Service_denied) {
-			Genode::error("hardware access denied");
-			env.parent().exit(~0);
-		}
+		_env.ep().manage(*this);
 	}
 
-	void handle_device_identified()
+	~Block_session_component() { _env.ep().dissolve(*this); }
+};
+
+struct Ahci::Main : Rpc_object<Typed_root<Block::Session>>
+{
+	Env  &env;
+	Heap  heap { env.ram(), env.rm() };
+
+	Attached_rom_dataspace config { env, "config" };
+
+	Constructible<Reporter> reporter { };
+	Constructible<Block_session_component> block_session[Ahci_driver::MAX_PORTS];
+
+	Main(Env &env)
+	: env(env)
+	{
+		log("--- Starting AHCI driver ---");
+		bool support_atapi  = config.xml().attribute_value("atapi", false);
+		try {
+			Ahci_driver::init(env, heap, support_atapi);
+			report_ports();
+		} catch (Ahci_driver::Missing_controller) {
+			error("no AHCI controller found");
+			env.parent().exit(~0);
+		} catch (Service_denied) {
+			error("hardware access denied");
+			env.parent().exit(~0);
+		}
+		//XXX: remove
+		env.parent().announce(env.ep().manage(*this));
+	}
+
+	Session_capability session(Root::Session_args const &args,
+	                            Affinity const &) override
+	{
+		log("new block session: ", args.string(), " size: ", sizeof(Block_session_component));
+		Session_label const label = label_from_args(args.string());
+		Session_policy const policy(label, config.xml());
+
+		Ram_quota const ram_quota = ram_quota_from_args(args.string());
+		size_t const tx_buf_size =
+			Arg_string::find_arg(args.string(), "tx_buf_size").ulong_value(0);
+
+		if (!tx_buf_size)
+			throw Service_denied();
+
+		if (tx_buf_size > ram_quota.value) {
+			error("insufficient 'ram_quota' from '", label, "',"
+			      " got ", ram_quota, ", need ", tx_buf_size);
+			throw Insufficient_ram_quota();
+		}
+
+		/* try read device port number attribute */
+		long num = policy.attribute_value("device", -1L);
+
+		/* try read device model and serial number attributes */
+		auto const model  = policy.attribute_value("model",  String<64>());
+		auto const serial = policy.attribute_value("serial", String<64>());
+
+		/* sessions are not writeable by default */
+		bool writeable = policy.attribute_value("writeable", false);
+
+		/* prefer model/serial routing */
+		if ((model != "") && (serial != ""))
+			num = Ahci_driver::device_number(model.string(), serial.string());
+
+		if (num < 0) {
+			error("rejecting session request, no matching policy for '", label, "'",
+			      model == "" ? ""
+			      : " (model=", model, " serial=", serial, ")");
+			throw Service_denied();
+		}
+
+		if (!Ahci_driver::avail(num)) {
+			error("Device ", num, " not available");
+			throw Service_denied();
+		}
+
+		if (writeable)
+			writeable = Arg_string::find_arg(args.string(), "writeable").bool_value(true);
+
+		return Capability<Session>();
+	}
+
+	void upgrade(Session_capability, Root::Upgrade_args const&) override { }
+	void close(Session_capability) override { }
+
+	void report_ports()
 	{
 		try {
 			Xml_node report = config.xml().sub_node("report");
@@ -200,9 +271,8 @@ struct Block::Main
 				reporter->enabled(true);
 				Ahci_driver::report_ports(*reporter);
 			}
-		} catch (Genode::Xml_node::Nonexistent_sub_node) { }
+		} catch (Xml_node::Nonexistent_sub_node) { }
 	}
 };
 
-
-void Component::construct(Genode::Env &env) { static Block::Main server(env); }
+void Component::construct(Genode::Env &env) { static Ahci::Main server(env); }

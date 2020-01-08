@@ -14,7 +14,7 @@
 #ifndef _INCLUDE__AHCI_H_
 #define _INCLUDE__AHCI_H_
 
-#include <block/component.h>
+#include <block/request.h>
 #include <os/attached_mmio.h>
 #include <os/reporter.h>
 #include <util/retry.h>
@@ -37,13 +37,14 @@ struct Ahci_root : Genode::Interface
 
 namespace Ahci_driver {
 
-	void init(Genode::Env &env, Genode::Allocator &alloc, Ahci_root &ep,
-	          bool support_atapi, Genode::Signal_context_capability device_identified);
+	enum { MAX_PORTS = 32 };
+
+	void init(Genode::Env &env, bool support_atapi);
 
 	bool avail(long device_num);
 	long device_number(char const *model_num, char const *serial_num);
 
-	Block::Driver *claim_port(long device_num);
+	//XXX: Block::Driver *claim_port(long device_num);
 	void           free_port(long device_num);
 	void           report_ports(Genode::Reporter &reporter);
 
@@ -221,7 +222,7 @@ struct Command_fis : Genode::Mmio
 		write<Command>(0xec);
 	}
 
-	void dma_ext(bool read, Block::sector_t block_number, Genode::size_t block_count)
+	void dma_ext(bool read, Block::block_number_t block_number, Block::block_count_t block_count)
 	{
 		write<Bits::C>(1);
 		write<Device::Lba>(1);
@@ -231,7 +232,7 @@ struct Command_fis : Genode::Mmio
 		write<Sector>(block_count);
 	}
 
-	void fpdma(bool read, Block::sector_t block_number, Genode::size_t block_count,
+	void fpdma(bool read, Block::block_number_t block_number, Block::block_count_t block_count,
 	           unsigned slot)
 	{
 		write<Bits::C>(1);
@@ -338,7 +339,7 @@ struct Atapi_command : Genode::Mmio
 		write<Lba8_15>(18);
 	}
 
-	void read10(Block::sector_t block_number, Genode::size_t block_count)
+	void read10(Block::block_number_t block_number, Block::block_count_t block_count)
 	{
 		write<Command>(0x28);
 		write<Lba>(block_number);
@@ -418,6 +419,7 @@ struct Port : private Port_base
 {
 	using Port_base::write;
 	using Port_base::read;
+	using Port_base::wait_for_any;
 
 	struct Not_ready : Genode::Exception { };
 
@@ -434,16 +436,6 @@ struct Port : private Port_base
 	Genode::addr_t fis_base    = 0;
 	Genode::addr_t cmd_table   = 0;
 	Genode::addr_t device_info = 0;
-
-	enum State {
-		NONE,
-		STATUS,
-		TEST_READY,
-		IDENTIFY,
-		READY,
-	};
-
-	State state = NONE;
 
 	Port(Genode::Region_map &rm, Hba &hba, Platform::Hba &platform_hba,
 	     unsigned number)
@@ -814,39 +806,7 @@ struct Port : private Port_base
 		write<Ci>(1U << slot);
 	}
 
-	bool ready() { return state == READY; }
-};
-
-
-struct Port_driver : Port, Block::Driver
-{
-	Ahci_root &root;
-	unsigned  &sem;
-
-	Port_driver(Genode::Ram_allocator &ram,
-	            Ahci_root             &root,
-	            unsigned              &sem,
-	            Genode::Region_map    &rm,
-	            Hba                   &hba,
-	            Platform::Hba         &platform_hba,
-	            unsigned               number)
-	: Port(rm, hba, platform_hba, number), Block::Driver(ram), root(root),
-	  sem(sem) { sem++; }
-
-	virtual void handle_irq() = 0;
-
-	virtual Genode::size_t  block_size()  const = 0;
-	virtual Block::sector_t block_count() const = 0;
-
-	void state_change()
-	{
-		if (--sem) return;
-
-		/* announce service */
-		root.announce();
-	}
-
-	void sanity_check(Block::sector_t block_number, Genode::size_t count)
+	void sanity_check(Block::block_number_t block_number, Block::block_count_t count)
 	{
 		/* max. PRDT size is 4MB */
 		if (count * block_size() > 4 * 1024 * 1024) {
@@ -859,22 +819,6 @@ struct Port_driver : Port, Block::Driver
 			Genode::error("error: requested blocks are outside of device");
 			throw Io_error();
 		}
-	}
-
-
-	/*******************
-	 ** Block::Driver **
-	 *******************/
-
-	Genode::Ram_dataspace_capability
-	alloc_dma_buffer(Genode::size_t size) override
-	{
-		return platform_hba.alloc_dma_buffer(size);
-	}
-
-	void free_dma_buffer(Genode::Ram_dataspace_capability c) override
-	{
-		platform_hba.free_dma_buffer(c);
 	}
 };
 
