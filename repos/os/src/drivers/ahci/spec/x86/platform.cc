@@ -38,8 +38,7 @@ struct X86_hba : Platform::Hba
 	Platform::Device_capability            pci_device_cap { };
 	Constructible<Platform::Device_client> pci_device     { };
 	Constructible<Irq_session_client>      irq            { };
-	addr_t                                 res_base       { 0 };
-	size_t                                 res_size       { 0 };
+	addr_t                                 iomem_base     { 0 };
 
 	X86_hba(Genode::Env &env) : env(env)
 	{
@@ -48,7 +47,7 @@ struct X86_hba : Platform::Hba
 			                                CLASS_MASK); });
 
 		if (!pci_device_cap.valid()) {
-			throw Ahci_driver::Missing_controller();
+			throw Ahci::Missing_controller();
 		}
 
 		/* construct pci client */
@@ -58,10 +57,9 @@ struct X86_hba : Platform::Hba
 		            "device: ", Genode::Hex(pci_device->device_id()), " "
 		            "class: ",  Genode::Hex(pci_device->class_code()), ")");
 
-		/* read base address of controller */
-		Platform::Device::Resource resource = pci_device->resource(AHCI_BASE_ID);
-		res_base = resource.base();
-		res_size = resource.size();
+		/* map base address of controller */
+		Io_mem_session_capability iomem_cap = pci_device->io_mem(pci_device->phys_bar_to_virt(AHCI_BASE_ID));
+		iomem_base = env.rm().attach(Io_mem_session_client(iomem_cap).dataspace());
 
 		uint16_t cmd = pci_device->config_read(PCI_CMD, Platform::Device::ACCESS_16BIT);
 		cmd |= 0x2; /* respond to memory space accesses */
@@ -114,8 +112,7 @@ struct X86_hba : Platform::Hba
 	 ** Hba interface **
 	 *******************/
 
-	Genode::addr_t base() const override { return res_base; }
-	Genode::size_t size() const override { return res_size; }
+	Genode::addr_t base() const override { return iomem_base; }
 
 	void sigh_irq(Signal_context_capability sigh) override
 	{

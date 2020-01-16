@@ -14,7 +14,7 @@
 #ifndef _INCLUDE__AHCI_H_
 #define _INCLUDE__AHCI_H_
 
-#include <block/request.h>
+#include <block/request_stream.h>
 #include <os/attached_mmio.h>
 #include <os/reporter.h>
 #include <util/retry.h>
@@ -27,28 +27,8 @@ namespace Platform {
 	Hba &init(Genode::Env &env, Genode::Mmio::Delayer &delayer);
 };
 
-
-struct Ahci_root : Genode::Interface
-{
-	virtual Genode::Entrypoint &entrypoint() = 0;
-	virtual void announce()                  = 0;
-};
-
-
-namespace Ahci_driver {
-
-	enum { MAX_PORTS = 32 };
-
-	void init(Genode::Env &env, bool support_atapi);
-
-	bool avail(long device_num);
-	long device_number(char const *model_num, char const *serial_num);
-
-	//XXX: Block::Driver *claim_port(long device_num);
-	void           free_port(long device_num);
-	void           report_ports(Genode::Reporter &reporter);
-
-	struct Missing_controller { };
+namespace Ahci {
+	struct Missing_controller : Genode::Exception { };
 }
 
 
@@ -58,7 +38,6 @@ struct Platform::Hba : Genode::Interface
 	 * Return base address and size of HBA device registers
 	 */
 	virtual Genode::addr_t base() const = 0;
-	virtual Genode::size_t size() const = 0;
 
 	/**
 	 * Register interrupt signal context
@@ -77,12 +56,12 @@ struct Platform::Hba : Genode::Interface
 /**
  * HBA definitions
  */
-struct Hba : Genode::Attached_mmio
+struct Hba : Genode::Mmio
 {
 	Mmio::Delayer &_delayer;
 
 	Hba(Genode::Env &env, Platform::Hba &hba, Mmio::Delayer &delayer)
-	: Attached_mmio(env, hba.base(), hba.size()), _delayer(delayer) { }
+	: Mmio(hba.base()), _delayer(delayer) { }
 
 	/**
 	 * Host capabilites
@@ -407,10 +386,17 @@ struct Port_base : Genode::Mmio
 	static constexpr Genode::addr_t offset() { return 0x100; }
 	static constexpr Genode::size_t size()   { return 0x80;  }
 
-	Port_base(unsigned number, Hba &hba)
-	: Mmio(hba.base() + offset() + (number * size())) { }
+	Port_base(unsigned index, Hba &hba)
+	: Mmio(hba.base() + offset() + (index * size())) { }
 };
 
+struct Port;
+
+struct Protocol : Genode::Interface
+{
+	virtual unsigned init(Port &port) = 0;
+	virtual Block::Session::Info info() const = 0;
+};
 
 /**
  * AHCI port
@@ -423,6 +409,8 @@ struct Port : private Port_base
 
 	struct Not_ready : Genode::Exception { };
 
+	unsigned            index;
+	Protocol           &protocol;
 	Genode::Region_map &rm;
 	Hba                &hba;
 	Platform::Hba      &platform_hba;
@@ -437,17 +425,30 @@ struct Port : private Port_base
 	Genode::addr_t cmd_table   = 0;
 	Genode::addr_t device_info = 0;
 
-	Port(Genode::Region_map &rm, Hba &hba, Platform::Hba &platform_hba,
-	     unsigned number)
+	Port(Protocol &protocol, Genode::Region_map &rm, Hba &hba,
+	     Platform::Hba &platform_hba,
+	     unsigned index)
 	:
-		Port_base(number, hba), rm(rm), hba(hba),
+		Port_base(index, hba),
+		index(index),
+		protocol(protocol), rm(rm), hba(hba),
 		platform_hba(platform_hba)
 	{
 		reset();
 		if (!enable())
 			throw 1;
+
 		stop();
+
 		wait_for(hba.delayer(), Cmd::Cr::Equal(0));
+
+		init();
+
+		/*
+		 * Init protocol and determine actual number of command slots of device
+		 */
+		unsigned device_slots = protocol.init(*this);
+		cmd_slots = Genode::min(device_slots, cmd_slots);
 	}
 
 	virtual ~Port()
@@ -808,6 +809,8 @@ struct Port : private Port_base
 
 	void sanity_check(Block::block_number_t block_number, Block::block_count_t count)
 	{
+	//XXX: FIXME
+#if 0
 		/* max. PRDT size is 4MB */
 		if (count * block_size() > 4 * 1024 * 1024) {
 			Genode::error("error: maximum supported packet size is 4MB");
@@ -819,7 +822,15 @@ struct Port : private Port_base
 			Genode::error("error: requested blocks are outside of device");
 			throw Io_error();
 		}
+#endif
+
+	/**********************
+	 ** Protocol wrapper **
+	 **********************/
+
 	}
+
+	Block::Session::Info info() const { return protocol.info(); }
 };
 
 #endif /* _INCLUDE__AHCI_H_ */

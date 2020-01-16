@@ -19,6 +19,7 @@
 //#include <ata_driver.h>
 //#include <atapi_driver.h>
 
+using namespace Genode;
 
 struct Ahci
 {
@@ -41,10 +42,10 @@ struct Ahci
 		void usleep(uint64_t us) override { Timer::Connection::usleep(us); }
 	} _delayer { env };
 
-	Platform::Hba &platform_hba = Platform::init(env, _delayer);
+	Platform::Hba &platform_hba { Platform::init(env, _delayer) };
 	Hba            hba          { env, platform_hba, _delayer };
 
-	Constructible<Port_driver> ports[MAX_PORTS];
+	Constructible<Port> ports[MAX_PORTS];
 	bool           port_claimed[MAX_PORTS];
 
 	Signal_handler<Ahci> irq { env.ep(), *this, &Ahci::handle_irq };
@@ -76,7 +77,9 @@ struct Ahci
 			unsigned port = log2(port_list);
 			port_list    &= ~(1U << port);
 
-			ports[port]->handle_irq();
+			//XXX: handle
+			/*
+			ports[port]->handle_irq(); */
 		}
 
 		/* clear status register */
@@ -155,7 +158,7 @@ struct Ahci
 			}
 		}
 	};
-
+#if 0
 	Block::Driver *claim_port(unsigned port_num)
 	{
 		if (!avail(port_num))
@@ -201,22 +204,24 @@ struct Ahci
 		 */
 		Ahci(Ahci const &);
 		Ahci &operator = (Ahci const &);
+#endif
 };
 
-
+#if 0
 static Ahci *sata_ahci(Ahci *ahci = 0)
 {
 	static Ahci *a = ahci;
 	return a;
 }
-
+#endif
 
 void Ahci_driver::init(Genode::Env &env, bool support_atapi)
 {
-	static Ahci ahci(env, support_atapi);
-	sata_ahci(&ahci);
+	//static Ahci ahci(env, support_atapi);
+	//sata_ahci(&ahci);
 }
 
+#if 0
 
 Block::Driver *Ahci_driver::claim_port(long device_num)
 {
@@ -240,10 +245,13 @@ long Ahci_driver::device_number(char const *model_num, char const *serial_num)
 {
 	return sata_ahci()->device_number(model_num, serial_num);
 }
+#endif
+
 
 
 void Ahci_driver::report_ports(Genode::Reporter &reporter)
 {
+#if 0
 	Genode::Reporter::Xml_generator xml(reporter, [&] () {
 		for (unsigned i = 0; i < Ahci::MAX_PORTS; ++i) {
 			Port_driver *port = sata_ahci()->port(i);
@@ -263,4 +271,5 @@ void Ahci_driver::report_ports(Genode::Reporter &reporter)
 			});
 		}
 	});
+#endif
 }

@@ -19,7 +19,6 @@
 
 using namespace Genode;
 
-
 /**
  * Return data of 'identify_device' ATA command
  */
@@ -112,7 +111,7 @@ struct String
 	char const *cstring() { return buf; }
 };
 
-
+#if 0
 /**
  * Commands to distinguish between ncq and non-ncq operation
  */
@@ -135,7 +134,7 @@ struct Ncq_command : Io_command
 	             bool            read,
 	             Block::sector_t block_number,
 	             size_t          count,
-	             unsigned        slot) override
+	             unsigned        slot) 
 	{
 		table.fis.fpdma(read, block_number, count, slot);
 		/* ensure that 'Cmd::St' is 1 before writing 'Sact' */
@@ -144,13 +143,13 @@ struct Ncq_command : Io_command
 		port.write<Port::Sact>(1U << slot);
 	}
 
-	void handle_irq(Port &port, Port::Is::access_t status) override
+	void handle_irq(Port &port, Port::Is::access_t status) 
 	{
 		/*
 		 * Check for completions of other requests immediately
 		 */
-		while (Port::Is::Sdbs::get(status = port.read<Port::Is>()))
-			port.ack_irq();
+		while (Port::Is::Sdbs::get(status = port.read<Port::Is>())) ;
+		///XXX
 	}
 };
 
@@ -161,26 +160,24 @@ struct Dma_ext_command : Io_command
 	             bool            read,
 	             Block::sector_t block_number,
 	             size_t          count,
-	             unsigned     /* slot */) override
+	             unsigned     /* slot */) 
 	{
 		table.fis.dma_ext(read, block_number, count);
 	}
 
-	void handle_irq(Port &port, Port::Is::access_t status) override
+	void handle_irq(Port &port, Port::Is::access_t status) 
 	{
 		if (Port::Is::Dma_ext_irq::get(status))
 			port.ack_irq();
 	}
 };
 
-
+#endif
 /**
  * Drivers using ncq- and non-ncq commands
  */
-struct Ata_driver : Port_driver
+struct Ata_protocol : Protocol, Noncopyable
 {
-	Genode::Allocator &alloc;
-
 	typedef ::String<Identity::Serial_number> Serial_string;
 	typedef ::String<Identity::Model_number>  Model_string;
 
@@ -188,37 +185,54 @@ struct Ata_driver : Port_driver
 	Genode::Constructible<Serial_string> serial   { };
 	Genode::Constructible<Model_string>  model    { };
 
-	Io_command               *io_cmd = nullptr;
-	Block::Packet_descriptor  pending[32];
-
-	Ata_driver(Genode::Allocator     &alloc,
-	           Genode::Ram_allocator &ram,
-	           Genode::Region_map    &rm,
-	           Hba                   &hba,
-	           Platform::Hba         &platform_hba,
-	           unsigned               number)
-	: Port_driver(ram, rm, hba, platform_hba, number),
-	  alloc(alloc)
+	unsigned init(Port &port) override
 	{
-		Port::init();
-		identify_device();
-	}
+		/* identify device */
+		addr_t phys = Dataspace_client(port.device_info_ds).phys_addr();
 
-	~Ata_driver()
-	{
-		if (io_cmd)
-			destroy(&alloc, io_cmd);
+		Command_table table(port.command_table_addr(0), phys, 0x1000);
+		table.fis.identify_device();
+		port.execute(0);
+
+		port.wait_for_any(port.hba.delayer(), Port::Is::Dss::Equal(1),
+		                                      Port::Is::Pss::Equal(1),
+		                                      Port::Is::Dhrs::Equal(1));
+
+		Genode::error("Identified ATA device: ", (unsigned)port.read<Port::Is>());
+		identity.construct(port.device_info);
+		serial.construct(*identity);
+		model.construct(*identity);
+
+		if (verbose) {
+			Genode::log("  model number: ",  Genode::Cstring(model->buf));
+			Genode::log("  serial number: ", Genode::Cstring(serial->buf));
+			identity->info();
+		}
+
+		/* read number of command slots of ATA device */
+		unsigned cmd_slots = identity->read<Identity::Queue_depth::Max_depth >() + 1;
+
+		/* no native command queueing */
+		if (!ncq_support(port))
+			cmd_slots = 1;
+
+		port.ack_irq();
+
+		return cmd_slots;
 	}
 
 	unsigned find_free_cmd_slot()
 	{
+#if 0
 		for (unsigned slot = 0; slot < cmd_slots; slot++)
 			if (!pending[slot].size())
 				return slot;
-
+  
 		throw Block::Driver::Request_congestion();
+#endif
+		return 0;
 	}
-
+#if 0
 	void ack_packets()
 	{
 		unsigned slots =  Port::read<Ci>() | Port::read<Sact>();
@@ -232,10 +246,11 @@ struct Ata_driver : Port_driver
 			ack_packet(p, true);
 		}
 	}
-
+#endif
 	void overlap_check(Block::sector_t block_number,
 	                   size_t          count)
 	{
+#if 0
 		Block::sector_t end = block_number + count - 1;
 
 		for (unsigned slot = 0; slot < cmd_slots; slot++) {
@@ -254,9 +269,10 @@ struct Ata_driver : Port_driver
 				                "pending ", pending[slot].block_number(),
 				                " + ", pending[slot].block_count(), ", "
 				                "request: ", block_number, " + ", count);
-				throw Block::Driver::Request_congestion();
+				//XXX: throw Block::Driver::Request_congestion();
 			}
 		}
+#endif
 	}
 
 	void io(bool                      read,
@@ -265,6 +281,7 @@ struct Ata_driver : Port_driver
 	        addr_t                    phys,
 	        Block::Packet_descriptor &packet)
 	{
+#if 0
 		sanity_check(block_number, count);
 		overlap_check(block_number, count);
 
@@ -275,7 +292,7 @@ struct Ata_driver : Port_driver
 		Command_table table(command_table_addr(slot), phys, count * block_size());
 
 		/* set ATA command */
-		io_cmd->command(*this, table, read, block_number, count, slot);
+		//io_cmd->command(*this, table, read, block_number, count, slot);
 
 		/* set or clear write flag in command header */
 		Command_header header(command_header_addr(slot));
@@ -283,6 +300,7 @@ struct Ata_driver : Port_driver
 		header.clear_byte_count();
 
 		execute(slot);
+#endif
 	}
 
 
@@ -290,91 +308,23 @@ struct Ata_driver : Port_driver
 	 ** Port_driver **
 	 *****************/
 
-	void handle_irq() override
+	void handle_irq() 
 	{
+#if 0
 		Genode::log("ATA irq");
 		Is::access_t status = Port::read<Is>();
-		io_cmd->handle_irq(*this, status);
-		ack_packets();
+		//io_cmd->handle_irq(*this, status);
+		//ack_packets();
 		stop();
+#endif
 	}
 
-	bool ncq_support()
+	bool ncq_support(Port &port)
 	{
-		return identity->read<Identity::Sata_caps::Ncq_support>() && hba.ncq();
+		return identity->read<Identity::Sata_caps::Ncq_support>() && port.hba.ncq();
 	}
 
-	void check_device()
-	{
-		cmd_slots = min((int)cmd_slots,
-		                identity->read<Identity::Queue_depth::Max_depth >() + 1);
-
-		/* no native command queueing */
-		if (!ncq_support())
-			cmd_slots = 1;
-
-		state = READY;
-	}
-
-	void identify_device()
-	{
-		addr_t phys = (addr_t)Dataspace_client(device_info_ds).phys_addr();
-
-		Command_table table(command_table_addr(0), phys, 0x1000);
-		table.fis.identify_device();
-		execute(0);
-
-		wait_for_any(hba.delayer(), Port::Is::Dss::Equal(1),
-		                            Port::Is::Pss::Equal(1),
-		                            Port::Is::Dhrs::Equal(1));
-
-		Genode::error("Identified ATA device: ", (unsigned)Port::read<Is>());
-		identity.construct(device_info);
-		serial.construct(*identity);
-		model.construct(*identity);
-
-		if (verbose) {
-			Genode::log("  model number: ",  Genode::Cstring(model->buf));
-			Genode::log("  serial number: ", Genode::Cstring(serial->buf));
-			identity->info();
-		}
-
-		check_device();
-		ack_irq();
-	}
-
-
-	/*****************************
-	 ** Block::Driver interface **
-	 *****************************/
-
-	bool dma_enabled() override { return true; };
-
-	Block::Session::Info info() const override
-	{
-		return { .block_size  = block_size(),
-		         .block_count = block_count(),
-		         .align_log2  = log2(block_size()),
-		         .writeable   = true };
-	}
-
-	void read_dma(Block::sector_t           block_number,
-	              size_t                    block_count,
-	              addr_t                    phys,
-	              Block::Packet_descriptor &packet) override
-	{
-		io(true, block_number, block_count, phys, packet);
-	}
-
-	void write_dma(Block::sector_t           block_number,
-	               size_t                    block_count,
-	               addr_t                    phys,
-	               Block::Packet_descriptor &packet) override
-	{
-		io(false, block_number, block_count, phys, packet);
-	}
-
-	Genode::size_t block_size() const override
+	Genode::size_t block_size() const 
 	{
 		Genode::size_t size = 512;
 
@@ -384,18 +334,22 @@ struct Ata_driver : Port_driver
 		return size;
 	}
 
-	Block::sector_t block_count() const override
+	Block::sector_t block_count() const 
 	{
 		return identity->read<Identity::Sector_count>();
 	}
 
-	private:
+	/*****************************
+	 ** Block::Driver interface **
+	 *****************************/
 
-		/*
-		 * Noncopyable
-		 */
-		Ata_driver(Ata_driver const &);
-		Ata_driver &operator = (Ata_driver const &);
+	Block::Session::Info info() const override
+	{
+		return { .block_size  = block_size(),
+		         .block_count = block_count(),
+		         .align_log2  = log2(2ul), ///XXX: check
+		         .writeable   = true };
+	}
 };
 
 
