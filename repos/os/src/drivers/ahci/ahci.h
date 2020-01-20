@@ -732,14 +732,14 @@ struct Port : private Port_base
 	void clear_serr() { write<Serr>(read<Serr>()); }
 
 	/**
-	 * Serial ATA active
+	 * Serial ATA active (strict write)
 	 */
-	struct Sact : Register<0x34, 32> { };
+	struct Sact : Register<0x34, 32, true> { };
 
 	/**
-	 * Command issue
+	 * Command issue (strict write)
 	 */
-	struct Ci : Register<0x38, 32> { };
+	struct Ci : Register<0x38, 32, true> { };
 
 	void init()
 	{

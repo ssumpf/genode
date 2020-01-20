@@ -190,7 +190,8 @@ struct Ahci::Driver : Noncopyable
 		}
 
 		/* check for device number */
-		if (device >= 0 && device < MAX_PORTS) return *ports[device];
+		if (device >= 0 && device < MAX_PORTS && ports[device].constructed())
+			return *ports[device];
 
 		throw -1;
 	}
