@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright (C) 2016-2017 Genode Labs GmbH
+ * Copyright (C) 2016-2020 Genode Labs GmbH
  *
  * This file is part of the Genode OS framework, which is distributed
  * under the terms of the GNU Affero General Public License version 3.
@@ -23,7 +23,7 @@
 
 /* local includes */
 #include <ahci.h>
-#include <ata_driver.h>
+#include <ata_protocol.h>
 
 namespace Ahci {
 	using namespace Genode;
@@ -34,140 +34,12 @@ namespace Ahci {
 	struct Block_session_component;
 }
 
-#if 0
-struct Block::Factory : Driver_factory
-{
-	long device_num;
-
-	Block::Driver *create() override
-	{
-		return Ahci_driver::claim_port(device_num);
-	}
-
-	void destroy(Block::Driver *) override
-	{
-		Ahci_driver::free_port(device_num);
-	}
-
-	Factory(long device_num) : device_num(device_num) { }
-};
-
-class Session_component : public Block::Session_component
-{
-	public:
-
-		Session_component(Block::Driver_factory &driver_factory,
-		                  Genode::Entrypoint    &ep,
-		                  Genode::Region_map    &rm,
-		                  Genode::size_t         buf_size,
-		                  bool                   writeable)
-		: Block::Session_component(driver_factory, ep, rm, buf_size, writeable) { }
-
-		Block::Driver_factory &factory() { return _driver_factory; }
-};
-
-
-class Block::Root_multiple_clients : public Root_component< ::Session_component>,
-                                     public Ahci_root
-{
-	private:
-
-		Genode::Env       &_env;
-		Genode::Allocator &_alloc;
-		Genode::Xml_node   _config;
-
-	protected:
-
-		::Session_component *_create_session(const char *args) override
-		{
-			Session_label const label = label_from_args(args);
-			Session_policy const policy(label, _config);
-
-			size_t ram_quota =
-					Arg_string::find_arg(args, "ram_quota").ulong_value(0);
-			size_t tx_buf_size =
-				Arg_string::find_arg(args, "tx_buf_size").ulong_value(0);
-
-			if (!tx_buf_size)
-				throw Service_denied();
-
-			size_t session_size = sizeof(::Session_component)
-			                    + sizeof(Factory) +	tx_buf_size;
-
-			if (max((size_t)4096, session_size) > ram_quota) {
-				error("insufficient 'ram_quota' from '", label, "',"
-				      " got ", ram_quota, ", need ", session_size);
-				throw Insufficient_ram_quota();
-			}
-
-			/* try read device port number attribute */
-			long num = policy.attribute_value("device", -1L);
-
-			/* try read device model and serial number attributes */
-			auto const model  = policy.attribute_value("model",  String<64>());
-			auto const serial = policy.attribute_value("serial", String<64>());
-
-			/* sessions are not writeable by default */
-			bool writeable = policy.attribute_value("writeable", false);
-
-			/* prefer model/serial routing */
-			if ((model != "") && (serial != ""))
-				num = Ahci_driver::device_number(model.string(), serial.string());
-
-			if (num < 0) {
-				error("rejecting session request, no matching policy for '", label, "'",
-				      model == "" ? ""
-				      : " (model=", model, " serial=", serial, ")");
-				throw Service_denied();
-			}
-
-			if (!Ahci_driver::avail(num)) {
-				error("Device ", num, " not available");
-				throw Service_denied();
-			}
-
-			if (writeable)
-				writeable = Arg_string::find_arg(args, "writeable").bool_value(true);
-
-			Block::Factory *factory = new (&_alloc) Block::Factory(num);
-			::Session_component *session = new (&_alloc)
-				::Session_component(*factory, _env.ep(), _env.rm(), tx_buf_size, writeable);
-			log(
-				writeable ? "writeable " : "read-only ",
-				"session opened at device ", num, " for '", label, "'");
-			return session;
-		}
-
-		void _destroy_session(::Session_component *session) override
-		{
-			Driver_factory &factory = session->factory();
-			Genode::destroy(&_alloc, session);
-			Genode::destroy(&_alloc, &factory);
-		}
-
-	public:
-
-		Root_multiple_clients(Genode::Env &env, Genode::Allocator &alloc,
-		                      Genode::Xml_node config)
-		:
-			Root_component(&env.ep().rpc_ep(), &alloc),
-			_env(env), _alloc(alloc), _config(config)
-		{ }
-
-		Genode::Entrypoint &entrypoint() override { return _env.ep(); }
-
-		void announce() override
-		{
-			_env.parent().announce(_env.ep().manage(*this));
-		}
-};
-
-#endif
 
 struct Ahci::Dispatch
 {
 	virtual void session(unsigned index) = 0;
 };
+
 
 struct Ahci::Driver : Noncopyable
 {
@@ -413,7 +285,7 @@ struct Ahci::Block_session_component : Rpc_object<Block::Session>,
 			bool progress = false;
 
 			/*
-			 * Acknowledge any pending packets before sending news request to the
+			 * Acknowledge any pending packets before sending new request to the
 			 * controller.
 			 */
 			try_acknowledge([&](Ack &ack) {
@@ -477,7 +349,7 @@ struct Ahci::Main : Rpc_object<Typed_root<Block::Session>>,
 			error("hardware access denied");
 			env.parent().exit(~0);
 		}
-		//XXX: remove
+
 		env.parent().announce(env.ep().manage(*this));
 	}
 
@@ -521,7 +393,7 @@ struct Ahci::Main : Rpc_object<Typed_root<Block::Session>>,
 				error("Device with number=", port.index, " is already in use");
 				throw Service_denied();
 			}
-			warning("CONSTRUCT block session");
+
 			block_session[port.index].construct(env, port, tx_buf_size);
 			return block_session[port.index]->cap();
 		} catch (...) {
@@ -533,6 +405,7 @@ struct Ahci::Main : Rpc_object<Typed_root<Block::Session>>,
 	}
 
 	void upgrade(Session_capability, Root::Upgrade_args const&) override { }
+
 	void close(Session_capability cap) override
 	{
 		for (int index = 0; index < Driver::MAX_PORTS; index++) {

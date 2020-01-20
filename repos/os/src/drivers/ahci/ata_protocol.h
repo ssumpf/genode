@@ -5,14 +5,14 @@
  */
 
 /*
- * Copyright (C) 2015-2017 Genode Labs GmbH
+ * Copyright (C) 2015-2020 Genode Labs GmbH
  *
  * This file is part of the Genode OS framework, which is distributed
  * under the terms of the GNU Affero General Public License version 3.
  */
 
-#ifndef _ATA_DRIVER_H_
-#define _ATA_DRIVER_H_
+#ifndef _AHCI__ATA_PROTOCOL_H_
+#define _AHCI__ATA_PROTOCOL_H_
 
 #include <base/log.h>
 #include "ahci.h"
@@ -112,52 +112,6 @@ struct String
 	char const *cstring() { return buf; }
 };
 
-#if 0
-/**
- * Commands to distinguish between ncq and non-ncq operation
- */
-struct Io_command : Interface
-{
-	virtual void command(Port           &por,
-	                     Command_table  &table,
-	                     bool            read,
-	                     Block::sector_t block_number,
-	                     size_t          count,
-	                     unsigned        slot) = 0;
-
-	virtual void handle_irq(Port &port, Port::Is::access_t status) = 0;
-};
-
-struct Ncq_command : Io_command
-{
-	void command(Port           &port,
-	             Command_table  &table,
-	             bool            read,
-	             Block::sector_t block_number,
-	             size_t          count,
-	             unsigned        slot) 
-	{
-		table.fis.fpdma(read, block_number, count, slot);
-		/* ensure that 'Cmd::St' is 1 before writing 'Sact' */
-		port.start();
-		/* set pending */
-		port.write<Port::Sact>(1U << slot);
-	}
-};
-
-struct Dma_ext_command : Io_command
-{
-	void command(Port           &,
-	             Command_table  &table,
-	             bool            read,
-	             Block::sector_t block_number,
-	             size_t          count,
-	             unsigned     /* slot */) 
-	{
-		table.fis.dma_ext(read, block_number, count);
-};
-
-#endif
 /**
  * Drivers using ncq- and non-ncq commands
  */
@@ -227,33 +181,6 @@ struct Ata_protocol : Protocol, Noncopyable
 		return cmd_slots;
 	}
 
-	unsigned find_free_cmd_slot()
-	{
-#if 0
-		for (unsigned slot = 0; slot < cmd_slots; slot++)
-			if (!pending[slot].size())
-				return slot;
-  
-		throw Block::Driver::Request_congestion();
-#endif
-		return 0;
-	}
-#if 0
-	void ack_packets()
-	{
-		unsigned slots =  Port::read<Ci>() | Port::read<Sact>();
-
-		for (unsigned slot = 0; slot < cmd_slots; slot++) {
-			if ((slots & (1U << slot)) || !pending[slot].size())
-				continue;
-
-			Block::Packet_descriptor p = pending[slot];
-			pending[slot] = Block::Packet_descriptor();
-			ack_packet(p, true);
-		}
-	}
-#endif
-
 	bool overlap_check(Block::Request const &request)
 	{
 		block_number_t block_number = request.operation.block_number;
@@ -282,38 +209,10 @@ struct Ata_protocol : Protocol, Noncopyable
 		return slots.for_each(overlap_check);
 	}
 
-	void io(bool                      read,
-	        Block::sector_t           block_number,
-	        size_t                    count,
-	        addr_t                    phys,
-	        Block::Packet_descriptor &packet)
-	{
-#if 0
-		sanity_check(block_number, count);
-		overlap_check(block_number, count);
 
-		unsigned slot = find_free_cmd_slot();
-		pending[slot] = packet;
-
-		/* setup fis */
-		Command_table table(command_table_addr(slot), phys, count * block_size());
-
-		/* set ATA command */
-		//io_cmd->command(*this, table, read, block_number, count, slot);
-
-		/* set or clear write flag in command header */
-		Command_header header(command_header_addr(slot));
-		header.write<Command_header::Bits::W>(read ? 0 : 1);
-		header.clear_byte_count();
-
-		execute(slot);
-#endif
-	}
-
-
-	/*****************
-	 ** Port_driver **
-	 *****************/
+	/*****************************
+	 ** Block::Driver interface **
+	 *****************************/
 
 	void handle_irq(Port &port)
 	{
@@ -348,10 +247,6 @@ struct Ata_protocol : Protocol, Noncopyable
 	{
 		return identity->read<Identity::Sector_count>();
 	}
-
-	/*****************************
-	 ** Block::Driver interface **
-	 *****************************/
 
 	Block::Session::Info info() const override
 	{
@@ -424,4 +319,4 @@ struct Ata_protocol : Protocol, Noncopyable
 	}
 };
 
-#endif /* _ATA_DRIVER_H_ */
+#endif /* _AHCI__ATA_PROTOCOL_H_ */

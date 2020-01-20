@@ -12,8 +12,8 @@
  * under the terms of the GNU Affero General Public License version 3.
  */
 
-#ifndef _INCLUDE__AHCI_H_
-#define _INCLUDE__AHCI_H_
+#ifndef _AHCI__AHCI_H_
+#define _AHCI__AHCI_H_
 
 #include <block/request_stream.h>
 #include <os/attached_mmio.h>
@@ -880,4 +880,4 @@ struct Port : private Port_base
 	}
 };
 
-#endif /* _INCLUDE__AHCI_H_ */
+#endif /* _AHCI__AHCI_H_ */
