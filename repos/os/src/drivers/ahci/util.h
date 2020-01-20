@@ -35,19 +35,6 @@ namespace Util {
 		size_t _limit { CAP };
 
 		/**
-		 * Lookup slot
-		 */
-		template <typename FUNC>
-		T *lookup(FUNC const &func)
-		{
-			for (size_t i = 0; i < _limit; i++) {
-				if (!_entries[i].valid()) { continue; }
-				if ( func(_entries[i])) { return &_entries[i]; }
-			}
-			return nullptr;
-		}
-
-		/**
 		 * Get free slot
 		 */
 		T *get()
@@ -56,17 +43,6 @@ namespace Util {
 				if (!_entries[i].valid()) { return &_entries[i]; }
 			}
 			return nullptr;
-		}
-
-		/**
-		 * Check free slot availability
-		 */
-		bool available() const
-		{
-			for (size_t i = 0; i < _limit; i++) {
-				if (!_entries[i].valid()) { return true; }
-			}
-			return false;
 		}
 
 		/**
