@@ -191,8 +191,7 @@ struct Ahci::Driver : Noncopyable
 		void usleep(uint64_t us) override { Timer::Connection::usleep(us); }
 	} _delayer { env };
 
-	Platform::Hba &platform_hba { Platform::init(env, _delayer) };
-	Hba            hba          { env, platform_hba, _delayer };
+	Hba            hba          { env, _delayer };
 
   Constructible<Ata_protocol> ata[MAX_PORTS];
 	Constructible<Port>         ports[MAX_PORTS];
@@ -207,7 +206,7 @@ struct Ahci::Driver : Noncopyable
 		info();
 
 		/* register irq handler */
-		platform_hba.sigh_irq(irq);
+		hba.sigh_irq(irq);
 
 		/* initialize HBA (IRQs, memory) */
 		hba.init();
@@ -235,9 +234,6 @@ struct Ahci::Driver : Noncopyable
 
 		/* clear status register */
 		hba.ack_irq();
-
-		/* ack at interrupt controller */
-		platform_hba.ack_irq();
 	}
 
 	/*
@@ -281,7 +277,7 @@ struct Ahci::Driver : Noncopyable
 				case ATA_SIG:
 					try {
 						ata[index].construct();
-						ports[index].construct(*ata[index], rm, hba, platform_hba, index);
+						ports[index].construct(*ata[index], rm, hba, index);
 						enabled = true;
 					} catch (...) { }
 
@@ -390,8 +386,12 @@ struct Ahci::Block_session_component : Rpc_object<Block::Session>,
 
 			bool progress = false;
 
+			/*
+			 * Acknowledge any pending packets before sending news request to the
+			 * controller.
+			 */
 			try_acknowledge([&](Ack &ack) {
-				port.for_each_completed_request([&] (Block::Request request) {
+				port.for_one_completed_request([&] (Block::Request request) {
 					progress = true;
 					ack.submit(request);
 				});

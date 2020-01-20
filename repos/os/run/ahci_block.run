@@ -83,6 +83,7 @@ append config {
 			<any-service> <parent/> <any-child /> </any-service>
 		</route>
 	</start>
+	<!--
 	<start name="test-ahci-atapi">
 		<binary name="test-block-client" />
 		<resource name="RAM" quantum="50M" />
@@ -91,7 +92,7 @@ append config {
 			<service name="Block"><child name="ahci_drv"/></service>
 			<any-service> <parent/> <any-child /> </any-service>
 		</route>
-	</start>
+	</start>-->
 </config> }
 
 install_config $config

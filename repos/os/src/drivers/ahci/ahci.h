@@ -1,4 +1,5 @@
 /**
+ *
  * \brief  Generic AHCI controller definitions
  * \author Sebasitan Sumpf
  * \date   2015-04-29
@@ -20,51 +21,52 @@
 #include <util/retry.h>
 #include <util/reconstructible.h>
 
-static bool constexpr verbose = false;
+#include <platform.h>
 
-namespace Platform {
-	struct Hba;
-	Hba &init(Genode::Env &env, Genode::Mmio::Delayer &delayer);
-};
+static bool constexpr verbose = false;
 
 namespace Ahci {
 	struct Missing_controller : Genode::Exception { };
+	struct Platform;
 
 }
 //XXX: Move to Ahci namespace
 using Response = Block::Request_stream::Response;
 using Payload  = Block::Request_stream::Payload;
 
-struct Platform::Hba : Genode::Interface
+struct Ahci::Platform
 {
+	Data _data;
+
+	Platform(Env &env) : _data(env) { };
 	/**
 	 * Return base address and size of HBA device registers
 	 */
-	virtual Genode::addr_t base() const = 0;
+	Genode::addr_t mmio_base() const;
 
 	/**
 	 * Register interrupt signal context
 	 */
-	virtual void sigh_irq(Genode::Signal_context_capability sigh) = 0;
-	virtual void ack_irq() = 0;
+	void sigh_irq(Genode::Signal_context_capability sigh);
+	void ack_irq();
 
 	/**
 	 * DMA
 	 */
-	virtual Genode::Ram_dataspace_capability alloc_dma_buffer(Genode::size_t size) = 0;
-	virtual void free_dma_buffer(Genode::Ram_dataspace_capability ds) = 0;
+	Genode::Ram_dataspace_capability alloc_dma_buffer(Genode::size_t size);
+	void free_dma_buffer(Genode::Ram_dataspace_capability ds);
 };
-
 
 /**
  * HBA definitions
  */
-struct Hba : Genode::Mmio
+struct Hba : Ahci::Platform,
+             Genode::Mmio
 {
 	Mmio::Delayer &_delayer;
 
-	Hba(Genode::Env &env, Platform::Hba &hba, Mmio::Delayer &delayer)
-	: Mmio(hba.base()), _delayer(delayer) { }
+	Hba(Genode::Env &env, Mmio::Delayer &delayer)
+	: Platform(env), Mmio(mmio_base()), _delayer(delayer) { }
 
 	/**
 	 * Host capabilites
@@ -98,7 +100,11 @@ struct Hba : Genode::Mmio
 	 */
 	struct Is : Register<0x8, 32> { };
 
-	void ack_irq() { write<Is>(read<Is>()); }
+	void ack_irq()
+	{
+		write<Is>(read<Is>());
+		Platform::ack_irq();
+	}
 
 	/**
 	 * Ports implemented
@@ -420,7 +426,6 @@ struct Port : private Port_base
 	Protocol           &protocol;
 	Genode::Region_map &rm;
 	Hba                &hba;
-	Platform::Hba      &platform_hba;
 	unsigned            cmd_slots = hba.command_slots();
 
 	Genode::Ram_dataspace_capability device_ds      { };
@@ -434,13 +439,11 @@ struct Port : private Port_base
 	Genode::addr_t dma_base      = 0; /* physical address of DMA memory */
 
 	Port(Protocol &protocol, Genode::Region_map &rm, Hba &hba,
-	     Platform::Hba &platform_hba,
 	     unsigned index)
 	:
 		Port_base(index, hba),
 		index(index),
-		protocol(protocol), rm(rm), hba(hba),
-		platform_hba(platform_hba)
+		protocol(protocol), rm(rm), hba(hba)
 	{
 		reset();
 		if (!enable())
@@ -463,17 +466,17 @@ struct Port : private Port_base
 	{
 		if (device_ds.valid()) {
 			rm.detach((void *)cmd_list);
-			platform_hba.free_dma_buffer(device_ds);
+			hba.free_dma_buffer(device_ds);
 		}
 
 		if (cmd_ds.valid()) {
 			rm.detach((void *)cmd_table);
-			platform_hba.free_dma_buffer(cmd_ds);
+			hba.free_dma_buffer(cmd_ds);
 		}
 
 		if (device_info_ds.valid()) {
 			rm.detach((void*)device_info);
-			platform_hba.free_dma_buffer(device_info_ds);
+			hba.free_dma_buffer(device_info_ds);
 		}
 	}
 
@@ -771,7 +774,7 @@ struct Port : private Port_base
 		using Genode::addr_t;
 		using Genode::size_t;
 
-		device_ds  = platform_hba.alloc_dma_buffer(0x1000);
+		device_ds  = hba.alloc_dma_buffer(0x1000);
 
 		/* command list 1K */
 		addr_t phys = Genode::Dataspace_client(device_ds).phys_addr();
@@ -784,7 +787,7 @@ struct Port : private Port_base
 
 		/* command table */
 		size_t cmd_size = Genode::align_addr(cmd_slots * Command_table::size(), 12);
-		cmd_ds          = platform_hba.alloc_dma_buffer(cmd_size);
+		cmd_ds          = hba.alloc_dma_buffer(cmd_size);
 		cmd_table       = (addr_t)rm.attach(cmd_ds);
 		phys            = (addr_t)Genode::Dataspace_client(cmd_ds).phys_addr();
 
@@ -795,7 +798,7 @@ struct Port : private Port_base
 		}
 
 		/* dataspace for device info */
-		device_info_ds = platform_hba.alloc_dma_buffer(0x1000);
+		device_info_ds = hba.alloc_dma_buffer(0x1000);
 		device_info    = rm.attach(device_info_ds);
 	}
 
@@ -838,7 +841,7 @@ struct Port : private Port_base
 	{
 		if (dma_base) return Genode::Ram_dataspace_capability();
 
-		Genode::Ram_dataspace_capability dma = platform_hba.alloc_dma_buffer(size);
+		Genode::Ram_dataspace_capability dma = hba.alloc_dma_buffer(size);
 		dma_base = Genode::Dataspace_client(dma).phys_addr();
 		return dma;
 	}
@@ -846,7 +849,7 @@ struct Port : private Port_base
 	void free_buffer(Genode::Ram_dataspace_capability ds)
 	{
 		dma_base = 0;
-		platform_hba.free_dma_buffer(ds);
+		hba.free_dma_buffer(ds);
 	}
 
 	/**********************
@@ -862,7 +865,7 @@ struct Port : private Port_base
 		return protocol.submit(*this, request); }
 
 	template <typename FN>
-	void for_each_completed_request(FN const &fn)
+	void for_one_completed_request(FN const &fn)
 	{
 		for (Genode::size_t index  = 0; index < cmd_slots; index++) {
 			Block::Request request = protocol.completed(*this, index);
