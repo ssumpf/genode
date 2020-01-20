@@ -216,7 +216,6 @@ struct Ata_protocol : Protocol, Noncopyable
 
 	void handle_irq(Port &port)
 	{
-		Genode::log("ATA irq");
 		/* ncg */
 		if (ncq_support(port))
 			while (Port::Is::Sdbs::get(port.read<Port::Is>()))
@@ -269,7 +268,7 @@ struct Ata_protocol : Protocol, Noncopyable
 		if (r == nullptr)
 			return Response::RETRY;
 
-		log("Request: ", request.operation, " valid: ", r->valid(), " index: ", slots.index(*r));
+		//log("Request: ", request.operation, " valid: ", r->valid(), " index: ", slots.index(*r));
 		*r = request;
 
 		Block::Operation op = request.operation;

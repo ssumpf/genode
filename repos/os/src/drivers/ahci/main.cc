@@ -243,7 +243,6 @@ struct Ahci::Block_session_handler : Interface
 
 	~Block_session_handler()
 	{
-		log("destroy ds");
 		port.free_buffer(ds);
 	}
 
@@ -269,7 +268,6 @@ struct Ahci::Block_session_component : Rpc_object<Block::Session>,
 
 	~Block_session_component()
 	{
-		log("close block session");
 		env.ep().dissolve(*this);
 	}
 
@@ -279,7 +277,6 @@ struct Ahci::Block_session_component : Rpc_object<Block::Session>,
 
 	void handle_requests() override
 	{
-		warning("Request");
 		while (true) {
 
 			bool progress = false;
@@ -317,8 +314,6 @@ struct Ahci::Block_session_component : Rpc_object<Block::Session>,
 
 		/* poke */
 		wakeup_client_if_needed();
-
-		log("LEAVE Request");
 	}
 };
 

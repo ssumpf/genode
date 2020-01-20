@@ -91,7 +91,6 @@ namespace Util {
 		size_t index(T const &entry) const
 		{
 			size_t index = &entry - _entries;
-			log("INDEX: ", index);
 			return index;
 		}
 
