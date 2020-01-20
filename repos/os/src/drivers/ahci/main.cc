@@ -323,9 +323,35 @@ struct Ahci::Driver : Noncopyable
 		throw -1;
 	}
 
+	template <typename FN> void for_each_port(FN const &fn)
+	{
+		for (unsigned index = 0; index < MAX_PORTS; index++) {
+			if (!ports[index].constructed()) continue;
+			fn(*ports[index], index, !ata[index].constructed());
+		}
+	}
+
 	void report_ports(Genode::Reporter &reporter)
 	{
-		//XXX:
+		auto report = [&](Port const &port, unsigned index, bool atapi) {
+
+			Block::Session::Info info = port.info();
+			Reporter::Xml_generator xml(reporter, [&] () {
+
+				xml.node("port", [&] () {
+					xml.attribute("num", index);
+					xml.attribute("type", atapi ? "ATAPI" : "ATA");
+					xml.attribute("block_count", info.block_count);
+					xml.attribute("block_size", info.block_size);
+					if (!atapi) {
+						xml.attribute("model", ata[index]->model->cstring());
+						xml.attribute("serial", ata[index]->serial->cstring());
+					}
+				});
+			});
+		};
+
+		for_each_port(report);
 	}
 };
 
