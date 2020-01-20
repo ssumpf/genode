@@ -26,47 +26,59 @@
 static bool constexpr verbose = false;
 
 namespace Ahci {
-	struct Missing_controller : Genode::Exception { };
-	struct Platform;
+	struct Missing_controller : Exception { };
 
+	class  Platform;
+	struct Protocol;
+	struct Port;
+	struct Port_base;
+	struct Hba;
+
+	using Response       = Block::Request_stream::Response;
+	using block_number_t = Block::block_number_t;
+	using block_count_t  = Block::block_count_t;
 }
-//XXX: Move to Ahci namespace
-using Response = Block::Request_stream::Response;
-using Payload  = Block::Request_stream::Payload;
 
-struct Ahci::Platform
+class Ahci::Platform
 {
-	Data _data;
+	private :
 
-	Platform(Env &env) : _data(env) { };
-	/**
-	 * Return base address and size of HBA device registers
-	 */
-	Genode::addr_t mmio_base() const;
+		Data _data;
 
-	/**
-	 * Register interrupt signal context
-	 */
-	void sigh_irq(Genode::Signal_context_capability sigh);
-	void ack_irq();
+	protected:
 
-	/**
-	 * DMA
-	 */
-	Genode::Ram_dataspace_capability alloc_dma_buffer(Genode::size_t size);
-	void free_dma_buffer(Genode::Ram_dataspace_capability ds);
+		/**
+		 * Return base address and size of HBA device registers
+		 */
+		addr_t _mmio_base() const;
+
+	public:
+
+		Platform(Env &env) : _data(env) { };
+
+		/**
+		 * Register interrupt signal context
+		 */
+		void sigh_irq(Signal_context_capability sigh);
+		void ack_irq();
+
+		/**
+		 * DMA
+		 */
+		Ram_dataspace_capability alloc_dma_buffer(size_t size);
+		void free_dma_buffer(Ram_dataspace_capability ds);
 };
 
 /**
  * HBA definitions
  */
-struct Hba : Ahci::Platform,
-             Genode::Mmio
+struct Ahci::Hba : Ahci::Platform,
+                   Mmio
 {
 	Mmio::Delayer &_delayer;
 
-	Hba(Genode::Env &env, Mmio::Delayer &delayer)
-	: Platform(env), Mmio(mmio_base()), _delayer(delayer) { }
+	Hba(Env &env, Mmio::Delayer &delayer)
+	: Platform(env), Mmio(_mmio_base()), _delayer(delayer) { }
 
 	/**
 	 * Host capabilites
@@ -135,310 +147,315 @@ struct Hba : Ahci::Platform,
 };
 
 
-struct Device_fis : Genode::Mmio
-{
-	struct Status : Register<0x2, 8>
+/***********************************
+ ** AHCI commands and descriptors **
+ ***********************************/
+
+namespace Ahci {
+
+	struct Device_fis : Mmio
 	{
-		/* ATAPI bits */
-		struct Device_ready : Bitfield<6, 1> { };
-	};
-	struct Error  : Register<0x3, 8> { };
+		struct Status : Register<0x2, 8>
+		{
+			/* ATAPI bits */
+			struct Device_ready : Bitfield<6, 1> { };
+		};
+		struct Error  : Register<0x3, 8> { };
 
-	Device_fis(Genode::addr_t recv_base)
-	: Mmio(recv_base + 0x40) { }
-};
-
-
-struct Command_fis : Genode::Mmio
-{
-	struct Type : Register<0x0, 8> { }; /* FIS type */
-	struct Bits : Register<0x1, 8, 1>
-	{
-		struct C : Bitfield<7, 1> { }; /* update of command register */
-	};
-	struct Command     : Register<0x2, 8, 1> { }; /* ATA command */
-	struct Features0_7 : Register<0x3, 8> { };
-
-	/* big-endian use byte access */
-	struct Lba0_7   : Register<0x4, 8> { };
-	struct Lba8_15  : Register<0x5, 8> { };
-	struct Lba16_23 : Register<0x6, 8> { };
-	struct Lba24    : Genode::Bitset_3<Lba0_7, Lba8_15, Lba16_23> { };
-	struct Device   : Register<0x7, 8>
-	{
-		struct Lba   : Bitfield<6, 1> { }; /* enable LBA mode */
+		Device_fis(addr_t recv_base)
+		: Mmio(recv_base + 0x40) { }
 	};
 
-	/* big endian */
-	struct Lba24_31     : Register<0x8, 8> { };
-	struct Lba32_39     : Register<0x9, 8> { };
-	struct Lba40_47     : Register<0xa, 8> { };
-	struct Features8_15 : Register<0xb, 8> { };
-	struct Features     : Genode::Bitset_2<Features0_7, Features8_15> { };
-	struct Lba48        : Genode::Bitset_3<Lba24_31, Lba32_39, Lba40_47> { };
-	struct Lba          : Genode::Bitset_2<Lba24, Lba48> { }; /* LBA 0 - 47 */
 
-	/* big endian */
-	struct Sector0_7  : Register<0xc, 8, 1>
+	struct Command_fis : Mmio
 	{
-		struct Tag : Bitfield<3, 5> { };
-	};
-	struct Sector8_15 : Register<0xd, 8> { };
-	struct Sector     : Genode::Bitset_2<Sector0_7, Sector8_15> { }; /* sector count */
+		struct Type : Register<0x0, 8> { }; /* FIS type */
+		struct Bits : Register<0x1, 8, 1>
+		{
+			struct C : Bitfield<7, 1> { }; /* update of command register */
+		};
+		struct Command     : Register<0x2, 8, 1> { }; /* ATA command */
+		struct Features0_7 : Register<0x3, 8> { };
 
-	Command_fis(Genode::addr_t base)
-	: Mmio(base)
-	{
-		clear();
+		/* big-endian use byte access */
+		struct Lba0_7   : Register<0x4, 8> { };
+		struct Lba8_15  : Register<0x5, 8> { };
+		struct Lba16_23 : Register<0x6, 8> { };
+		struct Lba24    : Bitset_3<Lba0_7, Lba8_15, Lba16_23> { };
+		struct Device   : Register<0x7, 8>
+		{
+			struct Lba   : Bitfield<6, 1> { }; /* enable LBA mode */
+		};
 
-		enum { HOST_TO_DEVICE = 0x27 };
-		write<Type>(HOST_TO_DEVICE);
-	}
+		/* big endian */
+		struct Lba24_31     : Register<0x8, 8> { };
+		struct Lba32_39     : Register<0x9, 8> { };
+		struct Lba40_47     : Register<0xa, 8> { };
+		struct Features8_15 : Register<0xb, 8> { };
+		struct Features     : Bitset_2<Features0_7, Features8_15> { };
+		struct Lba48        : Bitset_3<Lba24_31, Lba32_39, Lba40_47> { };
+		struct Lba          : Bitset_2<Lba24, Lba48> { }; /* LBA 0 - 47 */
 
-	static constexpr Genode::size_t size() { return 0x14; }
-	void clear() { Genode::memset((void *)base(), 0, size()); }
+		/* big endian */
+		struct Sector0_7  : Register<0xc, 8, 1>
+		{
+			struct Tag : Bitfield<3, 5> { };
+		};
+		struct Sector8_15 : Register<0xd, 8> { };
+		struct Sector     : Bitset_2<Sector0_7, Sector8_15> { }; /* sector count */
 
+		Command_fis(addr_t base)
+		: Mmio(base)
+		{
+			clear();
 
-	/************************
-	 ** ATA spec commands  **
-	 ************************/
+			enum { HOST_TO_DEVICE = 0x27 };
+			write<Type>(HOST_TO_DEVICE);
+		}
 
-	void identify_device()
-	{
-		write<Bits::C>(1);
-		write<Device::Lba>(0);
-		write<Command>(0xec);
-	}
-
-	void dma_ext(bool read, Block::block_number_t block_number, Block::block_count_t block_count)
-	{
-		write<Bits::C>(1);
-		write<Device::Lba>(1);
-		/* read_dma_ext : write_dma_ext */
-		write<Command>(read ? 0x25 : 0x35);
-		write<Lba>(block_number);
-		write<Sector>(block_count);
-	}
-
-	void fpdma(bool read, Block::block_number_t block_number, Block::block_count_t block_count,
-	           unsigned slot)
-	{
-		write<Bits::C>(1);
-		write<Device::Lba>(1);
-		/* read_fpdma : write_fpdma */
-		write<Command>(read ? 0x60 : 0x61);
-		write<Lba>(block_number);
-		write<Features>(block_count);
-		write<Sector0_7::Tag>(slot);
-	}
-
-	void atapi()
-	{
-		write<Bits::C>(1);
-		/* packet command */
-		write<Command>(0xa0);
-	}
-};
+		static constexpr size_t size() { return 0x14; }
+		void clear() { memset((void *)base(), 0, size()); }
 
 
-/**
- * AHCI command list structure header
- */
-struct Command_header : Genode::Mmio
-{
-	struct Bits : Register<0x0, 16>
-	{
-		struct Cfl : Bitfield<0, 5> { };  /* command FIS length */
-		struct A   : Bitfield<5, 1> { };  /* ATAPI command flag */
-		struct W   : Bitfield<6, 1> { };  /* write flag */
-		struct P   : Bitfield<7, 1> { };  /* prefetchable flag */
-		struct C   : Bitfield<10, 1> { }; /* clear busy upon R_OK */
-	};
+		/************************
+		 ** ATA spec commands  **
+		 ************************/
 
-	struct Prdtl    : Register<0x2, 16> { }; /* physical region descr. length */
-	struct Prdbc    : Register<0x4, 32> { }; /* PRD byte count */
-	struct Ctba0    : Register<0x8, 32> { }; /* command table base addr (low) */
-	struct Ctba0_u0 : Register<0xc, 32> { }; /* command table base addr (upper) */
+		void identify_device()
+		{
+			write<Bits::C>(1);
+			write<Device::Lba>(0);
+			write<Command>(0xec);
+		}
 
-	Command_header(Genode::addr_t base) : Mmio(base) { }
+		void dma_ext(bool read, block_number_t block_number, block_count_t block_count)
+		{
+			write<Bits::C>(1);
+			write<Device::Lba>(1);
+			/* read_dma_ext : write_dma_ext */
+			write<Command>(read ? 0x25 : 0x35);
+			write<Lba>(block_number);
+			write<Sector>(block_count);
+		}
 
-	void cmd_table_base(Genode::addr_t base_phys)
-	{
-		Genode::uint64_t addr = base_phys;
-		write<Ctba0>(addr);
-		write<Ctba0_u0>(addr >> 32);
-		write<Prdtl>(1);
-		write<Bits::Cfl>(Command_fis::size() / sizeof(unsigned));
-	}
+		void fpdma(bool read, block_number_t block_number, block_count_t block_count,
+		           unsigned slot)
+		{
+			write<Bits::C>(1);
+			write<Device::Lba>(1);
+			/* read_fpdma : write_fpdma */
+			write<Command>(read ? 0x60 : 0x61);
+			write<Lba>(block_number);
+			write<Features>(block_count);
+			write<Sector0_7::Tag>(slot);
+		}
 
-	void clear_byte_count()
-	{
-		write<Prdbc>(0);
-	}
-
-	void atapi_command()
-	{
-		write<Bits::A>(1);
-	}
-
-	static constexpr Genode::size_t size() { return 0x20; }
-};
-
-
-/**
- * ATAPI packet 12 or 16 bytes
- */
-struct Atapi_command : Genode::Mmio
-{
-	struct Command : Register<0, 8>   { };
-
-	/* LBA32 big endian */
-	struct Lba24_31 : Register<0x2, 8> { };
-	struct Lba16_23 : Register<0x3, 8> { };
-	struct Lba8_15  : Register<0x4, 8> { };
-	struct Lba0_7   : Register<0x5, 8> { };
-	struct Lba24    : Genode::Bitset_3<Lba0_7, Lba8_15, Lba16_23> { };
-	struct Lba      : Genode::Bitset_2<Lba24, Lba24_31> { };
-
-	/* sector count big endian */
-	struct Sector8_15  : Register<0x8, 8> { };
-	struct Sector0_7   : Register<0x9, 8> { };
-	struct Sector      : Genode::Bitset_2<Sector0_7, Sector8_15> { };
-
-
-	Atapi_command(Genode::addr_t base) : Mmio(base)
-	{
-		Genode::memset((void *)base, 0, 16);
-	}
-
-	void read_capacity()
-	{
-		write<Command>(0x25);
-	}
-
-	void test_unit_ready()
-	{
-		write<Command>(0x0);
-	}
-
-	void read_sense()
-	{
-		write<Command>(0x3);
-		write<Lba8_15>(18);
-	}
-
-	void read10(Block::block_number_t block_number, Block::block_count_t block_count)
-	{
-		write<Command>(0x28);
-		write<Lba>(block_number);
-		write<Sector>(block_count);
-	}
-};
-
-
-/**
- * Physical region descritpor table
- */
-struct Prdt : Genode::Mmio
-{
-	struct Dba  : Register<0x0, 32> { }; /* data base address */
-	struct Dbau : Register<0x4, 32> { }; /* data base address upper 32 bits */
-
-	struct Bits : Register<0xc, 32>
-	{
-		struct Dbc : Bitfield<0, 22> { }; /* data byte count */
-		struct Irq : Bitfield<31,1>  { }; /* interrupt completion */
+		void atapi()
+		{
+			write<Bits::C>(1);
+			/* packet command */
+			write<Command>(0xa0);
+		}
 	};
 
-	Prdt(Genode::addr_t base, Genode::addr_t phys, Genode::size_t bytes)
-	: Mmio(base)
+
+	/**
+	 * AHCI command list structure header
+	 */
+	struct Command_header : Mmio
 	{
-		Genode::uint64_t addr = phys;
-		write<Dba>(addr);
-		write<Dbau>(addr >> 32);
-		write<Bits::Dbc>(bytes > 0 ? bytes - 1 : 0);
-	}
+		struct Bits : Register<0x0, 16>
+		{
+			struct Cfl : Bitfield<0, 5> { };  /* command FIS length */
+			struct A   : Bitfield<5, 1> { };  /* ATAPI command flag */
+			struct W   : Bitfield<6, 1> { };  /* write flag */
+			struct P   : Bitfield<7, 1> { };  /* prefetchable flag */
+			struct C   : Bitfield<10, 1> { }; /* clear busy upon R_OK */
+		};
 
-	static constexpr Genode::size_t size() { return 0x10; }
-};
+		struct Prdtl    : Register<0x2, 16> { }; /* physical region descr. length */
+		struct Prdbc    : Register<0x4, 32> { }; /* PRD byte count */
+		struct Ctba0    : Register<0x8, 32> { }; /* command table base addr (low) */
+		struct Ctba0_u0 : Register<0xc, 32> { }; /* command table base addr (upper) */
+
+		Command_header(addr_t base) : Mmio(base) { }
+
+		void cmd_table_base(addr_t base_phys)
+		{
+			uint64_t addr = base_phys;
+			write<Ctba0>(addr);
+			write<Ctba0_u0>(addr >> 32);
+			write<Prdtl>(1);
+			write<Bits::Cfl>(Command_fis::size() / sizeof(unsigned));
+		}
+
+		void clear_byte_count()
+		{
+			write<Prdbc>(0);
+		}
+
+		void atapi_command()
+		{
+			write<Bits::A>(1);
+		}
+
+		static constexpr size_t size() { return 0x20; }
+	};
 
 
-struct Command_table
-{
-	Command_fis   fis;
-	Atapi_command atapi_cmd;
+	/**
+	 * ATAPI packet 12 or 16 bytes
+	 */
+	struct Atapi_command : Mmio
+	{
+		struct Command : Register<0, 8>   { };
 
-	/* in Genode we only need one PRD (for one packet) */
-	Prdt            prdt;
+		/* LBA32 big endian */
+		struct Lba24_31 : Register<0x2, 8> { };
+		struct Lba16_23 : Register<0x3, 8> { };
+		struct Lba8_15  : Register<0x4, 8> { };
+		struct Lba0_7   : Register<0x5, 8> { };
+		struct Lba24    : Bitset_3<Lba0_7, Lba8_15, Lba16_23> { };
+		struct Lba      : Bitset_2<Lba24, Lba24_31> { };
 
-	Command_table(Genode::addr_t base,
-	              Genode::addr_t phys,
-	              Genode::size_t bytes = 0)
-	: fis(base), atapi_cmd(base + 0x40),
-	  prdt(base + 0x80, phys, bytes)
-	{ }
+		/* sector count big endian */
+		struct Sector8_15  : Register<0x8, 8> { };
+		struct Sector0_7   : Register<0x9, 8> { };
+		struct Sector      : Bitset_2<Sector0_7, Sector8_15> { };
 
-	static constexpr Genode::size_t size() { return 0x100; }
-};
 
+		Atapi_command(addr_t base) : Mmio(base)
+		{
+			memset((void *)base, 0, 16);
+		}
+
+		void read_capacity()
+		{
+			write<Command>(0x25);
+		}
+
+		void test_unit_ready()
+		{
+			write<Command>(0x0);
+		}
+
+		void read_sense()
+		{
+			write<Command>(0x3);
+			write<Lba8_15>(18);
+		}
+
+		void read10(block_number_t block_number, block_count_t block_count)
+		{
+			write<Command>(0x28);
+			write<Lba>(block_number);
+			write<Sector>(block_count);
+		}
+	};
+
+
+	/**
+	 * Physical region descritpor table
+	 */
+	struct Prdt : Mmio
+	{
+		struct Dba  : Register<0x0, 32> { }; /* data base address */
+		struct Dbau : Register<0x4, 32> { }; /* data base address upper 32 bits */
+
+		struct Bits : Register<0xc, 32>
+		{
+			struct Dbc : Bitfield<0, 22> { }; /* data byte count */
+			struct Irq : Bitfield<31,1>  { }; /* interrupt completion */
+		};
+
+		Prdt(addr_t base, addr_t phys, size_t bytes)
+		: Mmio(base)
+		{
+			uint64_t addr = phys;
+			write<Dba>(addr);
+			write<Dbau>(addr >> 32);
+			write<Bits::Dbc>(bytes > 0 ? bytes - 1 : 0);
+		}
+
+		static constexpr size_t size() { return 0x10; }
+	};
+
+
+	struct Command_table
+	{
+		Command_fis   fis;
+		Atapi_command atapi_cmd;
+
+		/* in Genode we only need one PRD (for one packet) */
+		Prdt            prdt;
+
+		Command_table(addr_t base,
+		              addr_t phys,
+		              size_t bytes = 0)
+		: fis(base), atapi_cmd(base + 0x40),
+		  prdt(base + 0x80, phys, bytes)
+		{ }
+
+		static constexpr size_t size() { return 0x100; }
+	};
+} /* namespace Ahci */
 
 /**
  * Minimalistic AHCI port structure to merely detect device signature
  */
-struct Port_base : Genode::Mmio
+struct Ahci::Port_base : Mmio
 {
 	/**
 	 * Port signature
 	 */
 	struct Sig : Register<0x24, 32> { };
 
-	static constexpr Genode::addr_t offset() { return 0x100; }
-	static constexpr Genode::size_t size()   { return 0x80;  }
+	static constexpr addr_t offset() { return 0x100; }
+	static constexpr size_t size()   { return 0x80;  }
 
 	Port_base(unsigned index, Hba &hba)
 	: Mmio(hba.base() + offset() + (index * size())) { }
 };
 
-struct Port;
 
-struct Protocol : Genode::Interface
+struct Ahci::Protocol : Interface
 {
 	virtual unsigned init(Port &port) = 0;
 	virtual Block::Session::Info info() const = 0;
 	virtual void handle_irq(Port &port) = 0;
 
 	virtual Response submit(Port &port, Block::Request const request) = 0;
-	virtual Block::Request completed(Port &port, Genode::size_t const index) = 0;
+	virtual Block::Request completed(Port &port, size_t const index) = 0;
 };
 
 /**
  * AHCI port
  */
-struct Port : private Port_base
+struct Ahci::Port : private Port_base
 {
 	using Port_base::write;
 	using Port_base::read;
 	using Port_base::wait_for_any;
 
-	struct Not_ready : Genode::Exception { };
+	struct Not_ready : Exception { };
 
 	unsigned            index;
 	Protocol           &protocol;
-	Genode::Region_map &rm;
+	Region_map &rm;
 	Hba                &hba;
 	unsigned            cmd_slots = hba.command_slots();
 
-	Genode::Ram_dataspace_capability device_ds      { };
-	Genode::Ram_dataspace_capability cmd_ds         { };
-	Genode::Ram_dataspace_capability device_info_ds { };
+	Ram_dataspace_capability device_ds      { };
+	Ram_dataspace_capability cmd_ds         { };
+	Ram_dataspace_capability device_info_ds { };
 
-	Genode::addr_t cmd_list      = 0;
-	Genode::addr_t fis_base      = 0;
-	Genode::addr_t cmd_table     = 0;
-	Genode::addr_t device_info   = 0;
-	Genode::addr_t dma_base      = 0; /* physical address of DMA memory */
+	addr_t cmd_list      = 0;
+	addr_t fis_base      = 0;
+	addr_t cmd_table     = 0;
+	addr_t device_info   = 0;
+	addr_t dma_base      = 0; /* physical address of DMA memory */
 
-	Port(Protocol &protocol, Genode::Region_map &rm, Hba &hba,
+	Port(Protocol &protocol, Region_map &rm, Hba &hba,
 	     unsigned index)
 	:
 		Port_base(index, hba),
@@ -459,7 +476,7 @@ struct Port : private Port_base
 		 * Init protocol and determine actual number of command slots of device
 		 */
 		unsigned device_slots = protocol.init(*this);
-		cmd_slots = Genode::min(device_slots, cmd_slots);
+		cmd_slots = min(device_slots, cmd_slots);
 	}
 
 	virtual ~Port()
@@ -490,9 +507,9 @@ struct Port : private Port_base
 	 */
 	struct Clbu : Register<0x4, 32> { };
 
-	void command_list_base(Genode::addr_t phys)
+	void command_list_base(addr_t phys)
 	{
-		Genode::uint64_t addr = phys;
+		uint64_t addr = phys;
 		write<Clb>(addr);
 		write<Clbu>(addr >> 32);
 	}
@@ -507,9 +524,9 @@ struct Port : private Port_base
 	 */
 	struct Fbu : Register<0xc, 32> { };
 
-	void fis_rcv_base(Genode::addr_t phys)
+	void fis_rcv_base(addr_t phys)
 	{
-		Genode::uint64_t addr = phys;
+		uint64_t addr = phys;
 		write<Fb>(addr);
 		write<Fbu>(addr >> 32);
 	}
@@ -606,14 +623,14 @@ struct Port : private Port_base
 		try {
 			wait_for(hba.delayer(), Tfd::Sts_bsy::Equal(0));
 		} catch (Polling_timeout) {
-			Genode::error("HBA busy unable to start command processing.");
+			error("HBA busy unable to start command processing.");
 			return;
 		}
 
 		try {
 			wait_for(hba.delayer(), Tfd::Sts_drq::Equal(0));
 		} catch (Polling_timeout) {
-			Genode::error("HBA in DRQ unable to start command processing.");
+			error("HBA in DRQ unable to start command processing.");
 			return;
 		}
 
@@ -676,7 +693,7 @@ struct Port : private Port_base
 			/* try to wake up device */
 			write<Cmd::Icc>(Ssts::Ipm::ACTIVE);
 
-			Genode::retry<Not_ready>(
+			retry<Not_ready>(
 				[&] {
 							if ((Ssts::Dec::get(status) != Ssts::Dec::ESTABLISHED) ||
 							    !(Ssts::Ipm::get(status) &  Ssts::Ipm::ACTIVE))
@@ -704,7 +721,7 @@ struct Port : private Port_base
 	void reset()
 	{
 		if (read<Cmd::St>())
-			Genode::warning("CMD.ST bit set during device reset --> unknown behavior");
+			warning("CMD.ST bit set during device reset --> unknown behavior");
 
 		write<Sctl::Det>(1);
 		hba.delayer().usleep(1000);
@@ -713,7 +730,7 @@ struct Port : private Port_base
 		try {
 			wait_for(hba.delayer(), Ssts::Dec::Equal(Ssts::Dec::ESTABLISHED));
 		} catch (Polling_timeout) {
-			Genode::warning("Port reset failed");
+			warning("Port reset failed");
 		}
 	}
 
@@ -771,13 +788,10 @@ struct Port : private Port_base
 
 	void setup_memory()
 	{
-		using Genode::addr_t;
-		using Genode::size_t;
-
 		device_ds  = hba.alloc_dma_buffer(0x1000);
 
 		/* command list 1K */
-		addr_t phys = Genode::Dataspace_client(device_ds).phys_addr();
+		addr_t phys = Dataspace_client(device_ds).phys_addr();
 		cmd_list    = (addr_t)rm.attach(device_ds);
 		command_list_base(phys);
 
@@ -786,10 +800,10 @@ struct Port : private Port_base
 		fis_rcv_base(phys + 1024);
 
 		/* command table */
-		size_t cmd_size = Genode::align_addr(cmd_slots * Command_table::size(), 12);
+		size_t cmd_size = align_addr(cmd_slots * Command_table::size(), 12);
 		cmd_ds          = hba.alloc_dma_buffer(cmd_size);
 		cmd_table       = (addr_t)rm.attach(cmd_ds);
-		phys            = (addr_t)Genode::Dataspace_client(cmd_ds).phys_addr();
+		phys            = (addr_t)Dataspace_client(cmd_ds).phys_addr();
 
 		/* set command table addresses in command list */
 		for (unsigned i = 0; i < cmd_slots; i++) {
@@ -802,12 +816,12 @@ struct Port : private Port_base
 		device_info    = rm.attach(device_info_ds);
 	}
 
-	Genode::addr_t command_table_addr(unsigned slot)
+	addr_t command_table_addr(unsigned slot)
 	{
 		return cmd_table + (slot * Command_table::size());
 	};
 
-	Genode::addr_t command_header_addr(unsigned slot)
+	addr_t command_header_addr(unsigned slot)
 	{
 		return cmd_list + (slot * Command_header::size());
 	}
@@ -824,29 +838,29 @@ struct Port : private Port_base
 
 		/* max. PRDT size is 4MB */
 		if (request.operation.count * i.block_size > 4 * 1024 * 1024) {
-			Genode::error("error: maximum supported packet size is 4MB");
+			error("error: maximum supported packet size is 4MB");
 			return false;
 		}
 
 		/* sanity check */
 		if (request.operation.count + request.operation.block_number > i.block_count) {
-			Genode::error("error: requested blocks are outside of device");
+			error("error: requested blocks are outside of device");
 			return false;
 		}
 
 		return true;
 	}
 
-	Genode::Ram_dataspace_capability alloc_buffer(Genode::size_t size)
+	Ram_dataspace_capability alloc_buffer(size_t size)
 	{
-		if (dma_base) return Genode::Ram_dataspace_capability();
+		if (dma_base) return Ram_dataspace_capability();
 
-		Genode::Ram_dataspace_capability dma = hba.alloc_dma_buffer(size);
-		dma_base = Genode::Dataspace_client(dma).phys_addr();
+		Ram_dataspace_capability dma = hba.alloc_dma_buffer(size);
+		dma_base = Dataspace_client(dma).phys_addr();
 		return dma;
 	}
 
-	void free_buffer(Genode::Ram_dataspace_capability ds)
+	void free_buffer(Ram_dataspace_capability ds)
 	{
 		dma_base = 0;
 		hba.free_dma_buffer(ds);
@@ -867,7 +881,7 @@ struct Port : private Port_base
 	template <typename FN>
 	void for_one_completed_request(FN const &fn)
 	{
-		for (Genode::size_t index  = 0; index < cmd_slots; index++) {
+		for (size_t index  = 0; index < cmd_slots; index++) {
 			Block::Request request = protocol.completed(*this, index);
 
 			if (!request.operation.valid()) continue;

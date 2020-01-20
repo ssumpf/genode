@@ -26,9 +26,8 @@
 #include <ata_protocol.h>
 
 namespace Ahci {
-	using namespace Genode;
 	struct Dispatch;
-	struct Driver;
+	class  Driver;
 	struct Main;
 	struct Block_session_handler;
 	struct Block_session_component;
@@ -41,77 +40,46 @@ struct Ahci::Dispatch
 };
 
 
-struct Ahci::Driver : Noncopyable
+class Ahci::Driver : Noncopyable
 {
-	Env      &env;
-	Dispatch &dispatch;
+	public:
+
+		enum {  MAX_PORTS = 32 };
+
+	private:
+
+		Env      &_env;
+		Dispatch &_dispatch;
 
 	/* read device signature */
-	enum Signature {
-		ATA_SIG        = 0x101,
-		ATAPI_SIG      = 0xeb140101,
-		ATAPI_SIG_QEMU = 0xeb140000, /* will be fixed in Qemu */
-	};
+		enum Signature {
+			ATA_SIG        = 0x101,
+			ATAPI_SIG      = 0xeb140101,
+			ATAPI_SIG_QEMU = 0xeb140000, /* will be fixed in Qemu */
+		};
 
-	enum {  MAX_PORTS = 32 };
 
-	struct Timer_delayer : Mmio::Delayer, Timer::Connection
-	{
-		Timer_delayer(Genode::Env &env)
-		: Timer::Connection(env) { }
+		struct Timer_delayer : Mmio::Delayer, Timer::Connection
+		{
+			Timer_delayer(Env &env)
+			: Timer::Connection(env) { }
 
-		void usleep(uint64_t us) override { Timer::Connection::usleep(us); }
-	} _delayer { env };
+			void usleep(uint64_t us) override { Timer::Connection::usleep(us); }
+		} _delayer { _env };
 
-	Hba            hba          { env, _delayer };
+		Hba  _hba { _env, _delayer };
 
-  Constructible<Ata_protocol> ata[MAX_PORTS];
-	Constructible<Port>         ports[MAX_PORTS];
+		Constructible<Ata::Protocol> _ata[MAX_PORTS];
+		Constructible<Port>          _ports[MAX_PORTS];
 
-	Signal_handler<Driver> irq { env.ep(), *this, &Driver::handle_irq };
-	bool                         enable_atapi;
+		Signal_handler<Driver> _irq { _env.ep(), *this, &Driver::handle_irq };
+		bool                   _enable_atapi;
 
-	Driver(Genode::Env &env, Dispatch &dispatch, bool support_atapi)
-	:
-		env(env), dispatch(dispatch), enable_atapi(support_atapi)
-	{
-		info();
-
-		/* register irq handler */
-		hba.sigh_irq(irq);
-
-		/* initialize HBA (IRQs, memory) */
-		hba.init();
-
-		/* search for devices */
-		scan_ports(env.rm());
-	}
-
-	/**
-	 * Forward IRQs to ports/block sessions
-	 */
-	void handle_irq()
-	{
-		unsigned port_list = hba.read<Hba::Is>();
-		while (port_list) {
-			unsigned port = log2(port_list);
-			port_list    &= ~(1U << port);
-
-			/* handle (pending) requests */
-			dispatch.session(port);
-
-			/* ack irq */
-			ports[port]->handle_irq();
-		}
-
-		/* clear status register */
-		hba.ack_irq();
-	}
 
 	/*
 	 * Least significant bit
 	 */
-	unsigned lsb(unsigned bits) const
+	unsigned _lsb(unsigned bits) const
 	{
 		for (unsigned i = 0; i < 32; i++)
 			if (bits & (1u << i)) {
@@ -121,35 +89,35 @@ struct Ahci::Driver : Noncopyable
 		return 0;
 	}
 
-	void info()
+	void _info()
 	{
 		log("version: "
-		    "major=", Genode::Hex(hba.read<Hba::Version::Major>()), " "
-		    "minor=", Genode::Hex(hba.read<Hba::Version::Minor>()));
-		log("command slots: ", hba.command_slots());
-		log("native command queuing: ", hba.ncq() ? "yes" : "no");
-		log("64-bit support: ", hba.supports_64bit() ? "yes" : "no");
+		    "major=", Hex(_hba.read<Hba::Version::Major>()), " "
+		    "minor=", Hex(_hba.read<Hba::Version::Minor>()));
+		log("command slots: ", _hba.command_slots());
+		log("native command queuing: ", _hba.ncq() ? "yes" : "no");
+		log("64-bit support: ", _hba.supports_64bit() ? "yes" : "no");
 	}
 
-	void scan_ports(Genode::Region_map &rm)
+	void _scan_ports(Region_map &rm)
 	{
-		log("number of ports: ", hba.port_count(), " pi: ",
-		    Hex(hba.read<Hba::Pi>()));
+		log("number of ports: ", _hba.port_count(), " pi: ",
+		    Hex(_hba.read<Hba::Pi>()));
 
-		unsigned available = hba.read<Hba::Pi>();
-		for (unsigned i = 0; i < hba.port_count(); i++) {
+		unsigned available = _hba.read<Hba::Pi>();
+		for (unsigned i = 0; i < _hba.port_count(); i++) {
 
 			/* check if port is implemented */
 			if (!available) break;
-			unsigned index = lsb(available);
+			unsigned index = _lsb(available);
 			available ^= (1u << index);
 
 			bool enabled = false;
-			switch (Port_base(index, hba).read<Port_base::Sig>()) {
+			switch (Port_base(index, _hba).read<Port_base::Sig>()) {
 				case ATA_SIG:
 					try {
-						ata[index].construct();
-						ports[index].construct(*ata[index], rm, hba, index);
+						_ata[index].construct();
+						_ports[index].construct(*_ata[index], rm, _hba, index);
 						enabled = true;
 					} catch (...) { }
 
@@ -158,7 +126,7 @@ struct Ahci::Driver : Noncopyable
 
 				case ATAPI_SIG:
 				case ATAPI_SIG_QEMU:
-					if (enable_atapi)
+					if (_enable_atapi)
 					/*
 						try {
 							ports[index] = new (&alloc)
@@ -175,57 +143,94 @@ struct Ahci::Driver : Noncopyable
 			}
 		}
 	}
+	public:
 
-	Port &port(long device, char const *model_num, char const *serial_num)
-	{
-		/* check for model/device */
-		if (model_num && serial_num) {
-			for (long index = 0; index < MAX_PORTS; index++) {
-				if (!ata[index].constructed()) continue;
+		Driver(Env &env, Dispatch &dispatch, bool support_atapi)
+		: _env(env), _dispatch(dispatch), _enable_atapi(support_atapi)
+		{
+			_info();
 
-				Ata_protocol &protocol = *ata[index];
-				if (*protocol.model == model_num && *protocol.serial == serial_num)
-					return *ports[index];
+			/* register irq handler */
+			_hba.sigh_irq(_irq);
+
+			/* initialize HBA (IRQs, memory) */
+			_hba.init();
+
+			/* search for devices */
+			_scan_ports(env.rm());
+		}
+
+		/**
+		 * Forward IRQs to ports/block sessions
+		 */
+		void handle_irq()
+		{
+			unsigned port_list = _hba.read<Hba::Is>();
+
+			while (port_list) {
+				unsigned port = log2(port_list);
+				port_list    &= ~(1U << port);
+
+				/* handle (pending) requests */
+				_dispatch.session(port);
+
+				/* ack irq */
+				_ports[port]->handle_irq();
+			}
+
+			/* clear status register */
+			_hba.ack_irq();
+		}
+		Port &port(long device, char const *model_num, char const *serial_num)
+		{
+			/* check for model/device */
+			if (model_num && serial_num) {
+				for (long index = 0; index < MAX_PORTS; index++) {
+					if (!_ata[index].constructed()) continue;
+
+					Ata::Protocol &protocol = *_ata[index];
+					if (*protocol.model == model_num && *protocol.serial == serial_num)
+						return *_ports[index];
+				}
+			}
+
+			/* check for device number */
+			if (device >= 0 && device < MAX_PORTS && _ports[device].constructed())
+				return *_ports[device];
+
+			throw -1;
+		}
+
+		template <typename FN> void for_each_port(FN const &fn)
+		{
+			for (unsigned index = 0; index < MAX_PORTS; index++) {
+				if (!_ports[index].constructed()) continue;
+				fn(*_ports[index], index, !_ata[index].constructed());
 			}
 		}
 
-		/* check for device number */
-		if (device >= 0 && device < MAX_PORTS && ports[device].constructed())
-			return *ports[device];
+		void report_ports(Reporter &reporter)
+		{
+			auto report = [&](Port const &port, unsigned index, bool atapi) {
 
-		throw -1;
-	}
+				Block::Session::Info info = port.info();
+				Reporter::Xml_generator xml(reporter, [&] () {
 
-	template <typename FN> void for_each_port(FN const &fn)
-	{
-		for (unsigned index = 0; index < MAX_PORTS; index++) {
-			if (!ports[index].constructed()) continue;
-			fn(*ports[index], index, !ata[index].constructed());
-		}
-	}
-
-	void report_ports(Genode::Reporter &reporter)
-	{
-		auto report = [&](Port const &port, unsigned index, bool atapi) {
-
-			Block::Session::Info info = port.info();
-			Reporter::Xml_generator xml(reporter, [&] () {
-
-				xml.node("port", [&] () {
-					xml.attribute("num", index);
-					xml.attribute("type", atapi ? "ATAPI" : "ATA");
-					xml.attribute("block_count", info.block_count);
-					xml.attribute("block_size", info.block_size);
-					if (!atapi) {
-						xml.attribute("model", ata[index]->model->cstring());
-						xml.attribute("serial", ata[index]->serial->cstring());
-					}
+					xml.node("port", [&] () {
+						xml.attribute("num", index);
+						xml.attribute("type", atapi ? "ATAPI" : "ATA");
+						xml.attribute("block_count", info.block_count);
+						xml.attribute("block_size", info.block_size);
+						if (!atapi) {
+							xml.attribute("model", _ata[index]->model->cstring());
+							xml.attribute("serial", _ata[index]->serial->cstring());
+						}
+					});
 				});
-			});
-		};
+			};
 
-		for_each_port(report);
-	}
+			for_each_port(report);
+		}
 };
 
 
@@ -379,8 +384,8 @@ struct Ahci::Main : Rpc_object<Typed_root<Block::Session>>,
 		long device = policy.attribute_value("device", -1L);
 
 		/* try read device model and serial number attributes */
-		auto const model  = policy.attribute_value("model",  Genode::String<64>());
-		auto const serial = policy.attribute_value("serial", Genode::String<64>());
+		auto const model  = policy.attribute_value("model",  String<64>());
+		auto const serial = policy.attribute_value("serial", String<64>());
 
 		try {
 			Port &port = driver->port(device, model.string(), serial.string());

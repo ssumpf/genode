@@ -18,14 +18,20 @@
 #include "ahci.h"
 #include "util.h"
 
-using namespace Genode;
+namespace Ata {
+	struct Identity;
+	template <typename DEVICE_STRING> struct String;
+	class  Protocol;
+	using namespace Genode;
+	using namespace Ahci;
+}
 
 /**
  * Return data of 'identify_device' ATA command
  */
-struct Identity : Genode::Mmio
+struct Ata::Identity : Mmio
 {
-	Identity(Genode::addr_t base) : Mmio(base) { }
+	Identity(addr_t base) : Mmio(base) { }
 
 	struct Serial_number : Register_array<0x14, 8, 20, 8> { };
 	struct Model_number : Register_array<0x36, 8, 40, 8> { };
@@ -58,8 +64,6 @@ struct Identity : Genode::Mmio
 
 	void info()
 	{
-		using Genode::log;
-
 		log("  queue depth: ", read<Queue_depth::Max_depth>() + 1, " "
 		    "ncq: ", read<Sata_caps::Ncq_support>());
 		log("  numer of sectors: ", read<Sector_count>());
@@ -81,7 +85,7 @@ struct Identity : Genode::Mmio
  * 16-bit word big endian device ASCII characters
  */
 template <typename DEVICE_STRING>
-struct String
+struct Ata::String
 {
 	char buf[DEVICE_STRING::ITEMS + 1];
 
@@ -91,7 +95,7 @@ struct String
 		for (unsigned long i = 0; i < DEVICE_STRING::ITEMS; i++) {
 			/* read and swap even and uneven characters */
 			char c = (char)info.read<DEVICE_STRING>(i ^ 1);
-			if (Genode::is_whitespace(c) && j == 0)
+			if (is_whitespace(c) && j == 0)
 				continue;
 			buf[j++] = c;
 		}
@@ -108,214 +112,222 @@ struct String
 		return strcmp(buf, other) == 0;
 	}
 
-	void print(Genode::Output &out) const { Genode::print(out, (char const *)buf); }
+	void print(Output &out) const { print(out, (char const *)buf); }
 	char const *cstring() { return buf; }
 };
 
+
 /**
- * Drivers using ncq- and non-ncq commands
+ * Protocol driver using ncq- and non-ncq commands
  */
-struct Ata_protocol : Protocol, Noncopyable
+class Ata::Protocol : public Ahci::Protocol, Noncopyable
 {
-	using block_number_t = Block::block_number_t;
+	private:
 
-	struct Request : Block::Request
-	{
-		bool valid() const { return operation.valid(); }
-		void invalidate() { operation.type = Block::Operation::Type::INVALID; }
-
-		Request & operator=(const Block::Request &request)
+		struct Request : Block::Request
 		{
-			operation = request.operation;
-			success = request.success;
-			offset = request.offset;
-			tag = request.tag;
+			bool valid() const { return operation.valid(); }
+			void invalidate() { operation.type = Block::Operation::Type::INVALID; }
 
-			return *this;
-		}
-	};
+			Request & operator=(const Block::Request &request)
+			{
+				operation = request.operation;
+				success = request.success;
+				offset = request.offset;
+				tag = request.tag;
 
-	Util::Slots<Request, 32> slots { };
-
-	typedef ::String<Identity::Serial_number> Serial_string;
-	typedef ::String<Identity::Model_number>  Model_string;
-
-	Genode::Constructible<Identity>      identity { };
-	Genode::Constructible<Serial_string> serial   { };
-	Genode::Constructible<Model_string>  model    { };
-
-	unsigned init(Port &port) override
-	{
-		/* identify device */
-		addr_t phys = Dataspace_client(port.device_info_ds).phys_addr();
-
-		Command_table table(port.command_table_addr(0), phys, 0x1000);
-		table.fis.identify_device();
-		port.execute(0);
-
-		port.wait_for_any(port.hba.delayer(), Port::Is::Dss::Equal(1),
-		                                      Port::Is::Pss::Equal(1),
-		                                      Port::Is::Dhrs::Equal(1));
-
-		Genode::error("Identified ATA device: ", (unsigned)port.read<Port::Is>());
-		identity.construct(port.device_info);
-		serial.construct(*identity);
-		model.construct(*identity);
-
-		if (verbose) {
-			Genode::log("  model number: ",  Genode::Cstring(model->buf));
-			Genode::log("  serial number: ", Genode::Cstring(serial->buf));
-			identity->info();
-		}
-
-		/* read number of command slots of ATA device */
-		unsigned cmd_slots = identity->read<Identity::Queue_depth::Max_depth >() + 1;
-
-		/* no native command queueing */
-		if (!ncq_support(port))
-			cmd_slots = 1;
-
-		slots.limit((size_t)cmd_slots);
-		port.ack_irq();
-
-		return cmd_slots;
-	}
-
-	bool overlap_check(Block::Request const &request)
-	{
-		block_number_t block_number = request.operation.block_number;
-		block_number_t end = block_number + request.operation.count - 1;
-
-		auto overlap_check = [&] (Request const &req) {
-			block_number_t pending_start = req.operation.block_number;
-			block_number_t pending_end   = pending_start + req.operation.count - 1;
-
-			/* check if a pending packet overlaps */
-			if ((block_number >= pending_start && block_number <= pending_end) ||
-			    (end          >= pending_start && end          <= pending_end) ||
-			    (pending_start >= block_number && pending_start <= end) ||
-			    (pending_end   >= block_number && pending_end   <= end)) {
-
-				Genode::warning("overlap: "
-				                "pending ", pending_start,
-				                " + ", req.operation.count, ", "
-				                "request: ", block_number, " + ", request.operation.count);
-				return true;
+				return *this;
 			}
-
-			return false;
 		};
 
-		return slots.for_each(overlap_check);
-	}
+		Util::Slots<Request, 32> _slots { };
 
+		typedef String<Identity::Serial_number> Serial_string;
+		typedef String<Identity::Model_number>  Model_string;
 
-	/*****************************
-	 ** Block::Driver interface **
-	 *****************************/
+		Constructible<Identity>      _identity { };
 
-	void handle_irq(Port &port)
-	{
-		/* ncg */
-		if (ncq_support(port))
-			while (Port::Is::Sdbs::get(port.read<Port::Is>()))
-				port.ack_irq();
-		/* normal dma */
-		else if (Port::Is::Dma_ext_irq::get(port.read<Port::Is>()))
-			port.ack_irq();
+	public:
 
-		port.stop();
-	}
+		Constructible<Serial_string> serial { };
+		Constructible<Model_string>  model  { };
 
-	bool ncq_support(Port &port)
-	{
-		return identity->read<Identity::Sata_caps::Ncq_support>() && port.hba.ncq();
-	}
+	private:
 
-	Genode::size_t block_size() const 
-	{
-		Genode::size_t size = 512;
+		bool _overlap_check(Block::Request const &request)
+		{
+			block_number_t block_number = request.operation.block_number;
+			block_number_t end = block_number + request.operation.count - 1;
 
-		if (identity->read<Identity::Logical_block::Longer_512>())
-			size = identity->read<Identity::Logical_words>() / 2;
+			auto overlap_check = [&] (Request const &req) {
+				block_number_t pending_start = req.operation.block_number;
+				block_number_t pending_end   = pending_start + req.operation.count - 1;
 
-		return size;
-	}
+				/* check if a pending packet overlaps */
+				if ((block_number >= pending_start && block_number <= pending_end) ||
+				    (end          >= pending_start && end          <= pending_end) ||
+				    (pending_start >= block_number && pending_start <= end) ||
+				    (pending_end   >= block_number && pending_end   <= end)) {
 
-	Block::sector_t block_count() const 
-	{
-		return identity->read<Identity::Sector_count>();
-	}
+					warning("overlap: "
+					        "pending ", pending_start,
+					        " + ", req.operation.count, ", "
+					        "request: ", block_number, " + ", request.operation.count);
+					return true;
+				}
 
-	Block::Session::Info info() const override
-	{
-		return { .block_size  = block_size(),
-		         .block_count = block_count(),
-		         .align_log2  = log2(2ul), ///XXX: check
-		         .writeable   = true };
-	}
+				return false;
+			};
 
-	Response submit(Port &port,Block::Request const request)
-	{
-		if (port.sanity_check(request) == false || port.dma_base == 0)
-			return Response::REJECTED;
-
-		if (overlap_check(request))
-			return Response::RETRY;
-
-		Request *r = slots.get();
-
-		if (r == nullptr)
-			return Response::RETRY;
-
-		//log("Request: ", request.operation, " valid: ", r->valid(), " index: ", slots.index(*r));
-		*r = request;
-
-		Block::Operation op = request.operation;
-		size_t slot         = slots.index(*r);
-
-		/* setup fis */
-		Command_table table(port.command_table_addr(slot),
-		                    port.dma_base + request.offset, /* physical address */
-		                    op.count * block_size());
-
-		/* setup ATA command */
-		bool read = op.type == Block::Operation::Type::READ;
-
-		if (ncq_support(port)) {
-			table.fis.fpdma(read, op.block_number, op.count, slot);
-			/* ensure that 'Cmd::St' is 1 before writing 'Sact' */
-			port.start();
-			/* set pending */
-			port.write<Port::Sact>(1U << slot);
-		} else {
-			table.fis.dma_ext(read, op.block_number, op.count);
+			return _slots.for_each(overlap_check);
 		}
 
-		/* set or clear write flag in command header */
-		Command_header header(port.command_header_addr(slot));
-		header.write<Command_header::Bits::W>(read ? 0 : 1);
-		header.clear_byte_count();
+		bool _ncq_support(Port &port)
+		{
+			return _identity->read<Identity::Sata_caps::Ncq_support>() && port.hba.ncq();
+		}
 
-		port.execute(slot);
+		size_t _block_size() const
+		{
+			size_t size = 512;
 
-		return Response::ACCEPTED;
-	}
+			if (_identity->read<Identity::Logical_block::Longer_512>())
+				size = _identity->read<Identity::Logical_words>() / 2;
 
-	Block::Request completed(Port &port, size_t const index)
-	{
-		Request *request     = slots.pending(index);
-		unsigned slot_states = port.read<Port::Ci>() | port.read<Port::Sact>();
+			return size;
+		}
 
-		/* request not active or still pending */
-		if (request == nullptr || (slot_states & (1u << index)))
-			return Block::Request();
+		Block::sector_t _block_count() const 
+		{
+			return _identity->read<Identity::Sector_count>();
+		}
 
-		Block::Request r = *request;
-		request->invalidate();
+	public:
 
-		return r;
-	}
+		/******************************
+		 ** Ahci::Protocol interface **
+		 ******************************/
+
+		unsigned init(Port &port) override
+		{
+			/* identify device */
+			addr_t phys = Dataspace_client(port.device_info_ds).phys_addr();
+
+			Command_table table(port.command_table_addr(0), phys, 0x1000);
+			table.fis.identify_device();
+			port.execute(0);
+
+			port.wait_for_any(port.hba.delayer(), Port::Is::Dss::Equal(1),
+			                                      Port::Is::Pss::Equal(1),
+			                                      Port::Is::Dhrs::Equal(1));
+
+			error("Identified ATA device: ", (unsigned)port.read<Port::Is>());
+			_identity.construct(port.device_info);
+			serial.construct(*_identity);
+			model.construct(*_identity);
+
+			if (verbose) {
+				log("  model number: ",  Cstring(model->buf));
+				log("  serial number: ", Cstring(serial->buf));
+				_identity->info();
+			}
+
+			/* read number of command slots of ATA device */
+			unsigned cmd_slots = _identity->read<Identity::Queue_depth::Max_depth >() + 1;
+
+			/* no native command queueing */
+			if (!_ncq_support(port))
+				cmd_slots = 1;
+
+			_slots.limit((size_t)cmd_slots);
+			port.ack_irq();
+
+			return cmd_slots;
+		}
+
+
+		void handle_irq(Port &port)
+		{
+			/* ncg */
+			if (_ncq_support(port))
+				while (Port::Is::Sdbs::get(port.read<Port::Is>()))
+					port.ack_irq();
+			/* normal dma */
+			else if (Port::Is::Dma_ext_irq::get(port.read<Port::Is>()))
+				port.ack_irq();
+
+			port.stop();
+		}
+
+		Block::Session::Info info() const override
+		{
+			return { .block_size  = _block_size(),
+			         .block_count = _block_count(),
+			         .align_log2  = log2(2ul), ///XXX: check
+			         .writeable   = true };
+		}
+
+		Response submit(Port &port,Block::Request const request)
+		{
+			if (port.sanity_check(request) == false || port.dma_base == 0)
+				return Response::REJECTED;
+
+			if (_overlap_check(request))
+				return Response::RETRY;
+
+			Request *r = _slots.get();
+
+			if (r == nullptr)
+				return Response::RETRY;
+
+			//log("Request: ", request.operation, " valid: ", r->valid(), " index: ", slots.index(*r));
+			*r = request;
+
+			Block::Operation op = request.operation;
+			size_t slot         = _slots.index(*r);
+
+			/* setup fis */
+			Command_table table(port.command_table_addr(slot),
+			                    port.dma_base + request.offset, /* physical address */
+			                    op.count * _block_size());
+
+			/* setup ATA command */
+			bool read = op.type == Block::Operation::Type::READ;
+
+			if (_ncq_support(port)) {
+				table.fis.fpdma(read, op.block_number, op.count, slot);
+				/* ensure that 'Cmd::St' is 1 before writing 'Sact' */
+				port.start();
+				/* set pending */
+				port.write<Port::Sact>(1U << slot);
+			} else {
+				table.fis.dma_ext(read, op.block_number, op.count);
+			}
+
+			/* set or clear write flag in command header */
+			Command_header header(port.command_header_addr(slot));
+			header.write<Command_header::Bits::W>(read ? 0 : 1);
+			header.clear_byte_count();
+
+			port.execute(slot);
+
+			return Response::ACCEPTED;
+		}
+
+		Block::Request completed(Port &port, size_t const index)
+		{
+			Request *request     = _slots.pending(index);
+			unsigned slot_states = port.read<Port::Ci>() | port.read<Port::Sact>();
+
+			/* request not active or still pending */
+			if (request == nullptr || (slot_states & (1u << index)))
+				return Block::Request();
+
+			Block::Request r = *request;
+			request->invalidate();
+
+			return r;
+		}
 };
 
 #endif /* _AHCI__ATA_PROTOCOL_H_ */

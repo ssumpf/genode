@@ -48,7 +48,7 @@ Ahci::Data::Data(Env &env)
  ** Platform interface **
  ************************/
 
-Genode::addr_t Ahci::Platform::mmio_base() const { return _data.iomem_base; }
+Genode::addr_t Ahci::Platform::_mmio_base() const { return _data.iomem_base; }
 
 
 void Ahci::Platform::sigh_irq(Signal_context_capability sigh)

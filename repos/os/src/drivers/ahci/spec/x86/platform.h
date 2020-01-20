@@ -47,10 +47,10 @@ struct Ahci::Data
 	void _config_write(uint8_t op, uint16_t cmd,
 	                   Platform::Device::Access_size width)
 	{
-		Genode::size_t donate = 4096;
-		Genode::retry<Platform::Out_of_ram>(
+		size_t donate = 4096;
+		retry<Platform::Out_of_ram>(
 			[&] () {
-				Genode::retry<Platform::Out_of_caps>(
+				retry<Platform::Out_of_caps>(
 					[&] () { pci_device->config_write(op, cmd, width); },
 					[&] () { pci.upgrade_caps(2); });
 			},
