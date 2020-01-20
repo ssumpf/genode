@@ -11,16 +11,23 @@ if { ![have_spec imx7d_sabre] && ![have_spec arndale] && ![have_spec imx8q_evk] 
 	exit 0
 }
 
-set build_components {
-	core init timer
+create_boot_directory
+import_from_depot [depot_user]/src/[base_src] \
+                  [depot_user]/pkg/[drivers_nic_pkg] \
+                  [depot_user]/src/init \
+                  [depot_user]/src/libc \
+                  [depot_user]/src/vfs \
+                  [depot_user]/src/vfs_lwip
+
+build {
 	server/terminal_crosslink
 	test/terminal_expect_send
 	server/log_terminal
+	server/tcp_terminal
 	server/nic_router
 	server/vmm
+	app/ping
 }
-build $build_components
-create_boot_directory
 
 install_config {
 <config verbose="yes" prio_levels="2">
@@ -38,38 +45,111 @@ install_config {
 		<any-service><parent/><any-child/></any-service>
 	</default-route>
 	<default caps="100"/>
+
 	<start name="timer">
 		<resource name="RAM" quantum="1M"/>
 		<provides><service name="Timer"/></provides>
 	</start>
-	<start name="nic_drv">
+
+	<start name="drivers" caps="1000">
+		<resource name="RAM" quantum="32M" constrain_phys="yes"/>
+		<binary name="init"/>
+		<route>
+			<service name="ROM" label="config"> <parent label="drivers.config"/> </service>
+			<service name="Timer"> <child name="timer"/> </service>
+			<any-service> <parent/> </any-service>
+		</route>
+		<provides> <service name="Nic"/> </provides>
+	</start>
+
+	<start name="nic_drv" caps="200">
 		<binary name="nic_router" />
 		<resource name="RAM" quantum="8M"/>
 		<provides> <service name="Nic"/> </provides>
-		<config verbose_packets="yes">
-			<default-policy domain="default"/>
+		<config>
+			<policy label_prefix="vmm"          domain="linux"/>
+			<policy label_prefix="ping"         domain="linux"/>
+			<policy label_prefix="tcp_terminal" domain="default"/>
+			<uplink domain="uplink"/>
 			<domain name="default" interface="10.0.1.1/24">
-				<dhcp-server ip_first="10.0.1.2" ip_last="10.0.1.2" />
+				<dhcp-server ip_first="10.0.1.2" ip_last="10.0.1.4" />
+				<tcp dst="0.0.0.0/0">  <permit-any domain="uplink"/> </tcp>
+				<udp dst="0.0.0.0/0">  <permit-any domain="uplink"/> </udp>
+				<icmp dst="0.0.0.0/0" domain="uplink"/>
+			</domain>
+			<domain name="linux" interface="10.0.2.1/24" verbose_packets="true" verbose_packet_drop="true">
+				<dhcp-server ip_first="10.0.2.2" ip_last="10.0.2.4" />
+				<tcp dst="0.0.0.0/0">  <permit-any domain="uplink"/> </tcp>
+				<udp dst="0.0.0.0/0">  <permit-any domain="uplink"/> </udp>
+				<icmp dst="0.0.0.0/0" domain="uplink"/>
+			</domain>
+			<domain name="uplink">
+				<tcp-forward port="4321" domain="default" to="10.0.1.2"/>
+				<nat domain="default" tcp-ports="1000" udp-ports="1000" icmp-ids="1000"/>
+				<nat domain="linux" tcp-ports="1000" udp-ports="1000" icmp-ids="1000"/>
 			</domain>
 		</config>
+		<route>
+			<service name="Nic"> <child name="drivers"/> </service>
+			<any-service><parent/><any-child/></any-service>
+		</route>
 	</start>
+
 	<start name="log_terminal">
 		<resource name="RAM" quantum="2M"/>
 		<provides> <service name="Terminal"/> </provides>
 	</start>
+
+<!--
 	<start name="terminal_crosslink">
 		<resource name="RAM" quantum="1M"/>
 		<provides> <service name="Terminal"/> </provides>
 	</start>
-	<start name="vmm" caps="200" priority="-1">
-		<resource name="RAM" quantum="256M"/>
+-->
+
+	<start name="ping">
+		<resource name="RAM" quantum="4M"/>
+		<config interface="10.0.2.3/24"
+		        dst_ip="10.0.2.2"
+		        dst_port="50000"
+		        protocol="icmp"
+		        period_sec="5"
+		        verbose="no"
+		        count="99999" />
 		<route>
-			<service name="Terminal" label="earlycon"> <child name="log_terminal"/> </service>
-			<service name="Terminal" label="console"> <child name="terminal_crosslink"/> </service>
 			<service name="Nic"> <child name="nic_drv"/> </service>
 			<any-service><parent/><any-child/></any-service>
 		</route>
 	</start>
+
+	<start name="tcp_terminal" caps="200">
+		<resource name="RAM" quantum="8M"/>
+		<provides> <service name="Terminal"/> </provides>
+		<config>
+			<policy label_prefix="vmm" port="4321"/>
+			<vfs>
+				<dir name="dev"> <log/> </dir>
+				<dir name="socket"> <lwip dhcp="yes"/> </dir>
+			</vfs>
+			<libc stdout="/dev/log" socket="/socket"/>
+		</config>
+		<route>
+			<service name="Nic"> <child name="nic_drv"/> </service>
+			<any-service><parent/><any-child/></any-service>
+		</route>
+	</start>
+
+	<start name="vmm" caps="200" priority="-1">
+		<resource name="RAM" quantum="256M"/>
+		<route>
+			<service name="Terminal" label="earlycon"> <child name="log_terminal"/> </service>
+			<service name="Terminal" label="console"> <child name="tcp_terminal"/> </service>
+			<service name="Nic"> <child name="nic_drv"/> </service>
+			<any-service><parent/><any-child/></any-service>
+		</route>
+	</start>
+
+<!--
 	<start name="vm">
 		<binary name="test-terminal_expect_send"/>
 		<resource name="RAM" quantum="1M"/>
@@ -79,6 +159,7 @@ install_config {
 			<any-service><parent/><any-child/></any-service>
 		</route>
 	</start>
+-->
 </config>
 }
 
@@ -174,15 +255,16 @@ if { [have_spec arm_64] } {
 }
 
 set boot_modules {
-	core ld.lib.so init
-	timer
 	terminal_crosslink
 	test-terminal_expect_send
 	nic_router
 	log_terminal
+	tcp_terminal
 	vmm
 	linux
 	dtb
+	libc_pipe.lib.so
+	ping
 }
 append_if [have_spec arm_64] boot_modules initrd
 build_boot_image $boot_modules
@@ -191,4 +273,4 @@ build_boot_image $boot_modules
 # Execute test case
 #
 run_genode_until "\[init -> vm\] .*sbin.*" 220
-exec rm bin/linux bin/dtb
+#exec rm bin/linux bin/dtb
