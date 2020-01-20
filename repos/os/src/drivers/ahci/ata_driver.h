@@ -16,6 +16,7 @@
 
 #include <base/log.h>
 #include "ahci.h"
+#include "util.h"
 
 using namespace Genode;
 
@@ -142,15 +143,6 @@ struct Ncq_command : Io_command
 		/* set pending */
 		port.write<Port::Sact>(1U << slot);
 	}
-
-	void handle_irq(Port &port, Port::Is::access_t status) 
-	{
-		/*
-		 * Check for completions of other requests immediately
-		 */
-		while (Port::Is::Sdbs::get(status = port.read<Port::Is>())) ;
-		///XXX
-	}
 };
 
 struct Dma_ext_command : Io_command
@@ -163,13 +155,6 @@ struct Dma_ext_command : Io_command
 	             unsigned     /* slot */) 
 	{
 		table.fis.dma_ext(read, block_number, count);
-	}
-
-	void handle_irq(Port &port, Port::Is::access_t status) 
-	{
-		if (Port::Is::Dma_ext_irq::get(status))
-			port.ack_irq();
-	}
 };
 
 #endif
@@ -178,6 +163,26 @@ struct Dma_ext_command : Io_command
  */
 struct Ata_protocol : Protocol, Noncopyable
 {
+	using block_number_t = Block::block_number_t;
+
+	struct Request : Block::Request
+	{
+		bool valid() const { return operation.valid(); }
+		void invalidate() { operation.type = Block::Operation::Type::INVALID; }
+
+		Request & operator=(const Block::Request &request)
+		{
+			operation = request.operation;
+			success = request.success;
+			offset = request.offset;
+			tag = request.tag;
+
+			return *this;
+		}
+	};
+
+	Util::Slots<Request, 32> slots { };
+
 	typedef ::String<Identity::Serial_number> Serial_string;
 	typedef ::String<Identity::Model_number>  Model_string;
 
@@ -216,6 +221,7 @@ struct Ata_protocol : Protocol, Noncopyable
 		if (!ncq_support(port))
 			cmd_slots = 1;
 
+		slots.limit((size_t)cmd_slots);
 		port.ack_irq();
 
 		return cmd_slots;
@@ -247,18 +253,16 @@ struct Ata_protocol : Protocol, Noncopyable
 		}
 	}
 #endif
-	void overlap_check(Block::sector_t block_number,
-	                   size_t          count)
+
+	bool overlap_check(Block::Request const &request)
 	{
-#if 0
-		Block::sector_t end = block_number + count - 1;
+		block_number_t block_number = request.operation.block_number;
+		block_number_t end = block_number + request.operation.count - 1;
 
-		for (unsigned slot = 0; slot < cmd_slots; slot++) {
-			if (!pending[slot].size())
-				continue;
+		auto overlap_check = [&] (Request const &req) {
+			block_number_t pending_start = req.operation.block_number;
+			block_number_t pending_end   = pending_start + req.operation.count - 1;
 
-			Block::sector_t pending_start = pending[slot].block_number();
-			Block::sector_t pending_end   = pending_start + pending[slot].block_count() - 1;
 			/* check if a pending packet overlaps */
 			if ((block_number >= pending_start && block_number <= pending_end) ||
 			    (end          >= pending_start && end          <= pending_end) ||
@@ -266,13 +270,16 @@ struct Ata_protocol : Protocol, Noncopyable
 			    (pending_end   >= block_number && pending_end   <= end)) {
 
 				Genode::warning("overlap: "
-				                "pending ", pending[slot].block_number(),
-				                " + ", pending[slot].block_count(), ", "
-				                "request: ", block_number, " + ", count);
-				//XXX: throw Block::Driver::Request_congestion();
+				                "pending ", pending_start,
+				                " + ", req.operation.count, ", "
+				                "request: ", block_number, " + ", request.operation.count);
+				return true;
 			}
-		}
-#endif
+
+			return false;
+		};
+
+		return slots.for_each(overlap_check);
 	}
 
 	void io(bool                      read,
@@ -308,15 +315,18 @@ struct Ata_protocol : Protocol, Noncopyable
 	 ** Port_driver **
 	 *****************/
 
-	void handle_irq() 
+	void handle_irq(Port &port)
 	{
-#if 0
 		Genode::log("ATA irq");
-		Is::access_t status = Port::read<Is>();
-		//io_cmd->handle_irq(*this, status);
-		//ack_packets();
-		stop();
-#endif
+		/* ncg */
+		if (ncq_support(port))
+			while (Port::Is::Sdbs::get(port.read<Port::Is>()))
+				port.ack_irq();
+		/* normal dma */
+		else if (Port::Is::Dma_ext_irq::get(port.read<Port::Is>()))
+			port.ack_irq();
+
+		port.stop();
 	}
 
 	bool ncq_support(Port &port)
@@ -350,7 +360,68 @@ struct Ata_protocol : Protocol, Noncopyable
 		         .align_log2  = log2(2ul), ///XXX: check
 		         .writeable   = true };
 	}
-};
 
+	Response submit(Port &port,Block::Request const request)
+	{
+		if (port.sanity_check(request) == false || port.dma_base == 0)
+			return Response::REJECTED;
+
+		if (overlap_check(request))
+			return Response::RETRY;
+
+		Request *r = slots.get();
+
+		if (r == nullptr)
+			return Response::RETRY;
+
+		log("Request: ", request.operation, " valid: ", r->valid(), " index: ", slots.index(*r));
+		*r = request;
+
+		Block::Operation op = request.operation;
+		size_t slot         = slots.index(*r);
+
+		/* setup fis */
+		Command_table table(port.command_table_addr(slot),
+		                    port.dma_base + request.offset, /* physical address */
+		                    op.count * block_size());
+
+		/* setup ATA command */
+		bool read = op.type == Block::Operation::Type::READ;
+
+		if (ncq_support(port)) {
+			table.fis.fpdma(read, op.block_number, op.count, slot);
+			/* ensure that 'Cmd::St' is 1 before writing 'Sact' */
+			port.start();
+			/* set pending */
+			port.write<Port::Sact>(1U << slot);
+		} else {
+			table.fis.dma_ext(read, op.block_number, op.count);
+		}
+
+		/* set or clear write flag in command header */
+		Command_header header(port.command_header_addr(slot));
+		header.write<Command_header::Bits::W>(read ? 0 : 1);
+		header.clear_byte_count();
+
+		port.execute(slot);
+
+		return Response::ACCEPTED;
+	}
+
+	Block::Request completed(Port &port, size_t const index)
+	{
+		Request *request     = slots.pending(index);
+		unsigned slot_states = port.read<Port::Ci>() | port.read<Port::Sact>();
+
+		/* request not active or still pending */
+		if (request == nullptr || (slot_states & (1u << index)))
+			return Block::Request();
+
+		Block::Request r = *request;
+		request->invalidate();
+
+		return r;
+	}
+};
 
 #endif /* _ATA_DRIVER_H_ */

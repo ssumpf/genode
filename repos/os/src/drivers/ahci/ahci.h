@@ -29,8 +29,11 @@ namespace Platform {
 
 namespace Ahci {
 	struct Missing_controller : Genode::Exception { };
-}
 
+}
+//XXX: Move to Ahci namespace
+using Response = Block::Request_stream::Response;
+using Payload  = Block::Request_stream::Payload;
 
 struct Platform::Hba : Genode::Interface
 {
@@ -396,6 +399,10 @@ struct Protocol : Genode::Interface
 {
 	virtual unsigned init(Port &port) = 0;
 	virtual Block::Session::Info info() const = 0;
+	virtual void handle_irq(Port &port) = 0;
+
+	virtual Response submit(Port &port, Block::Request const request) = 0;
+	virtual Block::Request completed(Port &port, Genode::size_t const index) = 0;
 };
 
 /**
@@ -420,10 +427,11 @@ struct Port : private Port_base
 	Genode::Ram_dataspace_capability cmd_ds         { };
 	Genode::Ram_dataspace_capability device_info_ds { };
 
-	Genode::addr_t cmd_list    = 0;
-	Genode::addr_t fis_base    = 0;
-	Genode::addr_t cmd_table   = 0;
-	Genode::addr_t device_info = 0;
+	Genode::addr_t cmd_list      = 0;
+	Genode::addr_t fis_base      = 0;
+	Genode::addr_t cmd_table     = 0;
+	Genode::addr_t device_info   = 0;
+	Genode::addr_t dma_base      = 0; /* physical address of DMA memory */
 
 	Port(Protocol &protocol, Genode::Region_map &rm, Hba &hba,
 	     Platform::Hba &platform_hba,
@@ -807,30 +815,64 @@ struct Port : private Port_base
 		write<Ci>(1U << slot);
 	}
 
-	void sanity_check(Block::block_number_t block_number, Block::block_count_t count)
+	bool sanity_check(Block::Request const &request)
 	{
-	//XXX: FIXME
-#if 0
+		Block::Session::Info const i = info();
+
 		/* max. PRDT size is 4MB */
-		if (count * block_size() > 4 * 1024 * 1024) {
+		if (request.operation.count * i.block_size > 4 * 1024 * 1024) {
 			Genode::error("error: maximum supported packet size is 4MB");
-			throw Io_error();
+			return false;
 		}
 
 		/* sanity check */
-		if (block_number + count > block_count()) {
+		if (request.operation.count + request.operation.block_number > i.block_count) {
 			Genode::error("error: requested blocks are outside of device");
-			throw Io_error();
+			return false;
 		}
-#endif
+
+		return true;
+	}
+
+	Genode::Ram_dataspace_capability alloc_buffer(Genode::size_t size)
+	{
+		if (dma_base) return Genode::Ram_dataspace_capability();
+
+		Genode::Ram_dataspace_capability dma = platform_hba.alloc_dma_buffer(size);
+		dma_base = Genode::Dataspace_client(dma).phys_addr();
+		return dma;
+	}
+
+	void free_buffer(Genode::Ram_dataspace_capability ds)
+	{
+		dma_base = 0;
+		platform_hba.free_dma_buffer(ds);
+	}
 
 	/**********************
 	 ** Protocol wrapper **
 	 **********************/
 
-	}
 
 	Block::Session::Info info() const { return protocol.info(); }
+	void handle_irq() { protocol.handle_irq(*this); }
+
+
+	Response submit(Block::Request const request) {
+		return protocol.submit(*this, request); }
+
+	template <typename FN>
+	void for_each_completed_request(FN const &fn)
+	{
+		for (Genode::size_t index  = 0; index < cmd_slots; index++) {
+			Block::Request request = protocol.completed(*this, index);
+
+			if (!request.operation.valid()) continue;
+
+			request.success = true;
+			fn(request);
+		}
+	}
 };
 
 #endif /* _INCLUDE__AHCI_H_ */

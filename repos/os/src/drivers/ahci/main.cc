@@ -27,8 +27,10 @@
 
 namespace Ahci {
 	using namespace Genode;
+	struct Dispatch;
 	struct Driver;
 	struct Main;
+	struct Block_session_handler;
 	struct Block_session_component;
 }
 
@@ -161,9 +163,16 @@ class Block::Root_multiple_clients : public Root_component< ::Session_component>
 };
 
 #endif
+
+struct Ahci::Dispatch
+{
+	virtual void session(unsigned index) = 0;
+};
+
 struct Ahci::Driver : Noncopyable
 {
-	Env       &env;
+	Env      &env;
+	Dispatch &dispatch;
 
 	/* read device signature */
 	enum Signature {
@@ -191,9 +200,9 @@ struct Ahci::Driver : Noncopyable
 	Signal_handler<Driver> irq { env.ep(), *this, &Driver::handle_irq };
 	bool                         enable_atapi;
 
-	Driver(Genode::Env &env, bool support_atapi)
+	Driver(Genode::Env &env, Dispatch &dispatch, bool support_atapi)
 	:
-		env(env), enable_atapi(support_atapi)
+		env(env), dispatch(dispatch), enable_atapi(support_atapi)
 	{
 		info();
 
@@ -204,11 +213,11 @@ struct Ahci::Driver : Noncopyable
 		hba.init();
 
 		/* search for devices */
-		scan_ports(env.rm(), env.ram());
+		scan_ports(env.rm());
 	}
 
 	/**
-	 * Forward IRQs to ports
+	 * Forward IRQs to ports/block sessions
 	 */
 	void handle_irq()
 	{
@@ -217,9 +226,11 @@ struct Ahci::Driver : Noncopyable
 			unsigned port = log2(port_list);
 			port_list    &= ~(1U << port);
 
-			//XXX: handle
-			/*
-			ports[port]->handle_irq(); */
+			/* handle (pending) requests */
+			dispatch.session(port);
+
+			/* ack irq */
+			ports[port]->handle_irq();
 		}
 
 		/* clear status register */
@@ -252,7 +263,7 @@ struct Ahci::Driver : Noncopyable
 		log("64-bit support: ", hba.supports_64bit() ? "yes" : "no");
 	}
 
-	void scan_ports(Genode::Region_map &rm, Genode::Ram_allocator &ram)
+	void scan_ports(Genode::Region_map &rm)
 	{
 		log("number of ports: ", hba.port_count(), " pi: ",
 		    Hex(hba.read<Hba::Pi>()));
@@ -323,29 +334,99 @@ struct Ahci::Driver : Noncopyable
 };
 
 
-struct Ahci::Block_session_component : Rpc_object<Block::Session>,
-                                       Block::Request_stream
+struct Ahci::Block_session_handler : Interface
 {
-	Env &_env;
+	Env                     &env;
+	Port                    &port;
+	Ram_dataspace_capability ds;
 
-	Block_session_component(Env &env, Port &port, Dataspace_capability ds,
-	                        Signal_context_capability sigh)
-	:
-		Request_stream(env.rm(), ds, env.ep(), sigh, port.info()),
-		_env(env)
+	Signal_handler<Block_session_handler> request_handler
+	  { env.ep(), *this, &Block_session_handler::handle};
+
+	Block_session_handler(Env &env, Port &port, size_t buffer_size)
+	: env(env), port(port), ds(port.alloc_buffer(buffer_size))
+	{ }
+
+	~Block_session_handler()
 	{
-		_env.ep().manage(*this);
+		log("destroy ds");
+		port.free_buffer(ds);
 	}
 
-	~Block_session_component() { _env.ep().dissolve(*this); }
+	virtual void handle_requests()= 0;
+
+	void handle()
+	{
+		handle_requests();
+	}
+};
+
+struct Ahci::Block_session_component : Rpc_object<Block::Session>,
+                                       Block_session_handler,
+                                       Block::Request_stream
+{
+	Block_session_component(Env &env, Port &port, size_t buffer_size)
+	:
+	  Block_session_handler(env, port, buffer_size),
+	  Request_stream(env.rm(), ds, env.ep(), request_handler, port.info())
+	{
+		env.ep().manage(*this);
+	}
+
+	~Block_session_component()
+	{
+		log("close block session");
+		env.ep().dissolve(*this);
+	}
 
 	Info info() const override { return Request_stream::info(); }
 
 	Capability<Tx> tx_cap() override { return Request_stream::tx_cap(); }
+
+	void handle_requests() override
+	{
+		warning("Request");
+		while (true) {
+
+			bool progress = false;
+
+			try_acknowledge([&](Ack &ack) {
+				port.for_each_completed_request([&] (Block::Request request) {
+					progress = true;
+					ack.submit(request);
+				});
+			});
+
+			with_requests([&] (Block::Request request) {
+
+				Response response = Response::RETRY;
+
+				/* only READ/WRITE requests, others are noops for now */
+				if (Block::Operation::has_payload(request.operation.type) == false) {
+					request.success = true;
+					progress = true;
+					return Response::REJECTED;
+				}
+
+				if ((response = port.submit(request)) != Response::RETRY)
+					progress = true;
+
+				return response;
+			});
+
+			if (progress == false) break;
+		}
+
+		/* poke */
+		wakeup_client_if_needed();
+
+		log("LEAVE Request");
+	}
 };
 
 
-struct Ahci::Main : Rpc_object<Typed_root<Block::Session>>
+struct Ahci::Main : Rpc_object<Typed_root<Block::Session>>,
+                    Dispatch
 {
 	Env  &env;
 
@@ -353,7 +434,7 @@ struct Ahci::Main : Rpc_object<Typed_root<Block::Session>>
 
 	Constructible<Ahci::Driver> driver { };
 	Constructible<Reporter> reporter { };
-	Constructible<Block_session_component> block_session[Ahci::Driver::MAX_PORTS];
+	Constructible<Block_session_component> block_session[Driver::MAX_PORTS];
 
 	Main(Env &env)
 	: env(env)
@@ -361,7 +442,7 @@ struct Ahci::Main : Rpc_object<Typed_root<Block::Session>>
 		log("--- Starting AHCI driver ---");
 		bool support_atapi  = config.xml().attribute_value("atapi", false);
 		try {
-			driver.construct(env, support_atapi);
+			driver.construct(env, *this, support_atapi);
 			report_ports();
 		} catch (Ahci::Missing_controller) {
 			error("no AHCI controller found");
@@ -372,6 +453,12 @@ struct Ahci::Main : Rpc_object<Typed_root<Block::Session>>
 		}
 		//XXX: remove
 		env.parent().announce(env.ep().manage(*this));
+	}
+
+	void session(unsigned index)
+	{
+		if (index > Driver::MAX_PORTS || !block_session[index].constructed()) return;
+		block_session[index]->handle_requests();
 	}
 
 	Session_capability session(Root::Session_args const &args,
@@ -409,7 +496,7 @@ struct Ahci::Main : Rpc_object<Typed_root<Block::Session>>
 				throw Service_denied();
 			}
 			warning("CONSTRUCT block session");
-			block_session[port.index].construct(env, port, Dataspace_capability(), Signal_context_capability());
+			block_session[port.index].construct(env, port, tx_buf_size);
 			return block_session[port.index]->cap();
 		} catch (...) {
 			error("rejecting session request, no matching policy for '", label, "'",
@@ -420,7 +507,15 @@ struct Ahci::Main : Rpc_object<Typed_root<Block::Session>>
 	}
 
 	void upgrade(Session_capability, Root::Upgrade_args const&) override { }
-	void close(Session_capability) override { }
+	void close(Session_capability cap) override
+	{
+		for (int index = 0; index < Driver::MAX_PORTS; index++) {
+			if (!block_session[index].constructed() || !(cap == block_session[index]->cap()))
+				continue;
+
+			block_session[index].destruct();
+		}
+	}
 
 	void report_ports()
 	{
