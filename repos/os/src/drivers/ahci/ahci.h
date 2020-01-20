@@ -871,6 +871,8 @@ struct Port : private Port_base
 
 			request.success = true;
 			fn(request);
+
+			break;
 		}
 	}
 };
