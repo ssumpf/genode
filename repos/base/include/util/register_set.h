@@ -103,6 +103,10 @@ class Genode::Register_set : Noncopyable
 		inline bool _conditions_met(CONDITION condition) {
 			return condition.met(read<typename CONDITION::Object>()); }
 
+		template <typename CONDITION>
+		inline bool _one_condition_met(CONDITION condition) {
+			return condition.met(read<typename CONDITION::Object>()); }
+
 		/**
 		 * Return wether a list of IO conditions is met
 		 *
@@ -120,7 +124,7 @@ class Genode::Register_set : Noncopyable
 
 		template <typename CONDITION, typename... CONDITIONS>
 		inline bool _one_condition_met(CONDITION head, CONDITIONS... tail) {
-			return _conditions_met(head) ? true : _conditions_met(tail...); }
+			return _conditions_met(head) ? true : _one_condition_met(tail...); }
 
 		/**
 		 * This template equips registers/bitfields with conditions for polling
