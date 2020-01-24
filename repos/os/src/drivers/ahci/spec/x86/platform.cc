@@ -26,10 +26,10 @@ Ahci::Data::Data(Env &env)
 
 	/* construct pci client */
 	pci_device.construct(pci_device_cap);
-	Genode::log("AHCI found ("
-	            "vendor: ", Genode::Hex(pci_device->vendor_id()), " "
-	            "device: ", Genode::Hex(pci_device->device_id()), " "
-	            "class: ",  Genode::Hex(pci_device->class_code()), ")");
+	log("AHCI found ("
+	    "vendor: ", Hex(pci_device->vendor_id()), " "
+	    "device: ", Hex(pci_device->device_id()), " "
+	    "class: ",  Hex(pci_device->class_code()), ")");
 
 	/* map base address of controller */
 	Io_mem_session_capability iomem_cap = pci_device->io_mem(pci_device->phys_bar_to_virt(AHCI_BASE_ID));

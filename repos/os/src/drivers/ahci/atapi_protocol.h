@@ -11,19 +11,25 @@
  * under the terms of the GNU Affero General Public License version 3.
  */
 
-#ifndef _ATAPI_DRIVER_H_
-#define _ATAPI_DRIVER_H_
+#ifndef _AHCI__ATAPI_PROTOCOL_H_
+#define _AHCI__ATAPI_PROTOCOL_H_
 
 #include "ahci.h"
 #include <util/endian.h>
 
+namespace Atapi {
+class Protocol;
+using namespace Ahci;
 using namespace Genode;
+}
 
-struct Atapi_driver : Port_driver
+class Atapi::Protocol : public Ahci::Protocol, Noncopyable
 {
-	unsigned                 sense_tries = 0;
-	Block::Packet_descriptor pending { };
+	private:
 
+		Block::Request _pending { };
+
+#if 0
 	Atapi_driver(Genode::Ram_allocator &ram,
 	             Ahci_root             &root,
 	             unsigned              &sem,
@@ -37,7 +43,74 @@ struct Atapi_driver : Port_driver
 		Port::write<Cmd::Atapi>(1);
 		read_sense();
 	}
+#endif
 
+		size_t _block_size() const
+		{
+			return 2048;
+		}
+
+		size_t _block_count() const
+		{
+			return 0;
+		}
+
+		void _atapi_command(Port &port)
+		{
+			Command_header header(port.command_header_addr(0));
+			header.atapi_command();
+			header.clear_byte_count();
+			port.execute(0);
+		}
+
+	public:
+
+		unsigned init(Port &port) override
+		{
+			port.write<Port::Cmd::Atapi>(1);
+
+			/* read sense */
+			retry<Port::Polling_timeout>(
+				[&] {
+					addr_t phys = Dataspace_client(port.device_info_ds).phys_addr();
+					Command_table table(port.command_table_addr(0), phys, 0x1000);
+					table.fis.atapi();
+					table.atapi_cmd.read_sense();
+					_atapi_command(port);
+					port.wait_for_any(port.hba.delayer(),
+					                  Port::Is::Dss::Equal(1), Port::Is::Pss::Equal(1),
+					                  Port::Is::Dhrs::Equal(1));
+				},
+				[&] {}, 3);
+			log("DONE");
+			port.ack_irq();
+
+			return 1;
+		}
+
+		Block::Session::Info info() const override
+		{
+			return { .block_size  = _block_size(),
+			         .block_count = _block_count(),
+			         .align_log2  = 1,
+			         .writeable   = false };
+		}
+
+		void handle_irq(Port &port) override
+		{
+		}
+
+		Response submit(Port &port, Block::Request const request) override
+		{
+			return Response::REJECTED;
+		}
+
+		Block::Request completed(Port &port, size_t const index) override
+		{
+			return Block::Request();
+		}
+
+#if 0
 	void atapi_command()
 	{
 		Command_header header(command_header_addr(0));
@@ -213,6 +286,7 @@ struct Atapi_driver : Port_driver
 		/* set pending */
 		execute(0);
 	}
+#endif
 };
 
-#endif /* _ATAPI_DRIVER_H_ */
+#endif /* _AHCI__ATAPI_PROTOCOL_H_ */

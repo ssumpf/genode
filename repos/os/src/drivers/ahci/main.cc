@@ -24,6 +24,7 @@
 /* local includes */
 #include <ahci.h>
 #include <ata_protocol.h>
+#include <atapi_protocol.h>
 
 namespace Ahci {
 	struct Dispatch;
@@ -69,8 +70,9 @@ class Ahci::Driver : Noncopyable
 
 		Hba  _hba { _env, _delayer };
 
-		Constructible<Ata::Protocol> _ata[MAX_PORTS];
-		Constructible<Port>          _ports[MAX_PORTS];
+		Constructible<Ata::Protocol>   _ata[MAX_PORTS];
+		Constructible<Atapi::Protocol> _atapi[MAX_PORTS];
+		Constructible<Port>            _ports[MAX_PORTS];
 
 		Signal_handler<Driver> _irq { _env.ep(), *this, &Driver::handle_irq };
 		bool                   _enable_atapi;
@@ -127,13 +129,11 @@ class Ahci::Driver : Noncopyable
 				case ATAPI_SIG:
 				case ATAPI_SIG_QEMU:
 					if (_enable_atapi)
-					/*
 						try {
-							ports[index] = new (&alloc)
-								Atapi_driver(ram, root, ready_count, rm, hba,
-								             platform_hba, index);
+							_atapi[index].construct();
+							_ports[index].construct(*_atapi[index], rm, _hba, index);
 							enabled = true;
-						} catch (...) { }*/
+						} catch (...) { }
 
 					log("\t\t#", index, ":", enabled ? " ATAPI" : " off (ATAPI)");
 					break;

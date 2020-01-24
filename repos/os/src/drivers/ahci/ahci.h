@@ -436,6 +436,7 @@ struct Ahci::Port : private Port_base
 	using Port_base::write;
 	using Port_base::read;
 	using Port_base::wait_for_any;
+	using Port_base::Register_set::Polling_timeout;
 
 	struct Not_ready : Exception { };
 

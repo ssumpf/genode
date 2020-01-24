@@ -221,7 +221,6 @@ class Ata::Protocol : public Ahci::Protocol, Noncopyable
 			                                      Port::Is::Pss::Equal(1),
 			                                      Port::Is::Dhrs::Equal(1));
 
-			error("Identified ATA device: ", (unsigned)port.read<Port::Is>());
 			_identity.construct(port.device_info);
 			serial.construct(*_identity);
 			model.construct(*_identity);
@@ -245,8 +244,7 @@ class Ata::Protocol : public Ahci::Protocol, Noncopyable
 			return cmd_slots;
 		}
 
-
-		void handle_irq(Port &port)
+		void handle_irq(Port &port) override
 		{
 			/* ncg */
 			if (_ncq_support(port))
@@ -267,7 +265,7 @@ class Ata::Protocol : public Ahci::Protocol, Noncopyable
 			         .writeable   = true };
 		}
 
-		Response submit(Port &port,Block::Request const request)
+		Response submit(Port &port,Block::Request const request) override
 		{
 			if (port.sanity_check(request) == false || port.dma_base == 0)
 				return Response::REJECTED;
@@ -314,7 +312,7 @@ class Ata::Protocol : public Ahci::Protocol, Noncopyable
 			return Response::ACCEPTED;
 		}
 
-		Block::Request completed(Port &port, size_t const index)
+		Block::Request completed(Port &port, size_t const index) override
 		{
 			Request *request     = _slots.pending(index);
 			unsigned slot_states = port.read<Port::Ci>() | port.read<Port::Sact>();

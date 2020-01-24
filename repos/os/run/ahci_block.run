@@ -64,16 +64,17 @@ append config {
 	<start name="ahci_drv">
 		<resource name="RAM" quantum="10M" />
 		<provides><service name="Block" /></provides>
-		<config>
+		<config atapi="yes">
 			<report ports="yes"/>
 			<policy label="test-ahci -> " device="0" writeable="yes" />
-			<policy label="test-ahci-atapi -> " device="2" writeable="no" />
+			<policy label="test-ahci-atapi -> " device="1" writeable="no" />
 		</config>
 		<route>
 			<service name="Report"> <child name="ahci_report_rom"/> </service>
 			<any-service> <parent/> <any-child/> </any-service>
 		</route>
 	</start>
+	<!--
 	<start name="test-ahci">
 		<binary name="test-block-client" />
 		<resource name="RAM" quantum="50M" />
@@ -83,7 +84,7 @@ append config {
 			<any-service> <parent/> <any-child /> </any-service>
 		</route>
 	</start>
-	<!--
+	-->
 	<start name="test-ahci-atapi">
 		<binary name="test-block-client" />
 		<resource name="RAM" quantum="50M" />
@@ -92,7 +93,7 @@ append config {
 			<service name="Block"><child name="ahci_drv"/></service>
 			<any-service> <parent/> <any-child /> </any-service>
 		</route>
-	</start>-->
+	</start>
 </config> }
 
 install_config $config
