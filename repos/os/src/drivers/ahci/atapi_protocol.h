@@ -63,6 +63,37 @@ class Atapi::Protocol : public Ahci::Protocol, Noncopyable
 			port.execute(0);
 		}
 
+		void _read_sense(Port &port)
+		{
+			addr_t phys   = Dataspace_client(port.device_info_ds).phys_addr();
+
+			Command_table table(port.command_table_addr(0), phys, 0x1000);
+			table.fis.atapi();
+			table.atapi_cmd.read_sense();
+
+			_atapi_command(port);
+		}
+
+		void _test_unit_ready(Port &port)
+		{
+			Command_table table(port.command_table_addr(0), 0, 0);
+			table.fis.atapi();
+			table.atapi_cmd.test_unit_ready();
+
+			_atapi_command(port);
+		}
+
+		void _read_capacity(Port &port)
+		{
+			addr_t phys = Dataspace_client(port.device_info_ds).phys_addr();
+
+			Command_table table(port.command_table_addr(0), phys, 0x1000);
+			table.fis.atapi();
+			table.atapi_cmd.read_capacity();
+
+			_atapi_command(port);
+		}
+
 	public:
 
 		unsigned init(Port &port) override
@@ -72,18 +103,33 @@ class Atapi::Protocol : public Ahci::Protocol, Noncopyable
 			/* read sense */
 			retry<Port::Polling_timeout>(
 				[&] {
-					addr_t phys = Dataspace_client(port.device_info_ds).phys_addr();
-					Command_table table(port.command_table_addr(0), phys, 0x1000);
-					table.fis.atapi();
-					table.atapi_cmd.read_sense();
-					_atapi_command(port);
+					_read_sense(port);
 					port.wait_for_any(port.hba.delayer(),
 					                  Port::Is::Dss::Equal(1), Port::Is::Pss::Equal(1),
 					                  Port::Is::Dhrs::Equal(1));
+					port.ack_irq();
+
+						/* test unit ready */
+					_test_unit_ready(port);
+					port.wait_for(port.hba.delayer(), Port::Is::Dhrs::Equal(1));
+					log("Unit ready");
+
+					Device_fis f(port.fis_base);
+					log("Status: ", f.read<Device_fis::Status::Device_ready>(), " E: ", f.read<Device_fis::Error>());
+					port.ack_irq();
+
+					/* check if devic is ready */
+					if (!f.read<Device_fis::Status::Device_ready>() || f.read<Device_fis::Error>())
+						throw Port::Polling_timeout();
+
+					_read_capacity(port);
+					port.wait_for_any(port.hba.delayer(),
+					                  Port::Is::Dss::Equal(1), Port::Is::Pss::Equal(1),
+					                  Port::Is::Dhrs::Equal(1));
+					port.ack_irq();
 				},
 				[&] {}, 3);
 			log("DONE");
-			port.ack_irq();
 
 			return 1;
 		}
