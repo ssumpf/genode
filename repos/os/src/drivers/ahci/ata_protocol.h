@@ -1,5 +1,5 @@
 /*
- * \brief  AHCI-port driver for ATA devices
+ * \brief  ATA protocol driver
  * \author Sebastian Sumpf
  * \date   2015-04-29
  */
@@ -265,7 +265,7 @@ class Ata::Protocol : public Ahci::Protocol, Noncopyable
 			         .writeable   = true };
 		}
 
-		Response submit(Port &port,Block::Request const request) override
+		Response submit(Port &port, Block::Request const request) override
 		{
 			if (port.sanity_check(request) == false || port.dma_base == 0)
 				return Response::REJECTED;

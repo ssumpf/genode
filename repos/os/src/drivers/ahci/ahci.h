@@ -256,6 +256,15 @@ namespace Ahci {
 			/* packet command */
 			write<Command>(0xa0);
 		}
+
+		/*
+		 * Sets byte count limit for PIO transfers
+		 */
+		void byte_count(uint16_t bytes)
+		{
+			write<Lba8_15>(bytes & 0xff);
+			write<Lba16_23>(bytes >> 8);
+		}
 	};
 
 
@@ -350,6 +359,11 @@ namespace Ahci {
 			write<Command>(0x28);
 			write<Lba>(block_number);
 			write<Sector>(block_count);
+		}
+
+		void start_unit()
+		{
+			write<Command>(0x1b);
 		}
 	};
 
@@ -612,6 +626,7 @@ struct Ahci::Port : private Port_base
 		struct Sud   : Bitfield<1, 1> { };  /* spin-up device */
 		struct Pod   : Bitfield<2, 1> { };  /* power-up device */
 		struct Fre   : Bitfield<4, 1> { };  /* FIS receive enable */
+		struct Fr    : Bitfield<14, 1> { }; /* FIS receive running */
 		struct Cr    : Bitfield<15, 1> { }; /* command list running */
 		struct Atapi : Bitfield<24, 1> { };
 		struct Icc   : Bitfield<28, 4> { }; /* interface communication control */
@@ -799,6 +814,13 @@ struct Ahci::Port : private Port_base
 
 		/* receive FIS base 256 byte */
 		fis_base = cmd_list + 1024;
+
+		/*
+		 *  Set fis receive base, clear Fre (FIS receive) before and wait for FR
+		 *  (FIS receive running) to clear
+		 */
+		write<Cmd::Fre>(0);
+		wait_for(hba.delayer(), Cmd::Fr::Equal(0));
 		fis_rcv_base(phys + 1024);
 
 		/* command table */
