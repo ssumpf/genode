@@ -44,11 +44,6 @@ struct Mbr_partition_table : public Block::Partition_table
 		 */
 		struct Partition_record : Mmio
 		{
-
-			Partition_record() = delete;
-			Partition_record(addr_t base)
-			: Mmio(base) { }
-
 			struct Type : Register<4, 8>
 			{
 				enum {
@@ -59,14 +54,19 @@ struct Mbr_partition_table : public Block::Partition_table
 			struct Lba     : Register<8, 32>  { }; /* logical block address */
 			struct Sectors : Register<12, 32> { }; /* number of sectors */
 
+			Partition_record() = delete;
+
+			Partition_record(addr_t base)
+			: Mmio(base) { }
+
 			bool valid()      const { return read<Type>() != Type::INVALID; }
 			bool extended()   const { return read<Type>() == Type::EXTENTED_CHS ||
 			                                 read<Type>() == Type::EXTENTED_LBA; }
 			bool protective() const { return read<Type>() == Type::PROTECTIVE; }
 
-			unsigned lba() const { return read<Lba>(); }
+			uint8_t  type()    const { return read<Type>(); }
+			unsigned lba()     const { return read<Lba>(); }
 			unsigned sectors() const { return read<Sectors>(); }
-			uint8_t type() const { return read<Type>(); }
 
 			static constexpr size_t size() { return 16; }
 		};
@@ -76,16 +76,19 @@ struct Mbr_partition_table : public Block::Partition_table
 		 */
 		struct Mbr : Mmio
 		{
-			struct Magic : Register<510, 16> { };
+			struct Magic : Register<510, 16>
+			{
+				enum { NUMBER = 0xaa55 };
+			};
+
+			Mbr() = delete;
 
 			Mbr(addr_t base) : Mmio(base) { }
-			Mbr() = delete;
 
 			bool valid() const
 			{
 				/* magic number of partition table */
-				enum { MAGIC = 0xaa55 };
-				return read<Magic>() == MAGIC;
+				return read<Magic>() == Magic::NUMBER;
 			}
 
 			addr_t record(unsigned index) const
@@ -140,7 +143,7 @@ struct Mbr_partition_table : public Block::Partition_table
 		void _parse_mbr(Mbr const &mbr, FUNC const &f) const
 		{
 			for (int i = 0; i < 4; i++) {
-				Partition_record const &r = mbr.record(i);
+				Partition_record const r(mbr.record(i));
 
 				if (!r.valid())
 					continue;
