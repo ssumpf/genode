@@ -98,7 +98,7 @@ struct Mbr_partition_table : public Block::Partition_table
 		enum { MAX_PARTITIONS = 32 };
 
 		/* contains pointers to valid partitions or 0 */
-		Block::Partition *_part_list[MAX_PARTITIONS];
+		Constructible<Block::Partition> _part_list[MAX_PARTITIONS];
 
 		template <typename FUNC>
 		void _parse_extended(Partition_record const &record, FUNC const &f) const
@@ -159,14 +159,15 @@ struct Mbr_partition_table : public Block::Partition_table
 
 		using Partition_table::Partition_table;
 
+		//XXX: operator
 		Block::Partition *partition(int num) override {
-			return (num < MAX_PARTITIONS) ? _part_list[num] : 0; }
+			return (num < MAX_PARTITIONS) ? _part_list[num].operator->() : 0; }
 
 		template <typename FN>
 		void _for_each_valid_partition(FN const &fn) const
 		{
 			for (unsigned i = 0; i < MAX_PARTITIONS; i++)
-				if (_part_list[i])
+				if (_part_list[i].constructed())
 					fn(i);
 		};
 
@@ -186,8 +187,7 @@ struct Mbr_partition_table : public Block::Partition_table
 					    r.sectors(), " blocks) type: ",
 					    Hex(r.type(), Hex::OMIT_PREFIX));
 					if (!r.extended())
-						_part_list[i] = new (heap)
-							Block::Partition(r.lba() + offset, r.sectors());
+						_part_list[i].construct(Block::Partition(r.lba() + offset, r.sectors()));
 				});
 			}
 
@@ -196,13 +196,13 @@ struct Mbr_partition_table : public Block::Partition_table
 			if (ahdi_valid)
 				Ahdi::for_each_partition(s, [&] (unsigned i, Block::Partition info) {
 					if (i < MAX_PARTITIONS)
-						_part_list[i] = new (heap)
-							Block::Partition(info.lba, info.sectors); });
+						_part_list[i].construct(
+							Block::Partition(info.lba, info.sectors)); });
 
 			/* no partition table, use whole disc as partition 0 */
 			if (!mbr_valid && !ahdi_valid)
-				_part_list[0] = new (&heap)
-					Block::Partition(0, driver.blk_cnt() - 1);
+				_part_list[0].construct(
+					Block::Partition(0, driver.blk_cnt() - 1));
 
 			/* report the partitions */
 			if (reporter.enabled()) {
@@ -238,7 +238,7 @@ struct Mbr_partition_table : public Block::Partition_table
 						_parse_mbr(mbr, [&] (int i, Partition_record const &r, unsigned) {
 
 							/* nullptr if extended */
-							if (!_part_list[i])
+							if (!_part_list[i].constructed())
 								return;
 
 							xml.node("partition", [&] {
