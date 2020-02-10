@@ -419,6 +419,16 @@ namespace Ahci {
  */
 struct Ahci::Port_base : Mmio
 {
+	/* device signature */
+	enum Signature {
+		ATA_SIG        = 0x101,
+		ATAPI_SIG      = 0xeb140101,
+		ATAPI_SIG_QEMU = 0xeb140000, /* will be fixed in Qemu */
+	};
+
+	unsigned  index { };
+	Hba      &hba;
+
 	/**
 	 * Port signature
 	 */
@@ -428,7 +438,21 @@ struct Ahci::Port_base : Mmio
 	static constexpr size_t size()   { return 0x80;  }
 
 	Port_base(unsigned index, Hba &hba)
-	: Mmio(hba.base() + offset() + (index * size())) { }
+	: Mmio(hba.base() + offset() + (index * size())),
+	  index(index), hba(hba) { }
+
+	bool implemented() const
+	{
+		return hba.read<Hba::Pi>() & (1u << index) && (ata() || atapi());
+	}
+
+	bool ata() const { return read<Sig>() == ATA_SIG; }
+
+	bool atapi() const
+	{
+		unsigned sig = read<Sig>();
+		return sig == ATAPI_SIG || sig == ATAPI_SIG_QEMU;
+	}
 };
 
 
@@ -454,13 +478,13 @@ struct Ahci::Port : private Port_base
 	using Port_base::wait_for_any;
 	using Port_base::wait_for;
 	using Port_base::Register_set::Polling_timeout;
+	using Port_base::index;
+	using Port_base::hba;
 
 	struct Not_ready : Exception { };
 
-	unsigned     index;
 	Protocol    &protocol;
 	Region_map  &rm;
-	Hba         &hba;
 	unsigned     cmd_slots = hba.command_slots();
 
 	Ram_dataspace_capability device_ds      { };
@@ -477,8 +501,7 @@ struct Ahci::Port : private Port_base
 	     unsigned index)
 	:
 		Port_base(index, hba),
-		index(index),
-		protocol(protocol), rm(rm), hba(hba)
+		protocol(protocol), rm(rm)
 	{
 		reset();
 		if (!enable())

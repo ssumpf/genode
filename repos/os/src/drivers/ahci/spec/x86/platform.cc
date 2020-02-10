@@ -33,7 +33,7 @@ Ahci::Data::Data(Env &env)
 
 	/* map base address of controller */
 	Io_mem_session_capability iomem_cap = pci_device->io_mem(pci_device->phys_bar_to_virt(AHCI_BASE_ID));
-	iomem_base = env.rm().attach(Io_mem_session_client(iomem_cap).dataspace());
+	iomem.construct(env.rm(), Io_mem_session_client(iomem_cap).dataspace());
 
 	uint16_t cmd = pci_device->config_read(PCI_CMD, ::Platform::Device::ACCESS_16BIT);
 	cmd |= 0x2; /* respond to memory space accesses */
@@ -48,7 +48,10 @@ Ahci::Data::Data(Env &env)
  ** Platform interface **
  ************************/
 
-Genode::addr_t Ahci::Platform::_mmio_base() const { return _data.iomem_base; }
+Genode::addr_t Ahci::Platform::_mmio_base() const
+{
+	return addr_t(_data.iomem->local_addr<addr_t>());
+}
 
 
 void Ahci::Platform::sigh_irq(Signal_context_capability sigh)

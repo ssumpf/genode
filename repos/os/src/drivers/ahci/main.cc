@@ -52,13 +52,6 @@ class Ahci::Driver : Noncopyable
 		Env      &_env;
 		Dispatch &_dispatch;
 
-	/* read device signature */
-		enum Signature {
-			ATA_SIG        = 0x101,
-			ATAPI_SIG      = 0xeb140101,
-			ATAPI_SIG_QEMU = 0xeb140000, /* will be fixed in Qemu */
-		};
-
 
 		struct Timer_delayer : Mmio::Delayer, Timer::Connection
 		{
@@ -77,46 +70,32 @@ class Ahci::Driver : Noncopyable
 		Signal_handler<Driver> _irq { _env.ep(), *this, &Driver::handle_irq };
 		bool                   _enable_atapi;
 
+		void _info()
+		{
+			log("version: "
+			    "major=", Hex(_hba.read<Hba::Version::Major>()), " "
+			    "minor=", Hex(_hba.read<Hba::Version::Minor>()));
+			log("command slots: ", _hba.command_slots());
+			log("native command queuing: ", _hba.ncq() ? "yes" : "no");
+			log("64-bit support: ", _hba.supports_64bit() ? "yes" : "no");
+		}
 
-	/*
-	 * Least significant bit
-	 */
-	unsigned _lsb(unsigned bits) const
-	{
-		for (unsigned i = 0; i < 32; i++)
-			if (bits & (1u << i)) {
-				return i;
-			}
+		void _scan_ports(Region_map &rm)
+		{
+			log("number of ports: ", _hba.port_count(), " pi: ",
+			    Hex(_hba.read<Hba::Pi>()));
 
-		return 0;
-	}
+			for (unsigned index = 0; index < _hba.port_count(); index++) {
 
-	void _info()
-	{
-		log("version: "
-		    "major=", Hex(_hba.read<Hba::Version::Major>()), " "
-		    "minor=", Hex(_hba.read<Hba::Version::Minor>()));
-		log("command slots: ", _hba.command_slots());
-		log("native command queuing: ", _hba.ncq() ? "yes" : "no");
-		log("64-bit support: ", _hba.supports_64bit() ? "yes" : "no");
-	}
+				Port_base port(index, _hba);
 
-	void _scan_ports(Region_map &rm)
-	{
-		log("number of ports: ", _hba.port_count(), " pi: ",
-		    Hex(_hba.read<Hba::Pi>()));
+				if (port.implemented() == false) {
+					log("\t\t#", index, ": off (unknown device signature)");
+					continue;
+				}
 
-		unsigned available = _hba.read<Hba::Pi>();
-		for (unsigned i = 0; i < _hba.port_count(); i++) {
-
-			/* check if port is implemented */
-			if (!available) break;
-			unsigned index = _lsb(available);
-			available ^= (1u << index);
-
-			bool enabled = false;
-			switch (Port_base(index, _hba).read<Port_base::Sig>()) {
-				case ATA_SIG:
+				bool enabled = false;
+				if (port.ata()) {
 					try {
 						_ata[index].construct();
 						_ports[index].construct(*_ata[index], rm, _hba, index);
@@ -124,25 +103,18 @@ class Ahci::Driver : Noncopyable
 					} catch (...) { }
 
 					log("\t\t#", index, ":", enabled ? " ATA" : " off (ATA)");
-					break;
-
-				case ATAPI_SIG:
-				case ATAPI_SIG_QEMU:
-					if (_enable_atapi)
-						try {
-							_atapi[index].construct();
-							_ports[index].construct(*_atapi[index], rm, _hba, index);
-							enabled = true;
-						} catch (...) { }
+				} else if (port.atapi() && _enable_atapi) {
+					try {
+						_atapi[index].construct();
+						_ports[index].construct(*_atapi[index], rm, _hba, index);
+						enabled = true;
+					} catch (...) { }
 
 					log("\t\t#", index, ":", enabled ? " ATAPI" : " off (ATAPI)");
-					break;
-
-				default:
-					log("\t\t#", index, ": off (unknown device signature)");
+				}
 			}
 		}
-	}
+
 	public:
 
 		Driver(Env &env, Dispatch &dispatch, bool support_atapi)

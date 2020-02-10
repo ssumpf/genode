@@ -40,7 +40,7 @@ struct Ahci::Data
 	Platform::Device_capability            pci_device_cap { };
 	Constructible<Platform::Device_client> pci_device     { };
 	Constructible<Irq_session_client>      irq            { };
-	addr_t                                 iomem_base     { 0 };
+	Constructible<Attached_dataspace>      iomem          { };
 
 	Data(Env &env);
 
