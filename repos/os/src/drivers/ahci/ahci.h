@@ -443,7 +443,7 @@ struct Ahci::Port_base : Mmio
 
 	bool implemented() const
 	{
-		return hba.read<Hba::Pi>() & (1u << index) && (ata() || atapi());
+		return hba.read<Hba::Pi>() & (1u << index);
 	}
 
 	bool ata() const { return read<Sig>() == ATA_SIG; }

@@ -85,14 +85,12 @@ class Ahci::Driver : Noncopyable
 			log("number of ports: ", _hba.port_count(), " pi: ",
 			    Hex(_hba.read<Hba::Pi>()));
 
-			for (unsigned index = 0; index < _hba.port_count(); index++) {
+			for (unsigned index = 0; index < MAX_PORTS; index++) {
 
 				Port_base port(index, _hba);
 
-				if (port.implemented() == false) {
-					log("\t\t#", index, ": off (unknown device signature)");
+				if (port.implemented() == false)
 					continue;
-				}
 
 				bool enabled = false;
 				if (port.ata()) {
@@ -111,6 +109,9 @@ class Ahci::Driver : Noncopyable
 					} catch (...) { }
 
 					log("\t\t#", index, ":", enabled ? " ATAPI" : " off (ATAPI)");
+				} else {
+						log("\t\t#", index, ":", port.atapi() ? " off (ATAPI)"
+						    : "  off (unknown device signature)");
 				}
 			}
 		}
