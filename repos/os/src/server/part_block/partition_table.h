@@ -17,7 +17,8 @@
 
 #include <base/env.h>
 #include <base/log.h>
-#include <block_session/client.h>
+#include <base/registry.h>
+#include <block_session/connection.h>
 #include <os/reporter.h>
 
 #include "driver.h"
@@ -25,60 +26,133 @@
 namespace Block {
 	struct Partition;
 	class  Partition_table;
+	struct Job;
+	using namespace Genode;
+	typedef Block::Connection<Job> Block_connection;
 }
 
 
 struct Block::Partition
 {
-	Genode::uint64_t lba;     /* logical block address on device */
-	Genode::uint64_t sectors; /* number of sectors in patitions */
+	uint64_t lba;     /* logical block address on device */
+	uint64_t sectors; /* number of sectors in patitions */
 
-	Partition(Genode::uint64_t l, Genode::uint64_t s)
+	Partition(uint64_t l, uint64_t s)
 	: lba(l), sectors(s) { }
 };
 
-
-struct Block::Partition_table : Genode::Interface
+struct Block::Job : public Block_connection::Job
 {
+	Registry<Job>::Element registry_element;
+	addr_t  const index;
+	long    const number;
+	Request       request;
+	addr_t  const addr;
+	bool          completed { false };
+	off_t         offset { 0 };
+
+	Job(Block_connection &connection,
+	    Operation operation,
+	    Registry<Job> &registry,
+	    addr_t const index, addr_t const number,
+	    Request request, addr_t addr)
+	: Block_connection::Job(connection, operation),
+	  registry_element(registry, *this),
+	  index(index), number(number),  request(request), addr(addr) { }
+};
+
+struct Block::Partition_table : Interface
+{
+		struct Sector;
+		struct Sector_data
+		{
+			Env              &env;
+			Block_connection &block;
+			Allocator        &alloc;
+			Sector          *current = nullptr;
+
+			Sector_data(Env &env, Block_connection &block, Allocator &alloc)
+			: env(env), block(block), alloc(alloc) { }
+		};
+
 		class Sector
 		{
 			private:
 
-				Session_client    &_session;
-				Packet_descriptor  _p;
+				Sector_data       &_data;
+				bool               _completed { false };
+				size_t             _size { 0 };
+				void              *_buffer { nullptr };
 
 			public:
 
-				Sector(Driver       &driver,
-				       unsigned long blk_nr,
-				       unsigned long count,
-				       bool          write = false)
-				: _session(driver.session()),
-				  _p(_session.alloc_packet(driver.blk_size() * count),
-				     write ? Packet_descriptor::WRITE : Packet_descriptor::READ,
-				     blk_nr, count)
+				Sector(Sector_data &data, block_number_t block_number, block_count_t count)
+				 : _data(data)
 				{
-					_session.tx()->submit_packet(_p);
-					_p = _session.tx()->get_acked_packet();
-					if (!_p.succeeded())
-						Genode::error("Could not access block ",
-						              (unsigned long long)_p.block_number());
+					Operation const operation { .type = Operation::Type::READ, .block_number = block_number, .count = count };
+					Block_connection::Job job { data.block, operation };
+					_data.block.update_jobs(*this);
+
+					_data.current  = this;
+
+					while (!_completed)
+						data.env.ep().wait_and_dispatch_one_io_signal();
+
+					_data.current = nullptr;
 				}
 
-				~Sector() { _session.tx()->release_packet(_p); }
+				~Sector()
+				{
+					_data.alloc.free(_buffer, _size);
+				}
+
+				void handle_io()
+				{
+					_data.block.update_jobs(*this);
+				}
+
+				void consume_read_result(Block_connection::Job &job, off_t offset,
+				                         char const *src, size_t length)
+				{
+					log("consume: offset: ", Hex(offset), " length: ", length);
+					_buffer = _data.alloc.alloc(length);
+					memcpy(_buffer, src, length);
+					_size = length;
+				}
+
+				void produce_write_content(Block_connection::Job &job, off_t offset, char *dst, size_t length) { }
+
+				void completed(Block_connection::Job &job, bool success)
+				{
+					log("completed: ", success);
+					_completed = true;
+
+					if (!success)
+						error("IO error");
+					//XXX throw error
+				}
 
 				template <typename T> T addr() const {
-					return reinterpret_cast<T>(_session.tx()->packet_content(_p)); }
+					return reinterpret_cast<T>(_buffer); }
 		};
 
-		Genode::Heap & heap;
-		Driver       & driver;
-		Genode::Reporter & reporter;
+		Env              &env;
+		Block_connection &block;
+		Reporter         &reporter;
+		Io_signal_handler<Partition_table> io_sigh { env.ep(), *this, &Partition_table::handle_io };
+		Sector_data       data;
 
-		Partition_table(Genode::Heap & h, Driver & d, Genode::Reporter & r)
-		: heap(h), driver(d), reporter(r) {}
+		void handle_io()
+		{
+			if (data.current) { data.current->handle_io(); }
+		}
 
-		virtual Partition *partition(int num) = 0;
+
+		Partition_table(Env &env, Block_connection &block, Allocator &alloc, Reporter & r)
+		: env(env), block(block), reporter(r), data(env, block, alloc)
+		{ }
+
+		virtual Partition &partition(long num) = 0;
 
 		virtual bool parse() = 0;
 };

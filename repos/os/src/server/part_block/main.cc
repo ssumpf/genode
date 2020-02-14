@@ -14,34 +14,209 @@
  */
 
 #include <base/attached_rom_dataspace.h>
+#include <base/attached_ram_dataspace.h>
+#include <base/component.h>
 #include <block_session/rpc_object.h>
+#include <block/request_stream.h>
+#include <os/session_policy.h>
+#include <util/bit_allocator.h>
 
-#include "component.h"
-#include "driver.h"
 #include "gpt.h"
 #include "mbr.h"
 
+namespace Block {
+	class  Session_component;
+	struct Session_handler;
+	template <unsigned ITEMS>
+	struct Job_queue;
+	typedef Constructible<Job> Job_object;
+	struct Dispatch;
+};
 
-void Block::Driver::_ready_to_submit() {
-	Block::Session_component::wake_up(); }
+template <unsigned ITEMS>
+struct Block::Job_queue
+{
+	Job_object           _jobs[ITEMS];
+	Bit_allocator<ITEMS> _alloc;
+
+	addr_t alloc()
+	{
+		addr_t index = _alloc.alloc();
+		return index;
+	}
+
+	Job_object &job(addr_t index)
+	{
+		return _jobs[index];
+	}
+
+	void free(addr_t index)
+	{
+		if (_jobs[index].constructed())
+			_jobs[index].destruct();
+
+		_alloc.free(index);
+	}
+};
 
 
-class Main
+struct Block::Dispatch : Interface
+{
+	virtual Request_stream::Response submit(long number, Request const &request, addr_t addr) = 0;
+	virtual void update() = 0;
+	virtual void acknowledge_completed(bool all = true, long number = -1) = 0;
+};
+
+
+struct Block::Session_handler : Interface
+{
+	Env &env;
+	Attached_ram_dataspace ds;
+
+	Signal_handler<Session_handler> request_handler
+	  { env.ep(), *this, &Session_handler::handle };
+
+	Session_handler(Env &env, size_t buffer_size)
+	: env(env), ds(env.ram(), env.rm(), buffer_size)
+	{ }
+
+	virtual void handle_requests()= 0;
+
+	void handle()
+	{
+		handle_requests();
+	}
+};
+
+
+class Block::Session_component : public Rpc_object<Block::Session>,
+                                 public Session_handler,
+                                 public Block::Request_stream
+{
+	private:
+
+		long      _number;
+		Dispatch &_dispatcher;
+
+	public:
+
+		Session_component(Env &env, long number, size_t buffer_size,
+		                  Session::Info info, Dispatch &dispatcher)
+		: Session_handler(env, buffer_size),
+		  Request_stream(env.rm(), ds.cap(), env.ep(), request_handler, info),
+		  _number(number), _dispatcher(dispatcher)
+		{
+			env.ep().manage(*this);
+		}
+
+		~Session_component()
+		{
+			env.ep().dissolve(*this);
+		}
+
+		Info info() const override { return Request_stream::info(); }
+
+		Capability<Tx> tx_cap() override { return Request_stream::tx_cap(); }
+
+		long number() const { return _number; }
+
+		bool acknowledge(Request &request)
+		{
+			bool progress = false;
+			try_acknowledge([&] (Ack &ack) {
+				if (progress) return;
+				ack.submit(request);
+				progress = true;
+			});
+
+			return progress;
+		}
+
+		void handle_requests() override
+		{
+			log(__func__);
+			while (true) {
+
+				bool progress = false;
+	
+				/*
+				 * Acknowledge any pending packets before sending new request to the
+				 * controller.
+				 */
+				_dispatcher.acknowledge_completed(false, _number);
+
+				with_requests([&] (Request request) {
+
+					Response response = Response::RETRY;
+
+					/* only READ/WRITE requests, others are noops for now */
+					if (Block::Operation::has_payload(request.operation.type) == false) {
+						request.success = true;
+						progress = true;
+						return Response::REJECTED;
+					}
+
+					if (!info().writeable && request.operation.type == Operation::Type::WRITE) {
+						progress = true;
+						return Response::REJECTED;
+					}
+
+					with_payload([&] (Request_stream::Payload const &payload) {
+						payload.with_content(request, [&] (void *addr, Genode::size_t size) {
+							response = _dispatcher.submit(_number, request, addr_t(addr));
+						});
+					});
+
+					if (response != Response::RETRY)
+						progress = true;
+
+					return response;
+				});
+
+				if (progress == false) break;
+			}
+
+			_dispatcher.update();
+
+			/* poke */
+			wakeup_client_if_needed();
+		}
+
+};
+
+class Main : Rpc_object<Typed_root<Block::Session>>,
+             Block::Dispatch
 {
 	private:
 
 		Block::Partition_table & _table();
 
-		Genode::Env &_env;
+		Env &_env;
 
-		Genode::Attached_rom_dataspace _config { _env, "config" };
+		Attached_rom_dataspace _config { _env, "config" };
 
-		Genode::Heap        _heap     { _env.ram(), _env.rm() };
-		Block::Driver       _driver   { _env, _heap      };
-		Genode::Reporter    _reporter { _env, "partitions" };
-		Mbr_partition_table _mbr      { _heap, _driver, _reporter };
-		Gpt                 _gpt      { _heap, _driver, _reporter };
-		Block::Root         _root     { _env, _config.xml(), _heap, _driver, _table() };
+		Heap            _heap     { _env.ram(), _env.rm() };
+		Reporter        _reporter { _env, "partitions" };
+		Allocator_avl           _block_alloc { &_heap };
+
+		Block::Block_connection _block    { _env, &_block_alloc };
+		Io_signal_handler<Main> _io_sigh  { _env.ep(), *this, &Main::_handle_io };
+		Mbr_partition_table     _mbr      { _env, _block, _heap, _reporter };
+		Gpt                     _gpt      { _env, _block, _heap, _reporter };
+		Block::Partition_table &_partition_table { _table() };
+
+		enum { MAX_SESSIONS = 32 };
+		Block::Session_component *_sessions[MAX_SESSIONS] { };
+		Block::Job_queue<128>     _job_queue;
+		Registry<Block::Job>      _job_registry;
+
+		void _handle_io()
+		{
+			log("I/O signal");
+			update();
+			acknowledge_completed();
+			wake_up_clients();
+		}
 
 	public:
 
@@ -51,14 +226,182 @@ class Main
 
 		Main(Genode::Env &env) : _env(env)
 		{
-			/*
-			 * we read all partition information,
-			 * now it's safe to turn in asynchronous mode
-			 */
-			_driver.work_asynchronously();
+			_block.sigh(_io_sigh);
 
 			/* announce at parent */
-			env.parent().announce(env.ep().manage(_root));
+			env.parent().announce(env.ep().manage(*this));
+
+		}
+
+		Session_capability session(Root::Session_args const &args,
+		                           Affinity const &) override
+		{
+			long num = -1;
+			bool writeable = false;
+
+			Session_label const label = label_from_args(args.string());
+			try {
+				Session_policy policy(label, _config.xml());
+
+				/* read partition attribute */
+				num = policy.attribute_value("partition", -1L);
+
+				/* sessions are not writeable by default */
+				writeable = policy.attribute_value("writeable", false);
+
+			} catch (Xml_node::Nonexistent_attribute) {
+				error("policy does not define partition number for for '",
+				      label, "'");
+				throw Service_denied();
+			} catch (Session_policy::No_policy_defined) {
+				error("rejecting session request, no matching policy for '",
+				      label, "'");
+				throw Service_denied();
+			}
+
+			try {
+				_partition_table.partition(num);
+				log("session request for partition: ", num);
+			}
+			catch (...) {
+				error("Partition ", num, " unavailable for '", label, "'");
+				throw Service_denied();
+			}
+
+			if (_sessions[num]) {
+				error("Partition ", num, " already in use for '", label, "'");
+				throw Service_denied();
+			}
+
+			Ram_quota const ram_quota = ram_quota_from_args(args.string());
+			size_t tx_buf_size =
+				Arg_string::find_arg(args.string(), "tx_buf_size").ulong_value(0);
+
+			if (!tx_buf_size)
+				throw Service_denied();
+
+			/* delete ram quota by the memory needed for the session */
+			size_t session_size = max((size_t)4096,
+			                          sizeof(Block::Session_component));
+			if (ram_quota.value < session_size)
+				throw Insufficient_ram_quota();
+
+			/*
+			 * Check if donated ram quota suffices for both
+			 * communication buffers. Also check both sizes separately
+			 * to handle a possible overflow of the sum of both sizes.
+			 */
+			if (tx_buf_size > ram_quota.value - session_size) {
+				error("insufficient 'ram_quota', got ", ram_quota, ", need ",
+				     tx_buf_size + session_size);
+				throw Insufficient_ram_quota();
+			}
+
+			Block::Session::Info info {
+				.block_size  = _block.info().block_size,
+				.block_count = _partition_table.partition(num).sectors,
+				.align_log2  = 0,
+				.writeable   = writeable,
+			};
+
+			_sessions[num] = new (_heap) Block::Session_component(_env, num, tx_buf_size, info, *this);
+			return _sessions[num]->cap();
+		}
+
+		void close(Session_capability cap) override
+		{
+			for (long number = 0; number < MAX_SESSIONS; number++) {
+				if (!_sessions[number] || !(cap == _sessions[number]->cap()))
+					continue;
+
+				log("closing session for partition: ", number);
+				destroy(_heap, _sessions[number]);
+				_sessions[number] = nullptr;
+
+				break;
+			}
+		}
+
+		void upgrade(Session_capability, Root::Upgrade_args const&) override { }
+
+		Block::Request_stream::Response submit(long number, Block::Request const &request, addr_t addr) override
+		{
+			using namespace Block;
+
+			Partition &partition     = _partition_table.partition(number);
+			block_number_t last      = request.operation.block_number + request.operation.count;
+			block_number_t part_last = partition.lba + partition.sectors;
+
+			if (last > part_last)
+				return Request_stream::Response::REJECTED;
+
+			addr_t index = 0;
+
+			try {
+				index  = _job_queue.alloc();
+			} catch (...) { return Request_stream::Response::RETRY; }
+
+			Job_object &job = _job_queue.job(index);
+
+			Operation op     = request.operation;
+			op.block_number += partition.lba;
+
+			job.construct(_block, op, _job_registry, index, number, request, addr);
+
+			return Request_stream::Response::ACCEPTED;
+		}
+
+		void update() override { _block.update_jobs(*this); }
+
+		void consume_read_result(Block::Job &job, off_t offset,
+		                         char const *src, size_t length)
+		{
+			if (!_sessions[job.number]) return;
+			log("READ: offset: ", offset, " length: ", length);
+
+			memcpy((void *)(job.addr + job.offset), src, length);
+			job.offset += length;
+		}
+
+		void produce_write_content(Block::Job &job, off_t offset, char *dst, size_t length)
+		{
+			log("WRITE");
+			memcpy(dst, (void *)(job.addr + job.offset), length);
+			job.offset += length;
+		}
+
+		void completed(Block::Job &job, bool success)
+		{
+			log("COMPLETED");
+			job.request.success = success;
+			job.completed       = true;
+		}
+
+		void wake_up_clients()
+		{
+			for (unsigned i = 0; i <  MAX_SESSIONS; i++)
+				if (_sessions[i]) _sessions[i]->handle_requests();
+		}
+
+		void acknowledge_completed(bool all = true, long number = -1) override
+		{
+			_job_registry.for_each([&] (Block::Job &job) {
+				if (!job.completed) return;
+
+				addr_t index = job.index;
+
+				/* free orphans */
+				if (!_sessions[job.number]) {
+					_job_queue.free(index);
+					return;
+				}
+
+				if (!all && job.number != number)
+					return;
+
+				if (_sessions[job.number]->acknowledge(job.request))
+					_job_queue.free(index);
+			});
 		}
 };
 
@@ -136,6 +479,5 @@ Block::Partition_table & Main::_table()
 	error("Aborting: no partition table found.");
 	throw No_partion_table();
 }
-
 
 void Component::construct(Genode::Env &env) { static Main main(env); }

@@ -113,7 +113,7 @@ struct Mbr_partition_table : public Block::Partition_table
 			/* first logical partition number */
 			int nr = 5;
 			do {
-				Sector s(driver, lba, 1);
+				Sector s(const_cast<Sector_data&>(data), lba, 1);
 				Mbr const ebr(s.addr<addr_t>());
 
 				if (!ebr.valid())
@@ -162,9 +162,16 @@ struct Mbr_partition_table : public Block::Partition_table
 
 		using Partition_table::Partition_table;
 
-		//XXX: operator
-		Block::Partition *partition(int num) override {
-			return (num < MAX_PARTITIONS) ? _part_list[num].operator->() : 0; }
+		Block::Partition &partition(long num) override
+		{
+			if (num < 0 || num > MAX_PARTITIONS)
+				throw -1;
+
+			if (!_part_list[num].constructed())
+				throw -1;
+
+			return *_part_list[num];
+		}
 
 		template <typename FN>
 		void _for_each_valid_partition(FN const &fn) const
@@ -178,7 +185,9 @@ struct Mbr_partition_table : public Block::Partition_table
 		{
 			using namespace Genode;
 
-			Sector s(driver, 0, 1);
+			block.sigh(io_sigh);
+
+			Sector s(data, 0, 1);
 
 			/* check for MBR */
 			Mbr const mbr(s.addr<addr_t>());
@@ -205,7 +214,7 @@ struct Mbr_partition_table : public Block::Partition_table
 			/* no partition table, use whole disc as partition 0 */
 			if (!mbr_valid && !ahdi_valid)
 				_part_list[0].construct(
-					Block::Partition(0, driver.blk_cnt() - 1));
+					Block::Partition(0, block.info().block_count - 1));
 
 			/* report the partitions */
 			if (reporter.enabled()) {
@@ -214,7 +223,7 @@ struct Mbr_partition_table : public Block::Partition_table
 				{
 					Block::Partition const &part = *_part_list[i];
 
-					size_t const block_size = driver.blk_size();
+					size_t const block_size = block.info().block_size;
 
 					xml.attribute("number",     i);
 					xml.attribute("start",      part.lba);
@@ -223,7 +232,7 @@ struct Mbr_partition_table : public Block::Partition_table
 
 					/* probe for known file-system types */
 					enum { PROBE_BYTES = 4096, };
-					Sector fs(driver, part.lba, PROBE_BYTES / block_size);
+					Sector fs(data, part.lba, PROBE_BYTES / block_size);
 					Fs::Type const fs_type =
 						Fs::probe(fs.addr<uint8_t*>(), PROBE_BYTES);
 

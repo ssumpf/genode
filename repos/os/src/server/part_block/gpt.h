@@ -152,7 +152,7 @@ class Gpt : public Block::Partition_table
 				log(" gpe crc: ", Hex(read<Gpe_crc>(), Hex::OMIT_PREFIX));
 			}
 
-			bool valid(Block::Driver &driver, bool check_primary = true)
+			bool valid(Block::Partition_table::Sector_data &data, bool check_primary = true)
 			{
 				dump_hdr(check_primary);
 
@@ -178,15 +178,15 @@ class Gpt : public Block::Partition_table
 
 				/* check GPT entry array */
 				size_t length = entries() * entry_size();
-				Sector gpe(driver, gpe_lba(), length / driver.blk_size());
+				Sector gpe(data, gpe_lba(), length / data.block.info().block_size);
 				if (crc32(gpe.addr<addr_t>(), length) != read<Gpe_crc>())
 					return false;
 
 				if (check_primary) {
 					/* check backup gpt header */
-					Sector backup_hdr(driver, read<Backup_hdr_lba>(), 1);
+					Sector backup_hdr(data, read<Backup_hdr_lba>(), 1);
 					Gpt_hdr backup(backup_hdr.addr<addr_t>());
-					if (!backup.valid(driver, false)) {
+					if (!backup.valid(data, false)) {
 						warning("Backup GPT header is corrupted");
 					}
 				}
@@ -347,11 +347,11 @@ class Gpt : public Block::Partition_table
 		 */
 		void _parse_gpt(Gpt_hdr &gpt)
 		{
-			if (!(gpt.valid(driver)))
+			if (!(gpt.valid(data)))
 				throw Genode::Exception();
 
-			Sector entry_array(driver, gpt.gpe_lba(),
-			                   gpt.entries() * gpt.entry_size() / driver.blk_size());
+			Sector entry_array(data, gpt.gpe_lba(),
+			                   gpt.entries() * gpt.entry_size() / block.info().block_size);
 			Gpt_entry entries(entry_array.addr<addr_t>());
 
 			for (int i = 0; i < MAX_PARTITIONS; i++) {
@@ -377,7 +377,7 @@ class Gpt : public Block::Partition_table
 				Genode::Reporter::Xml_generator xml(reporter, [&] () {
 					xml.attribute("type", "gpt");
 
-					Genode::uint64_t const total_blocks = driver.blk_cnt();
+					Genode::uint64_t const total_blocks = block.info().block_count;
 					xml.attribute("total_blocks", total_blocks);
 
 					Genode::uint64_t const gpt_total =
@@ -396,7 +396,7 @@ class Gpt : public Block::Partition_table
 						}
 
 						enum { BYTES = 4096, };
-						Sector fs(driver, e.lba_start(), BYTES / driver.blk_size());
+						Sector fs(data, e.lba_start(), BYTES / block.info().block_size);
 						Fs::Type fs_type = Fs::probe(fs.addr<Genode::uint8_t*>(), BYTES);
 
 						xml.node("partition", [&] () {
@@ -406,7 +406,7 @@ class Gpt : public Block::Partition_table
 							xml.attribute("guid", e.guid().to_string());
 							xml.attribute("start", e.lba_start());
 							xml.attribute("length", e.lba_end() - e.lba_start() + 1);
-							xml.attribute("block_size", driver.blk_size());
+							xml.attribute("block_size", block.info().block_size);
 
 							Genode::uint64_t const gap = _calculate_gap(gpt, e, entries,
 							                                            gpt.entries(),
@@ -427,13 +427,24 @@ class Gpt : public Block::Partition_table
 
 		using Partition_table::Partition_table;
 
-		//XXX:
-		Block::Partition *partition(int num) override {
-			return (num <= MAX_PARTITIONS && num > 0) ? _part_list[num-1].operator->() : 0; }
+		Block::Partition &partition(long num) override
+		{
+			num -= 1;
+
+			if (num < 0 || num > MAX_PARTITIONS)
+				throw -1;
+
+			if (!_part_list[num].constructed())
+				throw -1;
+
+			return *_part_list[num];
+		}
 
 		bool parse() override
 		{
-			Sector s(driver, Gpt_hdr::Hdr_lba::LBA, 1);
+			block.sigh(io_sigh);
+
+			Sector s(data, Gpt_hdr::Hdr_lba::LBA, 1);
 			Gpt_hdr hdr(s.addr<addr_t>());
 			_parse_gpt(hdr);
 
