@@ -328,11 +328,10 @@ class Main : Rpc_object<Typed_root<Block::Session>>,
 		{
 			using namespace Block;
 
-			Partition &partition     = _partition_table.partition(number);
-			block_number_t last      = request.operation.block_number + request.operation.count;
-			block_number_t part_last = partition.lba + partition.sectors;
+			Partition &partition = _partition_table.partition(number);
+			block_number_t last  = request.operation.block_number + request.operation.count;
 
-			if (last > part_last)
+			if (last > partition.sectors)
 				return Request_stream::Response::REJECTED;
 
 			addr_t index = 0;
@@ -357,7 +356,6 @@ class Main : Rpc_object<Typed_root<Block::Session>>,
 		                         char const *src, size_t length)
 		{
 			if (!_sessions[job.number]) return;
-			log("READ: offset: ", offset, " length: ", length);
 
 			memcpy((void *)(job.addr + job.offset), src, length);
 			job.offset += length;
@@ -365,14 +363,12 @@ class Main : Rpc_object<Typed_root<Block::Session>>,
 
 		void produce_write_content(Block::Job &job, off_t offset, char *dst, size_t length)
 		{
-			log("WRITE");
 			memcpy(dst, (void *)(job.addr + job.offset), length);
 			job.offset += length;
 		}
 
 		void completed(Block::Job &job, bool success)
 		{
-			log("COMPLETED");
 			job.request.success = success;
 			job.completed       = true;
 		}
