@@ -87,31 +87,31 @@ class Block::Gpt : public Block::Partition_table
 		struct Gpt_hdr : Mmio
 
 		{
-			struct Sig : Register<0, 64> { };  /* identifies GUID Partition Table */
-			struct Revision : Register<8, 32> { };       /* GPT specification revision */
-			struct Hdr_size : Register<12, 32> { };       /* size of GPT header */
-			struct Hdr_crc  : Register<16, 32> { };        /* CRC32 of GPT header */
-			struct Reserved : Register<20,32> { };       /* must be zero */
-			struct Hdr_lba  : Register<24, 64> { enum { LBA = 1 }; };        /* LBA that contains this header */
+			struct Sig      : Register<0, 64> { };  /* identifies GUID Partition Table */
+			struct Revision : Register<8, 32> { };  /* GPT specification revision */
+			struct Hdr_size : Register<12, 32> { }; /* size of GPT header */
+			struct Hdr_crc  : Register<16, 32> { }; /* CRC32 of GPT header */
+			struct Reserved : Register<20,32> { };  /* must be zero */
+			struct Hdr_lba  : Register<24, 64> { enum { LBA = 1 }; }; /* LBA that contains this header */
 			struct Backup_hdr_lba : Register<32, 64> { }; /* LBA of backup GPT header */
 			struct Part_lba_start : Register<40, 64> { }; /* first LBA usable for partitions */
-			struct Part_lba_end   : Register<48, 64> { };   /* last LBA usable for partitions */
+			struct Part_lba_end   : Register<48, 64> { }; /* last LBA usable for partitions */
 
 			Uuid guid() { return Uuid(base() + 56); }          /* GUID to identify the disk */
 
-			struct Gpe_lba : Register<72, 64> { };        /* first LBA of GPE array */
-			struct Entries : Register<80, 32> { };        /* number of entries in GPE array */
-			struct Entry_size : Register<84, 32> { };     /* size of each GPE */
-			struct Gpe_crc : Register<88, 32> { };        /* CRC32 of GPE array */
+			struct Gpe_lba : Register<72, 64> { };    /* first LBA of GPE array */
+			struct Entries : Register<80, 32> { };    /* number of entries in GPE array */
+			struct Entry_size : Register<84, 32> { }; /* size of each GPE */
+			struct Gpe_crc : Register<88, 32> { };    /* CRC32 of GPE array */
 
 			Gpt_hdr() = delete;
 			Gpt_hdr(addr_t base) : Mmio(base) { };
 
 			uint64_t part_lba_start() const { return read<Part_lba_start>(); }
-			uint64_t part_lba_end() const { return read<Part_lba_end>(); }
-			uint64_t gpe_lba() const { return read<Gpe_lba>(); }
-			uint32_t entries() const { return read<Entries>(); }
-			uint32_t entry_size() const  { return read<Entry_size>(); }
+			uint64_t part_lba_end()   const { return read<Part_lba_end>(); }
+			uint64_t gpe_lba()        const { return read<Gpe_lba>(); }
+			uint32_t entries()        const { return read<Entries>(); }
+			uint32_t entry_size()     const { return read<Entry_size>(); }
 
 			uint32_t crc32(addr_t buf, size_t size)
 			{
@@ -200,13 +200,13 @@ class Block::Gpt : public Block::Partition_table
 		{
 			enum { NAME_LEN = 36 };
 
-			Uuid  type() const { return Uuid(base()); }           /* partition type GUID */
-			Uuid  guid() const { return Uuid(base()+ Uuid::size()); }          /* unique partition GUID */
+			Uuid  type() const { return Uuid(base()); }                /* partition type GUID */
+			Uuid  guid() const { return Uuid(base()+ Uuid::size()); }  /* unique partition GUID */
 
-			struct Lba_start : Register<32, 64> { };      /* start of partition */
-			struct Lba_end : Register<40, 64> { };        /* end of partition */
-			struct Attr : Register<48, 64> { };           /* partition attributes */
-			struct Name : Register_array<56, 16, NAME_LEN, 16> { }; /* partition name in UNICODE-16 */
+			struct Lba_start : Register<32, 64> { };                     /* start of partition */
+			struct Lba_end   : Register<40, 64> { };                     /* end of partition */
+			struct Attr      : Register<48, 64> { };                     /* partition attributes */
+			struct Name      : Register_array<56, 16, NAME_LEN, 16> { }; /* partition name in UNICODE-16 */
 
 			Gpt_entry() = delete;
 			Gpt_entry(addr_t base) : Mmio(base) { }

@@ -60,11 +60,9 @@ struct Block::Mbr_partition_table : public Block::Partition_table
 			Partition_record(addr_t base)
 			: Mmio(base) { }
 
-			bool valid()      const { return read<Type>() != Type::INVALID; }
-			bool extended()   const { return read<Type>() == Type::EXTENTED_CHS ||
-			                                 read<Type>() == Type::EXTENTED_LBA; }
-			bool protective() const { return read<Type>() == Type::PROTECTIVE; }
-
+			bool valid()       const { return read<Type>() != Type::INVALID; }
+			bool extended()    const { return read<Type>() == Type::EXTENTED_CHS ||
+			bool protective()  const { return read<Type>() == Type::PROTECTIVE; }
 			uint8_t  type()    const { return read<Type>(); }
 			unsigned lba()     const { return read<Lba>(); }
 			unsigned sectors() const { return read<Sectors>(); }
