@@ -7,7 +7,7 @@
  */
 
 /*
- * Copyright (C) 2011-2017 Genode Labs GmbH
+ * Copyright (C) 2011-2019 Genode Labs GmbH
  *
  * This file is part of the Genode OS framework, which is distributed
  * under the terms of the GNU Affero General Public License version 3.
@@ -27,11 +27,14 @@
 namespace Block {
 	class  Session_component;
 	struct Session_handler;
-	template <unsigned ITEMS>
-	struct Job_queue;
-	typedef Constructible<Job> Job_object;
+	template <unsigned ITEMS> struct Job_queue;
 	struct Dispatch;
+	class  Main;
+
+	typedef Constructible<Job> Job_object;
+	using Response = Request_stream::Response;
 };
+
 
 template <unsigned ITEMS>
 struct Block::Job_queue
@@ -62,9 +65,10 @@ struct Block::Job_queue
 
 struct Block::Dispatch : Interface
 {
-	virtual Request_stream::Response submit(long number, Request const &request, addr_t addr) = 0;
+	virtual Response submit(long number, Request const &request, addr_t addr) = 0;
 	virtual void update() = 0;
 	virtual void acknowledge_completed(bool all = true, long number = -1) = 0;
+	virtual Response sync(long number) = 0;
 };
 
 
@@ -100,6 +104,8 @@ class Block::Session_component : public Rpc_object<Block::Session>,
 
 	public:
 
+		bool syncing { false };
+
 		Session_component(Env &env, long number, size_t buffer_size,
 		                  Session::Info info, Dispatch &dispatcher)
 		: Session_handler(env, buffer_size),
@@ -134,11 +140,10 @@ class Block::Session_component : public Rpc_object<Block::Session>,
 
 		void handle_requests() override
 		{
-			log(__func__);
 			while (true) {
 
 				bool progress = false;
-	
+
 				/*
 				 * Acknowledge any pending packets before sending new request to the
 				 * controller.
@@ -149,8 +154,11 @@ class Block::Session_component : public Rpc_object<Block::Session>,
 
 					Response response = Response::RETRY;
 
+					if (syncing) return response;
+
 					/* only READ/WRITE requests, others are noops for now */
-					if (Block::Operation::has_payload(request.operation.type) == false) {
+					if (request.operation.type == Operation::Type::TRIM ||
+					    request.operation.type == Operation::Type::INVALID) {
 						request.success = true;
 						progress = true;
 						return Response::REJECTED;
@@ -161,8 +169,14 @@ class Block::Session_component : public Rpc_object<Block::Session>,
 						return Response::REJECTED;
 					}
 
+					if (request.operation.type == Operation::Type::SYNC) {
+						response = _dispatcher.sync(_number);
+						if (response == Response::ACCEPTED) syncing = true;
+						return response;
+					}
+
 					with_payload([&] (Request_stream::Payload const &payload) {
-						payload.with_content(request, [&] (void *addr, Genode::size_t size) {
+						payload.with_content(request, [&] (void *addr, size_t size) {
 							response = _dispatcher.submit(_number, request, addr_t(addr));
 						});
 					});
@@ -184,57 +198,81 @@ class Block::Session_component : public Rpc_object<Block::Session>,
 
 };
 
-class Main : Rpc_object<Typed_root<Block::Session>>,
-             Block::Dispatch
+
+class Block::Main : Rpc_object<Typed_root<Session>>,
+                    Dispatch
 {
 	private:
 
-		Block::Partition_table & _table();
+		Partition_table & _table();
 
 		Env &_env;
 
 		Attached_rom_dataspace _config { _env, "config" };
 
-		Heap            _heap     { _env.ram(), _env.rm() };
-		Reporter        _reporter { _env, "partitions" };
-		Allocator_avl           _block_alloc { &_heap };
+		Heap     _heap     { _env.ram(), _env.rm() };
+		Reporter _reporter { _env, "partitions" };
 
-		Block::Block_connection _block    { _env, &_block_alloc };
+		Allocator_avl           _block_alloc { &_heap };
+		Block_connection        _block    { _env, &_block_alloc };
 		Io_signal_handler<Main> _io_sigh  { _env.ep(), *this, &Main::_handle_io };
 		Mbr_partition_table     _mbr      { _env, _block, _heap, _reporter };
 		Gpt                     _gpt      { _env, _block, _heap, _reporter };
-		Block::Partition_table &_partition_table { _table() };
+		Partition_table        &_partition_table { _table() };
 
 		enum { MAX_SESSIONS = 32 };
-		Block::Session_component *_sessions[MAX_SESSIONS] { };
-		Block::Job_queue<128>     _job_queue;
-		Registry<Block::Job>      _job_registry;
+		Session_component *  _sessions[MAX_SESSIONS] { };
+		Job_queue<128>       _job_queue;
+		Registry<Block::Job> _job_registry;
+
+		void _wakeup_clients()
+		{
+			for (unsigned i = 0; i <  MAX_SESSIONS; i++) {
+				if (!_sessions[i]) continue;
+
+				if (_sessions[i]->syncing) {
+					bool in_flight = false;
+
+					_job_registry.for_each([&] (Job &job) {
+						if (i == job.number)
+							in_flight = true;
+					});
+
+					if (in_flight == false) _sessions[i]->syncing = false;
+				}
+
+				_sessions[i]->handle_requests();
+			}
+		}
 
 		void _handle_io()
 		{
-			log("I/O signal");
 			update();
 			acknowledge_completed();
-			wake_up_clients();
+			_wakeup_clients();
 		}
 
 	public:
 
-		struct No_partion_table : Genode::Exception { };
-		struct Ambiguous_tables : Genode::Exception { };
-		struct Invalid_config   : Genode::Exception { };
+		struct No_partion_table : Exception { };
+		struct Ambiguous_tables : Exception { };
+		struct Invalid_config   : Exception { };
 
-		Main(Genode::Env &env) : _env(env)
+		Main(Env &env) : _env(env)
 		{
 			_block.sigh(_io_sigh);
 
 			/* announce at parent */
 			env.parent().announce(env.ep().manage(*this));
-
 		}
 
-		Session_capability session(Root::Session_args const &args,
-		                           Affinity const &) override
+
+		/***********************
+		 ** Session interface **
+		 ***********************/
+
+		Genode::Session_capability session(Root::Session_args const &args,
+		                                   Affinity const &) override
 		{
 			long num = -1;
 			bool writeable = false;
@@ -261,15 +299,15 @@ class Main : Rpc_object<Typed_root<Block::Session>>,
 
 			try {
 				_partition_table.partition(num);
-				log("session request for partition: ", num);
 			}
 			catch (...) {
 				error("Partition ", num, " unavailable for '", label, "'");
 				throw Service_denied();
 			}
 
-			if (_sessions[num]) {
-				error("Partition ", num, " already in use for '", label, "'");
+			if (num >= MAX_SESSIONS || _sessions[num]) {
+				error("Partition ", num, " already in use or session limit reached for '",
+				      label, "'");
 				throw Service_denied();
 			}
 
@@ -282,7 +320,7 @@ class Main : Rpc_object<Typed_root<Block::Session>>,
 
 			/* delete ram quota by the memory needed for the session */
 			size_t session_size = max((size_t)4096,
-			                          sizeof(Block::Session_component));
+			                          sizeof(Session_component));
 			if (ram_quota.value < session_size)
 				throw Insufficient_ram_quota();
 
@@ -297,24 +335,23 @@ class Main : Rpc_object<Typed_root<Block::Session>>,
 				throw Insufficient_ram_quota();
 			}
 
-			Block::Session::Info info {
+			Session::Info info {
 				.block_size  = _block.info().block_size,
 				.block_count = _partition_table.partition(num).sectors,
 				.align_log2  = 0,
 				.writeable   = writeable,
 			};
 
-			_sessions[num] = new (_heap) Block::Session_component(_env, num, tx_buf_size, info, *this);
+			_sessions[num] = new (_heap) Session_component(_env, num, tx_buf_size, info, *this);
 			return _sessions[num]->cap();
 		}
 
-		void close(Session_capability cap) override
+		void close(Genode::Session_capability cap) override
 		{
 			for (long number = 0; number < MAX_SESSIONS; number++) {
 				if (!_sessions[number] || !(cap == _sessions[number]->cap()))
 					continue;
 
-				log("closing session for partition: ", number);
 				destroy(_heap, _sessions[number]);
 				_sessions[number] = nullptr;
 
@@ -322,37 +359,14 @@ class Main : Rpc_object<Typed_root<Block::Session>>,
 			}
 		}
 
-		void upgrade(Session_capability, Root::Upgrade_args const&) override { }
+		void upgrade(Genode::Session_capability, Root::Upgrade_args const&) override { }
 
-		Block::Request_stream::Response submit(long number, Block::Request const &request, addr_t addr) override
-		{
-			using namespace Block;
 
-			Partition &partition = _partition_table.partition(number);
-			block_number_t last  = request.operation.block_number + request.operation.count;
+		/************************
+		 ** Update_jobs_policy **
+		 ************************/
 
-			if (last > partition.sectors)
-				return Request_stream::Response::REJECTED;
-
-			addr_t index = 0;
-
-			try {
-				index  = _job_queue.alloc();
-			} catch (...) { return Request_stream::Response::RETRY; }
-
-			Job_object &job = _job_queue.job(index);
-
-			Operation op     = request.operation;
-			op.block_number += partition.lba;
-
-			job.construct(_block, op, _job_registry, index, number, request, addr);
-
-			return Request_stream::Response::ACCEPTED;
-		}
-
-		void update() override { _block.update_jobs(*this); }
-
-		void consume_read_result(Block::Job &job, off_t offset,
+		void consume_read_result(Job &job, off_t offset,
 		                         char const *src, size_t length)
 		{
 			if (!_sessions[job.number]) return;
@@ -361,27 +375,66 @@ class Main : Rpc_object<Typed_root<Block::Session>>,
 			job.offset += length;
 		}
 
-		void produce_write_content(Block::Job &job, off_t offset, char *dst, size_t length)
+		void produce_write_content(Job &job, off_t offset, char *dst, size_t length)
 		{
 			memcpy(dst, (void *)(job.addr + job.offset), length);
 			job.offset += length;
 		}
 
-		void completed(Block::Job &job, bool success)
+		void completed(Job &job, bool success)
 		{
 			job.request.success = success;
 			job.completed       = true;
 		}
 
-		void wake_up_clients()
+
+		/**************
+		 ** Dispatch **
+		 **************/
+
+		void update() override { _block.update_jobs(*this); }
+
+		Response submit(long number, Request const &request, addr_t addr) override
 		{
-			for (unsigned i = 0; i <  MAX_SESSIONS; i++)
-				if (_sessions[i]) _sessions[i]->handle_requests();
+			Partition &partition = _partition_table.partition(number);
+			block_number_t last  = request.operation.block_number + request.operation.count;
+
+			if (last > partition.sectors)
+				return Response::REJECTED;
+
+			addr_t index = 0;
+			try {
+				index  = _job_queue.alloc();
+			} catch (...) { return Response::RETRY; }
+
+			Job_object &job = _job_queue.job(index);
+
+			Operation op     = request.operation;
+			op.block_number += partition.lba;
+
+			job.construct(_block, op, _job_registry, index, number, request, addr);
+
+			return Response::ACCEPTED;
+		}
+
+		Response sync(long number)
+		{
+			addr_t index = 0;
+			try {
+				index = _job_queue.alloc();
+			} catch (...) { return Response::RETRY; }
+
+			Job_object &job = _job_queue.job(index);
+			Operation op;
+			op.type = Operation::Type::SYNC;
+			job.construct(_block, op, _job_registry, index, number, Request(), 0);
+
+			return Response::ACCEPTED;
 		}
 
 		void acknowledge_completed(bool all = true, long number = -1) override
 		{
-			_job_registry.for_each([&] (Block::Job &job) {
+			_job_registry.for_each([&] (Job &job) {
 				if (!job.completed) return;
 
 				addr_t index = job.index;
@@ -402,10 +455,8 @@ class Main : Rpc_object<Typed_root<Block::Session>>,
 };
 
 
-Block::Partition_table & Main::_table()
+Block::Partition_table & Block::Main::_table()
 {
-	using namespace Genode;
-
 	Xml_node const config = _config.xml();
 
 	bool const ignore_gpt = config.attribute_value("ignore_gpt", false);
@@ -437,7 +488,7 @@ Block::Partition_table & Main::_table()
 		try { valid_mbr = _mbr.parse(); }
 		catch (Mbr_partition_table::Protective_mbr_found) {
 			pmbr_found = true;
-		}
+		} catch (...) { };
 	}
 
 	if (!ignore_gpt) {
@@ -450,7 +501,6 @@ Block::Partition_table & Main::_table()
 	 * conjunction with a GPT header - hybrid operation is not supported)
 	 * and we will not decide which one to use, it is up to the user.
 	 */
-
 	if (valid_mbr && valid_gpt) {
 		error("ambigious tables: found valid MBR as well as valid GPT");
 		throw Ambiguous_tables();
@@ -476,4 +526,4 @@ Block::Partition_table & Main::_table()
 	throw No_partion_table();
 }
 
-void Component::construct(Genode::Env &env) { static Main main(env); }
+void Component::construct(Genode::Env &env) { static Block::Main main(env); }

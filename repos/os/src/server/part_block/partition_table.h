@@ -6,7 +6,7 @@
  */
 
 /*
- * Copyright (C) 2013-2017 Genode Labs GmbH
+ * Copyright (C) 2013-2019 Genode Labs GmbH
  *
  * This file is part of the Genode OS framework, which is distributed
  * under the terms of the GNU Affero General Public License version 3.
@@ -34,22 +34,23 @@ namespace Block {
 
 struct Block::Partition
 {
-	uint64_t lba;     /* logical block address on device */
-	uint64_t sectors; /* number of sectors in patitions */
+	block_number_t lba;     /* logical block address on device */
+	block_count_t  sectors; /* number of sectors in patitions */
 
-	Partition(uint64_t l, uint64_t s)
-	: lba(l), sectors(s) { }
+	Partition(block_number_t lba, block_count_t sectors)
+	: lba(lba), sectors(sectors) { }
 };
+
 
 struct Block::Job : public Block_connection::Job
 {
 	Registry<Job>::Element registry_element;
-	addr_t  const index;
-	long    const number;
+	addr_t  const index;                /* job index */
+	long    const number;               /* parition number */
 	Request       request;
-	addr_t  const addr;
+	addr_t  const addr;                 /* target payload address */
 	bool          completed { false };
-	off_t         offset { 0 };
+	off_t         offset { 0 };         /* current offset in payload for partial jobs */
 
 	Job(Block_connection &connection,
 	    Operation operation,
@@ -61,9 +62,11 @@ struct Block::Job : public Block_connection::Job
 	  index(index), number(number),  request(request), addr(addr) { }
 };
 
+
 struct Block::Partition_table : Interface
 {
 		struct Sector;
+
 		struct Sector_data
 		{
 			Env              &env;
@@ -75,14 +78,17 @@ struct Block::Partition_table : Interface
 			: env(env), block(block), alloc(alloc) { }
 		};
 
+		/**
+		 * Read sectors synchronously
+		 */
 		class Sector
 		{
 			private:
 
-				Sector_data       &_data;
-				bool               _completed { false };
-				size_t             _size { 0 };
-				void              *_buffer { nullptr };
+				Sector_data &_data;
+				bool         _completed { false };
+				size_t       _size { 0 };
+				void        *_buffer { nullptr };
 
 			public:
 
@@ -114,7 +120,6 @@ struct Block::Partition_table : Interface
 				void consume_read_result(Block_connection::Job &job, off_t offset,
 				                         char const *src, size_t length)
 				{
-					log("consume: offset: ", Hex(offset), " length: ", length);
 					_buffer = _data.alloc.alloc(length);
 					memcpy(_buffer, src, length);
 					_size = length;
@@ -127,9 +132,10 @@ struct Block::Partition_table : Interface
 					log("completed: ", success);
 					_completed = true;
 
-					if (!success)
-						error("IO error");
-					//XXX throw error
+					if (!success) {
+						error("IO error during partition parsing");
+						throw -1;
+					}
 				}
 
 				template <typename T> T addr() const {

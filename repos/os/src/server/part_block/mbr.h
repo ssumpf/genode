@@ -8,7 +8,7 @@
  */
 
 /*
- * Copyright (C) 2013-2017 Genode Labs GmbH
+ * Copyright (C) 2013-2019 Genode Labs GmbH
  *
  * This file is part of the Genode OS framework, which is distributed
  * under the terms of the GNU Affero General Public License version 3.
@@ -26,10 +26,11 @@
 #include "fsprobe.h"
 #include "ahdi.h"
 
-///XXX: 
-using namespace Genode;
+namespace Block {
+	struct Mbr_partition_table;
+};
 
-struct Mbr_partition_table : public Block::Partition_table
+struct Block::Mbr_partition_table : public Block::Partition_table
 {
 	public:
 
@@ -101,7 +102,7 @@ struct Mbr_partition_table : public Block::Partition_table
 		enum { MAX_PARTITIONS = 32 };
 
 		/* contains pointers to valid partitions or 0 */
-		Constructible<Block::Partition> _part_list[MAX_PARTITIONS];
+		Constructible<Partition> _part_list[MAX_PARTITIONS];
 
 		template <typename FUNC>
 		void _parse_extended(Partition_record const &record, FUNC const &f) const
@@ -162,7 +163,7 @@ struct Mbr_partition_table : public Block::Partition_table
 
 		using Partition_table::Partition_table;
 
-		Block::Partition &partition(long num) override
+		Partition &partition(long num) override
 		{
 			if (num < 0 || num > MAX_PARTITIONS)
 				throw -1;
@@ -183,8 +184,6 @@ struct Mbr_partition_table : public Block::Partition_table
 
 		bool parse() override
 		{
-			using namespace Genode;
-
 			block.sigh(io_sigh);
 
 			Sector s(data, 0, 1);
@@ -199,29 +198,29 @@ struct Mbr_partition_table : public Block::Partition_table
 					    r.sectors(), " blocks) type: ",
 					    Hex(r.type(), Hex::OMIT_PREFIX));
 					if (!r.extended())
-						_part_list[i].construct(Block::Partition(r.lba() + offset, r.sectors()));
+						_part_list[i].construct(Partition(r.lba() + offset, r.sectors()));
 				});
 			}
 
 			/* check for AHDI partition table */
 			bool const ahdi_valid = !mbr_valid && Ahdi::valid(s);
 			if (ahdi_valid)
-				Ahdi::for_each_partition(s, [&] (unsigned i, Block::Partition info) {
+				Ahdi::for_each_partition(s, [&] (unsigned i, Partition info) {
 					if (i < MAX_PARTITIONS)
 						_part_list[i].construct(
-							Block::Partition(info.lba, info.sectors)); });
+							Partition(info.lba, info.sectors)); });
 
 			/* no partition table, use whole disc as partition 0 */
 			if (!mbr_valid && !ahdi_valid)
 				_part_list[0].construct(
-					Block::Partition(0, block.info().block_count - 1));
+					Partition(0, block.info().block_count - 1));
 
 			/* report the partitions */
 			if (reporter.enabled()) {
 
 				auto gen_partition_attr = [&] (Xml_generator &xml, unsigned i)
 				{
-					Block::Partition const &part = *_part_list[i];
+					Partition const &part = *_part_list[i];
 
 					size_t const block_size = block.info().block_size;
 

@@ -1,11 +1,12 @@
 /*
  * \brief  GUID Partition table definitions
  * \author Josef Soentgen
+ * \author Sebastian Sumpf
  * \date   2014-09-19
  */
 
 /*
- * Copyright (C) 2014-2017 Genode Labs GmbH
+ * Copyright (C) 2014-2019 Genode Labs GmbH
  *
  * This file is part of the Genode OS framework, which is distributed
  * under the terms of the GNU Affero General Public License version 3.
@@ -24,38 +25,20 @@
 #include "partition_table.h"
 #include "fsprobe.h"
 
-namespace {
+static bool constexpr verbose = false;
 
-static bool const verbose = false;
+namespace Block {
+	class Gpt;
+};
 
-/* simple bitwise CRC32 checking */
-static inline Genode::uint32_t crc32(Genode::addr_t buf, Genode::size_t size)
-{
-	Genode::uint8_t const *p = reinterpret_cast<Genode::uint8_t const*>(buf);
-	Genode::uint32_t crc = ~0U;
-
-	while (size--) {
-		crc ^= *p++;
-		for (Genode::uint32_t j = 0; j < 8; j++)
-			crc = (-Genode::int32_t(crc & 1) & 0xedb88320) ^ (crc >> 1);
-	}
-
-	return crc ^ ~0U;
-}
-
-} /* anonymous namespace */
-
-//XXX:
-using namespace Genode;
-
-class Gpt : public Block::Partition_table
+class Block::Gpt : public Block::Partition_table
 {
 	private:
 
 		enum { MAX_PARTITIONS = 128 };
 
 		/* contains valid partitions or not constructed */
-		Constructible<Block::Partition> _part_list[MAX_PARTITIONS];
+		Constructible<Partition> _part_list[MAX_PARTITIONS];
 
 		typedef Block::Partition_table::Sector Sector;
 
@@ -85,7 +68,7 @@ class Gpt : public Block::Partition_table
 			{
 				static char buffer[37 + 1];
 
-				Genode::snprintf(buffer, sizeof(buffer),
+				snprintf(buffer, sizeof(buffer),
 				                 "%08X-%04X-%04X-%02X%02X-%06lx",
 				                 read<Time_low>(), read<Time_mid>(), read<Time_hi_and_version>(),
 				                 read<Clock_seq_hi_and_reserved>(), read<Clock_seq_low>(),
@@ -130,11 +113,23 @@ class Gpt : public Block::Partition_table
 			uint32_t entries() const { return read<Entries>(); }
 			uint32_t entry_size() const  { return read<Entry_size>(); }
 
+			uint32_t crc32(addr_t buf, size_t size)
+			{
+				uint8_t const *p = reinterpret_cast<uint8_t const*>(buf);
+				uint32_t crc = ~0U;
+
+				while (size--) {
+					crc ^= *p++;
+					for (uint32_t j = 0; j < 8; j++)
+						crc = (-int32_t(crc & 1) & 0xedb88320) ^ (crc >> 1);
+				}
+
+				return crc ^ ~0U;
+			}
+
 			void dump_hdr(bool check_primary)
 			{
 				if (!verbose) return;
-
-				using namespace Genode;
 
 				log("GPT ", check_primary ? "primary" : "backup", " header:");
 				log(" rev: ", read<Revision>());
@@ -152,7 +147,7 @@ class Gpt : public Block::Partition_table
 				log(" gpe crc: ", Hex(read<Gpe_crc>(), Hex::OMIT_PREFIX));
 			}
 
-			bool valid(Block::Partition_table::Sector_data &data, bool check_primary = true)
+			bool valid(Partition_table::Sector_data &data, bool check_primary = true)
 			{
 				dump_hdr(check_primary);
 
@@ -269,14 +264,12 @@ class Gpt : public Block::Partition_table
 		 *
 		 * \return the number of free blocks to the next logical entry
 		 */
-		Genode::uint64_t _calculate_gap(Gpt_hdr   const &header,
-		                                Gpt_entry const &entry,
-		                                Gpt_entry const &entries,
-		                                Genode::uint32_t num,
-		                                Genode::uint64_t total_blocks)
+		uint64_t _calculate_gap(Gpt_hdr   const &header,
+		                        Gpt_entry const &entry,
+		                        Gpt_entry const &entries,
+		                        Genode::uint32_t num,
+		                        Genode::uint64_t total_blocks)
 		{
-			using namespace Genode;
-
 			/* add one block => end == start */
 			uint64_t const end_lba = entry.lba_end() + 1;
 
@@ -301,7 +294,7 @@ class Gpt : public Block::Partition_table
 			if (end_lba > header.part_lba_end()) { return 0; }
 
 			/* if the underyling Block device changes we might be able to expand more */
-			Genode::uint64_t const part_end = max(header.part_lba_end(), total_blocks);
+			uint64_t const part_end = max(header.part_lba_end(), total_blocks);
 
 			/*
 			 * Use stored next start LBA or paritions end LBA from header,
@@ -321,12 +314,10 @@ class Gpt : public Block::Partition_table
 		 *
 		 * \return the number of used blocks
 		 */
-		Genode::uint64_t _calculate_used(Gpt_hdr const &header,
+		uint64_t _calculate_used(Gpt_hdr const &header,
 		                                 Gpt_entry const &entries,
 		                                 uint32_t num)
 		{
-			using namespace Genode;
-
 			uint64_t used = 0;
 
 			for (uint32_t i = 0; i < num; i++) {
@@ -348,7 +339,7 @@ class Gpt : public Block::Partition_table
 		void _parse_gpt(Gpt_hdr &gpt)
 		{
 			if (!(gpt.valid(data)))
-				throw Genode::Exception();
+				throw Exception();
 
 			Sector entry_array(data, gpt.gpe_lba(),
 			                   gpt.entries() * gpt.entry_size() / block.info().block_size);
@@ -374,17 +365,17 @@ class Gpt : public Block::Partition_table
 			/* Report the partitions */
 			if (reporter.enabled())
 			{
-				Genode::Reporter::Xml_generator xml(reporter, [&] () {
+				Reporter::Xml_generator xml(reporter, [&] () {
 					xml.attribute("type", "gpt");
 
-					Genode::uint64_t const total_blocks = block.info().block_count;
+					uint64_t const total_blocks = block.info().block_count;
 					xml.attribute("total_blocks", total_blocks);
 
-					Genode::uint64_t const gpt_total =
+					uint64_t const gpt_total =
 						(gpt.part_lba_end() - gpt.part_lba_start()) + 1;
 					xml.attribute("gpt_total", gpt_total);
 
-					Genode::uint64_t const gpt_used =
+					uint64_t const gpt_used =
 						_calculate_used(gpt, entries, gpt.entries());
 					xml.attribute("gpt_used", gpt_used);
 
@@ -397,7 +388,7 @@ class Gpt : public Block::Partition_table
 
 						enum { BYTES = 4096, };
 						Sector fs(data, e.lba_start(), BYTES / block.info().block_size);
-						Fs::Type fs_type = Fs::probe(fs.addr<Genode::uint8_t*>(), BYTES);
+						Fs::Type fs_type = Fs::probe(fs.addr<uint8_t*>(), BYTES);
 
 						xml.node("partition", [&] () {
 							xml.attribute("number", i + 1);
@@ -408,7 +399,7 @@ class Gpt : public Block::Partition_table
 							xml.attribute("length", e.lba_end() - e.lba_start() + 1);
 							xml.attribute("block_size", block.info().block_size);
 
-							Genode::uint64_t const gap = _calculate_gap(gpt, e, entries,
+							uint64_t const gap = _calculate_gap(gpt, e, entries,
 							                                            gpt.entries(),
 							                                            total_blocks);
 							if (gap) { xml.attribute("expandable", gap); }
@@ -427,7 +418,7 @@ class Gpt : public Block::Partition_table
 
 		using Partition_table::Partition_table;
 
-		Block::Partition &partition(long num) override
+		Partition &partition(long num) override
 		{
 			num -= 1;
 
