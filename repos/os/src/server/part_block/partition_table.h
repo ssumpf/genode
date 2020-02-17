@@ -21,8 +21,6 @@
 #include <block_session/connection.h>
 #include <os/reporter.h>
 
-#include "driver.h"
-
 namespace Block {
 	struct Partition;
 	class  Partition_table;
