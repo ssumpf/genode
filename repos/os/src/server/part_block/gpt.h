@@ -153,7 +153,6 @@ class Block::Gpt : public Block::Partition_table
 				/* check sig */
 				uint64_t const magic = 0x5452415020494645; /* "EFI PART" - ascii */;
 				if (read<Sig>() != magic) {
-					log("magic: ", Hex(magic), " sig: ", Hex(read<Sig>()));
 					return false;
 				}
 
