@@ -7,7 +7,7 @@
  */
 
 /*
- * Copyright (C) 2011-2019 Genode Labs GmbH
+ * Copyright (C) 2011-2020 Genode Labs GmbH
  *
  * This file is part of the Genode OS framework, which is distributed
  * under the terms of the GNU Affero General Public License version 3.
@@ -16,6 +16,7 @@
 #include <base/attached_rom_dataspace.h>
 #include <base/attached_ram_dataspace.h>
 #include <base/component.h>
+#include <base/heap.h>
 #include <block_session/rpc_object.h>
 #include <block/request_stream.h>
 #include <os/session_policy.h>
@@ -68,7 +69,7 @@ struct Block::Dispatch : Interface
 	virtual Response submit(long number, Request const &request, addr_t addr) = 0;
 	virtual void update() = 0;
 	virtual void acknowledge_completed(bool all = true, long number = -1) = 0;
-	virtual Response sync(long number) = 0;
+	virtual Response sync(long number, Request const &request) = 0;
 };
 
 
@@ -170,13 +171,13 @@ class Block::Session_component : public Rpc_object<Block::Session>,
 					}
 
 					if (request.operation.type == Operation::Type::SYNC) {
-						response = _dispatcher.sync(_number);
+						response = _dispatcher.sync(_number, request);
 						if (response == Response::ACCEPTED) syncing = true;
 						return response;
 					}
 
 					with_payload([&] (Request_stream::Payload const &payload) {
-						payload.with_content(request, [&] (void *addr, size_t size) {
+						payload.with_content(request, [&] (void *addr, size_t) {
 							response = _dispatcher.submit(_number, request, addr_t(addr));
 						});
 					});
@@ -221,9 +222,9 @@ class Block::Main : Rpc_object<Typed_root<Session>>,
 		Partition_table        &_partition_table { _table() };
 
 		enum { MAX_SESSIONS = 32 };
-		Session_component *  _sessions[MAX_SESSIONS] { };
-		Job_queue<128>       _job_queue;
-		Registry<Block::Job> _job_registry;
+		Session_component   *_sessions[MAX_SESSIONS] { };
+		Job_queue<128>       _job_queue { };
+		Registry<Block::Job> _job_registry { };
 
 		void _wakeup_clients()
 		{
@@ -251,6 +252,10 @@ class Block::Main : Rpc_object<Typed_root<Session>>,
 			acknowledge_completed();
 			_wakeup_clients();
 		}
+
+		Main(Main const &);
+		Main &operator = (Main const &);
+
 
 	public:
 
@@ -366,7 +371,7 @@ class Block::Main : Rpc_object<Typed_root<Session>>,
 		 ** Update_jobs_policy **
 		 ************************/
 
-		void consume_read_result(Job &job, off_t offset,
+		void consume_read_result(Job &job, off_t,
 		                         char const *src, size_t length)
 		{
 			if (!_sessions[job.number]) return;
@@ -375,7 +380,7 @@ class Block::Main : Rpc_object<Typed_root<Session>>,
 			job.offset += length;
 		}
 
-		void produce_write_content(Job &job, off_t offset, char *dst, size_t length)
+		void produce_write_content(Job &job, off_t, char *dst, size_t length)
 		{
 			memcpy(dst, (void *)(job.addr + job.offset), length);
 			job.offset += length;
@@ -417,7 +422,7 @@ class Block::Main : Rpc_object<Typed_root<Session>>,
 			return Response::ACCEPTED;
 		}
 
-		Response sync(long number)
+		Response sync(long number, Request const &request) override
 		{
 			addr_t index = 0;
 			try {
@@ -427,7 +432,7 @@ class Block::Main : Rpc_object<Typed_root<Session>>,
 			Job_object &job = _job_queue.job(index);
 			Operation op;
 			op.type = Operation::Type::SYNC;
-			job.construct(_block, op, _job_registry, index, number, Request(), 0);
+			job.construct(_block, op, _job_registry, index, number, request, 0);
 
 			return Response::ACCEPTED;
 		}

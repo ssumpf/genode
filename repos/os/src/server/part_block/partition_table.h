@@ -6,7 +6,7 @@
  */
 
 /*
- * Copyright (C) 2013-2019 Genode Labs GmbH
+ * Copyright (C) 2013-2020 Genode Labs GmbH
  *
  * This file is part of the Genode OS framework, which is distributed
  * under the terms of the GNU Affero General Public License version 3.
@@ -90,6 +90,9 @@ struct Block::Partition_table : Interface
 				size_t       _size { 0 };
 				void        *_buffer { nullptr };
 
+				Sector(Sector const &);
+				Sector &operator = (Sector const &);
+
 			public:
 
 				Sector(Sector_data &data, block_number_t block_number, block_count_t count)
@@ -117,7 +120,7 @@ struct Block::Partition_table : Interface
 					_data.block.update_jobs(*this);
 				}
 
-				void consume_read_result(Block_connection::Job &job, off_t offset,
+				void consume_read_result(Block_connection::Job &, off_t,
 				                         char const *src, size_t length)
 				{
 					_buffer = _data.alloc.alloc(length);
@@ -125,11 +128,10 @@ struct Block::Partition_table : Interface
 					_size = length;
 				}
 
-				void produce_write_content(Block_connection::Job &job, off_t offset, char *dst, size_t length) { }
+				void produce_write_content(Block_connection::Job &, off_t, char *, size_t) { }
 
-				void completed(Block_connection::Job &job, bool success)
+				void completed(Block_connection::Job &, bool success)
 				{
-					log("completed: ", success);
 					_completed = true;
 
 					if (!success) {

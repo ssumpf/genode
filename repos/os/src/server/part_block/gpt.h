@@ -6,7 +6,7 @@
  */
 
 /*
- * Copyright (C) 2014-2019 Genode Labs GmbH
+ * Copyright (C) 2014-2020 Genode Labs GmbH
  *
  * This file is part of the Genode OS framework, which is distributed
  * under the terms of the GNU Affero General Public License version 3.
@@ -21,7 +21,6 @@
 #include <util/misc_math.h>
 #include <util/mmio.h>
 
-#include "driver.h"
 #include "partition_table.h"
 #include "fsprobe.h"
 

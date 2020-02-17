@@ -8,7 +8,7 @@
  */
 
 /*
- * Copyright (C) 2013-2019 Genode Labs GmbH
+ * Copyright (C) 2013-2020 Genode Labs GmbH
  *
  * This file is part of the Genode OS framework, which is distributed
  * under the terms of the GNU Affero General Public License version 3.
@@ -62,6 +62,7 @@ struct Block::Mbr_partition_table : public Block::Partition_table
 
 			bool valid()       const { return read<Type>() != Type::INVALID; }
 			bool extended()    const { return read<Type>() == Type::EXTENTED_CHS ||
+			                                  read<Type>() == Type::EXTENTED_LBA; }
 			bool protective()  const { return read<Type>() == Type::PROTECTIVE; }
 			uint8_t  type()    const { return read<Type>(); }
 			unsigned lba()     const { return read<Lba>(); }
