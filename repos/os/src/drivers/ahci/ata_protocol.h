@@ -308,24 +308,26 @@ class Ata::Protocol : public Ahci::Protocol, Noncopyable
 			                    op.count * _block_size());
 
 			/* setup ATA command */
-			bool const read = op.type != Block::Operation::Type::WRITE;
-			bool const sync = op.type == Block::Operation::Type::SYNC;
+
+			/* write bit for command header + read/write ATA requests */
+			bool const write = (op.type == Block::Operation::Type::WRITE);
+			bool const sync  = (op.type == Block::Operation::Type::SYNC);
 
 			if (sync) {
 				table.fis.flush_cache_ext();
 			} else if (_ncq_support(port)) {
-				table.fis.fpdma(read, op.block_number, op.count, slot);
+				table.fis.fpdma(write == false, op.block_number, op.count, slot);
 				/* ensure that 'Cmd::St' is 1 before writing 'Sact' */
 				port.start();
 				/* set pending */
 				port.write<Port::Sact>(1U << slot);
 			} else {
-				table.fis.dma_ext(read, op.block_number, op.count);
+				table.fis.dma_ext(write == false, op.block_number, op.count);
 			}
 
 			/* set or clear write flag in command header */
 			Command_header header(port.command_header_addr(slot));
-			header.write<Command_header::Bits::W>(read ? 0 : 1);
+			header.write<Command_header::Bits::W>(write ? 1 : 0);
 			header.clear_byte_count();
 
 			port.execute(slot);
