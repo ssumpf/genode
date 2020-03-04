@@ -36,7 +36,7 @@ Redesign of the administrative user interface of Sculpt OS
 ##########################################################
 
 On our [https://genode.org/about/road-map - road map] for 2020, we stated
-the dwarfing of the barrier of entry as our main concern of the year.
+the reducing of the barrier of entry as our main concern of the year.
 We highlighted the ease of use of Sculpt OS as one particular work area.
 
 
@@ -595,7 +595,7 @@ of the different windows. It exports a data model of the window layout.
 Although, the example implementation of the window layouter introduced in
 14.08 was simple, it already contained a notion of having different virtual
 screens and screen sections, beside the actual window placements. However,
-until now there was no use-case of switching dynamically in between different
+until now there was no use-case of switching dynamically between different
 virtual screens respectively window sets related to them.
 
 While using more and more different graphical components within Sculpt, the
