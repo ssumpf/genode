@@ -126,7 +126,7 @@
 
 	memory@40000000 {
 		device_type = "memory";
-		reg = <0x0 0x40000000 0x0 0x40000000>;
+		reg = <0x0 0x40000000 0x0 0x38400000>;
 	};
 
 	reserved-memory {
@@ -1958,7 +1958,7 @@
 	};
 
 	chosen {
-		bootargs = "console=ttymxc0,115200 earlycon=pl011,0x9000000 init=/init";
+		bootargs = "console=ttymxc0,115200 earlycon=pl011,0x9000000 init=/init cma=32M";
 
 /*androidboot.gui_resolution=1080p androidboot.console=ttymxc0
  * androidboot.hardware=freescale androidboot.fbTileSupport=enable cma=1280M
