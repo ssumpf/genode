@@ -16,7 +16,7 @@
 
 #include <base/stdint.h>
 #include <exception.h>
-
+#include <base/log.h>
 class Ram {
 
 	private:
@@ -30,7 +30,10 @@ class Ram {
 		Ram(Genode::addr_t const addr,
 		    Genode::size_t const sz,
 		    Genode::addr_t const local)
-		: _base(addr), _size(sz), _local(local) { }
+		: _base(addr), _size(sz), _local(local)
+		{
+			Genode::log("RAM: ", Genode::Hex(addr), " - ", Genode::Hex(addr + sz - 1));
+		}
 
 		Genode::addr_t base()  const { return _base;  }
 		Genode::size_t size()  const { return _size;  }

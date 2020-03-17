@@ -55,8 +55,8 @@ install_config {
 		<resource name="RAM" quantum="2M"/>
 		<provides> <service name="Terminal"/> </provides>
 	</start>
-	<start name="vmm" caps="200" priority="-1">
-		<resource name="RAM" quantum="256M"/>
+	<start name="vmm" caps="400" priority="-1">
+		<resource name="RAM" quantum="2G"/>
 		<route>
 			<service name="Terminal" label="earlycon"> <child name="log_terminal"/> </service>
 			<service name="Terminal"> <child name="log_terminal"/> </service>

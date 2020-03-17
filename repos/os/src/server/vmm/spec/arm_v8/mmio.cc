@@ -90,6 +90,7 @@ void Vmm::Mmio_bus::handle_memory_access(Vmm::Cpu & cpu)
 		struct Access_size  : Bitfield<22, 2> {
 			enum { BYTE, HALFWORD, WORD, DOUBLEWORD }; };
 		struct Valid        : Bitfield<24, 1> {};
+		struct Ec       : Bitfield<26, 6> {};
 
 		static bool valid(access_t v) {
 			return Valid::get(v) && !Sign_extend::get(v); }
@@ -98,14 +99,19 @@ void Vmm::Mmio_bus::handle_memory_access(Vmm::Cpu & cpu)
 		static unsigned r(access_t v) { return Register::get(v); }
 	};
 
-	if (!Iss::valid(state.esr_el2))
-		throw Exception("Mmio_bus: unknown ESR=", Genode::Hex(state.esr_el2));
 
 	bool     wr    = Iss::Write::get(state.esr_el2);
 	unsigned idx   = Iss::Register::get(state.esr_el2);
 	uint64_t ipa   = ((uint64_t)state.hpfar_el2 << 8)
 	                 + (state.far_el2 & ((1 << 12) - 1));
 	uint64_t width = 1 << Iss::Access_size::get(state.esr_el2);
+
+	if (!Iss::valid(state.esr_el2))
+		throw Exception("Mmio_bus: unknown ESR=", Genode::Hex(state.esr_el2),
+		                " valid=", Iss::Valid::get(state.esr_el2), " sign ext=",
+		                Iss::Sign_extend::get(state.esr_el2), " ec=",
+		                Genode::Hex(Iss::Ec::get(state.esr_el2)),
+		                " ipa=", Genode::Hex(ipa), " width=", width);
 
 	try {
 		Address_range bus_range(ipa, width);
