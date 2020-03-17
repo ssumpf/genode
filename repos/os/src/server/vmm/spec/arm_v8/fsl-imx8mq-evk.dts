@@ -50,7 +50,7 @@
 			dc-supply = <0x5>;
 			phandle = <0x6>;
 		};
-
+/*
 		cpu@1 {
 			device_type = "cpu";
 			compatible = "arm,cortex-a53";
@@ -80,7 +80,7 @@
 			cpu-idle-states = <0x3>;
 			phandle = <0x9>;
 		};
-
+*/
 		l2-cache0 {
 			compatible = "cache";
 			phandle = <0x2>;
@@ -89,7 +89,7 @@
 
 	psci {
 		compatible = "arm,psci-1.0";
-		method = "smc";
+		method = "hvc";
 		cpu_suspend = <0xc4000001>;
 		cpu_off = <0xc4000002>;
 		cpu_on = <0xc4000003>;
@@ -126,7 +126,7 @@
 
 	memory@40000000 {
 		device_type = "memory";
-		reg = <0x0 0x40000000 0x0 0xc0000000>;
+		reg = <0x0 0x40000000 0x0 0x40000000>;
 	};
 
 	reserved-memory {
@@ -1941,9 +1941,33 @@
 		phandle = <0x5d>;
 	};
 
+	apb-pclk {
+		compatible = "fixed-clock";
+		phandle = <0x8000>;
+		clock-output-names = "clk24mhz";
+		clock-frequency = <0x16e3600>;
+		#clock-cells = <0x00>;
+	};
+
+	pl011@9000000 {
+		interrupts = <0x00 0x01 0x04>;
+		compatible = "arm,pl011\0arm,primecell";
+		clock-names = "uartclk\0apb_pclk";
+		reg = <0x00 0x9000000 0x00 0x1000>;
+		clocks = <0x8000 0x8000>;
+	};
+
 	chosen {
-		bootargs = "console=ttymxc0,115200 earlycon=ec_imx6q,0x30860000,115200";
-		stdout-path = "/serial@30860000";
+		bootargs = "console=ttymxc0,115200 earlycon=pl011,0x9000000 init=/init";
+
+/*androidboot.gui_resolution=1080p androidboot.console=ttymxc0
+ * androidboot.hardware=freescale androidboot.fbTileSupport=enable cma=1280M
+ * androidboot.primary_display=imx-drm firmware _class.path=/vendor/firmware
+ * transparent_hugepage=never loop.max_part=7 androidboot.lcd_density=213
+ * androidboot.wificountrycode=CN buildvariant=user"; */
+		linux,initrd-start = <0x42000000>;
+		linux,initrd-end   = <0x4205f9f5>;
+		stdout-path = "/pl011@9000000";
 	};
 
 	regulators {
