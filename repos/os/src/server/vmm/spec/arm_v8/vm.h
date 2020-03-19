@@ -18,9 +18,9 @@
 #include <exception.h>
 #include <cpu.h>
 #include <gic.h>
+#include <hw_device.h>
 #include <pl011.h>
 #include <virtio_console.h>
-#include <virtio_net.h>
 
 #include <base/attached_ram_dataspace.h>
 #include <base/attached_rom_dataspace.h>
@@ -64,6 +64,42 @@ class Vmm::Vm
 		void _load_kernel();
 		void _load_dtb();
 		void _load_initrd();
+
+		typedef Hw_device<1,2> Direct_device;
+		typedef void (*Resources)(Direct_device &);
+
+		enum { NUMBER_HW_DESCR = 17 };
+
+		/* pass-through devices in order of appearance */
+		Resources const _hw_descriptors[NUMBER_HW_DESCR] {
+			[](Direct_device &device) { device.mmio(0x30360000, 0x10000); device.irqs(63); }, /* anatop */
+			[](Direct_device &device) { device.mmio(0x30380000, 0x10000); device.irqs(177, 118); }, /* ccm */
+			[](Direct_device &device) { device.mmio(0x306a0000, 0x30000); device.irqs(79, 80); }, /* system counter */
+			[](Direct_device &device) { device.mmio(0x30350000, 0x10000);                      }, /* ocotp-ctrl */
+			[](Direct_device &device) { device.mmio(0x30330000, 0x10000);                      }, /* iomuxc */
+			[](Direct_device &device) { device.mmio(0x30200000, 0x10000); device.irqs(96, 97);   }, /* gpio */
+			[](Direct_device &device) { device.mmio(0x30210000, 0x10000); device.irqs(98, 99);   }, /* gpio */
+			[](Direct_device &device) { device.mmio(0x30220000, 0x10000); device.irqs(100, 101); }, /* gpio */
+			[](Direct_device &device) { device.mmio(0x30230000, 0x10000); device.irqs(102, 103); }, /* gpio */
+			[](Direct_device &device) { device.mmio(0x30240000, 0x10000); device.irqs(104, 105); }, /* gpio */
+			[](Direct_device &device) { device.mmio(0x30a20000, 0x10000); device.irqs(67); }, /* i2c */
+			[](Direct_device &device) { device.mmio(0x30a30000, 0x10000); device.irqs(68); }, /* i2c */
+			[](Direct_device &device) { device.mmio(0x30a40000, 0x10000); device.irqs(69); }, /* i2c */
+			[](Direct_device &device) { device.mmio(0x30bd0000, 0x10000); device.irqs(34); }, /* sdma */
+			[](Direct_device &device) { device.mmio(0x302c0000, 0x10000); device.irqs(135); }, /* sdma */
+			[](Direct_device &device) { device.mmio(0x33000000, 0x2000); device.irqs(44); }, /* dma-apbh */
+			[](Direct_device &device) { device.mmio(0x30860000, 0x10000); device.irqs(58); }, /* serial */
+		};
+
+		Genode::Constructible<Direct_device> _hw_devices[NUMBER_HW_DESCR];
+
+		void _construct_hw()
+		{
+			for (unsigned index = 0; index < NUMBER_HW_DESCR; index++) {
+				_hw_devices[index].construct(_env, _vm, boot_cpu());
+				_hw_descriptors[index](*_hw_devices[index]);
+			}
+		}
 
 	public:
 

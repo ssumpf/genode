@@ -52,6 +52,10 @@ Vm::Vm(Genode::Env & env)
   _uart("Pl011", 0x9000000, 0x1000, 33, boot_cpu(), _bus, env),
   _virtio_console("HVC", 0xa000000, 0x200,  48, boot_cpu(), _bus, _ram, env)
 {
+
+	/* initialize pass-through hardware */
+	_construct_hw();
+
 	_vm.attach(_vm_ram.cap(), RAM_ADDRESS);
 
 	/* FIXME extend for gicv2 by: _vm.attach_pic(0x8010000); */
