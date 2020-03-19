@@ -36,10 +36,10 @@ class Vmm::Vm
 
 		enum {
 			RAM_ADDRESS   = 0x40000000,
-			RAM_SIZE      = 900 *1024 * 1024,
+			RAM_SIZE      = 900 * 1024 * 1024,
 			KERNEL_OFFSET = 0x80000,
-			INITRD_OFFSET = 32 * 1024 * 1024,
-			DTB_OFFSET    = 64 * 1024 * 1024,
+			INITRD_OFFSET = 48 * 1024 * 1024,
+			DTB_OFFSET    = 80 * 1024 * 1024,
 			MAX_CPUS      = 1,
 			STACK_SIZE    = sizeof(unsigned long) * 2048,
 		};
@@ -60,7 +60,6 @@ class Vmm::Vm
 		Genode::Constructible<Cpu>     _cpus[MAX_CPUS];
 		Pl011                          _uart;
 		Virtio_console                 _virtio_console;
-		Virtio_net                     _virtio_net;
 
 		void _load_kernel();
 		void _load_dtb();
