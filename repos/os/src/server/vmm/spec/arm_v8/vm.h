@@ -65,10 +65,10 @@ class Vmm::Vm
 		void _load_dtb();
 		void _load_initrd();
 
-		typedef Hw_device<1,2> Direct_device;
+		typedef Hw_device<2,4> Direct_device;
 		typedef void (*Resources)(Direct_device &);
 
-		enum { NUMBER_HW_DESCR = 17 };
+		enum { NUMBER_HW_DESCR = 35 };
 
 		/* pass-through devices in order of appearance */
 		Resources const _hw_descriptors[NUMBER_HW_DESCR] {
@@ -85,10 +85,29 @@ class Vmm::Vm
 			[](Direct_device &device) { device.mmio(0x30a20000, 0x10000); device.irqs(67); }, /* i2c */
 			[](Direct_device &device) { device.mmio(0x30a30000, 0x10000); device.irqs(68); }, /* i2c */
 			[](Direct_device &device) { device.mmio(0x30a40000, 0x10000); device.irqs(69); }, /* i2c */
+			[](Direct_device &device) { device.mmio(0x30a50000, 0x10000); device.irqs(70); }, /* i2c */
 			[](Direct_device &device) { device.mmio(0x30bd0000, 0x10000); device.irqs(34); }, /* sdma */
 			[](Direct_device &device) { device.mmio(0x302c0000, 0x10000); device.irqs(135); }, /* sdma */
-			[](Direct_device &device) { device.mmio(0x33000000, 0x2000); device.irqs(44); }, /* dma-apbh */
+			[](Direct_device &device) { device.mmio(0x33000000, 0x2000);  device.irqs(44); }, /* dma-apbh */
 			[](Direct_device &device) { device.mmio(0x30860000, 0x10000); device.irqs(58); }, /* serial */
+			[](Direct_device &device) { device.mmio(0x303a0000, 0x10000); device.irqs(119); }, /* gpc (GENERAL POWER CONTROLLER!) */
+			[](Direct_device &device) {                                   device.irqs(39); }, /* pmu */
+			[](Direct_device &device) { device.mmio(0x30b40000, 0x10000); device.irqs(54); }, /* usdhc */
+			[](Direct_device &device) { device.mmio(0x30b50000, 0x10000); device.irqs(55); }, /* usdhc */
+			[](Direct_device &device) { device.mmio(0x302d0000, 0x10000); device.irqs(87); }, /* gpt */
+			[](Direct_device &device) { device.mmio(0x33002000, 0x6000);  device.irqs(46); }, /* gpmi-nand */
+			[](Direct_device &device) { device.mmio(0x38100000, 0x10000); device.irqs(72); }, /* usb */
+			[](Direct_device &device) { device.mmio(0x38200000, 0x10000); device.irqs(73); }, /* usb */
+			[](Direct_device &device) {                                   device.irqs(134, 141, 142, 143); }, /* busfreq */
+			[](Direct_device &device) { device.mmio(0x30370000, 0x10000); device.irqs(51, 52, 148); }, /* snvs */
+			[](Direct_device &device) { device.mmio(0x30820000, 0x10000); device.irqs(63); }, /* espi */
+			[](Direct_device &device) { device.mmio(0x30830000, 0x10000); device.irqs(64); }, /* espi */
+			[](Direct_device &device) { device.mmio(0x30840000, 0x10000); device.irqs(65); }, /* espi */
+			[](Direct_device &device) { device.mmio(0x30be0000, 0x10000); device.irqs(118, 119, 120); }, /* network */
+			[](Direct_device &device) { device.mmio(0x3d800000, 0x400000); device.irqs(132); }, /* ddr_pmu */
+			[](Direct_device &device) { device.mmio(0x30260000, 0x10000); device.irqs(81); }, /* tmu */
+			[](Direct_device &device) { device.mmio(0x32e2d000, 0x1000);  device.irqs(50); }, /* tmu */
+			//[](Direct_device &device) { device.mmio(0x30bb0000, 0x10000, 0x8000000, 0x10000000); device.irqs(139); }, /* qspi */
 		};
 
 		Genode::Constructible<Direct_device> _hw_devices[NUMBER_HW_DESCR];
