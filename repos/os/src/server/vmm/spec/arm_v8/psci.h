@@ -22,6 +22,7 @@ namespace Vmm {
 			MIGRATE_INFO_TYPE = 0x84000006,
 			PSCI_FEATURES     = 0x8400000a,
 			CPU_ON            = 0xc4000003,
+			CPU_SUSPEND       = 0xc4000001,
 		};
 
 		enum {

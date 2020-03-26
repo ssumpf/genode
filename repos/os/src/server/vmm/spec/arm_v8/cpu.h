@@ -306,6 +306,7 @@ class Vmm::Cpu
 		System_register                   _sr_mdscr;
 		System_register                   _sr_osdlr;
 		System_register                   _sr_oslar;
+		System_register                   _sr_oslsr;
 
 		/***********************
 		 ** Local peripherals **

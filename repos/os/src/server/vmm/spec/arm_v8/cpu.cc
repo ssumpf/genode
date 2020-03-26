@@ -263,6 +263,9 @@ void Cpu::_handle_hyper_call()
 			});
 			_state.r[0] = Psci::SUCCESS;
 			return;
+		case Psci::CPU_SUSPEND:
+			_state.r[0] = Psci::SUCCESS;
+			return;
 		default:
 			Genode::warning("unknown hypercall! ", cpu_id());
 			dump();
@@ -394,6 +397,7 @@ Cpu::Cpu(Vm                      & vm,
   _sr_mdscr           (2, 0, 0, 2, 2, "MDSCR_EL1",        true,  0x0, _reg_tree),
   _sr_osdlr           (2, 1, 0, 3, 4, "OSDLR_EL1",        true,  0x0, _reg_tree),
   _sr_oslar           (2, 1, 0, 0, 4, "OSLAR_EL1",        true,  0x0, _reg_tree),
+  _sr_oslsr           (2, 1, 0, 1, 4, "OSLSR_EL1",        true,  0x0, _reg_tree),
   _sr_sgi1r_el1       (_reg_tree, vm),
   _gic(*this, gic, bus),
   _timer(env, ep, _gic.irq(27), *this)
