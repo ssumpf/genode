@@ -56,6 +56,10 @@ Vm::Vm(Genode::Env & env)
 	/* initialize pass-through hardware */
 	_construct_hw();
 
+	Genode::addr_t phys = Genode::Dataspace_client(_vm_ram.cap()).phys_addr();
+	if (phys != RAM_ADDRESS)
+		Genode::error("Physical and RAM address mismatch (phys: ", Genode::Hex(phys),
+		              " ram: ", Genode::Hex(RAM_ADDRESS));
 	_vm.attach(_vm_ram.cap(), RAM_ADDRESS);
 
 	/* FIXME extend for gicv2 by: _vm.attach_pic(0x8010000); */

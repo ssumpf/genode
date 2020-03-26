@@ -126,7 +126,7 @@
 
 	memory@40000000 {
 		device_type = "memory";
-		reg = <0x0 0x40000000 0x0 0x38400000>;
+		reg = <0x0 0x60000000 0x0 0x38400000>;
 	};
 
 	reserved-memory {
@@ -142,7 +142,8 @@
 
 		imx_ion@0 {
 			compatible = "imx-ion-pool";
-			reg = <0x0 0xf6000000 0x0 0x8000000>;
+			/* reg = <0x0 0xf6000000 0x0 0x8000000>; */
+			reg = <0x0 0x96400000 0x0 0x2000000>;
 		};
 	};
 
@@ -1017,6 +1018,7 @@
 		status = "disabled";
 	};
 
+/*
 	serial@30860000 {
 		compatible = "fsl,imx8mq-uart", "fsl,imx6q-uart", "fsl,imx21-uart";
 		reg = <0x0 0x30860000 0x0 0x10000>;
@@ -1029,7 +1031,7 @@
 		assigned-clocks = <0x4 0x94>;
 		assigned-clock-parents = <0x4 0x2>;
 	};
-
+*/
 	serial@30880000 {
 		compatible = "fsl,imx8mq-uart", "fsl,imx6q-uart", "fsl,imx21-uart";
 		reg = <0x0 0x30880000 0x0 0x10000>;
@@ -1961,15 +1963,15 @@
 	};
 
 	chosen {
-		bootargs = "root=/dev/block/dm-0 console=ttymxc0,115200 earlycon=pl011,0x9000000 init=/init cma=32M";
+		bootargs = "root=/dev/block/dm-0 earlycon=pl011,0x9000000 init=/init cma=32M";
 
 /*androidboot.gui_resolution=1080p androidboot.console=ttymxc0
  * androidboot.hardware=freescale androidboot.fbTileSupport=enable cma=1280M
  * androidboot.primary_display=imx-drm firmware _class.path=/vendor/firmware
  * transparent_hugepage=never loop.max_part=7 androidboot.lcd_density=213
  * androidboot.wificountrycode=CN buildvariant=user"; */
-		linux,initrd-start = <0x42000000>;
-		linux,initrd-end   = <0x4205f9f5>;
+		linux,initrd-start = <0x63000000>;
+		linux,initrd-end   = <0x6305f9f5>;
 		stdout-path = "/pl011@9000000";
 	};
 
