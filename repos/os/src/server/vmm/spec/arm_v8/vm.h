@@ -68,7 +68,7 @@ class Vmm::Vm
 		typedef Hw_device<2,4> Direct_device;
 		typedef void (*Resources)(Direct_device &);
 
-		enum { NUMBER_HW_DESCR = 38 };
+		enum { NUMBER_HW_DESCR = 40 };
 
 		/* pass-through devices in order of appearance */
 		Resources const _hw_descriptors[NUMBER_HW_DESCR] {
@@ -90,6 +90,7 @@ class Vmm::Vm
 			[](Direct_device &device) { device.mmio(0x302c0000, 0x10000); device.irqs(135); }, /* sdma */
 			[](Direct_device &device) { device.mmio(0x33000000, 0x2000);  device.irqs(44); }, /* dma-apbh */
 			[](Direct_device &device) { device.mmio(0x303a0000, 0x10000); device.irqs(119); }, /* gpc (GENERAL POWER CONTROLLER!) */
+			[](Direct_device &device) { device.mmio(0x30390000, 0x10000); device.irqs(121); }, /* src */
 			[](Direct_device &device) {                                   device.irqs(39); }, /* pmu */
 			[](Direct_device &device) { device.mmio(0x30b40000, 0x10000); device.irqs(54); }, /* usdhc */
 			[](Direct_device &device) { device.mmio(0x30b50000, 0x10000); device.irqs(55); }, /* usdhc */
@@ -105,11 +106,12 @@ class Vmm::Vm
 			[](Direct_device &device) { device.mmio(0x30be0000, 0x10000); device.irqs(118, 119, 120); }, /* network */
 			[](Direct_device &device) { device.mmio(0x3d800000, 0x400000); device.irqs(132); }, /* ddr_pmu */
 			[](Direct_device &device) { device.mmio(0x30260000, 0x10000); device.irqs(81); }, /* tmu */
-			[](Direct_device &device) { device.mmio(0x32e2d000, 0x1000);  device.irqs(50); }, /* tmu */
+			[](Direct_device &device) { device.mmio(0x32e2d000, 0x1000);  device.irqs(50); }, /* irqsteer */
 			[](Direct_device &device) { device.mmio(0x30280000, 0x10000);  device.irqs(110); }, /* wdog */
 			[](Direct_device &device) { device.mmio(0x30290000, 0x10000);  device.irqs(111); }, /* wdog */
 			[](Direct_device &device) { device.mmio(0x302a0000, 0x10000);  device.irqs(32); }, /* wdog */
 			[](Direct_device &device) { device.mmio(0x38300000, 0x200000);  device.irqs(39, 40); }, /* vpu */
+			[](Direct_device &device) { device.mmio(0x38000000, 0x40000);  device.irqs(35); }, /* gpu */
 			//[](Direct_device &device) { device.mmio(0x33800000, 0x400000);  device.irqs(154, 159); }, /* pci */
 			//[](Direct_device &device) { device.mmio(0x33c00000, 0x400000);  device.irqs(106, 112); }, /* pci */
 			//[](Direct_device &device) { device.mmio(0x30bb0000, 0x10000, 0x8000000, 0x10000000); device.irqs(139); }, /* qspi */
