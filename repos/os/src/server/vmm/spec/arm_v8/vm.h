@@ -68,7 +68,7 @@ class Vmm::Vm
 		typedef Hw_device<2,4> Direct_device;
 		typedef void (*Resources)(Direct_device &);
 
-		enum { NUMBER_HW_DESCR = 40 };
+		enum { NUMBER_HW_DESCR = 42 };
 
 		/* pass-through devices in order of appearance */
 		Resources const _hw_descriptors[NUMBER_HW_DESCR] {
@@ -97,7 +97,9 @@ class Vmm::Vm
 			[](Direct_device &device) { device.mmio(0x302d0000, 0x10000); device.irqs(87); }, /* gpt */
 			[](Direct_device &device) { device.mmio(0x33002000, 0x6000);  device.irqs(46); }, /* gpmi-nand */
 			[](Direct_device &device) { device.mmio(0x38100000, 0x10000); device.irqs(72); }, /* usb */
+			[](Direct_device &device) { device.mmio(0x381f0000, 0x1000);                   }, /* usb-phy */
 			[](Direct_device &device) { device.mmio(0x38200000, 0x10000); device.irqs(73); }, /* usb */
+			[](Direct_device &device) { device.mmio(0x382f0000, 0x1000);                   }, /* usb-phy */
 			[](Direct_device &device) {                                   device.irqs(134, 141, 142, 143); }, /* busfreq */
 			[](Direct_device &device) { device.mmio(0x30370000, 0x10000); device.irqs(51, 52, 148); }, /* snvs */
 			[](Direct_device &device) { device.mmio(0x30820000, 0x10000); device.irqs(63); }, /* espi */
