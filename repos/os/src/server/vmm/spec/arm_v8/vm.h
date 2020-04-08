@@ -68,7 +68,7 @@ class Vmm::Vm
 		typedef Hw_device<2,4> Direct_device;
 		typedef void (*Resources)(Direct_device &);
 
-		enum { NUMBER_HW_DESCR = 42 };
+		enum { NUMBER_HW_DESCR = 50 };
 
 		/* pass-through devices in order of appearance */
 		Resources const _hw_descriptors[NUMBER_HW_DESCR] {
@@ -114,12 +114,23 @@ class Vmm::Vm
 			[](Direct_device &device) { device.mmio(0x302a0000, 0x10000);  device.irqs(32); }, /* wdog */
 			[](Direct_device &device) { device.mmio(0x38300000, 0x200000);  device.irqs(39, 40); }, /* vpu */
 			[](Direct_device &device) { device.mmio(0x38000000, 0x40000);  device.irqs(35); }, /* gpu */
+			[](Direct_device &device) { device.mmio(0x30010000, 0x10000);  device.irqs(127); }, /* sai */
+			[](Direct_device &device) { device.mmio(0x30030000, 0x20000);  device.irqs(122); }, /* sai */
+			[](Direct_device &device) { device.mmio(0x30050000, 0x10000);  device.irqs(132); }, /* sai */
+			[](Direct_device &device) { device.mmio(0x308b0000, 0x10000);  device.irqs(138); }, /* sai */
+			[](Direct_device &device) { device.mmio(0x30810000, 0x10000);  device.irqs(38); }, /* spdif */
+			[](Direct_device &device) { device.mmio(0x308a0000, 0x10000);  device.irqs(45); }, /* spdif */
+			[](Direct_device &device) { device.mmio(0x30090000, 0x40000);  device.irqs(91); }, /* caam */
+			[](Direct_device &device) { device.mmio(0x100000, 0x8000); }, /* caam-sm */
+
 			//[](Direct_device &device) { device.mmio(0x33800000, 0x400000);  device.irqs(154, 159); }, /* pci */
 			//[](Direct_device &device) { device.mmio(0x33c00000, 0x400000);  device.irqs(106, 112); }, /* pci */
 			//[](Direct_device &device) { device.mmio(0x30bb0000, 0x10000, 0x8000000, 0x10000000); device.irqs(139); }, /* qspi */
 		};
 
 		Genode::Constructible<Direct_device> _hw_devices[NUMBER_HW_DESCR];
+		Hw_device<1,8>                       _dcss { _env, _vm, boot_cpu() };
+		Hw_device<3, 2>                      _hdmi { _env, _vm, boot_cpu() };
 
 		void _construct_hw()
 		{
@@ -127,6 +138,14 @@ class Vmm::Vm
 				_hw_devices[index].construct(_env, _vm, boot_cpu());
 				_hw_descriptors[index](*_hw_devices[index]);
 			}
+
+			/* dcss */
+			_dcss.mmio(0x32e00000, 0x2d000);
+			_dcss.irqs(35, 36, 37, 38, 40, 41, 48, 49); /* CAUTION 41 is EDGE */
+
+			/* hdmi */
+			_hdmi.mmio(0x32c00000, 0x100000, 0x32e40000, 0x40000, 0x32e2f000, 0x1000);
+			_hdmi.irqs(57);
 		}
 
 	public:
