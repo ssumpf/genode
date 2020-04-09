@@ -39,11 +39,13 @@ class Vmm::Hw_device
 
 				Gic::Irq               & _irq;
 				Genode::Env            & _env;
+				unsigned                 _number;
 				Session                  _session;
 				Cpu::Signal_handler<Irq> _handler;
 
 				void _assert()
 				{
+	//				Genode::log("IRQ: ", _number);
 					_irq.assert();
 				}
 
@@ -72,9 +74,10 @@ class Vmm::Hw_device
 					if (_session.constructed()) _session->ack_irq();
 				}
 
-				Irq(Gic::Irq & irq, Cpu & cpu, Genode::Env & env)
+				Irq(Gic::Irq & irq, Cpu & cpu, Genode::Env & env, unsigned number)
 				: _irq(irq),
 				  _env(env),
+				  _number(number),
 				  _handler(cpu, env.ep(), *this, &Irq::_assert)
 				{
 					_irq.handler(*this);
@@ -116,7 +119,7 @@ class Vmm::Hw_device
 			irqs(args...);
 			for (unsigned i = 0; i < IRQ_COUNT; i++) {
 				if (_irqs[i].constructed()) continue;
-				_irqs[i].construct(_cpu.gic().irq(irq), _cpu, _env);
+				_irqs[i].construct(_cpu.gic().irq(irq), _cpu, _env, irq);
 				return;
 			}
 		}
