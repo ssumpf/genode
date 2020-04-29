@@ -126,7 +126,7 @@
 
 	memory@40000000 {
 		device_type = "memory";
-		reg = <0x0 0x60000000 0x0 0x38400000>;
+		reg = <0x0 0x50000000 0x0 0xb0000000>;
 	};
 
 	reserved-memory {
@@ -1293,7 +1293,7 @@
 		compatible = "fsl,imx8mq-gpu", "fsl,imx6q-gpu";
 		/* reg = <0x0 0x38000000 0x0 0x40000 0x0 0x40000000 0x0 0xc0000000 0x0 0x0
 		 * 0x0 0x10000000>; */
-		reg = <0x0 0x38000000 0x0 0x40000 0x0 0x60000000 0x0 0x38400000 0x0 0x0 0x0 0x10000000>;
+		reg = <0x0 0x38000000 0x0 0x40000 0x0 0x50000000 0x0 0xb0000000 0x0 0x0 0x0 0x10000000>;
 		reg-names = "iobase_3d", "phys_baseaddr", "contiguous_mem";
 		interrupts = <0x0 0x3 0x4>;
 		interrupt-names = "irq_3d";
@@ -1974,8 +1974,8 @@
  * androidboot.primary_display=imx-drm firmware _class.path=/vendor/firmware
  * transparent_hugepage=never loop.max_part=7 androidboot.lcd_density=213
  * androidboot.wificountrycode=CN buildvariant=user"; */
-		linux,initrd-start = <0x63000000>;
-		linux,initrd-end   = <0x636d9d6a>;
+		linux,initrd-start = <0x53000000>;
+		linux,initrd-end   = <0x536d9d6a>;
 		stdout-path = "/pl011@9000000";
 	};
 
