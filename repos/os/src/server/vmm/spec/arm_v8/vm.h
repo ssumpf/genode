@@ -22,7 +22,7 @@
 #include <pl011.h>
 #include <virtio_console.h>
 
-#include <base/attached_ram_dataspace.h>
+#include <base/attached_io_mem_dataspace.h>
 #include <base/attached_rom_dataspace.h>
 #include <vm_session/connection.h>
 
@@ -35,8 +35,8 @@ class Vmm::Vm
 		using Ep = Genode::Entrypoint;
 
 		enum {
-			RAM_ADDRESS   = 0x60000000,
-			RAM_SIZE      = 900 * 1024 * 1024,
+			RAM_ADDRESS   = 0x50000000,
+			RAM_SIZE      = 0xb0000000,
 			KERNEL_OFFSET = 0x80000,
 			INITRD_OFFSET = 48 * 1024 * 1024,
 			DTB_OFFSET    = 80 * 1024 * 1024,
@@ -49,8 +49,7 @@ class Vmm::Vm
 		Genode::Attached_rom_dataspace _kernel_rom { _env, "linux"  };
 		Genode::Attached_rom_dataspace _dtb_rom    { _env, "dtb"    };
 		Genode::Attached_rom_dataspace _initrd_rom { _env, "initrd" };
-		Genode::Attached_ram_dataspace _vm_ram     { _env.ram(), _env.rm(),
-		                                             RAM_SIZE, Genode::CACHED };
+		Genode::Attached_io_mem_dataspace _vm_ram  { _env, RAM_ADDRESS, RAM_SIZE };
 		Ram                            _ram        { RAM_ADDRESS, RAM_SIZE,
 		                                             (Genode::addr_t)_vm_ram.local_addr<void>()};
 		Genode::Heap                   _heap       { _env.ram(), _env.rm() };
