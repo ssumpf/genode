@@ -193,7 +193,7 @@ class Vmm::Cpu
 		{
 			private:
 
-				struct El0 : Bitfield<0,  4> { enum { AARCH64_ONLY = 1 }; };
+				struct El0 : Bitfield<0,  4> { enum { AARCH64_32 = 2 }; };
 				struct El1 : Bitfield<4,  4> { enum { AARCH64_ONLY = 1 }; };
 				struct El2 : Bitfield<8,  4> { enum { NOT_IMPLEMENTED  }; };
 				struct El3 : Bitfield<12, 4> { enum { NOT_IMPLEMENTED  }; };
@@ -202,7 +202,7 @@ class Vmm::Cpu
 
 				access_t _reset_value(access_t orig)
 				{
-					El0::set(orig, El0::AARCH64_ONLY);
+					El0::set(orig, El0::AARCH64_32 );
 					El1::set(orig, El1::AARCH64_ONLY);
 					El2::set(orig, El2::NOT_IMPLEMENTED);
 					El3::set(orig, El3::NOT_IMPLEMENTED);

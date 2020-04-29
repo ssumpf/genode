@@ -224,7 +224,7 @@ void Cpu::_handle_sync()
 		_handle_brk();
 		return;
 	default:
-		throw Exception("Unknown trap: %x",
+		throw Exception("Unknown trap: ",
 		                Esr::Ec::get(_state.esr_el2));
 	};
 }
