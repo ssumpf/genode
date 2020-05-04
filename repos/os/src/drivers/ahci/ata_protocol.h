@@ -124,6 +124,8 @@ class Ata::Protocol : public Ahci::Protocol, Noncopyable
 {
 	private:
 
+		bool _syncing { false };
+
 		struct Request : Block::Request
 		{
 			bool valid() const { return operation.valid(); }
@@ -266,6 +268,8 @@ class Ata::Protocol : public Ahci::Protocol, Noncopyable
 
 			_slot_states = port.read<Port::Ci>() | port.read<Port::Sact>();
 			port.stop();
+
+			_syncing = false;
 		}
 
 		Block::Session::Info info() const override
@@ -280,6 +284,12 @@ class Ata::Protocol : public Ahci::Protocol, Noncopyable
 
 		Response submit(Port &port, Block::Request const request) override
 		{
+			Block::Operation op = request.operation;
+			bool const sync = (op.type == Block::Operation::Type::SYNC);
+
+			if ((sync && _slot_states) || _syncing)
+				return Response::RETRY;
+
 			if (_writeable == false && request.operation.type == Block::Operation::Type::WRITE)
 				return Response::REJECTED;
 
@@ -298,7 +308,6 @@ class Ata::Protocol : public Ahci::Protocol, Noncopyable
 
 			*r = request;
 
-			Block::Operation op = request.operation;
 			size_t slot         = _slots.index(*r);
 			_slot_states       |= 1u << slot;
 
@@ -311,10 +320,10 @@ class Ata::Protocol : public Ahci::Protocol, Noncopyable
 
 			/* write bit for command header + read/write ATA requests */
 			bool const write = (op.type == Block::Operation::Type::WRITE);
-			bool const sync  = (op.type == Block::Operation::Type::SYNC);
 
 			if (sync) {
 				table.fis.flush_cache_ext();
+				_syncing = true;
 			} else if (_ncq_support(port)) {
 				table.fis.fpdma(write == false, op.block_number, op.count, slot);
 				/* ensure that 'Cmd::St' is 1 before writing 'Sact' */
