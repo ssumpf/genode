@@ -133,9 +133,6 @@ void lx_c_set_mode(struct drm_device * dev, struct drm_connector * connector,
 		return;
 	}
 
-	DRM_DEBUG("%s%s for connector %s\n", mode ? "set mode " : "no mode",
-	          mode ? mode->name : "", connector->name);
-
 	struct drm_mode_set set;
 	set.crtc = crtc;
 	set.x = 0;

@@ -19,6 +19,7 @@
 #include <base/component.h>
 #include <base/heap.h>
 #include <base/attached_rom_dataspace.h>
+#include <base/attached_io_mem_dataspace.h>
 
 /* local includes */
 #include <driver.h>
@@ -40,6 +41,11 @@ extern "C" int module_imx_drm_pdrv_init();
 extern "C" int module_dcss_driver_init();
 extern "C" int module_dcss_crtc_driver_init();
 extern "C" int module_imx_hdp_imx_platform_driver_init();
+extern "C" int module_mixel_mipi_phy_driver_init();
+extern "C" int module_imx_nwl_dsi_driver_bridge_init();
+extern "C" int module_imx_nwl_dsi_driver_init();
+extern "C" int module_rad_panel_driver_init();
+extern "C" void postcore_mipi_dsi_bus_init();
 
 unsigned long jiffies;
 
@@ -88,6 +94,7 @@ struct Framebuffer::Main
 		LX_MUTEX_INIT(bridge_lock);
 		LX_MUTEX_INIT(core_lock);
 		LX_MUTEX_INIT(component_mutex);
+		LX_MUTEX_INIT(host_lock);
 
 		/* init singleton Lx::Scheduler */
 		Lx::scheduler(&_env);
@@ -125,6 +132,13 @@ void Framebuffer::Main::_run_linux()
 	module_dcss_crtc_driver_init();
 	module_imx_hdp_imx_platform_driver_init();
 
+	/* MIPI DSI */
+	module_mixel_mipi_phy_driver_init();
+	module_imx_nwl_dsi_driver_bridge_init();
+	module_imx_nwl_dsi_driver_init();
+	postcore_mipi_dsi_bus_init();
+	module_rad_panel_driver_init();
+
 	/**
 	 * This device is originally created with the name '32e2d000.irqsteer'
 	 * via 'of_platform_bus_create()'. Here it is called 'imx-irqsteer' to match
@@ -150,12 +164,65 @@ void Framebuffer::Main::_run_linux()
 	platform_device_register(imx_irqsteer_pdev);
 
 
+
+
+	/**
+	 * This device is originally created with the name '32c00000.hdmi'
+	 * via 'of_platform_bus_create()'. Here it is called 'i.mx8-hdp' to match
+	 * the driver name.
+	 */
+
+/*
+	struct platform_device *hdp_pdev =
+		platform_device_alloc("i.mx8-hdp", 0);
+
+	static resource hdp_resources[] = 	{
+		{ 0x32c00000, 0x32cfffff, "hdp_ctrl",  IORESOURCE_MEM },
+		{ 0x32e40000, 0x32e7ffff, "hdp_crs",   IORESOURCE_MEM },
+		{ 0x32e2f000, 0x32e2f00f, "hdp_reset", IORESOURCE_MEM },
+		{         48,         48, "plug_in",   IORESOURCE_IRQ },
+		{         57,         57, "plug_out",  IORESOURCE_IRQ },
+	};
+
+	hdp_pdev->num_resources = 5;
+	hdp_pdev->resource = hdp_resources;
+
+	hdp_pdev->dev.of_node                    = (device_node*)kzalloc(sizeof(device_node), 0);
+	hdp_pdev->dev.of_node->name              = "hdmi";
+	hdp_pdev->dev.of_node->full_name         = "hdmi";
+	hdp_pdev->dev.of_node->properties        = (property*)kzalloc(sizeof(property), 0);
+	hdp_pdev->dev.of_node->properties->name  = "compatible";
+	hdp_pdev->dev.of_node->properties->value = (void*)"fsl,imx8mq-hdmi";
+
+	platform_device_register(hdp_pdev);
+*/
+	struct platform_device *mipi_dsi_phy_pdev =
+		platform_device_alloc("mixel-mipi-dsi-phy", 0);
+
+	static resource mipi_dsi_phy_resources[] = {
+		{ 0x30a00300, 0x30a003ff, "dsi_phy", IORESOURCE_MEM }
+	};
+
+	mipi_dsi_phy_pdev->num_resources = 1;
+	mipi_dsi_phy_pdev->resource      = mipi_dsi_phy_resources;
+
+	mipi_dsi_phy_pdev->dev.of_node                      = (device_node*)kzalloc(sizeof(device_node), 0);
+	mipi_dsi_phy_pdev->dev.of_node->properties          = (property*)kzalloc(2*sizeof(property), 0);
+	mipi_dsi_phy_pdev->dev.of_node->properties[0].name  = "compatible";
+	mipi_dsi_phy_pdev->dev.of_node->properties[0].value = (void*)"mixel,imx8mq-mipi-dsi-phy";
+	mipi_dsi_phy_pdev->dev.of_node->properties[0].next  = &mipi_dsi_phy_pdev->dev.of_node->properties[1];
+	mipi_dsi_phy_pdev->dev.of_node->properties[1].name  = "dsi_phy";
+	mipi_dsi_phy_pdev->dev.of_node->properties[1].value = (void*)0;
+
+	mipi_dsi_phy_pdev->dev.parent = &mipi_dsi_phy_pdev->dev;
+
+	platform_device_register(mipi_dsi_phy_pdev);
+
 	/**
 	 * This device is originally created with the name '32e00000.dcss'
 	 * via 'of_platform_bus_create()'. Here it is called 'dcss-core' to match
 	 * the driver name.
 	 */
-
 	struct platform_device *dcss_pdev =
 		platform_device_alloc("dcss-core", 0);
 
@@ -179,19 +246,14 @@ void Framebuffer::Main::_run_linux()
 	dcss_pdev->dev.of_node->full_name         = "dcss";
 	dcss_pdev->dev.of_node->properties        = (property*)kzalloc(sizeof(property), 0);
 	dcss_pdev->dev.of_node->properties->name  = "disp-dev";
-	dcss_pdev->dev.of_node->properties->value = (void*)"hdmi_disp";
+	//dcss_pdev->dev.of_node->properties->value = (void*)"hdmi_disp";
+	dcss_pdev->dev.of_node->properties->value = (void*)"mipi_disp";
 
 	platform_device_register(dcss_pdev);
 
 
-	/**
-	 * This device is originally created with the name '32c00000.hdmi'
-	 * via 'of_platform_bus_create()'. Here it is called 'i.mx8-hdp' to match
-	 * the driver name.
-	 */
-
-	struct platform_device *hdp_pdev =
-		platform_device_alloc("i.mx8-hdp", 0);
+	struct platform_device *mipi_dsi_bridge_pdev =
+		platform_device_alloc("nwl-mipi-dsi", 0);
 
 	static resource hdp_resources[] = 	{
 		{ IOMEM_BASE_HDMI_CTRL, IOMEM_END_HDMI_CTRL,
@@ -202,19 +264,25 @@ void Framebuffer::Main::_run_linux()
 		  "hdp_reset", IORESOURCE_MEM },
 		{       33,       33, "plug_in",   IORESOURCE_IRQ },
 		{       34,       34, "plug_out",  IORESOURCE_IRQ },
+
+	static resource mipi_dsi_bridge_resources[] = {
+		{ 0x30a00000, 0x30a002ff, "mipi_dsi_bridge", IORESOURCE_MEM },
+		{         66,         66, "mipi_dsi",        IORESOURCE_IRQ }
 	};
 
-	hdp_pdev->num_resources = 5;
-	hdp_pdev->resource = hdp_resources;
+	mipi_dsi_bridge_pdev->num_resources = 2;
+	mipi_dsi_bridge_pdev->resource      = mipi_dsi_bridge_resources;
 
-	hdp_pdev->dev.of_node                    = (device_node*)kzalloc(sizeof(device_node), 0);
-	hdp_pdev->dev.of_node->name              = "hdmi";
-	hdp_pdev->dev.of_node->full_name         = "hdmi";
-	hdp_pdev->dev.of_node->properties        = (property*)kzalloc(sizeof(property), 0);
-	hdp_pdev->dev.of_node->properties->name  = "compatible";
-	hdp_pdev->dev.of_node->properties->value = (void*)"fsl,imx8mq-hdmi";
+	Genode::addr_t **phy_ptr =
+	  (Genode::addr_t **)devres_find(&mipi_dsi_phy_pdev->dev, devm_phy_consume, nullptr, nullptr);
+	mipi_dsi_bridge_pdev->dev.of_node                      = (device_node*)kzalloc(sizeof(device_node), 0);
+	mipi_dsi_bridge_pdev->dev.of_node->name                = "mipi_dsi_bridge";
+	mipi_dsi_bridge_pdev->dev.of_node->properties          = (property*)kzalloc(sizeof(property), 0);
+	mipi_dsi_bridge_pdev->dev.of_node->properties[0].name  = "dphy";
+	mipi_dsi_bridge_pdev->dev.of_node->properties[0].value = (void*)*phy_ptr;
+	mipi_dsi_bridge_pdev->dev.of_node->properties[0].next  = nullptr;
 
-	platform_device_register(hdp_pdev);
+	platform_device_register(mipi_dsi_bridge_pdev);
 
 	/**
 	 * This device is originally created with the name 'display-subsystem'
@@ -231,6 +299,20 @@ void Framebuffer::Main::_run_linux()
 
 	platform_device_register(display_subsystem_pdev);
 
+	struct platform_device *mipi_dsi_imx_pdev =
+		platform_device_alloc("nwl_dsi-imx", 0);
+
+	mipi_dsi_imx_pdev->dev.of_node                      = (device_node*)kzalloc(sizeof(device_node), 0);
+	mipi_dsi_imx_pdev->dev.of_node->name                = "mipi_dsi";
+	mipi_dsi_imx_pdev->dev.of_node->properties          = (property*)kzalloc(2*sizeof(property), 0);
+	mipi_dsi_imx_pdev->dev.of_node->properties[0].name  = "compatible";
+	mipi_dsi_imx_pdev->dev.of_node->properties[0].value = (void *)"fsl,imx8mq-mipi-dsi_drm";
+	mipi_dsi_imx_pdev->dev.of_node->properties[0].next  = &mipi_dsi_imx_pdev->dev.of_node->properties[1];
+	mipi_dsi_imx_pdev->dev.of_node->properties[1].name  = "dphy";
+	mipi_dsi_imx_pdev->dev.of_node->properties[1].value = (void *)*phy_ptr;
+
+
+	platform_device_register(mipi_dsi_imx_pdev);
 
 	_driver.finish_initialization();
 	_driver.config_sigh(_policy_change_handler);
@@ -246,11 +328,99 @@ void Framebuffer::Main::_run_linux()
 	}
 }
 
+static void initialize_traced_values(Genode::Env &env)
+{
+	static volatile unsigned long dcss_values[][2] {
+		/* DCSS SUBSAM PARAMETERS */
+		0x32e1b070, 0x41614161,
+		0x32e1b060, 0x00000000,
+		0x32e1b080, 0x03ff0000,
+		0x32e1b090, 0x03ff0000,
+		0x32e1b010, 0x07a3046f,
+		0x32e1b020, 0x0001046f,
+		0x32e1b030, 0x001f001d,
+		0x32e1b040, 0x80240023,
+		0x32e1b050, 0x07a3045b
+	};
+
+	static volatile unsigned long src_values[][2] {
+		0x30390028, 0x0000003a
+	};
+
+	static volatile unsigned long mipi_values[][2] {
+		/* DPHY */
+		0x30a0031c, 0x00000000,
+		0x30a00300, 0x00000000, /* INITAL ON */
+
+		0x30a002a8, 0xffffffff,
+		0x30a002ac, 0x00000007,
+		0x30a002a8, 0xffffff7d,
+		0x30a00208, 0x00000005,
+		0x30a0020c, 0x00000003,
+		0x30a00210, 0x00000000,
+		0x30a00214, 0x00000000,
+		0x30a00218, 0x00000000,
+		0x30a00204, 0x00000438,
+		0x30a0021c, 0x00000014,
+		0x30a00220, 0x00000022,
+		0x30a00224, 0x00000002,
+		0x30a00228, 0x00000000,
+		0x30a00234, 0x00000001,
+		0x30a00228, 0x00000000,
+		0x30a00238, 0x00000000,
+		0x30a00240, 0x00000000,
+		0x30a00200, 0x00000438,
+		0x30a0023c, 0x00000780,
+		0x30a0022c, 0x00000004,
+		0x30a00230, 0x0000001e,
+		0x30a00000, 0x00000003,
+		0x30a00004, 0x00000001,
+		0x30a00014, 0x00000001,
+		0x30a00008, 0x00000001,
+		0x30a0000c, 0x00000034,
+		0x30a00010, 0x0000000d,
+		0x30a00018, 0x00000000,
+		0x30a0001c, 0x00000000,
+		0x30a00020, 0x00000000,
+		0x30a00024, 0x00000000,
+		0x30a00028, 0x00003a98,
+	};
+
+	enum {
+		DCSS_BASE = 0x32e1b000ul,
+		SRC_BASE  = 0x30390000ul,
+		MIPI_BASE = 0x30a00000ul,
+	};
+
+	Genode::Attached_io_mem_dataspace dcss { env, DCSS_BASE, 0x1000 };
+	unsigned num = sizeof(dcss_values) / (2 * sizeof(unsigned long));;
+	for (unsigned i = 0; i < num; i++) {
+		unsigned volatile *ptr = (unsigned volatile *)(dcss_values[i][0] - DCSS_BASE + (unsigned long)dcss.local_addr<unsigned long>());
+		*ptr = (unsigned)dcss_values[i][1];
+	}
+
+	Genode::Attached_io_mem_dataspace src { env, SRC_BASE, 0x1000 };
+	num = sizeof(src_values) / (2 * sizeof(unsigned long));;
+	for (unsigned i = 0; i < num; i++) {
+		unsigned volatile *ptr = (unsigned volatile *)(src_values[i][0] - SRC_BASE + (unsigned long)src.local_addr<unsigned long>());
+		*ptr = (unsigned)src_values[i][1];
+	}
+
+	Genode::Attached_io_mem_dataspace mipi { env, MIPI_BASE, 0x1000 };
+	num = sizeof(mipi_values) / (2 * sizeof(unsigned long));;
+	for (unsigned i = 0; i < num; i++) {
+		unsigned volatile *ptr = (unsigned volatile *)(mipi_values[i][0] - MIPI_BASE + (unsigned long)mipi.local_addr<unsigned long>());
+		*ptr = (unsigned)mipi_values[i][1];
+	}
+}
+
 
 void Component::construct(Genode::Env &env)
 {
 	/* XXX execute constructors of global statics */
 	env.exec_static_constructors();
+
+	initialize_traced_values(env);
 
 	static Framebuffer::Main main(env);
 }
