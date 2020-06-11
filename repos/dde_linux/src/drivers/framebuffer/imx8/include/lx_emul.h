@@ -756,6 +756,13 @@ enum rpm_status {
 	RPM_SUSPENDED,
 };
 
+#define pm_generic_suspend   NULL
+#define pm_generic_resume    NULL
+#define pm_generic_freeze    NULL
+#define pm_generic_thaw      NULL
+#define pm_generic_poweroff  NULL
+#define pm_generic_restore   NULL
+
 
 /***********************
  ** linux/pm_domain.h **
@@ -784,6 +791,7 @@ struct bus_type
 	const char *name;
 
 	int (*match)(struct device *dev, struct device_driver *drv);
+	int (*uevent)(struct device *dev, struct kobj_uevent_env *env);
 	int (*probe)(struct device *dev);
 	int (*remove)(struct device *dev);
 	void (*shutdown)(struct device *dev);
@@ -869,7 +877,10 @@ struct device_driver
 	const struct of_device_id *of_match_table;
 	const struct acpi_device_id *acpi_match_table;
 	const struct dev_pm_ops *pm;
-	int            (*probe)  (struct device *dev);
+
+	int  (*probe)  (struct device *dev);
+	int  (*remove) (struct device *dev);
+	void (*shutdown) (struct device *dev);
 };
 
 int driver_register(struct device_driver *drv);
@@ -1170,9 +1181,22 @@ struct file *shmem_file_setup(const char *, loff_t, unsigned long);
 enum i2c_slave_event { DUMMY };
 
 
+/***********************
+ ** uapi/linux/uuid.h **
+ ***********************/
+
+typedef struct {
+	__u8 b[16];
+} uuid_le;
+
+
 /****************
  ** linux/of.h **
  ****************/
+
+struct of_phandle_args;
+
+#include <linux/mod_devicetable.h>
 
 int of_alias_get_id(struct device_node *np, const char *stem);
 struct device_node *of_node_get(struct device_node *node);
@@ -1186,6 +1210,9 @@ int of_property_read_u32_index(const struct device_node *, const char *, u32,
 #define for_each_child_of_node(parent, child) \
 	for (child = of_get_next_child(parent, NULL); child != NULL; \
 	     child = of_get_next_child(parent, child))
+
+#define for_each_available_child_of_node(parent, child) \
+	for (; 1; lx_printf("for_each_available_child_of_node called"))
 
 struct property {
 	const char      * name;
@@ -1283,6 +1310,19 @@ bool gpio_is_valid(int number);
 int gpio_request_one(unsigned gpio, unsigned long flags, const char *label);
 void gpio_set_value(unsigned int gpio, int value);
 
+
+/***************************
+ ** linux/gpio/consumer.h **
+ ***************************/
+
+#define GPIOD_FLAGS_BIT_DIR_SET		BIT(0)
+#define GPIOD_FLAGS_BIT_DIR_OUT		BIT(1)
+#define GPIOD_FLAGS_BIT_DIR_VAL		BIT(2)
+
+enum gpiod_flags {
+	GPIOD_OUT_HIGH = GPIOD_FLAGS_BIT_DIR_SET | GPIOD_FLAGS_BIT_DIR_OUT |
+	                 GPIOD_FLAGS_BIT_DIR_VAL
+};
 
 /* needed by drivers/gpu/drm/drm_modes.c */
 #include <linux/list_sort.h>
@@ -1544,6 +1584,31 @@ int device_property_read_u32(struct device *, const char *, u32 *);
 void call_rcu(struct rcu_head *, void (*)(struct rcu_head *));
 
 
+/***********************
+ ** linux/backlight.h **
+ ***********************/
+
+enum backlight_type {
+	BACKLIGHT_RAW = 1,
+};
+
+struct backlight_properties
+{
+	int brightness;
+	int max_brightness;
+	enum backlight_type type;
+};
+
+struct backlight_device
+{
+	struct backlight_properties props;
+};
+
+struct backlight_ops {
+	int (*update_status)(struct backlight_device *);
+	int (*get_brightness)(struct backlight_device *);
+};
+
 /************************
  ** drm/drm_os_linux.h **
  ************************/
@@ -1622,6 +1687,7 @@ static inline void *irq_desc_get_handler_data(struct irq_desc *desc)
 #define CONFIG_MMU                             1
 #define CONFIG_OF                              1
 #define CONFIG_VIDEOMODE_HELPERS               1
+#define CONFIG_PHY_MIXEL_MIPI_DSI              1
 
 
 /**************************
@@ -1720,14 +1786,6 @@ module_exit(__driver##_exit);
 	module_driver(__platform_driver, platform_driver_register, \
 			platform_driver_unregister)
 
-/***********************
- ** uapi/linux/uuid.h **
- ***********************/
-
-typedef struct {
-	__u8 b[16];
-} uuid_le;
-
 
 /************************
  ** linux/cpuhotplug.h **
@@ -1743,9 +1801,20 @@ enum cpuhp_state {
  *******************/
 
 enum {
-	SZ_4K = 0x00001000,
+	SZ_256 = 0x00000100,
+	SZ_4K  = 0x00001000,
 	SZ_16K = 0x00004000,
 };
+
+
+/************************************
+ ** drivers/gpu/drm/drm_mipi_dsi.c **
+ ************************************/
+
+//XXX: init in startup code before drm_mipi_dsi.c
+LX_MUTEX_INIT_DECLARE(host_lock);
+
+#define host_lock LX_MUTEX(host_lock)
 
 
 #include <lx_emul/extern_c_end.h>
