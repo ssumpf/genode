@@ -16,6 +16,7 @@ SRC_CC  += printf.cc \
 
 INC_DIR += $(REP_DIR)/src/include
 
+
 vpath %.cc $(PRG_DIR)
 vpath %.cc $(REP_DIR)/src/lx_kit
 

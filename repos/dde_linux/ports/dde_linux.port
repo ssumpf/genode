@@ -1,10 +1,11 @@
 LICENSE     := GPLv2
 VERSION     := 2
-DOWNLOADS   := dwc_otg.git usb.archive intel_fb.archive lxip.archive \
-               wifi.archive fec.archive libnl.archive wpa_supplicant.git \
-               fw.archive usb_host.archive dwc_otg_host.git usb_hid.archive \
-               usb_net.archive imx8_fb.archive
+#DOWNLOADS   := dwc_otg.git usb.archive intel_fb.archive lxip.archive \
+#               wifi.archive fec.archive libnl.archive wpa_supplicant.git \
+#               fw.archive usb_host.archive dwc_otg_host.git usb_hid.archive \
+#               usb_net.archive imx8_fb.archive
 
+DOWNLOADS := intel_fb.archive imx8_fb.archive
 #
 # Tools
 #
@@ -151,16 +152,16 @@ DIR(fw) := firmware
 #
 # Patches
 #
-PATCHES := $(addprefix patches/,$(notdir $(wildcard $(REP_DIR)/patches/wpa*.patch)))
-PATCHES += $(addprefix patches/,$(notdir $(wildcard $(REP_DIR)/patches/libnl*.patch)))
-PATCHES += $(addprefix patches/,$(notdir $(wildcard $(REP_DIR)/patches/wifi*.patch)))
-PATCHES += $(addprefix patches/,$(notdir $(wildcard $(REP_DIR)/patches/lxip*.patch)))
+#PATCHES := $(addprefix patches/,$(notdir $(wildcard $(REP_DIR)/patches/wpa*.patch)))
+#PATCHES += $(addprefix patches/,$(notdir $(wildcard $(REP_DIR)/patches/libnl*.patch)))
+#PATCHES += $(addprefix patches/,$(notdir $(wildcard $(REP_DIR)/patches/wifi*.patch)))
+#PATCHES += $(addprefix patches/,$(notdir $(wildcard $(REP_DIR)/patches/lxip*.patch)))
 PATCHES += $(addprefix patches/,$(notdir $(wildcard $(REP_DIR)/patches/intel*.patch)))
-PATCHES += $(addprefix patches/,$(notdir $(wildcard $(REP_DIR)/patches/usb_host*.patch)))
-PATCHES += $(addprefix patches/,$(notdir $(wildcard $(REP_DIR)/patches/usb*.patch)))
-PATCHES += $(addprefix patches/,$(notdir $(wildcard $(REP_DIR)/patches/intel*.patch)))
-PATCHES += $(addprefix patches/,$(notdir $(wildcard $(REP_DIR)/patches/fec_*.patch)))
-PATCHES += $(addprefix patches/,$(notdir $(wildcard $(REP_DIR)/patches/usb_hid*.patch)))
+#PATCHES += $(addprefix patches/,$(notdir $(wildcard $(REP_DIR)/patches/usb_host*.patch)))
+#PATCHES += $(addprefix patches/,$(notdir $(wildcard $(REP_DIR)/patches/usb*.patch)))
+#PATCHES += $(addprefix patches/,$(notdir $(wildcard $(REP_DIR)/patches/intel*.patch)))
+#PATCHES += $(addprefix patches/,$(notdir $(wildcard $(REP_DIR)/patches/fec_*.patch)))
+#PATCHES += $(addprefix patches/,$(notdir $(wildcard $(REP_DIR)/patches/usb_hid*.patch)))
 PATCHES += $(addprefix patches/,$(notdir $(wildcard $(REP_DIR)/patches/imx8_fb*.patch)))
 
 #IP stack
