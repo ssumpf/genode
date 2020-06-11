@@ -3,7 +3,7 @@ import_from_depot [depot_user]/src/[base_src] \
                   [depot_user]/pkg/[drivers_interactive_pkg] \
                   [depot_user]/src/init
 
-build { server/event_dump test/framebuffer }
+build { server/event_dump test/framebuffer server/report_rom }
 
 install_config {
 <config>
@@ -27,8 +27,8 @@ install_config {
 		<provides><service name="Timer"/></provides>
 	</start>
 
-	<start name="drivers" caps="1500" managing_system="yes">
-		<resource name="RAM" quantum="64M"/>
+	<start name="drivers" caps="1500">
+		<resource name="RAM" quantum="256M" constrain_phys="yes"/>
 		<binary name="init"/>
 		<route>
 			<service name="ROM" label="config"> <parent label="drivers.config"/> </service>
@@ -53,6 +53,5 @@ install_config {
 
 </config>}
 
-build_boot_image { event_dump test-framebuffer }
-
+build_boot_image { event_dump test-framebuffer report_rom }
 run_genode_until forever
