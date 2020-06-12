@@ -121,6 +121,28 @@ void drm_dev_unregister(struct drm_device *dev)
 }
 
 
+/***********************
+ ** linux/backlight.h **
+ ***********************/
+
+void drm_panel_init(struct drm_panel *panel)
+{
+	TRACE_AND_STOP;
+}
+
+
+int drm_panel_add(struct drm_panel *panel)
+{
+	TRACE_AND_STOP;
+}
+
+
+void drm_panel_remove(struct drm_panel *panel)
+{
+	TRACE_AND_STOP;
+}
+
+
 /*****************************************
  ** drivers/gpu/drm/drm_fb_cma_helper.c **
  *****************************************/
@@ -333,6 +355,22 @@ void gpio_set_value(unsigned int gpio, int value)
 }
 
 
+/***************************
+ ** linux/gpio/consumer.h **
+ ***************************/
+
+struct gpio_desc *
+devm_gpiod_get(struct device *dev, const char *con_id, enum gpiod_flags flags)
+{
+	TRACE_AND_STOP;
+	return NULL;
+}
+
+void gpiod_set_value(struct gpio_desc *desc, int value)
+{
+	TRACE_AND_STOP;
+}
+
 /*****************
  ** linux/i2c.h **
  *****************/
@@ -372,6 +410,12 @@ bool is_of_node(const struct fwnode_handle *fwnode)
 	return false;
 }
 
+struct device_node *of_get_child_by_name(const struct device_node *node,
+                                         const char *name)
+{
+	TRACE_AND_STOP;
+}
+
 
 /************************
  ** linux/pm_runtime.h **
@@ -408,6 +452,89 @@ ktime_t ktime_get_real(void)
 {
 	TRACE_AND_STOP;
 	return -1;
+}
+
+
+/********************
+ ** linux/device.h **
+ ********************/
+
+int bus_register(struct bus_type *bus)
+{
+	TRACE_AND_STOP;
+	return -ENOMEM;
+}
+
+
+/***********************
+ ** linux/of_device.h **
+ ***********************/
+
+int of_device_uevent_modalias(struct device *dev, struct kobj_uevent_env *env)
+{
+	TRACE_AND_STOP;
+	return -ENODEV;
+}
+
+int of_driver_match_device(struct device *dev, const struct device_driver *drv)
+{
+	TRACE_AND_STOP;
+	return 0;
+}
+
+
+/**************************
+ ** linux/of_videomode.h **
+ **************************/
+
+int of_get_videomode(struct device_node *np, struct videomode *vm, int index)
+{
+	TRACE_AND_STOP;
+	return -1;
+}
+
+
+/***********************
+ ** video/videomode.h **
+ ***********************/
+
+void videomode_from_timing(const struct display_timing *dt, struct videomode *vm)
+{
+	TRACE_AND_STOP;
+}
+
+
+/***********************
+ ** linux/backlight.h **
+ ***********************/
+
+int backlight_enable(struct backlight_device *bd)
+{
+	TRACE_AND_STOP;
+	return -1;
+}
+
+
+int backlight_disable(struct backlight_device *bd)
+{
+	TRACE_AND_STOP;
+	return -1;
+}
+
+void *bl_get_data(struct backlight_device *bl_dev)
+{
+	TRACE_AND_STOP;
+	return NULL;
+}
+
+struct backlight_device *
+devm_backlight_device_register(struct device *dev, const char *name,
+                               struct device *parent, void *devdata,
+                               const struct backlight_ops *ops,
+                               const struct backlight_properties *props)
+{
+	TRACE_AND_STOP;
+	return NULL;
 }
 
 

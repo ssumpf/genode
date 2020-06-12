@@ -39,6 +39,10 @@ extern "C" int module_imx_drm_pdrv_init();
 extern "C" int module_dcss_driver_init();
 extern "C" int module_dcss_crtc_driver_init();
 extern "C" int module_imx_hdp_imx_platform_driver_init();
+extern "C" int module_mixel_mipi_phy_driver_init();
+extern "C" int module_imx_nwl_dsi_driver_init();
+extern "C" int module_rad_panel_driver_init();
+extern "C" void postcore_mipi_dsi_bus_init();
 
 
 static void run_linux(void * m);
@@ -67,6 +71,7 @@ struct Main
 		LX_MUTEX_INIT(bridge_lock);
 		LX_MUTEX_INIT(core_lock);
 		LX_MUTEX_INIT(component_mutex);
+		LX_MUTEX_INIT(host_lock);
 
 		/* init singleton Lx::Scheduler */
 		Lx::scheduler(&env);
@@ -135,6 +140,19 @@ static void run_linux(void * m)
 	module_dcss_crtc_driver_init();
 	module_imx_hdp_imx_platform_driver_init();
 
+	/* MIPI DSI */
+	Genode::log("module_mixel_mipi_phy_driver_init");
+	module_mixel_mipi_phy_driver_init();
+	Genode::log("-----------0---------------------");
+	Genode::log("module_imx_nwl_dsi_driver_init");
+	module_imx_nwl_dsi_driver_init();
+	Genode::log("---------------------------------");
+	Genode::log("postcore_mipi_dsi_bus_init");
+	postcore_mipi_dsi_bus_init();
+	Genode::log("---------------------------------");
+	Genode::log("module_rad_panel_driver_init");
+	module_rad_panel_driver_init();
+	Genode::log("---------------------------------");
 
 	/**
 	 * This device is originally created with the name '32e2d000.irqsteer'
