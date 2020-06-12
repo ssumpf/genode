@@ -1354,6 +1354,18 @@ devm_gpiod_get(struct device *dev, const char *con_id, enum gpiod_flags flags);
 
 void gpiod_set_value(struct gpio_desc *desc, int value);
 
+
+/********************
+ ** linux/regmap.h **
+ ********************/
+
+struct regmap;
+
+int regmap_write(struct regmap *map, unsigned int reg, unsigned int val);
+
+int regmap_update_bits(struct regmap *map, unsigned reg, unsigned mask,
+                       unsigned val);
+
 /* needed by drivers/gpu/drm/drm_modes.c */
 #include <linux/list_sort.h>
 

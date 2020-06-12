@@ -32,9 +32,9 @@ linux-x.x.x/drivers/gpu/drm/drm_property.c
 linux-x.x.x/drivers/gpu/drm/drm_rect.c
 linux-x.x.x/drivers/gpu/drm/drm_vblank.c
 linux-x.x.x/drivers/gpu/drm/drm_vma_manager.c
-linux-x.x.x/drivers/gpu/drm/bridge/nwl-dsi.c
 linux-x.x.x/drivers/gpu/drm/imx/imx-drm.h
 linux-x.x.x/drivers/gpu/drm/imx/imx-drm-core.c
+linux-x.x.x/drivers/gpu/drm/imx/nwl_dsi-imx.c
 linux-x.x.x/drivers/gpu/drm/imx/dcss/dcss-crtc.c
 linux-x.x.x/drivers/gpu/drm/imx/dcss/dcss-crtc.h
 linux-x.x.x/drivers/gpu/drm/imx/dcss/dcss-kms.c
@@ -196,6 +196,7 @@ linux-x.x.x/include/linux/rbtree_augmented.h
 linux-x.x.x/include/linux/rbtree.h
 linux-x.x.x/include/linux/sort.h
 linux-x.x.x/include/linux/vga_switcheroo.h
+linux-x.x.x/include/linux/mfd/syscon/imx8mq-iomuxc-gpr.h
 linux-x.x.x/include/linux/phy/phy.h
 linux-x.x.x/include/linux/phy/phy-mixel-mipi-dsi.h
 linux-x.x.x/include/soc/imx8/sc/ipc.h
