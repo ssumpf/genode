@@ -561,6 +561,28 @@ int dma_mmap_wc(struct device *dev,
 }
 
 
+/********************
+ ** linux/regmap.h **
+ ********************/
+
+struct regmap;
+
+int regmap_write(struct regmap *map, unsigned int reg, unsigned int val)
+{
+	TRACE_AND_STOP;
+
+	return 0;
+}
+
+int regmap_update_bits(struct regmap *map, unsigned reg, unsigned mask,
+                       unsigned val)
+{
+	TRACE_AND_STOP;
+
+	return 0;
+}
+
+
 /************************
  ** linux/pm-runtime.h **
  ************************/

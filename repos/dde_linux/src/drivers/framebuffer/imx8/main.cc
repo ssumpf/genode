@@ -129,6 +129,7 @@ static void run_linux(void * m)
 {
 	Main * main = reinterpret_cast<Main*>(m);
 
+	Genode::log("Starting linux main thread ...");
 	system_wq  = alloc_workqueue("system_wq", 0, 0);
 
 	radix_tree_init();
