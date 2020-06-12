@@ -149,6 +149,7 @@ struct bus_type platform_bus_type = {
 
 int platform_driver_register(struct platform_driver * drv)
 {
+	Genode::warning("register: ", drv->driver.name);
 	/* init platform_bus_type */
 	platform_bus_type.match = platform_match;
 	platform_bus_type.probe = platform_drv_probe;

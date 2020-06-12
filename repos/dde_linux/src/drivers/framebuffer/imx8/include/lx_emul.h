@@ -1255,6 +1255,9 @@ bool is_of_node(const struct fwnode_handle *fwnode);
 			NULL;						\
 	})
 
+struct device_node *of_get_child_by_name(const struct device_node *node,
+                                         const char *name);
+
 
 /***********************
  ** linux/of_device.h **
@@ -1264,6 +1267,28 @@ const void *of_device_get_match_data(const struct device *dev);
 
 const struct of_device_id *of_match_device(const struct of_device_id *matches,
                                            const struct device *dev);
+
+int of_driver_match_device(struct device *dev, const struct device_driver *drv);
+
+int of_device_uevent_modalias(struct device *dev, struct kobj_uevent_env *env);
+
+
+/**************************
+ ** linux/of_videomode.h **
+ **************************/
+
+struct videomode;
+
+int of_get_videomode(struct device_node *np, struct videomode *vm, int index);
+
+
+/***********************
+ ** video/videomode.h **
+ ***********************/
+
+struct display_timing;
+
+void videomode_from_timing(const struct display_timing *dt, struct videomode *vm);
 
 
 /******************
@@ -1323,6 +1348,11 @@ enum gpiod_flags {
 	GPIOD_OUT_HIGH = GPIOD_FLAGS_BIT_DIR_SET | GPIOD_FLAGS_BIT_DIR_OUT |
 	                 GPIOD_FLAGS_BIT_DIR_VAL
 };
+
+struct gpio_desc *
+devm_gpiod_get(struct device *dev, const char *con_id, enum gpiod_flags flags);
+
+void gpiod_set_value(struct gpio_desc *desc, int value);
 
 /* needed by drivers/gpu/drm/drm_modes.c */
 #include <linux/list_sort.h>
@@ -1608,6 +1638,30 @@ struct backlight_ops {
 	int (*update_status)(struct backlight_device *);
 	int (*get_brightness)(struct backlight_device *);
 };
+
+int backlight_enable(struct backlight_device *bd);
+int backlight_disable(struct backlight_device *bd);
+
+void *bl_get_data(struct backlight_device *bl_dev);
+
+struct backlight_device *
+devm_backlight_device_register(struct device *dev, const char *name,
+                               struct device *parent, void *devdata,
+                               const struct backlight_ops *ops,
+                               const struct backlight_properties *props);
+
+
+
+/***********************
+ ** linux/backlight.h **
+ ***********************/
+
+struct drm_panel;
+void drm_panel_init(struct drm_panel *panel);
+
+int drm_panel_add(struct drm_panel *panel);
+void drm_panel_remove(struct drm_panel *panel);
+
 
 /************************
  ** drm/drm_os_linux.h **
