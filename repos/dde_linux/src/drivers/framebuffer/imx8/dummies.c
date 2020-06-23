@@ -122,7 +122,7 @@ void drm_dev_unregister(struct drm_device *dev)
 
 
 /***********************
- ** linux/backlight.h **
+ ** linux/drm_panel.h **
  ***********************/
 
 void drm_panel_init(struct drm_panel *panel)
@@ -140,6 +140,20 @@ int drm_panel_add(struct drm_panel *panel)
 void drm_panel_remove(struct drm_panel *panel)
 {
 	TRACE_AND_STOP;
+}
+
+
+int drm_panel_attach(struct drm_panel *panel, struct drm_connector *connector)
+{
+	TRACE_AND_STOP;
+	return -1;
+}
+
+
+int drm_panel_detach(struct drm_panel *panel)
+{
+	TRACE;
+	return -1;
 }
 
 
@@ -414,6 +428,22 @@ struct device_node *of_get_child_by_name(const struct device_node *node,
                                          const char *name)
 {
 	TRACE_AND_STOP;
+	return NULL;
+}
+
+
+struct property *of_find_property(const struct device_node *np,
+                                  const char *name, int *lenp)
+{
+	TRACE_AND_STOP;
+	return NULL;
+}
+
+
+int of_modalias_node(struct device_node *node, char *modalias, int len)
+{
+	TRACE_AND_STOP;
+	return -1;
 }
 
 
@@ -455,17 +485,6 @@ ktime_t ktime_get_real(void)
 }
 
 
-/********************
- ** linux/device.h **
- ********************/
-
-int bus_register(struct bus_type *bus)
-{
-	TRACE_AND_STOP;
-	return -ENOMEM;
-}
-
-
 /***********************
  ** linux/of_device.h **
  ***********************/
@@ -478,10 +497,29 @@ int of_device_uevent_modalias(struct device *dev, struct kobj_uevent_env *env)
 
 int of_driver_match_device(struct device *dev, const struct device_driver *drv)
 {
-	TRACE_AND_STOP;
+	TRACE;
 	return 0;
 }
 
+/********************
+ ** linux/device.h **
+ ********************/
+
+void device_initialize(struct device *dev)
+{
+	TRACE_AND_STOP;
+}
+
+void device_unregister(struct device *dev)
+{
+	TRACE;
+}
+
+void *devm_kcalloc(struct device *dev, size_t n, size_t size, gfp_t flags)
+{
+	TRACE_AND_STOP;
+	return NULL;
+}
 
 /**************************
  ** linux/of_videomode.h **
@@ -561,6 +599,90 @@ int dma_mmap_wc(struct device *dev,
 }
 
 
+/*****************
+ ** linux/phy.h **
+ *****************/
+
+struct phy *devm_phy_get(struct device *dev, const char *string)
+{
+	TRACE_AND_STOP;
+	return NULL;
+}
+struct phy_ops;
+struct phy *devm_phy_create(struct device *dev,
+                            struct device_node *node,
+                            const struct phy_ops *ops)
+{
+	TRACE_AND_STOP;
+	return NULL;
+}
+
+struct phy_provider *__devm_of_phy_provider_register(struct device *dev,
+                                                     struct device_node *children,
+                                                     struct module *owner,
+                                                     struct phy * (*of_xlate)(struct device *dev,
+                                                        struct of_phandle_args *args))
+{
+	TRACE_AND_STOP;
+	return NULL;
+}
+
+
+struct phy *of_phy_simple_xlate(struct device *dev, struct of_phandle_args *args)
+{
+	TRACE_AND_STOP;
+	return NULL;
+}
+
+
+int phy_init(struct phy *phy)
+{
+	TRACE_AND_STOP;
+	return -1;
+}
+
+int phy_power_on(struct phy *phy)
+{
+	TRACE_AND_STOP;
+	return -1;
+}
+
+
+int phy_power_off(struct phy *phy)
+{
+	TRACE;
+	return -1;
+}
+
+
+int phy_exit(struct phy *phy)
+{
+	TRACE;
+	return -1;
+}
+
+
+/***********************
+ ** linux/interrupt.h **
+ ***********************/
+
+void devm_free_irq(struct device *dev, unsigned int irq, void *dev_id)
+{
+	TRACE;
+}
+
+
+/********************************
+ ** linux/unaligned/generic.h  **
+ ********************************/
+
+u32 get_unaligned_le32(const void *p)
+{
+	TRACE_AND_STOP;
+	return 0;
+}
+
+
 /********************
  ** linux/regmap.h **
  ********************/
@@ -580,6 +702,17 @@ int regmap_update_bits(struct regmap *map, unsigned reg, unsigned mask,
 	TRACE_AND_STOP;
 
 	return 0;
+}
+
+
+/************************
+ ** linux/mfd/syscon.h **
+ ************************/
+
+struct regmap *syscon_regmap_lookup_by_phandle( struct device_node *np, const char *property)
+{
+	TRACE_AND_STOP;
+	return NULL;
 }
 
 
