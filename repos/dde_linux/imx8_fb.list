@@ -32,6 +32,7 @@ linux-x.x.x/drivers/gpu/drm/drm_property.c
 linux-x.x.x/drivers/gpu/drm/drm_rect.c
 linux-x.x.x/drivers/gpu/drm/drm_vblank.c
 linux-x.x.x/drivers/gpu/drm/drm_vma_manager.c
+linux-x.x.x/drivers/gpu/drm/bridge/nwl-dsi.c
 linux-x.x.x/drivers/gpu/drm/imx/imx-drm.h
 linux-x.x.x/drivers/gpu/drm/imx/imx-drm-core.c
 linux-x.x.x/drivers/gpu/drm/imx/nwl_dsi-imx.c

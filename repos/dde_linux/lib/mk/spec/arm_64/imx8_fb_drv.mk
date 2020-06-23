@@ -20,6 +20,9 @@ SRC_C   += $(notdir $(wildcard $(LX_CONTRIB_DIR)/drivers/phy/*.c))
 SRC_C   += $(notdir $(wildcard $(LX_CONTRIB_DIR)/drivers/video/*.c))
 SRC_C   += $(notdir $(wildcard $(LX_CONTRIB_DIR)/lib/*.c))
 
+
+CC_OPT_nwl-dsi += -DMOD_SUFFIX=_bridge
+
 #
 # Linux sources are C89 with GNU extensions
 #

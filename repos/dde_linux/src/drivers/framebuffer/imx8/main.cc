@@ -40,6 +40,7 @@ extern "C" int module_dcss_driver_init();
 extern "C" int module_dcss_crtc_driver_init();
 extern "C" int module_imx_hdp_imx_platform_driver_init();
 extern "C" int module_mixel_mipi_phy_driver_init();
+extern "C" int module_imx_nwl_dsi_driver_bridge_init();
 extern "C" int module_imx_nwl_dsi_driver_init();
 extern "C" int module_rad_panel_driver_init();
 extern "C" void postcore_mipi_dsi_bus_init();
@@ -144,7 +145,10 @@ static void run_linux(void * m)
 	/* MIPI DSI */
 	Genode::log("module_mixel_mipi_phy_driver_init");
 	module_mixel_mipi_phy_driver_init();
-	Genode::log("-----------0---------------------");
+	Genode::log("---------------------------------");
+	Genode::log("module_imx_nwl_dsi_driver_bridge_init");
+	module_imx_nwl_dsi_driver_bridge_init();
+	Genode::log("---------------------------------");
 	Genode::log("module_imx_nwl_dsi_driver_init");
 	module_imx_nwl_dsi_driver_init();
 	Genode::log("---------------------------------");
@@ -219,6 +223,7 @@ static void run_linux(void * m)
 	 * the driver name.
 	 */
 
+/*
 	struct platform_device *hdp_pdev =
 		platform_device_alloc("i.mx8-hdp", 0);
 
@@ -241,8 +246,24 @@ static void run_linux(void * m)
 	hdp_pdev->dev.of_node->properties->value = (void*)"fsl,imx8mq-hdmi";
 
 	platform_device_register(hdp_pdev);
+*/
 
+	struct platform_device *mipi_bridge_pdev =
+		platform_device_alloc("nwl-mipi-dsi", 0);
 
+	platform_device_register(mipi_bridge_pdev);
+//	mipi_pdev.dev.of_node = (device_node *)kzalloc(sizeof(device_node), 0);
+//	mipi_pdev
+/*
+	struct platform_device *rad_pdev =
+		platform_device_alloc("panel-raydium-rm67191", 0);
+
+	rad_pdev->dev.bus = mipi_dsi_bus();
+	Genode::log("rad bys: ", rad_pdev->dev.bus);
+	Genode::log("register rad");
+	platform_device_register(rad_pdev);
+	Genode::log("done rad");
+*/
 	/**
 	 * This device is originally created with the name 'display-subsystem'
 	 * via 'of_platform_bus_create()'. Here it is called 'imx-drm' to match

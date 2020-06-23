@@ -185,7 +185,9 @@ int platform_device_add_data(struct platform_device *pdev, const void *data,
 
 int platform_device_register(struct platform_device *pdev)
 {
-	pdev->dev.bus  = &platform_bus_type;
+	if (pdev->dev.bus == nullptr)
+		pdev->dev.bus  = &platform_bus_type;
+
 	pdev->dev.name = pdev->name;
 	/*Set parent to ourselfs */
 	if (!pdev->dev.parent)
@@ -751,7 +753,7 @@ void reinit_completion(struct completion *work)
  */
 class Driver : public Genode::List<Driver>::Element
 {
-	private:
+	public:
 
 		struct device_driver *_drv; /* Linux driver */
 
@@ -780,6 +782,7 @@ class Driver : public Genode::List<Driver>::Element
 			 *  Don't try if buses don't match, since drivers often use 'container_of'
 			 *  which might cast the device to non-matching type
 			 */
+			Genode::log("drv bus: ", _drv->bus, " dev bus: ", dev->bus);
 			if (_drv->bus != dev->bus)
 				return false;
 
@@ -816,16 +819,42 @@ int device_add(struct device *dev)
 		return 0;
 
 	/* foreach driver match and probe device */
-	for (Driver *driver = Driver::list()->first(); driver; driver = driver->next())
+	for (Driver *driver = Driver::list()->first(); driver; driver = driver->next()) {
+		Genode::log("Match: ", driver->_drv->name, " pdev: ", dev->name, " match func: ");
 		if (driver->match(dev)) {
+			Genode::warning("Match: success");
 			int ret = driver->probe(dev);
 
 			if (!ret) return 0;
 		}
+	}
 
 	return 0;
 }
 
+
+static bus_type *_bus = nullptr;
+
+int bus_register(struct bus_type *bus)
+{
+	if (_bus) {
+		Genode::error(__func__, " called twice, implement list");
+		return  -ENOMEM;
+	}
+
+	_bus = bus;
+	return 0;
+}
+
+bus_type *mipi_dsi_bus()
+{
+	if (!_bus || strcmp(_bus->name, "mipi-dsi")) {
+		Genode::error("\"mipi-dsi\" bus not found");
+		return nullptr;
+	}
+
+	return _bus;
+}
 
 
 /*************************

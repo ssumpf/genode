@@ -901,6 +901,8 @@ int dev_set_name(struct device *dev, const char *name, ...);
 int bus_register(struct bus_type *bus);
 void bus_unregister(struct bus_type *bus);
 
+struct bus_type *mipi_dsi_bus(void);
+
 struct device *get_device(struct device *dev);
 void put_device(struct device *dev);
 
@@ -910,6 +912,9 @@ int  device_add(struct device *dev);
 
 int device_register(struct device *dev);
 void device_unregister(struct device *dev);
+void device_initialize(struct device *dev);
+
+
 
 const char *dev_name(const struct device *dev);
 
@@ -924,6 +929,7 @@ struct acpi_device;
 
 void devm_kfree(struct device *dev, void *p);
 void *devm_kzalloc(struct device *dev, size_t size, gfp_t gfp);
+void *devm_kcalloc(struct device *dev, size_t n, size_t size, gfp_t flags);
 
 typedef void (*dr_release_t)(struct device *dev, void *res);
 typedef int (*dr_match_t)(struct device *dev, void *res, void *match_data);
@@ -1174,6 +1180,13 @@ extern struct page *shmem_read_mapping_page( struct address_space *mapping, pgof
 struct file *shmem_file_setup(const char *, loff_t, unsigned long);
 
 
+/********************************
+ ** linux/unaligned/generic.h  **
+ ********************************/
+
+u32 get_unaligned_le32(const void *p);
+
+
 /*****************
  ** linux/i2c.h **
  *****************/
@@ -1242,6 +1255,10 @@ bool of_property_read_bool(const struct device_node *np, const char *propname);
 int of_property_read_string(const struct device_node *np, const char *propname,
                             const char **out_string);
 int of_property_read_u32(const struct device_node *np, const char *propname, u32 *out_value);
+
+struct property *of_find_property(const struct device_node *np,
+                                  const char *name, int *lenp);
+int of_modalias_node(struct device_node *node, char *modalias, int len);
 
 bool is_of_node(const struct fwnode_handle *fwnode);
 
@@ -1365,6 +1382,13 @@ int regmap_write(struct regmap *map, unsigned int reg, unsigned int val);
 
 int regmap_update_bits(struct regmap *map, unsigned reg, unsigned mask,
                        unsigned val);
+
+/************************
+ ** linux/mfd/syscon.h **
+ ************************/
+
+struct regmap *syscon_regmap_lookup_by_phandle( struct device_node *np, const char *property);
+
 
 /* needed by drivers/gpu/drm/drm_modes.c */
 #include <linux/list_sort.h>
@@ -1669,11 +1693,6 @@ devm_backlight_device_register(struct device *dev, const char *name,
  ***********************/
 
 struct drm_panel;
-void drm_panel_init(struct drm_panel *panel);
-
-int drm_panel_add(struct drm_panel *panel);
-void drm_panel_remove(struct drm_panel *panel);
-
 
 /************************
  ** drm/drm_os_linux.h **
@@ -1754,6 +1773,7 @@ static inline void *irq_desc_get_handler_data(struct irq_desc *desc)
 #define CONFIG_OF                              1
 #define CONFIG_VIDEOMODE_HELPERS               1
 #define CONFIG_PHY_MIXEL_MIPI_DSI              1
+#define CONFIG_GENERIC_PHY                     1
 
 
 /**************************
@@ -1785,6 +1805,7 @@ void enable_irq(unsigned int);
 void disable_irq(unsigned int);
 int disable_irq_nosync(unsigned int);
 
+void devm_free_irq(struct device *dev, unsigned int irq, void *dev_id);
 
 /*****************************
  ** linux/platform_device.h **
@@ -1836,17 +1857,27 @@ struct platform_driver {
 int platform_driver_register(struct platform_driver *);
 void platform_driver_unregister(struct platform_driver *);
 
+#ifndef MOD_SUFFIX
+#define MOD_SUFFIX
+#endif
+
+#define _MOD_CONCAT(a,b,c) a##b##c
+#define MOD_CONCAT(a,b,c) _MOD_CONCAT(a,b,c)
+
 #define module_driver(__driver, __register, __unregister, ...) \
-static int __init __driver##_init(void) \
+static int __init MOD_CONCAT(__driver, MOD_SUFFIX, _init)(void) \
 { \
 	return __register(&(__driver) , ##__VA_ARGS__); \
 } \
-module_init(__driver##_init); \
-static void __exit __driver##_exit(void) \
+int MOD_CONCAT(module_##__driver, MOD_SUFFIX, _init)() { \
+  return MOD_CONCAT(__driver, MOD_SUFFIX, _init)(); } \
+static void __exit MOD_CONCAT(__driver, MOD_SUFFIX, _exit)(void) \
 { \
 	__unregister(&(__driver) , ##__VA_ARGS__); \
 } \
-module_exit(__driver##_exit);
+void MOD_CONCAT(module_exit_##__driver, MOD_SUFFIX, _exit)() { \
+	MOD_CONCAT(__driver, MOD_SUFFIX, _exit)(); }
+
 
 #define module_platform_driver(__platform_driver) \
 	module_driver(__platform_driver, platform_driver_register, \
