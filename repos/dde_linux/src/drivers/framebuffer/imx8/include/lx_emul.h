@@ -11,7 +11,7 @@
 #define _LX_EMUL_H_
 
 #define DEBUG_LINUX_PRINTK 0
-#define DEBUG_DRIVER       0
+#define DEBUG_DRIVER       1
 
 /* XXX: acquire from firmware if this becomes necessary */
 #define SOC_REVISION 0x20
@@ -948,6 +948,9 @@ void *devres_open_group(struct device *dev, void *id, gfp_t gfp);
 int devres_release_group(struct device *dev, void *id);
 void devres_remove_group(struct device *dev, void *id);
 
+void *devres_find(struct device *dev, dr_release_t release,
+                   dr_match_t match, void *match_data);
+
 int dev_to_node(struct device *dev);
 
 
@@ -1686,7 +1689,11 @@ devm_backlight_device_register(struct device *dev, const char *name,
                                const struct backlight_ops *ops,
                                const struct backlight_properties *props);
 
+/****************************
+ ** drivers/phy/phy-core.c **
+ ****************************/
 
+void devm_phy_consume(struct device *dev, void *res);
 
 /***********************
  ** linux/backlight.h **

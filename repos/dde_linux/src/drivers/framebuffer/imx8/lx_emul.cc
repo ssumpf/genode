@@ -32,6 +32,7 @@
 #include "drm_crtc_internal.h"
 #include "drm_internal.h"
 #include <linux/component.h>
+#include <linux/phy/phy.h>
 #include <lx_emul/extern_c_end.h>
 
 #include <lx_kit/scheduler.h> /* dependency of lx_emul/impl/completion.h */
@@ -261,6 +262,9 @@ struct clk *devm_clk_get(struct device *dev, const char *id)
 		{ "pix", 27000000 },
 		{ "rtrm", 400000000 },
 		{ "dtrc", 25000000 },
+		{ "phy_ref", 25000000 },
+		{ "rx_esc", 80000000 },
+		{ "tx_esc", 40000000 }
 	};
 
 	for (unsigned i = 0; i < (sizeof(clocks) / sizeof(struct clk)); i++)
@@ -364,6 +368,11 @@ static struct device_node port_device_node {
 	.full_name = "port"
 };
 
+static struct device_node mipi_endpoint_device_node {
+	.name = "mipi-endpoint",
+	.full_name = "mipi-endpoint",
+};
+
 int of_device_is_compatible(const struct device_node *device,
                             const char *compat)
 {
@@ -410,9 +419,16 @@ const void *of_get_property(const struct device_node *node, const char *name, in
 	for (property * p = node ? node->properties : nullptr; p; p = p->next)
 		if (Genode::strcmp(name, p->name) == 0) return p->value;
 
-	if (DEBUG_DRIVER) Genode::warning("OF property ", name, " not found");
+	Genode::warning("OF property ", name, " not found");
 	return nullptr;
 }
+
+
+int of_alias_get_id(struct device_node *np, const char *stem)
+{
+	return (long)of_get_property(np, stem, 0);
+}
+
 
 struct device_node *of_parse_phandle(const struct device_node *np, const char *phandle_name, int index)
 {
@@ -482,7 +498,15 @@ struct device_node *of_graph_get_next_endpoint(const struct device_node *parent,
 		return nullptr;
 	}
 
-	Genode::error(__func__, "(): unhandled parent");
+	if(Genode::strcmp(parent->name, "mipi_dsi", strlen(parent->name)) == 0) {
+
+		if (!prev)
+			return &mipi_endpoint_device_node;
+
+		return nullptr;
+	}
+
+	Genode::error(__func__, "(): unhandled parent '", parent->name, "'");
 
 	return nullptr;
 }
@@ -512,6 +536,14 @@ struct device_node *of_graph_get_remote_port_parent(const struct device_node *no
 {
 	if (Genode::strcmp(node->name, "hdmi-endpoint") == 0)
 		return &hdmi_device_node;
+
+	if (Genode::strcmp(node->name, "mipi-endpoint") == 0) {
+
+		int len;
+		void const *np = of_get_property(&mipi_endpoint_device_node, "mipi_dsi_bridge_np", &len);
+		Genode::log("READ: ", np);
+		return (device_node *)np;
+	}
 
 	Genode::error("of_graph_get_remote_port_parent(): unhandled node");
 
@@ -705,7 +737,9 @@ static void *_ioremap(phys_addr_t phys_addr, unsigned long size, int wc)
 	try {
 		Genode::Attached_io_mem_dataspace *ds = new(Lx::Malloc::mem())
 			Genode::Attached_io_mem_dataspace(Lx_kit::env().env(), phys_addr, size, !!wc);
-		return ds->local_addr<void>();
+		void * ret = ds->local_addr<void>();
+		Genode::log("ioremap: ", Genode::Hex(phys_addr), " size: ", Genode::Hex(size), " addr: ", ret);
+		return ret;
 	} catch (...) {
 		panic("Failed to request I/O memory: [%lx,%lx)", phys_addr, phys_addr + size);
 		return 0;
@@ -947,14 +981,30 @@ bool of_property_read_bool(const struct device_node *np, const char *propname)
 		    (Genode::strcmp(propname, "fsl,no_edid", strlen(np->name)) == 0))
 			return false;
 
-		Genode::error(__func__, "(): unhandled property '", propname,
+		Genode::error(__func__, "(): hdmi unhandled property '", propname,
 		                        "' of device '", Genode::Cstring(np->name), "'");
 
 		return false;
 	}
 
-	Genode::error(__func__, "(): unhandled device '", Genode::Cstring(np->name),
-	                        "' (property: '", Genode::Cstring(propname), "')");
+	if ((Genode::strcmp(np->name, "mipi_dsi_bridge") == 0)) {
+		if (Genode::strcmp(propname, "no_clk_reset") == 0) {
+			/* set np in bridge endpoint */
+			mipi_endpoint_device_node.properties = (property*)kzalloc(sizeof(property), 0);
+			mipi_endpoint_device_node.properties->name  = "mipi_dsi_bridge_np";
+			mipi_endpoint_device_node.properties->value = (void *)np;
+			Genode::log("SET: ", np);
+			return true;
+		}
+
+		Genode::error(__func__, "(): mipi_dsi_bridge unhandled property '", propname,
+		                        "' of device '", Genode::Cstring(np->name), "'");
+		return false;
+	}
+
+	if (DEBUG_DRIVER)
+		Genode::error(__func__, "(): unhandled device '", Genode::Cstring(np->name),
+		                        "' (property: '", Genode::Cstring(propname), "')");
 
 	return false;
 }
@@ -1657,6 +1707,49 @@ unsigned int kref_read(const struct kref *kref)
 {
 	TRACE;
 	return atomic_read(&kref->refcount);
+}
+
+
+
+/****************************
+ ** drivers/phy/phy-core.c **
+ ****************************/
+
+void devm_phy_consume(struct device *dev, void *res)
+{
+	TRACE;
+}
+
+struct phy_ops;
+struct phy *devm_phy_create(struct device *dev,
+                            struct device_node *node,
+                            const struct phy_ops *ops)
+{
+	TRACE;
+
+	phy **ptr = (phy**)devres_alloc(devm_phy_consume, sizeof(*ptr), GFP_KERNEL);
+	phy *p    = (phy *)kzalloc(sizeof(phy), GFP_KERNEL);
+
+	p->dev.of_node = node;
+	p->ops         = ops;
+
+	Genode::log("PTR: ", ptr, " PHY: ", p);
+
+	*ptr = p;
+	devres_add(dev, ptr);
+
+	Genode::log("FIND: ", devres_find(dev, devm_phy_consume, nullptr, nullptr));
+
+	return p;
+}
+
+
+struct phy *devm_phy_get(struct device *dev, const char *string)
+{
+	int len = 0;
+	void const *phy = of_get_property(dev->of_node, string, &len);
+	Genode::log(__func__, ": search for '", string, "' val: ", phy);
+	return (struct phy *)phy;
 }
 
 
