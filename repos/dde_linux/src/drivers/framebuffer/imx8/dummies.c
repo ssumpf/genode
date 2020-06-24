@@ -603,27 +603,13 @@ int dma_mmap_wc(struct device *dev,
  ** linux/phy.h **
  *****************/
 
-struct phy *devm_phy_get(struct device *dev, const char *string)
-{
-	TRACE_AND_STOP;
-	return NULL;
-}
-struct phy_ops;
-struct phy *devm_phy_create(struct device *dev,
-                            struct device_node *node,
-                            const struct phy_ops *ops)
-{
-	TRACE_AND_STOP;
-	return NULL;
-}
-
 struct phy_provider *__devm_of_phy_provider_register(struct device *dev,
                                                      struct device_node *children,
                                                      struct module *owner,
                                                      struct phy * (*of_xlate)(struct device *dev,
                                                         struct of_phandle_args *args))
 {
-	TRACE_AND_STOP;
+	TRACE;
 	return NULL;
 }
 
@@ -843,12 +829,6 @@ loff_t noop_llseek(struct file *file, loff_t offset, int whence)
 	return -1;
 }
 
-int of_alias_get_id(struct device_node *np, const char *stem)
-{
-	TRACE_AND_STOP;
-	return -ENOSYS;
-}
-
 int of_irq_get(struct device_node *dev, int index)
 {
 	TRACE_AND_STOP;
@@ -874,8 +854,8 @@ void print_hex_dump(const char *level, const char *prefix_str, int prefix_type, 
 
 int PTR_ERR_OR_ZERO(__force const void *ptr)
 {
-	TRACE_AND_STOP;
-	return -1;
+	TRACE;
+	return 0;
 }
 
 void up_read(struct rw_semaphore *sem)

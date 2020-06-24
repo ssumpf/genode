@@ -235,11 +235,56 @@ void Framebuffer::Main::_run_linux()
 
 	platform_device_register(hdp_pdev);
 */
+	struct platform_device *mipi_dsi_phy_pdev =
+		platform_device_alloc("mixel-mipi-dsi-phy", 0);
 
-	struct platform_device *mipi_bridge_pdev =
+	static resource mipi_dsi_phy_resources[] = {
+		{ 0x30a00300, 0x30a003ff, "dsi_phy", IORESOURCE_MEM }
+	};
+
+	mipi_dsi_phy_pdev->num_resources = 1;
+	mipi_dsi_phy_pdev->resource      = mipi_dsi_phy_resources;
+
+	mipi_dsi_phy_pdev->dev.of_node                      = (device_node*)kzalloc(sizeof(device_node), 0);
+	mipi_dsi_phy_pdev->dev.of_node->properties          = (property*)kzalloc(2*sizeof(property), 0);
+	mipi_dsi_phy_pdev->dev.of_node->properties[0].name  = "compatible";
+	mipi_dsi_phy_pdev->dev.of_node->properties[0].value = (void*)"mixel,imx8mq-mipi-dsi-phy";
+	mipi_dsi_phy_pdev->dev.of_node->properties[0].next  = &mipi_dsi_phy_pdev->dev.of_node->properties[1];
+	mipi_dsi_phy_pdev->dev.of_node->properties[1].name  = "dsi_phy";
+	mipi_dsi_phy_pdev->dev.of_node->properties[1].value = (void*)0;
+
+	platform_device_register(mipi_dsi_phy_pdev);
+
+	struct platform_device *mipi_dsi_bridge_pdev =
 		platform_device_alloc("nwl-mipi-dsi", 0);
 
-	platform_device_register(mipi_bridge_pdev);
+	static resource mipi_dsi_bridge_resources[] = {
+		{ 0x30a00000, 0x30a002ff, "mipi_dsi_bridge", IORESOURCE_MEM },
+		{         66,         66, "mipi_dsi",        IORESOURCE_IRQ }
+	};
+
+	mipi_dsi_bridge_pdev->num_resources = 2;
+	mipi_dsi_bridge_pdev->resource      = mipi_dsi_bridge_resources;
+
+	Genode::addr_t **phy_ptr =
+	  (Genode::addr_t **)devres_find(&mipi_dsi_phy_pdev->dev, devm_phy_consume, nullptr, nullptr);
+	Genode::log("main: ptr ", phy_ptr, " phy ", *phy_ptr);
+	mipi_dsi_bridge_pdev->dev.of_node                      = (device_node*)kzalloc(sizeof(device_node), 0);
+	mipi_dsi_bridge_pdev->dev.of_node->name                = "mipi_dsi_bridge";
+	mipi_dsi_bridge_pdev->dev.of_node->properties          = (property*)kzalloc(sizeof(property), 0);
+	mipi_dsi_bridge_pdev->dev.of_node->properties[0].name  = "dphy";
+	mipi_dsi_bridge_pdev->dev.of_node->properties[0].value = (void*)*phy_ptr;
+	mipi_dsi_bridge_pdev->dev.of_node->properties[0].next  = nullptr;
+
+	platform_device_register(mipi_dsi_bridge_pdev);
+
+	struct platform_device *mipi_dsi_imx_pdev =
+		platform_device_alloc("nwl_dsi-imx", 0);
+
+	mipi_dsi_imx_pdev->dev.of_node                      = (device_node*)kzalloc(sizeof(device_node), 0);
+	mipi_dsi_imx_pdev->dev.of_node->name                = "mipi_dsi";
+
+	platform_device_register(mipi_dsi_imx_pdev);
 //	mipi_pdev.dev.of_node = (device_node *)kzalloc(sizeof(device_node), 0);
 //	mipi_pdev
 /*
