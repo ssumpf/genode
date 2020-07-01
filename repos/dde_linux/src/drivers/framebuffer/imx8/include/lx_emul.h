@@ -1379,7 +1379,10 @@ void gpiod_set_value(struct gpio_desc *desc, int value);
  ** linux/regmap.h **
  ********************/
 
-struct regmap;
+struct regmap
+{
+	u8 *base;
+};
 
 int regmap_write(struct regmap *map, unsigned int reg, unsigned int val);
 

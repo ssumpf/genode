@@ -264,7 +264,9 @@ struct clk *devm_clk_get(struct device *dev, const char *id)
 		{ "dtrc", 25000000 },
 		{ "phy_ref", 25000000 },
 		{ "rx_esc", 80000000 },
-		{ "tx_esc", 40000000 }
+		{ "tx_esc", 40000000 },
+		{ "core", 266666666 },
+		{ "phy_ref2", 593999997 },
 	};
 
 	for (unsigned i = 0; i < (sizeof(clocks) / sizeof(struct clk)); i++)
@@ -365,12 +367,19 @@ static struct device_node endpoint_device_node {
 
 static struct device_node port_device_node {
 	.name = "port",
-	.full_name = "port"
+	.full_name = "port",
 };
 
 static struct device_node mipi_endpoint_device_node {
 	.name = "mipi-endpoint",
 	.full_name = "mipi-endpoint",
+	.parent = &root_device_node
+};
+
+static struct device_node mipi_device_node {
+	.name = "mipi_dsi",
+	.full_name = "mipi_dsi",
+	.parent = &root_device_node
 };
 
 int of_device_is_compatible(const struct device_node *device,
@@ -388,9 +397,12 @@ int of_device_is_compatible(const struct device_node *device,
 struct device_node *of_get_next_child(const struct device_node *node,
                                       struct device_node *prev)
 {
+	Genode::warning(__func__, " called. name: ", node->name);
 	if (Genode::strcmp(node->name, "port", strlen(node->name)) == 0) {
-		if (!prev)
-			return &hdmi_endpoint_device_node;
+		if (!prev) {
+			//XXX: handle HDMI case return &hdmi_endpoint_device_node;
+			return &port_device_node;
+		}
 		return NULL;
 	}
 
@@ -527,7 +539,10 @@ struct device_node *of_graph_get_remote_port(const struct device_node *node)
 	if (Genode::strcmp(node->name, "endpoint", strlen(node->name)) == 0)
 		return &port_device_node;
 
-	Genode::error("of_graph_get_remote_port(): unhandled node\n");
+	if (Genode::strcmp(node->name, "mipi-endpoint", strlen(node->name)) == 0)
+		return &port_device_node;
+
+	Genode::error("of_graph_get_remote_port(): unhandled node '", node->name, "'\n");
 
 	return NULL;
 }
@@ -545,7 +560,10 @@ struct device_node *of_graph_get_remote_port_parent(const struct device_node *no
 		return (device_node *)np;
 	}
 
-	Genode::error("of_graph_get_remote_port_parent(): unhandled node");
+	if (Genode::strcmp(node->name, "port") == 0)
+		return &mipi_device_node;
+
+	Genode::error("of_graph_get_remote_port_parent(): unhandled node: ", node->name);
 
 	return NULL;
 }
@@ -758,6 +776,46 @@ void *devm_ioremap_resource(struct device *dev, struct resource *res)
 }
 
 
+/************************
+ ** linux/mfd/syscon.h **
+ ************************/
+
+struct regmap *syscon_regmap_lookup_by_phandle( struct device_node *np, const char *property)
+{
+	bool src = strcmp(property, "src") == 0;
+	bool mux = strcmp(property, "mux-sel") == 0;
+
+	if (!src && !mux) {
+		Genode::warning(__func__, " property '", property, "' not found.");
+		return 0;
+	}
+
+	phys_addr_t phys = src ? 0x30390000 : 0x30340000;
+
+	regmap *map = (regmap *)kzalloc(sizeof(regmap), GFP_KERNEL);
+	map->base   = (u8 *)_ioremap(phys, 0x10000, 0);
+	return map;
+}
+
+
+/********************
+ ** linux/regmap.h **
+ ********************/
+
+int regmap_update_bits(struct regmap *map, unsigned reg, unsigned mask,
+                       unsigned val)
+{
+	unsigned current = *(map->base + reg);
+
+	current &= ~mask;
+	current |= val;
+	*((volatile u8 *)(map->base + reg)) = current;
+
+	return 0;
+}
+
+
+
 /******************
  ** lib/string.c **
  ******************/
@@ -891,6 +949,12 @@ bus_type *mipi_dsi_bus()
 }
 
 
+void *devm_kcalloc(struct device * /* dev */, size_t n, size_t size, gfp_t flags)
+{
+	return kcalloc(n, size, flags);
+}
+
+
 /*************************
  ** linux/dma-mapping.h **
  *************************/
@@ -998,6 +1062,15 @@ bool of_property_read_bool(const struct device_node *np, const char *propname)
 		}
 
 		Genode::error(__func__, "(): mipi_dsi_bridge unhandled property '", propname,
+		                        "' of device '", Genode::Cstring(np->name), "'");
+		return false;
+	}
+
+	if (Genode::strcmp(np->name, "mipi_dsi") == 0) {
+		if (Genode::strcmp(propname, "no_clk_reset") == 0)
+			return true;
+
+		Genode::error(__func__, "(): mipi_dsi unhandled property '", propname,
 		                        "' of device '", Genode::Cstring(np->name), "'");
 		return false;
 	}
