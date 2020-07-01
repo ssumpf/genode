@@ -171,38 +171,6 @@ void Framebuffer::Main::_run_linux()
 	platform_device_register(imx_irqsteer_pdev);
 
 
-	/**
-	 * This device is originally created with the name '32e00000.dcss'
-	 * via 'of_platform_bus_create()'. Here it is called 'dcss-core' to match
-	 * the driver name.
-	 */
-
-	struct platform_device *dcss_pdev =
-		platform_device_alloc("dcss-core", 0);
-
-	static resource dcss_resources[] = 	{
-		{ 0x32e00000, 0x32efffff, "dcss",       IORESOURCE_MEM },
-		{          3,          3, "dpr_dc_ch0", IORESOURCE_IRQ },
-		{          4,          4, "dpr_dc_ch1", IORESOURCE_IRQ },
-		{          5,          5, "dpr_dc_ch2", IORESOURCE_IRQ },
-		{          6,          6, "ctx_ld",     IORESOURCE_IRQ },
-		{          8,          8, "ctxld_kick", IORESOURCE_IRQ },
-		{          9,          9, "dtg_prg1",   IORESOURCE_IRQ },
-		{         16,         16, "dtrc_ch1",   IORESOURCE_IRQ },
-		{         17,         17, "dtrc_ch2",   IORESOURCE_IRQ },
-	};
-
-	dcss_pdev->num_resources = 9;
-	dcss_pdev->resource = dcss_resources;
-
-	dcss_pdev->dev.of_node                    = (device_node*)kzalloc(sizeof(device_node), 0);
-	dcss_pdev->dev.of_node->name              = "dcss";
-	dcss_pdev->dev.of_node->full_name         = "dcss";
-	dcss_pdev->dev.of_node->properties        = (property*)kzalloc(sizeof(property), 0);
-	dcss_pdev->dev.of_node->properties->name  = "disp-dev";
-	dcss_pdev->dev.of_node->properties->value = (void*)"hdmi_disp";
-
-	platform_device_register(dcss_pdev);
 
 
 	/**
@@ -255,6 +223,40 @@ void Framebuffer::Main::_run_linux()
 
 	platform_device_register(mipi_dsi_phy_pdev);
 
+	/**
+	 * This device is originally created with the name '32e00000.dcss'
+	 * via 'of_platform_bus_create()'. Here it is called 'dcss-core' to match
+	 * the driver name.
+	 */
+	struct platform_device *dcss_pdev =
+		platform_device_alloc("dcss-core", 0);
+
+	static resource dcss_resources[] = 	{
+		{ 0x32e00000, 0x32efffff, "dcss",       IORESOURCE_MEM },
+		{          3,          3, "dpr_dc_ch0", IORESOURCE_IRQ },
+		{          4,          4, "dpr_dc_ch1", IORESOURCE_IRQ },
+		{          5,          5, "dpr_dc_ch2", IORESOURCE_IRQ },
+		{          6,          6, "ctx_ld",     IORESOURCE_IRQ },
+		{          8,          8, "ctxld_kick", IORESOURCE_IRQ },
+		{          9,          9, "dtg_prg1",   IORESOURCE_IRQ },
+		{         16,         16, "dtrc_ch1",   IORESOURCE_IRQ },
+		{         17,         17, "dtrc_ch2",   IORESOURCE_IRQ },
+	};
+
+	dcss_pdev->num_resources = 9;
+	dcss_pdev->resource = dcss_resources;
+
+	dcss_pdev->dev.of_node                    = (device_node*)kzalloc(sizeof(device_node), 0);
+	dcss_pdev->dev.of_node->name              = "dcss";
+	dcss_pdev->dev.of_node->full_name         = "dcss";
+	dcss_pdev->dev.of_node->properties        = (property*)kzalloc(sizeof(property), 0);
+	dcss_pdev->dev.of_node->properties->name  = "disp-dev";
+	//dcss_pdev->dev.of_node->properties->value = (void*)"hdmi_disp";
+	dcss_pdev->dev.of_node->properties->value = (void*)"mipi_disp";
+
+	platform_device_register(dcss_pdev);
+
+
 	struct platform_device *mipi_dsi_bridge_pdev =
 		platform_device_alloc("nwl-mipi-dsi", 0);
 
@@ -278,25 +280,6 @@ void Framebuffer::Main::_run_linux()
 
 	platform_device_register(mipi_dsi_bridge_pdev);
 
-	struct platform_device *mipi_dsi_imx_pdev =
-		platform_device_alloc("nwl_dsi-imx", 0);
-
-	mipi_dsi_imx_pdev->dev.of_node                      = (device_node*)kzalloc(sizeof(device_node), 0);
-	mipi_dsi_imx_pdev->dev.of_node->name                = "mipi_dsi";
-
-	platform_device_register(mipi_dsi_imx_pdev);
-//	mipi_pdev.dev.of_node = (device_node *)kzalloc(sizeof(device_node), 0);
-//	mipi_pdev
-/*
-	struct platform_device *rad_pdev =
-		platform_device_alloc("panel-raydium-rm67191", 0);
-
-	rad_pdev->dev.bus = mipi_dsi_bus();
-	Genode::log("rad bys: ", rad_pdev->dev.bus);
-	Genode::log("register rad");
-	platform_device_register(rad_pdev);
-	Genode::log("done rad");
-*/
 	/**
 	 * This device is originally created with the name 'display-subsystem'
 	 * via 'of_platform_bus_create()'. Here it is called 'imx-drm' to match
@@ -312,6 +295,29 @@ void Framebuffer::Main::_run_linux()
 
 	platform_device_register(display_subsystem_pdev);
 
+	struct platform_device *mipi_dsi_imx_pdev =
+		platform_device_alloc("nwl_dsi-imx", 0);
+
+	mipi_dsi_imx_pdev->dev.of_node                      = (device_node*)kzalloc(sizeof(device_node), 0);
+	mipi_dsi_imx_pdev->dev.of_node->name                = "mipi_dsi";
+	mipi_dsi_imx_pdev->dev.of_node->properties          = (property*)kzalloc(2*sizeof(property), 0);
+	mipi_dsi_imx_pdev->dev.of_node->properties[0].name  = "compatible";
+	mipi_dsi_imx_pdev->dev.of_node->properties[0].value = (void *)"fsl,imx8mq-mipi-dsi_drm";
+	mipi_dsi_imx_pdev->dev.of_node->properties[0].next  = &mipi_dsi_imx_pdev->dev.of_node->properties[1];
+	mipi_dsi_imx_pdev->dev.of_node->properties[1].name  = "dphy";
+	mipi_dsi_imx_pdev->dev.of_node->properties[1].value = (void *)*phy_ptr;
+
+
+	platform_device_register(mipi_dsi_imx_pdev);
+
+	struct platform_device *rad_pdev =
+		platform_device_alloc("panel-raydium-rm67191", 0);
+
+	rad_pdev->dev.bus = mipi_dsi_bus();
+	Genode::log("rad bys: ", rad_pdev->dev.bus);
+	Genode::log("register rad");
+	platform_device_register(rad_pdev);
+	Genode::log("done rad");
 
 	_driver.finish_initialization();
 	_driver.config_sigh(_policy_change_handler);

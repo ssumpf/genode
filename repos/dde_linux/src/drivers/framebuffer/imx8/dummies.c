@@ -515,11 +515,6 @@ void device_unregister(struct device *dev)
 	TRACE;
 }
 
-void *devm_kcalloc(struct device *dev, size_t n, size_t size, gfp_t flags)
-{
-	TRACE_AND_STOP;
-	return NULL;
-}
 
 /**************************
  ** linux/of_videomode.h **
@@ -602,7 +597,7 @@ int dma_mmap_wc(struct device *dev,
 /*****************
  ** linux/phy.h **
  *****************/
-
+struct phy;
 struct phy_provider *__devm_of_phy_provider_register(struct device *dev,
                                                      struct device_node *children,
                                                      struct module *owner,
@@ -681,26 +676,6 @@ int regmap_write(struct regmap *map, unsigned int reg, unsigned int val)
 
 	return 0;
 }
-
-int regmap_update_bits(struct regmap *map, unsigned reg, unsigned mask,
-                       unsigned val)
-{
-	TRACE_AND_STOP;
-
-	return 0;
-}
-
-
-/************************
- ** linux/mfd/syscon.h **
- ************************/
-
-struct regmap *syscon_regmap_lookup_by_phandle( struct device_node *np, const char *property)
-{
-	TRACE_AND_STOP;
-	return NULL;
-}
-
 
 /************************
  ** linux/pm-runtime.h **
