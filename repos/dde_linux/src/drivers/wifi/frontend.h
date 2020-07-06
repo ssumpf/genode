@@ -330,10 +330,10 @@ struct Wifi::Frontend
 
 	Msg_buffer _msg;
 
-	Genode::Lock _notify_lock { Genode::Lock::UNLOCKED };
+	Genode::Blockade _notify_blockade { };
 
-	void _notify_lock_lock()   { _notify_lock.lock(); }
-	void _notify_lock_unlock() { _notify_lock.unlock(); }
+	void _notify_lock_lock()   { _notify_blockade.block(); }
+	void _notify_lock_unlock() { _notify_blockade.wakeup(); }
 
 	bool _rfkilled { false };
 
