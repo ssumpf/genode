@@ -1228,7 +1228,8 @@ int of_property_read_u32_index(const struct device_node *, const char *, u32,
 	     child = of_get_next_child(parent, child))
 
 #define for_each_available_child_of_node(parent, child) \
-	for (; 1; lx_printf("for_each_available_child_of_node called"))
+	for (child = of_get_next_child(parent, NULL); child != NULL; \
+	     child = of_get_next_child(parent, child))
 
 struct property {
 	const char      * name;
@@ -1671,9 +1672,13 @@ struct backlight_properties
 	enum backlight_type type;
 };
 
+struct backlight_ops;
+
 struct backlight_device
 {
 	struct backlight_properties props;
+	struct backlight_ops const *ops;
+	struct device               dev;
 };
 
 struct backlight_ops {
@@ -1784,7 +1789,7 @@ static inline void *irq_desc_get_handler_data(struct irq_desc *desc)
 #define CONFIG_VIDEOMODE_HELPERS               1
 #define CONFIG_PHY_MIXEL_MIPI_DSI              1
 #define CONFIG_GENERIC_PHY                     1
-
+#define CONFIG_DRM_PANEL                       1
 
 /**************************
  ** Dummy trace funtions **
