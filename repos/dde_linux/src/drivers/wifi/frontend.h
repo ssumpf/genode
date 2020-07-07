@@ -1568,6 +1568,9 @@ struct Wifi::Frontend
 		_config_rom.sigh(_config_sigh);
 		_scan_timer.sigh(_scan_timer_sigh);
 
+		/* set/initialize as unblocked */
+		_notify_blockade.wakeup();
+
 		try {
 			_ap_reporter.construct(env, "accesspoints", "accesspoints");
 			_ap_reporter->generate([&] (Genode::Xml_generator &xml) { });
