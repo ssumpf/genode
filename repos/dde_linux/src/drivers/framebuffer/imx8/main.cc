@@ -221,6 +221,8 @@ void Framebuffer::Main::_run_linux()
 	mipi_dsi_phy_pdev->dev.of_node->properties[1].name  = "dsi_phy";
 	mipi_dsi_phy_pdev->dev.of_node->properties[1].value = (void*)0;
 
+	mipi_dsi_phy_pdev->dev.parent = &mipi_dsi_phy_pdev->dev;
+
 	platform_device_register(mipi_dsi_phy_pdev);
 
 	/**
@@ -309,7 +311,7 @@ void Framebuffer::Main::_run_linux()
 
 
 	platform_device_register(mipi_dsi_imx_pdev);
-
+/*
 	struct platform_device *rad_pdev =
 		platform_device_alloc("panel-raydium-rm67191", 0);
 
@@ -318,6 +320,7 @@ void Framebuffer::Main::_run_linux()
 	Genode::log("register rad");
 	platform_device_register(rad_pdev);
 	Genode::log("done rad");
+*/
 
 	_driver.finish_initialization();
 	_driver.config_sigh(_policy_change_handler);

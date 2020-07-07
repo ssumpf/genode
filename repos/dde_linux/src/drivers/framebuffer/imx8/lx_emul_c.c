@@ -70,7 +70,7 @@ void lx_c_allocate_framebuffer(struct drm_device * dev,
 
 	c->lx_fb = fb;
 
-	memset_io(c->addr, 0, c->size);
+	memset_io(c->addr, 0xff, c->size);
 
 	return;
 
@@ -85,6 +85,7 @@ void lx_c_set_mode(struct drm_device * dev, struct drm_connector * connector,
 {
 	struct drm_crtc        * crtc    = NULL;
 	struct drm_encoder     * encoder = connector->encoder;
+	lx_printf("%s:%d encoder %p\n", __func__, __LINE__, encoder);
 
 	if (!encoder) {
 		struct drm_encoder *enc;
@@ -114,6 +115,7 @@ void lx_c_set_mode(struct drm_device * dev, struct drm_connector * connector,
 	unsigned used_crtc = 0;
 
 	crtc = encoder->crtc;
+	lx_printf("%s:%d crtc: %p\n", __func__, __LINE__, crtc);
 	if (!crtc) {
 		unsigned i = 0;
 		struct drm_crtc *c;
@@ -135,7 +137,9 @@ void lx_c_set_mode(struct drm_device * dev, struct drm_connector * connector,
 		return;
 	}
 
-	DRM_DEBUG("%s%s for connector %s\n", mode ? "set mode " : "no mode",
+
+	lx_printf("%s:%d crtc: %p\n", __func__, __LINE__, crtc);
+	lx_printf("%s%s for connector %s\n", mode ? "set mode " : "no mode",
 	          mode ? mode->name : "", connector->name);
 
 	struct drm_mode_set set;

@@ -127,26 +127,13 @@ void drm_dev_unregister(struct drm_device *dev)
 
 void drm_panel_init(struct drm_panel *panel)
 {
-	TRACE_AND_STOP;
-}
-
-
-int drm_panel_add(struct drm_panel *panel)
-{
-	TRACE_AND_STOP;
+	TRACE;
 }
 
 
 void drm_panel_remove(struct drm_panel *panel)
 {
 	TRACE_AND_STOP;
-}
-
-
-int drm_panel_attach(struct drm_panel *panel, struct drm_connector *connector)
-{
-	TRACE_AND_STOP;
-	return -1;
 }
 
 
@@ -279,6 +266,7 @@ void handle_simple_irq(struct irq_desc *desc)
 void irq_chip_eoi_parent(struct irq_data *data)
 {
 	TRACE;
+	lx_printf("from: %p\n", __builtin_return_address(0));
 }
 
 struct irq_data *irq_get_irq_data(unsigned int irq)
@@ -331,12 +319,6 @@ void clk_disable_unprepare(struct clk *clk)
 	TRACE;
 }
 
-int clk_prepare_enable(struct clk *clk)
-{
-	TRACE;
-	return 0;
-}
-
 
 /******************
  ** linux/gpio.h **
@@ -376,8 +358,9 @@ void gpio_set_value(unsigned int gpio, int value)
 struct gpio_desc *
 devm_gpiod_get(struct device *dev, const char *con_id, enum gpiod_flags flags)
 {
-	TRACE_AND_STOP;
-	return NULL;
+	TRACE;
+
+	return (struct gpio_desc *)-EINVAL;
 }
 
 void gpiod_set_value(struct gpio_desc *desc, int value)
@@ -424,27 +407,6 @@ bool is_of_node(const struct fwnode_handle *fwnode)
 	return false;
 }
 
-struct device_node *of_get_child_by_name(const struct device_node *node,
-                                         const char *name)
-{
-	TRACE_AND_STOP;
-	return NULL;
-}
-
-
-struct property *of_find_property(const struct device_node *np,
-                                  const char *name, int *lenp)
-{
-	TRACE_AND_STOP;
-	return NULL;
-}
-
-
-int of_modalias_node(struct device_node *node, char *modalias, int len)
-{
-	TRACE_AND_STOP;
-	return -1;
-}
 
 
 /************************
@@ -495,11 +457,6 @@ int of_device_uevent_modalias(struct device *dev, struct kobj_uevent_env *env)
 	return -ENODEV;
 }
 
-int of_driver_match_device(struct device *dev, const struct device_driver *drv)
-{
-	TRACE;
-	return 0;
-}
 
 /********************
  ** linux/device.h **
@@ -507,23 +464,12 @@ int of_driver_match_device(struct device *dev, const struct device_driver *drv)
 
 void device_initialize(struct device *dev)
 {
-	TRACE_AND_STOP;
+	TRACE;
 }
 
 void device_unregister(struct device *dev)
 {
 	TRACE;
-}
-
-
-/**************************
- ** linux/of_videomode.h **
- **************************/
-
-int of_get_videomode(struct device_node *np, struct videomode *vm, int index)
-{
-	TRACE_AND_STOP;
-	return -1;
 }
 
 
@@ -541,33 +487,10 @@ void videomode_from_timing(const struct display_timing *dt, struct videomode *vm
  ** linux/backlight.h **
  ***********************/
 
-int backlight_enable(struct backlight_device *bd)
-{
-	TRACE_AND_STOP;
-	return -1;
-}
-
-
 int backlight_disable(struct backlight_device *bd)
 {
 	TRACE_AND_STOP;
 	return -1;
-}
-
-void *bl_get_data(struct backlight_device *bl_dev)
-{
-	TRACE_AND_STOP;
-	return NULL;
-}
-
-struct backlight_device *
-devm_backlight_device_register(struct device *dev, const char *name,
-                               struct device *parent, void *devdata,
-                               const struct backlight_ops *ops,
-                               const struct backlight_properties *props)
-{
-	TRACE_AND_STOP;
-	return NULL;
 }
 
 
@@ -613,19 +536,6 @@ struct phy *of_phy_simple_xlate(struct device *dev, struct of_phandle_args *args
 {
 	TRACE_AND_STOP;
 	return NULL;
-}
-
-
-int phy_init(struct phy *phy)
-{
-	TRACE_AND_STOP;
-	return -1;
-}
-
-int phy_power_on(struct phy *phy)
-{
-	TRACE_AND_STOP;
-	return -1;
 }
 
 
