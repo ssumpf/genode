@@ -147,13 +147,23 @@ Bootstrap::Platform::Board::Board()
 		Ccm_reg(Genode::addr_t const mmio_base)
 			: Genode::Mmio(mmio_base) { }
 
-		struct Target_root_0 : Register<0x8000, 32> {};
+		struct Target_root_0   : Register<0x8000, 32> {};
+		struct Target_root_20  : Register<0x8a00, 32> {};
+		struct Target_root_21  : Register<0x8a80, 32> {};
+		struct Target_root_22  : Register<0x8b00, 32> {};
+		struct Target_root_36  : Register<0x9200, 32> {};
+		struct Target_root_68  : Register<0xa200, 32> {};
+		struct Target_root_118 : Register<0xbb00, 32> {};
+		struct Target_root_119 : Register<0xbb80, 32> {};
 	};
 
 	struct Pll_reg : Genode::Mmio
 	{
 		Pll_reg(Genode::addr_t const mmio_base)
 			: Genode::Mmio(mmio_base) { }
+
+		struct Pll_video_1_0 : Register<0x10, 32> { };
+		struct Pll_video_1_1 : Register<0x14, 32> { };
 
 		struct Pll_arm_0 : Register<0x28,  32> {};
 		struct Pll_arm_1 : Register<0x2c,  32> {};
@@ -163,6 +173,17 @@ Bootstrap::Platform::Board::Board()
 	for (unsigned i = 0; i < num_values; i++)
 		*((volatile Genode::uint32_t*)iomux_values[i][0]) = (Genode::uint32_t)iomux_values[i][1];
 
+	/* enable MIPI power domain */
+	unsigned long result = 0;
+	asm volatile("mov x0, %1  \n"
+	             "mov x1, %2  \n"
+	             "mov x2, %3  \n"
+	             "mov x3, %4  \n"
+	             "smc #0      \n"
+	             "mov %0, x0  \n"
+	             : "=r" (result) : "r" (0xc2000000), "r" (0x3), "r" (0x0), "r" (1)
+	                      : "x0", "x1", "x2", "x3", "x4", "x5", "x6", "x7",
+	                        "x8", "x9", "x10", "x11", "x12", "x13", "x14");
 
 	Ccm_reg ccm(0x30380000);
 	Ccm_reg pll(0x30360000);
@@ -189,6 +210,55 @@ Bootstrap::Platform::Board::Board()
 	v = pll.read<Pll_reg::Pll_arm_0>();
 	pll.write<Pll_reg::Pll_arm_0>(v ^ (1<<12));
 	ccm.write<Ccm_reg::Target_root_0>(0x11000000);
+
+	/* MIPI_DSI_ESC_RX_CLK_ROOT = SYSTEM_PLL1_DIV10 */
+	ccm.write<Ccm_reg::Target_root_36>(0x12000000);
+
+	/* MIPI_DSI_CORE_CLK_ROOT = SYSTEM_PLL1_DIV3 */
+	ccm.write<Ccm_reg::Target_root_118>(0x11000000);
+
+	/* MIPI_DSI_PHY_REF_CLK_ROOT bypass VIDEO_PLL1_CLOCK */
+	ccm.write<Ccm_reg::Target_root_119>(0x14000000);
+
+
+	v = pll.read<Pll_reg::Pll_video_1_0>();
+	if (v & (1 << 19)) {
+		Genode::log("VIDEO boot: ", Genode::Hex(v));
+		v ^= (1 << 19); /* enable PLL */
+
+		while ((pll.read<Pll_reg::Pll_video_1_0>() & (1 << 31)) == 0) { ; }
+	}
+
+
+	pll.write<Pll_reg::Pll_video_1_1>(0x3b);
+	v = pll.read<Pll_reg::Pll_video_1_0>();
+
+	Genode::log("INITIAL: ", Genode::Hex(v));
+	Genode::log("v: ", Genode::Hex(v));
+	v &= ~0x1ful;
+	pll.write<Pll_reg::Pll_video_1_0>(v);
+	v = pll.read<Pll_reg::Pll_video_1_0>();
+	pll.write<Pll_reg::Pll_video_1_0>(v | (1 << 12));
+	Genode::log("WAIT");
+//XXX: must WORK! while (!(pll.read<Pll_reg::Pll_video_1_0>() & (1<<11))) { ; }
+	Genode::log("WAIT done");
+
+	v = pll.read<Pll_reg::Pll_video_1_0>();
+	pll.write<Pll_reg::Pll_video_1_0>(v ^ (1<<12));
+
+	Genode::log("FINAL: ", Genode::Hex(pll.read<Pll_reg::Pll_video_1_0>()));
+
+	/* MIPI_DSI_PHY_REF_CLK_ROOT = VIDEO_PLL1_CLOCK */
+	ccm.write<Ccm_reg::Target_root_119>(0x17000000);
+
+	v = ccm.read<Ccm_reg::Target_root_21>();
+	Genode::log("APB: ", Genode::Hex(v));
+	v = ccm.read<Ccm_reg::Target_root_20>();
+	Genode::log("AXI: ", Genode::Hex(v));
+	v = ccm.read<Ccm_reg::Target_root_22>();
+	Genode::log("RTRM: ", Genode::Hex(v));
+	v = ccm.read<Ccm_reg::Target_root_68>();
+	Genode::log("DTRC: ", Genode::Hex(v));
 }
 
 
