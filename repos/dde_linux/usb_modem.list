@@ -1,4 +1,7 @@
+linux-x.x.x/drivers/net/usb/cdc_mbim.c
+linux-x.x.x/drivers/net/usb/cdc_ncm.c
 linux-x.x.x/drivers/net/usb/usbnet.c
+linux-x.x.x/drivers/usb/class/cdc-wdm.c
 linux-x.x.x/net/core/skbuff.c
 linux-x.x.x/net/ethernet/eth.c
 linux-x.x.x/include/asm-generic/atomic64.h
