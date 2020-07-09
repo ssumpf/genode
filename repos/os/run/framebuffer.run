@@ -3,7 +3,7 @@ import_from_depot [depot_user]/src/[base_src] \
                   [depot_user]/pkg/[drivers_interactive_pkg] \
                   [depot_user]/src/init
 
-build { test/framebuffer server/report_rom }
+build { test/framebuffer server/report_rom  drivers/framebuffer/imx8}
 
 install_config {
 <config>
@@ -45,5 +45,5 @@ install_config {
 	</start>
 </config>}
 
-build_boot_image { test-framebuffer report_rom }
+build_boot_image { test-framebuffer report_rom imx8_fb_drv }
 run_genode_until forever
