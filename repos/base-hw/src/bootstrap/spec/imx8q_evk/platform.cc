@@ -148,13 +148,29 @@ Bootstrap::Platform::Board::Board()
 			: Genode::Mmio(mmio_base) { }
 
 		struct Target_root_0   : Register<0x8000, 32> {};
-		struct Target_root_20  : Register<0x8a00, 32> {};
+		struct Target_root_20  : Register<0x8a00, 32>
+		{
+			struct Mux : Bitfield<24, 3> { };
+		};
 		struct Target_root_21  : Register<0x8a80, 32> {};
-		struct Target_root_22  : Register<0x8b00, 32> {};
+		struct Target_root_22  : Register<0x8b00, 32>
+		{
+			struct Mux : Bitfield<24, 3> { };
+		};
 		struct Target_root_36  : Register<0x9200, 32> {};
 		struct Target_root_68  : Register<0xa200, 32> {};
+		struct Target_root_73  : Register<0xa480, 32> //
+		{
+			struct Div : Bitfield<0, 6> { };
+			struct Prediv : Bitfield<16, 3> { };
+			struct Mux : Bitfield<24, 3> { };
+		};
 		struct Target_root_118 : Register<0xbb00, 32> {};
-		struct Target_root_119 : Register<0xbb80, 32> {};
+		struct Target_root_119 : Register<0xbb80, 32>
+		{
+			struct Div : Bitfield<0, 6> { };
+			struct Prediv : Bitfield<16, 3> { };
+		};
 	};
 
 	struct Pll_reg : Genode::Mmio
@@ -250,15 +266,28 @@ Bootstrap::Platform::Board::Board()
 
 	/* MIPI_DSI_PHY_REF_CLK_ROOT = VIDEO_PLL1_CLOCK */
 	ccm.write<Ccm_reg::Target_root_119>(0x17000000);
+	ccm.write<Ccm_reg::Target_root_119::Div>(49);
 
 	v = ccm.read<Ccm_reg::Target_root_21>();
 	Genode::log("APB: ", Genode::Hex(v));
+
+	/* AXI reference clock to SYS1_PLL_800M */
+	ccm.write<Ccm_reg::Target_root_20::Mux>(2);
 	v = ccm.read<Ccm_reg::Target_root_20>();
 	Genode::log("AXI: ", Genode::Hex(v));
+
+	/* RTRM reference clock to SYS1_PLL_800M */
+	ccm.write<Ccm_reg::Target_root_22::Mux>(1);
 	v = ccm.read<Ccm_reg::Target_root_22>();
 	Genode::log("RTRM: ", Genode::Hex(v));
 	v = ccm.read<Ccm_reg::Target_root_68>();
 	Genode::log("DTRC: ", Genode::Hex(v));
+
+	/* set pixel reference clock to VIDEO_PLL1_CLOCK */
+	ccm.write<Ccm_reg::Target_root_73::Mux>(1);
+	ccm.write<Ccm_reg::Target_root_73::Prediv>(0);
+	ccm.write<Ccm_reg::Target_root_73::Div>(9);
+	Genode::log("PIX: ", Genode::Hex(ccm.read<Ccm_reg::Target_root_73>()));
 }
 
 
