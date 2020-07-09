@@ -3,7 +3,7 @@ SRC_C   := dummies.c lxc.c
 SRC_CC  := main.cc lx_emul.cc component.cc
 SRC_CC  += printf.cc timer.cc scheduler.cc malloc.cc env.cc work.cc
 
-LIBS    := base usb_net_include lx_kit_setjmp
+LIBS    := base usb_modem_include lx_kit_setjmp
 
 USB_CONTRIB_DIR := $(call select_from_ports,dde_linux)/src/drivers/usb_modem
 
@@ -11,6 +11,9 @@ INC_DIR += $(PRG_DIR)
 INC_DIR += $(REP_DIR)/src/include
 
 SRC_C += drivers/net/usb/usbnet.c
+SRC_C += drivers/net/usb/cdc_ncm.c
+SRC_C += drivers/net/usb/cdc_mbim.c
+SRC_C += drivers/usb/class/cdc-wdm.c
 SRC_C += net/core/skbuff.c
 SRC_C += net/ethernet/eth.c
 
