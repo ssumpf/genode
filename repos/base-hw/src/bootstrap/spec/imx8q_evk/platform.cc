@@ -157,7 +157,19 @@ Bootstrap::Platform::Board::Board()
 		{
 			struct Mux : Bitfield<24, 3> { };
 		};
-		struct Target_root_36  : Register<0x9200, 32> {};
+		struct Target_root_36  : Register<0x9200, 32>
+		{
+			struct Div : Bitfield<0, 6> { };
+			struct Prediv : Bitfield<16, 3> { };
+		};
+
+		struct Target_root_37  : Register<0x9280, 32>
+		{
+			struct Div : Bitfield<0, 6> { };
+			struct Prediv : Bitfield<16, 3> { };
+		};
+
+
 		struct Target_root_68  : Register<0xa200, 32> {};
 		struct Target_root_73  : Register<0xa480, 32> //
 		{
@@ -189,15 +201,28 @@ Bootstrap::Platform::Board::Board()
 	for (unsigned i = 0; i < num_values; i++)
 		*((volatile Genode::uint32_t*)iomux_values[i][0]) = (Genode::uint32_t)iomux_values[i][1];
 
-	/* enable MIPI power domain */
+	/* enable DISPMIX power domain */
 	unsigned long result = 0;
+
 	asm volatile("mov x0, %1  \n"
 	             "mov x1, %2  \n"
 	             "mov x2, %3  \n"
 	             "mov x3, %4  \n"
 	             "smc #0      \n"
 	             "mov %0, x0  \n"
-	             : "=r" (result) : "r" (0xc2000000), "r" (0x3), "r" (0x0), "r" (1)
+	             : "=r" (result) : "r" (0xc2000000), "r" (0x3), "r" (0x7), "r" (1)
+	                      : "x0", "x1", "x2", "x3", "x4", "x5", "x6", "x7",
+	                        "x8", "x9", "x10", "x11", "x12", "x13", "x14");
+
+
+/* enable MIPI power domain */
+	asm volatile("mov x0, %1  \n"
+	             "mov x1, %2  \n"
+	             "mov x2, %3  \n"
+	             "mov x3, %4  \n"
+	             "smc #0      \n"
+	             "mov %0, x0  \n"
+	             : "=r" (result) : "r" (0xc2000000), "r" (0x3), "r" (0), "r" (1)
 	                      : "x0", "x1", "x2", "x3", "x4", "x5", "x6", "x7",
 	                        "x8", "x9", "x10", "x11", "x12", "x13", "x14");
 
@@ -229,6 +254,14 @@ Bootstrap::Platform::Board::Board()
 
 	/* MIPI_DSI_ESC_RX_CLK_ROOT = SYSTEM_PLL1_DIV10 */
 	ccm.write<Ccm_reg::Target_root_36>(0x12000000);
+	ccm.write<Ccm_reg::Target_root_36::Prediv>(0);
+	ccm.write<Ccm_reg::Target_root_36::Div>(9);
+
+	/* IPG_DIV */
+	v = ccm.read<Ccm_reg::Target_root_37>();
+	Genode::log("IPG_DIV: ", Genode::Hex(v));
+	//Ccm_reg::Target_root_118::Prediv::set(0);
+//	Ccm_reg::Target_root_118::Div::set(6);
 
 	/* MIPI_DSI_CORE_CLK_ROOT = SYSTEM_PLL1_DIV3 */
 	ccm.write<Ccm_reg::Target_root_118>(0x11000000);
