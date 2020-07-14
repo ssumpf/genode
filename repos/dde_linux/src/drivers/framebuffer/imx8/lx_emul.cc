@@ -55,6 +55,12 @@
 #include <lx_kit/irq.h>
 #include <lx_kit/malloc.h>
 
+#include <os/backtrace.h>
+
+extern "C" void backtrace()
+{
+	Genode::backtrace();
+}
 
 /********************************
  ** drivers/base/dma-mapping.c **
@@ -273,12 +279,12 @@ struct clk *devm_clk_get(struct device *dev, const char *id)
 		{ "apb", 133333334 },
 		{ "axi", 800000000 },
 		{ "ipg", 133333334 },
-		{ "pix", 27000000 },
+		{ "pix", 120000000 },
 		{ "rtrm", 400000000 },
 		{ "dtrc", 25000000 },
 		{ "phy_ref", 24000000 },
 		{ "rx_esc", 80000000 },
-		{ "tx_esc", 40000000 },
+		{ "tx_esc", 20000000 },
 		{ "core", 266666666 },
 	};
 
@@ -1102,6 +1108,7 @@ void *dma_alloc_wc(struct device *dev, size_t size,
 	_dma_wc_ds_list().insert(dma_wc_ds);
 
 	*dma_addr = Genode::Dataspace_client(dma_wc_ds->cap()).phys_addr();
+	Genode::warning("FB: DMA: ", Genode::Hex(*dma_addr), " VIRT: ", dma_wc_ds->local_addr<void>());
 	return dma_wc_ds->local_addr<void>();
 }
 
@@ -1434,9 +1441,11 @@ void Framebuffer::Driver::update_mode()
 		lx_for_each_connector(lx_drm_device, [&] (drm_connector *c) {
 			unsigned brightness = MAX_BRIGHTNESS + 1;
 
+		Genode::warning("set mode");
 			/* set mode */
 			lx_c_set_mode(lx_drm_device, c, _lx_config._lx.lx_fb,
 			              _preferred_mode(c, brightness));
+		Genode::warning("done set mode");
 		});
 	}
 
@@ -2072,6 +2081,41 @@ struct drm_panel *of_drm_find_panel(const struct device_node *np)
 	int len;
 	return (drm_panel *)of_get_property(np, "panel", &len);
 }
+
+
+/***************************
+ ** linux/gpio/consumer.h **
+ ***************************/
+
+struct gpio_desc *
+devm_gpiod_get(struct device *dev, const char *con_id, enum gpiod_flags flags)
+{
+	if (Genode::strcmp("reset", con_id) == 0) {
+		gpio_desc *gpio = (gpio_desc *)kzalloc(sizeof(gpio_desc), 0);
+		gpio->pin = 6;
+		return gpio;
+	}
+
+	return (struct gpio_desc *)-EINVAL;
+}
+
+void gpiod_set_value(struct gpio_desc *desc, int value)
+{
+	lx_printf("%s:%d pin: %u\n", __func__, __LINE__, desc->pin);
+	Genode::Attached_io_mem_dataspace ds { Lx_kit::env().env(), 0x30240000, 0x1000, 0 };
+	unsigned *base = ds.local_addr<unsigned>();
+
+	/* set out direction */
+	unsigned *dir  = base + 1;
+	u32 direction = readl(dir);
+	writel(direction | (1u << desc->pin), dir);
+
+	u32 out = readl(base);
+	out &= ~(1u << desc->pin);
+	out |= ((value ? 1u : 0) << desc->pin);
+	writel(out, base);
+}
+
 
 /**************************************
  ** Stubs for non-ported driver code **
