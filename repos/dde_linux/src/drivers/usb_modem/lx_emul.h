@@ -120,6 +120,8 @@ int    dev_set_drvdata(struct device *dev, void *data);
 #define pr_notice(fmt, ...)     printk(KERN_NOTICE fmt, ##__VA_ARGS__)
 #define pr_emerg(fmt, ...)      printk(KERN_INFO fmt,   ##__VA_ARGS__)
 
+enum { O_NONBLOCK = 0x4000 };
+
 struct bus_type
 {
 	int (*match)(struct device *dev, struct device_driver *drv);
@@ -202,6 +204,8 @@ struct completion
 struct notifier_block;
 
 enum {
+	EPOLLERR    = 0x00000008,
+	EPOLLHUP    = 0x00000010,
 	ESHUTDOWN   = 58,
 };
 
@@ -247,6 +251,8 @@ struct net_device_ops {
 	int (*ndo_do_ioctl)(struct net_device *dev, struct ifreq *ifr, int cmd);
 	int (*ndo_set_features)(struct net_device *dev, netdev_features_t features);
 	void (*ndo_get_stats64)(struct net_device *dev, struct rtnl_link_stats64 *storage);
+	int (*ndo_vlan_rx_add_vid)(struct net_device *dev, __be16 proto, u16 vid); 
+	int (*ndo_vlan_rx_kill_vid)(struct net_device *dev, __be16 proto, u16 vid);
 };
 
 struct net_device_stats
@@ -992,10 +998,11 @@ void sg_mark_end(struct scatterlist *sg);
 //void sg_set_page(struct scatterlist *, struct page *, unsigned int, unsigned int);
 
 enum {
-	IPPROTO_IP  = 0,
-	IPPROTO_TCP = 6,
-	IPPROTO_UDP = 17,
-	IPPROTO_AH  = 51,
+	IPPROTO_IP     = 0,
+	IPPROTO_TCP    = 6,
+	IPPROTO_UDP    = 17,
+	IPPROTO_AH     = 51,
+	IPPROTO_ICMPV6 = 58,
 };
 
 enum {
@@ -1137,6 +1144,13 @@ static inline bool eth_type_vlan(__be16 ethertype) { return false; }
 static inline int __vlan_insert_tag(struct sk_buff *skb, __be16 vlan_proto, u16 vlan_tci) {
 	return 1; }
 
+struct vlan_ethhdr
+{
+	__be16 h_vlan_encapsulated_proto;
+};
+
+struct vlan_ethhdr *vlan_eth_hdr(const struct sk_buff *skb);
+
 #define skb_vlan_tag_get(__skb)      ((__skb)->vlan_tci & ~VLAN_TAG_PRESENT)
 
 extern struct workqueue_struct *tasklet_wq;
@@ -1270,6 +1284,45 @@ int dev_is_pci(struct device *dev);
 
 void skb_init();
 int module_usbnet_init();
+
+enum {
+	IPV6_ADDR_UNICAST = 0x1
+};
+
+enum {
+	NDISC_NEIGHBOUR_SOLICITATION = 135
+};
+
+struct ipv6_devconf
+{
+	__s32 forwarding;
+};
+
+struct inet6_dev
+{
+	struct ipv6_devconf cnf;
+};
+
+struct ipv6_stub
+{
+	void (*ndisc_send_na)(struct net_device *dev, const struct in6_addr *daddr,
+	                      const struct in6_addr *solicited_addr,
+	                      bool router, bool solicited, bool override, bool inc_opt);
+};
+
+extern const struct ipv6_stub *ipv6_stub;
+
+struct icmp6hdr
+{
+	__u8 icmp6_type;
+	__u8 icmp6_code;
+};
+
+struct nd_msg
+{
+	struct icmp6hdr icmph;
+	struct in6_addr target;
+};
 
 #include <uapi/linux/capability.h>
 #include <uapi/linux/libc-compat.h>
