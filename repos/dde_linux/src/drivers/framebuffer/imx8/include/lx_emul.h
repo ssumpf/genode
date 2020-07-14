@@ -1370,6 +1370,11 @@ enum gpiod_flags {
 	                 GPIOD_FLAGS_BIT_DIR_VAL
 };
 
+struct gpio_desc
+{
+	u32 pin;
+};
+
 struct gpio_desc *
 devm_gpiod_get(struct device *dev, const char *con_id, enum gpiod_flags flags);
 

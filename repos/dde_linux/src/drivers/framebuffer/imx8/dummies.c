@@ -351,23 +351,6 @@ void gpio_set_value(unsigned int gpio, int value)
 }
 
 
-/***************************
- ** linux/gpio/consumer.h **
- ***************************/
-
-struct gpio_desc *
-devm_gpiod_get(struct device *dev, const char *con_id, enum gpiod_flags flags)
-{
-	TRACE;
-
-	return (struct gpio_desc *)-EINVAL;
-}
-
-void gpiod_set_value(struct gpio_desc *desc, int value)
-{
-	TRACE_AND_STOP;
-}
-
 /*****************
  ** linux/i2c.h **
  *****************/
