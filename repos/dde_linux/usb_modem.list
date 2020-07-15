@@ -65,3 +65,4 @@ linux-x.x.x/include/uapi/linux/swab.h
 linux-x.x.x/include/uapi/linux/net_tstamp.h
 linux-x.x.x/include/uapi/linux/usb/cdc.h
 linux-x.x.x/include/uapi/linux/usb/ch9.h
+linux-x.x.x/include/uapi/linux/usb/cdc-wdm.h
