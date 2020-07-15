@@ -1324,6 +1324,8 @@ struct nd_msg
 	struct in6_addr target;
 };
 
+#define PMSG_SUSPEND ((struct pm_message) { .event = PM_EVENT_SUSPEND } )
+
 #include <uapi/linux/capability.h>
 #include <uapi/linux/libc-compat.h>
 #include <uapi/linux/if.h>
