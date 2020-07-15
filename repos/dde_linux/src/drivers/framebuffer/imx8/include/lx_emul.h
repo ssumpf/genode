@@ -111,14 +111,17 @@ LX_MUTEX_INIT_DECLARE(component_mutex);
  ** asm-generic/io.h **
  **********************/
 
+#include <lx_emul/mmio.h>
+
+
 static inline u32 __raw_readl(const volatile void __iomem *addr)
 {
-	return *(const volatile u32 __force *) addr;
+	return readl(addr);
 }
 
 static inline void __raw_writel(u32 b, volatile void __iomem *addr)
 {
-	*(volatile u32 __force *) addr = b;
+	writel(b, addr);
 }
 
 
@@ -957,9 +960,6 @@ int dev_to_node(struct device *dev);
 /****************
  ** linux/io.h **
  ****************/
-
-#define writel(value, addr) (*(volatile uint32_t *)(addr) = (value))
-#define readl(addr)         (*(volatile uint32_t *)(addr))
 
 #define readl_relaxed  readl
 #define writel_relaxed(v, a) writel(v, a)
