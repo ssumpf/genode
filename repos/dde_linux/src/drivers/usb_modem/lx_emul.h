@@ -38,12 +38,13 @@ typedef int clockid_t;
 
 #include <lx_emul/timer.h>
 #include <lx_emul/spinlock.h>
-#include <lx_emul/mutex.h>
 
 typedef __u16 __le16;
 typedef __u32 __le32;
 typedef __u64 __le64;
 typedef __u64 __be64;
+
+#define U32_MAX  ((u32)~0U)
 
 #define __aligned_u64 __u64 __attribute__((aligned(8)))
 
@@ -75,6 +76,7 @@ typedef __u64 __be64;
 #include <lx_emul/string.h>
 #include <lx_emul/kobject.h>
 #include <lx_emul/completion.h>
+#include <lx_emul/mutex.h>
 #include <lx_emul/pm.h>
 #include <lx_emul/scatterlist.h>
 
@@ -90,6 +92,8 @@ struct file
 	void * private_data;
 	const struct cred * f_cred;
 };
+
+typedef unsigned fl_owner_t;
 
 struct device;
 struct device_driver;
@@ -120,7 +124,17 @@ int    dev_set_drvdata(struct device *dev, void *data);
 #define pr_notice(fmt, ...)     printk(KERN_NOTICE fmt, ##__VA_ARGS__)
 #define pr_emerg(fmt, ...)      printk(KERN_INFO fmt,   ##__VA_ARGS__)
 
+#define __stringify_1(x...) #x
+#define __stringify(x...)   __stringify_1(x)
+
 enum { O_NONBLOCK = 0x4000 };
+
+enum {
+	S_IRUGO = 444,
+	S_IWUSR = 200,
+};
+
+#define _IOR(type,nr,size)     (type+nr+sizeof(size)+10)
 
 struct bus_type
 {
@@ -165,6 +179,41 @@ struct device
 	struct device_node       * of_node;
 };
 
+struct attribute
+{
+	const char * name;
+	mode_t       mode;
+};
+
+struct attribute_group {
+	const char        *name;
+	mode_t           (*is_visible)(struct kobject *, struct attribute *, int);
+	struct attribute **attrs;
+};
+
+struct device_attribute {
+	struct attribute attr;
+	ssize_t (*show)(struct device *dev, struct device_attribute *attr,
+	                char *buf);
+	ssize_t (*store)(struct device *dev, struct device_attribute *attr,
+	                 const char *buf, size_t count);
+};
+
+#define __ATTR(_name,_mode,_show,_store) { \
+	.attr  = {.name = #_name, .mode = _mode }, \
+	.show  = _show, \
+	.store = _store, \
+}
+
+#define __ATTR_NULL { .attr = { .name = NULL } }
+#define __ATTR_RW(name) __ATTR_NULL
+
+#define DEVICE_ATTR(_name, _mode, _show, _store) \
+struct device_attribute dev_attr_##_name = __ATTR(_name, _mode, _show, _store)
+
+#define DEVICE_ATTR_RW(_name) \
+struct device_attribute dev_attr_##_name = __ATTR_RW(_name)
+
 #define module_driver(__driver, __register, __unregister, ...) \
 	static int __init __driver##_init(void)                    \
 	{                                                          \
@@ -204,8 +253,12 @@ struct completion
 struct notifier_block;
 
 enum {
+	EPOLLIN     = 0x00000001,
+	EPOLLOUT    = 0x00000004,
 	EPOLLERR    = 0x00000008,
 	EPOLLHUP    = 0x00000010,
+	EPOLLRDNORM = 0x00000040,
+	EPOLLWRNORM = 0x00000100,
 	ESHUTDOWN   = 58,
 };
 
@@ -283,38 +336,39 @@ enum { MAX_ADDR_LEN = 32, IFNAMESZ = 16 };
 
 struct net_device
 {
-	char                         name[IFNAMESZ];
-	unsigned long                state;
-	netdev_features_t            features;
-	struct net_device_stats      stats;
-	netdev_features_t            hw_features;
-	const struct net_device_ops *netdev_ops;
-	const struct ethtool_ops    *ethtool_ops;
-	const struct header_ops     *header_ops;
-	unsigned int                 flags;
-	unsigned int                 priv_flags;
-	unsigned short               hard_header_len;
-	unsigned char                min_header_len;
-	unsigned long                mtu;
-	unsigned long                min_mtu;
-	unsigned long                max_mtu;
-	unsigned short               type;
-	unsigned char                addr_len;
-	unsigned char               *dev_addr;
-	unsigned char                broadcast[MAX_ADDR_LEN];
-	unsigned long                tx_queue_len;
-	int                          watchdog_timeo;
-	struct timer_list            watchdog_timer;
-	struct                       device dev;
-	u16                          gso_max_segs;
-	struct phy_device           *phydev;
-	unsigned short               needed_headroom;
-	unsigned short               needed_tailroom;
-	void                        *priv;
-	unsigned char                perm_addr[MAX_ADDR_LEN];
-	unsigned char                addr_assign_type;
-	int                          ifindex;
-	void                        *session_component;
+	char                          name[IFNAMESZ];
+	unsigned long                 state;
+	netdev_features_t             features;
+	struct net_device_stats       stats;
+	netdev_features_t             hw_features;
+	const struct net_device_ops  *netdev_ops;
+	const struct ethtool_ops     *ethtool_ops;
+	const struct header_ops      *header_ops;
+	unsigned int                  flags;
+	unsigned int                  priv_flags;
+	unsigned short                hard_header_len;
+	unsigned char                 min_header_len;
+	unsigned long                 mtu;
+	unsigned long                 min_mtu;
+	unsigned long                 max_mtu;
+	unsigned short                type;
+	unsigned char                 addr_len;
+	unsigned char                *dev_addr;
+	unsigned char                 broadcast[MAX_ADDR_LEN];
+	unsigned long                 tx_queue_len;
+	int                           watchdog_timeo;
+	struct timer_list             watchdog_timer;
+	struct                        device dev;
+	const struct attribute_group *sysfs_groups[4];
+	u16                           gso_max_segs;
+	struct phy_device            *phydev;
+	unsigned short                needed_headroom;
+	unsigned short                needed_tailroom;
+	void                         *priv;
+	unsigned char                 perm_addr[MAX_ADDR_LEN];
+	unsigned char                 addr_assign_type;
+	int                           ifindex;
+	void                         *session_component;
 };
 
 struct usbnet;
@@ -791,7 +845,28 @@ struct inode
 //unsigned long i_ino;
 };
 
+loff_t noop_llseek(struct file *file, loff_t offset, int whence);
+
+struct file_operations
+{
+	struct module *owner;
+	int          (*open) (struct inode *, struct file *);
+	ssize_t      (*read) (struct file *, char __user *, size_t, loff_t *);
+	loff_t       (*llseek) (struct file *, loff_t, int);
+	unsigned int (*poll) (struct file *, struct poll_table_struct *);
+	long         (*unlocked_ioctl) (struct file *, unsigned int, unsigned long);
+	long         (*compat_ioctl) (struct file *, unsigned int, unsigned long);
+	int          (*flush) (struct file *, fl_owner_t id);
+	int          (*release) (struct inode *, struct file *);
+	ssize_t      (*write) (struct file *, const char __user *, size_t, loff_t *);
+};
+
+LX_MUTEX_INIT_DECLARE(wdm_mutex);
+
+#define wdm_mutex LX_MUTEX(wdm_mutex)
+
 #define mutex_release(l, n, i)
+
 
 int spin_is_locked(spinlock_t *lock);
 
