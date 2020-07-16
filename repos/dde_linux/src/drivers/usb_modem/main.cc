@@ -28,6 +28,36 @@
 
 struct workqueue_struct *tasklet_wq;
 
+class Sync_set_config : public Usb::Completion
+{
+	private:
+
+		Usb::Session_client  & _usb;
+		Usb::Packet_descriptor _packet { _usb.source()->alloc_packet(0) };
+		completion             _comp;
+
+	public:
+
+		Sync_set_config(Usb::Session_client &usb) : _usb(usb)
+		{
+			init_completion(&_comp);
+		}
+
+		void complete(Usb::Packet_descriptor &p) override
+		{
+			::complete(&_comp);
+		}
+
+		void send(int configuration)
+		{
+			_packet.type   = Usb::Packet_descriptor::CONFIG;
+			_packet.number = configuration;
+			_usb.source()->submit_packet(_packet);
+			wait_for_completion(&_comp);
+		}
+};
+
+
 
 void Driver::Device::scan_altsettings(usb_interface * iface,
                                       unsigned iface_idx, unsigned alt_idx)
@@ -66,7 +96,7 @@ void Driver::Device::scan_interfaces(unsigned iface_idx)
 		kzalloc(sizeof(usb_host_interface)*iface->num_altsetting, GFP_KERNEL);
 	iface->dev.parent = &udev->dev;
 	iface->dev.bus    = (bus_type*) 0xdeadbeef;
-
+	Genode::log("scan: ", iface_idx);
 	for (unsigned i = 0; i < iface->num_altsetting; i++)
 		scan_altsettings(iface, iface_idx, i);
 
@@ -74,8 +104,18 @@ void Driver::Device::scan_interfaces(unsigned iface_idx)
 	probe_interface(iface, &id);
 	udev->config->interface[iface_idx] = iface;
 
-	driver.env.parent().announce(driver.ep.manage(driver.root));
 };
+
+
+void Driver::Device::set_config(Usb::Device_descriptor const &desc)
+{
+	/* Huawei ME906s */
+	if (desc.vendor_id == 0x12d1 && desc.product_id == 0x15c1) {
+		Genode::log("Found Huawei ME906s choosing configuration #3");
+		Sync_set_config(usb).send(3);
+		Genode::log("config set");
+	}
+}
 
 
 void Driver::Device::register_device()
@@ -99,8 +139,16 @@ void Driver::Device::register_device()
 	udev->descriptor.idProduct = dev_desc.product_id;
 	udev->descriptor.bcdDevice = dev_desc.device_release;
 
+	set_config(dev_desc);
+	/* re-read config */
+	usb.config_descriptor(&dev_desc, &config_desc);
+
+	/* device specific configuration profile */
+
 	for (unsigned i = 0; i < config_desc.num_interfaces; i++)
 		scan_interfaces(i);
+
+	driver.env.parent().announce(driver.ep.manage(driver.root));
 }
 
 
@@ -179,9 +227,13 @@ void Driver::main_task_entry(void * arg)
 
 	skb_init();
 	module_usbnet_init();
+	Genode::log("wdm init");
 	module_wdm_driver_init();
+	Genode::log("ncm init");
 	module_cdc_ncm_driver_init();
+	Genode::log("mbim init");
 	module_cdc_mbim_driver_init();
+	Genode::log("init done");
 
 	static Device dev(*driver, Label(""));
 

@@ -74,6 +74,7 @@ struct Driver
 		                      unsigned iface_idx, unsigned alt_idx);
 		void probe_interface(usb_interface *, usb_device_id *);
 		void remove_interface(usb_interface *);
+		void set_config(Usb::Device_descriptor const &desc);
 	};
 
 	struct Devices : Genode::List<Device::Le>
