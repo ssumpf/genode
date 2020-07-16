@@ -1,6 +1,6 @@
 #include <lx_emul.h>
 
-#if 0
+#if 1
 #define TRACE \
 	do { \
 		lx_printf("%s not implemented\n", __func__); \
@@ -54,6 +54,22 @@ __wsum csum_partial(const void *buff, int len, __wsum sum)
 }
 
 void * dev_get_drvdata(const struct device *dev)
+{
+	TRACE_AND_STOP;
+	return NULL;
+}
+
+void dev_hold(struct net_device *dev)
+{
+	TRACE_AND_STOP;
+}
+
+void dev_put(struct net_device *dev)
+{
+	TRACE_AND_STOP;
+}
+
+const char *dev_name(const struct device *dev)
 {
 	TRACE_AND_STOP;
 	return NULL;
@@ -234,6 +250,16 @@ void netif_wake_queue(struct net_device * d)
 	TRACE;
 }
 
+void netif_tx_lock_bh(struct net_device *dev)
+{
+	TRACE;
+}
+
+void netif_tx_unlock_bh(struct net_device *dev)
+{
+	TRACE;
+}
+
 const void *of_get_mac_address(struct device_node *np)
 {
 	TRACE;
@@ -295,6 +321,11 @@ void sock_efree(struct sk_buff *skb)
 	TRACE_AND_STOP;
 }
 
+void spin_lock(spinlock_t *lock)
+{
+	TRACE;
+}
+
 void spin_lock_irq(spinlock_t *lock)
 {
 	TRACE_AND_STOP;
@@ -308,6 +339,16 @@ void spin_lock_nested(spinlock_t *lock, int subclass)
 void spin_unlock_irq(spinlock_t *lock)
 {
 	TRACE_AND_STOP;
+}
+
+void spin_lock_bh(spinlock_t *lock)
+{
+	TRACE;
+}
+
+void spin_unlock_bh(spinlock_t *lock)
+{
+	TRACE;
 }
 
 size_t strlcpy(char *dest, const char *src, size_t size)
@@ -392,6 +433,13 @@ int usb_string(struct usb_device *dev, int index, char *buf, size_t size)
 	return -1;
 }
 
+const struct usb_device_id *usb_match_id(struct usb_interface *interface,
+                                         const struct usb_device_id *id)
+{
+	TRACE_AND_STOP;
+	return NULL;
+}
+
 ktime_t ktime_get_real(void)
 {
 	TRACE_AND_STOP;
@@ -401,6 +449,12 @@ ktime_t ktime_get_real(void)
 void kunmap_atomic(void *addr)
 {
 	TRACE_AND_STOP;
+}
+
+int kstrtoul(const char *s, unsigned int base, unsigned long *res)
+{
+	TRACE_AND_STOP;
+	return -1;
 }
 
 void might_sleep()
@@ -514,5 +568,111 @@ int phy_ethtool_nway_reset(struct net_device *ndev)
 	return -1;
 }
 
+int __vlan_get_tag(const struct sk_buff *skb, u16 *vlan_tci)
+{
+	TRACE;
+	return -1;
+}
+
+void __vlan_hwaccel_put_tag(struct sk_buff *skb, __be16 vlan_proto, u16 vlan_tci)
+{
+	TRACE;
+}
+
+struct vlan_ethhdr *vlan_eth_hdr(const struct sk_buff *skb)
+{
+	TRACE_AND_STOP;
+	return NULL;
+}
+
+int vlan_get_tag(const struct sk_buff *skb, u16 *vlan_tci)
+{
+	TRACE;
+	return -1;
+}
+
+struct net_device *
+__vlan_find_dev_deep_rcu(struct net_device *real_dev, __be16 vlan_proto, u16 vlan_id)
+{
+	TRACE_AND_STOP;
+	return NULL;
+}
+
+bool ipv6_addr_is_solict_mult(const struct in6_addr *addr)
+{
+	TRACE;
+	return false;
+}
+
+int ipv6_addr_type(const struct in6_addr *addr)
+{
+	TRACE;
+	return -1;
+}
+
+struct inet6_dev *in6_dev_get(const struct net_device *dev)
+{
+	TRACE_AND_STOP;
+	return NULL;
+}
+
+void in6_dev_put(struct inet6_dev *idev)
+{
+	TRACE_AND_STOP;
+}
+
+void hrtimer_start(struct hrtimer *timer, ktime_t tim, const enum hrtimer_mode mode)
+{
+	TRACE_AND_STOP;
+}
+
+void *memdup_user(const void *src, size_t len)
+{
+	TRACE_AND_STOP;
+	return NULL;
+}
+
+int mutex_lock_interruptible(struct mutex *m)
+{
+	TRACE;
+	return 0;
+}
+
+struct usb_class_driver;
+int usb_register_dev(struct usb_interface *intf, struct usb_class_driver *class_driver)
+{
+	TRACE_AND_STOP;
+	return -1;
+}
+
+void usb_deregister_dev(struct usb_interface *intf,struct usb_class_driver *class_driver)
+{
+	TRACE_AND_STOP;
+}
+
+long copy_to_user(void *to, const void *from, unsigned long n)
+{
+	TRACE_AND_STOP;
+	return 0;
+}
+
+void poll_wait(struct file *f, wait_queue_head_t *w, poll_table *p)
+{
+	TRACE_AND_STOP;
+}
+
+unsigned iminor(const struct inode *inode)
+{
+	TRACE_AND_STOP;
+	return 0;
+}
+
+loff_t noop_llseek(struct file *file, loff_t offset, int whence)
+{
+	TRACE_AND_STOP;
+	return 0;
+}
+
 int sysctl_tstamp_allow_data;
 struct user_namespace init_user_ns;
+const struct ipv6_stub *ipv6_stub;

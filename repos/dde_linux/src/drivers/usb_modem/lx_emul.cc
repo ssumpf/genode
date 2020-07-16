@@ -13,7 +13,6 @@
 
 #define TRACE do { ; } while (0)
 
-#include <lx_emul/impl/kernel.h>
 #include <lx_emul/impl/delay.h>
 #include <lx_emul/impl/slab.h>
 #include <lx_emul/impl/work.h>
@@ -28,6 +27,7 @@
 #include <lx_kit/backend_alloc.h>
 
 #include <lx_emul/extern_c_begin.h>
+#include <lx_emul/impl/kernel.h>
 
 #include <linux/mii.h>
 
