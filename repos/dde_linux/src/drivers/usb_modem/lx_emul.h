@@ -74,9 +74,9 @@ typedef __u64 __be64;
 
 #include <lx_emul/list.h>
 #include <lx_emul/string.h>
+#include <lx_emul/mutex.h>
 #include <lx_emul/kobject.h>
 #include <lx_emul/completion.h>
-#include <lx_emul/mutex.h>
 #include <lx_emul/pm.h>
 #include <lx_emul/scatterlist.h>
 
@@ -233,9 +233,17 @@ void kfree(const void *);
 #define from_timer(var, callback_timer, timer_fieldname) \
 	container_of(callback_timer, typeof(*var), timer_fieldname)
 
+void hrtimer_start(struct hrtimer *timer, ktime_t tim, const enum hrtimer_mode mode);
+
 void *kmalloc(size_t size, gfp_t flags);
 void *kzalloc(size_t size, gfp_t flags);
+
+int kstrtoul(const char *s, unsigned int base, unsigned long *res);
+
 int snprintf(char *buf, size_t size, const char *fmt, ...);
+int sprintf(char *buf, const char *fmt, ...);
+int strtobool(const char *, bool *);
+
 const char *dev_name(const struct device *dev);
 
 struct __una_u16 { u16 x; } __attribute__((packed));
@@ -370,6 +378,8 @@ struct net_device
 	int                           ifindex;
 	void                         *session_component;
 };
+
+#define to_net_dev(d) container_of(d, struct net_device, dev)
 
 struct usbnet;
 
@@ -629,6 +639,10 @@ void netif_stop_queue(struct net_device *);
 void netif_start_queue(struct net_device *);
 void netif_wake_queue(struct net_device * d);
 
+void netif_tx_lock_bh(struct net_device *dev);
+void netif_tx_unlock_bh(struct net_device *dev);
+
+
 void netdev_stats_to_stats64(struct rtnl_link_stats64 *stats64, const struct net_device_stats *netdev_stats);
 
 enum { TASK_RUNNING = 0, TASK_INTERRUPTIBLE = 1, TASK_UNINTERRUPTIBLE = 2, TASK_NORMAL = 3 };
@@ -846,6 +860,7 @@ struct inode
 };
 
 loff_t noop_llseek(struct file *file, loff_t offset, int whence);
+unsigned iminor(const struct inode *inode);
 
 struct file_operations
 {
@@ -866,7 +881,7 @@ LX_MUTEX_INIT_DECLARE(wdm_mutex);
 #define wdm_mutex LX_MUTEX(wdm_mutex)
 
 #define mutex_release(l, n, i)
-
+int mutex_lock_interruptible(struct mutex *);
 
 int spin_is_locked(spinlock_t *lock);
 
@@ -884,12 +899,14 @@ struct net
 };
 
 u32 prandom_u32(void);
-void rcu_read_lock(void);
-void rcu_read_unlock(void);
+static inline void rcu_read_lock(void) { }
+static inline void rcu_read_unlock(void) { }
 #define rcu_dereference_protected(p, c) p
 bool net_gso_ok(netdev_features_t features, int gso_type);
 bool copy_from_iter_full_nocache(void *addr, size_t bytes, struct iov_iter *i);
 bool lockdep_is_held(void *l);
+
+long copy_to_user(void *to, const void *from, unsigned long n);
 
 extern int debug_locks;
 bool wq_has_sleeper(struct wait_queue_head *wq_head);
@@ -912,6 +929,8 @@ enum { MAX_SCHEDULE_TIMEOUT = 1000 };
 #define write_pnet(pnet, net) do { (void)(net);} while (0)
 
 int l3mdev_master_ifindex_by_index(struct net *net, int ifindex);
+
+void *memdup_user(const void *, size_t);
 
 struct kmem_cache;
 void *kmem_cache_alloc_node(struct kmem_cache *cache, gfp_t, int);
@@ -1173,6 +1192,9 @@ struct frag_hdr
 #define ipv6_optlen(p)  (((p)->hdrlen+1) << 3)
 #define ipv6_authlen(p) (((p)->hdrlen+2) << 2)
 
+int ipv6_addr_type(const struct in6_addr *addr);
+bool ipv6_addr_is_solict_mult(const struct in6_addr *addr);
+
 enum { IP_OFFSET = 0x1FFF, IP_MF = 0x2000 };
 
 enum { IP6_MF = 0x0001, IP6_OFFSET = 0xfff8 };
@@ -1225,6 +1247,11 @@ struct vlan_ethhdr
 };
 
 struct vlan_ethhdr *vlan_eth_hdr(const struct sk_buff *skb);
+
+int __vlan_get_tag(const struct sk_buff *skb, u16 *vlan_tci);
+int vlan_get_tag(const struct sk_buff *skb, u16 *vlan_tci);
+struct net_device *
+__vlan_find_dev_deep_rcu(struct net_device *real_dev, __be16 vlan_proto, u16 vlan_id);
 
 #define skb_vlan_tag_get(__skb)      ((__skb)->vlan_tci & ~VLAN_TAG_PRESENT)
 
@@ -1343,6 +1370,9 @@ void skb_gro_flush_final(struct sk_buff *skb, struct sk_buff **pp, int flush);
 
 struct packet_offload *gro_find_complete_by_type(__be16 type);
 
+
+void dev_hold(struct net_device *dev);
+void dev_put(struct net_device *dev);
 void dev_add_offload(struct packet_offload *po);
 
 #define fs_initcall(x)
@@ -1359,6 +1389,9 @@ int dev_is_pci(struct device *dev);
 
 void skb_init();
 int module_usbnet_init();
+int module_wdm_driver_init();
+int module_cdc_ncm_driver_init();
+int module_cdc_mbim_driver_init();
 
 enum {
 	IPV6_ADDR_UNICAST = 0x1
@@ -1392,6 +1425,10 @@ struct icmp6hdr
 	__u8 icmp6_type;
 	__u8 icmp6_code;
 };
+
+
+struct inet6_dev *in6_dev_get(const struct net_device *dev);
+void in6_dev_put(struct inet6_dev *idev);
 
 struct nd_msg
 {

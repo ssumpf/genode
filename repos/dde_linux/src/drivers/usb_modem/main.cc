@@ -179,6 +179,9 @@ void Driver::main_task_entry(void * arg)
 
 	skb_init();
 	module_usbnet_init();
+	module_wdm_driver_init();
+	module_cdc_ncm_driver_init();
+	module_cdc_mbim_driver_init();
 
 	static Device dev(*driver, Label(""));
 
