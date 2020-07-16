@@ -213,7 +213,12 @@ void Driver::Device::probe_interface(usb_interface * iface, usb_device_id * id)
 	using Le = Genode::List_element<Lx_driver>;
 	for (Le *le = Lx_driver::list().first(); le; le = le->next()) {
 		usb_device_id * id = le->object()->match(iface);
-		if (id && le->object()->probe(iface, id)) return;
+		Genode::log("match id: ", id, " name: ", le->object()->drv.name);
+		if (id) {
+			int ret = le->object()->probe(iface, id);
+			Genode::log("probe: ", ret);
+			if (ret == 0) return;
+		}
 	}
 }
 
