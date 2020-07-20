@@ -196,7 +196,7 @@ class Framebuffer::Session_component : public Genode::Rpc_object<Session>
 			/* copy pixels from back buffer to physical frame buffer */
 			Genode::Pixel_rgb565 * src = _ds.local_addr<Genode::Pixel_rgb565>();
 			Genode::Pixel_rgb888 * dst = (Genode::Pixel_rgb888*)_driver.fb_addr();
-			Genode::log("Refresh: ", dst);
+
 			for (int row = y1; row <= y2; row++) {
 				int line_offset = width * row;
 				Genode::Pixel_rgb565 const * s = src + line_offset + x1;
