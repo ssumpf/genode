@@ -147,58 +147,37 @@ Bootstrap::Platform::Board::Board()
 		Ccm_reg(Genode::addr_t const mmio_base)
 			: Genode::Mmio(mmio_base) { }
 
-		struct Ccgr_93 : Register<0x45d0, 32> { };
-
 		struct Target_root_0   : Register<0x8000, 32> {};
-
-		/* disp_axi */
 		struct Target_root_20  : Register<0x8a00, 32>
 		{
 			struct Mux : Bitfield<24, 3> { };
 		};
-
-		/* disp_apb */
 		struct Target_root_21  : Register<0x8a80, 32> {};
-
-		/* disp_rtrm */
 		struct Target_root_22  : Register<0x8b00, 32>
 		{
 			struct Mux : Bitfield<24, 3> { };
 		};
-
-		/* dsi_ahb */
 		struct Target_root_36  : Register<0x9200, 32>
 		{
 			struct Div : Bitfield<0, 6> { };
 			struct Prediv : Bitfield<16, 3> { };
 		};
 
-		/* dsi_ipg_div */
 		struct Target_root_37  : Register<0x9280, 32>
 		{
 			struct Div : Bitfield<0, 6> { };
 			struct Prediv : Bitfield<16, 3> { };
 		};
 
-		/* disp_drtc */
-		struct Target_root_68  : Register<0xa200, 32> {};
 
-		/* dc_pixel */
+		struct Target_root_68  : Register<0xa200, 32> {};
 		struct Target_root_73  : Register<0xa480, 32> //
 		{
 			struct Div : Bitfield<0, 6> { };
 			struct Prediv : Bitfield<16, 3> { };
 			struct Mux : Bitfield<24, 3> { };
 		};
-
-		/* dsi_core */
-		struct Target_root_118 : Register<0xbb00, 32>
-		{
-			struct Div : Bitfield<0, 6> { };
-			struct Prediv : Bitfield<16, 3> { };
-		};
-
-		/* dsi_phy_ref */
+		struct Target_root_118 : Register<0xbb00, 32> {};
 		struct Target_root_119 : Register<0xbb80, 32>
 		{
 			struct Div : Bitfield<0, 6> { };
@@ -211,44 +190,11 @@ Bootstrap::Platform::Board::Board()
 		Pll_reg(Genode::addr_t const mmio_base)
 			: Genode::Mmio(mmio_base) { }
 
-		struct Pll_video_1_0 : Register<0x10, 32>
-		{
-			/* output dividider (0 = 2, 11111 = 63) */
-			struct Output_div : Bitfield<0, 5> { };
-
-			/* reference clock divider (0 = 1 ...) */
-			struct Refclk_div : Bitfield<5, 6> { };
-
-			/* ack new pll divider by hardware */
-			struct Ack_new_pll : Bitfield<11, 1> { };
-
-			/* new pll divider */
-			struct New_pll : Bitfield<12, 1> { };
-
-			/* bypass */
-			struct Bypass : Bitfield<14, 1> { };
-
-			/* signal select */
-			struct Lock_sel : Bitfield<15, 1> { };
-
-			/* reference clock */
-			struct Refclk_sel : Bitfield<16, 2> { };
-
-			/* power down */
-			struct Pd : Bitfield<19, 1> { };
-
-			struct Cle : Bitfield<21, 1> { };
-
-			struct Lock : Bitfield<31, 1> { };
-		};
+		struct Pll_video_1_0 : Register<0x10, 32> { };
 		struct Pll_video_1_1 : Register<0x14, 32> { };
 
 		struct Pll_arm_0 : Register<0x28,  32> {};
 		struct Pll_arm_1 : Register<0x2c,  32> {};
-
-		struct Sys_pll_1_0 : Register<0x30, 32> { };
-		struct Sys_pll_1_1 : Register<0x34, 32> { };
-
 	};
 
 	unsigned num_values = sizeof(iomux_values) / (2*sizeof(unsigned long));
@@ -308,8 +254,8 @@ Bootstrap::Platform::Board::Board()
 
 	/* MIPI_DSI_ESC_RX_CLK_ROOT = SYSTEM_PLL1_DIV10 */
 	ccm.write<Ccm_reg::Target_root_36>(0x12000000);
-	//ccm.write<Ccm_reg::Target_root_36::Prediv>(0);
-	//ccm.write<Ccm_reg::Target_root_36::Div>(9);
+	ccm.write<Ccm_reg::Target_root_36::Prediv>(0);
+	ccm.write<Ccm_reg::Target_root_36::Div>(9);
 
 	/* IPG_DIV */
 	v = ccm.read<Ccm_reg::Target_root_37>();
@@ -317,14 +263,13 @@ Bootstrap::Platform::Board::Board()
 	//Ccm_reg::Target_root_118::Prediv::set(0);
 //	Ccm_reg::Target_root_118::Div::set(6);
 
-	/* MIPI_DSI_CORE_CLK_ROOT = SYSTEM_PLL1_DIV3 266 Mhz */
+	/* MIPI_DSI_CORE_CLK_ROOT = SYSTEM_PLL1_DIV3 */
 	ccm.write<Ccm_reg::Target_root_118>(0x11000000);
 
 	/* MIPI_DSI_PHY_REF_CLK_ROOT bypass VIDEO_PLL1_CLOCK */
 	ccm.write<Ccm_reg::Target_root_119>(0x14000000);
 
 
-#if 0
 	v = pll.read<Pll_reg::Pll_video_1_0>();
 	if (v & (1 << 19)) {
 		Genode::log("VIDEO boot: ", Genode::Hex(v));
@@ -332,80 +277,50 @@ Bootstrap::Platform::Board::Board()
 
 		while ((pll.read<Pll_reg::Pll_video_1_0>() & (1 << 31)) == 0) { ; }
 	}
-#endif
 
 
-	Genode::log("video_pll1: cfg0: ", Genode::Hex(pll.read<Pll_reg::Pll_video_1_0>()),
-	            " cfg1: ", Genode::Hex(pll.read<Pll_reg::Pll_video_1_1>()));
+	pll.write<Pll_reg::Pll_video_1_1>(0x3b);
+	v = pll.read<Pll_reg::Pll_video_1_0>();
 
-	Pll_reg::Pll_video_1_0::access_t video = 0;
-	Pll_reg::Pll_video_1_0::Pd::set(video, 0);         /* enable  power */
-	Pll_reg::Pll_video_1_0::Cle::set(video, 1);         /* enable gating */
-	Pll_reg::Pll_video_1_0::Refclk_sel::set(video, 0); /* 25MHz refclock */
-	Pll_reg::Pll_video_1_0::Refclk_div::set(video, 4); /* divide by 5 = 25/5 = 5 MHz */ 
-	Pll_reg::Pll_video_1_0::Bypass::set(video, 0);     /* disable bypass */ 
-	Pll_reg::Pll_video_1_0::Lock_sel::set(video, 1);   /* maximum lock time */ 
-	Pll_reg::Pll_video_1_0::Output_div::set(video, 0); /* divide output by 2 */
-
-	pll.write<Pll_reg::Pll_video_1_0>(video);
-
-	/*
-	 * Set output to 1200MHz = 5MHz * 8 / 2 * 60
-	 * 5Mhz -> reference clock
-	 * 2 -> Output_div 0
-	 * 60 -> Int div in pll_1_1 - 1
-	 */
-	pll.write<Pll_reg::Pll_video_1_1>(59);
-
-	pll.write<Pll_reg::Pll_video_1_0::New_pll>(1);
-	Genode::log("WAIT: ", Genode::Hex(video));
-	while (pll.read<Pll_reg::Pll_video_1_0::Ack_new_pll>() == 0  ||
-	       pll.read<Pll_reg::Pll_video_1_0::Lock>() == 0) { ; }
+	Genode::log("INITIAL: ", Genode::Hex(v));
+	Genode::log("v: ", Genode::Hex(v));
+	v &= ~0x1ful;
+	pll.write<Pll_reg::Pll_video_1_0>(v);
+	v = pll.read<Pll_reg::Pll_video_1_0>();
+	pll.write<Pll_reg::Pll_video_1_0>(v | (1 << 12));
+	Genode::log("WAIT");
+//XXX: must WORK! while (!(pll.read<Pll_reg::Pll_video_1_0>() & (1<<11))) { ; }
 	Genode::log("WAIT done");
-	
-	pll.write<Pll_reg::Pll_video_1_0::New_pll>(0);
+
+	v = pll.read<Pll_reg::Pll_video_1_0>();
+	pll.write<Pll_reg::Pll_video_1_0>(v ^ (1<<12));
 
 	Genode::log("FINAL: ", Genode::Hex(pll.read<Pll_reg::Pll_video_1_0>()));
-	Genode::log("Syspll1: cfg0: ", Genode::Hex(pll.read<Pll_reg::Sys_pll_1_0>()),
-	            " cfg1: ", Genode::Hex(pll.read<Pll_reg::Sys_pll_1_1>()));
 
-
-	v = ccm.read<Ccm_reg::Ccgr_93>();
-	Genode::log("Gate93", Genode::Hex(v));
+	/* MIPI_DSI_PHY_REF_CLK_ROOT = VIDEO_PLL1_CLOCK */
+	ccm.write<Ccm_reg::Target_root_119>(0x17000000);
+	ccm.write<Ccm_reg::Target_root_119::Div>(49);
 
 	v = ccm.read<Ccm_reg::Target_root_21>();
 	Genode::log("APB: ", Genode::Hex(v));
 
 	/* AXI reference clock to SYS1_PLL_800M */
-	ccm.write<Ccm_reg::Target_root_20>(0x12000000);
+	ccm.write<Ccm_reg::Target_root_20::Mux>(2);
 	v = ccm.read<Ccm_reg::Target_root_20>();
 	Genode::log("AXI: ", Genode::Hex(v));
 
-	/* RTRM reference clock to SYS1_PLL_400M */
-	//ccm.write<Ccm_reg::Target_root_22::Mux>(3);
-	ccm.write<Ccm_reg::Target_root_22>(0x13000000);
+	/* RTRM reference clock to SYS1_PLL_800M */
+	ccm.write<Ccm_reg::Target_root_22::Mux>(1);
 	v = ccm.read<Ccm_reg::Target_root_22>();
 	Genode::log("RTRM: ", Genode::Hex(v));
 	v = ccm.read<Ccm_reg::Target_root_68>();
 	Genode::log("DTRC: ", Genode::Hex(v));
 
-
-	//pll.write<Pll_reg::Pll_video_1_0::Pd>(1);
-	Genode::log("disabled pll: ", Genode::Hex(pll.read<Pll_reg::Pll_video_1_0>()));
-
-	/* MIPI_DSI_PHY_REF_CLK_ROOT = VIDEO_PLL1_CLOCK 24 MHz */
-	ccm.write<Ccm_reg::Target_root_119>(0x17000000);
-	Genode::log("dsi_phy_ref");
-	ccm.write<Ccm_reg::Target_root_119::Div>(49);
-
-	/* set pixel reference clock to VIDEO_PLL1_CLOCK 120MHz */
-	ccm.write<Ccm_reg::Target_root_73>(0x11000000);
-	//ccm.write<Ccm_reg::Target_root_73::Prediv>(0);
+	/* set pixel reference clock to VIDEO_PLL1_CLOCK */
+	ccm.write<Ccm_reg::Target_root_73::Mux>(1);
+	ccm.write<Ccm_reg::Target_root_73::Prediv>(0);
 	ccm.write<Ccm_reg::Target_root_73::Div>(9);
 	Genode::log("PIX: ", Genode::Hex(ccm.read<Ccm_reg::Target_root_73>()));
-
-	Genode::log("FINAL: ", Genode::Hex(pll.read<Pll_reg::Pll_video_1_0>()));
-
 }
 
 
