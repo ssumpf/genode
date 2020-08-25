@@ -59,15 +59,25 @@ void Timer::Time_source::_initialize()
 {
 	_timer_irq.sigh(_signal_handler);
 
+	Genode::log(__func__, ":", __LINE__);
 	write<Cr>(0);
+	Genode::log(__func__, ":", __LINE__);
 	write<Ir>(0);
+	Genode::log(__func__, ":", __LINE__);
 	write<Ocr1>(0);
+	Genode::log(__func__, ":", __LINE__);
 	write<Ocr2>(0);
+	Genode::log(__func__, ":", __LINE__);
 	write<Ocr3>(0);
-	write<Icr1>(0);
-	write<Icr2>(0);
+	Genode::log(__func__, ":", __LINE__);
+	//write<Icr1>(0);
+	//Genode::log(__func__, ":", __LINE__);
+	//write<Icr2>(0);
+	Genode::log(__func__, ":", __LINE__);
 	write<Cr::Clk_src>(Cr::Clk_src::HIGH_FREQ_REF_CLK);
+	Genode::log(__func__, ":", __LINE__);
 	while (read<Cr::Swr>()) ;
+	Genode::log(__func__, ":", __LINE__);
 	write<Sr>(0);
 	write<Cr::Frr>(1);
 	write<Cr::En_mod>(1);
