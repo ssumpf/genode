@@ -55,13 +55,13 @@
 #include <lx_kit/irq.h>
 #include <lx_kit/malloc.h>
 
-//#include <os/backtrace.h>
+#include <os/backtrace.h>
 
-/*
+
 extern "C" void backtrace()
 {
 	Genode::backtrace();
-}*/
+}
 
 /********************************
  ** drivers/base/dma-mapping.c **
@@ -126,6 +126,7 @@ struct resource *platform_get_resource_byname(struct platform_device *dev,
 		return r;
 	}
 
+	Genode::error("RESOURCE: ", name, " not found");
 	return NULL;
 }
 
@@ -572,6 +573,8 @@ int of_get_videomode(struct device_node *np, struct videomode *vm, int index)
 		vm->vback_porch  = 0x4;
 		vm->vsync_len    = 0x2;
 
+		vm->flags = (display_flags)0x1095;
+
 		return 0;
 	}
 
@@ -641,6 +644,7 @@ struct device_node *of_graph_get_next_endpoint(const struct device_node *parent,
 	}
 
 	Genode::error(__func__, "(): unhandled parent '", parent->name, "'");
+	backtrace();
 
 	return nullptr;
 }
