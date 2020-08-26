@@ -55,12 +55,12 @@
 #include <lx_kit/irq.h>
 #include <lx_kit/malloc.h>
 
-#include <os/backtrace.h>
+//#include <os/backtrace.h>
 
 
 extern "C" void backtrace()
 {
-	Genode::backtrace();
+	//Genode::backtrace();
 }
 
 /********************************
