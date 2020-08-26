@@ -141,6 +141,7 @@ Bootstrap::Platform::Board::Board()
 		{ 0x30330504, 0x2        },
 		{ 0x30340038, 0x49409600 },
 		{ 0x30340040, 0x49409200 },
+		{ 0x30340034, 0x4 }, /* MIPI mux selector */
 /*
 		{ 0x30340060, 0x180800   },
 		{ 0x30340064, 0x6400520  },
@@ -386,7 +387,7 @@ Bootstrap::Platform::Board::Board()
 	Genode::log("PLL new diff: ", Genode::Hex(pll.read<Pll_reg::Pll_video_1_1>()));
 
 
-	pll.write<Pll_reg::Pll_video_1_0::Bypass>(0);
+	//pll.write<Pll_reg::Pll_video_1_0::Bypass>(1);
 	//pll.write<Pll_reg::Pll_video_1_0::Clke>(1);
 	Genode::log("Pll output enabled: ", Genode::Hex(pll.read<Pll_reg::Pll_video_1_0>()));
 	//ccm.write<Ccm_reg::Disp_gate>(3);
@@ -419,6 +420,7 @@ Bootstrap::Platform::Board::Board()
 	/* MIPI_DSI_PHY_REF_CLK_ROOT = VIDEO_PLL1_CLOCK */
 	ccm.write<Ccm_reg::Target_root_119>(0x07000000);
 	ccm.write<Ccm_reg::Target_root_119::Div>(49);
+	ccm.write<Ccm_reg::Target_root_119>(0x17000031);
 	//ccm.write<Ccm_reg::Target_root_119::Div>(9);
 	/* PLL2 */
 	/* 2 MHz */
@@ -439,8 +441,9 @@ Bootstrap::Platform::Board::Board()
 	//ccm.write<Ccm_reg::Target_root_36::Div>(9);
 
 	/* set pixel reference clock to VIDEO_PLL1_CLOCK */
-	ccm.write<Ccm_reg::Target_root_73>(0x11000000);
+	ccm.write<Ccm_reg::Target_root_73>(0x01000000);
 	ccm.write<Ccm_reg::Target_root_73::Div>(9);
+	ccm.write<Ccm_reg::Target_root_73>(0x11000009);
 	//ccm.write<Ccm_reg::Target_root_73::Div>(4);
 	Genode::log("PIX: ", Genode::Hex(ccm.read<Ccm_reg::Target_root_73>()));
 	/* PLL2 */
