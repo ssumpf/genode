@@ -266,7 +266,6 @@ void handle_simple_irq(struct irq_desc *desc)
 void irq_chip_eoi_parent(struct irq_data *data)
 {
 	TRACE;
-	lx_printf("from: %p\n", __builtin_return_address(0));
 }
 
 struct irq_data *irq_get_irq_data(unsigned int irq)

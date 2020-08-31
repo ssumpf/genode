@@ -160,7 +160,6 @@ struct bus_type platform_bus_type = {
 
 int platform_driver_register(struct platform_driver * drv)
 {
-	Genode::warning("register: ", drv->driver.name);
 	/* init platform_bus_type */
 	platform_bus_type.match = platform_match;
 	platform_bus_type.probe = platform_drv_probe;
@@ -244,7 +243,6 @@ struct platform_device *platform_device_alloc(const char *name, int id)
 unsigned long clk_get_rate(struct clk * clk)
 {
 	if (!clk) return 0;
-	Genode::log("clk_get: ", clk->name, " rate: ", clk->rate);
 	return clk->rate;
 }
 
@@ -255,7 +253,6 @@ int clk_set_rate(struct clk *clk, unsigned long rate)
 
 
 	if (!clk) return -1;
-	Genode::warning("clk_set_rate: ", clk->name, " rate: ", rate);
 	clk->rate = rate;
 	return 0;
 }
@@ -264,7 +261,6 @@ int clk_set_rate(struct clk *clk, unsigned long rate)
 int clk_prepare_enable(struct clk *clk)
 {
 	TRACE;
-	if (clk) Genode::warning(__func__, " ENABLE: ",  clk->name);
 	return 0;
 }
 
@@ -423,7 +419,6 @@ int of_device_is_compatible(const struct device_node *device,
 struct device_node *of_get_next_child(const struct device_node *node,
                                       struct device_node *prev)
 {
-	Genode::warning(__func__, " called. name: ", node->name);
 	if (Genode::strcmp(node->name, "port", strlen(node->name)) == 0) {
 		if (!prev) {
 			//XXX: handle HDMI case return &hdmi_endpoint_device_node;
@@ -435,7 +430,6 @@ struct device_node *of_get_next_child(const struct device_node *node,
 	if (Genode::strcmp(node->name, "mipi_dsi_bridge") == 0) {
 		if (prev) return NULL;
 		/* create panel device node */
-		Genode::log(__func__, " return panel");
 
 		device_node *np = &mipi_panel_node;
 		np->properties = (property *)kzalloc(6*sizeof(property), 0);
@@ -500,7 +494,8 @@ const void *of_get_property(const struct device_node *node, const char *name, in
 		}
 	}
 
-	Genode::warning("OF property ", name, " not found");
+	if (DEBUG_DRIVER)
+		Genode::warning("OF property ", name, " not found");
 	return nullptr;
 }
 
@@ -561,7 +556,6 @@ int of_get_videomode(struct device_node *np, struct videomode *vm, int index)
 {
 	/* taken from device tree */
 	if (Genode::strcmp(np->name, "panel") == 0) {
-	Genode::log(__func__);
 		vm->pixelclock   = 0x7de2900;
 		vm->hactive      = 0x438;
 		vm->hfront_porch = 0x14;
@@ -644,7 +638,6 @@ struct device_node *of_graph_get_next_endpoint(const struct device_node *parent,
 	}
 
 	Genode::error(__func__, "(): unhandled parent '", parent->name, "'");
-	backtrace();
 
 	return nullptr;
 }
@@ -682,7 +675,6 @@ struct device_node *of_graph_get_remote_port_parent(const struct device_node *no
 
 		int len;
 		void const *np = of_get_property(&mipi_endpoint_device_node, "mipi_dsi_bridge_np", &len);
-		Genode::log("READ: ", np);
 		return (device_node *)np;
 	}
 
@@ -885,7 +877,6 @@ static void *_ioremap(phys_addr_t phys_addr, unsigned long size, int wc)
 		Genode::Attached_io_mem_dataspace *ds = new(Lx::Malloc::mem())
 			Genode::Attached_io_mem_dataspace(Lx_kit::env().env(), phys_addr, size, !!wc);
 		void * ret = ds->local_addr<void>();
-		Genode::log("ioremap: ", Genode::Hex(phys_addr), " size: ", Genode::Hex(size), " addr: ", ret);
 		return ret;
 	} catch (...) {
 		panic("Failed to request I/O memory: [%lx,%lx)", phys_addr, phys_addr + size);
@@ -934,7 +925,6 @@ struct regmap *syscon_regmap_lookup_by_phandle( struct device_node *np, const ch
 int regmap_update_bits(struct regmap *map, unsigned reg, unsigned mask,
                        unsigned val)
 {
-	Genode::log(__func__, " base: ", map->base, " reg: ", Genode::Hex(reg));
 	unsigned current = *((unsigned *)(map->base + reg));
 
 	current &= ~mask;
@@ -1004,7 +994,6 @@ class Driver : public Genode::List<Driver>::Element
 			 *  Don't try if buses don't match, since drivers often use 'container_of'
 			 *  which might cast the device to non-matching type
 			 */
-			Genode::log("drv bus: ", _drv->bus, " dev bus: ", dev->bus);
 			if (_drv->bus != dev->bus)
 				return false;
 
@@ -1042,9 +1031,7 @@ int device_add(struct device *dev)
 
 	/* foreach driver match and probe device */
 	for (Driver *driver = Driver::list()->first(); driver; driver = driver->next()) {
-		Genode::log("Match: ", driver->_drv->name, " pdev: ", dev->name, " match func: ");
 		if (driver->match(dev)) {
-			Genode::warning("Match: success");
 			int ret = driver->probe(dev);
 
 			if (!ret) return 0;
@@ -1066,16 +1053,6 @@ int bus_register(struct bus_type *bus)
 
 	_bus = bus;
 	return 0;
-}
-
-bus_type *mipi_dsi_bus()
-{
-	if (!_bus || strcmp(_bus->name, "mipi-dsi")) {
-		Genode::error("\"mipi-dsi\" bus not found");
-		return nullptr;
-	}
-
-	return _bus;
 }
 
 
@@ -1113,7 +1090,6 @@ void *dma_alloc_wc(struct device *dev, size_t size,
 	_dma_wc_ds_list().insert(dma_wc_ds);
 
 	*dma_addr = Genode::Dataspace_client(dma_wc_ds->cap()).phys_addr();
-	Genode::warning("FB: DMA: ", Genode::Hex(*dma_addr), " VIRT: ", dma_wc_ds->local_addr<void>());
 	return dma_wc_ds->local_addr<void>();
 }
 
@@ -1190,7 +1166,6 @@ bool of_property_read_bool(const struct device_node *np, const char *propname)
 			mipi_endpoint_device_node.properties = (property*)kzalloc(sizeof(property), 0);
 			mipi_endpoint_device_node.properties->name  = "mipi_dsi_bridge_np";
 			mipi_endpoint_device_node.properties->value = (void *)np;
-			Genode::log("SET: ", np);
 			return true;
 		}
 
@@ -1344,19 +1319,17 @@ Framebuffer::Driver::_preferred_mode(drm_connector *connector,
 {
 	using namespace Genode;
 	using Genode::size_t;
-	Genode::error("PREFERRED MODE");
+
 	/* try to read configuration for connector */
 	try {
 		Xml_node config = _config.xml();
 		Xml_node xn = config.sub_node();
 		for (unsigned i = 0; i < config.num_sub_nodes(); xn = xn.next()) {
-			Genode::log("for: ", i, " XN: ", xn);
 			if (!xn.has_type("connector"))
 				continue;
-			Genode::log("found connector");
+
 			typedef String<64> Name;
 			Name const con_policy = xn.attribute_value("name", Name());
-			Genode::log("con_policy: ", con_policy, " connector: ", (char const *)connector->name);
 			if (con_policy != connector->name)
 				continue;
 
@@ -1372,10 +1345,7 @@ Framebuffer::Driver::_preferred_mode(drm_connector *connector,
 			long          const hz     = xn.attribute_value("hz",     0L);
 
 			struct drm_display_mode *mode;
-			Genode::log("CHEC MODES");
 			list_for_each_entry(mode, &connector->modes, head) {
-			Genode::log("MODE1: ", mode->hdisplay, " width: ", width,
-			             "V: ", mode->vdisplay);
 			if (mode->hdisplay == (int) width &&
 				mode->vdisplay == (int) height)
 				if (!hz || hz == mode->vrefresh)
@@ -1393,7 +1363,6 @@ Framebuffer::Driver::_preferred_mode(drm_connector *connector,
 
 		struct drm_display_mode *mode = nullptr, *tmp;
 		list_for_each_entry(tmp, &connector->modes, head) {
-			Genode::log("MODE: ", tmp->hdisplay);
 			if (!mode || tmp->hdisplay > mode->hdisplay) mode = tmp;
 		};
 		return mode;
@@ -1446,11 +1415,9 @@ void Framebuffer::Driver::update_mode()
 		lx_for_each_connector(lx_drm_device, [&] (drm_connector *c) {
 			unsigned brightness = MAX_BRIGHTNESS + 1;
 
-		Genode::warning("set mode");
 			/* set mode */
 			lx_c_set_mode(lx_drm_device, c, _lx_config._lx.lx_fb,
 			              _preferred_mode(c, brightness));
-		Genode::warning("done set mode");
 		});
 	}
 
@@ -1521,7 +1488,6 @@ void Framebuffer::Driver::generate_report()
 					xml.attribute("connected", connected);
 
 					if (!connected) return;
-Genode::log("CONNECTED");
 					struct drm_display_mode *mode;
 					list_for_each_entry(mode, &c->modes, head) {
 						xml.node("mode", [&] ()
@@ -1957,12 +1923,8 @@ struct phy *devm_phy_create(struct device *dev,
 	p->ops         = ops;
 	p->dev.parent  = dev;
 
-	Genode::log("PTR: ", ptr, " PHY: ", p);
-
 	*ptr = p;
 	devres_add(dev, ptr);
-
-	Genode::log("FIND: ", devres_find(dev, devm_phy_consume, nullptr, nullptr));
 
 	return p;
 }
@@ -1972,7 +1934,6 @@ struct phy *devm_phy_get(struct device *dev, const char *string)
 {
 	int len = 0;
 	void const *phy = of_get_property(dev->of_node, string, &len);
-	Genode::log(__func__, ": search for '", string, "' val: ", phy);
 	return (struct phy *)phy;
 }
 
@@ -2082,7 +2043,6 @@ int drm_panel_attach(struct drm_panel *panel, struct drm_connector *connector)
 
 struct drm_panel *of_drm_find_panel(const struct device_node *np)
 {
-	lx_printf("%s:%d np %s\n", __func__, __LINE__, np->name);
 	int len;
 	return (drm_panel *)of_get_property(np, "panel", &len);
 }
@@ -2106,7 +2066,6 @@ devm_gpiod_get(struct device *dev, const char *con_id, enum gpiod_flags flags)
 
 void gpiod_set_value(struct gpio_desc *desc, int value)
 {
-	lx_printf("%s:%d pin: %u\n", __func__, __LINE__, desc->pin);
 	Genode::Attached_io_mem_dataspace ds { Lx_kit::env().env(), 0x30240000, 0x1000, 0 };
 	unsigned *base = ds.local_addr<unsigned>();
 

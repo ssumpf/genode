@@ -11,7 +11,7 @@
 #define _LX_EMUL_H_
 
 #define DEBUG_LINUX_PRINTK 0
-#define DEBUG_DRIVER       1
+#define DEBUG_DRIVER       0
 
 /* XXX: acquire from firmware if this becomes necessary */
 #define SOC_REVISION 0x20
@@ -866,8 +866,12 @@ struct device_attribute {
 #define dev_printk(level, dev, format, arg...) \
 	lx_printf("dev_printk: " format , ## arg)
 
+#if DEBUG_DRIVER
 #define dev_dbg(dev, format, arg...) \
 	lx_printf("dev_dbg: " format, ## arg)
+#else
+#define dev_dbg(dev, format, arg...)
+#endif
 
 #define dev_err_ratelimited(dev, fmt, ...)                              \
 	dev_err(dev, fmt, ##__VA_ARGS__)
@@ -903,8 +907,6 @@ int dev_set_name(struct device *dev, const char *name, ...);
 
 int bus_register(struct bus_type *bus);
 void bus_unregister(struct bus_type *bus);
-
-struct bus_type *mipi_dsi_bus(void);
 
 struct device *get_device(struct device *dev);
 void put_device(struct device *dev);

@@ -132,21 +132,11 @@ void Framebuffer::Main::_run_linux()
 	module_imx_hdp_imx_platform_driver_init();
 
 	/* MIPI DSI */
-	Genode::log("module_mixel_mipi_phy_driver_init");
 	module_mixel_mipi_phy_driver_init();
-	Genode::log("---------------------------------");
-	Genode::log("module_imx_nwl_dsi_driver_bridge_init");
 	module_imx_nwl_dsi_driver_bridge_init();
-	Genode::log("---------------------------------");
-	Genode::log("module_imx_nwl_dsi_driver_init");
 	module_imx_nwl_dsi_driver_init();
-	Genode::log("---------------------------------");
-	Genode::log("postcore_mipi_dsi_bus_init");
 	postcore_mipi_dsi_bus_init();
-	Genode::log("---------------------------------");
-	Genode::log("module_rad_panel_driver_init");
 	module_rad_panel_driver_init();
-	Genode::log("---------------------------------");
 
 	/**
 	 * This device is originally created with the name '32e2d000.irqsteer'
@@ -273,7 +263,6 @@ void Framebuffer::Main::_run_linux()
 
 	Genode::addr_t **phy_ptr =
 	  (Genode::addr_t **)devres_find(&mipi_dsi_phy_pdev->dev, devm_phy_consume, nullptr, nullptr);
-	Genode::log("main: ptr ", phy_ptr, " phy ", *phy_ptr);
 	mipi_dsi_bridge_pdev->dev.of_node                      = (device_node*)kzalloc(sizeof(device_node), 0);
 	mipi_dsi_bridge_pdev->dev.of_node->name                = "mipi_dsi_bridge";
 	mipi_dsi_bridge_pdev->dev.of_node->properties          = (property*)kzalloc(sizeof(property), 0);
@@ -312,16 +301,6 @@ void Framebuffer::Main::_run_linux()
 
 
 	platform_device_register(mipi_dsi_imx_pdev);
-/*
-	struct platform_device *rad_pdev =
-		platform_device_alloc("panel-raydium-rm67191", 0);
-
-	rad_pdev->dev.bus = mipi_dsi_bus();
-	Genode::log("rad bys: ", rad_pdev->dev.bus);
-	Genode::log("register rad");
-	platform_device_register(rad_pdev);
-	Genode::log("done rad");
-*/
 
 	_driver.finish_initialization();
 	_driver.config_sigh(_policy_change_handler);
@@ -407,7 +386,7 @@ static void initialize_traced_values(Genode::Env &env)
 		unsigned volatile *ptr = (unsigned volatile *)(dcss_values[i][0] - DCSS_BASE + (unsigned long)dcss.local_addr<unsigned long>());
 		*ptr = (unsigned)dcss_values[i][1];
 	}
-Genode::log("DCSS done");
+
 	Genode::Attached_io_mem_dataspace src { env, SRC_BASE, 0x1000 };
 	num = sizeof(src_values) / (2 * sizeof(unsigned long));;
 	for (unsigned i = 0; i < num; i++) {
@@ -415,14 +394,12 @@ Genode::log("DCSS done");
 		*ptr = (unsigned)src_values[i][1];
 	}
 
-Genode::log("SRC done");
 	Genode::Attached_io_mem_dataspace mipi { env, MIPI_BASE, 0x1000 };
 	num = sizeof(mipi_values) / (2 * sizeof(unsigned long));;
 	for (unsigned i = 0; i < num; i++) {
 		unsigned volatile *ptr = (unsigned volatile *)(mipi_values[i][0] - MIPI_BASE + (unsigned long)mipi.local_addr<unsigned long>());
 		*ptr = (unsigned)mipi_values[i][1];
 	}
-Genode::log("MIPI done");
 }
 
 
