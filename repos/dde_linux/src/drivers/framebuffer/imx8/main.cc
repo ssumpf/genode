@@ -18,6 +18,7 @@
 #include <base/component.h>
 #include <base/heap.h>
 #include <base/attached_rom_dataspace.h>
+#include <base/attached_io_mem_dataspace.h>
 
 /* Server related local includes */
 #include <component.h>
@@ -347,11 +348,101 @@ static void run_linux(void * m)
 	}
 }
 
+static void initialize_traced_values(Genode::Env &env)
+{
+	static volatile unsigned long dcss_values[][2] {
+		/* DCSS SUBSAM PARAMETERS */
+		0x32e1b070, 0x41614161,
+		0x32e1b060, 0x00000000,
+		0x32e1b080, 0x03ff0000,
+		0x32e1b090, 0x03ff0000,
+		0x32e1b010, 0x07a3046f,
+		0x32e1b020, 0x0001046f,
+		0x32e1b030, 0x001f001d,
+		0x32e1b040, 0x80240023,
+		0x32e1b050, 0x07a3045b
+	};
+
+	static volatile unsigned long src_values[][2] {
+		0x30390028, 0x0000003a
+	};
+
+	static volatile unsigned long mipi_values[][2] {
+		/* DPHY */
+		0x30a0031c, 0x00000000,
+		0x30a00300, 0x00000000, /* INITAL ON */
+
+		0x30a002a8, 0xffffffff,
+		0x30a002ac, 0x00000007,
+		0x30a002a8, 0xffffff7d,
+		0x30a00208, 0x00000005,
+		0x30a0020c, 0x00000003,
+		0x30a00210, 0x00000000,
+		0x30a00214, 0x00000000,
+		0x30a00218, 0x00000000,
+		0x30a00204, 0x00000438,
+		0x30a0021c, 0x00000014,
+		0x30a00220, 0x00000022,
+		0x30a00224, 0x00000002,
+		0x30a00228, 0x00000000,
+		0x30a00234, 0x00000001,
+		0x30a00228, 0x00000000,
+		0x30a00238, 0x00000000,
+		0x30a00240, 0x00000000,
+		0x30a00200, 0x00000438,
+		0x30a0023c, 0x00000780,
+		0x30a0022c, 0x00000004,
+		0x30a00230, 0x0000001e,
+		0x30a00000, 0x00000003,
+		0x30a00004, 0x00000001,
+		0x30a00014, 0x00000001,
+		0x30a00008, 0x00000001,
+		0x30a0000c, 0x00000034,
+		0x30a00010, 0x0000000d,
+		0x30a00018, 0x00000000,
+		0x30a0001c, 0x00000000,
+		0x30a00020, 0x00000000,
+		0x30a00024, 0x00000000,
+		0x30a00028, 0x00003a98,
+	};
+
+	enum {
+		DCSS_BASE = 0x32e1b000ul,
+		SRC_BASE  = 0x30390000ul,
+		MIPI_BASE = 0x30a00000ul,
+	};
+
+	Genode::Attached_io_mem_dataspace dcss { env, DCSS_BASE, 0x1000 };
+	unsigned num = sizeof(dcss_values) / (2 * sizeof(unsigned long));;
+	for (unsigned i = 0; i < num; i++) {
+		unsigned volatile *ptr = (unsigned volatile *)(dcss_values[i][0] - DCSS_BASE + (unsigned long)dcss.local_addr<unsigned long>());
+		*ptr = (unsigned)dcss_values[i][1];
+	}
+Genode::log("DCSS done");
+	Genode::Attached_io_mem_dataspace src { env, SRC_BASE, 0x1000 };
+	num = sizeof(src_values) / (2 * sizeof(unsigned long));;
+	for (unsigned i = 0; i < num; i++) {
+		unsigned volatile *ptr = (unsigned volatile *)(src_values[i][0] - SRC_BASE + (unsigned long)src.local_addr<unsigned long>());
+		*ptr = (unsigned)src_values[i][1];
+	}
+
+Genode::log("SRC done");
+	Genode::Attached_io_mem_dataspace mipi { env, MIPI_BASE, 0x1000 };
+	num = sizeof(mipi_values) / (2 * sizeof(unsigned long));;
+	for (unsigned i = 0; i < num; i++) {
+		unsigned volatile *ptr = (unsigned volatile *)(mipi_values[i][0] - MIPI_BASE + (unsigned long)mipi.local_addr<unsigned long>());
+		*ptr = (unsigned)mipi_values[i][1];
+	}
+Genode::log("MIPI done");
+}
+
 
 void Component::construct(Genode::Env &env)
 {
 	/* XXX execute constructors of global statics */
 	env.exec_static_constructors();
+
+	initialize_traced_values(env);
 
 	static Main m(env);
 }
