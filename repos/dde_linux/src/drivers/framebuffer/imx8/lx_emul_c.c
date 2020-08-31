@@ -70,7 +70,7 @@ void lx_c_allocate_framebuffer(struct drm_device * dev,
 
 	c->lx_fb = fb;
 
-	memset_io(c->addr, 0xff, c->size);
+	memset_io(c->addr, 0, c->size);
 
 	return;
 
