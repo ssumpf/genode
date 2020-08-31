@@ -1,4 +1,5 @@
-static volatile unsigned long trace_values[][3] { 0x00000001, 0x32e160c0, 0x00000001,
+static volatile unsigned long trace_values[][3] {
+//0x00000001, 0x32e160c0, 0x00000001,
 #if 0
 0x00000001, 0x32e170c0, 0x00000001,
 0x00000001, 0x32e20068, 0x00000001,
@@ -1059,6 +1060,7 @@ unsigned root_clks[134] = {
 		Genode::log("root_clk", i, " addr: ", cur, " val: ", Genode::Hex(root_clks[i]));
 	}
 #endif
+#if 0
 	unsigned num = sizeof(trace_values) / (3 * sizeof(unsigned long));;
 	Genode::log("Replay trace ...");
 	for (unsigned i = 0; i < num; i++) {
@@ -1070,8 +1072,7 @@ unsigned root_clks[134] = {
 			*((unsigned volatile *)trace_values[i][1]) = (unsigned)trace_values[i][2];
 		}
 	}
-	//Genode::log("trace done");
-	//Genode::memset((void *)0xdc042000, 0xff, 2*1024*1024);
+#endif
 }
 
 
