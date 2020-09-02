@@ -26,14 +26,17 @@
 #include <board.h>
 #include <gpio.h>
 
+template<unsigned _MAX_BANKS> class Imx_driver_gpio;
+using Imx_driver = Imx_driver_gpio<Board::GPIO_COUNT>;
 
-class Imx_driver : public Gpio::Driver
+template <unsigned _MAX_BANKS>
+class Imx_driver_gpio: public Gpio::Driver
 {
 	private:
 
 		enum {
 			PIN_SHIFT = 5,
-			MAX_BANKS = 7,
+			MAX_BANKS = _MAX_BANKS,
 			MAX_PINS  = 32
 		};
 
@@ -121,58 +124,33 @@ class Imx_driver : public Gpio::Driver
 					_sig_cap[pin] = cap; }
 		};
 
-		Gpio_bank _gpio_bank_0;
-		Gpio_bank _gpio_bank_1;
-		Gpio_bank _gpio_bank_2;
-		Gpio_bank _gpio_bank_3;
-		Gpio_bank _gpio_bank_4;
-		Gpio_bank _gpio_bank_5;
-		Gpio_bank _gpio_bank_6;
+		Genode::Constructible<Gpio_bank> _gpio_banks[MAX_BANKS];
 
-		Gpio_bank *_gpio_bank(int gpio)
+		Gpio_bank &_gpio_bank(int gpio)
 		{
-			switch (gpio >> PIN_SHIFT) {
-			case 0:
-				return &_gpio_bank_0;
-			case 1:
-				return &_gpio_bank_1;
-			case 2:
-				return &_gpio_bank_2;
-			case 3:
-				return &_gpio_bank_3;
-			case 4:
-				return &_gpio_bank_4;
-			case 5:
-				return &_gpio_bank_5;
-			case 6:
-				return &_gpio_bank_6;
+			int bank = gpio >> PIN_SHIFT;
+
+			if (bank >= MAX_BANKS) {
+				Genode::error("no Gpio_bank for pin ", gpio, " available");
+				throw -1;
 			}
 
-			Genode::error("no Gpio_bank for pin ", gpio, " available");
-			return 0;
+			return *_gpio_banks[bank];
 		}
 
 		int _gpio_index(int gpio)       { return gpio & 0x1f; }
 
-		Imx_driver(Genode::Env &env)
-		:
-			_gpio_bank_0(env, Board::GPIO1_MMIO_BASE, Board::GPIO1_MMIO_SIZE,
-			             Board::GPIO1_IRQL, Board::GPIO1_IRQH),
-			_gpio_bank_1(env, Board::GPIO2_MMIO_BASE, Board::GPIO2_MMIO_SIZE,
-			             Board::GPIO2_IRQL, Board::GPIO2_IRQH),
-			_gpio_bank_2(env, Board::GPIO3_MMIO_BASE, Board::GPIO3_MMIO_SIZE,
-			             Board::GPIO3_IRQL, Board::GPIO3_IRQH),
-			_gpio_bank_3(env, Board::GPIO4_MMIO_BASE, Board::GPIO4_MMIO_SIZE,
-			             Board::GPIO4_IRQL, Board::GPIO4_IRQH),
-			_gpio_bank_4(env, Board::GPIO5_MMIO_BASE, Board::GPIO5_MMIO_SIZE,
-			             Board::GPIO5_IRQL, Board::GPIO5_IRQH),
-			_gpio_bank_5(env, Board::GPIO6_MMIO_BASE, Board::GPIO6_MMIO_SIZE,
-			             Board::GPIO6_IRQL, Board::GPIO6_IRQH),
-			_gpio_bank_6(env, Board::GPIO7_MMIO_BASE, Board::GPIO7_MMIO_SIZE,
-			             Board::GPIO7_IRQL, Board::GPIO7_IRQH)
+	public:
+
+		Imx_driver_gpio(Genode::Env &env)
 		{
 			for (unsigned i = 0; i < MAX_BANKS; ++i) {
-				Gpio_reg *regs = _gpio_bank(i << PIN_SHIFT)->regs();
+
+				/* MMIO_BASE, MMIO_SIZE, IRQL, IRQH */
+				_gpio_banks[i].construct(env, Board::gpio[i][0], Board::gpio[i][1],
+				                              Board::gpio[i][2], Board::gpio[i][3]);
+
+				Gpio_reg *regs = _gpio_bank(i << PIN_SHIFT).regs();
 				for (unsigned j = 0; j < MAX_PINS; j++) {
 					regs->write<Gpio_reg::Int_conf>(Gpio_reg::Int_conf::LOW_LEVEL, j);
 					regs->write<Gpio_reg::Int_mask>(0, j);
@@ -181,10 +159,7 @@ class Imx_driver : public Gpio::Driver
 			}
 		}
 
-
-	public:
-
-		static Imx_driver &factory(Genode::Env &env);
+		//static Imx_driver_gpio<MAX_BANKS> &factory(Genode::Env &env);
 
 		/******************************
 		 **  Gpio::Driver interface  **
@@ -192,14 +167,14 @@ class Imx_driver : public Gpio::Driver
 
 		void direction(unsigned gpio, bool input) override
 		{
-			Gpio_reg *gpio_reg = _gpio_bank(gpio)->regs();
+			Gpio_reg *gpio_reg = _gpio_bank(gpio).regs();
 			gpio_reg->write<Gpio_reg::Dir>(input ? 0 : 1,
 			                               _gpio_index(gpio));
 		}
 
 		void write(unsigned gpio, bool level) override
 		{
-			Gpio_reg *gpio_reg = _gpio_bank(gpio)->regs();
+			Gpio_reg *gpio_reg = _gpio_bank(gpio).regs();
 
 			gpio_reg->write<Gpio_reg::Data>(level ? 1 : 0,
 			                                _gpio_index(gpio));
@@ -207,7 +182,7 @@ class Imx_driver : public Gpio::Driver
 
 		bool read(unsigned gpio) override
 		{
-			Gpio_reg *gpio_reg = _gpio_bank(gpio)->regs();
+			Gpio_reg *gpio_reg = _gpio_bank(gpio).regs();
 			return gpio_reg->read<Gpio_reg::Pad_stat>(_gpio_index(gpio));
 		}
 
@@ -223,54 +198,56 @@ class Imx_driver : public Gpio::Driver
 
 		void falling_detect(unsigned gpio) override
 		{
-			Gpio_reg *gpio_reg = _gpio_bank(gpio)->regs();
+			Gpio_reg *gpio_reg = _gpio_bank(gpio).regs();
 			gpio_reg->write<Gpio_reg::Int_conf>(Gpio_reg::Int_conf::FAL_EDGE,
 			                                    _gpio_index(gpio));
 		}
 
 		void rising_detect(unsigned gpio) override
 		{
-			Gpio_reg *gpio_reg = _gpio_bank(gpio)->regs();
+			Gpio_reg *gpio_reg = _gpio_bank(gpio).regs();
 			gpio_reg->write<Gpio_reg::Int_conf>(Gpio_reg::Int_conf::RIS_EDGE,
 			                                    _gpio_index(gpio));
 		}
 
 		void high_detect(unsigned gpio) override
 		{
-			Gpio_reg *gpio_reg = _gpio_bank(gpio)->regs();
+			Gpio_reg *gpio_reg = _gpio_bank(gpio).regs();
 			gpio_reg->write<Gpio_reg::Int_conf>(Gpio_reg::Int_conf::HIGH_LEVEL,
 			                                    _gpio_index(gpio));
 		}
 
 		void low_detect(unsigned gpio) override
 		{
-			Gpio_reg *gpio_reg = _gpio_bank(gpio)->regs();
+			Gpio_reg *gpio_reg = _gpio_bank(gpio).regs();
 			gpio_reg->write<Gpio_reg::Int_conf>(Gpio_reg::Int_conf::LOW_LEVEL,
 			                                    _gpio_index(gpio));
 		}
 
 		void irq_enable(unsigned gpio, bool enable) override
 		{
-			_gpio_bank(gpio)->irq(_gpio_index(gpio), enable);
+			_gpio_bank(gpio).irq(_gpio_index(gpio), enable);
 		}
 
 		void ack_irq(unsigned gpio) override
 		{
-			_gpio_bank(gpio)->ack_irq(_gpio_index(gpio));
+			_gpio_bank(gpio).ack_irq(_gpio_index(gpio));
 		}
 
 		void register_signal(unsigned gpio,
 		                     Genode::Signal_context_capability cap) override
 		{
-			_gpio_bank(gpio)->sigh(_gpio_index(gpio), cap); }
+			_gpio_bank(gpio).sigh(_gpio_index(gpio), cap); }
 
 		void unregister_signal(unsigned gpio) override
 		{
 			Genode::Signal_context_capability cap;
-			_gpio_bank(gpio)->sigh(_gpio_index(gpio), cap);
+			_gpio_bank(gpio).sigh(_gpio_index(gpio), cap);
 		}
 
 		bool gpio_valid(unsigned gpio) override { return gpio < (MAX_PINS*MAX_BANKS); }
 };
+
+
 
 #endif /* _DRIVERS__GPIO__SPEC__IMX53__DRIVER_H_ */
