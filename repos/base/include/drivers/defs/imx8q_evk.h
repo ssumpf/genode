@@ -43,6 +43,10 @@ namespace Imx8 {
 		GPIO4_IRQH = 103,
 		GPIO5_IRQL = 104,
 		GPIO5_IRQH = 105,
+
+		I2C_1_IRQ  = 67,
+		I2C_1_BASE = 0x30a20000,
+		I2C_1_SIZE = 0x10000,
 	};
 };
 

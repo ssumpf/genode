@@ -1,0 +1,33 @@
+build "core init drivers/touch"
+
+create_boot_directory
+
+install_config {
+	<config>
+		<parent-provides>
+			<service name="LOG"/>
+			<service name="PD"/>
+			<service name="CPU"/>
+			<service name="ROM"/>
+			<service name="IO_MEM"/>
+			<service name="IO_PORT"/>
+			<service name="IRQ"/>
+			<service name="RM"/>
+		</parent-provides>
+		<default-route>
+			<any-service> <parent/> <any-child/> </any-service>
+		</default-route>
+		<default caps="50"/>
+
+		<start name="touch" caps="500">
+			<binary name="imx8_touch_input_drv"/>
+			<resource name="RAM" quantum="10M"/>
+		</start>
+	</config>
+}
+
+build_boot_image "core ld.lib.so init imx8_touch_input_drv"
+
+run_genode_until forever
+
+}
