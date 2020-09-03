@@ -233,7 +233,6 @@ struct Libc::Kernel final : Vfs::Io_response_handler,
 		bool              _app_returned = false;
 
 		bool _resume_main_once  = false;
-		bool _suspend_scheduled = false;
 
 		Select_handler_base *_scheduled_select_handler = nullptr;
 
@@ -433,7 +432,7 @@ struct Libc::Kernel final : Vfs::Io_response_handler,
 
 			/* _setjmp() returned after _longjmp() - user context suspended */
 
-			while ((!_app_returned) && (!_suspend_scheduled)) {
+			while ((!_app_returned)) {
 
 				if (_kernel_routine) {
 					Kernel_routine &routine = *_kernel_routine;
@@ -465,8 +464,6 @@ struct Libc::Kernel final : Vfs::Io_response_handler,
 				if (!_kernel_routine && _resume_main_once && !_setjmp(_kernel_context))
 					_switch_to_user();
 			}
-
-			_suspend_scheduled = false;
 		}
 
 		/**
