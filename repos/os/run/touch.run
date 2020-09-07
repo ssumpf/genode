@@ -1,4 +1,4 @@
-build "core init drivers/touch"
+build "core init drivers/touch drivers/gpio"
 
 create_boot_directory
 
@@ -19,6 +19,12 @@ install_config {
 		</default-route>
 		<default caps="50"/>
 
+		<start name="gpio" caps="500">
+			<binary name="imx8_gpio_drv"/>
+			<resource name="RAM" quantum="5M"/>
+			<provides><service name="Gpio"/></provides>
+		</start>
+
 		<start name="touch" caps="500">
 			<binary name="imx8_touch_input_drv"/>
 			<resource name="RAM" quantum="10M"/>
@@ -26,7 +32,8 @@ install_config {
 	</config>
 }
 
-build_boot_image "core ld.lib.so init imx8_touch_input_drv"
+build_boot_image "core ld.lib.so init imx8_touch_input_drv \
+                  imx8_gpio_drv"
 
 run_genode_until forever
 

@@ -31,14 +31,14 @@ class I2c::I2c : Genode::Mmio
 {
 	private:
 
-		struct Address : public Register<0x0, 8>
+		struct Address : public Register<0x0, 16>
 		{
 			struct Addr : Bitfield<1,7> {};
 		};
 
-		struct Freq_divider : public Register<0x4, 8> {};
+		struct Freq_divider : public Register<0x4, 16> {};
 
-		struct Control : public Register<0x8, 8>
+		struct Control : public Register<0x8, 16>
 		{
 			struct Repeat_start        : Bitfield<2,1> {};
 			struct Tx_ack_enable       : Bitfield<3,1> {};
@@ -48,7 +48,7 @@ class I2c::I2c : Genode::Mmio
 			struct Enable              : Bitfield<7,1> {};
 		};
 
-		struct Status : public Register<0xc, 8>
+		struct Status : public Register<0xc, 16>
 		{
 			struct Rcv_ack             : Bitfield<0,1> {};
 			struct Irq                 : Bitfield<1,1> {};
@@ -59,7 +59,7 @@ class I2c::I2c : Genode::Mmio
 			struct Data_transfer       : Bitfield<7,1> {};
 		};
 
-		struct Data : public Register<0x10, 8> { };
+		struct Data : public Register<0x10, 16> { };
 
 
 		class No_ack : Genode::Exception {};
@@ -71,8 +71,8 @@ class I2c::I2c : Genode::Mmio
 		void _start()
 		{
 			/* clock enable */
-
-			write<Freq_divider>(0x2c);
+			/* input root 90 is 25Mhz target is 400Khz, divide by 64 */
+			write<Freq_divider>(0x2a);
 			write<Status>(0);
 			write<Control>(Control::Enable::bits(1));
 
@@ -104,9 +104,10 @@ class I2c::I2c : Genode::Mmio
 			while (!read<Status::Irq>());
 
 			write<Status::Irq>(0);
-			if (read<Status::Rcv_ack>()) throw No_ack();
-
 			_irq_handler.ack();
+
+			//Genode::log("Status: ", Genode::Hex(read<Status>()));
+			if (read<Status::Rcv_ack>()) throw No_ack();
 		}
 
 	public:
@@ -129,7 +130,6 @@ class I2c::I2c : Genode::Mmio
 					_write(addr << 1);
 					for (Genode::size_t i = 0; i < num; i++)
 						_write(buf[i]);
-
 					_stop();
 					return;
 				} catch(No_ack) { }
@@ -144,17 +144,22 @@ class I2c::I2c : Genode::Mmio
 			while (true) {
 				try {
 					_start();
+
 					_write(addr << 1 | 1);
+					Genode::log(__func__,":",__LINE__);
 					write<Control::Tx_rx_select>(0);
 					if (num > 1)
 						write<Control::Tx_ack_enable>(0);
 					read<Data>(); /* dummy read */
+					Genode::log(__func__,":",__LINE__);
 
 					for (Genode::size_t i = 0; i < num; i++) {
 
+					Genode::log(__func__,":",__LINE__);
 						do { _irq_handler.wait(); }
 						while (!read<Status::Irq>());
 
+					Genode::log(__func__,":",__LINE__);
 						write<Status::Irq>(0);
 
 						if (i == num-1) {
@@ -166,16 +171,18 @@ class I2c::I2c : Genode::Mmio
 						}
 
 						buf[i] = read<Data>();
+						Genode::log("READ data: ", Genode::Hex(buf[i]));
 						_irq_handler.ack();
 					}
 
 					_stop();
 					return;
-				} catch(No_ack) { }
-				 _stop();
+				} catch(No_ack) {
+					Genode::log("no ack");
+					 _stop();
+				}
 			}
 		}
-
 };
 
 #endif /* _DRIVERS__INPUT__SPEC__IMX53__I2C_H_ */
