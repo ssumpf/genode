@@ -60,7 +60,8 @@ class Libc::Monitor : Interface
 	protected:
 
 		virtual Result _monitor(Mutex &, Function &, uint64_t) = 0;
-		virtual void _charge_monitors() = 0;
+		virtual void _trigger_monitor_examination() = 0;
+		virtual void _monitors_outdated() = 0;
 
 	public:
 
@@ -68,7 +69,7 @@ class Libc::Monitor : Interface
 		 * Block until monitored execution completed or timeout expires
 		 *
 		 * The mutex must be locked when calling the monitor. It is released
-		 * during wait for completion and re-aquired before the function
+		 * during wait for completion and re-acquired before the function
 		 * returns. This behavior is comparable to condition variables.
 		 *
 		 * Returns true if execution completed, false on timeout.
@@ -83,14 +84,21 @@ class Libc::Monitor : Interface
 				_Function(FN const &fn) : fn(fn) { }
 			} function { fn };
 
-			_charge_monitors();
 			return _monitor(mutex, function, timeout_ms);
 		}
 
 		/**
-		 * Charge monitor to execute the monitored function
+		 * Trigger examination of monitored functions
+		 *
+		 * Monitor functions are executed only if the monitor state is
+		 * outdated.
 		 */
-		void charge_monitors() { _charge_monitors(); }
+		void trigger_monitor_examination() { _trigger_monitor_examination(); }
+
+		/**
+		 * Mark monitor state as outdated
+		 */
+		void monitors_outdated() { _monitors_outdated(); }
 };
 
 
@@ -136,7 +144,8 @@ struct Libc::Monitor::Pool
 
 			mutex.release();
 
-			_monitor.charge_monitors();
+			_monitor.monitors_outdated();
+			_monitor.trigger_monitor_examination();
 
 			job.wait_for_completion();
 

@@ -209,7 +209,7 @@ struct Libc::Kernel final : Vfs::Io_response_handler,
 		bool    _dispatch_pending_io_signals = false;
 
 		/* io_progress_handler marker */
-		bool _io_ready { false };
+		bool _io_progressed { false };
 
 		Thread &_myself { *Thread::myself() };
 
@@ -470,7 +470,7 @@ struct Libc::Kernel final : Vfs::Io_response_handler,
 				if (_execute_monitors_pending == Monitor::Pool::State::JOBS_PENDING)
 					_execute_monitors_pending = _monitors.execute_monitors();
 
-				_io_ready = false;
+				_io_progressed = false;
 
 				/*
 				 * Process I/O signals without returning to the application
@@ -480,7 +480,9 @@ struct Libc::Kernel final : Vfs::Io_response_handler,
 				auto main_blocked_in_monitor = [&] ()
 				{
 					return _main_monitor_job.constructed()
-					   && !_main_monitor_job->completed();
+					   && !_main_monitor_job->completed()
+					   && !_main_monitor_job->expired()
+					   && !_resume_main_once;
 				};
 
 				while (main_blocked_in_monitor() || (_resume_main_once == false)) {
@@ -570,13 +572,16 @@ struct Libc::Kernel final : Vfs::Io_response_handler,
 			}
 		}
 
-		void _charge_monitors() override
+		void _trigger_monitor_examination() override
 		{
-			if (_execute_monitors_pending == Monitor::Pool::State::ALL_COMPLETE) {
-				_execute_monitors_pending =  Monitor::Pool::State::JOBS_PENDING;
-				if (!_main_context())
-					Signal_transmitter(*_execute_monitors).submit();
-			}
+			if (!_main_context())
+				Signal_transmitter(*_execute_monitors).submit();
+		}
+
+		void _monitors_outdated() override
+		{
+			_execute_monitors_pending = Monitor::Pool::State::JOBS_PENDING;
+			_io_progressed = true;
 		}
 
 		/**
@@ -647,7 +652,7 @@ struct Libc::Kernel final : Vfs::Io_response_handler,
 		/**
 		 * Cwd interface
 		 */
-		Absolute_path &cwd() { return _cwd; }
+		Absolute_path &cwd() override { return _cwd; }
 
 
 		/*********************************
@@ -672,11 +677,8 @@ struct Libc::Kernel final : Vfs::Io_response_handler,
 		 ** Vfs::Io_response_handler interface **
 		 ****************************************/
 
-		void read_ready_response() override {
-			_io_ready = true; }
-
-		void io_progress_response() override {
-			_io_ready = true; }
+		void read_ready_response() override  { _io_progressed = true; }
+		void io_progress_response() override { _io_progressed = true; }
 
 
 		/**********************************************

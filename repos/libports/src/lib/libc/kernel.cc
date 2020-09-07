@@ -391,8 +391,8 @@ extern void (*libc_select_notify_from_kernel)();
 
 void Libc::Kernel::handle_io_progress()
 {
-	if (_io_ready) {
-		_io_ready = false;
+	if (_io_progressed) {
+		_io_progressed = false;
 
 		Kernel::resume_all();
 
