@@ -394,6 +394,8 @@ void Libc::Kernel::handle_io_progress()
 	if (_io_ready) {
 		_io_ready = false;
 
+		Kernel::resume_all();
+
 		if (_execute_monitors_pending == Monitor::Pool::State::JOBS_PENDING)
 			_execute_monitors_pending = _monitors.execute_monitors();
 	}

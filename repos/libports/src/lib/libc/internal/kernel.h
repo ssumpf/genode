@@ -483,7 +483,7 @@ struct Libc::Kernel final : Vfs::Io_response_handler,
 					   && !_main_monitor_job->completed();
 				};
 
-				while (main_blocked_in_monitor()) {
+				while (main_blocked_in_monitor() || (_resume_main_once == false)) {
 
 					/*
 					 * Block for one I/O signal and process all pending ones
