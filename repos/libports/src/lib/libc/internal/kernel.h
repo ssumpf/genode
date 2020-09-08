@@ -479,13 +479,26 @@ struct Libc::Kernel final : Vfs::Io_response_handler,
 
 				auto main_blocked_in_monitor = [&] ()
 				{
+					/*
+					 * In general, 'resume_all()' only flags the main state but
+					 * does not alter the main monitor job. For exmaple in case
+					 * of a sleep timeout, main is resumed by 'resume_main()'
+					 * in 'Main_blockade::wakeup()' but did not yet return from
+					 * 'suspend()'. The expired state in the main job is set
+					 * only after 'suspend()' returned.
+					 */
+					if (_resume_main_once)
+						return false;
+
 					return _main_monitor_job.constructed()
 					   && !_main_monitor_job->completed()
-					   && !_main_monitor_job->expired()
-					   && !_resume_main_once;
+					   && !_main_monitor_job->expired();
 				};
 
-				while (main_blocked_in_monitor() || (_resume_main_once == false)) {
+				auto main_suspended_for_io = [&] {
+					return _resume_main_once == false; };
+
+				while (main_blocked_in_monitor() || main_suspended_for_io()) {
 
 					/*
 					 * Block for one I/O signal and process all pending ones
