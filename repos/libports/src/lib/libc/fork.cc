@@ -12,7 +12,6 @@
  */
 
 /* Genode includes */
-#include <base/log.h>
 #include <base/thread.h>
 #include <base/registry.h>
 #include <base/child.h>
@@ -622,7 +621,6 @@ extern "C" pid_t __sys_fork(void)
 	Forked_child *child { nullptr };
 
 	monitor().monitor(mutex, [&] {
-		log("stage ", (int)stage);
 		switch (stage) {
 		case Stage::FORK:
 			child = fork_kernel_routine();
