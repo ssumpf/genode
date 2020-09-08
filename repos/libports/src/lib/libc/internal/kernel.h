@@ -444,6 +444,9 @@ struct Libc::Kernel final : Vfs::Io_response_handler,
 
 				dispatch_all_pending_io_signals();
 
+				if (_io_progressed)
+					Kernel::resume_all();
+
 				/*
 				 * Execute monitors on kernel entry regardless of any I/O
 				 * because the monitor function may be unrelated to I/O.
