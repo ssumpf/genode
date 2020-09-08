@@ -106,7 +106,6 @@ class I2c::I2c : Genode::Mmio
 			write<Status::Irq>(0);
 			_irq_handler.ack();
 
-			//Genode::log("Status: ", Genode::Hex(read<Status>()));
 			if (read<Status::Rcv_ack>()) throw No_ack();
 		}
 
@@ -146,20 +145,17 @@ class I2c::I2c : Genode::Mmio
 					_start();
 
 					_write(addr << 1 | 1);
-					Genode::log(__func__,":",__LINE__);
+
 					write<Control::Tx_rx_select>(0);
 					if (num > 1)
 						write<Control::Tx_ack_enable>(0);
 					read<Data>(); /* dummy read */
-					Genode::log(__func__,":",__LINE__);
 
 					for (Genode::size_t i = 0; i < num; i++) {
 
-					Genode::log(__func__,":",__LINE__);
 						do { _irq_handler.wait(); }
 						while (!read<Status::Irq>());
 
-					Genode::log(__func__,":",__LINE__);
 						write<Status::Irq>(0);
 
 						if (i == num-1) {
@@ -171,7 +167,6 @@ class I2c::I2c : Genode::Mmio
 						}
 
 						buf[i] = read<Data>();
-						Genode::log("READ data: ", Genode::Hex(buf[i]));
 						_irq_handler.ack();
 					}
 
