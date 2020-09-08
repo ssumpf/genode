@@ -2066,6 +2066,7 @@ devm_gpiod_get(struct device *dev, const char *con_id, enum gpiod_flags flags)
 
 void gpiod_set_value(struct gpio_desc *desc, int value)
 {
+#if 0
 	Genode::Attached_io_mem_dataspace ds { Lx_kit::env().env(), 0x30240000, 0x1000, 0 };
 	unsigned *base = ds.local_addr<unsigned>();
 
@@ -2078,6 +2079,7 @@ void gpiod_set_value(struct gpio_desc *desc, int value)
 	out &= ~(1u << desc->pin);
 	out |= ((value ? 1u : 0) << desc->pin);
 	writel(out, base);
+#endif
 }
 
 
