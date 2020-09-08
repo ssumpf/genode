@@ -17,7 +17,8 @@ import_from_depot [depot_user]/src/[base_src] \
                   [depot_user]/src/demo \
                   [depot_user]/src/init
 
-build { app/status_bar test/nitpicker drivers/framebuffer/imx8 }
+build { app/status_bar test/nitpicker drivers/framebuffer/imx8 drivers/touch \
+        drivers/gpio }
 
 install_config {
 <config>
@@ -189,6 +190,17 @@ install_config {
 	<start name="scout" caps="10000">
 		<resource name="RAM" quantum="80M" />
 	</start>
+
+	<start name="gpio" caps="500">
+		<binary name="imx8_gpio_drv"/>
+		<resource name="RAM" quantum="5M"/>
+		<provides><service name="Gpio"/></provides>
+	</start>
+
+	<start name="touch" caps="500">
+		<binary name="imx8_touch_input_drv"/>
+		<resource name="RAM" quantum="10M"/>
+	</start>
 </config>}
 
 #
@@ -214,7 +226,8 @@ puts $launchpad_config_fd {<config>
 </config>}
 close $launchpad_config_fd
 
-build_boot_image { status_bar testnit launchpad.config imx8_fb_drv }
+build_boot_image { status_bar testnit launchpad.config imx8_fb_drv \
+ imx8_gpio_drv imx8_touch_input_drv }
 
 if {[get_cmd_switch --autopilot]} {
 	run_genode_until {\[init -> scout\] png is.*\n} 40
