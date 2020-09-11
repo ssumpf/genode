@@ -215,5 +215,6 @@ build_boot_image $boot_modules
 # Execute test case
 #
 append qemu_args " -nographic "
+run_genode_until forever
 run_genode_until "\[init -> vm\] .*sbin.*" 220
 exec rm bin/linux bin/dtb
