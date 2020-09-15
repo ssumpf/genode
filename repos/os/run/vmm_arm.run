@@ -12,16 +12,24 @@ if { ![have_spec imx7d_sabre] && ![have_spec imx8q_evk] &&
 	exit 0
 }
 
+create_boot_directory
+import_from_depot [depot_user]/src/[base_src] \
+                  [depot_user]/pkg/[drivers_nic_pkg] \
+                  [depot_user]/src/init \
+                  [depot_user]/src/libc \
+                  [depot_user]/src/vfs_lwip \
+                  [depot_user]/src/vfs_pipe \
+                  [depot_user]/src/vfs
+
 set build_components {
-	core init timer
 	server/terminal_crosslink
-	test/terminal_expect_send
+	server/tcp_terminal
 	server/log_terminal
 	server/nic_router
 	server/vmm
 }
+
 build $build_components
-create_boot_directory
 
 install_config {
 <config verbose="yes" prio_levels="2">
@@ -39,10 +47,12 @@ install_config {
 		<any-service><parent/><any-child/></any-service>
 	</default-route>
 	<default caps="100"/>
+
 	<start name="timer">
 		<resource name="RAM" quantum="1M"/>
 		<provides><service name="Timer"/></provides>
 	</start>
+
 	<start name="nic_drv">
 		<binary name="nic_router" />
 		<resource name="RAM" quantum="8M"/>
@@ -54,23 +64,51 @@ install_config {
 			</domain>
 		</config>
 	</start>
+
 	<start name="log_terminal">
 		<resource name="RAM" quantum="2M"/>
 		<provides> <service name="Terminal"/> </provides>
 	</start>
-	<start name="terminal_crosslink">
-		<resource name="RAM" quantum="1M"/>
-		<provides> <service name="Terminal"/> </provides>
-	</start>
+
 	<start name="vmm" caps="200" priority="-1">
 		<resource name="RAM" quantum="256M"/>
 		<route>
 			<service name="Terminal" label="earlycon"> <child name="log_terminal"/> </service>
-			<service name="Terminal"> <child name="terminal_crosslink"/> </service>
+			<service name="Terminal"> <child name="tcp_terminal"/> </service>
 			<service name="Nic"> <child name="nic_drv"/> </service>
 			<any-service><parent/><any-child/></any-service>
 		</route>
 	</start>
+
+	<start name="drivers" caps="1000" managing_system="yes">
+		<resource name="RAM" quantum="32M"/>
+		<binary name="init"/>
+		<route>
+			<service name="ROM" label="config"> <parent label="drivers.config"/> </service>
+			<service name="Timer"> <child name="timer"/> </service>
+			<any-service> <parent/> </any-service>
+		</route>
+		<provides> <service name="Nic"/> </provides>
+	</start>
+
+	<start name="tcp_terminal" caps="200">
+		<resource name="RAM" quantum="8M"/>
+		<provides> <service name="Terminal"/> </provides>
+		<config>
+			<policy label_prefix="vmm" port="8888"/>
+			<vfs>
+				<dir name="dev"> <log/> </dir>
+				<dir name="socket"> <lwip dhcp="yes"/> </dir>
+				<dir name="pipe"> <pipe/> </dir>
+			</vfs>
+			<libc stdout="/dev/log" socket="/socket" pipe="/pipe"/>
+		</config>
+		<route>
+			<service name="Nic"> <child name="drivers"/> </service>
+			<any-service><parent/><any-child/></any-service>
+		</route>
+	</start>
+<!--
 	<start name="vm">
 		<binary name="test-terminal_expect_send"/>
 		<resource name="RAM" quantum="1M"/>
@@ -80,6 +118,7 @@ install_config {
 			<any-service><parent/><any-child/></any-service>
 		</route>
 	</start>
+-->
 </config>
 }
 
@@ -198,10 +237,8 @@ if { [have_spec arm_64] } {
 }
 
 set boot_modules {
-	core ld.lib.so init
-	timer
 	terminal_crosslink
-	test-terminal_expect_send
+	tcp_terminal
 	nic_router
 	log_terminal
 	vmm

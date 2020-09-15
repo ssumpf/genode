@@ -46,7 +46,7 @@ namespace Vmm {
 
 		VTIMER_IRQ                = 27,
 
-		MAX_CPUS                  = 2,
+		MAX_CPUS                  = 4,
 	};
 }
 

@@ -23,6 +23,20 @@
 			device_type   = "cpu";
 			enable-method = "psci";
 		};
+
+		cpu@2 {
+			compatible    = "arm,cortex-a53";
+			reg           = <0x02>;
+			device_type   = "cpu";
+			enable-method = "psci";
+		};
+
+		cpu@3 {
+			compatible    = "arm,cortex-a53";
+			reg           = <0x03>;
+			device_type   = "cpu";
+			enable-method = "psci";
+		};
 	};
 
 	psci {
