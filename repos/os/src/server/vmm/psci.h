@@ -21,6 +21,7 @@ namespace Vmm {
 			PSCI_VERSION      = 0x84000000,
 			MIGRATE_INFO_TYPE = 0x84000006,
 			PSCI_FEATURES     = 0x8400000a,
+			CPU_SUSPEND       = 0xc4000001,
 			CPU_ON            = 0xc4000003,
 		};
 
