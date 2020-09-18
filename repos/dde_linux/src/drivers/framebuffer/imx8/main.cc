@@ -164,24 +164,24 @@ void Framebuffer::Main::_run_linux()
 	platform_device_register(imx_irqsteer_pdev);
 
 
-
-
 	/**
 	 * This device is originally created with the name '32c00000.hdmi'
 	 * via 'of_platform_bus_create()'. Here it is called 'i.mx8-hdp' to match
 	 * the driver name.
 	 */
 
-/*
 	struct platform_device *hdp_pdev =
 		platform_device_alloc("i.mx8-hdp", 0);
 
 	static resource hdp_resources[] = 	{
-		{ 0x32c00000, 0x32cfffff, "hdp_ctrl",  IORESOURCE_MEM },
-		{ 0x32e40000, 0x32e7ffff, "hdp_crs",   IORESOURCE_MEM },
-		{ 0x32e2f000, 0x32e2f00f, "hdp_reset", IORESOURCE_MEM },
-		{         48,         48, "plug_in",   IORESOURCE_IRQ },
-		{         57,         57, "plug_out",  IORESOURCE_IRQ },
+		{ IOMEM_BASE_HDMI_CTRL, IOMEM_END_HDMI_CTRL,
+		  "hdp_ctrl",  IORESOURCE_MEM },
+		{ IOMEM_BASE_HDMI_CRS, IOMEM_END_HDMI_CRS,
+		  "hdp_crs",   IORESOURCE_MEM },
+		{ IOMEM_BASE_HDMI_RST, IOMEM_END_HDMI_RST,
+		  "hdp_reset", IORESOURCE_MEM },
+		{       33,       33, "plug_in",   IORESOURCE_IRQ },
+		{       34,       34, "plug_out",  IORESOURCE_IRQ },
 	};
 
 	hdp_pdev->num_resources = 5;
@@ -195,7 +195,7 @@ void Framebuffer::Main::_run_linux()
 	hdp_pdev->dev.of_node->properties->value = (void*)"fsl,imx8mq-hdmi";
 
 	platform_device_register(hdp_pdev);
-*/
+/*
 	struct platform_device *mipi_dsi_phy_pdev =
 		platform_device_alloc("mixel-mipi-dsi-phy", 0);
 
@@ -217,7 +217,7 @@ void Framebuffer::Main::_run_linux()
 	mipi_dsi_phy_pdev->dev.parent = &mipi_dsi_phy_pdev->dev;
 
 	platform_device_register(mipi_dsi_phy_pdev);
-
+*/
 	/**
 	 * This device is originally created with the name '32e00000.dcss'
 	 * via 'of_platform_bus_create()'. Here it is called 'dcss-core' to match
@@ -246,24 +246,14 @@ void Framebuffer::Main::_run_linux()
 	dcss_pdev->dev.of_node->full_name         = "dcss";
 	dcss_pdev->dev.of_node->properties        = (property*)kzalloc(sizeof(property), 0);
 	dcss_pdev->dev.of_node->properties->name  = "disp-dev";
-	//dcss_pdev->dev.of_node->properties->value = (void*)"hdmi_disp";
-	dcss_pdev->dev.of_node->properties->value = (void*)"mipi_disp";
+	dcss_pdev->dev.of_node->properties->value = (void*)"hdmi_disp";
+	//XXX: READ config dcss_pdev->dev.of_node->properties->value = (void*)"mipi_disp";
 
 	platform_device_register(dcss_pdev);
 
-
+/*
 	struct platform_device *mipi_dsi_bridge_pdev =
 		platform_device_alloc("nwl-mipi-dsi", 0);
-
-	static resource hdp_resources[] = 	{
-		{ IOMEM_BASE_HDMI_CTRL, IOMEM_END_HDMI_CTRL,
-		  "hdp_ctrl",  IORESOURCE_MEM },
-		{ IOMEM_BASE_HDMI_CRS, IOMEM_END_HDMI_CRS,
-		  "hdp_crs",   IORESOURCE_MEM },
-		{ IOMEM_BASE_HDMI_RST, IOMEM_END_HDMI_RST,
-		  "hdp_reset", IORESOURCE_MEM },
-		{       33,       33, "plug_in",   IORESOURCE_IRQ },
-		{       34,       34, "plug_out",  IORESOURCE_IRQ },
 
 	static resource mipi_dsi_bridge_resources[] = {
 		{ 0x30a00000, 0x30a002ff, "mipi_dsi_bridge", IORESOURCE_MEM },
@@ -283,7 +273,7 @@ void Framebuffer::Main::_run_linux()
 	mipi_dsi_bridge_pdev->dev.of_node->properties[0].next  = nullptr;
 
 	platform_device_register(mipi_dsi_bridge_pdev);
-
+*/
 	/**
 	 * This device is originally created with the name 'display-subsystem'
 	 * via 'of_platform_bus_create()'. Here it is called 'imx-drm' to match
@@ -298,7 +288,7 @@ void Framebuffer::Main::_run_linux()
 	display_subsystem_pdev->dev.of_node = &display_subsystem_of_node;
 
 	platform_device_register(display_subsystem_pdev);
-
+/*
 	struct platform_device *mipi_dsi_imx_pdev =
 		platform_device_alloc("nwl_dsi-imx", 0);
 
@@ -313,7 +303,7 @@ void Framebuffer::Main::_run_linux()
 
 
 	platform_device_register(mipi_dsi_imx_pdev);
-
+*/
 	_driver.finish_initialization();
 	_driver.config_sigh(_policy_change_handler);
 

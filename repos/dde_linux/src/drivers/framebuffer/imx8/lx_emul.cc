@@ -423,6 +423,11 @@ static struct device_node port_device_node {
 	.full_name = "port",
 };
 
+static struct device_node mipi_port_device_node {
+	.name = "mipi-port",
+	.full_name = "mipi-port",
+};
+
 static struct device_node mipi_endpoint_device_node {
 	.name = "mipi-endpoint",
 	.full_name = "mipi-endpoint",
@@ -458,7 +463,15 @@ struct device_node *of_get_next_child(const struct device_node *node,
 	if (Genode::strcmp(node->name, "port", strlen(node->name)) == 0) {
 		if (!prev) {
 			//XXX: handle HDMI case return &hdmi_endpoint_device_node;
-			return &port_device_node;
+			//return &port_device_node;
+			return &hdmi_endpoint_device_node;
+		}
+		return NULL;
+	}
+
+	if (Genode::strcmp(node->name, "mipi-port", strlen(node->name)) == 0) {
+		if (!prev) {
+			return &mipi_port_device_node;
 		}
 		return NULL;
 	}
@@ -695,7 +708,7 @@ struct device_node *of_graph_get_remote_port(const struct device_node *node)
 		return &port_device_node;
 
 	if (Genode::strcmp(node->name, "mipi-endpoint", strlen(node->name)) == 0)
-		return &port_device_node;
+		return &mipi_port_device_node;
 
 	Genode::error("of_graph_get_remote_port(): unhandled node '", node->name, "'\n");
 
@@ -714,7 +727,7 @@ struct device_node *of_graph_get_remote_port_parent(const struct device_node *no
 		return (device_node *)np;
 	}
 
-	if (Genode::strcmp(node->name, "port") == 0)
+	if (Genode::strcmp(node->name, "mipi-port") == 0)
 		return &mipi_device_node;
 
 	Genode::error("of_graph_get_remote_port_parent(): unhandled node: ", node->name);
