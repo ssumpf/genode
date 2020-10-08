@@ -459,7 +459,7 @@ class Usb::Worker : public Genode::Weak_object<Usb::Worker>
 			}
 
 			int err = usb_set_configuration(_device->udev, p.number);
-
+			Genode::log("set configuration returned: ", err);
 			if (!err)
 				p.succeded = true;
 		}
@@ -536,7 +536,9 @@ class Usb::Worker : public Genode::Weak_object<Usb::Worker>
 						break;
 
 					case Packet_descriptor::CONFIG:
+						Genode::log("CONFIG packet");
 						_config(p);
+						Genode::log("CONFIG done");
 						break;
 
 					case Packet_descriptor::RELEASE_IF:
@@ -830,6 +832,29 @@ class Usb::Session_component : public Session_rpc_object,
 
 			if (&iface->altsetting[alt_setting] == iface->cur_altsetting)
 				interface_descr->active = true;
+		}
+
+		bool interface_extra(unsigned index, unsigned alt_setting,
+		                     Interface_extra *interface_data)
+		{
+			if (!_device)
+				throw Device_not_found();
+
+			usb_interface *iface = _device->interface(index);
+			if (!iface)
+				throw Interface_not_found();
+
+			Genode::uint8_t length = iface->altsetting[alt_setting].extralen;
+			if (length == 0) return false;
+
+			if (length > sizeof(Interface_extra::data))
+				length = sizeof(Interface_extra::data);
+
+			Genode::memcpy(interface_data->data, iface->altsetting[alt_setting].extra,
+			               length);
+
+			interface_data->length = length;
+			return true;
 		}
 
 		void endpoint_descriptor(unsigned              interface_num,

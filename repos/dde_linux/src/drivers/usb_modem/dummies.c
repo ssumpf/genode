@@ -27,14 +27,6 @@ u16 bitrev16(u16 in)
 	return -1;
 }
 
-struct usb_cdc_parsed_header;
-struct usb_interface;
-int cdc_parse_cdc_header(struct usb_cdc_parsed_header *hdr, struct usb_interface *intf, u8 *buffer, int buflen)
-{
-	TRACE_AND_STOP;
-	return -1;
-}
-
 u16 crc16(u16 crc, const u8 *buffer, size_t len)
 {
 	TRACE_AND_STOP;
@@ -471,12 +463,6 @@ bool page_is_pfmemalloc(struct page *page)
 void put_page(struct page *page)
 {
 	TRACE_AND_STOP;
-}
-
-struct usb_interface *usb_ifnum_to_if(const struct usb_device *dev, unsigned ifnum)
-{
-	TRACE_AND_STOP;
-	return NULL;
 }
 
 void usb_kill_urb(struct urb *urb)

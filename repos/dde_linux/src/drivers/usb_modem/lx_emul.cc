@@ -180,6 +180,7 @@ struct Lx_driver
 	int probe(usb_interface * iface, usb_device_id * id)
 	{
 		iface->dev.driver = &drv.drvwrap.driver;
+		Genode::log("probe: ", drv.probe);
 		if (drv.probe) return drv.probe(iface, id);
 		return 0;
 	}

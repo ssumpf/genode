@@ -76,6 +76,8 @@ append_if [have_spec rpi] config {
 			<policy label_prefix="usb_net_drv" vendor_id="0x0424" product_id="0xec00"/> }
 append_if [have_spec x86] config {
 			<policy label_prefix="usb_modem_drv" vendor_id="0x12d1" product_id="0x15c1"/> }
+append_if [have_spec arm_v8] config {
+			<policy label_prefix="usb_modem_drv" vendor_id="0x12d1" product_id="0x15c1"/> }
 append config {
 		</config>
 		<route>

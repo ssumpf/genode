@@ -43,6 +43,11 @@ class Sync_set_config : public Usb::Completion
 			init_completion(&_comp);
 		}
 
+		virtual ~Sync_set_config()
+		{
+			_usb.source()->release_packet(_packet);
+		}
+
 		void complete(Usb::Packet_descriptor &p) override
 		{
 			::complete(&_comp);
@@ -50,13 +55,13 @@ class Sync_set_config : public Usb::Completion
 
 		void send(int configuration)
 		{
-			_packet.type   = Usb::Packet_descriptor::CONFIG;
-			_packet.number = configuration;
+			_packet.type       = Usb::Packet_descriptor::CONFIG;
+			_packet.number     = configuration;
+			_packet.completion = this;
 			_usb.source()->submit_packet(_packet);
 			wait_for_completion(&_comp);
 		}
 };
-
 
 
 void Driver::Device::scan_altsettings(usb_interface * iface,
@@ -69,6 +74,14 @@ void Driver::Device::scan_altsettings(usb_interface * iface,
 	if (iface_desc.active)
 		iface->cur_altsetting = &iface->altsetting[alt_idx];
 
+	Usb::Interface_extra iface_extra;
+	if (usb.interface_extra(iface_idx, alt_idx, &iface_extra)) {
+		iface->altsetting[alt_idx].extra = (unsigned char *)kzalloc(iface_extra.length, 0);
+		Genode::memcpy(iface->altsetting[alt_idx].extra, iface_extra.data,
+		               iface_extra.length);
+		iface->altsetting[alt_idx].extralen = iface_extra.length;
+		Genode::log("Parsed ", iface_extra.length, " bytes of extra data");
+	}
 
 	iface->altsetting[alt_idx].endpoint = (usb_host_endpoint*)
 		kzalloc(sizeof(usb_host_endpoint)*iface->altsetting[alt_idx].desc.bNumEndpoints, GFP_KERNEL);
@@ -96,15 +109,15 @@ void Driver::Device::scan_interfaces(unsigned iface_idx)
 		kzalloc(sizeof(usb_host_interface)*iface->num_altsetting, GFP_KERNEL);
 	iface->dev.parent = &udev->dev;
 	iface->dev.bus    = (bus_type*) 0xdeadbeef;
-	Genode::log("scan: ", iface_idx);
+	Genode::log("scan: ", iface_idx, " udev: ", udev);
 	for (unsigned i = 0; i < iface->num_altsetting; i++)
 		scan_altsettings(iface, iface_idx, i);
 
 	struct usb_device_id id;
-	probe_interface(iface, &id);
 	udev->config->interface[iface_idx] = iface;
-
-};
+	udev->actconfig = udev->config;
+	probe_interface(iface, &id);
+}
 
 
 void Driver::Device::set_config(Usb::Device_descriptor const &desc)
