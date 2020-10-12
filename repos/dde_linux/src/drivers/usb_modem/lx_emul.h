@@ -110,7 +110,7 @@ int    dev_set_drvdata(struct device *dev, void *data);
 #define dev_info(dev, format, arg...) lx_printf("dev_info: " format , ## arg)
 #define dev_warn(dev, format, arg...) lx_printf("dev_warn: " format , ## arg)
 #define dev_err( dev, format, arg...) lx_printf("dev_err: "  format , ## arg)
-#define dev_dbg( dev, format, arg...)
+#define dev_dbg( dev, format, arg...) lx_printf("dev_dbg: "  format , ## arg)
 
 #define netif_info(priv, type, dev, fmt, args...) lx_printf("netif_info: " fmt, ## args);
 #define netif_dbg(priv, type, dev, fmt, args...)

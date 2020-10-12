@@ -229,15 +229,15 @@ struct usb_interface *usb_ifnum_to_if(const struct usb_device *dev,
 	int i;
 
 	if (!config) {
-		lx_printf("No config for %u\n");
+		lx_printf("No config for %u\n", ifnum);
 		return NULL;
 	}
-	lx_printf("Num interaces %u\n", config->desc.bNumInterfaces);
+	lx_printf("Num interaces %u ifnum %u\n", config->desc.bNumInterfaces, ifnum);
 	for (i = 0; i < config->desc.bNumInterfaces; i++) {
 		lx_printf("IFACE NR: %u\n", config->interface[i]->altsetting[i].desc.bInterfaceNumber);
 		if (config->interface[i]->altsetting[0]
 				.desc.bInterfaceNumber == ifnum) {
-			lx_printf("Found interface for %u", ifnum);
+			lx_printf("Found interface for %u\n", ifnum);
 			return config->interface[i];
 		}
 	}

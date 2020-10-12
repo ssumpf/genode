@@ -22,6 +22,11 @@
 
 #include <component.h>
 
+#include <lx_emul.h>
+#include <lx_emul/extern_c_begin.h>
+#include <linux/usb.h>
+#include <lx_emul/extern_c_end.h>
+
 struct usb_device_id;
 struct usb_interface;
 struct usb_device;
@@ -88,6 +93,55 @@ struct Driver
 				fn(*cur->object());
 		}
 	};
+
+	class Sync_packet : public Usb::Completion
+	{
+		private:
+
+			Usb::Session_client  & _usb;
+			Usb::Packet_descriptor _packet { _usb.source()->alloc_packet(0) };
+			completion             _comp;
+
+		public:
+
+			Sync_packet(Usb::Session_client &usb) : _usb(usb)
+			{
+				init_completion(&_comp);
+			}
+
+			virtual ~Sync_packet()
+			{
+				_usb.source()->release_packet(_packet);
+			}
+
+			void complete(Usb::Packet_descriptor &p) override
+			{
+				::complete(&_comp);
+			}
+
+			void send()
+			{
+				_packet.completion = this;
+				_usb.source()->submit_packet(_packet);
+				wait_for_completion(&_comp);
+			}
+
+			void config(int configuration)
+			{
+				_packet.type   = Usb::Packet_descriptor::CONFIG;
+				_packet.number = configuration;
+				send();
+			}
+
+			void alt_setting(int interface, int alt_setting)
+			{
+				_packet.type = Usb::Packet_descriptor::ALT_SETTING;
+				_packet.interface.number      = interface;
+				_packet.interface.alt_setting = alt_setting;
+				send();
+			}
+	};
+
 
 	Devices                         devices;
 	Genode::Env                    &env;

@@ -63,7 +63,7 @@ void dev_put(struct net_device *dev)
 
 const char *dev_name(const struct device *dev)
 {
-	TRACE_AND_STOP;
+	TRACE;
 	return NULL;
 }
 
@@ -384,12 +384,7 @@ int usb_clear_halt(struct usb_device *dev, int pipe)
 }
 
 struct usb_driver;
-int usb_driver_claim_interface(struct usb_driver *driver, struct usb_interface *iface, void *priv)
-{
-	TRACE_AND_STOP;
-	return -1;
-}
-
+struct usb_interface;
 void usb_driver_release_interface(struct usb_driver *driver, struct usb_interface *iface)
 {
 	TRACE_AND_STOP;
@@ -468,12 +463,6 @@ void put_page(struct page *page)
 void usb_kill_urb(struct urb *urb)
 {
 	TRACE_AND_STOP;
-}
-
-int usb_set_interface(struct usb_device *dev, int ifnum, int alternate)
-{
-	TRACE;
-	return 0;
 }
 
 int usb_unlink_urb(struct urb *urb)
@@ -625,12 +614,6 @@ int mutex_lock_interruptible(struct mutex *m)
 }
 
 struct usb_class_driver;
-int usb_register_dev(struct usb_interface *intf, struct usb_class_driver *class_driver)
-{
-	TRACE_AND_STOP;
-	return -1;
-}
-
 void usb_deregister_dev(struct usb_interface *intf,struct usb_class_driver *class_driver)
 {
 	TRACE_AND_STOP;

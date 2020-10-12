@@ -22,46 +22,7 @@
 #include <lx_kit/timer.h>
 #include <lx_kit/work.h>
 
-#include <lx_emul/extern_c_begin.h>
-#include <linux/usb.h>
-#include <lx_emul/extern_c_end.h>
-
 struct workqueue_struct *tasklet_wq;
-
-class Sync_set_config : public Usb::Completion
-{
-	private:
-
-		Usb::Session_client  & _usb;
-		Usb::Packet_descriptor _packet { _usb.source()->alloc_packet(0) };
-		completion             _comp;
-
-	public:
-
-		Sync_set_config(Usb::Session_client &usb) : _usb(usb)
-		{
-			init_completion(&_comp);
-		}
-
-		virtual ~Sync_set_config()
-		{
-			_usb.source()->release_packet(_packet);
-		}
-
-		void complete(Usb::Packet_descriptor &p) override
-		{
-			::complete(&_comp);
-		}
-
-		void send(int configuration)
-		{
-			_packet.type       = Usb::Packet_descriptor::CONFIG;
-			_packet.number     = configuration;
-			_packet.completion = this;
-			_usb.source()->submit_packet(_packet);
-			wait_for_completion(&_comp);
-		}
-};
 
 
 void Driver::Device::scan_altsettings(usb_interface * iface,
@@ -86,6 +47,7 @@ void Driver::Device::scan_altsettings(usb_interface * iface,
 	iface->altsetting[alt_idx].endpoint = (usb_host_endpoint*)
 		kzalloc(sizeof(usb_host_endpoint)*iface->altsetting[alt_idx].desc.bNumEndpoints, GFP_KERNEL);
 
+	Genode::log("iface_idx: ", iface_idx, " alt_idx: ", alt_idx, " ep_count: ", iface->altsetting[alt_idx].desc.bNumEndpoints);
 	for (unsigned i = 0; i < iface->altsetting[alt_idx].desc.bNumEndpoints; i++) {
 		Usb::Endpoint_descriptor ep_desc;
 		usb.endpoint_descriptor(iface_idx, alt_idx, i, &ep_desc);
@@ -113,10 +75,7 @@ void Driver::Device::scan_interfaces(unsigned iface_idx)
 	for (unsigned i = 0; i < iface->num_altsetting; i++)
 		scan_altsettings(iface, iface_idx, i);
 
-	struct usb_device_id id;
 	udev->config->interface[iface_idx] = iface;
-	udev->actconfig = udev->config;
-	probe_interface(iface, &id);
 }
 
 
@@ -125,7 +84,7 @@ void Driver::Device::set_config(Usb::Device_descriptor const &desc)
 	/* Huawei ME906s */
 	if (desc.vendor_id == 0x12d1 && desc.product_id == 0x15c1) {
 		Genode::log("Found Huawei ME906s choosing configuration #3");
-		Sync_set_config(usb).send(3);
+		Sync_packet(usb).config(3);
 		Genode::log("config set");
 	}
 }
@@ -160,6 +119,16 @@ void Driver::Device::register_device()
 
 	for (unsigned i = 0; i < config_desc.num_interfaces; i++)
 		scan_interfaces(i);
+
+	udev->actconfig = udev->config;
+	udev->config->desc.bNumInterfaces = config_desc.num_interfaces;
+
+	for (unsigned i = 0; i < config_desc.num_interfaces; i++) {
+		struct usb_device_id id;
+		Genode::log("probe interface ", i);
+		probe_interface(udev->config->interface[i], &id);
+		Genode::log("probe interface done ", i);
+	}
 
 	driver.env.parent().announce(driver.ep.manage(driver.root));
 }

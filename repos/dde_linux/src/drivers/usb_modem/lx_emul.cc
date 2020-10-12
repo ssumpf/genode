@@ -209,12 +209,49 @@ int usb_register_driver(struct usb_driver * driver, struct module *, const char 
 }
 
 
+int usb_driver_claim_interface(struct usb_driver *driver, struct usb_interface *iface, void *priv)
+{
+	usb_device      *udev = interface_to_usbdev(iface);
+	Usb::Connection *usb = reinterpret_cast<Usb::Connection *>(udev->bus->controller);
+	Genode::log("CLAIM: ", iface->cur_altsetting->desc.bInterfaceNumber);
+	try {
+		usb->claim_interface(iface->cur_altsetting->desc.bInterfaceNumber);
+	} catch (...) {
+		return -1;
+	}
+	return 0;
+}
+
+
+int usb_set_interface(struct usb_device *udev, int ifnum, int alternate)
+{
+	Usb::Connection *usb = reinterpret_cast<Usb::Connection *>(udev->bus->controller);
+	Driver::Sync_packet packet { *usb };
+	packet.alt_setting(ifnum, alternate);
+	usb_interface *iface = udev->config->interface[ifnum];
+	iface->cur_altsetting = &iface->altsetting[alternate];
+	Genode::log("Interface set ifnum: ", ifnum, " alt: ", alternate);
+
+	return 0;
+}
+
+
+int usb_register_dev(struct usb_interface *intf, struct usb_class_driver *class_driver)
+{
+	TRACE;
+	return 0;
+}
+
+
+
 void Driver::Device::probe_interface(usb_interface * iface, usb_device_id * id)
 {
 	using Le = Genode::List_element<Lx_driver>;
 	for (Le *le = Lx_driver::list().first(); le; le = le->next()) {
 		usb_device_id * id = le->object()->match(iface);
-		Genode::log("match id: ", id, " name: ", le->object()->drv.name);
+
+		if (id)
+			Genode::log("match id: ", id, " name: ", le->object()->drv.name, " if_num: ", id->bInterfaceNumber);
 		if (id) {
 			int ret = le->object()->probe(iface, id);
 			Genode::log("probe: ", ret);
