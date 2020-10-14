@@ -106,6 +106,7 @@ void Driver::Device::register_device()
 	udev->config = (usb_host_config*) kzalloc(sizeof(usb_host_config), GFP_KERNEL);
 	udev->bus->bus_name = "usbbus";
 	udev->bus->controller = (device*) (&usb);
+	udev->bus->sysdev     = (device*) (&driver.terminal_root);
 
 	udev->descriptor.idVendor  = dev_desc.vendor_id;
 	udev->descriptor.idProduct = dev_desc.product_id;
@@ -131,6 +132,7 @@ void Driver::Device::register_device()
 	}
 
 	driver.env.parent().announce(driver.ep.manage(driver.root));
+	driver.env.parent().announce(driver.ep.manage(driver.terminal_root));
 }
 
 

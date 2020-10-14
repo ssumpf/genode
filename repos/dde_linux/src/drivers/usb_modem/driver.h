@@ -11,8 +11,8 @@
  * version 2.
  */
 
-#ifndef _SRC__DRIVERS__USB_NET__DRIVER_H_
-#define _SRC__DRIVERS__USB_NET__DRIVER_H_
+#ifndef _SRC__DRIVERS__USB_MODEM__DRIVER_H_
+#define _SRC__DRIVERS__USB_MODEM__DRIVER_H_
 
 #include <base/allocator_avl.h>
 #include <base/attached_rom_dataspace.h>
@@ -21,6 +21,7 @@
 #include <lx_kit/scheduler.h>
 
 #include <component.h>
+#include <terminal.h>
 
 #include <lx_emul.h>
 #include <lx_emul/extern_c_begin.h>
@@ -149,6 +150,7 @@ struct Driver
 	Genode::Heap                    heap           { env.ram(), env.rm() };
 	Genode::Allocator_avl           alloc          { &heap };
 	Root                            root           { env, heap };
+	Terminal::Root                  terminal_root  { env, heap };
 	Genode::Constructible<Task>     main_task;
 	Genode::Constructible<Genode::Attached_rom_dataspace> report_rom;
 

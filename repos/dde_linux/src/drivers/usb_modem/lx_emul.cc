@@ -238,10 +238,17 @@ int usb_set_interface(struct usb_device *udev, int ifnum, int alternate)
 
 int usb_register_dev(struct usb_interface *intf, struct usb_class_driver *class_driver)
 {
-	TRACE;
-	return 0;
-}
+	usb_device *udev = interface_to_usbdev(intf);
+	if (Genode::strcmp(class_driver->name, "cdc-wdm", 7) == 0) {
+		Terminal::Root *terminal = reinterpret_cast<Terminal::Root *>(udev->bus->sysdev);
+		terminal->class_driver(class_driver);
+		return 0;
+	}
 
+	Genode::error(__func__, " no device for class driver '",
+	              (char const*)class_driver->name, "'");
+	return -1;
+}
 
 
 void Driver::Device::probe_interface(usb_interface * iface, usb_device_id * id)

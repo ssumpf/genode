@@ -88,7 +88,10 @@ append config {
 
 	<start name="usb_modem_drv">
 		<resource name="RAM" quantum="10M"/>
-		<provides> <service name="Nic"/> </provides>
+		<provides>
+			<service name="Nic"/>
+			<service name="Terminal"/>
+		</provides>
 		<config mac="02:00:00:00:01:01" />
 	</start>
 <!--
