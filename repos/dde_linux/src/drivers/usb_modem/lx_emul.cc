@@ -470,6 +470,12 @@ int dev_set_drvdata(struct device *dev, void *data)
 }
 
 
+void * dev_get_drvdata(const struct device *dev)
+{
+	return dev->driver_data;
+}
+
+
 int netif_running(const struct net_device *dev)
 {
 	return dev->state & (1 << __LINK_STATE_START);
@@ -586,4 +592,10 @@ void page_frag_free(void *addr)
 
 	Lx::Malloc::dma().free_large(page->addr);
 	kfree(page);
+}
+
+
+unsigned iminor(const struct inode *inode)
+{
+	return 0;
 }

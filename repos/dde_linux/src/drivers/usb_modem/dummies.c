@@ -45,12 +45,6 @@ __wsum csum_partial(const void *buff, int len, __wsum sum)
 	return -1;
 }
 
-void * dev_get_drvdata(const struct device *dev)
-{
-	TRACE_AND_STOP;
-	return NULL;
-}
-
 void dev_hold(struct net_device *dev)
 {
 	TRACE_AND_STOP;
@@ -628,12 +622,6 @@ long copy_to_user(void *to, const void *from, unsigned long n)
 void poll_wait(struct file *f, wait_queue_head_t *w, poll_table *p)
 {
 	TRACE_AND_STOP;
-}
-
-unsigned iminor(const struct inode *inode)
-{
-	TRACE_AND_STOP;
-	return 0;
 }
 
 loff_t noop_llseek(struct file *file, loff_t offset, int whence)

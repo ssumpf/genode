@@ -1,6 +1,6 @@
 TARGET  := usb_modem_drv
 SRC_C   := dummies.c lxc.c
-SRC_CC  := main.cc lx_emul.cc component.cc
+SRC_CC  := main.cc lx_emul.cc component.cc terminal.cc
 SRC_CC  += printf.cc timer.cc scheduler.cc malloc.cc env.cc work.cc
 
 LIBS    := base usb_modem_include lx_kit_setjmp

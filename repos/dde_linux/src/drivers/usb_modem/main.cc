@@ -205,6 +205,8 @@ Driver::Device::~Device()
 
 void Driver::main_task_entry(void * arg)
 {
+	LX_MUTEX_INIT(wdm_mutex);
+
 	Driver * driver = reinterpret_cast<Driver*>(arg);
 
 	tasklet_wq = alloc_workqueue("tasklet_wq", 0, 0);

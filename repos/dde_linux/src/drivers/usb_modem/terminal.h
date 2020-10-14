@@ -16,15 +16,13 @@
 #define _SRC__DRIVERS__USB_MODEM__TERMINAL_H_
 
 /* Genode includes */
-#include <base/component.h>
-#include <base/heap.h>
 #include <base/attached_ram_dataspace.h>
-#include <base/attached_rom_dataspace.h>
 #include <base/log.h>
 #include <os/session_policy.h>
 #include <root/component.h>
 #include <terminal_session/terminal_session.h>
 
+#include <lx_kit/scheduler.h>
 
 namespace Terminal {
 	class Session_component;
@@ -49,6 +47,11 @@ class Terminal::Session_component : public Genode::Rpc_object<Session, Session_c
 
 		usb_class_driver *_class_driver;
 
+		static void _run_wdm_task(void *args);
+
+		Lx::Task _task { _run_wdm_task, _class_driver, "wdm_task",
+		                 Lx::Task::PRIORITY_1, Lx::scheduler() };
+
 	public:
 
 		Session_component(Genode::Env &env,
@@ -63,6 +66,9 @@ class Terminal::Session_component : public Genode::Rpc_object<Session, Session_c
 				Genode::error("No class driver for terminal");
 				throw Genode::Service_denied();
 			}
+
+			_task.unblock();
+			Lx::scheduler().schedule();
 		}
 
 		/********************************
@@ -78,11 +84,13 @@ class Terminal::Session_component : public Genode::Rpc_object<Session, Session_c
 
 		Genode::size_t _read(Genode::size_t dst_len)
 		{
+			Genode::log(__func__, " ", dst_len, " bytes");
 			return 0;
 		}
 
 		Genode::size_t _write(Genode::size_t num_bytes)
 		{
+			Genode::log(__func__, " ", num_bytes, " bytes");
 			return 0;
 		}
 
@@ -93,6 +101,7 @@ class Terminal::Session_component : public Genode::Rpc_object<Session, Session_c
 
 		void read_avail_sigh(Genode::Signal_context_capability sigh) override
 		{
+			Genode::warning(__func__);
 			_read_avail_sigh = sigh;
 		}
 
