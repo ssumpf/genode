@@ -58,7 +58,7 @@ static inline void __check_or_initialize_mutex(struct mutex *m)
 void mutex_lock(struct mutex *m)
 {
 	__check_or_initialize_mutex(m);
-
+	//lx_printf("%s:%d %p\n", __func__, __LINE__, m);
 	while (1) {
 		if (m->state == MUTEX_UNLOCKED) {
 			m->state  = MUTEX_LOCKED;
@@ -86,6 +86,7 @@ void mutex_lock(struct mutex *m)
 
 void mutex_unlock(struct mutex *m)
 {
+	//lx_printf("%s:%d %p\n", __func__, __LINE__, m);
 	if (m->state == MUTEX_UNLOCKED) {
 		Genode::error("bug: multiple mutex unlock detected");
 		Genode::sleep_forever();

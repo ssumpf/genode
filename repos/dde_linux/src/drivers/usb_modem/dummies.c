@@ -314,7 +314,7 @@ void spin_lock(spinlock_t *lock)
 
 void spin_lock_irq(spinlock_t *lock)
 {
-	TRACE_AND_STOP;
+	TRACE;
 }
 
 void spin_lock_nested(spinlock_t *lock, int subclass)
@@ -324,7 +324,7 @@ void spin_lock_nested(spinlock_t *lock, int subclass)
 
 void spin_unlock_irq(spinlock_t *lock)
 {
-	TRACE_AND_STOP;
+	TRACE;
 }
 
 void spin_lock_bh(spinlock_t *lock)
@@ -595,28 +595,10 @@ void hrtimer_start(struct hrtimer *timer, ktime_t tim, const enum hrtimer_mode m
 	TRACE_AND_STOP;
 }
 
-void *memdup_user(const void *src, size_t len)
-{
-	TRACE_AND_STOP;
-	return NULL;
-}
-
-int mutex_lock_interruptible(struct mutex *m)
-{
-	TRACE;
-	return 0;
-}
-
 struct usb_class_driver;
 void usb_deregister_dev(struct usb_interface *intf,struct usb_class_driver *class_driver)
 {
 	TRACE_AND_STOP;
-}
-
-long copy_to_user(void *to, const void *from, unsigned long n)
-{
-	TRACE_AND_STOP;
-	return 0;
 }
 
 void poll_wait(struct file *f, wait_queue_head_t *w, poll_table *p)

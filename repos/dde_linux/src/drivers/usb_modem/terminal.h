@@ -39,17 +39,19 @@ class Terminal::Session_component : public Genode::Rpc_object<Session, Session_c
 
 	private:
 
+		enum State { WRITE, READ };
+
 		Genode::Attached_ram_dataspace    _io_buffer;
 		Genode::Signal_context_capability _read_avail_sigh { };
 
-		size_t  _data_avail { 0 };
-		size_t   _io_buffer_size;
-
-		usb_class_driver *_class_driver;
+		State  _state { WRITE };
+		size_t _data_avail { 0 };
+		size_t _io_buffer_size;
+		usb_class_driver *_class_driver = nullptr;
 
 		static void _run_wdm_task(void *args);
 
-		Lx::Task _task { _run_wdm_task, _class_driver, "wdm_task",
+		Lx::Task _task { _run_wdm_task, this, "wdm_task",
 		                 Lx::Task::PRIORITY_1, Lx::scheduler() };
 
 	public:
@@ -62,7 +64,7 @@ class Terminal::Session_component : public Genode::Rpc_object<Session, Session_c
 			_io_buffer_size(io_buffer_size),
 			_class_driver(class_driver)
 		{
-			if (_class_driver == nullptr) {
+			if (class_driver == nullptr) {
 				Genode::error("No class driver for terminal");
 				throw Genode::Service_denied();
 			}
@@ -85,12 +87,27 @@ class Terminal::Session_component : public Genode::Rpc_object<Session, Session_c
 		Genode::size_t _read(Genode::size_t dst_len)
 		{
 			Genode::log(__func__, " ", dst_len, " bytes");
-			return 0;
+			if (_state != READ) return 0;
+
+			size_t length = Genode::min(dst_len, _data_avail);
+
+			_data_avail -= length;
+
+			if (_data_avail == 0) _state = WRITE;
+			return length;
 		}
 
 		Genode::size_t _write(Genode::size_t num_bytes)
 		{
+			if (_state == READ) return 0;
+
 			Genode::log(__func__, " ", num_bytes, " bytes");
+			_data_avail = num_bytes;
+			_state = WRITE;
+
+			_task.unblock();
+			Lx::scheduler().schedule();
+
 			return 0;
 		}
 
@@ -114,6 +131,15 @@ class Terminal::Session_component : public Genode::Rpc_object<Session, Session_c
 
 		size_t read(void *, size_t) override { return 0; }
 		size_t write(void const *, size_t) override { return 0; }
+
+		char *buffer() { return _io_buffer.local_addr<char>(); }
+
+		void signal_data_avail()
+		{
+			if (_read_avail_sigh.valid() == false) return;
+			_state = READ;
+			Genode::Signal_transmitter(_read_avail_sigh).submit();
+		}
 };
 
 

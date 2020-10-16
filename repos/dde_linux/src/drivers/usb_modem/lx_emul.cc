@@ -599,3 +599,27 @@ unsigned iminor(const struct inode *inode)
 {
 	return 0;
 }
+
+
+void *memdup_user(const void *src, size_t len)
+{
+	void *out = kmalloc(len, 0);
+	memcpy(out, src, len);
+	return out;
+}
+
+
+long copy_to_user(void *to, const void *from, unsigned long n)
+{
+	memcpy(to, from, n);
+	return 0;
+}
+
+
+
+int mutex_lock_interruptible(struct mutex *m)
+{
+	mutex_lock(m);
+	return 0;
+}
+
