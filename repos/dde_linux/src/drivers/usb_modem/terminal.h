@@ -47,31 +47,31 @@ class Terminal::Session_component : public Genode::Rpc_object<Session, Session_c
 		State  _state { WRITE };
 		size_t _data_avail { 0 };
 		size_t _io_buffer_size;
-		usb_class_driver *_class_driver = nullptr;
+		void   *_wdm_device { nullptr };
+		usb_class_driver *_class_driver { nullptr };
 
-		static void _run_wdm_task(void *args);
+		static void _run_wdm_device(void *args);
+		static void _run_wdm_write(void *args);
+		static void _run_wdm_read(void *args);
 
-		Lx::Task _task { _run_wdm_task, this, "wdm_task",
-		                 Lx::Task::PRIORITY_1, Lx::scheduler() };
+		Lx::Task _task_write { _run_wdm_write, this, "wdm_task_write",
+		                       Lx::Task::PRIORITY_1, Lx::scheduler() };
+
+		Lx::Task _task_read { _run_wdm_read, this, "wdm_task_read",
+		                      Lx::Task::PRIORITY_1, Lx::scheduler() };
+
+		Lx::Task _task_device { _run_wdm_device, this, "wdm_task_devie",
+		                        Lx::Task::PRIORITY_1, Lx::scheduler() };
+		void _schedule_read()
+		{
+			_task_read.unblock();
+		}
 
 	public:
 
 		Session_component(Genode::Env &env,
 		                  Genode::size_t io_buffer_size,
-		                  usb_class_driver *class_driver)
-		:
-			_io_buffer(env.ram(), env.rm(), io_buffer_size),
-			_io_buffer_size(io_buffer_size),
-			_class_driver(class_driver)
-		{
-			if (class_driver == nullptr) {
-				Genode::error("No class driver for terminal");
-				throw Genode::Service_denied();
-			}
-
-			_task.unblock();
-			Lx::scheduler().schedule();
-		}
+		                  usb_class_driver *class_driver);
 
 		/********************************
 		 ** Terminal session interface **
@@ -86,14 +86,20 @@ class Terminal::Session_component : public Genode::Rpc_object<Session, Session_c
 
 		Genode::size_t _read(Genode::size_t dst_len)
 		{
-			Genode::log(__func__, " ", dst_len, " bytes");
 			if (_state != READ) return 0;
 
 			size_t length = Genode::min(dst_len, _data_avail);
+			if (dst_len < _data_avail)
+				Genode::warning("dst_len < data_avail (", dst_len, " < ", _data_avail, ") not supported");
 
 			_data_avail -= length;
+			Genode::log(__func__, " ", dst_len, " bytes, length: ", length, " left: ", _data_avail);
 
-			if (_data_avail == 0) _state = WRITE;
+			if (_data_avail == 0) {
+				_state = WRITE;
+				_schedule_read();
+			}
+
 			return length;
 		}
 
@@ -105,7 +111,7 @@ class Terminal::Session_component : public Genode::Rpc_object<Session, Session_c
 			_data_avail = num_bytes;
 			_state = WRITE;
 
-			_task.unblock();
+			_task_write.unblock();
 			Lx::scheduler().schedule();
 
 			return 0;
