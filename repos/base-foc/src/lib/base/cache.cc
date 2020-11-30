@@ -17,7 +17,7 @@
 using namespace Genode;
 
 
-void cache_coherent(Genode::addr_t addr, Genode::size_t size)
+void Genode::cache_coherent(addr_t addr, size_t size)
 {
 	Foc::l4_cache_coherent(addr, addr + size);
 }
