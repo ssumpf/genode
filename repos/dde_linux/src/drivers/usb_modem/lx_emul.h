@@ -54,19 +54,6 @@ typedef __u64 __be64;
 #include <lx_emul/bug.h>
 #include <lx_emul/errno.h>
 #include <lx_emul/module.h>
-//#define __init
-//#define __exit
-//#define THIS_MODULE 0
-//struct module;
-//#define module_init(fn) int module_##fn(void) { return fn(); }
-//#define module_exit(fn) void module_exit_##fn(void) { fn(); }
-//#define EXPORT_SYMBOL_GPL(x)
-//#define MODULE_AUTHOR(name)
-//#define MODULE_DESCRIPTION(desc)
-//#define MODULE_LICENSE(x)
-//#define MODULE_VERSION(x)
-//#define MODULE_PARM_DESC(_parm, desc)
-//#define module_param(name, type, perm)
 #include <lx_emul/gfp.h>
 #include <lx_emul/barrier.h>
 

@@ -1,3 +1,17 @@
+/*
+ * \brief  Linux emulation
+ * \author Stefan Kalkowski
+ * \author Sebastian Sumpf
+ * \date   2020-12-02
+ */
+
+/*
+ * Copyright (C) 2020 Genode Labs GmbH
+ *
+ * This file is distributed under the terms of the GNU General Public License
+ * version 2.
+ */
+
 #include <base/env.h>
 #include <usb_session/client.h>
 #include <base/snprintf.h>

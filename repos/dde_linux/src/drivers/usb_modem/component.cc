@@ -1,11 +1,11 @@
 /*
- * \brief  Freescale ethernet driver component
+ * \brief  Ethernet driver component
  * \author Stefan Kalkowski
  * \date   2017-11-01
  */
 
 /*
- * Copyright (C) 2017 Genode Labs GmbH
+ * Copyright (C) 2020 Genode Labs GmbH
  *
  * This file is distributed under the terms of the GNU General Public License
  * version 2.

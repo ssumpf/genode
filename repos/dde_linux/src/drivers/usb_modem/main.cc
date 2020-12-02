@@ -1,11 +1,12 @@
 /*
- * \brief  USB net driver
+ * \brief  USB modem driver
  * \author Stefan Kalkowski
+ * \author Sebastian Sumpf
  * \date   2018-06-07
  */
 
 /*
- * Copyright (C) 2018 Genode Labs GmbH
+ * Copyright (C) 2020 Genode Labs GmbH
  *
  * This file is distributed under the terms of the GNU General Public License
  * version 2.
