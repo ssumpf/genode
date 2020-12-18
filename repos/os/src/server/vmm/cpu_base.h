@@ -88,9 +88,9 @@ class Vmm::Cpu_base
 		}
 
 		template <typename T>
-		struct Signal_handler : Genode::Vm_handler<Signal_handler<T>>
+		struct Signal_handler : Genode::Vcpu_handler<Signal_handler<T>>
 		{
-			using Base = Genode::Vm_handler<Signal_handler<T>>;
+			using Base = Genode::Vcpu_handler<Signal_handler<T>>;
 
 			Cpu_base & cpu;
 			T        & obj;

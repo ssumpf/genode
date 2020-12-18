@@ -40,7 +40,7 @@ Vm_base::Vm_base(Env                &env,
                  Machine_type        machine,
                  Board_revision      board,
                  Allocator          &alloc,
-                 Vm_handler_base    &handler)
+                 Vcpu_handler_base  &handler)
 :
 	_env(env), _kernel(kernel), _cmdline(cmdline), _kernel_off(kernel_off),
 	_machine(machine), _board(board), _ram(env, ram_base, ram_size),

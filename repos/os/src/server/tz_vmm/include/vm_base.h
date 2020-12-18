@@ -92,7 +92,7 @@ class Genode::Vm_base : Noncopyable, Interface
 		        Machine_type        machine,
 		        Board_revision      board,
 		        Allocator          &alloc,
-		        Vm_handler_base    &handler);
+		        Vcpu_handler_base  &handler);
 
 		void run()   { _vm.run(_vcpu_id); }
 		void pause() { _vm.pause(_vcpu_id); }

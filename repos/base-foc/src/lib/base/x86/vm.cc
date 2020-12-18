@@ -17,7 +17,7 @@
 #include <base/env.h>
 #include <base/registry.h>
 #include <vm_session/client.h>
-#include <cpu/vm_state.h>
+#include <cpu/vcpu_state.h>
 #include <trace/timestamp.h>
 
 /* Fiasco.OC includes */
@@ -1280,7 +1280,7 @@ static enum Virt virt_type(Env &env)
 
 Vm_session_client::Vcpu_id
 Vm_session_client::create_vcpu(Allocator &alloc, Env &env,
-                               Vm_handler_base &handler)
+                               Vcpu_handler_base &handler)
 {
 	enum Virt vm_type = virt_type(env);
 	if (vm_type == Virt::UNKNOWN) {

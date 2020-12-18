@@ -16,7 +16,7 @@
 #include <base/registry.h>
 #include <vm_session/client.h>
 
-#include <cpu/vm_state.h>
+#include <cpu/vcpu_state.h>
 
 #include <trace/timestamp.h>
 
@@ -101,8 +101,8 @@ struct Vcpu : Genode::Thread
 			/* get selector to call back a vCPU into VMM */
 			_recall = _stack->utcb().lock_sel();
 
-			Vm_state &state = *reinterpret_cast<Vm_state *>(_state);
-			state = Vm_state {};
+			Vcpu_state &state = *reinterpret_cast<Vcpu_state *>(_state);
+			state = Vcpu_state {};
 
 			/* wait for first user resume() */
 			_wake_up.down();
@@ -766,7 +766,7 @@ struct Vcpu : Genode::Thread
 
 Genode::Vm_session_client::Vcpu_id
 Genode::Vm_session_client::create_vcpu(Allocator &alloc, Env &env,
-                                       Vm_handler_base &handler)
+                                       Vcpu_handler_base &handler)
 {
 	Thread * ep = reinterpret_cast<Thread *>(&handler._rpc_ep);
 	Affinity::Location location = ep->affinity();

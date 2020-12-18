@@ -59,7 +59,11 @@ Vm::Vm(Genode::Env & env)
   _virtio_block("Block", VIRTIO_BLK_MMIO_START, VIRTIO_BLK_MMIO_SIZE,
                 VIRTIO_BLK_IRQ, boot_cpu(), _bus, _ram, env, _heap)
 {
-	_vm.attach(_vm_ram.cap(), RAM_START);
+	_vm.attach(_vm_ram.cap(), RAM_START,
+	           Genode::Vm_session::Attach_attr { .offset     = 0,
+	                                             .size       = 0,
+	                                             .executable = true,
+	                                             .writeable  = true });
 
 	_load_kernel();
 	_load_dtb();
