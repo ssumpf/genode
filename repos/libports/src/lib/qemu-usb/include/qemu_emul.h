@@ -481,6 +481,11 @@ void memory_region_del_subregion(MemoryRegion *mr,
  ** sysemu/dma.h **
  ******************/
 
+typedef enum {
+	DMA_DIRECTION_TO_DEVICE   = 0,
+	DMA_DIRECTION_FROM_DEVICE = 1,
+} DMADirection;
+
 typedef struct QEMUIOVector QEMUSGList;
 
 void qemu_sglist_add(QEMUSGList *qsg, dma_addr_t base, dma_addr_t len);
