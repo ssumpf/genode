@@ -25,20 +25,20 @@ namespace Genode {
 
 class Genode::Vcpu_handler_base : public Signal_dispatcher_base
 {
-	friend class Vm_session_client;
-
 	protected:
 
 		Rpc_entrypoint            &_rpc_ep;
-		Signal_context_capability  _cap  { };
-		Genode::Semaphore          _done { 0 };
+		Signal_context_capability  _signal_cap { };
+		Genode::Semaphore          _ready_semaphore { 0 };
 
 	public:
 
 		Vcpu_handler_base(Rpc_entrypoint &rpc)
 		: _rpc_ep(rpc) { }
 
-		Rpc_entrypoint & rpc_ep() { return _rpc_ep; }
+		Rpc_entrypoint &          rpc_ep()          { return _rpc_ep; }
+		Signal_context_capability signal_cap()      { return _signal_cap; }
+		Genode::Semaphore &       ready_semaphore() { return _ready_semaphore; }
 };
 
 template <typename T, typename EP = Genode::Entrypoint>
@@ -71,7 +71,7 @@ class Genode::Vcpu_handler : public Vcpu_handler_base
 			_obj(obj),
 			_member(member)
 		{
-			_cap = _ep.manage(*this);
+			_signal_cap = _ep.manage(*this);
 		}
 
 		~Vcpu_handler() { _ep.dissolve(*this); }
@@ -82,10 +82,10 @@ class Genode::Vcpu_handler : public Vcpu_handler_base
 		void dispatch(unsigned) override
 		{
 			(_obj.*_member)();
-			_done.up();
+			_ready_semaphore.up();
 		}
 
-		operator Capability<Signal_context>() const { return _cap; }
+		operator Capability<Signal_context>() const { return _signal_cap; }
 };
 
 #endif /* _INCLUDE__VM_SESSION__HANDLER_H_ */
