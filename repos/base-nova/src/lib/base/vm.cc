@@ -578,7 +578,7 @@ void Nova_vcpu::run()
 
 /*
  * Do not touch the UTCB before _read_nova_state() and after
- * _write_nova_state(), particularly not be logging diagnostics.
+ * _write_nova_state(), particularly not by logging diagnostics.
  */
 bool Nova_vcpu::_handle_exit(Nova::Utcb &utcb, uint16_t exit_reason)
 {
