@@ -13,11 +13,11 @@
  */
 
 /* Genode includes */
-#include <base/log.h>
 #include <base/attached_rom_dataspace.h>
-#include <util/list.h>
-#include <base/heap.h>
+#include <base/log.h>
 #include <base/registry.h>
+#include <libc/allocator.h>
+#include <util/list.h>
 
 /* qemu-usb includes */
 #include <qemu/usb.h>
@@ -287,7 +287,7 @@ struct Timer_queue : public Qemu::Timer_queue
 
 struct Pci_device : public Qemu::Pci_device
 {
-	Genode::Heap _heap;
+	Libc::Allocator _alloc { };
 
 	PPDMDEVINS pci_dev;
 
@@ -295,19 +295,15 @@ struct Pci_device : public Qemu::Pci_device
 	{
 		Genode::Allocator &_alloc;
 
-		Qemu::addr_t  base;
-		Qemu::size_t  size;
-		void         *addr;
+		Qemu::addr_t   const base;
+		Qemu::size_t   const size;
+		void         * const addr { _alloc.alloc(size) };
 
 		Dma_bounce_buffer(Genode::Allocator &alloc,
-		           Qemu::addr_t base,
-		           Qemu::size_t size)
-		:
-			_alloc { alloc },
-			base { base }, size { size }, addr { nullptr }
-		{
-			addr = _alloc.alloc(size);
-		}
+		                  Qemu::addr_t       base,
+		                  Qemu::size_t       size)
+		: _alloc { alloc }, base { base }, size { size }
+		{ }
 
 		virtual ~Dma_bounce_buffer()
 		{
@@ -318,8 +314,7 @@ struct Pci_device : public Qemu::Pci_device
 	using Reg_dma_buffer = Genode::Registered<Dma_bounce_buffer>;
 	Genode::Registry<Reg_dma_buffer> _dma_buffers { };
 
-	Pci_device(Genode::Env &env, PPDMDEVINS pDevIns)
-	: _heap(env.ram(), env.rm()), pci_dev(pDevIns) { }
+	Pci_device(PPDMDEVINS pDevIns) : pci_dev(pDevIns) { }
 
 	void raise_interrupt(int level) override {
 		PDMDevHlpPCISetIrqNoWait(pci_dev, 0, level); }
@@ -330,26 +325,28 @@ struct Pci_device : public Qemu::Pci_device
 	int write_dma(Qemu::addr_t addr, void const *buf, Qemu::size_t size) override {
 		return PDMDevHlpPhysWrite(pci_dev, addr, buf, size); }
 
-	void *map_dma(Qemu::addr_t base, Qemu::size_t size, bool read) override
+	void *map_dma(Qemu::addr_t base, Qemu::size_t size,
+	              Qemu::Pci_device::Dma_direction dir) override
 	{
 		Reg_dma_buffer *dma = nullptr;
 
 		try {
-			dma = new (_heap) Reg_dma_buffer(_dma_buffers,
-			                                 _heap, base, size);
+			dma = new (_alloc) Reg_dma_buffer(_dma_buffers,
+			                                  _alloc, base, size);
 		} catch (...) {
 			return nullptr;
 		}
 
 		/* copy data for write request to bounce buffer */
-		if (!read) {
+		if (dir == Qemu::Pci_device::Dma_direction::OUT) {
 			(void)PDMDevHlpPhysRead(pci_dev, base, dma->addr, size);
 		}
 
 		return dma->addr;
 	}
 
-	void unmap_dma(void *addr, Qemu::size_t size, bool read) override
+	void unmap_dma(void *addr, Qemu::size_t size,
+	               Qemu::Pci_device::Dma_direction dir) override
 	{
 		_dma_buffers.for_each([&] (Reg_dma_buffer &dma) {
 			if (dma.addr != addr) {
@@ -357,12 +354,12 @@ struct Pci_device : public Qemu::Pci_device
 			}
 
 			/* copy data for read request from bounce buffer */
-			if (read) {
+			if (dir == Qemu::Pci_device::Dma_direction::IN) {
 				(void)PDMDevHlpPhysWrite(pci_dev,
 				                         dma.base, dma.addr, dma.size);
 			}
 
-			Genode::destroy(_heap, &dma);
+			Genode::destroy(_alloc, &dma);
 		});
 	}
 };
@@ -495,7 +492,7 @@ static DECLCALLBACK(int) xhciR3Construct(PPDMDEVINS pDevIns, int iInstance, PCFG
 
 	static Timer_queue timer_queue(pThis->controller_timer);
 	pThis->timer_queue = &timer_queue;
-	static Pci_device pci_device(genode_env(), pDevIns);
+	static Pci_device pci_device(pDevIns);
 
 	pThis->ctl = Qemu::usb_init(timer_queue, pci_device, *pThis->usb_ep,
 	                            vmm_heap(), genode_env());
