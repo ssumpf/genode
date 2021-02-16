@@ -91,8 +91,6 @@ endif
 BASE_DIR    := $(GENODE_DIR)/repos/base
 BASE_HW_DIR := $(GENODE_DIR)/repos/base-hw
 
-
-
 SRC_TIMER := target.inc include hw main.cc
 
 SRC_INCLUDE_HW += $(notdir $(wildcard $(BASE_HW_DIR)/src/include/hw/*.h)) \
