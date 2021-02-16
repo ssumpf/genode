@@ -13,8 +13,8 @@
  */
 
 /* Genode includes */
-#include <base/attached_rom_dataspace.h>
 #include <base/log.h>
+#include <base/attached_rom_dataspace.h>
 #include <base/registry.h>
 #include <libc/allocator.h>
 #include <util/list.h>
