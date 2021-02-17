@@ -57,7 +57,38 @@ static bool svm_np() { return svm_features() & (1U << 0); }
  ** Fiasco.OC vCPU implementation **
  ***********************************/
 
-struct Foc_vcpu : Thread, Rpc_client<Vm_session::Native_vcpu>, Noncopyable
+struct Foc_vcpu;
+
+struct Foc_native_vcpu_rpc : Rpc_client<Vm_session::Native_vcpu>, Noncopyable
+{
+	private:
+
+		Capability<Vm_session::Native_vcpu> _create_vcpu(Vm_connection &vm,
+		                                                 Thread_capability &cap)
+		{
+			return vm.with_upgrade([&] () {
+				return vm.call<Vm_session::Rpc_create_vcpu>(cap); });
+		}
+
+	public:
+
+		Foc_vcpu &vcpu;
+
+		Foc_native_vcpu_rpc(Vm_connection &vm, Thread_capability &cap,
+		                    Foc_vcpu &vcpu)
+		:
+			Rpc_client<Vm_session::Native_vcpu>(_create_vcpu(vm, cap)),
+			vcpu(vcpu)
+		{ }
+
+		Foc::l4_cap_idx_t task_index() { return call<Rpc_task_index>(); }
+
+		Foc::l4_vcpu_state_t * foc_vcpu_state() {
+			return static_cast<Foc::l4_vcpu_state_t *>(call<Rpc_foc_vcpu_state>()); }
+};
+
+
+struct Foc_vcpu : Thread, Noncopyable
 {
 	private:
 
@@ -219,6 +250,8 @@ struct Foc_vcpu : Thread, Rpc_client<Vm_session::Native_vcpu>, Noncopyable
 		Vcpu_state::Fpu::State _fpu_ep     __attribute__((aligned(0x10))) { };
 		Vcpu_state::Fpu::State _fpu_vcpu   __attribute__((aligned(0x10))) { };
 
+		Constructible<Foc_native_vcpu_rpc> _rpc   { };
+
 		enum {
 			VMEXIT_STARTUP = 0xfe,
 			VMEXIT_PAUSED  = 0xff,
@@ -238,6 +271,10 @@ struct Foc_vcpu : Thread, Rpc_client<Vm_session::Native_vcpu>, Noncopyable
 
 		void entry() override
 		{
+			/* trigger that thread is up */
+			_startup.wakeup();
+
+			/* wait until vcpu is assigned to us */
 			_wake_up.down();
 
 			{
@@ -250,7 +287,7 @@ struct Foc_vcpu : Thread, Rpc_client<Vm_session::Native_vcpu>, Noncopyable
 				_state_request = NONE;
 			}
 
-			Foc::l4_vcpu_state_t * const vcpu = call<Rpc_foc_vcpu_state>();
+			Foc::l4_vcpu_state_t * const vcpu = _rpc->foc_vcpu_state();
 			addr_t const vcpu_addr = reinterpret_cast<addr_t>(vcpu);
 
 			if (!l4_vcpu_check_version(vcpu))
@@ -263,7 +300,7 @@ struct Foc_vcpu : Thread, Rpc_client<Vm_session::Native_vcpu>, Noncopyable
 			void * vmcs = reinterpret_cast<void *>(vcpu_addr + L4_VCPU_OFFSET_EXT_STATE);
 
 			/* set vm page table */
-			vcpu->user_task = call<Rpc_task_index>();
+			vcpu->user_task = _rpc->task_index();
 
 			Vcpu_state &state = _vcpu_state;
 			state.discharge();
@@ -1201,8 +1238,6 @@ struct Foc_vcpu : Thread, Rpc_client<Vm_session::Native_vcpu>, Noncopyable
 			return ep->affinity();
 		}
 
-		Capability<Native_vcpu> _create_vcpu(Vm_connection &);
-
 	public:
 
 		Foc_vcpu(Env &env, Vm_connection &vm, Vcpu_handler_base &handler,
@@ -1210,10 +1245,22 @@ struct Foc_vcpu : Thread, Rpc_client<Vm_session::Native_vcpu>, Noncopyable
 		:
 			Thread(env, "vcpu_thread", STACK_SIZE, _location(handler),
 			       Weight(), env.cpu()),
-			Rpc_client<Native_vcpu>(_create_vcpu(vm)),
 			_vcpu_handler(handler),
 			_vm_type(type)
-		{ }
+		{
+			Thread::start();
+
+			/* wait until thread is alive, e.g. Thread::cap() is valid */
+			_startup.block();
+
+			try {
+				_rpc.construct(vm, this->cap(), *this);
+			} catch (...) {
+				terminate();
+				join();
+				throw;
+			}
+		}
 
 		void resume()
 		{
@@ -1253,6 +1300,7 @@ struct Foc_vcpu : Thread, Rpc_client<Vm_session::Native_vcpu>, Noncopyable
 		}
 
 		Vcpu_state          &state() { return _vcpu_state; }
+		Foc_native_vcpu_rpc *rpc()   { return &*_rpc; }
 };
 
 
@@ -1273,28 +1321,17 @@ static enum Virt virt_type(Env &env)
 }
 
 
-Capability<Vm_session::Native_vcpu> Foc_vcpu::_create_vcpu(Vm_connection &vm)
-{
-	/* start proxy thread, Thread::cap() becomes valid afterwards */
-	this->start();
-
-	/* request to assign vCPU to the Thread::cap() */
-	return vm.with_upgrade([&] () {
-		return vm.call<Vm_session::Rpc_create_vcpu>(this->Thread::cap()); });
-}
-
-
 /**************
  ** vCPU API **
  **************/
 
-void         Vm_connection::Vcpu::run()   {        static_cast<Foc_vcpu &>(_native_vcpu).resume(); }
-void         Vm_connection::Vcpu::pause() {        static_cast<Foc_vcpu &>(_native_vcpu).pause(); }
-Vcpu_state & Vm_connection::Vcpu::state() { return static_cast<Foc_vcpu &>(_native_vcpu).state(); }
+void         Vm_connection::Vcpu::run()   {        static_cast<Foc_native_vcpu_rpc &>(_native_vcpu).vcpu.resume(); }
+void         Vm_connection::Vcpu::pause() {        static_cast<Foc_native_vcpu_rpc &>(_native_vcpu).vcpu.pause(); }
+Vcpu_state & Vm_connection::Vcpu::state() { return static_cast<Foc_native_vcpu_rpc &>(_native_vcpu).vcpu.state(); }
 
 
 Vm_connection::Vcpu::Vcpu(Vm_connection &vm, Allocator &alloc,
                           Vcpu_handler_base &handler, Exit_config const &)
 :
-	_native_vcpu(*new (alloc) Foc_vcpu(vm._env, vm, handler, virt_type(vm._env)))
+	_native_vcpu(*((new (alloc) Foc_vcpu(vm._env, vm, handler, virt_type(vm._env)))->rpc()))
 { }
