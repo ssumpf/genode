@@ -5,72 +5,87 @@
  */
 
 /*
- * Copyright (C) 2018 Genode Labs GmbH
+ * Copyright (C) 2018-2021 Genode Labs GmbH
  *
  * This file is part of the Genode OS framework, which is distributed
  * under the terms of the GNU Affero General Public License version 3.
  */
 
 #include <base/allocator.h>
+#include <base/attached_dataspace.h>
 #include <base/env.h>
 #include <base/registry.h>
 #include <base/internal/capability_space.h>
 #include <kernel/interface.h>
-#include <vm_session/client.h>
+
+#include <vm_session/connection.h>
+#include <vm_session/handler.h>
+
+#include <hw_native_vcpu/hw_native_vcpu.h>
 
 using namespace Genode;
 
-struct Vcpu;
-
-static Genode::Registry<Genode::Registered<Vcpu>> vcpus;
+using Exit_config = Vm_connection::Exit_config;
 
 
-struct Vcpu
+/****************************
+ ** hw vCPU implementation **
+ ****************************/
+
+struct Hw_vcpu : Rpc_client<Vm_session::Native_vcpu>, Noncopyable
 {
-	Vm_session_client::Vcpu_id          const id;
-	Capability<Vm_session::Native_vcpu> const cap;
+	private:
 
-	Vcpu(Vm_session::Vcpu_id id, Capability<Vm_session::Native_vcpu> cap)
-	: id(id), cap(cap) { }
+		Attached_dataspace      _state;
+		Native_capability       _kernel_vcpu { };
 
-	virtual ~Vcpu() { }
+		Capability<Native_vcpu> _create_vcpu(Vm_connection &, Vcpu_handler_base &);
+
+	public:
+
+		Hw_vcpu(Env &, Vm_connection &, Vcpu_handler_base &);
+
+		void run() {
+			Kernel::run_vm(Capability_space::capid(_kernel_vcpu)); }
+
+		void pause() {
+			Kernel::pause_vm(Capability_space::capid(_kernel_vcpu)); }
+
+		Vcpu_state & state() { return *_state.local_addr<Vcpu_state>(); }
 };
 
 
-Vm_session::Vcpu_id
-Vm_session_client::create_vcpu(Allocator & alloc, Env &, Vm_handler_base & handler)
+Hw_vcpu::Hw_vcpu(Env &env, Vm_connection &vm, Vcpu_handler_base &handler)
+:
+	Rpc_client<Native_vcpu>(_create_vcpu(vm, handler)),
+	_state(env.rm(), vm.with_upgrade([&] () { return call<Rpc_state>(); }))
 {
-	Vcpu_id const id =
-		call<Rpc_create_vcpu>(reinterpret_cast<Thread *>(&handler._rpc_ep)->cap());
-	call<Rpc_exception_handler>(handler._cap, id);
-	Vcpu * vcpu = new (alloc) Registered<Vcpu> (vcpus, id, call<Rpc_native_vcpu>(id));
-	return vcpu->id;
+	call<Rpc_exception_handler>(handler.signal_cap());
+	_kernel_vcpu = call<Rpc_native_vcpu>();
 }
 
 
-void Vm_session_client::run(Vcpu_id const vcpu_id)
+Capability<Vm_session::Native_vcpu> Hw_vcpu::_create_vcpu(Vm_connection     &vm,
+                                                          Vcpu_handler_base &handler)
 {
-	vcpus.for_each([&] (Vcpu & vcpu) {
-		if (vcpu.id.id != vcpu_id.id) { return; }
-		Kernel::run_vm(Capability_space::capid(vcpu.cap));
-	});
+	Thread &tep { *reinterpret_cast<Thread *>(&handler.rpc_ep()) };
+
+	return vm.with_upgrade([&] () {
+		return vm.call<Vm_session::Rpc_create_vcpu>(tep.cap()); });
 }
 
 
-void Vm_session_client::pause(Vcpu_id const vcpu_id)
-{
-	vcpus.for_each([&] (Vcpu & vcpu) {
-		if (vcpu.id.id != vcpu_id.id) { return; }
-		Kernel::pause_vm(Capability_space::capid(vcpu.cap));
-	});
-}
+/**************
+ ** vCPU API **
+ **************/
+
+void         Vm_connection::Vcpu::run()   {        static_cast<Hw_vcpu &>(_native_vcpu).run(); }
+void         Vm_connection::Vcpu::pause() {        static_cast<Hw_vcpu &>(_native_vcpu).pause(); }
+Vcpu_state & Vm_connection::Vcpu::state() { return static_cast<Hw_vcpu &>(_native_vcpu).state(); }
 
 
-Dataspace_capability Vm_session_client::cpu_state(Vcpu_id const vcpu_id)
-{
-	return call<Rpc_cpu_state>(vcpu_id);
-}
-
-
-Vm_session::~Vm_session()
+Vm_connection::Vcpu::Vcpu(Vm_connection &vm, Allocator &alloc,
+                          Vcpu_handler_base &handler, Exit_config const &)
+:
+	_native_vcpu(*new (alloc) Hw_vcpu(vm._env, vm, handler))
 { }
