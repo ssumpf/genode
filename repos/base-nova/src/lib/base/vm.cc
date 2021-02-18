@@ -57,11 +57,12 @@ struct Nova_vcpu : Rpc_client<Vm_session::Native_vcpu>, Noncopyable
 
 		Signal_dispatcher_base &_obj;
 		Allocator              &_alloc;
-		Attached_dataspace      _state;
 		void                   *_ep_handler    { nullptr };
 		void                   *_dispatching   { nullptr };
 		bool                    _block         { true };
 		bool                    _use_guest_fpu { false };
+
+		Vcpu_state              _vcpu_state __attribute__((aligned(0x10))) { };
 
 		uint8_t _fpu_ep[512]  __attribute__((aligned(0x10)));
 
@@ -167,7 +168,7 @@ struct Nova_vcpu : Rpc_client<Vm_session::Native_vcpu>, Noncopyable
 
 		void pause();
 
-		Vcpu_state & state() { return *_state.local_addr<Vcpu_state>(); }
+		Vcpu_state & state() { return _vcpu_state; }
 };
 
 
@@ -749,8 +750,7 @@ Nova_vcpu::Nova_vcpu(Env &env, Vm_connection &vm, Allocator &alloc,
                      Vcpu_handler_base &handler, Exit_config const &exit_config)
 :
 	Rpc_client<Native_vcpu>(_create_vcpu(vm, handler)),
-	_id_elem(*this, _vcpu_space()), _obj(handler), _alloc(alloc),
-	_state(env.rm(), vm.with_upgrade([&] () { return call<Rpc_state>(); }))
+	_id_elem(*this, _vcpu_space()), _obj(handler), _alloc(alloc)
 {
 	/*
 	 * XXX can be alleviated by managing ID values with Bit_allocator

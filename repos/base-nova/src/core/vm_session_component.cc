@@ -97,12 +97,6 @@ Trace::Source::Info Vm_session_component::Vcpu::trace_source_info() const
 }
 
 
-Capability<Dataspace> Vm_session_component::Vcpu::state()
-{
-	return _ds_cap;
-}
-
-
 void Vm_session_component::Vcpu::startup()
 {
 	/* initialize SC on first call - do nothing on subsequent calls */
@@ -171,36 +165,22 @@ Vm_session_component::Vcpu::Vcpu(Rpc_entrypoint            &ep,
 	_trace_control_slot(trace_control_area)
 {
 	/* account caps required to setup vCPU */
-	_cap_alloc.withdraw(Cap_quota{CAP_RANGE});
+	Cap_quota_guard::Reservation caps(_cap_alloc, Cap_quota{CAP_RANGE});
 
 	/* now try to allocate cap indexes */
 	_sel_sm_ec_sc = cap_map().insert(CAP_RANGE_LOG2);
 	if (_sel_sm_ec_sc == invalid_sel()) {
 		error("out of caps in core");
-		_cap_alloc.replenish(Cap_quota{CAP_RANGE});
 		throw Creation_failed();
 	}
 
-	try {
-		/* create ds for vCPU state */
-		_ds_cap = _ram_alloc.alloc(align_addr(sizeof(Genode::Vcpu_state), 12),
-		                           Cache_attribute::CACHED);
-	} catch (...) {
-		_cap_alloc.replenish(Cap_quota{CAP_RANGE});
-		cap_map().remove(_sel_sm_ec_sc, CAP_RANGE_LOG2);
-		throw;
-	}
-
-	_trace_sources.insert(&_trace_source);
-
-	uint8_t res;
-
 	/* setup resources */
-	res = _with_kernel_quota_upgrade(_pd_sel, [&] {
+	uint8_t res = _with_kernel_quota_upgrade(_pd_sel, [&] {
 		return Nova::create_sm(sm_sel(), core_pd_sel, 0);
 	});
 
 	if (res != Nova::NOVA_OK) {
+		cap_map().remove(_sel_sm_ec_sc, CAP_RANGE_LOG2);
 		error("create_sm = ", res);
 		throw Creation_failed();
 	}
@@ -213,6 +193,7 @@ Vm_session_component::Vcpu::Vcpu(Rpc_entrypoint            &ep,
 	});
 
 	if (res != Nova::NOVA_OK) {
+		cap_map().remove(_sel_sm_ec_sc, CAP_RANGE_LOG2);
 		error("create_ec = ", res);
 		throw Creation_failed();
 	}
@@ -232,11 +213,16 @@ Vm_session_component::Vcpu::Vcpu(Rpc_entrypoint            &ep,
 	});
 
 	if (res != Nova::NOVA_OK) {
+		cap_map().remove(_sel_sm_ec_sc, CAP_RANGE_LOG2);
 		error("map sm ", res, " ", _id);
 		throw Creation_failed();
 	}
 
 	_ep.manage(this);
+
+	_trace_sources.insert(&_trace_source);
+
+	caps.acknowledge();
 }
 
 
@@ -245,9 +231,6 @@ Vm_session_component::Vcpu::~Vcpu()
 	_ep.dissolve(this);
 
 	_trace_sources.remove(&_trace_source);
-
-	if (_ds_cap.valid())
-		_ram_alloc.free(_ds_cap);
 
 	if (_sel_sm_ec_sc != invalid_sel()) {
 		_cap_alloc.replenish(Cap_quota{CAP_RANGE});

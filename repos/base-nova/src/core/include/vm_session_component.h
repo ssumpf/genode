@@ -49,7 +49,6 @@ class Genode::Vm_session_component
 				Constrained_ram_allocator    &_ram_alloc;
 				Cap_quota_guard              &_cap_alloc;
 				Trace::Source_registry       &_trace_sources;
-				Ram_dataspace_capability      _ds_cap { };
 				addr_t                        _sel_sm_ec_sc;
 				bool                          _alive { false };
 				unsigned           const      _id;
