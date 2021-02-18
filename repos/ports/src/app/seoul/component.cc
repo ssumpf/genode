@@ -33,6 +33,7 @@
 #include <util/misc_math.h>
 
 #include <vm_session/connection.h>
+#include <vm_session/handler.h>
 #include <cpu/vcpu_state.h>
 
 /* os includes */
@@ -161,8 +162,8 @@ class Vcpu : public StaticReceiver<Vcpu>
 		bool const                          _svm;
 		bool const                          _map_small;
 		bool const                          _rdtsc_exit;
-		Genode::Vm_session_client::Vcpu_id  _id;
-		Genode::Attached_dataspace          _state_ds;
+		Genode::Vm_connection::Exit_config  _exit_config { };
+		Genode::Vm_connection::Vcpu         _vm_vcpu;
 		Genode::Vcpu_state                 &_state;
 
 		Seoul::Guest_memory                &_guest_memory;
@@ -183,18 +184,12 @@ class Vcpu : public StaticReceiver<Vcpu>
 		     bool vmx, bool svm, bool map_small, bool rdtsc)
 		:
 			_vm_con(vm_con),
-			_handler(ep, *this, &Vcpu::_handle_vm_exception,
-			         vmx ? &Vcpu::exit_config_intel :
-			         svm ? &Vcpu::exit_config_amd : nullptr),
+			_handler(ep, *this, &Vcpu::_handle_vm_exception),
+//			         vmx ? &Vcpu::exit_config_intel :
+//			         svm ? &Vcpu::exit_config_amd : nullptr),
 			_vmx(vmx), _svm(svm), _map_small(map_small), _rdtsc_exit(rdtsc),
-			/* construct vcpu */
-			_id(_vm_con.with_upgrade([&]() {
-				return _vm_con.create_vcpu(alloc, env, _handler);
-			})),
-			/* get state of vcpu */
-			_state_ds(env.rm(), _vm_con.cpu_state(_id)),
-			_state(*_state_ds.local_addr<Genode::Vcpu_state>()),
-
+			_vm_vcpu(_vm_con, alloc, _handler, _exit_config),
+			_state(_vm_vcpu.state()),
 			_guest_memory(guest_memory),
 			_motherboard(motherboard),
 			_vcpu(vcpu_mutex, unsynchronized_vcpu)
@@ -208,15 +203,13 @@ class Vcpu : public StaticReceiver<Vcpu>
 			unsynchronized_vcpu->executor.add(this, receive_static<CpuMessage>);
 
 			/* let vCPU run */
-			_vm_con.run(id());
+			_vm_vcpu.run();
 		}
-
-		Genode::Vm_session_client::Vcpu_id id() const { return _id; }
 
 		void block() { _block.down(); }
 		void unblock() { _block.up(); }
 
-		void recall() { _vm_con.pause(id()); }
+		void recall() { _vm_vcpu.pause(); }
 
 		void _handle_vm_exception()
 		{
@@ -269,8 +262,7 @@ class Vcpu : public StaticReceiver<Vcpu>
 			}
 
 			/* resume */
-			_vm_con.run(id());
-
+			_vm_vcpu.run();
 		}
 
 		void exit_config_intel(Genode::Vcpu_state &state, unsigned exit)
