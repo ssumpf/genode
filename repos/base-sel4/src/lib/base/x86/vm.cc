@@ -37,12 +37,36 @@ using namespace Genode;
 
 using Exit_config = Vm_connection::Exit_config;
 
+struct Sel4_vcpu;
+
+struct Sel4_native_rpc : Rpc_client<Vm_session::Native_vcpu>, Noncopyable
+{
+	private:
+
+		Capability<Vm_session::Native_vcpu> _create_vcpu(Vm_connection &vm,
+		                                                 Thread_capability &cap)
+		{
+			return vm.with_upgrade([&] () {
+				return vm.call<Vm_session::Rpc_create_vcpu>(cap); });
+		}
+
+	public:
+
+		Sel4_vcpu &vcpu;
+
+		Sel4_native_rpc(Vm_connection &vm, Thread_capability &cap,
+		                Sel4_vcpu &vcpu)
+		:
+			Rpc_client<Vm_session::Native_vcpu>(_create_vcpu(vm, cap)),
+			vcpu(vcpu)
+		{ }
+};
 
 /******************************
  ** seL4 vCPU implementation **
  ******************************/
 
-struct Sel4_vcpu : Genode::Thread, Rpc_client<Vm_session::Native_vcpu>, Noncopyable
+struct Sel4_vcpu : Genode::Thread, Noncopyable
 {
 	private:
 
@@ -52,6 +76,8 @@ struct Sel4_vcpu : Genode::Thread, Rpc_client<Vm_session::Native_vcpu>, Noncopya
 		Blockade                    _startup { };
 		addr_t                      _recall { 0 };
 		uint64_t                    _tsc_offset { 0 };
+
+		Constructible<Sel4_native_rpc>     _rpc   { };
 
 		bool                        _show_error_unsupported_r { true };
 		bool                        _show_error_unsupported_tpr { true };
@@ -721,8 +747,6 @@ struct Sel4_vcpu : Genode::Thread, Rpc_client<Vm_session::Native_vcpu>, Noncopya
 			return ep->affinity();
 		}
 
-		Capability<Native_vcpu> _create_vcpu(Vm_connection &);
-
 	public:
 
 		Sel4_vcpu(Env &env, Vm_connection &vm,
@@ -730,17 +754,17 @@ struct Sel4_vcpu : Genode::Thread, Rpc_client<Vm_session::Native_vcpu>, Noncopya
 		:
 			Thread(env, "vcpu_thread", STACK_SIZE, _location(handler),
 			       Weight(), env.cpu()),
-			Rpc_client<Native_vcpu>(_create_vcpu(vm)),
 			_vcpu_handler(handler)
 		{
+			Thread::start();
+
+			/* wait until thread is alive, e.g. Thread::cap() is valid */
+			_startup.block();
+
+			_rpc.construct(vm, this->cap(), *this);
+
 			/* signal about finished vCPU assignment */
 			_wake_up.up();
-		}
-
-		void start() override
-		{
-			Thread::start();
-			_startup.block();
 		}
 
 		void resume()
@@ -768,32 +792,21 @@ struct Sel4_vcpu : Genode::Thread, Rpc_client<Vm_session::Native_vcpu>, Noncopya
 			_wake_up.up();
 		}
 
-		Vcpu_state & state() { return _state; }
+		Vcpu_state      & state() { return _state; }
+		Sel4_native_rpc * rpc()   { return &*_rpc; }
 };
-
-
-Capability<Vm_session::Native_vcpu> Sel4_vcpu::_create_vcpu(Vm_connection &vm)
-{
-	/* start proxy thread, Thread::cap() becomes valid afterwards */
-	this->start();
-
-	/* request to assign vCPU to the Thread::cap() */
-	return vm.with_upgrade([&] () {
-		return vm.call<Vm_session::Rpc_create_vcpu>(this->Thread::cap()); });
-}
-
 
 /**************
  ** vCPU API **
  **************/
 
-void         Vm_connection::Vcpu::run()   {        static_cast<Sel4_vcpu &>(_native_vcpu).resume(); }
-void         Vm_connection::Vcpu::pause() {        static_cast<Sel4_vcpu &>(_native_vcpu).pause(); }
-Vcpu_state & Vm_connection::Vcpu::state() { return static_cast<Sel4_vcpu &>(_native_vcpu).state(); }
+void         Vm_connection::Vcpu::run()   {        static_cast<Sel4_native_rpc &>(_native_vcpu).vcpu.resume(); }
+void         Vm_connection::Vcpu::pause() {        static_cast<Sel4_native_rpc &>(_native_vcpu).vcpu.pause(); }
+Vcpu_state & Vm_connection::Vcpu::state() { return static_cast<Sel4_native_rpc &>(_native_vcpu).vcpu.state(); }
 
 
 Vm_connection::Vcpu::Vcpu(Vm_connection &vm, Allocator &alloc,
                           Vcpu_handler_base &handler, Exit_config const &exit_config)
 :
-	_native_vcpu(*new (alloc) Sel4_vcpu(vm._env, vm, handler, exit_config))
+	_native_vcpu(*((new (alloc) Sel4_vcpu(vm._env, vm, handler, exit_config))->rpc()))
 { }
