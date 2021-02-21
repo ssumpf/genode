@@ -84,7 +84,7 @@ static inline bool svm_save_state(Genode::Vcpu_state * state, VM * pVM, PVMCPU p
 
 static inline bool svm_load_state(Genode::Vcpu_state * state, VM * pVM, PVMCPU pVCpu)
 {
-	typedef Genode::Vm_state::Segment Segment;
+	typedef Genode::Vcpu_state::Segment Segment;
 
 	PCPUMCTX pCtx  = CPUMQueryGuestCtxPtr(pVCpu);
 
