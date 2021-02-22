@@ -74,11 +74,14 @@ class Vmm::Virtio_console : public Virtio_device<Virtio_split_queue, 2>
 		               Mmio_bus         & bus,
 		               Ram              & ram,
 		               Genode::Env      & env)
-		: Virtio_device<Virtio_split_queue, 2>(name, addr, size,
-		                                       irq, cpu, bus, ram, CONSOLE),
-		  _terminal(env, "console"),
-		  _handler(cpu, env.ep(), *this, &Virtio_console::_read) {
-			_terminal.read_avail_sigh(_handler); }
+		:
+			Virtio_device<Virtio_split_queue, 2>(name, addr, size,
+			                                     irq, cpu, bus, ram, CONSOLE),
+			_terminal(env, "console"),
+			_handler(cpu, env.ep(), *this, &Virtio_console::_read)
+		{
+			_terminal.read_avail_sigh(_handler);
+		}
 };
 
 #endif /* _VIRTIO_CONSOLE_H_ */

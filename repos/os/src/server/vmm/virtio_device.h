@@ -151,8 +151,9 @@ class Vmm::Virtio_split_queue
 			addr_t   const start;
 
 			Descriptor_array(Ram & ram, addr_t base, unsigned const max)
-			: max(max),
-			  start(ram.local_address(base, max * elem_size)) {}
+			:
+				max(max),
+				start(ram.local_address(base, max * elem_size)) {}
 
 			Descriptor get(Descriptor_index idx)
 			{
@@ -400,9 +401,10 @@ class Vmm::Virtio_device : public Vmm::Mmio_device
 		              Mmio_bus              &bus,
 		              Ram                   &ram,
 		              uint32_t               dev_id)
-		: Mmio_device(name, addr, size),
-		  _irq(cpu.gic().irq(irq)),
-		  _ram(ram)
+		:
+			Mmio_device(name, addr, size),
+			_irq(cpu.gic().irq(irq)),
+			_ram(ram)
 		{
 			/* set device id from specific, derived device */
 			_dev_id.set(dev_id);

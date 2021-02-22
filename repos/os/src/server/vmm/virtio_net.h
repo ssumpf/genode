@@ -146,10 +146,11 @@ class Vmm::Virtio_net : public Virtio_device<Virtio_split_queue, 2>
 		           Mmio_bus &bus,
 		           Ram      &ram,
 		           Genode::Env &env)
-		: Virtio_device<Virtio_split_queue, 2>(name, addr, size,
-		                                       irq, cpu, bus, ram, NIC),
-		  _env(env),
-		  _handler(cpu, _env.ep(), *this, &Virtio_net::_handle)
+		:
+			Virtio_device<Virtio_split_queue, 2>(name, addr, size,
+			                                     irq, cpu, bus, ram, NIC),
+			_env(env),
+			_handler(cpu, _env.ep(), *this, &Virtio_net::_handle)
 		{
 			enum { VIRTIO_NET_F_MAC = 1u << 5 };
 			_dev_feature.set(VIRTIO_NET_F_MAC);
