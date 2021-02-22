@@ -754,10 +754,10 @@ struct Foc_vcpu : Thread, Noncopyable
 			typedef Vcpu_state::Range Range;
 
 			state.gdtr.charge(Range{.limit = vmcb->state_save_area.gdtr.limit,
-			                        .base  = vmcb->state_save_area.gdtr.base });
+			                        .base  = (addr_t)vmcb->state_save_area.gdtr.base });
 
 			state.idtr.charge(Range{.limit = vmcb->state_save_area.idtr.limit,
-			                        .base  = vmcb->state_save_area.idtr.base });
+			                        .base  = (addr_t)vmcb->state_save_area.idtr.base });
 
 			state.sysenter_cs.charge(vmcb->state_save_area.sysenter_cs);
 			state.sysenter_sp.charge(vmcb->state_save_area.sysenter_esp);
