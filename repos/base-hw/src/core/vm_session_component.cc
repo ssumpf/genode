@@ -61,16 +61,13 @@ Capability<Vm_session::Native_vcpu> Vm_session_component::create_vcpu(Thread_cap
 	if (_vcpus[_vcpu_id_alloc].constructed())
 		return { };
 
-	_vcpus[_vcpu_id_alloc].construct(_id);
+	_vcpus[_vcpu_id_alloc].construct(_id, _ep);
 	Vcpu & vcpu = *_vcpus[_vcpu_id_alloc];
 
 	try {
 		vcpu.ds_cap = _constrained_md_ram_alloc.alloc(_ds_size(),
 		                                              Cache_attribute::UNCACHED);
 		vcpu.ds_addr = _region_map.attach(vcpu.ds_cap);
-
-		/* XXX */
-		_ep.manage(&vcpu);
 	} catch (...) {
 		if (vcpu.ds_cap.valid())
 			_constrained_md_ram_alloc.free(vcpu.ds_cap);

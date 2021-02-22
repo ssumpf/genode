@@ -54,12 +54,21 @@ class Genode::Vm_session_component
 		struct Vcpu : public Rpc_object<Vm_session::Native_vcpu, Vcpu>
 		{
 			Kernel::Vm::Identity      &id;
+			Rpc_entrypoint            &ep;
 			Ram_dataspace_capability   ds_cap   { };
 			Region_map::Local_addr     ds_addr  { nullptr };
 			Kernel_object<Kernel::Vm>  kobj     {};
 			Affinity::Location         location {};
 
-			Vcpu(Kernel::Vm::Identity &id) : id(id) { }
+			Vcpu(Kernel::Vm::Identity &id, Rpc_entrypoint &ep) : id(id), ep(ep)
+			{
+				ep.manage(this);
+			}
+
+			~Vcpu()
+			{
+				ep.dissolve(this);
+			}
 
 			/*******************************
 			 ** Native_vcpu RPC interface **
