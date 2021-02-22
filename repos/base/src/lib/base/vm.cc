@@ -14,7 +14,6 @@
 
 /* Genode includes */
 #include <vm_session/connection.h>
-#include <cpu/vcpu_state.h>
 
 using namespace Genode;
 
