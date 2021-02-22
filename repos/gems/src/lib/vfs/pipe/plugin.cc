@@ -213,7 +213,7 @@ struct Vfs_pipe::Pipe
 
 		if (buffer.avail_capacity() == 0) {
 			out_count = 0;
-			return Write_result::WRITE_ERR_WOULD_BLOCK;
+			return Write_result::WRITE_OK;
 		}
 
 		while (out < count && 0 < buffer.avail_capacity()) {
