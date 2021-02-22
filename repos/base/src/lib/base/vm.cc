@@ -28,6 +28,8 @@ void Vm_connection::Vcpu::run() { }
 void Vm_connection::Vcpu::pause() { }
 
 
+struct Genode::Vcpu_state { };
+
 Vcpu_state & Vm_connection::Vcpu::state()
 {
 	static char dummy[sizeof(Vcpu_state)];
@@ -36,7 +38,8 @@ Vcpu_state & Vm_connection::Vcpu::state()
 }
 
 
-Vm_connection::Vcpu::Vcpu(Vm_connection &, Allocator &, Vcpu_handler_base &)
+Vm_connection::Vcpu::Vcpu(Vm_connection &, Allocator &,
+                          Vcpu_handler_base &, Exit_config const &)
 :
 	_native_vcpu(dummy)
 {
