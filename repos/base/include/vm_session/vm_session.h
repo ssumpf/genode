@@ -82,11 +82,6 @@ struct Genode::Vm_session : Session
 	 ** RPC declaration **
 	 *********************/
 
-//	/* all */  GENODE_RPC(Rpc_cpu_state, Dataspace_capability, _cpu_state, Vcpu_id);
-//	/* hw */   GENODE_RPC(Rpc_exception_handler, void, _exception_handler, Signal_context_capability, Vcpu_id);
-//	/* sel4 */ GENODE_RPC(Rpc_pause, void, _pause, Vcpu_id);
-//	/* hw */   GENODE_RPC(Rpc_kernel_cap, Untyped_capability, kernel_cap, Vcpu_id);
-
 	GENODE_RPC_THROW(Rpc_attach, void, attach,
 	                 GENODE_TYPE_LIST(Out_of_ram, Out_of_caps, Region_conflict,
 	                                  Invalid_dataspace),

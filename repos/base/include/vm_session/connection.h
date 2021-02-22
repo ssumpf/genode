@@ -57,7 +57,7 @@ struct Genode::Vm_connection : Connection<Vm_session>, Rpc_client<Vm_session>
 	 */
 	struct Exit_config
 	{
-		/* TODO for example OMIT_FPU_ON_IRQ */
+		/* for example OMIT_FPU_ON_IRQ */
 	};
 
 	/**
@@ -70,9 +70,6 @@ struct Genode::Vm_connection : Connection<Vm_session>, Rpc_client<Vm_session>
 	{
 		Native_vcpu &_native_vcpu;
 
-		/**
-		 * XXX Vcpu_handler should become only Vcpu_handler::handle_vcpu_exception()
-		 */
 		Vcpu(Vm_connection &, Allocator &, Vcpu_handler_base &, Exit_config const &);
 
 		void run();
