@@ -5,9 +5,8 @@ set use_overlay 0
 set use_serial 1
 set use_top 1
 
-set build_components { virtualbox6 }
-
 create_boot_directory
+
 
 set depot_archives { }
 
@@ -22,14 +21,17 @@ lappend depot_archives [depot_user]/src/report_rom
 lappend depot_archives [depot_user]/src/vfs_import
 lappend depot_archives [depot_user]/src/vfs_pipe
 
+lappend_if [expr $use_net] depot_archives [depot_user]/src/ipxe_nic_drv
+lappend_if [expr $use_net] depot_archives [depot_user]/src/nic_router
+
 import_from_depot $depot_archives
+
+
+set build_components { virtualbox6 }
 
 lappend_if [expr $use_top]    build_components app/top
 lappend_if [expr $use_serial] build_components server/log_terminal
 lappend_if [have_spec x86]    build_components drivers/rtc
-
-lappend_if [expr $use_net]    build_components drivers/nic
-lappend_if [expr $use_net]    build_components server/nic_router
 
 build $build_components
 
@@ -57,7 +59,7 @@ append config {
 	<default caps="100"/>
 	<start name="timer" priority="0">
 		<resource name="RAM" quantum="1M"/>
-		<provides><service name="Timer"/></provides>
+		<provides> <service name="Timer"/> </provides>
 	</start>}
 
 
@@ -69,8 +71,9 @@ append_if [expr $use_top] config {
 
 append config {
 	<start name="drivers" caps="1500" managing_system="yes" priority="-1">
-		<resource name="RAM" quantum="64M"/>
 		<binary name="init"/>
+		<resource name="RAM" quantum="64M"/>
+		<provides> <service name="Platform"/> </provides>
 		<route>
 			<service name="ROM" label="config"> <parent label="drivers.config"/> </service>
 			<service name="Timer">   <child name="timer"/> </service>
@@ -88,50 +91,44 @@ append config {
 	</start>}
 
 append_if [expr $use_net] config {
-	<start name="nic_drv" priority="-1">
-		<binary name="ipxe_nic_drv"/>
-		<resource name="RAM" quantum="8M"/>
-		<config mode="uplink_client"/>
-		<route>
-			<service name="Uplink"> <child name="nic_router"/> </service>
-			<any-service> <parent/> <any-child/> </any-service>
-		</route>
-	</start>
-
-	<start name="nic_router" caps="120">
+	<start name="nic_router" caps="120" priority="-1">
 		<resource name="RAM" quantum="5M"/>
 		<provides>
 			<service name="Nic"/>
 			<service name="Uplink"/>
 		</provides>
 		<config verbose_domain_state="yes">
-
 			<policy label_prefix="vbox"    domain="downlink"/>
 			<policy label_prefix="nic_drv" domain="uplink"/>
 
 			<domain name="uplink">
-
 				<nat domain="downlink"
 				     tcp-ports="16384"
 				     udp-ports="16384"
 				     icmp-ids="16384"/>
-
 			</domain>
 
 			<domain name="downlink" interface="10.0.3.1/24" verbose_packets="no">
-
 				<dhcp-server ip_first="10.0.3.100" ip_last="10.0.3.200">
 					<dns-server ip="8.8.8.8"/>
 					<dns-server ip="1.1.1.1"/>
 				</dhcp-server>
-
 				<tcp dst="0.0.0.0/0"> <permit-any domain="uplink"/> </tcp>
 				<udp dst="0.0.0.0/0"> <permit-any domain="uplink"/> </udp>
 				<icmp dst="0.0.0.0/0" domain="uplink"/>
-
 			</domain>
-
 		</config>
+	</start>
+
+	<start name="nic_drv" priority="-1">
+		<binary name="ipxe_nic_drv"/>
+		<resource name="RAM" quantum="8M"/>
+		<config mode="uplink_client"/>
+		<route>
+			<service name="Platform"> <child name="drivers"/> </service>
+			<service name="Uplink"> <child name="nic_router"/> </service>
+			<any-service> <parent/> <any-child/> </any-service>
+		</route>
 	</start>}
 
 append_if [expr $use_serial] config {
