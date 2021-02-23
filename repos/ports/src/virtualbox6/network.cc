@@ -480,8 +480,6 @@ static DECLCALLBACK(void) drvNicDestruct(PPDMDRVINS pDrvIns)
  */
 static DECLCALLBACK(int) drvNicConstruct(PPDMDRVINS pDrvIns, PCFGMNODE pCfg, uint32_t fFlags)
 {
-	Genode::error("construct me ");
-
 	PDRVNIC pThis = PDMINS_2_DATA(pDrvIns, PDRVNIC);
 	PDMDRV_CHECK_VERSIONS_RETURN(pDrvIns);
 	int rc;
