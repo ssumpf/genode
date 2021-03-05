@@ -28,8 +28,14 @@ void Thread::exception(Cpu & cpu)
 	using Stval = Genode::Cpu::Stval;
 
 	if (regs->is_irq()) {
-		/* there are only cpu-local timer interrupts right now */
-		cpu.interrupt(cpu.timer().interrupt_id());
+		/* cpu-local timer interrupt */
+		if (regs->irq() == cpu.timer().interrupt_id()) {
+			cpu.interrupt(cpu.timer().interrupt_id());
+		} else {
+			//Genode::raw("irq: ", regs->irq());
+			/* interrupt controller */
+			_interrupt(0);
+		}
 		return;
 	}
 
