@@ -15,9 +15,10 @@ proc qemu_args { } {
 }
 
 proc qemu_nic_model {} {
-	if [have_board pbxa9]     { return lan9118 }
-	if [have_board zynq_qemu] { return cadence_gem }
-	if [have_board pc]        { return e1000 }
+	if [have_board pbxa9]      { return lan9118 }
+	if [have_board zynq_qemu]  { return cadence_gem }
+	if [have_board pc]         { return e1000 }
+	if [have_board riscv_qemu] { return open_eth }
 	return nic_model_missing
 }
 

@@ -490,6 +490,8 @@ proc drivers_nic_pkg { } {
 	if {[have_board imx7d_sabre]}     { return drivers_nic-imx7d_sabre     }
 	if {[have_board imx8q_evk]}       { return drivers_nic-imx8q_evk       }
 	if {[have_board virt_qemu]}       { return drivers_nic-virt_qemu       }
+	if {[have_board riscv_qemu]}      { return drivers_nic-riscv_qemu      }
+	if {[have_board migv]}            { return drivers_nic-migv            }
 
 	puts stderr "drivers_nic package undefined for this build configuration"
 	exit 1
