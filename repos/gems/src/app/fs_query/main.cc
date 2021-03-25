@@ -223,22 +223,27 @@ struct Fs_query::Main : Vfs::Watch_response_handler
 
 	void _handle_config()
 	{
-		_config.update();
+			_config.update();
 
-		Xml_node const config = _config.xml();
+			Xml_node const config = _config.xml();
 
-		_root_dir_fs.apply_config(config.sub_node("vfs"));
+			_root_dir_fs.apply_config(config.sub_node("vfs"));
 
-		_dirs.for_each([&] (Registered<Watched_directory> &dir) {
-			destroy(_heap, &dir); });
+			_dirs.for_each([&] (Registered<Watched_directory> &dir) {
+				destroy(_heap, &dir); });
 
-		config.for_each_sub_node("query", [&] (Xml_node query) {
-			Directory::Path const path = query.attribute_value("path", Directory::Path());
-			new (_heap) Registered<Watched_directory>(_dirs, _heap, _root_dir, path, *this);
-		});
+			config.for_each_sub_node("query", [&] (Xml_node query) {
+				Directory::Path const path = query.attribute_value("path", Directory::Path());
+				try {
+					new (_heap)
+						Registered<Watched_directory>(
+							_dirs, _heap, _root_dir, path, *this);
+				}
+				catch (Genode::Directory::Nonexistent_directory) { }
+			});
 
-		_reporter.generate([&] (Xml_generator &xml) {
-			_gen_listing(xml, config); });
+			_reporter.generate([&] (Xml_generator &xml) {
+				_gen_listing(xml, config); });
 	}
 
 	Main(Env &env) : _env(env)
