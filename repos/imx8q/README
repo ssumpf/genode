@@ -1,0 +1,9 @@
+This repository contains devices drivers for the iMX8-MQ platform.
+
+
+imx8mq_gpu
+~~~~~~~~~~
+
+This is a experimental port of the 'etnaviv' Linux DRM driver for Vivante
+GPUs. For more information on how to use the driver please look at
+'src/drivers/gpu/etnaviv/README'.

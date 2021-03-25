@@ -1,0 +1,34 @@
+LICENSE     := GPLv2
+VERSION     := 2
+DOWNLOADS   := imx8mq_gpu.archive
+
+#
+# Tools
+#
+$(call check_tool,flex)
+$(call check_tool,bison)
+
+FLEX = flex
+YACC = bison
+
+#
+# i.MX8 Framebuffer driver
+#
+SRC_DIR_IMX8MQ_GPU  := src/drivers/gpu/etnaviv
+URL(imx8mq_gpu)     := https://github.com/Freescale/linux-fslc/tarball/c7225ae
+NAME(imx8mq_gpu)    := linux-5.4-2.3.x-imx.tar.gz
+SHA(imx8mq_gpu)     := eff933df2d5efd091d73a3708bd9c94cbf17822d58ea4948f0548b20e514bcbb
+TAR_OPT(imx8mq_gpu) := --strip-components=1 --files-from - < \
+                       <(cat $(REP_DIR)/imx8mq_gpu.list $(REP_DIR)/imx8mq_gpu_gen.list|sed 's;^;Freescale-linux-fslc-c7225ae/;')
+DIR(imx8mq_gpu)     := $(SRC_DIR_IMX8MQ_GPU)
+
+#
+# Patches
+#
+PATCHES += $(addprefix patches/,$(notdir $(wildcard $(REP_DIR)/patches/imx8mq_gpu*.patch)))
+
+# Freescale i.MX8 framebuffer
+IMX8MQ_GPU_OPT = -p1 -d$(SRC_DIR_IMX8MQ_GPU)
+PATCH_OPT(patches/imx8mq_gpu.patch) := $(IMX8MQ_GPU_OPT)
+
+# vi: set ft=make :

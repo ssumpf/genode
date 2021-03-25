@@ -1,0 +1,24 @@
+This directory contains an experimental port of the Linux DRM driver
+'etnaviv' for Vivante GC7000L GPUs.
+
+Limitations
+~~~~~~~~~~~
+
+There is no policy management implemented and therefore each connecting
+client is allowed to use the service. Furthermore the 'Drm' session does not
+make use of accounting mechanisms, the driver has to provide all the resources
+the client may need.
+
+
+Usage
+~~~~~
+
+The driver will announce the 'Drm' service after it successfully initialized
+the GPU.
+
+To start the driver the following configuration snippet can be used:
+
+!<start name="imx8mq_gpu_drv" caps="500">
+!  <resource name="RAM" quantum="128M">
+!  <provides> <service name="Drm"/> </provides>
+!</start>
