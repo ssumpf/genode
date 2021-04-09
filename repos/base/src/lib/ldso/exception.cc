@@ -38,6 +38,9 @@ extern "C" int dl_iterate_phdr(int (*callback) (Phdr_info *info, size_t size, vo
 	int err = 0;
 	Phdr_info info;
 
+	/* forbid object list manipulation during traversal */
+	Mutex::Guard guard(Linker::shared_object_mutex());
+
 	for (Object *e = obj_list_head();e; e = e->next_obj()) {
 
 		info.addr  = e->reloc_base();
@@ -85,6 +88,9 @@ extern "C" unsigned long dl_unwind_find_exidx(unsigned long pc, int *pcount)
 	/* size of exception table entries */
 	enum { EXIDX_ENTRY_SIZE = 8 };
 	*pcount = 0;
+
+	/* forbid object list manipulation during traversal */
+	Mutex::Guard guard(Linker::shared_object_mutex());
 
 	for (Object *e = obj_list_head(); e; e = e->next_obj()) {
 
