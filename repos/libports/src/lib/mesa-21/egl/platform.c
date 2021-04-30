@@ -79,12 +79,14 @@ _create_surface(_EGLDisplay *disp,
 		dri2_surf->dri_drawable = (*dri2_dpy->dri2->createNewDrawable)(dri2_dpy->dri_screen, config,
 		                                                               dri2_surf);
 		/* create back buffer image */
+		unsigned flags = 0;
+		flags |= __DRI_IMAGE_USE_LINEAR;
+		flags |= (__DRI_IMAGE_USE_SHARE | __DRI_IMAGE_USE_BACKBUFFER);
 		dri2_surf->back_image = dri2_dpy->image->createImage(dri2_dpy->dri_screen,
 		                                                     dri2_surf->base.Width,
 		                                                     dri2_surf->base.Height,
-		                                                     __DRI_IMAGE_FORMAT_ARGB8888,
-		                                                     dri2_dpy->is_different_gpu ?
-		                                                     0 : __DRI_IMAGE_USE_SHARE,
+		                                                     __DRI_IMAGE_FORMAT_XRGB8888,
+		                                                     flags,
 		                                                     NULL);
 	} else {
 		assert(dri2_dpy->swrast);
@@ -120,7 +122,11 @@ dri2_genode_create_window_surface(_EGLDisplay *disp,
                                   _EGLConfig *conf, void *native_window,
                                   const EGLint *attrib_list)
 {
-	return _create_surface(disp, conf, native_window, attrib_list, WINDOW);
+	_EGLSurface *surf = _create_surface(disp, conf, native_window, attrib_list, WINDOW);
+	if (surf) {
+		_eglGetSurface(surf);
+	}
+	return surf;
 }
 
 
@@ -161,7 +167,6 @@ dri2_genode_destroy_surface(_EGLDisplay *disp, _EGLSurface *surf)
 
 EGLBoolean dri2_initialize_genode(_EGLDisplay *disp)
 {
-	printf("%s:%d\n", __func__, __LINE__);
 	void *handle;
 
 	if (!(handle = dlopen("egl_drv.lib.so", 0))) {

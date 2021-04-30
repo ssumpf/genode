@@ -13,14 +13,14 @@ DIR(mesa)     := src/lib/mesa
 TAR_OPT(mesa) := --strip-components=1 --files-from $(REP_DIR)/src/lib/mesa-21/files.list
 HASH_INPUT    += $(REP_DIR)/src/lib/mesa-21/files.list
 
-PATCHES       := src/lib/mesa-21/patches/mesa.patch
+PATCHES       := src/lib/mesa-21/patches/*.patch
 PATCH_OPT     := -p1
 
 #
 # Generated Mesa sources
 #
-URL(generated) = https://github.com/ssumpf/mesa_generated.git
-REV(generated) = ba569dd5118e44a6b830059407906e34c2caa0fe
+URL(generated) = https://github.com/cnuke/mesa_generated.git
+REV(generated) = 20f45398755f4c4bb404070f8045b81e2697ccb4
 DIR(generated) = generated
 
 #
@@ -64,6 +64,7 @@ generated_files = $(GEN_TARGET)/src/compiler/glsl/float64_glsl.h \
                   $(GEN_TARGET)/src/compiler/spirv/spirv_info.c \
                   $(GEN_TARGET)/src/compiler/spirv/vtn_gather_types.c \
                   $(GEN_TARGET)/src/compiler/spirv/vtn_generator_ids.h \
+                  $(GEN_TARGET)/src/gallium/auxiliary/indices/u_indices_gen.c \
                   $(GEN_TARGET)/src/git_sha1.h \
                   $(GEN_TARGET)/src/mapi/glapi/gen/api_exec.c \
                   $(GEN_TARGET)/src/mapi/glapi/gen/enums.c \
@@ -206,6 +207,11 @@ $(GEN_TARGET)/src/mapi/glapi/gen/enums.c:
 	$(MSG_DIR)
 	$(VERBOSE)$(PYTHON) $(SRC)/src/mapi/glapi/gen/gl_enums.py \
 	-f $(SRC)/src/mapi/glapi/registry/gl.xml > $@
+
+$(GEN_TARGET)/src/gallium/auxiliary/indices/u_indices_gen.c:
+	$(MSG_DIR)
+	$(VERBOSE)$(PYTHON) \
+		$(SRC)/src/gallium/auxiliary/indices/u_indices_gen.py > $@
 
 $(GEN_TARGET)/src/git_sha1.h:
 	$(MSG_DIR)

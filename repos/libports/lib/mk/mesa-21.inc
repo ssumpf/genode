@@ -1,5 +1,5 @@
-SHARED_LIB = yes
-LIBS       = libc stdcxx zlib expat glapi-21 softpipe mesa-21_api
+SHARED_LIB := yes
+LIBS       += libc stdcxx zlib expat glapi-21 softpipe mesa-21_api libdrm
 
 include $(REP_DIR)/lib/mk/mesa-common-21.inc
 
@@ -23,6 +23,7 @@ INC_DIR += $(MESA_GEN_DIR)/src/compiler \
            $(MESA_SRC_DIR)/src/gallium/drivers \
            $(MESA_SRC_DIR)/src/gallium/frontends/dri \
            $(MESA_SRC_DIR)/src/gallium/winsys \
+           $(MESA_SRC_DIR)/src/loader \
            $(MESA_SRC_DIR)/src/mapi \
            $(MESA_SRC_DIR)/src/mesa \
            $(MESA_SRC_DIR)/src/mesa/drivers/dri/common \
@@ -216,12 +217,14 @@ SRC_C += compiler/glsl/glcpp/pp.c \
          compiler/nir/nir_lower_alu_to_scalar.c \
          compiler/nir/nir_lower_atomics_to_ssbo.c \
          compiler/nir/nir_lower_bitmap.c \
+         compiler/nir/nir_lower_bool_to_bitsize.c \
          compiler/nir/nir_lower_bool_to_float.c \
          compiler/nir/nir_lower_bool_to_int32.c \
          compiler/nir/nir_lower_clamp_color_outputs.c \
          compiler/nir/nir_lower_clip.c \
          compiler/nir/nir_lower_clip_cull_distance_arrays.c \
          compiler/nir/nir_lower_clip_disable.c \
+         compiler/nir/nir_lower_clip_halfz.c \
          compiler/nir/nir_lower_double_ops.c \
          compiler/nir/nir_lower_drawpixels.c \
          compiler/nir/nir_lower_flatshade.c \
@@ -229,6 +232,7 @@ SRC_C += compiler/glsl/glcpp/pp.c \
          compiler/nir/nir_lower_frexp.c \
          compiler/nir/nir_lower_global_vars_to_local.c \
          compiler/nir/nir_lower_goto_ifs.c \
+         compiler/nir/nir_lower_idiv.c \
          compiler/nir/nir_lower_indirect_derefs.c \
          compiler/nir/nir_lower_int64.c \
          compiler/nir/nir_lower_int_to_float.c \
@@ -260,6 +264,7 @@ SRC_C += compiler/glsl/glcpp/pp.c \
          compiler/nir/nir_lower_vec_to_movs.c \
          compiler/nir/nir_lower_wpos_ytransform.c \
          compiler/nir/nir_metadata.c \
+         compiler/nir/nir_move_vec_src_uses_to_dest.c \
          compiler/nir/nir_opt_access.c \
          compiler/nir/nir_opt_combine_stores.c \
          compiler/nir/nir_opt_conditional_discard.c \
@@ -363,10 +368,14 @@ SRC_C += compiler/glsl/glcpp/pp.c \
          gallium/auxiliary/hud/hud_cpu.c \
          gallium/auxiliary/hud/hud_driver_query.c \
          gallium/auxiliary/hud/hud_fps.c \
+         gallium/auxiliary/indices/u_indices_gen.c \
+         gallium/auxiliary/indices/u_primconvert.c \
          gallium/auxiliary/nir/nir_draw_helpers.c \
          gallium/auxiliary/nir/nir_to_tgsi.c \
+         gallium/auxiliary/nir/tgsi_to_nir.c \
          gallium/auxiliary/os/os_process.c \
          gallium/auxiliary/pipe-loader/pipe_loader.c \
+         gallium/auxiliary/pipe-loader/pipe_loader_drm.c \
          gallium/auxiliary/pipe-loader/pipe_loader_sw.c \
          gallium/auxiliary/postprocess/pp_celshade.c \
          gallium/auxiliary/postprocess/pp_colors.c \
@@ -380,6 +389,7 @@ SRC_C += compiler/glsl/glcpp/pp.c \
          gallium/auxiliary/rbug/rbug_demarshal.c \
          gallium/auxiliary/rbug/rbug_shader.c \
          gallium/auxiliary/rbug/rbug_texture.c \
+         gallium/auxiliary/renderonly/renderonly.c \
          gallium/auxiliary/rtasm/rtasm_cpu.c \
          gallium/auxiliary/rtasm/rtasm_execmem.c \
          gallium/auxiliary/rtasm/rtasm_x86sse.c \
@@ -390,6 +400,7 @@ SRC_C += compiler/glsl/glcpp/pp.c \
          gallium/auxiliary/tgsi/tgsi_from_mesa.c \
          gallium/auxiliary/tgsi/tgsi_info.c \
          gallium/auxiliary/tgsi/tgsi_iterate.c \
+         gallium/auxiliary/tgsi/tgsi_lowering.c \
          gallium/auxiliary/tgsi/tgsi_parse.c \
          gallium/auxiliary/tgsi/tgsi_sanity.c \
          gallium/auxiliary/tgsi/tgsi_scan.c \
@@ -405,6 +416,7 @@ SRC_C += compiler/glsl/glcpp/pp.c \
          gallium/auxiliary/util/u_bitmask.c \
          gallium/auxiliary/util/u_blitter.c \
          gallium/auxiliary/util/u_debug_describe.c \
+         gallium/auxiliary/util/u_debug_refcnt.c \
          gallium/auxiliary/util/u_dl.c \
          gallium/auxiliary/util/u_draw.c \
          gallium/auxiliary/util/u_draw_quad.c \
@@ -412,9 +424,11 @@ SRC_C += compiler/glsl/glcpp/pp.c \
          gallium/auxiliary/util/u_dump_state.c \
          gallium/auxiliary/util/u_framebuffer.c \
          gallium/auxiliary/util/u_gen_mipmap.c \
+         gallium/auxiliary/util/u_hash_table.c \
          gallium/auxiliary/util/u_helpers.c \
          gallium/auxiliary/util/u_log.c \
          gallium/auxiliary/util/u_network.c \
+         gallium/auxiliary/util/u_prim_restart.c \
          gallium/auxiliary/util/u_pstipple.c \
          gallium/auxiliary/util/u_sampler.c \
          gallium/auxiliary/util/u_screen.c \
@@ -426,6 +440,7 @@ SRC_C += compiler/glsl/glcpp/pp.c \
          gallium/auxiliary/util/u_transfer.c \
          gallium/auxiliary/util/u_upload_mgr.c \
          gallium/auxiliary/util/u_vbuf.c \
+         gallium/frontends/dri/dri2.c \
          gallium/frontends/dri/dri_context.c \
          gallium/frontends/dri/dri_drawable.c \
          gallium/frontends/dri/dri_helpers.c \
@@ -684,9 +699,11 @@ SRC_C += compiler/glsl/glcpp/pp.c \
          util/os_time.c \
          util/ralloc.c \
          util/rand_xor.c \
+         util/register_allocate.c \
          util/rgtc.c \
          util/set.c \
          util/sha1/sha1.c \
+         util/slab.c \
          util/softfloat.c \
          util/string_buffer.c \
          util/strtod.c \
@@ -698,16 +715,17 @@ SRC_C += compiler/glsl/glcpp/pp.c \
          util/u_process.c \
          util/u_queue.c \
          util/u_vector.c \
+         util/vma.c \
          util/xmlconfig.c
 
 CC_OPT += -DMAPI_ABI_HEADER=\"glapi/gen/glapi_mapi_tmp.h\" \
           -DMAPI_MODE_BRIDGE
 
-
 CC_OPT_loader/loader = -DDEFAULT_DRIVER_DIR='"/drivers"'
 CC_OPT_compiler/glsl/glsl_lexer = -include "stdint.h"
-CC_OPT_gallium/auxiliary/pipe-loader/pipe_loader_sw = -DPIPE_SEARCH_DIR='"/pipe"' -DGALLIUM_STATIC_TARGETS=1
-CC_OPT_gallium/auxiliary/pipe-loader/pipe_loader    = -DGALLIUM_STATIC_TARGETS=1
+CC_OPT_gallium/auxiliary/pipe-loader/pipe_loader_sw  = -DPIPE_SEARCH_DIR='"/pipe"' -DGALLIUM_STATIC_TARGETS=1
+CC_OPT_gallium/auxiliary/pipe-loader/pipe_loader_drm = -DGALLIUM_STATIC_TARGETS=1
+CC_OPT_gallium/auxiliary/pipe-loader/pipe_loader     = -DGALLIUM_STATIC_TARGETS=1
 
 CC_CXX_WARN_STRICT =
 

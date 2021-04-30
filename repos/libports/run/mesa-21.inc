@@ -10,10 +10,23 @@ if {[have_include power_on/qemu] && $use_i965} {
 }
 
 create_boot_directory
-import_from_depot [depot_user]/pkg/[drivers_interactive_pkg] \
-                  [depot_user]/src/nitpicker \
-                  [depot_user]/src/demo \
 
+set imports { }
+
+if {[have_spec linux]} {
+lappend imports [depot_user]/pkg/drivers_interactive-[board]
+}
+
+if {$use_etnaviv} {
+lappend imports [depot_user]/pkg/drivers_managed-[board]
+}
+lappend imports [depot_user]/src/nitpicker
+lappend imports [depot_user]/src/gui_fb
+lappend imports [depot_user]/src/demo
+lappend imports [depot_user]/src/report_rom
+
+
+import_from_depot $imports
 
 set build_components {
 	drivers/gpu/intel
@@ -23,6 +36,7 @@ set build_components {
 
 lappend_if $use_i965 build_components lib/mesa/i965
 lappend_if $use_etnaviv build_components lib/mesa-21/etnaviv
+lappend_if $use_etnaviv build_components drivers/gpu/etnaviv
 lappend build_components $demo_component
 
 build $build_components
@@ -49,14 +63,25 @@ set config {
 		<provides><service name="Timer"/></provides>
 	</start>
 
-	<start name="drivers" caps="1500" managing_system="yes">
-		<resource name="RAM" quantum="64M"/>
+	<start name="report_rom">
+		<resource name="RAM" quantum="1M"/>
+		<provides> <service name="Report"/> <service name="ROM"/> </provides>
+		<config verbose="no"/>
+		<route>
+			<any-service> <parent/> </any-service>
+		</route>
+	</start>
+
+	<start name="drivers" caps="2500" managing_system="yes">
+		<resource name="RAM" quantum="128M"/>
 		<binary name="init"/>
+		<provides> <service name="Platform"/> </provides>
 		<route>
 			<service name="ROM" label="config"> <parent label="drivers.config"/> </service>
 			<service name="Timer">   <child name="timer"/> </service>
 			<service name="Capture"> <child name="nitpicker"/> </service>
 			<service name="Event">   <child name="nitpicker"/> </service>
+			<service name="Report">  <child name="report_rom"/> </service>
 			<any-service> <parent/> </any-service>
 		</route>
 	</start>
@@ -78,10 +103,10 @@ set config {
 	<start name="pointer">
 		<resource name="RAM" quantum="1M"/>
 	</start>
-	<start name="liquid_fb" caps="200">
+	<start name="gui_fb" caps="200">
 		<resource name="RAM" quantum="16M"/>
 		<provides> <service name="Framebuffer"/> <service name="Input"/> </provides>
-		<config resize_handle="off" animate="off" title="gears" width="600" height="600" xpos="100" ypos="100"/>
+		<config resize_handle="off" animate="off" title="gears" width="600" height="600" xpos="800" ypos="100"/>
 		<route>
 		<any-service> <parent/> <any-child/> </any-service>
 		</route>
@@ -175,6 +200,17 @@ append_if $use_i965 config {
 		</route>
 	</start>}
 
+append_if $use_etnaviv config {
+	<start name="imx8q_gpu_drv" caps="200">
+		<resource name="RAM" quantum="64M"/>
+		<provides> <service name="Drm"/> </provides>
+		<route>
+			<service name="Timer"> <child name="timer"/> </service>
+			<service name="Platform"> <child name="drivers"/> </service>
+			<any-service> <parent/> </any-service>
+		</route>
+	</start>}
+
 append config {
 </config>}
 
@@ -185,6 +221,7 @@ set boot_modules {
 	egl-21.lib.so mesa-21.lib.so stdcxx.lib.so
 	expat.lib.so glapi-21.lib.so zlib.lib.so
 	core init ld.lib.so timer egl_swrast-21.lib.so
+	libdrm.lib.so
 }
 
 append_if $use_i965 boot_modules {
@@ -193,7 +230,9 @@ append_if $use_i965 boot_modules {
 }
 
 append_if $use_etnaviv boot_modules {
-	egl_etnaviv-21.lib.so drm.lib.so
+	egl_etnaviv-21.lib.so libdrm.lib.so
+
+	imx8q_gpu_drv
 }
 
 append boot_modules $demo_modules
