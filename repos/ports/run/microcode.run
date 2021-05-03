@@ -52,7 +52,8 @@ install_config {
 	</config>
 }
 
-copy_file {*}$microcode_files bin/
+foreach file $microcode_files {
+	copy_file $file bin/ }
 
 
 set boot_modules { core ld.lib.so init test-microcode }
