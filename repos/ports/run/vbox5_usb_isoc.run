@@ -1,3 +1,9 @@
+create_boot_directory
+
+import_from_depot [depot_user]/pkg/top_view \
+                  [depot_user]/pkg/fonts_fs
+
+
 set build_components {
 	core init timer
 	drivers/framebuffer
@@ -9,9 +15,11 @@ set build_components {
 	server/dynamic_rom
 	server/event_filter
 	server/fs_rom
+	server/gui_fb
 	server/nitpicker
 	server/part_block
 	server/report_rom
+	server/rom_filter
 	server/vfs
 	server/log_terminal
 	lib/vfs/pipe
@@ -21,6 +29,7 @@ set build_components {
 	app/pointer
 	app/usb_report_filter
 	app/top
+	app/usb_webcam
 	virtualbox5
 }
 
@@ -40,13 +49,11 @@ source ${genode_dir}/repos/base/run/platform_drv.inc
 
 lappend build_components server/cpu_sampler
 lappend build_components lib/cpu_sampler_platform-nova
-lappend build_components test/libuvc
 
 append_platform_drv_build_components
 
 build $build_components
 
-create_boot_directory
 
 
 append config {
@@ -76,6 +83,62 @@ append config {
 		</route>
 	</start>
 
+	<start name="fonts_fs" caps="300" priority="-1">
+		<resource name="RAM" quantum="8M"/>
+		<binary name="vfs"/>
+		<route>
+			<service name="ROM" label="config"> <parent label="fonts_fs.config"/> </service>
+			<any-service> <parent/> </any-service>
+		</route>
+		<provides> <service name="File_system"/> </provides>
+	</start>
+
+
+	<start name="menu_view" caps="200" priority="-1">
+		<resource name="RAM" quantum="24M"/>
+		<config xpos="200" ypos="100">
+			<report hover="yes"/>
+			<libc stderr="/dev/log"/>
+			<vfs>
+				<tar name="menu_view_styles.tar" />
+				<dir name="dev"> <log/> </dir>
+				<dir name="fonts"> <fs label="fonts"/> </dir>
+			</vfs>
+		</config>
+		<route>
+			<service name="ROM" label="dialog"> <child name="report_rom" /> </service>
+			<service name="Report" label="hover"> <child name="report_rom"/> </service>
+			<service name="File_system" label="fonts"> <child name="fonts_fs" label="fonts"/> </service>
+			<service name="Gui"> <child name="nitpicker"/></service>
+			<any-service> <parent/> <any-child/> </any-service>
+		</route>
+	</start>
+
+	<start name="graph" caps="100" priority="-1">
+		<resource name="RAM" quantum="8M"/>
+		<config>
+			<vfs> <dir name="fonts"> <fs label="fonts"/> </dir> </vfs>
+		</config>
+		<route>
+			<service name="ROM" label="graph"> <child name="report_rom" /> </service>
+			<service name="File_system" label="fonts"> <child name="fonts_fs" label="fonts"/> </service>
+			<service name="Gui"> <child name="nitpicker"/></service>
+			<any-service> <parent/> <any-child/> </any-service>
+		</route>
+	</start>
+
+	<start name="top_view" caps="200" priority="-1">
+		<resource name="RAM" quantum="3400K"/>
+		<config view_ms="2000" report="yes" log="no"/>
+		<route>
+			<service name="ROM" label="hover"> <child name="report_rom" /> </service>
+			<service name="Report"> <child name="report_rom" /> </service>
+			<service name="Timer"> <child name="timer" /> </service>
+			<any-service> <parent/> </any-service>
+		</route>
+	</start>
+
+<!--
 	<start name="top">
 		<resource name="RAM" quantum="2M"/>
 		<config period_ms="10000" sort_time="ec"/>
@@ -84,7 +147,7 @@ append config {
 			<any-service> <parent/> </any-service>
 		</route>
 	</start>
-
+-->
 	<!-- must be some priority as client, otherwise priority boost XXX -->
 <!--
 	<start name="cpu_sampler" priority="-2" caps="300">
@@ -230,32 +293,6 @@ append config {
 	</start>
 
 <!--
-	<start name="trace_subject_reporter" priority="-1">
-		<resource name="RAM" quantum="6M"/>
-		<config period_ms="500">
-			<report activity="yes" affinity="yes"/>
-		</config>
-		<route>
-			<service name="TRACE"><parent/></service>
-			<service name="LOG"><parent/></service>
-			<service name="Timer"><child name="timer"/></service>
-			<service name="Report"><child name="report_rom"/></service>
-			<any-service><parent/></any-service>
-		</route>
-	</start>
-
-	<start name="cpu_load_display" priority="-1">
-		<resource name="RAM" quantum="6M"/>
-		<config/>
-		<route>
-			<service name="LOG"><parent/></service>
-			<service name="Timer"><child name="timer"/></service>
-			<service name="ROM" label="trace_subjects"><child name="report_rom"/></service>
-			<service name="Gui"><child name="nitpicker"/></service>
-			<any-service><parent/></any-service>
-		</route>
-	</start>
-
 	<start name="top" priority="-1">
 		<resource name="RAM" quantum="2M"/>
 		<config period_ms="10000"/>
@@ -280,7 +317,7 @@ append config {
 					<inline name="usb_drv.config">
 <config uhci="yes" ohci="yes" ehci="yes" xhci="yes" bios_handoff="no">
 	<report devices="yes"/>
-	·<policy label="test-libuvc -> usb_device" vendor_id="0x04f2"
+	·<policy label="usb_webcam -> usb_device" vendor_id="0x04f2"
 	         product_id="0xb564"/>
 </config>
 					</inline>
@@ -419,7 +456,7 @@ append config {
 		<binary name="report_rom"/>
 		<resource name="RAM" quantum="2M"/>
 		<provides> <service name="Report"/> <service name="ROM"/> </provides>
-		<config verbose="yes">
+		<config verbose="no">
 			<policy label="usb_report_filter -> devices"        report="usb_host_drv -> devices"/>
 			<policy label="usb_report_filter -> usb_drv_config" report="usb_host_drv -> config"/>
 			<policy label="vbox -> usb_devices"                 report="usb_report_filter -> usb_devices"/>
@@ -432,13 +469,19 @@ append config {
 	<start name="report_rom">
 		<resource name="RAM" quantum="2M"/>
 		<provides> <service name="Report"/> <service name="ROM"/> </provides>
-		<config>
+		<config verbose="no">
 			<policy label="pointer -> hover"                    report="nitpicker -> hover"/>
 			<policy label="pointer -> xray"                     report="nitpicker -> xray"/>
 			<policy label="cpu_load_display -> trace_subjects"  report="trace_subject_reporter -> trace_subjects"/>
 
 			<policy label="dummy_clipboard_consumer" report="vbox -> clipboard"/>
 			<policy label="vbox -> clipboard"        report="dummy_clipboard_producer"/>
+			<policy label="webcam-state" report="vbox -> capture"/>
+
+			<policy label="menu_view -> dialog" report="top_view -> dialog"/>
+			<policy label="top_view -> hover" report="menu_view -> hover"/>
+			<policy label="graph -> graph" report="top_view -> graph"/>
+
 		</config>
 		<route>
 			<any-service> <parent /> <any-child /> </any-service>
@@ -457,33 +500,32 @@ append config {
 			<any-service> <parent/> <any-child /> </any-service>
 		</route>
 	</start>
+
+	<start name="gui_fb">
+		<resource name="RAM" quantum="18M"/>
+		<provides> <service name="Framebuffer"/> <service name="Input"/></provides>
+		<config/>
+		<route>
+			<service name="Gui"> <child name="nitpicker"/> </service>
+			<any-service> <parent/> </any-service>
+		</route>
+	</start>
+
+
+
 	<start name="nitpicker_cam" priority="-1" caps="150">
 		<binary name="nitpicker"/>
 		<resource name="RAM" quantum="12M"/>
 		<provides>
 			<service name="Gui"/> <service name="Capture"/>
 		</provides>
-		<config>
+		<config request_framebuffer="yes">
 			<capture/>
 			<domain name="" layer="1" content="client"/>
 			<default-policy domain=""/>
 		</config>
 		<route>
-			<any-service> <parent/> <any-child /> </any-service>
-		</route>
-	</start>
-	<start name="test-libuvc" caps="250" priority="-1">
-		<resource name="RAM" quantum="64M"/>
-		<config ld_verbose="yes" viewer="yes" verbose="no" duration="3600">
-			<vfs>
-				<dir name="dev"> <log/> <inline name="rtc">2018-01-01 00:01</inline> </dir>
-				<dir name="pipe"> <pipe/> </dir>
-			</vfs>
-			<libc stdout="/dev/log" stderr="/dev/log" rtc="/dev/rtc" pipe="/pipe"/>
-				<env key="LIBUSB_DEBUG" value="1"/> <!-- log libusb errors -->
-		</config>
-		<route>
-			<service name="Gui"> <child name="nitpicker_cam"/> </service>
+			<service name="Framebuffer"> <child name="gui_fb"/> </service>
 			<any-service> <parent/> <any-child /> </any-service>
 		</route>
 	</start>
@@ -524,10 +566,15 @@ append config {
 
 						<domain name="pointer"  layer="1" content="client" label="no" origin="pointer" />
 						<domain name="cpu_load" layer="2" content="client" label="no" />
-						<domain name=""         layer="3" content="client" label="no" focus="click" hover="always"/>
+						<domain name="top"   layer="3" content="client" label="no" xpos="1600" ypos="0" focus="click"/>
+						<domain name="gui_fb"   layer="3" content="client" label="no" xpos="1920" ypos="960" />
+						<domain name=""         layer="4" content="client" label="no" focus="click" hover="always"/>
 
 						<policy label_prefix="pointer"          domain="pointer"/>
 						<policy label_prefix="cpu_load_display" domain="cpu_load"/>
+						<policy label_prefix="gui_fb" domain="gui_fb"/>
+						<policy label_prefix="menu_view" domain="top"/>
+						<policy label_prefix="graph" domain="top"/>
 						<default-policy domain=""/>
 					</config>
 				</inline>
@@ -550,6 +597,52 @@ append config {
 		</route>
 	</start>
 
+	<start name="webcam-config">
+		<binary name="rom_filter"/>
+		<resource name="RAM" quantum="1M"/>
+		<provides> <service name="ROM"/> </provides>
+		<config>
+			<input name="webcam_enabled" rom="webcam-state" node="capture">
+				<attribute name="enabled"/>
+			</input>
+
+			<output node="config">
+				<attribute name="enabled" input="webcam_enabled"/>
+				<attribute name="width"   value="640"/>
+				<attribute name="height"  value="480"/>
+				<attribute name="format"  value="mjpeg"/>
+				<attribute name="fps"     value="15"/>
+				<inline>
+					<vfs>
+						<dir name="dev"> <log/> <inline name="rtc">2018-01-01 00:01</inline> </dir>
+						<dir name="pipe"> <pipe/> </dir>
+					</vfs>
+					<libc stdout="/dev/log" stderr="/dev/log" rtc="/dev/rtc" pipe="/pipe"/>
+					<env key="LIBUSB_DEBUG" value="1"/>
+				</inline>
+			</output>
+		</config>
+		<route>
+			<service name="ROM" label="webcam-state">
+				<child name="report_rom" label="webcam-state"/>
+			</service>
+			<any-service> <parent/> </any-service>
+		</route>
+	</start>
+
+	<start name="usb_webcam" caps="350" priority="-1">
+		<resource name="RAM" quantum="64M"/>
+		<route>
+			<service name="ROM" label="config">
+				<child name="webcam-config" label="config"/>
+			</service>
+			<service name="Gui"> <child name="nitpicker_cam"/> </service>
+			<service name="Usb"> <child name="usb_host_drv"/> </service>
+			<service name="Timer"> <child name="timer"/> </service>
+			<any-service> <parent/> <any-child /> </any-service>
+		</route>
+	</start>
+
 	<start name="vbox" priority="-2" caps="800">
 
 		<binary name="virtualbox5-nova" />
@@ -558,7 +651,7 @@ append config {
 		        vbox_file="machine.vbox"
 		        vm_name="ubuntu_20_04"
 		        xhci="yes" capslock="NOROM">
-			<webcam width="640" height="480" fps="15" vertical_flip="false" screen_size="false" report="false"/>
+			<webcam width="640" height="480" fps="30" vertical_flip="false" screen_size="false" report="true"/>
 			<libc stdout="/dev/log" stderr="/dev/log" rtc="/dev/rtc" pipe="/pipe"/>
 			<vfs>
 			}
@@ -615,9 +708,11 @@ append boot_modules {
 	vfs_rump.lib.so rump.lib.so rump_fs.lib.so
 	libc.lib.so vfs.lib.so libm.lib.so
 	libiconv.lib.so stdcxx.lib.so
-	qemu-usb.lib.so test-libuvc
+	qemu-usb.lib.so usb_webcam
 	libusb.lib.so libuvc.lib.so
 	jpeg.lib.so
+	gui_fb
+	rom_filter
 
 	null
 }
