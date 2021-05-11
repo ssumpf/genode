@@ -6,9 +6,9 @@
 
 LWIP_PORT_DIR := $(call select_from_ports,lwip)
 LWIPDIR := $(LWIP_PORT_DIR)/src/lib/lwip/src
-
+SHARED_LIB := yes
 -include $(LWIPDIR)/Filelists.mk
-
+LIBS = vfs
 # Genode platform files
 SRC_CC = printf.cc rand.cc sys_arch.cc
 
