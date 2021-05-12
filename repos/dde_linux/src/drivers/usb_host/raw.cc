@@ -718,7 +718,7 @@ class Device : public List<Device>::Element
 
 		usb_interface *interface(unsigned index)
 		{
-			if (!_udev || !_udev->actconfig)
+			if (!_udev->actconfig)
 				return nullptr;
 
 			if (index >= _udev->actconfig->desc.bNumInterfaces)
