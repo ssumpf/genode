@@ -60,7 +60,6 @@ class Device : public List<Device>::Element
 
 		Signal_context_capability _sigh_ready;
 		unsigned                  _p_in_flight  { 0 };
-		bool                      _device_ready { false };
 
 		template<typename FN>
 		void _with_packet_stream(FN const &fn)
@@ -612,9 +611,7 @@ class Device : public List<Device>::Element
 			/* wait for device to become ready */
 			init_completion(&_packet_avail);
 			wait_queue_head_t wait;
-			_wait_event(wait, _udev.actconfig);
-
-			_device_ready = true;
+			_wait_event(wait, ready());
 
 			if (_sigh_ready.valid())
 				Signal_transmitter(_sigh_ready).submit();
@@ -670,7 +667,7 @@ class Device : public List<Device>::Element
 			}
 		}
 
-		bool ready() const { return _device_ready; }
+		bool ready() const { return _udev.actconfig; }
 
 		void sigh_ready(Signal_context_capability sigh_ready)
 		{
