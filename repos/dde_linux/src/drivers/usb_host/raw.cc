@@ -51,7 +51,7 @@ class Device : public List<Device>::Element
 
 	private:
 
-		usb_device *_udev;
+		usb_device &_udev;
 		Lx::Task    _task { _run, this, "device_worker",
 		                    Lx::Task::PRIORITY_2,
 		                    Lx::scheduler() };
@@ -72,13 +72,13 @@ class Device : public List<Device>::Element
 		template <typename FN>
 		void _with_interface(unsigned index, FN const &fn)
 		{
-			if (!_udev->actconfig)
+			if (!_udev.actconfig)
 				return;
 
-			if (index >= _udev->actconfig->desc.bNumInterfaces)
+			if (index >= _udev.actconfig->desc.bNumInterfaces)
 				return;
 
-			usb_interface * const interface_ptr = _udev->actconfig->interface[index];
+			usb_interface * const interface_ptr = _udev.actconfig->interface[index];
 
 			if (!interface_ptr)
 				return;
@@ -89,10 +89,10 @@ class Device : public List<Device>::Element
 		template <typename FN>
 		void _for_each_interface(FN const &fn)
 		{
-			if (!_udev->actconfig)
+			if (!_udev.actconfig)
 				return;
 
-			for (unsigned i = 0; i < _udev->actconfig->desc.bNumInterfaces; i++)
+			for (unsigned i = 0; i < _udev.actconfig->desc.bNumInterfaces; i++)
 				_with_interface(i, fn);
 		}
 
@@ -112,7 +112,7 @@ class Device : public List<Device>::Element
 			char *buffer = _sink->packet_content(p);
 			int   length;
 
-			if ((length = usb_string(_udev, p.string.index, buffer, p.size())) < 0) {
+			if ((length = usb_string(&_udev, p.string.index, buffer, p.size())) < 0) {
 				warning("Could not read string descriptor index: ", (unsigned)p.string.index);
 				p.string.length = 0;
 			} else {
@@ -129,7 +129,7 @@ class Device : public List<Device>::Element
 		{
 			void *buf = kmalloc(4096, GFP_NOIO);
 
-			int err = usb_control_msg(_udev, usb_rcvctrlpipe(_udev, 0),
+			int err = usb_control_msg(&_udev, usb_rcvctrlpipe(&_udev, 0),
 			                          p.control.request, p.control.request_type,
 			                          p.control.value, p.control.index, buf,
 			                          p.size(), p.control.timeout);
@@ -175,7 +175,7 @@ class Device : public List<Device>::Element
 			if (p.size())
 				Genode::memcpy(buf, _sink->packet_content(p), p.size());
 
-			int err = usb_control_msg(_udev, usb_sndctrlpipe(_udev, 0),
+			int err = usb_control_msg(&_udev, usb_sndctrlpipe(&_udev, 0),
 			                          p.control.request, p.control.request_type,
 			                          p.control.value, p.control.index, buf, p.size(),
 			                          p.control.timeout);
@@ -186,7 +186,7 @@ class Device : public List<Device>::Element
 
 				if (p.control.request == USB_REQ_CLEAR_FEATURE &&
 				    p.control.value == USB_ENDPOINT_HALT) {
-					usb_reset_endpoint(_udev, p.control.index);
+					usb_reset_endpoint(&_udev, p.control.index);
 				}
 			} else {
 				p.control.actual_size = 0;
@@ -292,9 +292,9 @@ class Device : public List<Device>::Element
 			void    *buf = dma_malloc(p.size());
 
 			if (read)
-				pipe = usb_rcvbulkpipe(_udev, p.transfer.ep);
+				pipe = usb_rcvbulkpipe(&_udev, p.transfer.ep);
 			else {
-				pipe = usb_sndbulkpipe(_udev, p.transfer.ep);
+				pipe = usb_sndbulkpipe(&_udev, p.transfer.ep);
 				Genode::memcpy(buf, _sink->packet_content(p), p.size());
 			}
 
@@ -308,7 +308,7 @@ class Device : public List<Device>::Element
 
 			Complete_data *data = alloc_complete_data(p);
 
-			usb_fill_bulk_urb(bulk_urb, _udev, pipe, buf, p.size(),
+			usb_fill_bulk_urb(bulk_urb, &_udev, pipe, buf, p.size(),
 			                 _async_complete, data);
 
 			int ret = usb_submit_urb(bulk_urb, GFP_KERNEL);
@@ -340,9 +340,9 @@ class Device : public List<Device>::Element
 			void    *buf = dma_malloc(p.size());
 
 			if (read)
-				pipe = usb_rcvintpipe(_udev, p.transfer.ep);
+				pipe = usb_rcvintpipe(&_udev, p.transfer.ep);
 			else {
-				pipe = usb_sndintpipe(_udev, p.transfer.ep);
+				pipe = usb_sndintpipe(&_udev, p.transfer.ep);
 				Genode::memcpy(buf, _sink->packet_content(p), p.size());
 			}
 
@@ -360,8 +360,8 @@ class Device : public List<Device>::Element
 
 			if (p.transfer.polling_interval == Usb::Packet_descriptor::DEFAULT_POLLING_INTERVAL) {
 
-				usb_host_endpoint *ep = read ? _udev->ep_in[p.transfer.ep & 0x0f]
-				                             : _udev->ep_out[p.transfer.ep & 0x0f];
+				usb_host_endpoint *ep = read ? _udev.ep_in[p.transfer.ep & 0x0f]
+				                             : _udev.ep_out[p.transfer.ep & 0x0f];
 
 				if (!ep) {
 					error("could not get ep: ", p.transfer.ep);
@@ -375,7 +375,7 @@ class Device : public List<Device>::Element
 			} else
 				polling_interval = p.transfer.polling_interval;
 
-			usb_fill_int_urb(irq_urb, _udev, pipe, buf, p.size(),
+			usb_fill_int_urb(irq_urb, &_udev, pipe, buf, p.size(),
 			                 _async_complete, data, polling_interval);
 
 			int ret = usb_submit_urb(irq_urb, GFP_KERNEL);
@@ -420,12 +420,12 @@ class Device : public List<Device>::Element
 			void              *buf = dma_malloc(p.size());
 
 			if (read) {
-				pipe = usb_rcvisocpipe(_udev, p.transfer.ep);
-				ep   = _udev->ep_in[p.transfer.ep & 0x0f];
+				pipe = usb_rcvisocpipe(&_udev, p.transfer.ep);
+				ep   = _udev.ep_in[p.transfer.ep & 0x0f];
 			}
 			else {
-				pipe = usb_sndisocpipe(_udev, p.transfer.ep);
-				ep   = _udev->ep_out[p.transfer.ep & 0x0f];
+				pipe = usb_sndisocpipe(&_udev, p.transfer.ep);
+				ep   = _udev.ep_out[p.transfer.ep & 0x0f];
 				Genode::memcpy(buf, _sink->packet_content(p), p.size());
 			}
 
@@ -445,7 +445,7 @@ class Device : public List<Device>::Element
 			}
 
 			Complete_data *data         = alloc_complete_data(p);
-			urb->dev                    = _udev;
+			urb->dev                    = &_udev;
 			urb->pipe                   = pipe;
 			urb->start_frame            = -1;
 			urb->stream_id              = 0;
@@ -489,7 +489,7 @@ class Device : public List<Device>::Element
 		void _alt_setting(Packet_descriptor &p)
 		{
 
-			int err = usb_set_interface(_udev, p.interface.number,
+			int err = usb_set_interface(&_udev, p.interface.number,
 			                            p.interface.alt_setting);
 
 			if (!err)
@@ -503,7 +503,7 @@ class Device : public List<Device>::Element
 		 */
 		void _config(Packet_descriptor &p)
 		{
-			usb_host_config *config = _udev->actconfig;
+			usb_host_config *config = _udev.actconfig;
 
 			if (config) {
 				for (unsigned i = 0; i < config->desc.bNumInterfaces; i++) {
@@ -514,7 +514,7 @@ class Device : public List<Device>::Element
 				}
 			}
 
-			int err = usb_set_configuration(_udev, p.number);
+			int err = usb_set_configuration(&_udev, p.number);
 
 			if (!err)
 				p.succeded = true;
@@ -612,7 +612,7 @@ class Device : public List<Device>::Element
 			/* wait for device to become ready */
 			init_completion(&_packet_avail);
 			wait_queue_head_t wait;
-			_wait_event(wait, _udev->actconfig);
+			_wait_event(wait, _udev.actconfig);
 
 			_device_ready = true;
 
@@ -633,7 +633,7 @@ class Device : public List<Device>::Element
 
 	public:
 
-		Device(usb_device *udev) : _udev(udev)
+		Device(usb_device &udev) : _udev(udev)
 		{
 			list()->insert(this);
 
@@ -655,7 +655,7 @@ class Device : public List<Device>::Element
 		unsigned num_interfaces() const
 		{
 			if (ready())
-				return _udev->actconfig->desc.bNumInterfaces;
+				return _udev.actconfig->desc.bNumInterfaces;
 
 			return 0;
 		}
@@ -686,7 +686,7 @@ class Device : public List<Device>::Element
 		static Device * device_by_product(uint16_t vendor, uint16_t product)
 		{
 			for (Device *d = list()->first(); d; d = d->next()) {
-				if (d->_udev->descriptor.idVendor == vendor && d->_udev->descriptor.idProduct == product)
+				if (d->_udev.descriptor.idVendor == vendor && d->_udev.descriptor.idProduct == product)
 					return d;
 			}
 
@@ -696,7 +696,7 @@ class Device : public List<Device>::Element
 		static Device * device_by_bus(long bus, long dev)
 		{
 			for (Device *d = list()->first(); d; d = d->next()) {
-				if (d->_udev->bus->busnum == bus && d->_udev->devnum == dev)
+				if (d->_udev.bus->busnum == bus && d->_udev.devnum == dev)
 					return d;
 			}
 
@@ -718,13 +718,13 @@ class Device : public List<Device>::Element
 
 		usb_interface *interface(unsigned index)
 		{
-			if (!_udev->actconfig)
+			if (!_udev.actconfig)
 				return nullptr;
 
-			if (index >= _udev->actconfig->desc.bNumInterfaces)
+			if (index >= _udev.actconfig->desc.bNumInterfaces)
 				return nullptr;
 
-			usb_interface *iface = _udev->actconfig->interface[index];
+			usb_interface *iface = _udev.actconfig->interface[index];
 			return iface;
 		}
 
@@ -755,24 +755,24 @@ class Device : public List<Device>::Element
 			return result;
 		}
 
-		long bus()  const { return _udev->bus->busnum; }
-		long dev()  const { return _udev->devnum; }
+		long bus()  const { return _udev.bus->busnum; }
+		long dev()  const { return _udev.devnum; }
 
-		usb_device &udev() const { return *_udev; }
+		usb_device &udev() const { return _udev; }
 
 		void report(Xml_generator &xml)
 		{
-			if (!_udev || !_udev->actconfig)
+			if (!_udev.actconfig)
 				return;
 
 			using namespace Genode;
 			using Value = String<64>;
 
 			xml.attribute("label",      label());
-			xml.attribute("vendor_id",  Value(Hex(_udev->descriptor.idVendor)));
-			xml.attribute("product_id", Value(Hex(_udev->descriptor.idProduct)));
-			xml.attribute("bus",        Value(Hex(_udev->bus->busnum)));
-			xml.attribute("dev",        Value(Hex(_udev->devnum)));
+			xml.attribute("vendor_id",  Value(Hex(_udev.descriptor.idVendor)));
+			xml.attribute("product_id", Value(Hex(_udev.descriptor.idProduct)));
+			xml.attribute("bus",        Value(Hex(_udev.bus->busnum)));
+			xml.attribute("dev",        Value(Hex(_udev.devnum)));
 			xml.attribute("class",      Value(Hex(device_class_value())));
 
 			_for_each_interface([&] (usb_interface &interface) {
@@ -798,9 +798,9 @@ class Device : public List<Device>::Element
 
 		Session_label label()
 		{
-			if (!_udev || !_udev->bus)
+			if (!_udev.bus)
 				return Session_label("usb-unknown");
-			return Session_label("usb-", _udev->bus->busnum, "-", _udev->devnum);
+			return Session_label("usb-", _udev.bus->busnum, "-", _udev.devnum);
 		}
 };
 
@@ -1299,7 +1299,7 @@ int raw_notify(struct notifier_block *nb, unsigned long action, void *data)
 		case USB_DEVICE_ADD:
 		{
 			::Session::list()->state_change(Usb::Session_component::DEVICE_ADD,
-			                                new (Lx::Malloc::mem()) Device(udev));
+			                                new (Lx::Malloc::mem()) Device(*udev));
 			break;
 		}
 
