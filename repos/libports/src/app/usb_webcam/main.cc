@@ -1,5 +1,5 @@
 /*
- * \brief  VESA frame buffer driver back end
+ * \brief  USB webcam app using libuvc
  * \author Josef Soentgen
  * \author Sebastian Sumpf
  * \date   2021-01-25
@@ -102,12 +102,12 @@ static void cb(uvc_frame_t *frame, void *ptr)
 				return;
 			}
 			break;
-			case UVC_COLOR_FORMAT_YUYV:
-				err = libyuv::YUY2ToARGB((uint8_t const *)frame->data,
-				                         width * 2,
-				                         viewer->framebuffer(),
-				                         width * 4,
-				                         width, height);
+		case UVC_COLOR_FORMAT_YUYV:
+			err = libyuv::YUY2ToARGB((uint8_t const *)frame->data,
+			                         width * 2,
+			                         viewer->framebuffer(),
+			                         width * 4,
+			                         width, height);
 			if (err) {
 				error("YUY2ToARGB returned:", err);
 				return;
@@ -134,13 +134,9 @@ class Webcam
 		void _cleanup()
 		{
 			Libc::with_libc([&] () {
-				if (_handle) {
-					uvc_stop_streaming(_handle);
-				}
-				if (_device)
-					uvc_unref_device(_device);
-				if (_context)
-					uvc_exit(_context);
+				if (_handle)  uvc_stop_streaming(_handle);
+				if (_device)  uvc_unref_device(_device);
+				if (_context) uvc_exit(_context);
 			});
 		}
 
@@ -239,10 +235,10 @@ class Main
 			}
 
 			log("config: enabled: ", enabled, " ", width, "x", height, " format: ", (unsigned)frame_format);
-			if (enabled == false && _webcam.constructed())
+			if (_webcam.constructed())
 				_webcam.destruct();
 
-			if (enabled && _webcam.constructed() == false) {
+			if (enabled) {
 				try {
 					_webcam.construct(_env, Framebuffer::Mode {
 						.area = { width, height } }, frame_format, fps);
