@@ -125,6 +125,9 @@ class Webcam
 {
 	private:
 
+		Webcam(const Webcam &) = delete;
+		const Webcam& operator=(const Webcam&) = delete;
+
 		Env &_env;
 		uvc_context_t       *_context { nullptr };
 		uvc_device_t        *_device  { nullptr };
