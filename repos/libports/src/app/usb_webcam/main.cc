@@ -89,6 +89,7 @@ static void cb(uvc_frame_t *frame, void *ptr)
 	int err = 0;
 	int width  = viewer->mode().area.w();
 	int height = viewer->mode().area.h();
+
 	switch (frame->frame_format) {
 		case UVC_COLOR_FORMAT_MJPEG:
 			err = libyuv::MJPGToARGB((uint8_t const *)frame->data,
@@ -102,7 +103,13 @@ static void cb(uvc_frame_t *frame, void *ptr)
 				return;
 			}
 			break;
+
 		case UVC_COLOR_FORMAT_YUYV:
+
+			/* skip incomplete frames */
+			if (frame->data_bytes < width * height * 2ul)
+				break;
+
 			err = libyuv::YUY2ToARGB((uint8_t const *)frame->data,
 			                         width * 2,
 			                         viewer->framebuffer(),
