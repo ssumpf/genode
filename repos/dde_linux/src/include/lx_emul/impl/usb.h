@@ -18,6 +18,7 @@ int usb_control_msg(struct usb_device *dev, unsigned int pipe,
                     __u8 request, __u8 requesttype, __u16 value,
                     __u16 index, void *data, __u16 size, int timeout)
 {
+
 	usb_ctrlrequest *dr = (usb_ctrlrequest*)
 		kmalloc(sizeof(usb_ctrlrequest), GFP_KERNEL);
 	if (!dr) return -ENOMEM;
@@ -43,6 +44,13 @@ int usb_control_msg(struct usb_device *dev, unsigned int pipe,
 
 	usb_fill_control_urb(u, dev, pipe, (unsigned char *)dr, data,
 	                     size, nullptr, nullptr);
+
+	if (!dev->bus || !dev->bus->controller) {
+		kfree(scu);
+		usb_free_urb(u);
+		kfree(dr);
+		return -ENODEV;
+	}
 
 	Genode::construct_at<Sync_ctrl_urb>(scu, *(Usb::Connection*)(dev->bus->controller), *u);
 
@@ -76,6 +84,9 @@ struct urb *usb_alloc_urb(int iso_packets, gfp_t mem_flags)
 
 int usb_submit_urb(struct urb *urb, gfp_t mem_flags)
 {
+	if (!urb->dev->bus || !urb->dev->bus->controller)
+		return -ENODEV;
+
 	Urb * u = (Urb *)kzalloc(sizeof(Urb), mem_flags);
 	if (!u)
 		return 1;
