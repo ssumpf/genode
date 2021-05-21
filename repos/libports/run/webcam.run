@@ -280,7 +280,7 @@ append config {
 						<default caps="128"/>
 						<start name="usb_webcam" priority="0" caps="350">
 							<resource name="RAM" quantum="48M"/>
-							<config enabled="yes" width="320" height="240" format="yuv" fps="30">
+							<config ld_verbose="yes" enabled="yes" width="640" height="480" format="yuv" fps="30">
 								<vfs>
 									<dir name="dev"> <log/> <inline name="rtc">2018-01-01 00:01</inline> </dir>
 									<dir name="pipe"> <pipe/> </dir>
@@ -351,11 +351,6 @@ append boot_modules {
 	vfs.lib.so
 	vfs_pipe.lib.so
 	x86_pc_usb_host_drv
-}
-
-# evaluated by the run tool
-proc binary_name_cpu_sampler_platform_lib_so { } {
-	return "cpu_sampler_platform-nova.lib.so"
 }
 
 build_boot_image $boot_modules

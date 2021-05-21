@@ -167,7 +167,7 @@ class Lx_kit::Scheduler : public Lx::Scheduler
 			}
 
 			if (!at_least_one) {
-				Genode::warning("schedule() called without runnable tasks");
+				Genode::warning("schedule() called without runnable tasks from: ", __builtin_return_address(0));
 				log_state("SCHEDULE");
 			}
 
