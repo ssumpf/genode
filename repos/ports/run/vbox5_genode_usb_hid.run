@@ -265,6 +265,7 @@ set boot_modules {
 	ld.lib.so libc.lib.so libm.lib.so
 	libiconv.lib.so stdcxx.lib.so
 	qemu-usb.lib.so
+	libyuv.lib.so jpeg.lib.so
 }
 
 append_platform_drv_boot_modules

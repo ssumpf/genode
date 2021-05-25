@@ -385,7 +385,8 @@ append boot_modules {
 	part_block ahci_drv fs_rom vfs
 	libc.lib.so vfs.lib.so libm.lib.so
 	libiconv.lib.so stdcxx.lib.so
-	qemu-usb.lib.so
+	qemu-usb.lib.so libyuv.lib.so
+	jpeg.lib.so
 }
 
 lappend_if [expr $use_rumpfs] boot_modules rump.lib.so

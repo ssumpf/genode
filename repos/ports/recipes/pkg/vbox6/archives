@@ -1,6 +1,7 @@
 _/src/init
 _/src/libc
 _/src/libiconv
+_/src/libyuv
 _/src/posix
 _/src/stdcxx
 _/src/vbox6
