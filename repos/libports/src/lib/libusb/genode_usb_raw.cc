@@ -45,7 +45,7 @@ struct Usb_ep
 	void _handle_pthread_registration()
 	{
 		Genode::Thread *myself = Genode::Thread::myself();
-		if (!myself || Libc::pthread_create_from_thread(&_pthread, *myself, &myself)) {
+		if (!myself || Libc::pthread_create(&_pthread, *myself, &myself)) {
 			Genode::error("cannot register thread for pthread");
 			return;
 		}
