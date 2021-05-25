@@ -1,14 +1,11 @@
 set build_components {
-	core init timer
 	drivers/framebuffer
-	drivers/rtc
 	drivers/usb_host
 
 	server/dynamic_rom
 	server/nitpicker
 	server/vfs
 
-	app/pointer
 	app/usb_webcam
 
 	lib/vfs/pipe
@@ -31,12 +28,15 @@ proc libuvc_vendor_id {}  { return "0x0bda" }
 proc libuvc_product_id {} { return "0x58db" }
 
 
-source ${genode_dir}/repos/base/run/platform_drv.inc
-append_platform_drv_build_components
-
-build $build_components
 
 create_boot_directory
+
+import_from_depot [depot_user]/src/[base_src] \
+                  [depot_user]/src/init
+
+source ${genode_dir}/repos/base/run/platform_drv.inc
+append_platform_drv_build_components
+build $build_components
 
 
 append config {
@@ -51,7 +51,6 @@ append config {
 		<service name="CPU"/>
 		<service name="LOG"/>
 		<service name="VM"/>
-		<service name="TRACE"/>
 	</parent-provides>
 	<default-route>
 		<any-service> <parent/> <any-child/> </any-service>
@@ -89,16 +88,6 @@ append config {
 		<binary name="vesa_fb_drv"/>
 		<resource name="RAM" quantum="32M"/>
 		<config/>
-		<route>
-			<any-service> <parent /> <any-child /> </any-service>
-		</route>
-	</start>
-
-	<start name="rtc_drv" priority="-1">
-		<resource name="RAM" quantum="1M"/>
-		<provides>
-			<service name="Rtc"/>
-		</provides>
 		<route>
 			<any-service> <parent /> <any-child /> </any-service>
 		</route>
@@ -190,20 +179,15 @@ append config {
 install_config $config
 
 append boot_modules {
-	core
 	dynamic_rom
-	init
 	jpeg.lib.so
-	ld.lib.so
 	libc.lib.so
 	libm.lib.so
 	libusb.lib.so
 	libuvc.lib.so
 	libyuv.lib.so
 	nitpicker
-	rtc_drv
 	stdcxx.lib.so
-	timer
 	usb_webcam
 	vesa_fb_drv
 	vfs
