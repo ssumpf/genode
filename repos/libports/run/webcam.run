@@ -6,8 +6,6 @@ set build_components {
 	server/dynamic_rom
 	server/gui_fb
 	server/nitpicker
-
-	app/usb_webcam
 }
 
 # fuji4
@@ -86,7 +84,7 @@ append config {
 
 	<start name="fb_drv" priority="-1" caps="150">
 		<binary name="vesa_fb_drv"/>
-		<resource name="RAM" quantum="32M"/>
+		<resource name="RAM" quantum="20M"/>
 		<config/>
 		<route>
 			<any-service> <parent /> <any-child /> </any-service>
@@ -111,9 +109,9 @@ append config {
 	</start>
 
 	<start name="gui_fb" priority="-1">
-		<resource name="RAM" quantum="18M"/>
+		<resource name="RAM" quantum="8M"/>
 		<provides> <service name="Framebuffer"/> <service name="Input"/></provides>
-		<config/>
+		<config width="1280" height="720"/>
 		<route>
 			<service name="Gui"> <child name="nitpicker"/> </service>
 			<any-service> <parent/> </any-service>
@@ -143,7 +141,7 @@ append config {
 	</start>
 
 	<start name="rom_reporter">
-		<resource name="RAM" quantum="64MB"/>
+		<resource name="RAM" quantum="1MB"/>
 		<provides> <service name="Report"/> </provides>
 		<config>
 			<rom label="capture"/>
