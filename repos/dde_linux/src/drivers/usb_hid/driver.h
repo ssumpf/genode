@@ -132,6 +132,7 @@ struct Driver
 	Driver(Genode::Env &env);
 
 	void scan_report();
+	bool blacklist(Genode::Xml_node const & node);
 
 	static unsigned long screen_x;
 	static unsigned long screen_y;

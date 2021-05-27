@@ -217,6 +217,22 @@ void Driver::main_task_entry(void * arg)
 }
 
 
+bool Driver::blacklist(Genode::Xml_node const & node)
+{
+	unsigned vendor_id  = 0;
+	unsigned product_id = 0;
+
+	node.attribute("vendor_id").value(vendor_id);
+	node.attribute("product_id").value(product_id);
+
+	/* New Bee headset */
+	if (vendor_id == 0xd8c && product_id == 0x14)
+		return true;
+
+	return false;
+}
+
+
 void Driver::scan_report()
 {
 	if (!report_rom.constructed()) {
@@ -235,7 +251,8 @@ void Driver::scan_report()
 			unsigned long c = 0;
 			dev_node.attribute("class").value(c);
 			if (c != USB_CLASS_HID) return;
-
+			if (blacklist(dev_node)) return;
+			Genode::log("dev: ", dev_node);
 			Label label;
 			dev_node.attribute("label").value(label);
 
