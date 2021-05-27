@@ -125,7 +125,7 @@ append config {
 		<config verbose="yes">
 			<rom name="capture">
 				<inline>
-					<capture enabled="yes"/>
+					<capture enabled="true"/>
 				</inline>
 				<sleep milliseconds="8000"/>
 				<inline>
