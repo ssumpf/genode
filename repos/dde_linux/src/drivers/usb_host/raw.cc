@@ -877,6 +877,8 @@ class Usb::Session_component : public Session_rpc_object,
 		{
 			while (sink()->packet_avail() && sink()->ready_to_ack()) {
 				Packet_descriptor p = sink()->get_packet();
+				p.succeded = false;
+				p.error    = Packet_descriptor::NO_DEVICE_ERROR;
 				sink()->acknowledge_packet(p);
 			}
 		}
