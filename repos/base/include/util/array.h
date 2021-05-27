@@ -66,7 +66,8 @@ class Genode::Array
 		 */
 		T & value(unsigned idx)
 		{
-			if (idx >= _count) { throw Index_out_of_bounds(); }
+			if (idx >= _count)
+				throw Index_out_of_bounds();
 			return _objs[idx];
 		}
 
@@ -82,7 +83,8 @@ class Genode::Array
 		 */
 		void add(T obj)
 		{
-			if ((_count + 1) > MAX) { throw Index_out_of_bounds(); }
+			if ((_count + 1) > MAX)
+				throw Index_out_of_bounds();
 			_objs[_count++] = obj;
 		}
 
@@ -100,15 +102,15 @@ class Genode::Array
 		template<typename ... TAIL>
 		void add(T obj, TAIL ... tail)
 		{
-			_objs[_count++] = obj;
+			add(obj);
 			add(tail...);
 		}
 
 		template <typename FUNC>
 		void for_each(FUNC const &f)
 		{
-			for (unsigned idx = 0; idx < _count; idx++) {
-				f(idx, _objs[idx]); }
+			for (unsigned idx = 0; idx < _count; idx++)
+				f(idx, _objs[idx]);
 		}
 
 		template <typename FUNC>
