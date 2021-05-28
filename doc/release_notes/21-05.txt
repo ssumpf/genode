@@ -742,7 +742,7 @@ _tools/dts/_ for this purpose.
 The tool aids the understanding of the hardware and allows for the pruning of
 device trees down to a manageable complexity. As an illustration, the
 spiderweb on the left shows the device-interdependencies of the Pine-A64-LTS
-board on the left. On the right, the device tree is pruned to cover only
+board. On the right, the device tree is pruned to cover only
 what's needed to use Ethernet. The tool is covered in more detail by the
 following dedicated article.
 
