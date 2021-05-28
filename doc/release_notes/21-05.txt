@@ -103,7 +103,7 @@ As part of working on the Sculpt OS
 [https://genode.org/news/sculpt-os-21.03-boots-now-in-2.5-seconds - version 21.03],
 we identified several optimization vectors with the potential for user-visible
 improvements. In particular, while interacting with the system, a few effects
-made us curios.
+made us curious.
 
 Operations that involved changes to the runtime subsystem, e.g., adding or
 reconfiguring a component, seemed to interfere with multi-media workloads.
@@ -422,7 +422,7 @@ the development stage to product quality. At the current stage, it is neither
 time-tested nor reviewed by independent cryptography experts. Consequently,
 you should use it with a healthy dose of suspicion, for non-critical data
 only! We would be more than happy to receive feedback on your experience with
-the file vault!
+the file vault.
 
 
 VirtualBox
@@ -454,7 +454,7 @@ registers and interrupts by introducing the notions of
 
 :'Platform::Device::Irq': interface for receiving device interrupts
 
-The API is covered in detail the following article.
+The API is covered in detail by the following article.
 
 :One Platform driver to rule them all:
 
@@ -519,7 +519,7 @@ improvements, and robustness handling efforts during the current release cycle.
 The HID subsystem is now capable of handling devices where the HID USB interface
 is at an arbitrary location within the device descriptors - as opposed to the
 assumption that the HID interface is always at the first position in interface
-list of the device. Also, the HID drivers now handles session destruction more
+list of the device. Also, the HID driver now handles session destruction more
 gracefully and supports unlimited plug and unplug events of an associated HID
 device.
 
@@ -532,8 +532,8 @@ sudden session disconnects gracefully now.
 The CPU usage of the host driver for isochronous transfers has been reduced
 significantly for Intel XHCI controllers by adding a fix that reduces the
 triggering of an interrupt for every completed isochronous packet to one
-interrupt for every eighth packet, bringing the worst case scenario down to
-1000 IRQ/s from a possible 8000 IRQ/s before.
+interrupt per eight packets, bringing the worst case scenario down to
+1000 interrupts per second from a possible 8000 IRQs before.
 
 
 NIC drivers
@@ -630,7 +630,7 @@ board specific line of work can now be found within a separate
 [https://github.com/ssumpf/genode-riscv - repository].
 
 With driver support in place, the final step for full RISC-V support in Genode is
-to our C library for this architecture.
+to extend our C library for this architecture.
 
 
 Build system and tools
