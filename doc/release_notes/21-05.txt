@@ -37,7 +37,7 @@ support for isochronous USB transfers as required by UVC devices. Isochronous
 transfers represent a continuous stream of data (either input or output) with a
 constant rate without delivery guarantees. We extended _libusb_ to handle
 isochronous transfers, which were already supported by Genode's USB session.
-Observing that these kind of transfers can cause high load within the USB host driver,
+Observing that this kind of transfers can cause high load within the USB host driver,
 we optimized isochronous transfer support at the host driver level (Section [USB]).
 
 At the front-end side, we created a small _usb_webcam_ component that uses
@@ -119,7 +119,7 @@ Clock-cycle measurements
 ------------------------
 
 The next natural step was the benchmarking of various code paths of init
-using precise a cycle-accurate time-stamp counter (TSC).
+using a cycle-accurate time-stamp counter (TSC).
 Even though Genode has a 'Trace::timestamp' utility readily available, it remains
 barely used for manual instrumentation because such instrumentations require
 too much labor: allocation of state variables for gathering the statistics,
@@ -134,7 +134,7 @@ utility is covered by a dedicated article.
 
   [https://genodians.org/nfeske/2021-04-07-performance]
 
-Thanks to GENODE_LOG_TSC, we were able identify three concrete opportunities
+Thanks to GENODE_LOG_TSC, we were able to identify three concrete opportunities
 for optimization in a course of one evening. First, the dynamic
 reconfiguration of init apparently did not scale well with a growing number of
 components. The code for analysing differences of configuration versions
@@ -261,7 +261,7 @@ first introduced in version
 The API is tailored and refined according to the relatively simple use cases
 of low-complexity Genode components. The current release introduces a new
 utility for the creation of new files, appropriately named 'New_file'. The
-change is accompanied with a new 'Directory::create_sub_directory' method for
+change is accompanied by a new 'Directory::create_sub_directory' method for
 the easy creation of directory hierarchies.
 
 
@@ -328,7 +328,7 @@ the input events before and after the remap filter as follows.
 !   </remap>
 ! </log>
 
-The optional 'prefix' attribute thereby helps distinguishing the log output from
+The optional 'prefix' attribute thereby helps to distinguish the log output from
 different stages.
 
 
@@ -370,7 +370,7 @@ Over several releases
 we persistently worked at a native solution for modern block encryption - the
 SPARK-based CBE-library - and its integration into Genode's VFS. Even though,
 this work was already suitable for real-world scenarios like
-[https://genodians.org/m-stein/2020-06-12-cbe-linux-vm - hosting a Linux VM ontop of the encrypted block device],
+[https://genodians.org/m-stein/2020-06-12-cbe-linux-vm - hosting a Linux VM on top of the encrypted block device],
 it still lacked stress-testing by a regular user base because its integration
 into an end-user system like Sculpt required tedious low-level wizardry.
 
@@ -396,15 +396,15 @@ simple directory. The directory can be locked by closing the file vault and
 unlocked by starting the file vault on the same trust anchor and entering the
 correct user passphrase. All controls for the file vault's underlying
 CBE encrypter - like for its re-sizing and re-keying functionality - are
-presented though a simple and guiding UI that
+presented through a simple and guiding UI that
 also provides you with the most relevant status information of your vault.
 
 The file vault package is accompanied by some notable improvements regarding
 the CBE key management. Whereas in the previous release, this aspect was still merely a
 prototype with almost no protective value, the current implementation embraces
 well-known algorithms to generate and encrypt the keys used in the CBE
-respectively the file vault. This is explained in detail in the above
-mentioned article.
+respectively the file vault. This is explained in detail in the above-mentioned
+article.
 
 As a note of caution, as already indicated, the primary purpose of the current
 version of the file vault is to lift native block encryption in Genode from
@@ -424,7 +424,7 @@ and put efforts into stabilizing the port. Therefore, we updated to version
 execution model with fewer threads. Further, we improved synchronization in
 multi-processor use cases and added a Sculpt runtime package for vbox6.
 
-Finally as a little treat, our ports of VirtualBox now support to pass extra
+Finally, as a little treat, our ports of VirtualBox now support to pass extra
 buttons of five-button mice to the guest.
 
 
@@ -489,8 +489,8 @@ I2C driver for i.MX8
 Thanks to Jean-Adrien Domage from [https://www.gapfruit.com - gapfruit], an
 API for I2C bus transactions, and a new I2C bus driver for the i.MX8 SoC entered
 our framework.
-Coincidentally, the need to use the new I2C API more intensively arised
-soon after his initial contribution. As a consequence the API got extended a
+Coincidentally, the need to use the new I2C API more intensively arose
+soon after his initial contribution. As a consequence, the API got extended a
 bit. The result is a nice joint venture, and looks like the following:
 
 ! void transmit(Transaction & t);
@@ -509,7 +509,7 @@ improvements, and robustness handling efforts during the current release cycle.
 The HID subsystem is now capable of handling devices where the HID USB interface
 is at an arbitrary location within the device descriptors - as opposed to the
 assumption that the HID interface is always at the first position in interface
-list of the device. Also the HID drivers now handles session destruction more
+list of the device. Also, the HID drivers now handles session destruction more
 gracefully and supports unlimited plug and unplug events of an associated HID
 device.
 
@@ -562,7 +562,7 @@ passing a TLS pointer.
 Expecting that the 64-bit Genode/Linux version will remain a niche
 use case of Genode in the foreseeable future, we do not provide a pre-built
 tool chain. Hence, as a preparatory step of using this version of Genode, the
-tool chain must by built manually via Genode's _tool/tool_chain_ script.
+tool chain must be built manually via Genode's _tool/tool_chain_ script.
 
 As a known limitation, Genode's 'Trace::timestamp' function is not available
 on this version of Genode because Linux prevents the user land from accessing
