@@ -12,6 +12,7 @@ set build_components {
 	drivers/ps2
 	drivers/rtc
 	drivers/usb_host
+	drivers/usb_hid
 	server/dynamic_rom
 	server/event_filter
 	server/fs_rom
@@ -317,8 +318,9 @@ append config {
 					<inline name="usb_drv.config">
 <config uhci="yes" ohci="yes" ehci="yes" xhci="yes" bios_handoff="no">
 	<report devices="yes"/>
-	·<policy label="usb_webcam -> usb_device" vendor_id="0x04f2"
-	         product_id="0xb564"/>
+		<policy label="usb_webcam -> usb_device" vendor_id="0x04f2" product_id="0xb564"/>
+		<policy label_prefix="vbox" vendor_id="0x0d8c" product_id="0x0014"/>
+		<policy label_prefix="usb_hid" class="0x3"/>
 </config>
 					</inline>
 					<inline name="usb_report_filter.config">
@@ -387,18 +389,29 @@ append config {
 		</route>
 	</start>
 
-	<start name="usb_host_drv" priority="-1" caps="120">
+	<start name="usb_host_drv" priority="-1" caps="200">
 		<binary name="x86_pc_usb_host_drv"/>
-		<resource name="RAM" quantum="20M"/>
+		<resource name="RAM" quantum="32M"/>
 		<provides> <service name="Usb"/> </provides>
 		<route>
 			<service name="Report"> <child name="usb_report_rom"/> </service>
-			<service name="Event"> <child name="event_filter" label="usb_hid"/> </service>
 			<service name="ROM" label="config">
 				<child name="usb_config_rom" label="usb_drv.config"/> </service>
 			<any-service><parent/><any-child/></any-service>
 		</route>
 	</start>
+
+	<start name="usb_hid" caps="140">
+		<binary name="usb_hid_drv"/>
+		<resource name="RAM" quantum="11M"/>
+		<config use_report="yes"/>
+			<route>
+				<service name="Event"> <child name="event_filter" label="usb_hid"/> </service>
+				<service name="ROM" label="report"> <child name="usb_report_rom"/> </service>
+				<any-service> <parent/> <any-child/> </any-service>
+		</route>
+	</start>
+
 
 	<start name="fb_drv" priority="-1" caps="150">
 		<binary name="vesa_fb_drv"/>
@@ -460,6 +473,7 @@ append config {
 			<policy label="usb_report_filter -> devices"        report="usb_host_drv -> devices"/>
 			<policy label="usb_report_filter -> usb_drv_config" report="usb_host_drv -> config"/>
 			<policy label="vbox -> usb_devices"                 report="usb_report_filter -> usb_devices"/>
+			<policy label="usb_hid -> report"                   report="usb_host_drv -> devices"/>
 		</config>
 		<route>
 			<any-service> <parent /> <any-child /> </any-service>
@@ -709,11 +723,11 @@ append boot_modules {
 	libc.lib.so vfs.lib.so libm.lib.so
 	libiconv.lib.so stdcxx.lib.so
 	qemu-usb.lib.so usb_webcam
-	libusb.lib.so libuvc.lib.so
+	libusb.lib.so libuvc.lib.so libyuv.lib.so
 	jpeg.lib.so
 	gui_fb
 	rom_filter
-
+	usb_hid_drv
 	null
 }
 
