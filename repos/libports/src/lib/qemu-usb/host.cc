@@ -18,7 +18,7 @@
 #include <hw/usb.h>
 #include <extern_c_end.h>
 #include <base/debug.h>
-
+#include <trace/timestamp.h>
 
 using namespace Genode;
 
@@ -452,6 +452,14 @@ struct Usb_host_device : List<Usb_host_device>::Element
 	{
 		enum { NUMBER_OF_PACKETS = 32 };
 
+		static unsigned c = 0;
+		static unsigned long told = 0;
+		if (++c % 1000 == 0)  {
+			unsigned long tnew = Genode::Trace::timestamp();
+			Genode::log((tnew - told)/1800, " C: ", c);
+			told = tnew;
+		}
+
 		bool valid = isoc_write_packet->valid();
 		if (valid) {
 			isoc_write_packet->copy(usb_packet);
@@ -607,6 +615,8 @@ struct Usb_host_device : List<Usb_host_device>::Element
 
 	void submit(Usb::Packet_descriptor p)
 	{
+		if (!usb_raw.source()->ready_to_submit())
+			Genode::error("ERRROR");
 		usb_raw.source()->submit_packet(p);
 	}
 

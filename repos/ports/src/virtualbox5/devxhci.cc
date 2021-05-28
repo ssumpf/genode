@@ -198,7 +198,13 @@ struct Timer_queue : public Qemu::Timer_queue
 	{
 		PXHCI pThis    = PDMINS_2_DATA(pDevIns, PXHCI);
 		Timer_queue *q = pThis->timer_queue;
-
+		static unsigned c = 0;
+		static unsigned long told = 0;
+		if (++c % 1000 == 0) {
+			unsigned long tnew = Genode::Trace::timestamp();
+			Genode::log((tnew - told)/1800, " TM: ", c);
+			told = tnew;
+		}
 		q->timeout();
 	}
 
