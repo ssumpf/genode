@@ -383,7 +383,7 @@ intuitive and secure as possible.
 
 :Introducing the file vault:
 
-   [https://genodians.org/m-stein/2021-05-17-introducing-the-file-vault]
+  [https://genodians.org/m-stein/2021-05-17-introducing-the-file-vault]
 
 [image file_vault_setup]
 
