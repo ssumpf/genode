@@ -50,6 +50,8 @@ these formats to Genode's pixel format, we utilize the
 [https://chromium.googlesource.com/libyuv/libyuv - libyuv] library and thereby
 support the YUV2 as well as the MJPEG pixel format for webcams.
 
+[image webcam]
+
 Additionally, we wanted to be able to transfer the webcam data directly into our
 VirtualBox port, thus enabling, sophisticated video conference systems like
 Jitsi or Skype.
@@ -82,6 +84,8 @@ whenever the guest changes the state of the capturing, either switching
 capturing on/off or changing the format.
 
 ! <capture enabled="true/false" format="YUV2/BGR3"/>
+
+[image webcam_chat]
 
 
 Performance optimizations
