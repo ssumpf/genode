@@ -50,16 +50,17 @@ these formats to Genode's pixel format, we utilize the
 [https://chromium.googlesource.com/libyuv/libyuv - libyuv] library and thereby
 support the YUV2 as well as the MJPEG pixel format for webcams.
 
-[image webcam]
-
 Additionally, we wanted to be able to transfer the webcam data directly into our
 VirtualBox port, thus enabling, sophisticated video conference systems like
 Jitsi or Skype.
+
+[image webcam]
+
 Our USB support for our VirtualBox port is based on the ported Qemu USB XHCI
 model. Since no USB webcam model is available for Qemu, we were required
 to develop a model from scratch. The new USB webcam model is attached to the
-QEMU USB XHCI model and operates as a bulk entrypoint. In contrast to an
-isochronous entrypoint, the model causes less CPU load and fewer virtual
+QEMU USB XHCI model and operates as a bulk endpoint. In contrast to an
+isochronous endpoint, the model causes less CPU load and fewer virtual
 interrupts. The announced supported formats to the guest are YUV2 and BGR3.
 By enabling the USB webcam model in the Genode VirtualBox configuration,
 a _Capture_ session is used to capture pictures at the
@@ -86,6 +87,11 @@ capturing on/off or changing the format.
 ! <capture enabled="true/false" format="YUV2/BGR3"/>
 
 [image webcam_chat]
+
+Finally, our developers, croc and lion, setup the Webcam scenario in Sculpt
+and test drive the new feature fascinated. The picture shows a session via Jitsi,
+on the right side lion participates at the meeting via a Win10 VM on Sculpt and
+croc sitting left joined via an Android tablet.
 
 
 Performance optimizations
@@ -571,7 +577,7 @@ tool chain must be built manually via Genode's _tool/tool_chain_ script.
 As a known limitation, Genode's 'Trace::timestamp' function is not available
 on this version of Genode because Linux prevents the user land from accessing
 the cycle counter (pmccntr_el0). So the accuracy of timing is somewhat impeded
-to the order of milliseconds. Also, the jitterentopy random-number generator
+to the order of milliseconds. Also, the jitterentropy random-number generator
 cannot be used.
 
 Those limitations notwithstanding, one can successfully execute scenarios as
