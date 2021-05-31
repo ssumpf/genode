@@ -406,6 +406,73 @@ PDMBOTHCBDECL(int) xhciMmioWrite(PPDMDEVINS pDevIns, void *pvUser, RTGCPHYS GCPh
 	Genode::off_t offset = GCPhysAddr - pThis->MMIOBase;
 	Qemu::Controller *ctl = pThis->ctl;
 
+	enum { MAX_DOORBELL = 3 };
+	static struct {
+		unsigned cnt;
+		uint64_t last;
+		uint64_t us_min;
+		uint64_t us_max;
+		uint64_t us_sum;
+		unsigned us_max_cnt_id;
+		unsigned us_min_cnt_id;
+	} doorbells[MAX_DOORBELL] = { { .us_min = ~0UL },
+	                              { .us_min = ~0UL },
+	                              { .us_min = ~0UL } };
+
+	static unsigned cnt = 0;
+
+	bool doorbell = (0x2000 <= offset) && (offset < 0x2100);
+	/* 0 - host, 4, 8 */
+	if (doorbell) {
+		cnt ++;
+
+		unsigned long tnow = Genode::Trace::timestamp();
+
+		if (offset % 4)
+			Genode::error("unexpected access !?");
+
+		unsigned id = (offset - 0x2000) / 4;
+		if (id < MAX_DOORBELL) {
+			if (tnow < doorbells[id].last)
+				Genode::error("bogus doorbell calulation ", tnow, " - ", doorbells[id].last);
+
+			unsigned long diff_us = (tnow - doorbells[id].last) / 1800;
+
+			doorbells[id].cnt ++;
+			doorbells[id].last = tnow;
+			doorbells[id].us_sum += diff_us;
+			if (doorbells[id].us_max < diff_us) {
+				doorbells[id].us_max = diff_us;
+				doorbells[id].us_max_cnt_id = cnt;
+			}
+			if (doorbells[id].us_min > diff_us) {
+				doorbells[id].us_min = diff_us;
+				doorbells[id].us_min_cnt_id = cnt;
+			}
+		} else
+			Genode::error("unexpected doorbell id ", id);
+
+		if (cnt % 1000 == 0) {
+			static unsigned long told = 0;
+
+			unsigned long diff_us = (tnow - told)/1800;
+
+			Genode::error("doorbell 1000x after ", diff_us, "us");
+			for (unsigned i = 0; i < MAX_DOORBELL; i++) {
+				Genode::warning(" ", i, "=", doorbells[i].cnt, " ",
+				                doorbells[i].us_sum / doorbells[i].cnt, " ",
+				                doorbells[i].us_min == ~0UL ? Genode::String<16>("~0UL") : Genode::String<16>(doorbells[i].us_min),
+				                "(",  doorbells[i].us_min_cnt_id,
+				                ")-", doorbells[i].us_max,
+				                "(",  doorbells[i].us_max_cnt_id, ")");
+				doorbells[i].us_min = ~0UL;
+				doorbells[i].us_max = 0;
+			}
+
+			told = tnow;
+		}
+	}
+
 	ctl->mmio_write(offset, pv, cb);
 	return 0;
 }
