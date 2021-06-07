@@ -207,6 +207,7 @@ SRC_C += compiler/glsl/glcpp/pp.c \
          compiler/nir/nir_gather_info.c \
          compiler/nir/nir_gather_ssa_types.c \
          compiler/nir/nir_gather_xfb_info.c \
+         compiler/nir/nir_gs_count_vertices.c \
          compiler/nir/nir_inline_functions.c \
          compiler/nir/nir_instr_set.c \
          compiler/nir/nir_linking_helpers.c \
@@ -234,9 +235,11 @@ SRC_C += compiler/glsl/glcpp/pp.c \
          compiler/nir/nir_lower_frexp.c \
          compiler/nir/nir_lower_global_vars_to_local.c \
          compiler/nir/nir_lower_goto_ifs.c \
+         compiler/nir/nir_lower_gs_intrinsics.c \
          compiler/nir/nir_lower_idiv.c \
          compiler/nir/nir_lower_indirect_derefs.c \
          compiler/nir/nir_lower_int64.c \
+         compiler/nir/nir_lower_interpolation.c \
          compiler/nir/nir_lower_int_to_float.c \
          compiler/nir/nir_lower_io_arrays_to_elements.c \
          compiler/nir/nir_lower_io.c \
@@ -735,8 +738,6 @@ SRC_C += compiler/glsl/glcpp/pp.c \
 
 CC_OPT += -DMAPI_ABI_HEADER=\"glapi/gen/glapi_mapi_tmp.h\" \
           -DMAPI_MODE_BRIDGE
-
-CC_OPT_gallium/targets/dri/target += -DGALLIUM_IRIS=1
 
 CC_OPT_loader/loader = -DDEFAULT_DRIVER_DIR='"/drivers"'
 CC_OPT_compiler/glsl/glsl_lexer = -include "stdint.h"
