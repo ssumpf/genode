@@ -52,5 +52,4 @@ namespace Lx_fs {
 	Path_string absolute_root_dir(char const *root_path);
 }
 
-
 #endif  /* _LX_UTIL_H_ */

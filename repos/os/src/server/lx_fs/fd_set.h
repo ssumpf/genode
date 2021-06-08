@@ -46,5 +46,4 @@ class Lx_fs::Fd_set
 		bool    is_set(int fd) const { return FD_ISSET(fd, &_fdset); }
 };
 
-#endif   /* _FD_SET_H_ */
-
+#endif /* _FD_SET_H_ */

@@ -99,5 +99,4 @@ class Lx_fs::Watch_node final : public Lx_fs::Node,
 		Fs_open_node *open_node() { return _open_node; }
 };
 
-
 #endif /* _WATCH_H_ */

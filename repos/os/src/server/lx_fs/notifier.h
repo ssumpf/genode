@@ -2,7 +2,6 @@
  * \brief  inotify handling for underlying file system.
  * \author Pirmin Duss
  * \date   2020-06-17
- *
  */
 
 /*
@@ -154,5 +153,4 @@ class Lx_fs::Notifier final : public Thread
 		void remove_watch(char const *path, Watch_node &node);
 };
 
-
-#endif  /* _NOTIFIER_H_ */
+#endif /* _NOTIFIER_H_ */

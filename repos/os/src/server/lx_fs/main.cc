@@ -713,4 +713,3 @@ struct Lx_fs::Main
 
 
 void Component::construct(Genode::Env &env) { static Lx_fs::Main inst(env); }
-

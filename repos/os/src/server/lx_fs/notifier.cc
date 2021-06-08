@@ -50,8 +50,6 @@ namespace Lx_fs
 		                         IN_IGNORED,        /* file was ignored */
 	};
 
-	Notifier *_notifier { nullptr };
-
 	struct Libc_signal_thread;
 }
 
@@ -231,8 +229,6 @@ Lx_fs::Notifier::Notifier(Env &env)
 	Thread { env, "inotify", STACK_SIZE },
 	_env   { env }
 {
-	_notifier = this;
-
 	_fd = inotify_init();
 
 	if (0 > _fd)
