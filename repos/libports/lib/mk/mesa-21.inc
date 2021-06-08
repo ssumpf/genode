@@ -438,6 +438,7 @@ SRC_C += compiler/glsl/glcpp/pp.c \
          gallium/auxiliary/util/u_texture.c \
          gallium/auxiliary/util/u_tile.c \
          gallium/auxiliary/util/u_transfer.c \
+         gallium/auxiliary/util/u_transfer_helper.c \
          gallium/auxiliary/util/u_upload_mgr.c \
          gallium/auxiliary/util/u_vbuf.c \
          gallium/frontends/dri/dri2.c \
@@ -447,6 +448,7 @@ SRC_C += compiler/glsl/glcpp/pp.c \
          gallium/frontends/dri/dri_query_renderer.c \
          gallium/frontends/dri/dri_screen.c \
          gallium/frontends/dri/drisw.c \
+         gallium/frontends/dri/dri2.c \
          gallium/targets/dri/target.c \
          gallium/winsys/sw/dri/dri_sw_winsys.c \
          gallium/winsys/sw/null/null_sw_winsys.c \
@@ -682,6 +684,7 @@ SRC_C += compiler/glsl/glcpp/pp.c \
          util/disk_cache.c \
          util/disk_cache_os.c \
          util/double.c \
+         util/fast_idiv_by_const.c \
          util/format/u_format_bptc.c \
          util/format/u_format.c \
          util/format/u_format_etc.c \
@@ -721,11 +724,13 @@ SRC_C += compiler/glsl/glcpp/pp.c \
 CC_OPT += -DMAPI_ABI_HEADER=\"glapi/gen/glapi_mapi_tmp.h\" \
           -DMAPI_MODE_BRIDGE
 
+CC_OPT_gallium/targets/dri/target += -DGALLIUM_IRIS=1
+
 CC_OPT_loader/loader = -DDEFAULT_DRIVER_DIR='"/drivers"'
 CC_OPT_compiler/glsl/glsl_lexer = -include "stdint.h"
 CC_OPT_gallium/auxiliary/pipe-loader/pipe_loader_sw  = -DPIPE_SEARCH_DIR='"/pipe"' -DGALLIUM_STATIC_TARGETS=1
-CC_OPT_gallium/auxiliary/pipe-loader/pipe_loader_drm = -DGALLIUM_STATIC_TARGETS=1
 CC_OPT_gallium/auxiliary/pipe-loader/pipe_loader     = -DGALLIUM_STATIC_TARGETS=1
+CC_OPT_gallium/auxiliary/pipe-loader/pipe_loader_drm = -DGALLIUM_STATIC_TARGETS=1 -DDRM_DIR_NAME='"/dev/dri"'
 
 CC_CXX_WARN_STRICT =
 
