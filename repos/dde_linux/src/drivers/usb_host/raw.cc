@@ -21,6 +21,7 @@
 #include <lx_emul.h>
 #include <lx_emul/extern_c_begin.h>
 #include <linux/usb.h>
+#include <linux/usb/hcd.h>
 #include "raw.h"
 #include <lx_emul/extern_c_end.h>
 #include <signal.h>
@@ -536,6 +537,23 @@ class Device : public List<Device>::Element
 		}
 
 		/**
+		 * Flush all pending URBs for endpoint
+		 */
+		void _flush_endpoint(Packet_descriptor &p)
+		{
+			bool in = p.number & USB_DIR_IN;
+			Genode::log("FLUSH: ", Genode::Hex(p.number));
+			usb_host_endpoint *ep;
+			if (in)
+				ep = _udev.ep_in[p.number & 0xf];
+			else
+				ep = _udev.ep_out[p.number & 0xf];
+
+			usb_hcd_flush_endpoint(&_udev, ep);
+			p.succeded = true;
+		}
+
+		/**
 		 * Dispatch incoming packet types
 		 */
 		void _dispatch()
@@ -596,6 +614,10 @@ class Device : public List<Device>::Element
 
 					case Packet_descriptor::RELEASE_IF:
 						_release_interface(p);
+						break;
+
+					case Packet_descriptor::FLUSH_TRANSFERS:
+						_flush_endpoint(p);
 						break;
 				}
 
