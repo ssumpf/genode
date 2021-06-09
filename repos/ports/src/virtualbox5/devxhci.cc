@@ -202,6 +202,7 @@ struct Timer_queue : public Qemu::Timer_queue
 	{
 		PXHCI pThis    = PDMINS_2_DATA(pDevIns, PXHCI);
 		Timer_queue *q = pThis->timer_queue;
+#if 0
 		static unsigned c = 0;
 		static unsigned long told = 0;
 		if (++c % 1000 == 0) {
@@ -209,6 +210,7 @@ struct Timer_queue : public Qemu::Timer_queue
 			Genode::log((tnew - told)/1800, " TM: ", c);
 			told = tnew;
 		}
+#endif
 		q->timeout();
 	}
 
@@ -405,7 +407,7 @@ PDMBOTHCBDECL(int) xhciMmioWrite(PPDMDEVINS pDevIns, void *pvUser, RTGCPHYS GCPh
 
 	Genode::off_t offset = GCPhysAddr - pThis->MMIOBase;
 	Qemu::Controller *ctl = pThis->ctl;
-
+#if 0
 	enum { MAX_DOORBELL = 3 };
 	static struct {
 		unsigned cnt;
@@ -472,7 +474,7 @@ PDMBOTHCBDECL(int) xhciMmioWrite(PPDMDEVINS pDevIns, void *pvUser, RTGCPHYS GCPh
 			told = tnow;
 		}
 	}
-
+#endif
 	ctl->mmio_write(offset, pv, cb);
 	return 0;
 }
