@@ -218,7 +218,7 @@ void Lx_fs::Notifier::_process_notify()
 	int cnt { 0 };
 	Single_watch_list_element *e { _notify_queue.first() };
 	for (; e != nullptr && cnt < PARALLEL_NOTIFICATIONS; ++cnt) {
-		e->node.signal_handler().local_submit();
+		e->node.notify_handler().local_submit();
 		e = remove_from_list(_notify_queue, e, _heap);
 	}
 }

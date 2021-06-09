@@ -29,14 +29,14 @@ unsigned long Lx_fs::Watch_node::_inode(char const *path)
 }
 
 
-Lx_fs::Watch_node::Watch_node(Env                         &env,
-           char const                  *path,
-           Watch_node_response_handler &watch_node_response_handler,
-           Notifier                    &notifier)
+Lx_fs::Watch_node::Watch_node(Env              &env,
+                              char const       *path,
+                              Response_handler &response_handler,
+                              Notifier          &notifier)
 :
 	Node { _inode(path) },
 	_env { env },
-	_watch_node_response_handler { watch_node_response_handler },
+	_response_handler { response_handler },
 	_notifier { notifier }
 {
 	name(path);
@@ -52,7 +52,7 @@ Lx_fs::Watch_node::~Watch_node()
 }
 
 
-void Lx_fs::Watch_node::watch_response()
+void Lx_fs::Watch_node::_handle_notify()
 {
 	mark_as_updated();
 	_acked_packet = Packet_descriptor { Packet_descriptor { },
@@ -61,5 +61,5 @@ void Lx_fs::Watch_node::watch_response()
 	                                    0, 0 };
 	_acked_packet.succeeded(true);
 
-	_watch_node_response_handler.handle_watch_node_response(*this);
+	_response_handler.handle_watch_node_response(*this);
 }

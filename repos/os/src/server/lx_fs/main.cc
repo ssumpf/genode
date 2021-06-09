@@ -91,7 +91,7 @@ class Lx_fs::Session_resources
 
 class Lx_fs::Session_component : private Session_resources,
                                  public Session_rpc_object,
-                                 private Watch_node::Watch_node_response_handler
+                                 private Watch_node::Response_handler
 {
 	private:
 
@@ -244,7 +244,7 @@ class Lx_fs::Session_component : private Session_resources,
 		}
 
 		/**
-		 * Watch_node::Watch_node_response_handler interface
+		 * Watch_node::Response_handler interface
 		 */
 		void handle_watch_node_response(Lx_fs::Watch_node &node) override
 		{
