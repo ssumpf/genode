@@ -9,8 +9,8 @@ set build_components {
 }
 
 # fuji4
-#proc libuvc_vendor_id {}  { return "0x04f2" }
-#proc libuvc_product_id {} { return "0xb564" }
+proc libuvc_vendor_id {}  { return "0x04f2" }
+proc libuvc_product_id {} { return "0xb564" }
 
 # c270
 #proc libuvc_vendor_id {}  { return "0x046d" }
@@ -21,8 +21,8 @@ set build_components {
 #proc libuvc_product_id {} { return "0x09c1" }
 
 # t470
-proc libuvc_vendor_id {}  { return "0x0bda" }
-proc libuvc_product_id {} { return "0x58db" }
+#proc libuvc_vendor_id {}  { return "0x0bda" }
+#proc libuvc_product_id {} { return "0x58db" }
 
 
 
