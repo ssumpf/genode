@@ -127,11 +127,10 @@ CROSS_DEV_PREFIX ?= /usr/local/genode/tool/current/bin/genode-$(TOOL_ARCH)-
 
 # gather list of <path.c>:<symbol> pairs, strip first path element (build dir)
 NM          = $(CROSS_DEV_PREFIX)nm --print-file-name --defined-only
-C_FILE_DEF := $(shell $(NM) `find $(LINUX_KERNEL_DIR) -name "*.o" | grep -v vmlinux.o` | grep -i " t " |\
-                      sed -e 's/^[^\/]*\///' -e 's/o:[0-f]* [tT] /c:/')
+C_FILE_DEF := $(shell cd $(LINUX_KERNEL_DIR); $(NM) `find -name "*.o" -printf "%P\n" | grep -v vmlinux.o` | grep -i " t " | sed -e 's/o:[0-f]* [tT] /c:/')
 
 # query C_FILE_DEF database for a given symbol
-symbol_to_c_file  = $(firstword $(subst :, ,$(filter %:$(1),$(C_FILE_DEF))))
+symbol_to_c_file  = $(addprefix $(LINUX_SRC_DIR)/, $(firstword $(subst :, ,$(filter %:$(1),$(C_FILE_DEF)))))
 
 #
 # Ctags database
@@ -140,7 +139,7 @@ symbol_to_c_file  = $(firstword $(subst :, ,$(filter %:$(1),$(C_FILE_DEF))))
 HEADER_DECL      := $(shell cd $(LINUX_SRC_DIR)/include; ctags -R -x --kinds-c=p --_xformat="%N:%F" .)
 GLOBAL_VAR       := $(shell cd $(LINUX_SRC_DIR)/include; ctags -R -x --kinds-c=x --_xformat="%N:%F" .)
 func_to_h_file    = $(lastword $(subst :, ,$(filter $(1):%,$(HEADER_DECL))))
-do_func_to_def    = $(subst :, ,$(subst typename:,,$(subst $(1): ,,$(shell cd $(LINUX_SRC_DIR); ctags -x --kinds-c=f --_xformat="%N: %t %N%S" $(2) | grep "^\<$(1)\>:"))))
+do_func_to_def    = $(subst :, ,$(subst typename:,,$(subst $(1): ,,$(shell ctags -x --kinds-c=f --_xformat="%N: %t %N%S" $(2) | grep "^\<$(1)\>:"))))
 check_func_to_def = $(if $(2),$(call do_func_to_def,$(1),$(2)),)
 func_to_def       = $(call check_func_to_def,$(1),$(call symbol_to_c_file,$(1)))
 
