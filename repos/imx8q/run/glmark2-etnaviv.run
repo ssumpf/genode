@@ -1,0 +1,166 @@
+create_boot_directory
+
+set imports { }
+
+lappend imports [depot_user]/pkg/drivers_managed-[board]
+lappend imports [depot_user]/src/nitpicker
+lappend imports [depot_user]/src/report_rom
+lappend imports [depot_user]/raw/glmark2
+
+
+import_from_depot $imports
+
+set build_components {
+	core init timer
+	drivers/gpu/etnaviv
+	lib/mesa-21/softpipe
+	lib/mesa-21/etnaviv
+
+	app/glmark2
+
+	server/dummy_log
+}
+
+build $build_components
+
+set config {
+<config prio_levels="2" verbose="yes">
+	<parent-provides>
+		<service name="CPU"/>
+		<service name="IRQ"/>
+		<service name="IO_MEM"/>
+		<service name="IO_PORT"/>
+		<service name="LOG"/>
+		<service name="PD"/>
+		<service name="RM"/>
+		<service name="ROM"/>
+	</parent-provides>
+	<default caps="100"/>
+	<default-route>
+		<any-service> <parent/> <any-child/> </any-service>
+	</default-route>
+
+	<start name="timer">
+		<resource name="RAM" quantum="1M"/>
+		<provides><service name="Timer"/></provides>
+	</start>
+
+	<start name="report_rom">
+		<resource name="RAM" quantum="1M"/>
+		<provides> <service name="Report"/> <service name="ROM"/> </provides>
+		<config verbose="no"/>
+		<route>
+			<any-service> <parent/> </any-service>
+		</route>
+	</start>
+
+	<start name="drivers" caps="2500" managing_system="yes">
+		<resource name="RAM" quantum="128M"/>
+		<binary name="init"/>
+		<provides> <service name="Platform"/> </provides>
+		<route>
+			<service name="ROM" label="config"> <parent label="drivers.config"/> </service>
+			<service name="Timer">   <child name="timer"/> </service>
+			<service name="Capture"> <child name="nitpicker"/> </service>
+			<service name="Event">   <child name="nitpicker"/> </service>
+			<service name="Report">  <child name="report_rom"/> </service>
+			<any-service> <parent/> </any-service>
+		</route>
+	</start>
+
+	<start name="nitpicker" caps="200">
+		<resource name="RAM" quantum="2M"/>
+		<provides>
+			<service name="Gui"/> <service name="Capture"/> <service name="Event"/>
+		</provides>
+		<config>
+			<capture/> <event/>
+			<domain name="pointer" layer="1" content="client" label="no" origin="pointer" />
+			<domain name="default" layer="2" content="client" label="no" focus="click" hover="always" />
+			<policy label_prefix="pointer" domain="pointer"/>
+			<default-policy                domain="default"/>
+		</config>
+		<route><any-service><parent/><any-child/></any-service></route>
+	</start>
+	<start name="pointer">
+		<resource name="RAM" quantum="1M"/>
+	</start>
+
+	<start name="glmark2" caps="500">
+		<resource name="RAM" quantum="160M"/>
+		<config ld_verbose="yes">
+			<vfs>
+				<dir name="dev">
+					<log/>
+				</dir>
+				<dir name="data">
+					<tar name="glmark2_assets.tar"/>
+				</dir>
+			</vfs>
+			<libc stdout="/dev/log" stderr="/dev/log"/>
+			<arg value="glmark2"/>
+			<!-- <arg value="\-\-debug"/> -->
+			<arg value="-b"/>
+			<arg value=":duration=2.0"/>
+			<arg value="-s"/>
+			<arg value="800x600"/>
+		</config>
+		<route>
+			<service name="Gui"> <child name="nitpicker"/> </service>
+			<service name="ROM" label="egl_drv.lib.so">
+				<parent label="egl_etnaviv-21.lib.so"/>
+			</service>
+			<service name="ROM" label="libEGL.so">
+				<parent label="mesa-21.lib.so"/>
+			</service>
+			<service name="ROM" label="libGLESv2.so">
+				<parent label="mesa-21.lib.so"/>
+			</service>
+			<!-- <service name="LOG"> <child name="dummy_log"/> </service> -->
+			<any-service> <parent/> <any-child/> </any-service>
+		</route>
+	</start>
+
+	<start name="dummy_log" caps="100">
+		<resource name="RAM" quantum="1M"/>
+		<provides> <service name="LOG"/> </provides>
+		<route>
+			<any-service> <parent/> </any-service>
+		</route>
+	</start>
+
+	<start name="imx8q_gpu_drv" caps="500">
+		<resource name="RAM" quantum="128M"/>
+		<provides> <service name="Drm"/> </provides>
+		<config ld_verbose="yes"/>
+		<route>
+			<service name="Timer"> <child name="timer"/> </service>
+			<service name="Gui"> <child name="nitpicker"/> </service>
+			<service name="Platform"> <child name="drivers"/> </service>
+			<!-- <service name="LOG"> <child name="dummy_log"/> </service> -->
+			<any-service> <parent/> </any-service>
+		</route>
+	</start>
+</config>}
+
+install_config $config
+
+set boot_modules {
+	libc.lib.so vfs.lib.so libm.lib.so
+	egl-21.lib.so mesa-21.lib.so stdcxx.lib.so
+	expat.lib.so glapi-21.lib.so zlib.lib.so
+	core init ld.lib.so timer egl_swrast-21.lib.so
+
+	dummy_log
+
+	egl_etnaviv-21.lib.so libdrm.lib.so
+	imx8q_gpu_drv
+
+	glmark2 jpeg.lib.so libpng.lib.so
+}
+
+build_boot_image $boot_modules
+
+append qemu_args " -m 768"
+
+run_genode_until forever
