@@ -211,7 +211,7 @@ check_func = $(if $(2),$(call check_fdef,$(1),$(2),$(call func_to_def,$(1))),$(c
 ifeq ($(realpath $(LINUX_KERNEL_DIR)),)
 show_symbol = "$1"
 else
-show_symbol = "$1 $(foreach F,$(call symbol_to_c_file,$1),(found at $(F:.c=.o)))"
+show_symbol = "$1 $(foreach F,$(call symbol_to_c_file,$1),(found at $(subst $(LINUX_SRC_DIR)/,,$(F:.c=.o))))"
 endif
 
 show:
