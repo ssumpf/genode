@@ -11,7 +11,7 @@ if {[have_spec linux]} {
 }
 
 if {![have_include "power_on/qemu"]} {
-	puts "Run script not supported on this platform."
+	puts "Test requires to be run on Qemu."
 	exit 0
 }
 
