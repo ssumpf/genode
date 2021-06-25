@@ -866,13 +866,21 @@ Timeout_event::Timeout_event(Timer::Connection &timer,
 	if (!_sec) {
 		throw Invalid(); }
 
+	uint64_t curr_us = _timer.curr_time().trunc_to_plain_us().value;
+	uint64_t diff_us = _sec * 1000 * 1000;
+	uint64_t end_us = curr_us + diff_us;
+	log("Debug: Timeout_event curr ", Hex(curr_us), " diff ", Hex(diff_us), " end ", Hex(end_us));
 	_timeout.schedule(Microseconds(_sec * 1000 * 1000));
 }
 
 
 void Timeout_event::_handle_timeout(Duration)
 {
-	_child.event_occured(*this, _timer.curr_time().trunc_to_plain_us().value - _child.init_time_us);
+	uint64_t curr_us = _timer.curr_time().trunc_to_plain_us().value;
+	uint64_t init_us = _child.init_time_us;
+	uint64_t diff_us = curr_us - init_us;
+	log("Debug: _handle_timeout curr ", Hex(curr_us), " init ", Hex(init_us), " diff ", Hex(diff_us));
+	_child.event_occured(*this, diff_us);
 }
 
 
