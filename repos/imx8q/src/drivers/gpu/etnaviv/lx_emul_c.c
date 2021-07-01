@@ -1242,6 +1242,11 @@ int dma_direct_map_sg(struct device *dev, struct scatterlist *sgl,
 		sg_dma_len(sg) = sg->length;
 		LX_TRACE_PRINT("%s: i: %d page: %px offset: %u length: %u dma_addr: 0x%llx\n",
 		               __func__, i, page, sg->offset, sg->length, sg->dma_address);
+
+		if (!(attrs & DMA_ATTR_SKIP_CPU_SYNC)) {
+			/* arch_sync_dma_for_device -> __dma_unmap_area */
+			lx_emul_cache_clean_and_invalidate(dma.vaddr, 4096);
+		}
 	}
 
 	return 0;
@@ -1257,11 +1262,64 @@ void dma_direct_unmap_sg(struct device *dev, struct scatterlist *sgl,
 
 	for_each_sg(sgl, sg, nents, i) {
 
+		struct Lx_dma dma;
+		struct page *page = sg_page(sg);
+		dma = lx_emul_get_dma_address_for_page(page->mapping, page);
+		if (!dma.vaddr && !dma.paddr) {
+			BUG();
+		}
+
 		if (!(attrs & DMA_ATTR_SKIP_CPU_SYNC)) {
 			LX_TRACE_PRINT("%s: dma_direct_sync_single_for_cpu(0x%llx) not implemented\n",
 			               __func__, sg->dma_address);
+
+			/* arch_sync_dma_for_cpu -> __dma_unmap_area */
+			lx_emul_cache_invalidate(dma.vaddr, 4096);
 		}
 		sg->dma_address = 0;
+	}
+}
+
+
+void dma_direct_sync_sg_for_cpu(struct device *dev, struct scatterlist *sgl,
+                                int nents, enum dma_data_direction dir)
+{
+	int i;
+	struct scatterlist *sg;
+
+	for_each_sg(sgl, sg, nents, i) {
+		struct Lx_dma dma;
+		struct page *page = sg_page(sg);
+		dma = lx_emul_get_dma_address_for_page(page->mapping, page);
+
+		if (!dma.vaddr && !dma.paddr) {
+			BUG();
+		}
+
+		/* arch_sync_dma_for_cpu -> __dma_unmap_area */
+		lx_emul_cache_invalidate(dma.vaddr, 4096);
+	}
+}
+
+
+void dma_direct_sync_sg_for_device(struct device *dev,
+                                   struct scatterlist *sgl,
+                                   int nents, enum dma_data_direction dir)
+{
+	int i;
+	struct scatterlist *sg;
+
+	for_each_sg(sgl, sg, nents, i) {
+		struct Lx_dma dma;
+		struct page *page = sg_page(sg);
+		dma = lx_emul_get_dma_address_for_page(page->mapping, page);
+
+		if (!dma.vaddr && !dma.paddr) {
+			BUG();
+		}
+
+		/* arch_sync_dma_for_device -> __dma_unmap_area */
+		lx_emul_cache_clean_and_invalidate(dma.vaddr, 4096);
 	}
 }
 
@@ -1733,7 +1791,8 @@ struct file *shmem_file_setup(char const *name, loff_t size,
 		goto err_as;
 	}
 
-	lx_dma = lx_emul_dma_alloc_attrs(NULL, size, false);
+	/* XXX for now map uncached */
+	lx_dma = lx_emul_dma_alloc_attrs(NULL, size, 1);
 	if (!lx_dma.vaddr && !lx_dma.paddr) {
 		goto err_as;
 	}

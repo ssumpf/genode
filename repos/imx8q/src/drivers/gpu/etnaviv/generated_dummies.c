@@ -7,14 +7,6 @@
 #include <lx_emul.h>
 
 
-#include <linux/ratelimit.h>
-
-int ___ratelimit(struct ratelimit_state * rs,const char * func)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 #include <drm/drm_print.h>
 
 void __drm_printfn_seq_file(struct drm_printer * p,struct va_format * vaf)
@@ -122,22 +114,6 @@ void destroy_workqueue(struct workqueue_struct * wq)
 #include <linux/device.h>
 
 void device_initialize(struct device * dev)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/dma-mapping.h>
-
-void dma_direct_sync_sg_for_cpu(struct device * dev,struct scatterlist * sgl,int nents,enum dma_data_direction dir)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/dma-mapping.h>
-
-void dma_direct_sync_sg_for_device(struct device * dev,struct scatterlist * sgl,int nents,enum dma_data_direction dir)
 {
 	lx_emul_trace_and_stop(__func__);
 }

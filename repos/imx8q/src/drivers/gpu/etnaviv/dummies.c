@@ -376,3 +376,11 @@ void dev_coredumpv(struct device * dev,void * data,size_t datalen,gfp_t gfp)
 {
 	lx_emul_trace(__func__);
 }
+
+
+#include <linux/ratelimit.h>
+
+int ___ratelimit(struct ratelimit_state * rs,const char * func)
+{
+	lx_emul_trace(__func__);
+}

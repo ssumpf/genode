@@ -186,11 +186,12 @@ void *lx_emul_kmem_cache_alloc(void const *c)
 struct Dma_wc_dataspace : Genode::Attached_ram_dataspace,
                           Genode::List<Dma_wc_dataspace>::Element
 {
-	Dma_wc_dataspace(Genode::size_t size)
+	Dma_wc_dataspace(Genode::size_t size, bool cached)
 	: Genode::Attached_ram_dataspace(Lx_kit::env().env.ram(),
 	                                 Lx_kit::env().env.rm(),
 	                                 size,
-	                                 Genode::Cache::UNCACHED) { }
+	                                 cached ? Genode::Cache::CACHED : Genode::Cache::UNCACHED)
+	{ }
 };
 
 
@@ -203,17 +204,20 @@ static Genode::List<Dma_wc_dataspace> &_dma_wc_ds_list()
 
 Lx_dma lx_emul_dma_alloc_attrs(void const *dev, unsigned long size, int wc)
 {
-	(void)wc;
-
 	try {
-		Dma_wc_dataspace *dma_wc_ds = new (Lx::Malloc::mem()) Dma_wc_dataspace(size);
+		/* "wc" memory -> NC memory */
+		bool const cached = wc > 0 ? false : true;
+		Dma_wc_dataspace *dma_wc_ds =
+			new (Lx::Malloc::mem()) Dma_wc_dataspace(size, cached);
 
 		_dma_wc_ds_list().insert(dma_wc_ds);
 
-		return Lx_dma {
+		Lx_dma dma {
 			.vaddr = (unsigned long)dma_wc_ds->local_addr<void>(),
 			.paddr = (unsigned long)Genode::Dataspace_client(dma_wc_ds->cap()).phys_addr()
 		};
+		Genode::memset((void*)dma.vaddr, 0, size);
+		return dma;
 	} catch (...) { }
 	return Lx_dma { .vaddr = 0, .paddr = 0 };
 }
@@ -495,6 +499,20 @@ Lx_dma lx_emul_get_dma_address_for_page(void *as, void *p)
 	}
 
 	return mp->dma_for_page(p);
+}
+
+
+#include <cpu/cache.h>
+
+void lx_emul_cache_clean_and_invalidate(unsigned long vaddr, unsigned long size)
+{
+	Genode::cache_clean_invalidate_data((Genode::addr_t)vaddr, (Genode::size_t)size);
+}
+
+
+void lx_emul_cache_invalidate(unsigned long vaddr, unsigned long size)
+{
+	Genode::cache_invalidate_data((Genode::addr_t)vaddr, (Genode::size_t)size);
 }
 
 

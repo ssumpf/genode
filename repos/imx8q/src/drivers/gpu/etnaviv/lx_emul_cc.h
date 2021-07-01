@@ -67,6 +67,9 @@ int            lx_emul_remove_page_to_address_page(void *, void *, unsigned long
 struct Lx_dma  lx_emul_get_dma_address_for_page(void *, void *);
 void          *lx_emul_address_space_vmap(void *);
 
+void lx_emul_cache_clean_and_invalidate(unsigned long, unsigned long);
+void lx_emul_cache_invalidate(unsigned long, unsigned long);
+
 unsigned long lx_emul_user_copy(void *, void const*, unsigned long);
 
 
