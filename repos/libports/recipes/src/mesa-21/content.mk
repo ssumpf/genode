@@ -1,10 +1,15 @@
-MIRROR_FROM_REP_DIR := lib/mk/egl-21.mk \
+MIRROR_FROM_REP_DIR := \
+                       lib/mk/egl-21.mk \
+                       lib/mk/egl_etnaviv-21.mk \
                        lib/mk/egl_swrast-21.mk \
+                       lib/mk/etnaviv.mk \
                        lib/mk/glapi-21.mk \
-                       lib/mk/mesa-21.mk \
+                       lib/mk/mesa-21.inc \
                        lib/mk/mesa-21_api.mk \
                        lib/mk/mesa-common-21.inc \
                        lib/mk/softpipe.mk \
+                       lib/mk/spec/arm_v8/mesa-21.mk \
+                       lib/mk/spec/x86_64/mesa-21.mk \
                        src/lib/mesa-21
 
 content: $(MIRROR_FROM_REP_DIR) src/lib/mesa-21/target.mk
