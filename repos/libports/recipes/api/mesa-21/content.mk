@@ -1,4 +1,5 @@
 MIRROR_FROM_REP_DIR := lib/import/import-mesa-21.mk \
+                       lib/import/import-mesa-21_api.mk \
                        lib/symbols/egl-21 \
                        lib/symbols/mesa-21
 
