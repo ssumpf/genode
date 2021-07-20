@@ -2727,6 +2727,8 @@ void disable_irq(unsigned int);
 
 #include <linux/math64.h>
 
+void aperture_exit(void);
+
 #include <lx_emul/extern_c_end.h>
 
 #endif /* _LX_EMUL_H_ */
