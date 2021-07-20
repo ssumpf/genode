@@ -30,7 +30,7 @@ struct Skb skb_helper(struct sk_buff *skb)
 	skb_push(skb, ETH_HLEN);
 
 	helper.packet      = skb->data;
-	helper.packet_size = ETH_HLEN;
+	helper.packet_size = 0;
 	helper.frag        = 0;
 	helper.frag_size   = 0;
 
