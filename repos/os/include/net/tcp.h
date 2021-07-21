@@ -61,7 +61,7 @@ class Net::Tcp_packet
 			struct Ack         : Bitfield<4, 1>  { };
 			struct Urg         : Bitfield<5, 1>  { };
 			struct Ece         : Bitfield<6, 1>  { };
-			struct Crw         : Bitfield<7, 1>  { };
+			struct Cwr         : Bitfield<7, 1>  { };
 			struct Ns          : Bitfield<8, 1>  { };
 			struct Data_offset : Bitfield<12, 4> { };
 		};
@@ -88,7 +88,7 @@ class Net::Tcp_packet
 		uint16_t urgent_ptr()  const { return host_to_big_endian(_urgent_ptr); }
 		bool     ns()          const { return Flags::Ns::get(flags()); };
 		bool     ece()         const { return Flags::Ece::get(flags()); };
-		bool     crw()         const { return Flags::Crw::get(flags()); };
+		bool     cwr()         const { return Flags::Cwr::get(flags()); };
 		bool     fin()         const { return Flags::Fin::get(flags()); };
 		bool     syn()         const { return Flags::Syn::get(flags()); };
 		bool     rst()         const { return Flags::Rst::get(flags()); };
