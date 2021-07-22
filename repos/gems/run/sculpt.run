@@ -240,12 +240,12 @@ install_config {
 		</route>
 	</start>
 
-	<start name="drivers" caps="3150" priority="-1" managing_system="yes">
-		<resource name="RAM" quantum="128M"/>
+	<start name="drivers" caps="4000" priority="-1" managing_system="yes">
+		<resource name="RAM" quantum="160M"/>
 		<resource name="CPU" quantum="40"/>
 		<binary name="init"/>
 		<route>
-			<service name="LOG"> <child name="log"/> </service>
+			<service name="LOG"> <parent/> </service>
 			<service name="ROM" label="config">
 				<child name="config_fs_rom" label="drivers"/> </service>
 			<service name="ROM" label_last="capslock"> <child name="report_rom"/> </service>
@@ -687,3 +687,4 @@ exec sh -c "tar cf [run_dir]/genode/depot_users.tar -C [genode_dir] \
 append boot_modules { }
 
 build_boot_image $boot_modules
+run_genode_until forever
