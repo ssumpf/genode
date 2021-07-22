@@ -16,9 +16,9 @@ if {$use_i965} {
 }
 
 set driver_config "drivers.config"
-if {[have_board pc]} {
-	set driver_config "drivers_platform.config"
-}
+# if {[have_board pc]} {
+# 	set driver_config "drivers_platform.config"
+# }
 
 create_boot_directory
 import_from_depot [depot_user]/src/[base_src] \
@@ -30,6 +30,7 @@ import_from_depot [depot_user]/src/[base_src] \
 
 set build_components {
 	drivers/gpu/intel
+	drivers/framebuffer/intel
 	lib/mesa/swrast
 }
 
@@ -94,14 +95,26 @@ append config {
 	</start>}
 
 append_if $use_i965 config {
-	<start name="intel_fb_drv" caps="2000" priority="-1">
+	<start name="intel_gpu_drv" caps="2000" priority="-1">
 		<binary name="intel_gpu_drv"/>
 		<resource name="RAM" quantum="40M"/>
-		<provides> <service name="Gpu"/> </provides>
+		<provides>
+			<service name="Gpu"/>
+			<service name="Platform"/>
+		</provides>
 		<route>
+			<service name="Platform"> <child name="drivers"/> </service>
 			<any-service> <parent /> <any-child/> </any-service>
 		</route>
-	</start>}
+	</start>
+	<start name="intel_fb_drv" caps="1000">
+		<resource name="RAM" quantum="96M"/>
+		<route>
+			<service name="Platform"> <child name="intel_gpu_drv"/> </service>
+			<any-service> <parent/> <any-child /> </any-service>
+		</route>
+	</start>
+}
 
 set launchpad_config ""
 append launchpad_config {
@@ -179,7 +192,7 @@ set boot_modules {
 
 append_if $use_i965 boot_modules {
 	egl_i965.lib.so drm.lib.so
-	intel_gpu_drv
+	intel_gpu_drv intel_fb_drv
 }
 
 append boot_modules $demo_modules
