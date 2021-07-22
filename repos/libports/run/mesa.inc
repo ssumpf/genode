@@ -19,6 +19,7 @@ import_from_depot [depot_user]/src/[base_src] \
 
 set build_components {
 	drivers/gpu/intel
+	drivers/framebuffer/intel
 	lib/mesa/swrast
 }
 
@@ -51,6 +52,7 @@ set config {
 	<start name="drivers" caps="1500" managing_system="yes">
 		<resource name="RAM" quantum="64M"/>
 		<binary name="init"/>
+		<provides> <service name="Platform"/> </provides>
 		<route>
 			<service name="ROM" label="config"> <parent label="drivers.config"/> </service>
 			<service name="Timer">   <child name="timer"/> </service>
@@ -78,9 +80,32 @@ set config {
 		<resource name="RAM" quantum="1M"/>
 	</start>}
 
+
 set backend_library egl_swrast.lib.so
 if {$use_i965} {
 set backend_library egl_i965.lib.so
+}
+
+append_if $use_i965 config {
+	<start name="intel_gpu_drv" caps="800" priority="-1">
+		<binary name="intel_gpu_drv"/>
+		<resource name="RAM" quantum="40M"/>
+		<provides>
+			<service name="Gpu"/>
+			<service name="Platform"/>
+		</provides>
+		<route>
+			<service name="Platform"> <child name="drivers"/> </service>
+			<any-service> <parent /> <any-child/> </any-service>
+		</route>
+	</start>
+	<start name="intel_fb_drv" caps="800">
+		<resource name="RAM" quantum="48M"/>
+		<route>
+			<service name="Platform"> <child name="intel_gpu_drv"/> </service>
+			<any-service> <parent/> <any-child /> </any-service>
+		</route>
+	</start>
 }
 
 set launchpad_config {
@@ -136,16 +161,6 @@ append config $launchpad_config
 append config {
 	</start>}
 
-append_if $use_i965 config {
-	<start name="intel_fb_drv" caps="200">
-		<binary name="intel_gpu_drv"/>
-		<resource name="RAM" quantum="40M"/>
-		<provides> <service name="Gpu"/> </provides>
-		<route>
-			<any-service> <parent /> <any-child/> </any-service>
-		</route>
-	</start>}
-
 append config {
 </config>}
 
@@ -161,7 +176,7 @@ set boot_modules {
 
 append_if $use_i965 boot_modules {
 	egl_i965.lib.so drm.lib.so
-	intel_gpu_drv
+	intel_gpu_drv intel_fb_drv
 }
 
 append boot_modules $demo_modules
