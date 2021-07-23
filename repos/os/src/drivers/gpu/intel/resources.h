@@ -223,7 +223,23 @@ class Igd::Resources : Genode::Noncopyable
 			_platform.upgrade_ram(1024*1024);
 
 			_find_devices();
-			if (!_gpu_cap.valid() || !_mch_enabled()) {
+			if (!_gpu_cap.valid()) {
+				Genode::error("No GPU found");
+				throw Initialization_failed();
+			}
+
+			if (!_host_bridge_cap.valid()) {
+				Genode::error("PCI host bridge is not accessible");
+				throw Initialization_failed();
+			}
+
+			if (!_isa_bridge_cap.valid()) {
+				Genode::error("ISA bridge is not accessible");
+				throw Initialization_failed();
+			}
+
+			if (!_mch_enabled()) {
+				Genode::error("MCH is not enabled");
 				throw Initialization_failed();
 			}
 
@@ -246,6 +262,7 @@ class Igd::Resources : Genode::Noncopyable
 		{
 			_platform.release_device(_gpu_cap);
 			_platform.release_device(_host_bridge_cap);
+			_platform.release_device(_isa_bridge_cap);
 		}
 
 		addr_t map_gttmmadr()
