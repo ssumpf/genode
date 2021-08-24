@@ -1162,14 +1162,12 @@ void drm_init(Genode::Env &env, Genode::Entrypoint &signal_ep)
  *
  * On Genode the virtual address of MMAP_GTT is stored in the offset.
  */
-extern "C" void *drm_mmap(void * vaddr, size_t length,
+extern "C" void *drm_mmap(void * /* vaddr */, size_t length,
                           int /* prot */, int /* flags */,
                           int /* fd */, off_t offset)
 {
 	/* sanity check if we got a GTT mapped offset */
 	bool const ok = _call->map_buffer_ggtt(offset, length);
-	Genode::error(__func__, " ", vaddr, "+", Genode::Hex(length), " ", Genode::Hex(offset), " ok=", ok);
-	Genode::sleep_forever();
 	return ok ? (void *)offset : nullptr;
 }
 
