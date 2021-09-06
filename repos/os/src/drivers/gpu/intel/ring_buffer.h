@@ -71,7 +71,11 @@ class Igd::Ring_buffer
 		{
 			Genode::size_t const bytes = (_max - _tail) * sizeof(uint32_t);
 			Genode::memset(_dwords + _tail, 0, bytes);
+			Utils::clflush(_dwords  + _tail);
 			_tail = 0;
+			//Igd::Mi_user_interrupt ui;
+			//Genode::memcpy(_dwords, &ui.value, 4);
+			//Utils::clflush(_dwords);
 		}
 
 		/**
