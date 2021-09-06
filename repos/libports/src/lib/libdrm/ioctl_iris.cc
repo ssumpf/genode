@@ -387,7 +387,9 @@ class Drm_call
 		 ** execbuffer completion **
 		 ***************************/
 
-		void _handle_completion() {
+		void _handle_completion()
+		{
+			/* wake up possible waiters */
 			_completion_lock.wakeup();
 		}
 
@@ -771,6 +773,17 @@ class Drm_call
 				});
 			}
 
+			/*
+			 * Always wait for buffer to complete to avoid race between map and unmap
+			 * of signal ep, the original drm_i915_gem_wait simply 0 now
+			 */
+			struct drm_i915_gem_wait wait = {
+				.bo_handle = (__u32)command_buffer->handle.id().value,
+				.flags = 0,
+				.timeout_ns = -1LL
+			};
+
+			_device_gem_wait(&wait);
 			return 0;
 		}
 
@@ -866,7 +879,7 @@ class Drm_call
 			case DRM_I915_GEM_EXECBUFFER2:    return _device_gem_execbuffer2(arg);
 			case DRM_I915_GEM_BUSY:           return _device_gem_busy(arg);
 			case DRM_I915_GEM_MADVISE:        return _device_gem_madvise(arg);
-			case DRM_I915_GEM_WAIT:           return _device_gem_wait(arg);
+			case DRM_I915_GEM_WAIT:           return 0; //_device_gem_wait(arg);
 			case DRM_I915_QUERY:              return _device_query(arg);
 			case DRM_I915_GEM_CONTEXT_SETPARAM: return _device_gem_context_set_param(arg);
 			case DRM_I915_GEM_CONTEXT_GETPARAM: return _device_gem_context_get_param(arg);
@@ -1142,6 +1155,12 @@ class Drm_call
 				if (!h.busy) return;
 				if (h.seqno.id > gpu_info.last_completed.id) return;
 				h.busy = false;
+
+				/*
+				 * Because bo object map/unmap is not supported correctly right now
+				 * (reference counting), we unmap and map the buffers on for each frame
+				 */
+				_unmap_buffer_ppgtt(h);
 			});
 
 		}
