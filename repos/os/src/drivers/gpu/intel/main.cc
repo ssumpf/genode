@@ -508,7 +508,7 @@ struct Igd::Device
 	{
 		enum {
 			APERTURE_SIZE = 32u << 20,
-			MAX_FENCES    = 4,
+			MAX_FENCES    = 16,
 		};
 
 		Device                          &_device;
@@ -779,7 +779,6 @@ struct Igd::Device
 				/* gen8_emit_fini_breadcrumb_tail -> gen8_emit_wa_tail */
 				enum { CMD_NUM = 2 };
 				Genode::uint32_t cmd[2] = {};
-				Igd::Mi_user_interrupt ui;
 				cmd[0] = MI_ARB_CHECK;
 				cmd[1] = MI_NOOP;
 
@@ -795,6 +794,11 @@ struct Igd::Device
 				return false;
 			}
 
+			log("FLUSH: EL: ", &el,
+			    " SW: ", Hex(tail), " ", Hex(tail + advance),
+			    " HW: ",
+			     Hex(rcs.context->head_offset()), " ",
+			     Hex(rcs.context->tail_offset() * 2));
 			el.ring_flush(tail, tail + advance);
 
 			/* tail_offset must be specified in qword */
@@ -1324,7 +1328,7 @@ struct Igd::Device
 	uint32_t set_tiling(Ggtt::Offset const start, size_t const size,
 	                    uint32_t const mode)
 	{
-		uint32_t const id = _mmio.find_free_fence();
+		uint32_t const id = _get_free_fence();
 		if (id == INVALID_FENCE) {
 			Genode::warning("could not find free FENCE");
 			return id;
@@ -1360,8 +1364,10 @@ struct Igd::Device
 		Mmio::GT_0_INTERRUPT_IIR::access_t const v = _mmio.read<Mmio::GT_0_INTERRUPT_IIR>();
 
 		bool const ctx_switch    = Mmio::GT_0_INTERRUPT_IIR::Cs_ctx_switch_interrupt::get(v);
-		(void)ctx_switch;
 		bool const user_complete = Mmio::GT_0_INTERRUPT_IIR::Cs_mi_user_interrupt::get(v);
+	Genode::warning("IRQ: ", _current_vgpu(),
+	                " gt0 iir: ", Hex(v),
+	                " master: ", Hex(master));
 
 		if (v) { _clear_rcs_iir(v); }
 
@@ -1375,7 +1381,8 @@ struct Igd::Device
 		bool const fault_valid = _mmio.fault_regs_valid();
 		if (fault_valid) { Genode::error("FAULT_REG valid"); }
 
-		_mmio.update_context_status_pointer();
+		if (ctx_switch)
+			_mmio.update_context_status_pointer();
 
 		if (user_complete) {
 			_unschedule_current_vgpu();
@@ -1751,6 +1758,9 @@ class Gpu::Session_component : public Genode::Session_object<Gpu::Session>
 				return false;
 			}
 
+			//XXX: support change of already fenced bo's fencing mode
+			if (b->fenced) return true;
+
 			Igd::size_t const size = Genode::Dataspace_client(b->cap).size();
 			Genode::uint32_t const fenced = _device.set_tiling(b->map.offset, size, mode);
 
@@ -1910,7 +1920,16 @@ struct Main
 };
 
 
-void Component::construct(Genode::Env &env) { static Main main(env); }
+void Component::construct(Genode::Env &env)
+{
+	static Constructible<Main> main;
+	try {
+		main.construct(env);
+	} catch (Igd::Resources::Initialization_failed) {
+		Genode::warning("Intel GPU resources not found.");
+		env.parent().exit(0);
+	}
+}
 
 
 Genode::size_t Component::stack_size() { return 32UL*1024*sizeof(long); }
