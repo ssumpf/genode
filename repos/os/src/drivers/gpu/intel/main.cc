@@ -560,8 +560,7 @@ struct Igd::Device
 			_completed_seqno = _device.seqno();
 		}
 
-		bool setup_ring_buffer(Genode::addr_t const buffer_addr,
-		                       Genode::addr_t const scratch_addr)
+		bool setup_ring_buffer(Genode::addr_t const buffer_addr)
 		{
 			_current_seqno++;
 
@@ -641,7 +640,11 @@ struct Igd::Device
 */
 
 				cmd[1] = tmp;
-				cmd[2] = scratch_addr;
+				/*
+				 * PP-Hardware status page (base GLOBAL_GTT_IVB is disabled)
+				 * offset (qword 52) because STORE_DATA_INDEX is enabled.
+				 */
+				cmd[2] = 0x34 * 4;
 
 				for (size_t i = 0; i < CMD_NUM; i++) {
 					advance += el.ring_append(cmd[i]);
@@ -794,12 +797,13 @@ struct Igd::Device
 				Genode::error("ring offset misaligned - abort");
 				return false;
 			}
-
+#if 0
 			log("FLUSH: EL: ", &el,
 			    " SW: ", Hex(tail), " ", Hex(tail + advance),
 			    " HW: ",
 			     Hex(rcs.context->head_offset()), " ",
 			     Hex(rcs.context->tail_offset() * 2));
+#endif
 			el.ring_flush(tail, tail + advance);
 
 			/* tail_offset must be specified in qword */
@@ -1385,10 +1389,11 @@ struct Igd::Device
 
 		bool const ctx_switch    = Mmio::GT_0_INTERRUPT_IIR::Cs_ctx_switch_interrupt::get(v);
 		bool const user_complete = Mmio::GT_0_INTERRUPT_IIR::Cs_mi_user_interrupt::get(v);
+#if 0
 	Genode::warning("IRQ: ", _current_vgpu(),
 	                " gt0 iir: ", Hex(v),
 	                " master: ", Hex(master));
-
+#endif
 		if (v) { _clear_rcs_iir(v); }
 
 		Vgpu *notify_gpu = nullptr;
@@ -1567,7 +1572,7 @@ class Gpu::Session_component : public Genode::Session_object<Gpu::Session>
 					throw Gpu::Session::Invalid_state();
 				}
 
-				found = _vgpu.setup_ring_buffer(buffer.ppgtt_va, _device._ggtt->scratch_page());
+				found = _vgpu.setup_ring_buffer(buffer.ppgtt_va);
 			});
 
 			if (!found)
