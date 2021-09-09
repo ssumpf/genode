@@ -467,9 +467,6 @@ struct Igd::Device
 
 		addr_t hw_status_page() const { return ctx.gmaddr(); }
 
-		uint64_t seqno() const {
-			Utils::clflush((uint32_t*)(ctx.vaddr() + 0xc0));
-			return *(uint32_t*)(ctx.vaddr() + 0xc0); }
 
 		private:
 
@@ -503,6 +500,11 @@ struct Igd::Device
 	 **********/
 
 	uint32_t _vgpu_avail { 0 };
+
+	/* global hardware-status page */
+	enum { HARDWARE_STATUS_PAGES = 8 };
+	Constructible<Ggtt_map_memory>      _hw_status_ctx  { };
+	Constructible<Hardware_status_page> _hw_status_page { };
 
 	struct Vgpu : Genode::Fifo<Vgpu>::Element
 	{
@@ -556,7 +558,7 @@ struct Igd::Device
 		void user_complete()
 		{
 			/* remember last completed seqno for info object */
-			_completed_seqno = rcs.seqno();
+			_completed_seqno = _device.seqno();
 		}
 
 		bool setup_ring_buffer(Genode::addr_t const buffer_addr,
@@ -743,7 +745,7 @@ struct Igd::Device
 				tmp |= Igd::Pipe_control::QW_WRITE;
 
 				cmd[1] = tmp;
-				cmd[2] = (rcs.hw_status_page() + HWS_DATA) & 0xffffffff;
+				cmd[2] = (_device.hw_status_page() + HWS_DATA) & 0xffffffff;
 				cmd[3] = 0; /* upper addr 0 */
 				cmd[4] = _current_seqno & 0xffffffff;
 				cmd[5] = _current_seqno >> 32;
@@ -845,6 +847,10 @@ struct Igd::Device
 
 		int const port = _mmio.read<Igd::Mmio::EXECLIST_STATUS_RSCUNIT::Execlist_write_pointer>();
 
+		if (_mmio.read<Igd::Mmio::EXECLIST_STATUS_RSCUNIT::Execlist_0_valid>() ||
+		    _mmio.read<Igd::Mmio::EXECLIST_STATUS_RSCUNIT::Execlist_1_valid>())
+			return;
+
 		el.schedule(port);
 
 		uint32_t desc[4];
@@ -886,13 +892,6 @@ struct Igd::Device
 		Engine<Rcs_context> &rcs = gpu->rcs;
 
 		_mmio.flush_gfx_tlb();
-
-		/*
-		 * XXX check if HWSP is shared across contexts and if not when
-		 *     we actually need to write the register
-		 */
-		Mmio::HWS_PGA_RCSUNIT::access_t const addr = rcs.hw_status_page();
-		_mmio.write_post<Igd::Mmio::HWS_PGA_RCSUNIT>(addr);
 
 		_submit_execlist(rcs);
 
@@ -1059,6 +1058,13 @@ struct Igd::Device
 
 		_clock_gating();
 
+		/* setup global hardware status page */
+		_hw_status_ctx.construct(env.rm(), alloc, *this, HARDWARE_STATUS_PAGES, 0);
+		_hw_status_page.construct(_hw_status_ctx->vaddr());
+
+		Mmio::HWS_PGA_RCSUNIT::access_t const addr = _hw_status_ctx->gmaddr();
+		_mmio.write_post<Igd::Mmio::HWS_PGA_RCSUNIT>(addr);
+
 		_mmio.dump();
 		_mmio.context_status_pointer_dump();
 
@@ -1194,6 +1200,14 @@ struct Igd::Device
 		}
 
 		return stepping_start <= stepping && stepping <= stepping_end;
+	}
+
+	addr_t hw_status_page() const { return _hw_status_ctx->gmaddr(); }
+
+	uint64_t seqno() const
+	{
+		Utils::clflush((uint32_t*)(_hw_status_ctx->vaddr() + 0xc0));
+		return *(uint32_t*)(_hw_status_ctx->vaddr() + 0xc0);
 	}
 
 	/*******************

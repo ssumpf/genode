@@ -731,7 +731,8 @@ class Igd::Rcs_context
 			PPGTT_CTX_START = EXECLIST_CTX_END,
 			PPGTT_CTX_END   = 0x0050,
 			PPGTT_CTX_SIZE  = (PPGTT_CTX_END - PPGTT_CTX_START) * sizeof(uint32_t),
-			PPGTT_CTX_IH    = 0x11000001,
+			PPGTT_CTX_IH    = 0x11001011,
+			PPGTT_CTX_IH_2  = 0x11000001,
 
 			ENGINE_CTX_START = PPGTT_CTX_END,
 			ENGINE_CTX_END   = 0x0EC0,
@@ -808,7 +809,8 @@ class Igd::Rcs_context
 
 			using P = Ppgtt_context<RCS_RING_BASE>;
 
-			_ppgtt_context.write<P::Load_immediate_header_2>(PPGTT_CTX_IH);
+			_ppgtt_context.write<P::Load_immediate_header>(PPGTT_CTX_IH);
+			_ppgtt_context.write<P::Load_immediate_header_2>(PPGTT_CTX_IH_2);
 		}
 
 		size_t head_offset()
