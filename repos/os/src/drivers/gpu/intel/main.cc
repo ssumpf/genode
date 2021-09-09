@@ -502,7 +502,6 @@ struct Igd::Device
 	uint32_t _vgpu_avail { 0 };
 
 	/* global hardware-status page */
-	enum { HARDWARE_STATUS_PAGES = 8 };
 	Constructible<Ggtt_map_memory>      _hw_status_ctx  { };
 	Constructible<Hardware_status_page> _hw_status_page { };
 
@@ -961,6 +960,7 @@ struct Igd::Device
 	 ** watchdog timeout **
 	 **********************/
 
+
 	void _handle_watchdog_timeout()
 	{
 		if (!_active_vgpu) { return; }
@@ -973,7 +973,7 @@ struct Igd::Device
 		_mmio.execlist_status_dump();
 
 		_active_vgpu->rcs.context->dump();
-		_active_vgpu->rcs.context->dump_hw_status_page();
+		_hw_status_page->dump();
 		Execlist &el = *_active_vgpu->rcs.execlist;
 		el.ring_update_head(_active_vgpu->rcs.context->head_offset());
 		el.ring_dump(4096, _active_vgpu->rcs.context->tail_offset() * 2,
@@ -1059,7 +1059,7 @@ struct Igd::Device
 		_clock_gating();
 
 		/* setup global hardware status page */
-		_hw_status_ctx.construct(env.rm(), alloc, *this, HARDWARE_STATUS_PAGES, 0);
+		_hw_status_ctx.construct(env.rm(), alloc, *this, 1, 0);
 		_hw_status_page.construct(_hw_status_ctx->vaddr());
 
 		Mmio::HWS_PGA_RCSUNIT::access_t const addr = _hw_status_ctx->gmaddr();
@@ -1202,6 +1202,11 @@ struct Igd::Device
 		return stepping_start <= stepping && stepping <= stepping_end;
 	}
 
+
+	/**************************
+	 ** Hardware status page **
+	 **************************/
+
 	addr_t hw_status_page() const { return _hw_status_ctx->gmaddr(); }
 
 	uint64_t seqno() const
@@ -1209,6 +1214,7 @@ struct Igd::Device
 		Utils::clflush((uint32_t*)(_hw_status_ctx->vaddr() + 0xc0));
 		return *(uint32_t*)(_hw_status_ctx->vaddr() + 0xc0);
 	}
+
 
 	/*******************
 	 ** Vgpu handling **
