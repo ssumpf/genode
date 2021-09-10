@@ -21,8 +21,7 @@ PATCHES       := src/lib/mesa/patches/bitset_redefined.patch \
                  src/lib/mesa/patches/iris_disable_compute.patch \
                  src/lib/mesa/patches/mesa.patch \
                  src/lib/mesa/patches/os_mmap.patch \
-                 src/lib/mesa/patches/softpipe_cache.patch \
-                 src/lib/mesa/patches/i965.patch
+                 src/lib/mesa/patches/softpipe_cache.patch
 
 PATCH_OPT     := -p1
 
