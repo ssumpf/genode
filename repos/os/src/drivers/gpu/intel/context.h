@@ -93,7 +93,7 @@ struct Igd::Common_context_regs : public Genode::Mmio
 	struct Common_register_array : Register_array<OFFSET * sizeof(uint32_t), 32, NUM, 32> { };
 
 	template <long int OFFSET, size_t NUM>
-	struct Common_register_array_64 : Register_array<OFFSET * sizeof(uint32_t), 32, NUM, 64> { };
+	struct Common_register_array_64 : Register_array<OFFSET * sizeof(uint32_t), 64, NUM, 64> { };
 
 	addr_t _base;
 
