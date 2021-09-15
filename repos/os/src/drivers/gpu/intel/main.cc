@@ -44,6 +44,9 @@
 #include <platform_session.h>
 #include <ring_buffer.h>
 
+extern "C" {
+#include "intel_renderstate.h"
+}
 
 using namespace Genode;
 
@@ -1480,6 +1483,8 @@ class Gpu::Session_component : public Genode::Session_object<Gpu::Session>
 
 		Genode::uint64_t seqno { 0 };
 
+		bool _init_render_state_once { false };
+
 		void _free_buffers()
 		{
 			auto lookup_and_free = [&] (Buffer &buffer) {
@@ -1561,6 +1566,12 @@ class Gpu::Session_component : public Genode::Session_object<Gpu::Session>
 		Gpu::Info::Execution_buffer_sequence exec_buffer(Genode::Dataspace_capability cap,
 		                                                 Genode::size_t) override
 		{
+			if (!_init_render_state_once) {
+				Genode::error("init render state");
+				if (!init_renderstate())
+					Genode::error("init render state failed");
+			}
+
 			bool found = false;
 
 			_buffer_registry.for_each([&] (Buffer &buffer) {
@@ -1585,6 +1596,69 @@ class Gpu::Session_component : public Genode::Session_object<Gpu::Session>
 		void completion_sigh(Genode::Signal_context_capability sigh) override
 		{
 			_vgpu.completion_sigh(sigh);
+		}
+
+		bool init_renderstate()
+		{
+			enum { BUFFER_SIZE = 4096 };
+
+			/* XXX de-alloc & unmap missing */
+
+			auto const cap = alloc_buffer(BUFFER_SIZE);
+			if (!cap.valid())
+				return false;
+			Gpu::addr_t va = 1ul << 20; /* XXX allocator */
+			bool const map = map_buffer_ppgtt(cap, va);
+			if (!map) return false;
+
+			Attached_dataspace ram(_rm, cap);
+
+			/* try to do it only once */
+			_init_render_state_once = true;
+
+			if (gen9_null_state.batch_items * 4 > BUFFER_SIZE)
+				return false;
+
+			memcpy(ram.local_addr<void>(), gen9_null_state.batch,
+			       gen9_null_state.batch_items * 4);
+
+			bool success = false;
+
+			_buffer_registry.for_each([&] (Buffer &buffer) {
+				if (!(buffer.cap == cap)) { return; }
+
+				auto const buffer_map = ram.local_addr<uint32_t>();
+
+				/* reloc part */
+				for (unsigned i = 0; gen9_null_state.reloc[i] != -1u; i++) {
+					unsigned reloc_index = gen9_null_state.reloc[i] / 4;
+					if (reloc_index + 1 >= gen9_null_state.batch_items)
+						return;
+
+					if (!buffer.ppgtt_va_valid)
+						return;
+
+					if (buffer_map[reloc_index + 1] != 0)
+						return;
+
+					uint64_t value = buffer_map[reloc_index];
+					value += buffer.ppgtt_va;
+
+					buffer_map[reloc_index    ] |= value;
+					buffer_map[reloc_index + 1] |= value >> 32;
+				}
+
+				success = true;
+			});
+
+			if (!success)
+				return false;
+
+			auto const seq_no = exec_buffer(cap, gen9_null_state.batch_items * 4);
+
+			Genode::warning("seq_no init render state ", seq_no.id);
+
+			return success;
 		}
 
 		Genode::Dataspace_capability alloc_buffer(Genode::size_t size) override
