@@ -565,6 +565,13 @@ struct Igd::Device
 
 		bool setup_ring_buffer(Genode::addr_t const buffer_addr)
 		{
+			#define MI_INSTR(opcode, flags) (((opcode) << 23) | (flags))
+			#define MI_NOOP          MI_INSTR(0u, 0)
+			#define MI_ARB_ON_OFF    MI_INSTR(0x08u, 0)
+			#define   MI_ARB_ENABLE     (1u<<0)
+			#define   MI_ARB_DISABLE    (0u<<0)
+			#define MI_ARB_CHECK     MI_INSTR(0x05u, 0)
+
 			_current_seqno++;
 
 			Execlist &el = *rcs.execlist;
@@ -574,13 +581,13 @@ struct Igd::Device
 			bool dc_flush_wa = _device.match(Device_info::Platform::KABYLAKE,
 			                                 Device_info::Stepping::A0,
 			                                 Device_info::Stepping::B0);
-
+#if 0
 			size_t const need = 4 /* batchbuffer cmd */ + 6 /* prolog */
 			                  + ((_device.generation().value == 9) ? 6 : 0)
 			                  + ((_device.generation().value == 8) ? 20 : 22) /* epilog + w/a */
 			                  + (dc_flush_wa ? 12 : 0);
 			if (!el.ring_avail(need)) { el.ring_reset_and_fill_zero(); }
-
+#endif
 			/* save old tail */
 			Ring_buffer::Index const tail = el.ring_tail();
 
@@ -666,13 +673,6 @@ struct Igd::Device
 				}
 			}
 
-			#define MI_INSTR(opcode, flags) (((opcode) << 23) | (flags))
-			#define MI_NOOP          MI_INSTR(0u, 0)
-			#define MI_ARB_ON_OFF    MI_INSTR(0x08u, 0)
-			#define   MI_ARB_ENABLE     (1u<<0)
-			#define   MI_ARB_DISABLE    (0u<<0)
-			#define MI_ARB_CHECK     MI_INSTR(0x05u, 0)
-
 			/*
 			 * gen8_emit_bb_start_noarb, gen8 and render engine
 			 *
@@ -728,6 +728,7 @@ struct Igd::Device
 				tmp |= Igd::Pipe_control::RENDER_TARGET_CACHE_FLUSH;
 				tmp |= Igd::Pipe_control::DEPTH_CACHE_FLUSH;
 				tmp |= Igd::Pipe_control::DC_FLUSH_ENABLE;
+				//tmp |= Igd::Pipe_control::FLUSH_L3;
 
 				cmd[1] = tmp;
 
@@ -748,9 +749,10 @@ struct Igd::Device
 				tmp |= Igd::Pipe_control::FLUSH_ENABLE;
 				tmp |= Igd::Pipe_control::GLOBAL_GTT_IVB;
 				tmp |= Igd::Pipe_control::QW_WRITE;
+				tmp |= Igd::Pipe_control::STORE_DATA_INDEX;
 
 				cmd[1] = tmp;
-				cmd[2] = (_device.hw_status_page() + HWS_DATA) & 0xffffffff;
+				cmd[2] = HWS_DATA;
 				cmd[3] = 0; /* upper addr 0 */
 				cmd[4] = _current_seqno & 0xffffffff;
 				cmd[5] = _current_seqno >> 32;
@@ -856,6 +858,7 @@ struct Igd::Device
 		if (_mmio.read<Igd::Mmio::EXECLIST_STATUS_RSCUNIT::Execlist_0_valid>() ||
 		    _mmio.read<Igd::Mmio::EXECLIST_STATUS_RSCUNIT::Execlist_1_valid>())
 			return;
+
 
 		el.schedule(port);
 
@@ -974,6 +977,10 @@ struct Igd::Device
 
 		Genode::error("watchdog triggered: engine stuck,"
 		              " vGPU=", _active_vgpu->id());
+
+		Mmio::MASTER_INT_CTL::access_t master = _mmio.read<Mmio::MASTER_INT_CTL>();
+		log("Master IRQ: ", Hex((unsigned)master));
+
 		_mmio.dump();
 		_mmio.error_dump();
 		_mmio.fault_dump();
@@ -1102,6 +1109,8 @@ struct Igd::Device
 			Genode::error("unsupported platform ", (int)_info.platform);
 
 		_resources.timer().sigh(_watchdog_timeout_sigh);
+
+		_mmio.write<Mmio::Arbiter_control::Gaps_tsv_enable>(1);
 	}
 
 	void _clock_gating()
@@ -1378,22 +1387,62 @@ struct Igd::Device
 		_clear_fence(id);
 	}
 
+	void _compare(unsigned round, unsigned *o, unsigned *n, unsigned words)
+	{
+		for (unsigned i = 0; i < words; i++) {
+			if (o[i] == n[i]) continue;
+
+			log("round: ", round, " ", Hex(i), ": ", Hex(o[i]), " != ", Hex(n[i]));
+		}
+	}
+
 	unsigned handle_irq()
 	{
+		_mmio.disable_master_irq();
 		Mmio::MASTER_INT_CTL::access_t master = _mmio.read<Mmio::MASTER_INT_CTL>();
 
 		/* handle render interrupts only */
 		if (Mmio::MASTER_INT_CTL::Render_interrupts_pending::get(master) == 0)
 			return master;
 
-		_mmio.disable_master_irq();
-
 		Mmio::GT_0_INTERRUPT_IIR::access_t const v = _mmio.read<Mmio::GT_0_INTERRUPT_IIR>();
 
 		bool const ctx_switch    = Mmio::GT_0_INTERRUPT_IIR::Cs_ctx_switch_interrupt::get(v);
 		bool const user_complete = Mmio::GT_0_INTERRUPT_IIR::Cs_mi_user_interrupt::get(v);
 #if 0
-	Genode::warning("IRQ: ", _current_vgpu(),
+		if (user_complete) {
+			enum { DWORDS = 20816 };
+			static unsigned count = 0;
+			static unsigned old_ctx[DWORDS];
+
+			unsigned last_cbs = _hw_status_page->read<Hardware_status_page::Last_written_status_offset>();
+			log("last written offset: ", last_cbs);
+			using C = Igd::Context_status_qword;
+			C::access_t v = _hw_status_page->read<Hardware_status_page::Context_status_dwords>(last_cbs);
+			log("   Context_status ", last_cbs);
+			log("    Context_id:          ", C::Context_id::get(v));
+			log("    Context_complete:    ", C::Context_complete::get(v));
+			log("    Active_to_idle:      ", C::Active_to_idle::get(v));
+			log("    Preempted:           ", C::Preempted::get(v));
+			log("    Idle_to_active:      ", C::Idle_to_active::get(v));
+
+			if (count) {
+				_compare(count, old_ctx, (unsigned *)(_current_vgpu()->rcs.ctx.vaddr() + PAGE_SIZE), DWORDS);
+			}
+			count++;
+
+			memcpy(old_ctx, (void *)(_current_vgpu()->rcs.ctx.vaddr() + PAGE_SIZE), DWORDS * 4);
+		}
+#endif
+
+		if (v & ~0x101u)
+			Genode::warning("IRQ: ", Hex((unsigned)v));
+#if 0
+/*
+	if (!user_complete)
+		return master; */
+	static size_t irq_cnt = 0;
+	Genode::warning("IRQ[", irq_cnt++, "]: ", _current_vgpu(),
 	                " gt0 iir: ", Hex(v),
 	                " master: ", Hex(master));
 #endif
@@ -1417,8 +1466,9 @@ struct Igd::Device
 			_active_vgpu = nullptr;
 
 			if (notify_gpu) {
-				if (!_notify_complete(notify_gpu))
+				if (!_notify_complete(notify_gpu)) {
 					_vgpu_list.enqueue(*notify_gpu);
+				}
 			}
 
 			/* keep the ball rolling...  */
@@ -1566,12 +1616,13 @@ class Gpu::Session_component : public Genode::Session_object<Gpu::Session>
 		Gpu::Info::Execution_buffer_sequence exec_buffer(Genode::Dataspace_capability cap,
 		                                                 Genode::size_t) override
 		{
+#if 0
 			if (!_init_render_state_once) {
 				Genode::error("init render state");
 				if (!init_renderstate())
 					Genode::error("init render state failed");
 			}
-
+#endif
 			bool found = false;
 
 			_buffer_registry.for_each([&] (Buffer &buffer) {
