@@ -563,13 +563,6 @@ struct Igd::Device
 
 		bool setup_ring_buffer(Genode::addr_t const buffer_addr)
 		{
-			#define MI_INSTR(opcode, flags) (((opcode) << 23) | (flags))
-			#define MI_NOOP          MI_INSTR(0u, 0)
-			#define MI_ARB_ON_OFF    MI_INSTR(0x08u, 0)
-			#define   MI_ARB_ENABLE     (1u<<0)
-			#define   MI_ARB_DISABLE    (0u<<0)
-			#define MI_ARB_CHECK     MI_INSTR(0x05u, 0)
-
 			_current_seqno++;
 
 			Execlist &el = *rcs.execlist;
@@ -675,7 +668,7 @@ struct Igd::Device
 				Genode::uint32_t cmd[CMD_NUM] = {};
 				Igd::Mi_batch_buffer_start mi;
 
-				cmd[0] = MI_ARB_ON_OFF | MI_ARB_DISABLE;
+				cmd[0] = Mi_arb_on_off(false).value;
 				cmd[1] = mi.value;
 				cmd[2] = buffer_addr & 0xffffffff;
 				cmd[3] = (buffer_addr >> 32) & 0xffff;
@@ -696,12 +689,12 @@ struct Igd::Device
 				Genode::uint32_t cmd[CMD_NUM] = {};
 				Igd::Mi_batch_buffer_start mi;
 
-				cmd[0] = MI_ARB_ON_OFF | MI_ARB_ENABLE;
+				cmd[0] = Mi_arb_on_off(true).value;
 				cmd[1] = mi.value;
 				cmd[2] = buffer_addr & 0xffffffff;
 				cmd[3] = (buffer_addr >> 32) & 0xffff;
-				cmd[4] = MI_ARB_ON_OFF | MI_ARB_DISABLE;
-				cmd[5] = MI_NOOP;
+				cmd[4] = Mi_arb_on_off(false).value;
+				cmd[5] = Mi_noop().value;
 
 				for (size_t i = 0; i < CMD_NUM; i++) {
 					advance += el.ring_append(cmd[i]);
@@ -765,7 +758,7 @@ struct Igd::Device
 				Genode::uint32_t cmd[2] = {};
 				Igd::Mi_user_interrupt ui;
 				cmd[0] = ui.value;
-				cmd[1] = MI_ARB_ON_OFF | MI_ARB_ENABLE;
+				cmd[1] = Mi_arb_on_off(true).value;
 
 				for (size_t i = 0; i < CMD_NUM; i++) {
 					advance += el.ring_append(cmd[i]);
@@ -777,8 +770,8 @@ struct Igd::Device
 				/* gen8_emit_fini_breadcrumb_tail -> gen8_emit_wa_tail */
 				enum { CMD_NUM = 2 };
 				Genode::uint32_t cmd[2] = {};
-				cmd[0] = MI_ARB_CHECK;
-				cmd[1] = MI_NOOP;
+				cmd[0] = Mi_arb_check().value;
+				cmd[1] = Mi_noop().value;
 
 				for (size_t i = 0; i < CMD_NUM; i++) {
 					advance += el.ring_append(cmd[i]);
