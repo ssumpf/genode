@@ -227,6 +227,8 @@ struct Test_tracing
 
 	Test_tracing(Env &env) : env(env)
 	{
+		enum { MAX_SUBJECTS = 128 };
+
 		log("test Tracing");
 
 		try {
@@ -263,10 +265,13 @@ struct Test_tracing
 		/* wait some time before querying the subjects */
 		timer.msleep(3000);
 
-		Trace::Subject_id subjects[64];
-		size_t num_subjects = trace.subjects(subjects, 64);
+		Trace::Subject_id subjects[MAX_SUBJECTS];
+		size_t num_subjects = trace.subjects(subjects, MAX_SUBJECTS);
 
 		log(num_subjects, " tracing subjects present");
+
+		if (num_subjects == MAX_SUBJECTS)
+			error("Seems we reached the maximum number of subjects.");
 
 		auto print_info = [this] (Trace::Subject_id id, Trace::Subject_info info) {
 
