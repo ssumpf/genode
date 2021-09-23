@@ -28,10 +28,11 @@ struct Test_thread : Thread
 {
 	Env               &env;
 	Timer::Connection  timer { env };
+	bool               stop  { false };
 
 	void entry() override
 	{
-		for (unsigned i = 0; ; i++) {
+		for (unsigned i = 0; !stop; i++) {
 			if (i & 0x3) {
 				Ram_dataspace_capability ds_cap = env.ram().alloc(1024);
 				env.ram().free(ds_cap);
@@ -42,6 +43,13 @@ struct Test_thread : Thread
 
 	Test_thread(Env &env, Name &name)
 	: Thread(env, name, 1024 * sizeof(addr_t)), env(env) { start(); }
+
+	~Test_thread()
+	{
+		stop = true;
+		this->join();
+	}
+
 };
 
 
