@@ -263,7 +263,7 @@ struct Test_tracing
 		}
 
 		/* wait some time before querying the subjects */
-		timer.msleep(3000);
+		timer.msleep(1500);
 
 		Trace::Subject_id subjects[MAX_SUBJECTS];
 		size_t num_subjects = trace.subjects(subjects, MAX_SUBJECTS);
@@ -324,7 +324,7 @@ struct Test_tracing
 		for_each_subject(subjects, num_subjects, enable_tracing);
 
 		/* give the test thread some time to run */
-		timer.msleep(3000);
+		timer.msleep(1000);
 
 		for_each_subject(subjects, num_subjects, print_info);
 
