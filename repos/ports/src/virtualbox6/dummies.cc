@@ -86,11 +86,40 @@ USBProxyBackendFreeBSD::USBProxyBackendFreeBSD() STOP
 USBProxyBackend::USBProxyBackend() STOP
 USBProxyBackend::~USBProxyBackend() { }
 
-HRESULT             USBProxyBackend::FinalConstruct() STOP
+int        USBProxyBackend::captureDevice(HostUSBDevice*) STOP
+void       USBProxyBackend::captureDeviceCompleted(HostUSBDevice*, bool) STOP
+void       USBProxyBackend::deviceAdded(ComObjPtr<HostUSBDevice>&, USBDEVICE*) STOP
+PUSBDEVICE USBProxyBackend::getDevices() STOP
+HRESULT    USBProxyBackend::getName(com::Utf8Str&) STOP
+HRESULT    USBProxyBackend::getType(com::Utf8Str&) STOP
+bool       USBProxyBackend::i_isDevReEnumerationRequired() STOP
+int        USBProxyBackend::init(USBProxyService*, com::Utf8Str const&, com::Utf8Str const&, bool) STOP
+void *     USBProxyBackend::insertFilter(USBFILTER const*) STOP
+int        USBProxyBackend::interruptWait() STOP
+bool       USBProxyBackend::isFakeUpdateRequired() STOP
+int        USBProxyBackend::releaseDevice(HostUSBDevice*) STOP
+void       USBProxyBackend::releaseDeviceCompleted(HostUSBDevice*, bool) STOP
+void       USBProxyBackend::removeFilter(void*) STOP
+void       USBProxyBackend::serviceThreadInit() STOP
+void       USBProxyBackend::serviceThreadTerm() STOP
+void       USBProxyBackend::uninit() STOP
+int        USBProxyBackend::wait(unsigned int) STOP
+
+HRESULT    USBProxyBackend::FinalConstruct() STOP
+
 com::Utf8Str const &USBProxyBackend::i_getAddress()   STOP
+com::Utf8Str const &USBProxyBackend::i_getBackend()   STOP
 com::Utf8Str const &USBProxyBackend::i_getId()        STOP
 
 USBProxyBackendUsbIp::USBProxyBackendUsbIp() STOP
+
+
+/* AudioDriver.cpp */
+
+#include "AudioDriver.h"
+
+AudioDriver::AudioDriver(Console *) STOP
+AudioDriver::~AudioDriver() { }
 
 
 /* USBProxyService.cpp */
@@ -164,8 +193,7 @@ HRESULT CloudProviderManager::getProviders(std::vector<ComPtr<ICloudProvider>,
 #include "netif.h"
 
 int NetIfGetLinkSpeed(const char *, uint32_t *) STOP
-int NetIfGetState(const char *, NETIFSTATUS *)  STOP
-int NetIfRemoveHostOnlyNetworkInterface(VirtualBox *, const Guid &, IProgress **) STOP
+int NetIfGetConfigByName(PNETIFINFO) STOP
 int NetIfList(std::__cxx11::list<ComObjPtr<HostNetworkInterface>,
               std::allocator<ComObjPtr<HostNetworkInterface> > >&) { return VINF_SUCCESS; }
 
@@ -193,12 +221,6 @@ RTDECL(int)      RTDvmMapInitialize(RTDVM, const char *)            STOP
 
 HRESULT MachineMoveVM::init()                              STOP
 void    MachineMoveVM::i_MoveVMThreadTask(MachineMoveVM *) STOP
-
-
-/* NetIf-generic.cpp */
-
-int NetIfCreateHostOnlyNetworkInterface(VirtualBox *, IHostNetworkInterface **,
-                                        IProgress **, const char *) STOP
 
 
 /* HostDnsServiceResolvConf.cpp */
@@ -408,3 +430,15 @@ int  pgmR3InitSavedState(PVM, uint64_t) { return VINF_SUCCESS; }
 #include "nsProxyRelease.h"
 
 NS_COM nsresult NS_ProxyRelease(nsIEventTarget *target, nsISupports *doomed, PRBool alwaysProxy) STOP
+
+
+/* SUPR3HardenedVerify.cpp */
+
+#include "SUPLibInternal.h"
+
+DECLHIDDEN(int) supR3HardenedRecvPreInitData(PCSUPPREINITDATA) STOP
+
+
+/* VBoxXPCOMImpImp.c */
+
+void *_ZTV14nsGetInterface = nullptr;
