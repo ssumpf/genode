@@ -82,10 +82,21 @@ int  USBFilterMatchRated      (PCUSBFILTER, PCUSBFILTER) STOP
 #include "USBProxyBackend.h"
 
 USBProxyBackendFreeBSD::USBProxyBackendFreeBSD() STOP
+USBProxyBackendFreeBSD::~USBProxyBackendFreeBSD() { }
+
+int        USBProxyBackendFreeBSD::captureDevice(HostUSBDevice*) STOP
+PUSBDEVICE USBProxyBackendFreeBSD::getDevices() STOP
+int        USBProxyBackendFreeBSD::init(USBProxyService*, com::Utf8Str const&, com::Utf8Str const&, bool) STOP
+int        USBProxyBackendFreeBSD::interruptWait() STOP
+bool       USBProxyBackendFreeBSD::isFakeUpdateRequired() STOP
+int        USBProxyBackendFreeBSD::releaseDevice(HostUSBDevice*) STOP
+void       USBProxyBackendFreeBSD::uninit() STOP
+int        USBProxyBackendFreeBSD::wait(unsigned int) STOP
 
 USBProxyBackend::USBProxyBackend() STOP
 USBProxyBackend::~USBProxyBackend() { }
 
+HRESULT    USBProxyBackend::FinalConstruct() STOP
 int        USBProxyBackend::captureDevice(HostUSBDevice*) STOP
 void       USBProxyBackend::captureDeviceCompleted(HostUSBDevice*, bool) STOP
 void       USBProxyBackend::deviceAdded(ComObjPtr<HostUSBDevice>&, USBDEVICE*) STOP
@@ -105,13 +116,21 @@ void       USBProxyBackend::serviceThreadTerm() STOP
 void       USBProxyBackend::uninit() STOP
 int        USBProxyBackend::wait(unsigned int) STOP
 
-HRESULT    USBProxyBackend::FinalConstruct() STOP
-
 com::Utf8Str const &USBProxyBackend::i_getAddress()   STOP
 com::Utf8Str const &USBProxyBackend::i_getBackend()   STOP
 com::Utf8Str const &USBProxyBackend::i_getId()        STOP
 
 USBProxyBackendUsbIp::USBProxyBackendUsbIp() STOP
+USBProxyBackendUsbIp::~USBProxyBackendUsbIp() { }
+
+int        USBProxyBackendUsbIp::captureDevice(HostUSBDevice*) STOP
+PUSBDEVICE USBProxyBackendUsbIp::getDevices() STOP
+int        USBProxyBackendUsbIp::init(USBProxyService*, com::Utf8Str const&, com::Utf8Str const&, bool) STOP
+int        USBProxyBackendUsbIp::interruptWait() STOP
+bool       USBProxyBackendUsbIp::isFakeUpdateRequired() STOP
+int        USBProxyBackendUsbIp::releaseDevice(HostUSBDevice*) STOP
+void       USBProxyBackendUsbIp::uninit() STOP
+int        USBProxyBackendUsbIp::wait(unsigned int) STOP
 
 
 /* AudioDriver.cpp */
