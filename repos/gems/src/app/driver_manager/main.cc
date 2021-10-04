@@ -716,6 +716,7 @@ void Driver_manager::Main::_generate_usb_drv_config(Reporter &usb_drv_config,
 		xml.attribute("ehci", true);
 		xml.attribute("ohci", _use_ohci);
 		xml.attribute("xhci", true);
+		xml.attribute("bios_handoff", false);
 		xml.attribute("capslock_led", "rom");
 		xml.attribute("numlock_led",  "rom");
 

@@ -8,8 +8,6 @@ _/pkg/nit_focus
 _/pkg/rom_filter
 _/pkg/rom_reporter
 _/pkg/nic_router-nat
-_/pkg/vbox6
-_/pkg/vbox6-capture
 _/pkg/wm
 _/pkg/themed_wm
 _/pkg/themed_decorator
@@ -21,7 +19,6 @@ _/pkg/mesa_gears
 _/pkg/fonts_fs
 _/pkg/report_dump
 _/pkg/acpica
-_/pkg/qt5_textedit
 _/pkg/system_clock-pc
 _/pkg/mesa_gpu-cpu
 _/pkg/mesa_gpu-intel
