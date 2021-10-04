@@ -126,8 +126,15 @@ class Kernel::Cpu_scheduler
 		bool                    _need_to_schedule { true };
 		time_t                  _last_time { 0 };
 
-		template <typename F> void _for_each_prio(F f) {
-			for (unsigned p = Prio::max(); p > Prio::min() - 1; p--) { f(p); } }
+		template <typename F> void _for_each_prio(F f)
+		{
+			bool cancel_for_each_prio { false };
+			for (unsigned p = Prio::max(); p != Prio::min() - 1; p--) {
+				f(p, cancel_for_each_prio);
+				if (cancel_for_each_prio)
+					return;
+			}
+		}
 
 		static void _reset(Cpu_share &share);
 
