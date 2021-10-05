@@ -22,7 +22,7 @@ SRC_CC += Devices/EFI/FlashCore.cpp
 SRC_CC += Devices/GIMDev/DrvUDP.cpp
 SRC_CC += Devices/GIMDev/GIMDev.cpp
 SRC_CC += Devices/Graphics/DevVGA-SVGA.cpp
-SRC_CC += Devices/Graphics/DevVGA-SVGA3d-glhlp.cpp
+SRC_CC += Devices/Graphics/DevVGA-SVGA3d-glHlp.cpp
 SRC_CC += Devices/Graphics/DevVGA-SVGA3d-hlp.cpp
 SRC_CC += Devices/Graphics/DevVGA-SVGA3d-info.cpp
 SRC_CC += Devices/Graphics/DevVGA-SVGA3d-ogl.cpp
@@ -129,27 +129,12 @@ INC_DIR += $(VIRTUALBOX_DIR)/include/VBox/Graphics
 # found in src/VBox/Devices/Makefile.kmk
 CC_OPT += -DVBOX_HGCM_HOST_CODE
 
-# FIXME patch src/VBox/Devices/Graphics/DevVGA-SVGA3d-ogl.cpp
-#CC_OPT_Devices/Graphics/DevVGA-SVGA3d-ogl = -DRT_OS_LINUX
-
 # SVGA3D/wine specific config
 WINE_CC_OPT := -D__WINESRC__ -DWINE_NOWINSOCK -D_USE_MATH_DEFINES \
                -DVBOX_USING_WINDDK_W7_OR_LATER \
                -DVBOX_WINE_WITH_SINGLE_SWAPCHAIN_CONTEXT \
                -DVBOX_WINE_WITH_IPRT \
                -UVBOX_WITH_WDDM
-# TODO remove this
-#               -DWINE_UNICODE_API="" \
-#               -D_REENTRANT \
-#               -DDLLDIR=\"\" \
-#               -DBINDIR=\"\" \
-#               -DLIB_TO_BINDIR=\"\" \
-#               -DLIB_TO_DLLDIR=\"\" \
-#               -DBIN_TO_DLLDIR=\"\" \
-#               -DLIB_TO_DATADIR=\"\" \
-#               -DBIN_TO_DATADIR=\"\" \
-#               -DIN_vmsvgashader_STATIC \
-#               -DIN_VMSVGA3D \
 
 CC_OPT_Devices/Graphics/shaderlib/directx           = $(WINE_CC_OPT)
 CC_OPT_Devices/Graphics/shaderlib/glsl_shader       = $(WINE_CC_OPT)
