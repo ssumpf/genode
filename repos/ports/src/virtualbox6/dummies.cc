@@ -461,13 +461,3 @@ DECLHIDDEN(int) supR3HardenedRecvPreInitData(PCSUPPREINITDATA) STOP
 /* VBoxXPCOMImpImp.c */
 
 void *_ZTV14nsGetInterface = nullptr;
-
-
-/* Frontend */
-
-#include <VBox/VBoxOGL.h>
-
-bool RTCALL VBoxOglIs3DAccelerationSupported(void)
-{
-	return true;
-}
