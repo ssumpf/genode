@@ -545,8 +545,7 @@ if {[have_board pc]} {
 	copy_file [genode_dir]/repos/os/src/drivers/gpu/intel/gpu_drv.config \
 		[run_dir]/genode/gpu_drv.config
 
-	copy_file [genode_dir]/repos/gems/run/sculpt/machine.vbox  [run_dir]/genode/
-	copy_file [genode_dir]/repos/gems/run/sculpt/machine.vbox6 [run_dir]/genode/
+	copy_file [genode_dir]/repos/gems/run/sculpt/machine.vbox [run_dir]/genode/
 
 	copy_file [genode_dir]/repos/gems/recipes/raw/drivers_managed-pc/drivers.config \
 		[run_dir]/genode/drivers.config
