@@ -2,6 +2,7 @@
 #define _GL__GLX_H_
 
 #include <X11/Xlib.h>
+#include <X11/Xutil.h>
 #include <GL/gl.h>
 
 
@@ -10,9 +11,6 @@ extern "C" {
 #endif
 
 
-/*
- * Tokens for glXChooseVisual and glXGetConfig:
- */
 //#define GLX_USE_GL              1
 //#define GLX_BUFFER_SIZE         2
 //#define GLX_LEVEL               3
