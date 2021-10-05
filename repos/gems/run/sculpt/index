@@ -10,16 +10,14 @@
     <pkg path="window_layouter"      info="default window layouter"/>
   </index>
 
-  <index name="Mesa 3D">
-    <pkg path="mesa_gpu-cpu"   info="SWRAST Mesa driver"/>
-    <pkg path="mesa_gpu-intel" info="Intel IRIS Mesa driver"/>
-  </index>
-
   <index name="Tools">
-    <pkg path="system_shell" info="command-line interface to the system"/>
-    <pkg path="system_clock" info="system-clock service"/>
-    <pkg path="qt5_textedit" info="Qt5-based text editor"/>
-    <pkg path="report_dump"  info="save periodic snapshots of the report fs"/>
+    <pkg path="system_shell"    info="command-line interface to the system"/>
+    <pkg path="system_clock-pc" info="real-time-clock service"/>
+    <pkg path="qt5_textedit"    info="Qt5-based text editor"/>
+    <pkg path="report_dump"     info="save periodic snapshots of the report fs"/>
+    <pkg path="recall_fs"       info="component-specific file-system view"/>
+    <pkg path="black_hole"      info="pseudo service provider"/>
+    <pkg path="usb_webcam"      info="USB webcam"/>
   </index>
 
   <index name="Demos">
@@ -28,9 +26,13 @@
   </index>
 
   <index name="Virtual machines">
-    <pkg path="vbox5" info="VBox5 for running Linux (generic version)"/>
-    <pkg path="vbox5-nova-sculpt" info="VBox5 for running Linux (NOVA version)" />
-    <pkg path="vbox5-nova-capture" info="VBox5 + Webcam (NOVA version)" />
+    <pkg path="vbox6"         info="VBox6 for running Linux"/>
+    <invalid-pkg path="vbox6-capture" info="VBox6 + Webcam support" />
+  </index>
+
+  <index name="Mesa 3D">
+    <pkg path="mesa_gpu-cpu"   info="software-rendering driver"/>
+    <pkg path="mesa_gpu-intel" info="Intel GPU driver (IRIS)"/>
   </index>
 
 </index>
