@@ -25,3 +25,4 @@ _/pkg/system_clock-pc
 _/pkg/mesa_gpu-cpu
 _/pkg/mesa_gpu-intel
 _/pkg/usb_webcam
+_/pkg/file_vault

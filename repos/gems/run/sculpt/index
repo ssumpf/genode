@@ -18,6 +18,7 @@
     <pkg path="recall_fs"       info="component-specific file-system view"/>
     <pkg path="black_hole"      info="pseudo service provider"/>
     <pkg path="usb_webcam"      info="USB webcam"/>
+    <pkg path="file_vault"      info="encrypted file store"/>
   </index>
 
   <index name="Demos">
