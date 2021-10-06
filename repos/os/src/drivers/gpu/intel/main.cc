@@ -1579,15 +1579,13 @@ class Gpu::Session_component : public Genode::Session_object<Gpu::Session>
 		void _throw_if_avail_quota_insufficient(Cap_quota caps, Ram_quota ram)
 		{
 			Cap_quota const c = _cap_quota_guard().avail();
-			if (c.value < caps.value) {
+			if (c.value < caps.value)
 				throw Out_of_caps();
-			}
 
 			Ram_quota const r = _ram_quota_guard().avail();
 			enum { MINIMAL_RAM_AMOUNT = 4096, };
-			if (r.value < ram.value) {
+			if (r.value < ram.value)
 				throw Out_of_ram();
-			}
 		}
 
 
