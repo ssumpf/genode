@@ -8,3 +8,4 @@ input_session
 framebuffer_session
 posix
 libc
+sandbox
