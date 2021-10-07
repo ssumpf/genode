@@ -1,0 +1,35 @@
+#
+# Ubuntu 16.04 32bit in VBox 5
+#
+
+assert_spec x86
+
+if {(![have_spec nova] && ![have_spec foc])} {
+	puts "Platform is unsupported."
+}
+
+set flavor   "vbox6_win10"
+
+set vm_ram   "8192M"
+
+set use_vbox6 1
+set use_vbox5 0
+set use_vbox5_nova 0
+
+set use_rumpfs 1
+# Write overlay only into ram
+set use_ram_fs 0
+# However read initial overlay from disk
+set use_overlay_from_disk 1
+
+set use_serial 1
+set use_check_result 1
+
+set use_usb 0
+#[expr ![get_cmd_switch --autopilot]]
+set use_ps2 1
+
+set use_vms 1
+set use_cpu_load 1
+
+source ${genode_dir}/repos/ports/run/vbox_win.inc

@@ -1,0 +1,62 @@
+<?xml version="1.0"?>
+<VirtualBox xmlns="http://www.innotek.de/VirtualBox-settings" version="1.14-linux">
+  <Machine uuid="{37ab43a5-38d8-4491-93f5-5b0b077f5c32}" name="Win10" OSType="Windows10_64" snapshotFolder="Snapshots" lastStateChange="2014-11-14T11:58:35Z">
+    <MediaRegistry>
+      <HardDisks>
+        <HardDisk uuid="{91ebf365-de35-45b7-a0db-39dc8597a8af}" location="/vm/windows/win10_20h2.vdi" format="VDI" type="Immutable">
+          <HardDisk uuid="{055e910e-88c3-4fea-8137-14a45cc594fb}" location="/ram/overlay_vbox6_win10.vdi" format="VDI" autoReset="false"/>
+        </HardDisk>
+<!--        <HardDisk uuid="{74740507-f675-47e3-bbc7-415d9b2f4c56}" location="/vm/windows/block.vmdk" format="VMDK" type="Normal"/> -->
+      </HardDisks>
+    </MediaRegistry>
+    <Hardware>
+      <CPU count="2">
+        <PAE enabled="true"/>
+        <LongMode enabled="true"/>
+        <HardwareVirtExLargePages enabled="false"/>
+      </CPU>
+      <Memory RAMSize="4096"/>
+      <HID Pointing="PS2Mouse" Keyboard="PS2Keyboard"/>
+<!--      <Display VRAMSize="20" monitorCount="1" controller="VBoxSVGA"/> -->
+      <RemoteDisplay enabled="false"/>
+      <Paravirt provider="KVM"/>
+      <BIOS>
+        <IOAPIC enabled="true"/>
+      </BIOS>
+      <USB>
+        <Controllers>
+          <Controller name="OHCI" type="OHCI"/>
+        </Controllers>
+      </USB>
+      <Network>
+        <Adapter slot="0" enabled="false" MACAddress="0800271D7901" cable="true" type="82540EM">
+          <BridgedInterface/>
+        </Adapter>
+      </Network>
+      <UART>
+        <Port slot="0" enabled="false" IOBase="0x3f8" IRQ="4" path="/dev/log" hostMode="RawFile"/>
+        <Port slot="1" enabled="false" IOBase="0x2f8" IRQ="3" hostMode="Disconnected"/>
+      </UART>
+      <AudioAdapter controller="HDA" driver="OSS" enabled="true"/>
+      <RTC localOrUTC="UTC"/>
+      <SharedFolders/>
+<!--      <Clipboard mode="Bidirectional"/>-->
+    </Hardware>
+    <StorageControllers>
+<!--
+      <StorageController name="IDE Controller" type="PIIX4" PortCount="3" useHostIOCache="true" Bootable="true">
+-->
+      <StorageController name="SATA" type="AHCI" PortCount="2" useHostIOCache="true" Bootable="true">
+        <AttachedDevice type="HardDisk" port="0" device="0">
+          <Image uuid="{055e910e-88c3-4fea-8137-14a45cc594fb}"/>
+        </AttachedDevice>
+<!--
+        <AttachedDevice type="HardDisk" port="1" device="0">
+          <Image uuid="{74740507-f675-47e3-bbc7-415d9b2f4c56}"/>
+        </AttachedDevice>
+-->
+        <AttachedDevice passthrough="false" type="DVD" port="2" device="0"/>
+      </StorageController>
+    </StorageControllers>
+  </Machine>
+</VirtualBox>
