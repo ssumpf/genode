@@ -115,7 +115,7 @@ append config {
 		<resource name="RAM" quantum="10M"/>
 		<provides><service name="Block"/></provides>
 		<config>
-			<policy label_prefix="part_block" device="0" writeable="yes"/>
+			<policy label_prefix="part_block" device="2" writeable="yes"/>
 		</config>
 	</start>
 	<start name="part_block" priority="-1">
@@ -126,7 +126,7 @@ append config {
 		</route>
 		<config>}
 append_if [expr $use_rumpfs] config {
-			<policy label_prefix="rump_fs" partition="4" writeable="yes"/>}
+			<policy label_prefix="rump_fs" partition="3" writeable="yes"/>}
 append_if [expr !$use_rumpfs] config {
 			<policy label_prefix="vbox1 -> raw" partition="3" writeable="yes"/>}
 append config {
