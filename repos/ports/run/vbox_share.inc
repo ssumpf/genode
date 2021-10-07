@@ -68,10 +68,8 @@ if {![have_spec nova]} {
 	exit 0
 }
 
-set virtualbox_binary "virtualbox-rem"
-if {[have_spec nova]} { set virtualbox_binary "virtualbox-nova" }
-set virtualbox5_binary "virtualbox5-rem"
-if {[have_spec nova]} { set virtualbox5_binary "virtualbox5-nova" }
+set virtualbox_binary "virtualbox5"
+if {[have_spec nova]} { set virtualbox_binary "virtualbox5-nova" }
 
 #
 # Create .bat file to be executed by Win VM
@@ -354,7 +352,7 @@ append config_of_app {
 
 	<start name="vbox1" priority="-2" caps="600">}
 append_if [expr $use_vbox5] config_of_app "
-		<binary name=\"$virtualbox5_binary\" />"
+		<binary name=\"$virtualbox_binary\" />"
 append config_of_app {
 		<resource name="RAM" quantum="1280M"/>
 		<config vbox_file="} $vbox_file {" vm_name="AutoDisk">

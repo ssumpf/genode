@@ -211,6 +211,7 @@ append config {
 			<service name="ROM" label="config"> <parent label="wm.config"/> </service>
 			<service name="ROM"    label_last="clipboard"> <child name="clipboard"/> </service>
 			<service name="Report" label_last="clipboard"> <child name="clipboard"/> </service>
+			<service name="Report" label_last="shape"> <child name="pointer"/> </service>
 			<service name="Gui"> <child name="nitpicker"/> </service>
 			<any-service> <parent/> <any-child/> </any-service>
 		</route>

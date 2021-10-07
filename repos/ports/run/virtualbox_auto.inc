@@ -52,8 +52,18 @@ append build_components {
 	drivers/framebuffer
 }
 
+if {[info exists use_vbox5] && $use_vbox5} {
+	set virtualbox_target "virtualbox5"
+}
+if {[info exists use_vbox6] && $use_vbox6} {
+	set virtualbox_target "virtualbox6"
+}
+if {![info exists virtualbox_binary]} {
+	set virtualbox_binary $virtualbox_target
+}
+puts "---- Using $virtualbox_target target and $virtualbox_binary binary"
+
 lappend_if [expr $use_serial] build_components server/log_terminal
-lappend_if [expr $use_vbox5]  build_components virtualbox5
 lappend_if [expr $use_ps2]    build_components drivers/ps2
 lappend_if [expr $use_usb]    build_components app/usb_report_filter
 lappend_if [have_spec x86]    build_components drivers/rtc
@@ -62,6 +72,7 @@ lappend_if [expr $use_cpu_load] build_components app/trace_subject_reporter
 lappend_if [expr $use_cpu_load] build_components app/cpu_load_display
 lappend_if [expr $use_cpu_load] build_components app/top
 lappend_if [have_spec nova] build_components app/log_core
+lappend build_components $virtualbox_target
 
 source ${genode_dir}/repos/base/run/platform_drv.inc
 # override defaults of platform_drv.inc
@@ -409,12 +420,12 @@ append boot_modules {
 }
 
 lappend_if [expr $use_serial] boot_modules log_terminal
-lappend_if [expr $use_vbox5] boot_modules $virtualbox5_binary
 lappend_if [expr $use_ram_fs && !$use_overlay_from_disk] boot_modules $overlay_image
 lappend_if [expr $use_cpu_load] boot_modules trace_subject_reporter
 lappend_if [expr $use_cpu_load] boot_modules cpu_load_display
 lappend_if [expr $use_cpu_load] boot_modules top
 lappend_if [have_spec nova] boot_modules log_core
+lappend boot_modules $virtualbox_binary
 
 # platform-specific modules
 lappend_if [expr $use_ps2] boot_modules ps2_drv
