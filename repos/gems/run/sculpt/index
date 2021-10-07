@@ -29,7 +29,7 @@
 
   <index name="Virtual machines">
     <pkg path="vbox6"         info="VBox6 for running Linux"/>
-    <invalid-pkg path="vbox6-capture" info="VBox6 + Webcam support" />
+    <pkg path="vbox6-capture" info="VBox6 + Webcam support"/>
   </index>
 
   <index name="Mesa 3D">
