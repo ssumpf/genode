@@ -8,7 +8,7 @@ src/lib/libuvc:
 	mkdir -p $(dir $@)
 	cp -r $(PORT_DIR)/src/lib/libuvc $@
 	rm -rf $@/.git
-	cho "LIBS = libuvc" > $@/target.mk
+	echo "LIBS = libuvc" > $@/target.mk
 
 include:
 	mkdir -p $@
