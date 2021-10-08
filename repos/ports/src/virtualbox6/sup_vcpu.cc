@@ -123,7 +123,6 @@ class Sup::Vcpu_impl : public Sup::Vcpu, Genode::Noncopyable
 		};
 
 		struct {
-			unsigned intr_state     = 0;
 			unsigned ctrl_primary   = VIRT::ctrl_primary();
 			unsigned ctrl_secondary = VIRT::ctrl_secondary();
 		} _cached_state;
@@ -173,9 +172,6 @@ template <typename VIRT> void Sup::Vcpu_impl<VIRT>::_transfer_state_to_vcpu(CPUM
 	Vcpu_state &state { _vcpu.state() };
 
 	/* transfer defaults and cached state */
-	state.inj_info.charge(VMX_ENTRY_INT_INFO_NONE); /* XXX never injects events */
-	state.intr_state.charge(_cached_state.intr_state);
-	state.actv_state.charge(VMX_VMCS_GUEST_ACTIVITY_ACTIVE);
 	state.ctrl_primary.charge(_cached_state.ctrl_primary); /* XXX always updates ctrls */
 	state.ctrl_secondary.charge(_cached_state.ctrl_secondary); /* XXX always updates ctrls */
 
@@ -354,14 +350,14 @@ template <typename VIRT> void Sup::Vcpu_impl<VIRT>::_transfer_state_to_vbox(CPUM
 	uint32_t const tpr = state.tpr.value();
 
 	/* update cached state */
-	Assert(!VMX_ENTRY_INT_INFO_IS_VALID(state.inj_info.value()));
-	_cached_state.intr_state     = state.intr_state.value();
 	_cached_state.ctrl_primary   = state.ctrl_primary.value();
 	_cached_state.ctrl_secondary = state.ctrl_secondary.value();
 
 	/* clear blocking by MOV SS or STI bits */
-	if (_cached_state.intr_state & 3)
-		_cached_state.intr_state &= ~3U;
+	if (_vcpu.state().intr_state.value() & 3) {
+		_vcpu.state().intr_state.charge(state.intr_state.value() & ~3U);
+		_vcpu.state().actv_state.charge(VMX_VMCS_GUEST_ACTIVITY_ACTIVE);
+	}
 
 	VMCPU_FF_CLEAR(pVCpu, VMCPU_FF_TO_R3);
 
@@ -519,7 +515,6 @@ typename Sup::Vcpu_impl<T>::Current_state Sup::Vcpu_impl<T>::_handle_paused()
 
 	/* check whether we have to request irq injection window */
 	if (_check_and_request_irq_window()) {
-		state.discharge();
 		state.inj_info.charge(state.inj_info.value());
 		_irq_window = true;
 		return RUNNING;
@@ -540,8 +535,6 @@ template <typename T>
 typename Sup::Vcpu_impl<T>::Current_state Sup::Vcpu_impl<T>::_handle_irq_window()
 {
 	Vcpu_state &state { _vcpu.state() };
-
-	state.discharge();
 
 	PVMCPU pVCpu = &_vmcpu;
 
@@ -637,6 +630,9 @@ template <typename VIRT> VBOXSTRICTRC Sup::Vcpu_impl<VIRT>::_switch_to_hw()
 		_next_state = RUN;
 
 		result = VIRT::handle_exit(_vcpu.state());
+
+		/* discharge by default */
+		_vcpu.state().discharge();
 
 		switch (result.state) {
 
