@@ -33,9 +33,6 @@
 #include <stdio.h>
 #include "eglut.h"
 
-#include <stdio.h>
-#include <sys/time.h>
-
 static GLfloat view_rotx = 20.0, view_roty = 30.0, view_rotz = 0.0;
 static GLint gear1, gear2, gear3;
 static GLfloat angle = 0.0;
@@ -179,30 +176,9 @@ gear(GLfloat inner_radius, GLfloat outer_radius, GLfloat width,
 }
 
 
-/*
- * This function and FPS tracking below are adapted from glxgears.c
- */
-static double current_time()
-{
-    struct timeval tv;
-
-    gettimeofday(&tv, NULL);
-
-    return (double) tv.tv_sec + tv.tv_usec / 1000000.0;
-}
-
-
 static void
 draw(void)
 {
-   static unsigned frames = 0;
-   static double   t0     = -1.0;
-
-   double t = current_time();
-
-   if (t0 < 0.0)
-       t0 = t;
-
    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 #if 1
    glPushMatrix();
@@ -230,16 +206,6 @@ draw(void)
 
    glPopMatrix();
 #endif
-
-   frames++;
-   if (t - t0 >= 5.0) {
-       double seconds = t - t0;
-       double fps     = frames / seconds;
-       printf("%d frames in %3.1f seconds = %6.3f FPS\n", frames, seconds, fps);
-
-       t0     = t;
-       frames = 0;
-   }
 }
 
 
