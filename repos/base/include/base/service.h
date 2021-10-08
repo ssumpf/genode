@@ -256,10 +256,10 @@ class Genode::Parent_service : public Service
 				                               _env.id_space());
 				try {
 
-					session.cap = _env.session(name().string(),
-					                           session.id_at_parent->id(),
-					                           Session_state::Server_args(session).string(),
-					                           session.affinity());
+					session.cap = _env.try_session(name().string(),
+					                               session.id_at_parent->id(),
+					                               Session_state::Server_args(session).string(),
+					                               session.affinity());
 
 					session.phase = Session_state::AVAILABLE;
 				}
