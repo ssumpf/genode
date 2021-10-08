@@ -7,7 +7,8 @@ PORT_DIR := $(call port_dir,$(REP_DIR)/ports/libuvc)
 src/lib/libuvc:
 	mkdir -p $(dir $@)
 	cp -r $(PORT_DIR)/src/lib/libuvc $@
-	echo "LIBS = libuvc" > $@/target.mk
+	rm -rf $@/.git
+	cho "LIBS = libuvc" > $@/target.mk
 
 include:
 	mkdir -p $@
