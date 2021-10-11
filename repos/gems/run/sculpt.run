@@ -558,7 +558,7 @@ if {[have_board pc]} {
 # Note: the string must be exactly 5 bytes long.
 #
 proc sculpt_version { } {
-	return "21.10" }
+	return "21.D3" }
 
 # write file with newline (for producing nice output when using 'cat /VERSION')
 set fd [open [run_dir]/genode/VERSION w]
@@ -694,7 +694,7 @@ exec sh -c "tar cf [run_dir]/genode/depot_users.tar -C [genode_dir] \
 #
 # Create boot image
 #
-
-append boot_modules { }
+build { test/mesa_demo/gears }
+append boot_modules { libdrm.lib.so }
 
 build_boot_image $boot_modules
