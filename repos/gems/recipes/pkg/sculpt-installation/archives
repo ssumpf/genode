@@ -28,3 +28,5 @@ _/pkg/mesa_gpu-intel
 _/pkg/usb_webcam
 _/pkg/file_vault
 _/pkg/test-capture
+_/pkg/bsd_audio_drv
+_/pkg/mixer

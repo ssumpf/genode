@@ -19,9 +19,11 @@
     <pkg path="qt5_textedit"    info="Qt5-based text editor"/>
     <pkg path="report_dump"     info="save periodic snapshots of the report fs"/>
     <pkg path="recall_fs"       info="component-specific file-system view"/>
+    <pkg path="file_vault"      info="encrypted file store"/>
     <pkg path="black_hole"      info="pseudo service provider"/>
     <pkg path="usb_webcam"      info="USB webcam"/>
-    <pkg path="file_vault"      info="encrypted file store"/>
+    <pkg path="bsd_audio_drv"   info="audio driver" arch="x86_64"/>
+    <pkg path="mixer"           info="audio mixer"/>
   </index>
 
   <index name="Demos">
