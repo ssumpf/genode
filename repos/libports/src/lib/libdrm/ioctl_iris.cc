@@ -1411,6 +1411,9 @@ class Drm_call
 				if (b.tiling.valid())
 					b.tiling = Gpu::Buffer::Tiling();
 
+				if (b.map_cap.valid())
+					_unmap_buffer(b);
+
 				b.buffer_attached.destruct();
 				found = true;
 			});
