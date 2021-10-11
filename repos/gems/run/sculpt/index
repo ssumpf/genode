@@ -1,5 +1,8 @@
 <index>
 
+  <supports arch="x86_64"/>
+  <supports arch="arm_v8a"/>
+
   <index name="GUI">
     <pkg path="sticks_blue_backdrop" info="default desktop background"/>
     <pkg path="themed_wm"            info="ready-to-use window manager"/>
@@ -12,7 +15,7 @@
 
   <index name="Tools">
     <pkg path="system_shell"    info="command-line interface to the system"/>
-    <pkg path="system_clock-pc" info="real-time-clock service"/>
+    <pkg path="system_clock-pc" info="real-time-clock service" arch="x86_64"/>
     <pkg path="qt5_textedit"    info="Qt5-based text editor"/>
     <pkg path="report_dump"     info="save periodic snapshots of the report fs"/>
     <pkg path="recall_fs"       info="component-specific file-system view"/>
@@ -27,14 +30,14 @@
     <pkg path="test-capture" info="test for displaying a capture session"/>
   </index>
 
-  <index name="Virtual machines">
+  <index name="Virtual machines" arch="x86_64">
     <pkg path="vbox6"         info="VBox6 for running Linux"/>
     <pkg path="vbox6-capture" info="VBox6 + Webcam support"/>
   </index>
 
   <index name="Mesa 3D">
     <pkg path="mesa_gpu-cpu"   info="software-rendering driver"/>
-    <pkg path="mesa_gpu-intel" info="Intel GPU driver (IRIS)"/>
+    <pkg path="mesa_gpu-intel" info="Intel GPU driver (IRIS)" arch="x86_64"/>
   </index>
 
 </index>
