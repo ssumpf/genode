@@ -1090,6 +1090,9 @@ class Drm_call
 					return;
 				}
 
+				if (b.map_cap.valid())
+					_unmap_buffer(b);
+
 				b.buffer_attached.destruct();
 				found = true;
 			});
