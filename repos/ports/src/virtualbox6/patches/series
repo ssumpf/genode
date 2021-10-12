@@ -8,3 +8,5 @@ smp_sipi.patch
 tm_poke.patch
 exec_state.patch
 devsvga.patch
+shaderlib.patch
+svga.patch
