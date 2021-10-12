@@ -453,7 +453,6 @@ class Drm_call
 				_buffer_space.apply<Buffer>(id, [&] (Buffer &b) {
 					if (b.mmap(_env)) {
 						p->addr_ptr = b.mmap_addr();
-						Genode::warning("_device_gem_mmap: addr: ", Genode::Hex(p->addr_ptr), " handle: ", b.id().value);
 						map_failed  = false;
 					}
 				});
@@ -477,10 +476,10 @@ class Drm_call
 			auto      const p = reinterpret_cast<drm_i915_gem_mmap_gtt *>(arg);
 			Gpu::Buffer_id const id { .value = p->handle };
 
-			//if (verbose_ioctl) {
+			if (verbose_ioctl) {
 				Genode::error(__func__, ": ", "handle: ", id.value,
 				              " offset: ", Genode::Hex(p->offset));
-			//}
+			}
 
 			/*
 			 * We always map a buffer when the tiling is set. Since Mesa
@@ -629,7 +628,7 @@ class Drm_call
 
 			return 0;
 
-			if (1) {
+			if (verbose_ioctl) {
 				Genode::error(__func__, ": ",
 				                "handle: ", id.value, " "
 				                "mode: ", mode, " "
@@ -640,7 +639,6 @@ class Drm_call
 			bool ok = false;
 			try {
 				_buffer_space.apply<Buffer>(id, [&] (Buffer &b) {
-					Genode::warning("map valid: ", b.map_cap);
 					/* we need a valid GGTT mapping for fencing */
 					if (!b.map_cap.valid() && !_map_buffer(b))
 						return;
@@ -1209,14 +1207,11 @@ void drm_init(Genode::Env &env)
  *
  * On Genode the virtual address of MMAP_GTT is stored in the offset.
  */
-static unsigned long l { 0 };
 extern "C" void *drm_mmap(void * /* vaddr */, size_t length,
                           int /* prot */, int /* flags */,
                           int /* fd */, off_t offset)
 {
 	/* sanity check if we got a GTT mapped offset */
-	l += length;
-	Genode::log("drm_mmap: ", l);
 	bool const ok = _call->map_buffer_ggtt(offset, length);
 	return ok ? (void *)offset : nullptr;
 }
@@ -1226,8 +1221,6 @@ extern "C" void *drm_mmap(void * /* vaddr */, size_t length,
  */
 extern "C" int drm_munmap(void *addr, size_t length)
 {
-	l -= length;
-	Genode::log("drm_munmap: ", addr, " length: ", Genode::Hex(length));
 	_call->unmap_buffer(addr, length);
 	return 0;
 }
