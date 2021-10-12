@@ -36,7 +36,7 @@ class Genodefb :
 		Gui::Connection    &_gui;
 		Fb_Genode::Session &_fb;
 		View_handle         _view;
-		Fb_Genode::Mode     _fb_mode { .area = { 1024, 768 } };
+		Fb_Genode::Mode     _fb_mode { .area = { 1920, 1080 } };
 
 		/*
 		 * The mode currently used by the VM. Can be smaller than the

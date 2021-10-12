@@ -2,7 +2,7 @@
 #define _X11__XLIB_H_
 
 #include <X11/X.h>
-
+#include <EGL/egl.h>
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -12,7 +12,7 @@ extern "C" {
 #define True   1
 #define False  0
 
-typedef struct { void *dummy; } Display;
+typedef struct { EGLDisplay dpy; } Display;
 typedef struct { void *dummy; } Screen;
 typedef struct { void *dummy; } Visual;
 

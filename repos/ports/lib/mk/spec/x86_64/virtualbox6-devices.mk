@@ -1,6 +1,6 @@
 include $(REP_DIR)/lib/mk/virtualbox6-common.inc
 
-LIBS += stdcxx mesa
+LIBS += stdcxx mesa egl
 
 SRC_CC += Devices/Audio/AudioHlp.cpp
 SRC_CC += Devices/Audio/AudioMixBuffer.cpp
@@ -145,6 +145,15 @@ CC_OPT_Devices/Graphics/shaderlib/shader_sm4        = $(WINE_CC_OPT)
 CC_OPT_Devices/Graphics/shaderlib/shaderapi         = $(WINE_CC_OPT)
 CC_OPT_Devices/Graphics/shaderlib/stateblock        = $(WINE_CC_OPT)
 CC_OPT_Devices/Graphics/shaderlib/utils             = $(WINE_CC_OPT)
+
+#SVGA3D_CC_OPT = -DGL_GLEXT_LEGACY
+#CC_OPT_Devices/Graphics/DevVGA-SVGA3d-glHlp         = $(SVGA3D_CC_OPT)
+#CC_OPT_Devices/Graphics/DevVGA-SVGA3d-hlp           = $(SVGA3D_CC_OPT)
+#CC_OPT_Devices/Graphics/DevVGA-SVGA3d-info          = $(SVGA3D_CC_OPT)
+#CC_OPT_Devices/Graphics/DevVGA-SVGA3d-ogl           = $(SVGA3D_CC_OPT)
+#CC_OPT_Devices/Graphics/DevVGA-SVGA3d-savedstate    = $(SVGA3D_CC_OPT)
+#CC_OPT_Devices/Graphics/DevVGA-SVGA3d-shared        = $(SVGA3D_CC_OPT)
+#CC_OPT_Devices/Graphics/DevVGA-SVGA3d               = $(SVGA3D_CC_OPT)
 
 Devices/Graphics/DevVGA.o: vbetables.h
 

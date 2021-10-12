@@ -58,7 +58,14 @@ extern "C" void          glXDestroyContext(Display *dpy, GLXContext ctx) STOP
 extern "C" int           glXGetFBConfigAttrib(Display *dpy, GLXFBConfig config, int attribute, int *value) STOP
 extern "C" XVisualInfo * glXGetVisualFromFBConfig(Display *dpy, GLXFBConfig config) STOP
 extern "C" Bool          glXMakeCurrent(Display *dpy, GLXDrawable drawable, GLXContext ctx) STOP
-extern "C" Bool          glXQueryVersion(Display *dpy, int *maj, int *min) STOP
+
+
+extern "C" Bool glXQueryVersion(Display *, int *major, int *minor)
+{
+	*major = 1;
+	*minor = 9;
+	return true;
+}
 
 
 /*
@@ -68,14 +75,36 @@ extern "C" Bool          glXQueryVersion(Display *dpy, int *maj, int *min) STOP
 extern "C" int           XCloseDisplay(Display *)                              STOP
 extern "C" Colormap      XCreateColormap(Display *, Window, Visual *, int)                              STOP
 extern "C" Window        XCreateWindow( Display *, Window, int, int, unsigned int, unsigned int, unsigned int, int, unsigned int, Visual *, unsigned long, XSetWindowAttributes *) STOP
-extern "C" Window        XDefaultRootWindow(Display *)                              STOP
 extern "C" int           XDestroyWindow(Display *, Window)                              STOP
 extern "C" XErrorHandler XSetErrorHandler(XErrorHandler)                              STOP
 extern "C" int           XFree(void *)                              STOP
 extern "C" Status        XGetWindowAttributes(Display *, Window, XWindowAttributes *)                              STOP
 extern "C" int           XMapWindow(Display *, Window)                              STOP
 extern "C" int           XNextEvent(Display *, XEvent *)                              STOP
-extern "C" Display *     XOpenDisplay(char *name)                              STOP
-extern "C" int           XPending(Display *)                              STOP
 extern "C" int           XScreenNumberOfScreen(Screen *)                              STOP
 extern "C" int           XSync(Display *, Bool)                              STOP
+
+
+extern "C" Display * XOpenDisplay(char *)
+{
+	Display *display = new Display();
+	display->dpy = eglGetDisplay(EGLNativeDisplayType());
+	return display;
+}
+
+extern "C" int XPending(Display *)
+{
+	static bool once = true;
+
+	if (once) {
+		Genode::error(__func__ " called by 'vmsvga3dXEventThread' implement!");
+		once = false;
+	}
+
+	return 0;
+}
+
+
+extern "C" Window XDefaultRootWindow(Display *)
+{
+}
