@@ -22,7 +22,7 @@
 #include <services/services.h>
 
 
-static Genode::Env *genode_env;
+Genode::Env *genode_env;
 
 Genode::Env & Services::env()         { return *genode_env; }
 void Services::init(Genode::Env &env) { genode_env = &env; }
