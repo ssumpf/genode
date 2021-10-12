@@ -1,0 +1,29 @@
+diff --git a/src/VBox/Devices/Graphics/shaderlib/wined3d_gl.h b/src/VBox/Devices/Graphics/shaderlib/wined3d_gl.h
+index 2fa9b12..99bd0d9 100644
+--- a/src/virtualbox6/src/VBox/Devices/Graphics/shaderlib/wined3d_gl.h
++++ b/src/virtualbox6/src/VBox/Devices/Graphics/shaderlib/wined3d_gl.h
+@@ -64,6 +64,11 @@
+ #define WINE_GLAPI
+ #endif
+ 
++#ifdef DECLSPEC_HIDDEN
++#undef DECLSPEC_HIDDEN
++#endif
++#define DECLSPEC_HIDDEN __attribute__((visibility("hidden")))
++
+ /****************************************************
+  * OpenGL 1.0/1.1/1.2/1.3
+  *     types, #defines and function pointers
+diff --git a/src/VBox/Devices/Graphics/shaderlib/wined3d_private.h b/src/VBox/Devices/Graphics/shaderlib/wined3d_private.h
+index 3c7e750..bc23da2 100644
+--- a/src/virtualbox6/src/VBox/Devices/Graphics/shaderlib/wined3d_private.h
++++ b/src/virtualbox6/src/VBox/Devices/Graphics/shaderlib/wined3d_private.h
+@@ -1323,7 +1323,7 @@ struct wined3d_context *context_create(IWineD3DSwapChainImpl *swapchain, IWineD3
+                 , struct VBOXUHGSMI *pHgsmi
+ #endif
+         ) DECLSPEC_HIDDEN;
+-struct IWineD3DDeviceImpl *context_get_device(const struct wined3d_context *context); DECLSPEC_HIDDEN;
++struct IWineD3DDeviceImpl *context_get_device(const struct wined3d_context *context) DECLSPEC_HIDDEN;
+ #ifdef VBOX_WITH_WDDM
+ struct wined3d_context *context_find_create(IWineD3DDeviceImpl *device, IWineD3DSwapChainImpl *swapchain, IWineD3DSurfaceImpl *target,
+         const struct wined3d_format_desc *ds_format_desc) DECLSPEC_HIDDEN;
