@@ -32,17 +32,30 @@ class Igd::Ppgtt_allocator : public Genode::Translation_table_allocator
 		Genode::Region_map      &_rm;
 		Utils::Backend_alloc    &_backend;
 
-		enum { ELEMENTS = 256, };
+		enum { ELEMENTS = 128, }; /* max 128M for page tables */
 		Utils::Address_map<ELEMENTS> _map { };
+
+		Genode::Allocator_avl    _range;
 
 	public:
 
-		Ppgtt_allocator(Genode::Region_map      &rm,
+		Ppgtt_allocator(Genode::Allocator       &md_alloc,
+		                Genode::Region_map      &rm,
 		                Utils::Backend_alloc    &backend)
 		:
 			_rm         { rm },
-			_backend    { backend }
+			_backend    { backend },
+			_range      { &md_alloc }
 		{ }
+
+		~Ppgtt_allocator()
+		{
+			_map.for_each([&](Utils::Address_map<ELEMENTS>::Element &elem) {
+				_rm.detach(elem.va);
+				_backend.free(elem.ds_cap);
+				elem.invalidate();
+			});
+		}
 
 		/*************************
 		 ** Allocator interface **
@@ -50,24 +63,38 @@ class Igd::Ppgtt_allocator : public Genode::Translation_table_allocator
 
 		bool alloc(size_t size, void **out_addr) override
 		{
-			Genode::Ram_dataspace_capability ds = _backend.alloc(size);
+			if (_range.alloc_aligned(size, out_addr, 12).ok()) {
+				return true;
+			}
+
+			size_t alloc_size = 1024*1024;
+
+			Genode::Ram_dataspace_capability ds =
+				_backend.alloc(alloc_size);
 
 			*out_addr = _rm.attach(ds);
-			return _map.add(ds, *out_addr);
+			bool added = _map.add(ds, *out_addr);
+
+			if (!added) {
+				Genode::error("Could not add ", *out_addr, " to PPGTT map");
+				return false;
+			}
+
+			_range.add_range((Genode::addr_t)*out_addr, alloc_size);
+
+			if (_range.alloc_aligned(size, out_addr, 12).error()) {
+				Genode::log("alloc PPGTT error: size: ", Genode::Hex(size));
+				return false;
+			}
+
+			return true;
 		}
 
-		void free(void *addr, size_t) override
+		void free(void *addr, size_t size) override
 		{
 			if (addr == nullptr) { return; }
 
-			Genode::Ram_dataspace_capability cap = _map.remove(addr);
-			if (!cap.valid()) {
-				Genode::error("could not lookup capability for addr: ", addr);
-				return;
-			}
-
-			_rm.detach(addr);
-			_backend.free(cap);
+			_range.free(addr, size);
 		}
 
 		bool   need_size_for_free() const override { return false; }
@@ -80,15 +107,15 @@ class Igd::Ppgtt_allocator : public Genode::Translation_table_allocator
 		void *phys_addr(void *va) override
 		{
 			if (va == nullptr) { return nullptr; }
-			typename Utils::Address_map<ELEMENTS>::Element *e = _map.phys_addr(va);
-			return e ? (void*)e->pa : nullptr;
+			addr_t pa = _map.phys_addr(va);
+			return pa ? (void *)pa : nullptr;
 		}
 
 		void *virt_addr(void *pa) override
 		{
 			if (pa == nullptr) { return nullptr; }
-			typename Utils::Address_map<ELEMENTS>::Element *e = _map.virt_addr(pa);
-			return e ? (void*)e->va : nullptr;
+			addr_t virt = _map.virt_addr(pa);
+			return virt ? (void*)virt : nullptr;
 		}
 };
 
