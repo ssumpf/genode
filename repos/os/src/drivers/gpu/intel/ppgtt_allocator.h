@@ -38,9 +38,12 @@ class Igd::Ppgtt_allocator : public Genode::Translation_table_allocator
 		Genode::Cap_quota_guard &_caps_guard;
 		Genode::Ram_quota_guard &_ram_guard;
 
+		Genode::Allocator_avl    _range;
+
 	public:
 
-		Ppgtt_allocator(Genode::Region_map      &rm,
+		Ppgtt_allocator(Genode::Allocator       &md_alloc,
+		                Genode::Region_map      &rm,
 		                Utils::Backend_alloc    &backend,
 		                Genode::Cap_quota_guard &caps_guard,
 		                Genode::Ram_quota_guard &ram_guard)
@@ -48,7 +51,8 @@ class Igd::Ppgtt_allocator : public Genode::Translation_table_allocator
 			_rm         { rm },
 			_backend    { backend },
 			_caps_guard { caps_guard },
-			_ram_guard  { ram_guard }
+			_ram_guard  { ram_guard },
+			_range      { &md_alloc }
 		{ }
 
 		/*************************
@@ -57,16 +61,28 @@ class Igd::Ppgtt_allocator : public Genode::Translation_table_allocator
 
 		bool alloc(size_t size, void **out_addr) override
 		{
+			Genode::log("Alloc: ", size);
+			if (_range.alloc_aligned(size, out_addr, 12).ok()) {
+				Genode::log("alloc ok ", *out_addr);
+				return true;
+			}
+			Genode::log("Alloc from backend");
+
 			Genode::Ram_dataspace_capability ds =
 				_backend.alloc(size, _caps_guard, _ram_guard);
 
 			*out_addr = _rm.attach(ds);
+			_range.add_range((Genode::addr_t)*out_addr, size);
+
 			return _map.add(ds, *out_addr);
 		}
 
-		void free(void *addr, size_t) override
+		void free(void *addr, size_t size) override
 		{
 			if (addr == nullptr) { return; }
+
+			_range.free(addr, size);
+			return;
 
 			Genode::Ram_dataspace_capability cap = _map.remove(addr);
 			if (!cap.valid()) {
