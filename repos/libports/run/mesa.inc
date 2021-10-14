@@ -27,6 +27,8 @@ import_from_depot $imports
 set build_components {
 	lib/mesa/softpipe
 	core init timer
+	drivers/framebuffer/intel
+	lib/vfs/gpu
 }
 
 lappend_if $use_iris    build_components lib/mesa/iris
@@ -147,6 +149,7 @@ set boot_modules {
 
 append_if $use_iris boot_modules {
 	mesa_gpu-iris.lib.so libdrm.lib.so
+	intel_fb_drv vfs_gpu.lib.so
 }
 
 append_if $use_etnaviv boot_modules {
