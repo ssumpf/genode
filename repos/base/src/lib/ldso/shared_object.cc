@@ -76,14 +76,14 @@ Genode::Shared_object::Shared_object(Env &env, Allocator &md_alloc,
 
 	} catch(Linker::Not_found &symbol) {
 		warning("LD: symbol not found: '", symbol, "'");
-		throw Invalid_file();
+		throw Invalid_rom_module();
 
 	} catch (...) {
 		if (Linker::verbose)
 			warning("LD: exception during Shared_object open: "
 			        "'", Current_exception(), "'");
 
-		throw Invalid_file();
+		throw Invalid_rom_module();
 	}
 }
 
