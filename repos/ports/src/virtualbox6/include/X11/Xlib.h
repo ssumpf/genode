@@ -14,7 +14,16 @@ extern "C" {
 
 typedef struct { EGLDisplay dpy; } Display;
 typedef struct { void *dummy; } Screen;
-typedef struct { void *dummy; } Visual;
+typedef struct
+{
+	EGLConfig           config;
+} Visual;
+
+struct _Window
+{
+	EGLSurface          surface;
+	EGLNativeWindowType window;
+};
 
 typedef struct { unsigned char error_code; } XErrorEvent;
 
