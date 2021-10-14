@@ -28,6 +28,7 @@ extern "C" {
 #include <errno.h>
 #include <drm.h>
 #include <i915_drm.h>
+#include <unistd.h>
 
 #define DRM_NUMBER(req) ((req) & 0xff)
 }
@@ -1317,12 +1318,15 @@ class Drm_call
 
 			Gpu::Buffer_id const id { .value = p->handle };
 			try {
-				_buffer_space.apply<Buffer>(id, [&](Buffer const &b) {
+				_buffer_space.apply<Buffer>(id, [&](Buffer const &) {
+
 					if (!prime_handle.value)
 						prime_handle = id;
 
-					if (prime_handle.value != id.value)
-						Genode::error("prime handle changed - ignored ", b.id().value);
+					if (prime_handle.value != id.value) {
+						Genode::warning("prime handle changed: ", id.value);
+						prime_handle = id;
+					}
 				});
 			 } catch (Genode::Id_space<Buffer>::Unknown_id) {
 				return -1;
@@ -1370,6 +1374,19 @@ class Drm_call
 				Genode::warning("syncobject 0 not reserved");
 
 			_gpu_session.completion_sigh(_completion_sigh);
+		}
+
+		int lseek(int fd, off_t offset, int whence)
+		{
+			if (fd != prime_fd || offset || whence != SEEK_END)
+				return -1;
+
+			int size = -1;
+			_buffer_space.apply<Buffer>(prime_handle, [&](Buffer const &b) {
+				size =(int)b.size;
+			});
+
+			return size;
 		}
 
 		bool map_buffer_ggtt(Offset offset, size_t length)
@@ -1525,6 +1542,14 @@ extern "C" int drm_munmap(void *addr, size_t length)
 extern "C" void drm_unmap_ppgtt(__u32 handle)
 {
 	_call->unmap_buffer_ppgtt(handle);
+}
+
+
+extern "C" int drm_lseek(int fd, off_t offset, int whence)
+{
+	if (_call.constructed() == false) { errno = EIO; return -1; }
+
+	return _call->lseek(fd, offset, whence);
 }
 
 
