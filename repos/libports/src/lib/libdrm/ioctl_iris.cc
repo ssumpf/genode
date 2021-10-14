@@ -18,6 +18,7 @@
 #include <base/heap.h>
 #include <base/log.h>
 #include <base/registry.h>
+#include <base/shared_object.h>
 #include <base/sleep.h>
 
 #include <gpu_session/connection.h>
@@ -31,6 +32,13 @@ extern "C" {
 #include <unistd.h>
 
 #define DRM_NUMBER(req) ((req) & 0xff)
+}
+
+namespace Libc {
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
 }
 
 using Genode::addr_t;
@@ -251,11 +259,13 @@ class Drm_call
 		using Ram_quota = Genode::Ram_quota;
 
 		Genode::Env      &_env;
-		Genode::Heap      _heap               { _env.ram(), _env.rm() };
-		Gpu::Connection   _gpu_session        { _env, 3*1024*1024 };
+		Genode::Heap     &_heap;
+		Gpu::Connection  &_gpu_session;
+
 		Gpu::Info_intel  const &_gpu_info {
 			*_gpu_session.attached_info<Gpu::Info_intel>() };
 		size_t            _available_gtt_size { _gpu_info.aperture_size };
+		int               _wait_fd { 0 };
 
 		using Buffer       = Gpu::Buffer;
 		using Buffer_space = Genode::Id_space<Buffer>;
@@ -668,16 +678,6 @@ class Drm_call
 				return -1;
 			}
 		}
-
-		/***************************
-		 ** execbuffer completion **
-		 ***************************/
-
-		void _handle_completion() { }
-
-		Genode::Io_signal_handler<Drm_call> _completion_sigh {
-			_env.ep(), *this, &Drm_call::_handle_completion };
-
 
 		/************
 		 ** ioctls **
@@ -1365,15 +1365,20 @@ class Drm_call
 
 	public:
 
-		Drm_call(Genode::Env &env)
-		: _env(env)
+		Drm_call(Genode::Env &env, Genode::Heap &heap, Gpu::Connection &gpu_session)
+		: _env(env), _heap(heap), _gpu_session(gpu_session)
 		{
 			/* make handle id 0 unavailable, handled as invalid by iris */
 			drm_syncobj_create reserve_id_0 { };
 			if (_generic_syncobj_create(&reserve_id_0))
 				Genode::warning("syncobject 0 not reserved");
 
-			_gpu_session.completion_sigh(_completion_sigh);
+			_wait_fd = Libc::open("/dev/gpu", 0);
+			if (_wait_fd < 0) {
+				Genode::error("Failed to open '/dev/gpu': ",
+				              "try configure '<gpu>' in 'dev' directory of VFS'");
+				throw -1;
+			}
 		}
 
 		int lseek(int fd, off_t offset, int whence)
@@ -1491,7 +1496,10 @@ class Drm_call
 				if (_gpu_session.complete(seqno)) {
 					break;
 				}
-				_env.ep().wait_and_dispatch_one_io_signal();
+
+				/* wait for completion signal in VFS plugin */
+				char buf;
+				Libc::read(_wait_fd, &buf, 1);
 			}
 
 			/* mark done buffer objects */
@@ -1511,7 +1519,27 @@ static Genode::Constructible<Drm_call> _call;
 
 void drm_init(Genode::Env &env)
 {
-	_call.construct(env);
+	using namespace Genode;
+
+	/*
+	 * XXX: lookup Gpu::Connection via 'Gpu::Connection &vfs_gpu_connection()' in
+	 * vfs_gpu.lib.so' VFS plugin
+	 */
+	static Heap heap { env.ram(), env.rm() };
+	try {
+		Shared_object object { env, heap, "vfs_gpu.lib.so",
+		                       Shared_object::BIND_LAZY,
+		                       Shared_object::DONT_KEEP };
+
+		void *vfs_gpu_connection = object.lookup("_Z18vfs_gpu_connectionv");
+
+		log("libdrm (iris): 'vfs_gpu_connection' found at: ", vfs_gpu_connection);
+		Gpu::Connection &gpu_session = ((Gpu::Connection & (*)())vfs_gpu_connection)();
+
+		_call.construct(env, heap, gpu_session);
+	} catch (Shared_object::Invalid_rom_module) {
+		Genode::error("'vfs_gpu.lib.so' plugin not found");
+	} catch (...) { }
 }
 
 
@@ -1524,6 +1552,8 @@ extern "C" void *drm_mmap(void * /* vaddr */, size_t length,
                           int /* prot */, int /* flags */,
                           int /* fd */, off_t offset)
 {
+	if (_call.constructed() == false) { errno = EIO; return nullptr; }
+
 	/* sanity check if we got a GTT mapped offset */
 	bool const ok = _call->map_buffer_ggtt(offset, length);
 	return ok ? (void *)offset : nullptr;
@@ -1534,6 +1564,8 @@ extern "C" void *drm_mmap(void * /* vaddr */, size_t length,
  */
 extern "C" int drm_munmap(void *addr, size_t length)
 {
+	if (_call.constructed() == false) { errno = EIO; return -1; }
+
 	_call->unmap_buffer(addr, length);
 	return 0;
 }
@@ -1555,7 +1587,9 @@ extern "C" int drm_lseek(int fd, off_t offset, int whence)
 
 extern "C" int genode_ioctl(int /* fd */, unsigned long request, void *arg)
 {
+	if (_call.constructed() == false) { errno = EIO; return -1; }
 	if (verbose_ioctl) { dump_ioctl(request); }
+
 	int const ret = _call->ioctl(request, arg);
 	if (verbose_ioctl) { Genode::log("returned ", ret); }
 	return ret;
