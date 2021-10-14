@@ -28,6 +28,8 @@ set build_components {
 	drivers/gpu/intel
 	lib/mesa/softpipe
 	core init timer
+	drivers/framebuffer/intel
+	lib/vfs/gpu
 }
 
 lappend_if $use_iris    build_components lib/mesa/iris
@@ -71,7 +73,7 @@ set config {
 	<start name="drivers" caps="2500" managing_system="yes">
 		<resource name="RAM" quantum="128M"/>
 		<binary name="init"/>
-		<provides> <service name="Platform"/> </provides>
+		<provides> <service name="Platform"/> <service name="Gpu"/> </provides>
 		<route>
 			<service name="ROM" label="config"> <parent label="drivers.config"/> </service>
 			<service name="Timer">   <child name="timer"/> </service>
@@ -122,20 +124,6 @@ append config {
 	</start>
 }
 
-append_if $use_iris config {
-	<start name="intel_gpu_drv" caps="2000">
-		<resource name="RAM" quantum="40M"/>
-		<provides>
-			<service name="Gpu"/>
-			<service name="Platform"/>
-		</provides>
-		<route>
-			<service name="Platform"> <child name="drivers"/> </service>
-			<any-service> <parent /> <any-child/> </any-service>
-		</route>
-	</start>
-}
-
 append_if $use_etnaviv config {
 	<start name="imx8q_gpu_drv" caps="200">
 		<resource name="RAM" quantum="64M"/>
@@ -163,6 +151,7 @@ set boot_modules {
 append_if $use_iris boot_modules {
 	mesa_gpu-iris.lib.so libdrm.lib.so
 	intel_gpu_drv
+	intel_fb_drv vfs_gpu.lib.so
 }
 
 append_if $use_etnaviv boot_modules {
