@@ -93,16 +93,34 @@ int SUPSemEventMultiClose(PSUPDRVSESSION   pSession,
 
 
 int SUPSemEventMultiSignal(PSUPDRVSESSION   pSession,
-                           SUPSEMEVENTMULTI hEventMulti) STOP
+                           SUPSEMEVENTMULTI hEventMulti)
+{
+	Genode::error(__func__, " called");
+	return RTSemEventMultiSignal(reinterpret_cast<RTSEMEVENTMULTI>(hEventMulti));
+}
 
 
 int SUPSemEventMultiReset(PSUPDRVSESSION   pSession,
-                          SUPSEMEVENTMULTI hEventMulti) STOP
+                          SUPSEMEVENTMULTI hEventMulti)
+{
+	Genode::error(__func__, " called");
+	return RTSemEventMultiReset(reinterpret_cast<RTSEMEVENTMULTI>(hEventMulti));
+}
 
 
 int SUPSemEventMultiWaitNoResume(PSUPDRVSESSION   pSession,
                                  SUPSEMEVENTMULTI hEventMulti,
-                                 uint32_t         cMillies) STOP
+                                 uint32_t         cMillies)
+{
+	Genode::error(__func__, " called");
+
+	uint32_t fFlags = RTSEMWAIT_FLAGS_RELATIVE | RTSEMWAIT_FLAGS_MILLISECS | RTSEMWAIT_FLAGS_INTERRUPTIBLE;
+	if (cMillies == RT_INDEFINITE_WAIT)
+		fFlags |= RTSEMWAIT_FLAGS_INDEFINITE;
+
+	return RTSemEventMultiWaitEx(reinterpret_cast<RTSEMEVENTMULTI>(hEventMulti),
+	                             fFlags, cMillies);
+}
 
 
 int SUPSemEventMultiWaitNsAbsIntr(PSUPDRVSESSION   pSession,
