@@ -109,8 +109,6 @@ struct Nova_vcpu : Rpc_client<Vm_session::Native_vcpu>, Noncopyable
 			(void)exit;
 			(void)config;
 
-			return Nova::Mtd(Nova::Mtd::ALL);
-
 			Genode::addr_t mtd = 0;
 
 			mtd |= Nova::Mtd::ACDB;
@@ -544,6 +542,7 @@ void Nova_vcpu::_write_nova_state(Nova::Utcb &utcb)
 	}
 
 	if (state().fpu.charged()) {
+		utcb.mtd |= Nova::Mtd::FPU;
 		state().fpu.with_state([] (Vcpu_state::Fpu::State const &fpu) {
 			asm volatile ("fxrstor %0" : : "m" (fpu) : "memory");
 		});
