@@ -5,3 +5,4 @@ narrowing.patch
 network.patch
 devahci.patch
 devsvga.patch
+smp_sipi.patch
