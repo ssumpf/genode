@@ -223,7 +223,7 @@ class Drm_call
 
 		Genode::Env      &_env;
 		Genode::Heap      _heap               { _env.ram(), _env.rm() };
-		Gpu::Connection   _gpu_session        { _env };
+		Gpu::Connection   _gpu_session        { _env, 3*1024*1024 };
 		Gpu::Info_intel  const &_gpu_info {
 			*_gpu_session.attached_info<Gpu::Info_intel>() };
 		size_t            _available_gtt_size { _gpu_info.aperture_size };
@@ -261,11 +261,11 @@ class Drm_call
 						Utils::limit_to_48bit(vaddr.addr));
 				},
 				[&] () {
-					_gpu_session.upgrade_caps(2);
+					_gpu_session.upgrade_caps(4);
 				});
 			},
 			[&] () {
-				_gpu_session.upgrade_ram(4096);
+				_gpu_session.upgrade_ram(1024*1024);
 			});
 
 			if (!ppgtt) {
@@ -304,7 +304,7 @@ class Drm_call
 				});
 			},
 			[&] () {
-				_gpu_session.upgrade_ram(donate);
+				_gpu_session.upgrade_ram(1024*1024);
 			});
 
 			if (buffer)
@@ -714,9 +714,6 @@ class Drm_call
 							Genode::warning("handle: ", obj[i].handle, " reused but is busy");
 
 						if (b.gpu_vaddr_valid && b.gpu_vaddr.addr != obj[i].offset) {
-							Genode::error("unmap already mapped ", b.id().value, " ",
-							              Genode::Hex(b.gpu_vaddr.addr), "->",
-							              Genode::Hex(obj[i].offset));
 							_unmap_buffer_ppgtt(b);
 						}
 
@@ -1130,6 +1127,19 @@ class Drm_call
 			}
 		}
 
+		void unmap_buffer_ppgtt(__u32 handle)
+		{
+			Gpu::Buffer_id const id = { .value = handle };
+			try {
+				_buffer_space.apply<Buffer>(id, [&](Buffer &b) {
+					if (b.busy)
+						return;
+
+					_unmap_buffer_ppgtt(b);
+				});
+			} catch (Genode::Id_space<Buffer>::Unknown_id) { }
+		}
+
 		int ioctl(unsigned long request, void *arg)
 		{
 			bool const device = device_ioctl(request);
@@ -1152,12 +1162,6 @@ class Drm_call
 				if (!h.busy) return;
 				if (h.seqno.value > _gpu_info.last_completed.value) return;
 				h.busy = false;
-
-				/*
-				 * Because bo object map/unmap is not supported correctly right now
-				 * (reference counting), we unmap and map the buffers on for each frame
-				 */
-				_unmap_buffer_ppgtt(h);
 			});
 
 		}
@@ -1194,6 +1198,12 @@ extern "C" int drm_munmap(void *addr, size_t length)
 {
 	_call->unmap_buffer(addr, length);
 	return 0;
+}
+
+
+extern "C" void drm_unmap_ppgtt(__u32 handle)
+{
+	_call->unmap_buffer_ppgtt(handle);
 }
 
 

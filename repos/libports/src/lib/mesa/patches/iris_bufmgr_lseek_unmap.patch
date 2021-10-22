@@ -1,0 +1,32 @@
+diff --git a/src/lib/mesa/src/gallium/drivers/iris/iris_bufmgr.c b/src/lib/mesa/src/gallium/drivers/iris/iris_bufmgr.c
+index 2549729..416a1a6 100644
+--- a/src/lib/mesa/src/gallium/drivers/iris/iris_bufmgr.c
++++ b/src/lib/mesa/src/gallium/drivers/iris/iris_bufmgr.c
+@@ -101,6 +101,9 @@
+ 
+ #define FILE_DEBUG_FLAG DEBUG_BUFMGR
+ 
++void drm_unmap_ppgtt(__u32 handle);
++off_t drm_lseek(int fd, off_t offset, int whence);
++
+ static inline int
+ atomic_add_unless(int *v, int add, int unless)
+ {
+@@ -439,6 +442,8 @@ alloc_bo_from_cache(struct iris_bufmgr *bufmgr,
+     */
+    if (memzone != iris_memzone_for_address(bo->gtt_offset) ||
+        bo->gtt_offset % alignment != 0) {
++
++      drm_unmap_ppgtt(bo->gem_handle);
+       vma_free(bufmgr, bo->gtt_offset, bo->size);
+       bo->gtt_offset = 0ull;
+    }
+@@ -1417,7 +1422,7 @@ iris_bo_import_dmabuf(struct iris_bufmgr *bufmgr, int prime_fd,
+     * later, we can lseek on the prime fd to get the size.  Older
+     * kernels will just fail, in which case we fall back to the
+     * provided (estimated or guess size). */
+-   ret = lseek(prime_fd, 0, SEEK_END);
++   ret = drm_lseek(prime_fd, 0, SEEK_END);
+    if (ret != -1)
+       bo->size = ret;
+ 
