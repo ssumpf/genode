@@ -189,6 +189,7 @@ int XPending(Display *)
 		Genode::error(__func__, " called by 'vmsvga3dXEventThread' implement!");
 		once = false;
 	}
+	Genode::sleep_forever();
 
 	return 0;
 }
