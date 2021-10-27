@@ -64,8 +64,6 @@ struct Nova_vcpu : Rpc_client<Vm_session::Native_vcpu>, Noncopyable
 
 		Vcpu_state              _vcpu_state __attribute__((aligned(0x10))) { };
 
-		uint8_t _fpu_ep[512]  __attribute__((aligned(0x10)));
-
 		enum Remote_state_requested {
 			NONE = 0,
 			PAUSE = 1,
@@ -189,7 +187,6 @@ void Nova_vcpu::_read_nova_state(Nova::Utcb &utcb, unsigned exit_reason,
 		state().fpu.charge([&] (Vcpu_state::Fpu::State &fpu) {
 			memcpy(&fpu, &fpu_at_exit, sizeof(fpu));
 		});
-		asm volatile ("fxrstor %0" : : "m" (*_fpu_ep) : "memory");
 	}
 
 	if (utcb.mtd & Nova::Mtd::ACDB) {
@@ -542,10 +539,6 @@ void Nova_vcpu::_write_nova_state(Nova::Utcb &utcb)
 		utcb.mtd |= Nova::Mtd::TPR;
 		utcb.write_tpr(state().tpr.value());
 		utcb.write_tpr_threshold(state().tpr_threshold.value());
-	}
-
-	if (_use_guest_fpu || state().fpu.charged()) {
-		asm volatile ("fxsave %0" : "=m" (*_fpu_ep) :: "memory");
 	}
 
 	if (state().fpu.charged()) {
