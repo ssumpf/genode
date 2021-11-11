@@ -32,6 +32,7 @@
 struct eglut_window {
    EGLConfig config;
    EGLContext context;
+   EGLContext context_shared;
 
    /* initialized by native display */
    struct {
@@ -44,6 +45,7 @@ struct eglut_window {
    } native;
 
    EGLSurface surface;
+   EGLSurface surface_shared;
 
    int index;
 

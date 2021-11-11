@@ -157,8 +157,10 @@ _eglutCreateWindow(const char *title, int x, int y, int w, int h)
    context_attribs[i] = EGL_NONE;
 
    eglBindAPI(api);
-   win->context = eglCreateContext(_eglut->dpy,
+   win->context_shared = eglCreateContext(_eglut->dpy,
          win->config, EGL_NO_CONTEXT, context_attribs);
+   win->context = eglCreateContext(_eglut->dpy,
+         win->config, win->context_shared, context_attribs);
    if (!win->context)
       _eglutFatal("failed to create context");
 
@@ -166,6 +168,8 @@ _eglutCreateWindow(const char *title, int x, int y, int w, int h)
    switch (_eglut->surface_type) {
    case EGL_WINDOW_BIT:
       win->surface = eglCreateWindowSurface(_eglut->dpy,
+            win->config, win->native.u.window, NULL);
+      win->surface_shared = eglCreateWindowSurface(_eglut->dpy,
             win->config, win->native.u.window, NULL);
       break;
    case EGL_PIXMAP_BIT:
