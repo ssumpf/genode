@@ -166,9 +166,8 @@ Genode::Constructible<Gui3d> _3dfb { };
 void _eglutNativeEventLoop()
 {
 	struct eglut_window *w = _eglut->current;
-	//eglMakeCurrent(_eglut->dpy, w->surface_shared, w->surface_shared, w->context_shared);
+	eglMakeCurrent(_eglut->dpy, w->surface_shared, w->surface_shared, w->context_shared);
 	GLuint id, fid, framebuffer, rid, wid;
-	glGenFramebuffers(1, &framebuffer);
 	glGenFramebuffers(1, &rid);
 	glGenFramebuffers(1, &wid);
 	Genode::log("glGenFramebuffers");
@@ -198,10 +197,12 @@ void _eglutNativeEventLoop()
 
 	void *buf = malloc(600*600*4);
 	void *fbuf = malloc(1280*800*4);
+	eglMakeCurrent(_eglut->dpy, w->surface, w->surface ,w->context);
+	glGenFramebuffers(1, &framebuffer);
 	while (true) {
 		struct eglut_window *win =_eglut->current;
 		Genode::log("MAKE render current");
-		//eglMakeCurrent(_eglut->dpy, w->surface, w->surface ,w->context);
+		eglMakeCurrent(_eglut->dpy, w->surface, w->surface ,w->context);
 		glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
 		glBindTexture(t, id);
 		glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, id, 0);
@@ -214,29 +215,35 @@ void _eglutNativeEventLoop()
 
 		if (eglut_win.constructed()) {
 
-			Genode::log("MAKE blit current");
-			//eglMakeCurrent(_eglut->dpy, w->surface_shared, w->surface_shared, w->context_shared);
 			/* blit to back end */
+			Genode::log(__func__, ":", __LINE__);
 			glGetTexImage(t, 0, GL_RGBA,  GL_UNSIGNED_INT_8_8_8_8_REV, buf);
 			Genode::memcpy(eglut_win->addr, buf, 600*600*4);
 			eglut_win->refresh();
-			Genode::log(__func__, ":", __LINE__);
+			Genode::log("MAKE blit current");
+			eglMakeCurrent(_eglut->dpy, w->surface_shared, w->surface_shared, w->context_shared);
 			/* copy framebuffer and blit to back end */
 			glBindFramebuffer(GL_READ_FRAMEBUFFER, rid);
 			glBindFramebuffer(GL_DRAW_FRAMEBUFFER, wid);
 			glFramebufferTexture2D(GL_READ_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, id, 0);
 			glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, fid, 0);
 			Genode::log(__func__, ":", __LINE__);
+			if (glCheckFramebufferStatus(GL_READ_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+				Genode::error("READ FRAMEBUFFER not complete");
+			}
+			if (glCheckFramebufferStatus(GL_DRAW_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+				Genode::error("DRAW FRAMEBUFFER not complete");
+			}
 			glBlitFramebuffer(0, 0, 600, 600,
 			                  100, 100, 700, 700,
 			                  GL_COLOR_BUFFER_BIT,
-			                  GL_NEAREST);
+			                  GL_LINEAR);
 			Genode::log(__func__, ":", __LINE__);
-			glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
-			glBindTexture(t, fid);
-			glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, fid, 0);
+			//glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+			//glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, fid, 0);
 //			glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, fid, 0);
 			Genode::log(__func__, ":", __LINE__);
+			glBindTexture(t, fid);
 			glGetTexImage(t, 0, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8_REV, fbuf);
 			Genode::log(__func__, ":", __LINE__);
 			Genode::memcpy(_3dfb->fb(), fbuf, 1280*800*4);
