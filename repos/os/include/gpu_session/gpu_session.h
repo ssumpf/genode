@@ -186,18 +186,23 @@ struct Gpu::Session : public Genode::Session
 	 */
 	virtual bool set_tiling(Buffer_id id, unsigned mode) = 0;
 
+	//XXX: Prototype for testing not for mainline
+	virtual Genode::Capability<Session> create_session() = 0;
+	virtual void destroy_session(Genode::Capability<Session>) = 0;
+	virtual Genode::Dataspace_capability address_dataspace(Genode::size_t size) = 0;
+	virtual void unmap_buffers() = 0;
+
 	/*******************
 	 ** RPC interface **
 	 *******************/
 
 	GENODE_RPC(Rpc_info_dataspace, Genode::Dataspace_capability, info_dataspace);
 	GENODE_RPC_THROW(Rpc_exec_buffer, Gpu::Sequence_number, exec_buffer,
-	                 GENODE_TYPE_LIST(Invalid_state),
+	                 GENODE_TYPE_LIST(Invalid_state, Out_of_caps, Out_of_ram),
 	                 Gpu::Buffer_id, Genode::size_t);
 	GENODE_RPC(Rpc_complete, bool, complete,
 	           Gpu::Sequence_number);
-	GENODE_RPC(Rpc_completion_sigh, void, completion_sigh,
-	           Genode::Signal_context_capability);
+	GENODE_RPC(Rpc_completion_sigh, void, completion_sigh, Genode::Signal_context_capability);
 	GENODE_RPC_THROW(Rpc_alloc_buffer, Genode::Dataspace_capability, alloc_buffer,
 	                 GENODE_TYPE_LIST(Out_of_caps, Out_of_ram),
 	                 Gpu::Buffer_id, Genode::size_t);
@@ -215,11 +220,18 @@ struct Gpu::Session : public Genode::Session
 	GENODE_RPC(Rpc_set_tiling, bool, set_tiling,
 	           Gpu::Buffer_id, unsigned);
 
+	GENODE_RPC_THROW(Rpc_create_session, Genode::Capability<Session>, create_session,
+	                 GENODE_TYPE_LIST(Out_of_caps, Out_of_ram));
+	GENODE_RPC(Rpc_destroy_session, void, destroy_session, Genode::Capability<Session>);
+	GENODE_RPC(Rpc_dataspace, Genode::Dataspace_capability, address_dataspace, Genode::size_t);
+	GENODE_RPC(Rpc_unmap_buffers, void, unmap_buffers);
+
 	GENODE_RPC_INTERFACE(Rpc_info_dataspace, Rpc_exec_buffer,
 	                     Rpc_complete, Rpc_completion_sigh, Rpc_alloc_buffer,
 	                     Rpc_free_buffer, Rpc_map_buffer, Rpc_unmap_buffer,
 	                     Rpc_map_buffer_ppgtt, Rpc_unmap_buffer_ppgtt,
-	                     Rpc_set_tiling);
+	                     Rpc_set_tiling, Rpc_dataspace, Rpc_unmap_buffers,
+	                     Rpc_create_session, Rpc_destroy_session);
 };
 
 #endif /* _INCLUDE__GPU_SESSION__GPU_SESSION_H_ */
