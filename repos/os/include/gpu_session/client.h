@@ -72,6 +72,18 @@ class Gpu::Session_client : public Genode::Rpc_client<Session>
 
 		bool set_tiling(Buffer_id id, unsigned mode) override {
 			return call<Rpc_set_tiling>(id, mode); }
+
+		Session_capability create_session() override {
+			return call<Rpc_create_session>(); }
+
+		void destroy_session(Session_capability cap) override {
+			call<Rpc_destroy_session>(cap); }
+
+		Genode::Dataspace_capability address_dataspace(Genode::size_t size) override {
+			return call<Rpc_dataspace>(size); }
+
+		void unmap_buffers() override {
+			call<Rpc_unmap_buffers>(); }
 };
 
 #endif /* _INCLUDE__GPU_SESSION__CLIENT_H_ */
