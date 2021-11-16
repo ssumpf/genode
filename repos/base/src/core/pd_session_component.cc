@@ -47,8 +47,10 @@ Pd_session_component::try_alloc(size_t ds_size, Cache cache)
 			 */
 			Ram_quota const overhead { Ram_dataspace_factory::SLAB_BLOCK_SIZE };
 
-			if (!_ram_quota_guard().have_avail(overhead))
+			if (!_ram_quota_guard().have_avail(overhead)) {
+				ram_reservation.cancel();
 				return Ram_allocator::Alloc_error::OUT_OF_RAM;
+			}
 
 			/*
 			 * Each dataspace is an RPC object and thereby consumes a
