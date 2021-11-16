@@ -492,18 +492,11 @@ struct Igd::Device
 			/* PPGTT */
 			device._populate_scratch(ppgtt_scratch);
 
-			ppgtt = new (ppgtt_allocator) Igd::Ppgtt(&ppgtt_scratch.pdp);
-
 			try {
 				size_t const ring_size = RING_PAGES * PAGE_SIZE;
 
-				/* get PML4 address */
-				addr_t const ppgtt_phys_addr = _ppgtt_phys_addr(ppgtt_allocator,
-				                                                ppgtt);
-				addr_t const pml4 = ppgtt_phys_addr | 1;
-
 				/* setup context */
-				context.construct(ctx.vaddr(), ring.gmaddr(), ring_size, pml4, device.generation());
+				context.construct(ctx.vaddr(), ring.gmaddr(), ring_size, device.generation());
 
 				/* setup execlist */
 				execlist.construct(id, ctx.gmaddr(), ring.vaddr(), ring_size);
@@ -518,11 +511,33 @@ struct Igd::Device
 
 		void _destruct()
 		{
-			if (ppgtt)
-				Genode::destroy(ppgtt_allocator, ppgtt);
-
 			execlist.destruct();
 			context.destruct();
+		}
+
+		Ppgtt *alloc_ppgtt()
+		{
+			return new (ppgtt_allocator) Igd::Ppgtt(&ppgtt_scratch.pdp);
+		}
+
+		void free_ppgtt(Ppgtt *ppgtt)
+		{
+			destroy(ppgtt_allocator, ppgtt);
+		}
+
+		uint64_t plm4(Ppgtt *ppgtt)
+		{
+			/* get PML4 address */
+			addr_t ppgtt_phys_addr = _ppgtt_phys_addr(ppgtt_allocator,
+			                                          ppgtt);
+			uint64_t plm4 = ppgtt_phys_addr | 1;
+			return plm4;
+		}
+
+		void schedule_ppgtt(Ppgtt *p, uint64_t plm4)
+		{
+			ppgtt = p;
+			context->plm4_addr(plm4);
 		}
 
 		size_t ring_size() const { return RING_PAGES * PAGE_SIZE; }
@@ -1520,6 +1535,59 @@ class Gpu::Session_component : public Genode::Session_object<Gpu::Session>
 		Igd::Device       &_device;
 		Igd::Device::Vgpu  _vgpu;
 
+		struct Context
+		{
+			Attached_ram_dataspace ds;
+			Igd::Ppgtt *ppgtt { nullptr };
+			uint64_t plm4 { 0 };
+
+			Context(Ram_allocator &ram, Region_map &rm, size_t size)
+			:
+			  ds(ram, rm, size)
+			{ }
+		};
+
+		struct Buffer_mapping
+		{
+			Buffer_id id;
+			addr_t ppgtt_addr;
+		};
+
+		Constructible<Context> _contexts[32];
+
+		Context &_alloc_context(Ram_allocator &ram, Region_map &rm, size_t size)
+		{
+			for (unsigned i = 0; i < 32; i++) {
+				if (_contexts[i].constructed()) continue;
+
+				_contexts[i].construct(ram, rm, size);
+				return *_contexts[i];
+			}
+			throw -1;
+		}
+
+		void _free_context(Dataspace_capability ds)
+		{
+			for (unsigned i = 0; i < 32; i++) {
+				if (!_contexts[i].constructed()) continue;
+
+				if (_contexts[i]->ds.cap() == ds)
+					_contexts[i].destruct();
+			}
+		}
+
+		Context &_context(Dataspace_capability ds)
+		{
+			for (unsigned i = 0; i < 32; i++) {
+				if (!_contexts[i].constructed()) continue;
+
+				if (_contexts[i]->ds.cap() == ds)
+					return *_contexts[i];
+			}
+
+			throw -2;
+		}
+
 		struct Buffer
 		{
 			Gpu::Buffer_id const id;
@@ -1531,10 +1599,18 @@ class Gpu::Session_component : public Genode::Session_object<Gpu::Session>
 			enum { INVALID_FENCE = 0xff };
 			Genode::uint32_t fenced { INVALID_FENCE };
 
+			addr_t phys_addr { 0 };
+			size_t actual_size { 0 };
+
 			Igd::Ggtt::Mapping map { };
 
 			Buffer(Gpu::Buffer_id id, Genode::Dataspace_capability cap)
-			: id { id }, cap { cap } { }
+			: id { id }, cap { cap }
+			{
+				Dataspace_client buf(cap);
+				phys_addr   = buf.phys_addr();
+				actual_size = buf.size();
+			}
 
 			virtual ~Buffer() { }
 		};
@@ -1640,8 +1716,18 @@ class Gpu::Session_component : public Genode::Session_object<Gpu::Session>
 		}
 
 		Gpu::Sequence_number exec_buffer(Buffer_id id,
-		                                 Genode::size_t) override
+		                                 Dataspace_capability ds) override
 		{
+
+			Context &context = _context(ds);
+			_vgpu.rcs.schedule_ppgtt(context.ppgtt, context.plm4);
+			Buffer_mapping *mapping = context.ds.local_addr<Buffer_mapping>();
+
+			while (mapping->ppgtt_addr) {
+				_map_buffer_ppgtt(mapping->id, mapping->ppgtt_addr);
+				mapping++;
+			}
+
 			bool found = false;
 
 			_apply_buffer(id, [&] (Buffer &buffer) {
@@ -1660,6 +1746,18 @@ class Gpu::Session_component : public Genode::Session_object<Gpu::Session>
 
 			_device.vgpu_activate(_vgpu);
 			return { .value = _vgpu.current_seqno() };
+		}
+
+		void unmap_context(Dataspace_capability ds)
+		{
+			Context &context = _context(ds);
+			_vgpu.rcs.schedule_ppgtt(context.ppgtt, context.plm4);
+			Buffer_mapping *mapping = context.ds.local_addr<Buffer_mapping>();
+
+			while (mapping->ppgtt_addr) {
+				_unmap_buffer_ppgtt(mapping->id, mapping->ppgtt_addr);
+				mapping++;
+			}
 		}
 
 		bool complete(Gpu::Sequence_number seqno) override
@@ -1788,7 +1886,24 @@ class Gpu::Session_component : public Genode::Session_object<Gpu::Session>
 			if (!unmapped) { Genode::error("buffer not mapped"); }
 		}
 
-		bool map_buffer_ppgtt(Gpu::Buffer_id id, Gpu::addr_t va) override
+		Dataspace_capability create_context(size_t size) override
+		{
+			Context &context = _alloc_context(_ram, _rm, size);
+			context.ppgtt    = _vgpu.rcs.alloc_ppgtt();
+			context.plm4     = _vgpu.rcs.plm4(context.ppgtt);
+			return context.ds.cap();
+		}
+
+		void destroy_context(Dataspace_capability ds) override
+		{
+			Context &context = _context(ds);
+			_vgpu.rcs.free_ppgtt(context.ppgtt);
+			_free_context(ds);
+		}
+
+		bool map_buffer_ppgtt(Gpu::Buffer_id id, Gpu::addr_t va) override { return false; }
+
+		bool _map_buffer_ppgtt(Gpu::Buffer_id id, Gpu::addr_t va)
 		{
 			enum {
 				CAP_AMOUNT = 32,
@@ -1807,16 +1922,11 @@ class Gpu::Session_component : public Genode::Session_object<Gpu::Session>
 			auto lookup_and_map = [&] (Buffer &buffer) {
 
 				if (buffer.ppgtt_va_valid) {
-					Genode::error("buffer already mapped");
 					return;
 				}
 
 				try {
-					Genode::Dataspace_client buf(buffer.cap);
-					/* XXX check that actual_size matches alloc_buffer size */
-					Genode::size_t const actual_size = buf.size();
-					Genode::addr_t const phys_addr   = buf.phys_addr();
-					_vgpu.rcs_map_ppgtt(va, phys_addr, actual_size);
+					_vgpu.rcs_map_ppgtt(va, buffer.phys_addr, buffer.actual_size);
 					buffer.ppgtt_va = va;
 					buffer.ppgtt_va_valid = true;
 					result = OK;
@@ -1846,7 +1956,10 @@ class Gpu::Session_component : public Genode::Session_object<Gpu::Session>
 		}
 
 		void unmap_buffer_ppgtt(Gpu::Buffer_id id,
-		                        Gpu::addr_t va) override
+		                        Gpu::addr_t va) override { }
+
+		void _unmap_buffer_ppgtt(Gpu::Buffer_id id,
+		                         Gpu::addr_t va)
 		{
 			auto lookup_and_unmap = [&] (Buffer &buffer) {
 
@@ -1860,9 +1973,7 @@ class Gpu::Session_component : public Genode::Session_object<Gpu::Session>
 					return;
 				}
 
-				Genode::Dataspace_client buf(buffer.cap);
-				Genode::size_t const actual_size = buf.size();
-				_vgpu.rcs_unmap_ppgtt(va, actual_size);
+				_vgpu.rcs_unmap_ppgtt(va, buffer.actual_size);
 				buffer.ppgtt_va_valid = false;
 			};
 			_apply_buffer(id, lookup_and_unmap);
