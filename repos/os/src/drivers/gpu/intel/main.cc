@@ -492,11 +492,18 @@ struct Igd::Device
 			/* PPGTT */
 			device._populate_scratch(ppgtt_scratch);
 
+			ppgtt = new (ppgtt_allocator) Igd::Ppgtt(&ppgtt_scratch.pdp);
+
 			try {
 				size_t const ring_size = RING_PAGES * PAGE_SIZE;
 
+				/* get PML4 address */
+				addr_t const ppgtt_phys_addr = _ppgtt_phys_addr(ppgtt_allocator,
+				                                                ppgtt);
+				addr_t const pml4 = ppgtt_phys_addr | 1;
+
 				/* setup context */
-				context.construct(ctx.vaddr(), ring.gmaddr(), ring_size, device.generation());
+				context.construct(ctx.vaddr(), ring.gmaddr(), ring_size, pml4, device.generation());
 
 				/* setup execlist */
 				execlist.construct(id, ctx.gmaddr(), ring.vaddr(), ring_size);
@@ -511,33 +518,11 @@ struct Igd::Device
 
 		void _destruct()
 		{
+			if (ppgtt)
+				Genode::destroy(ppgtt_allocator, ppgtt);
+
 			execlist.destruct();
 			context.destruct();
-		}
-
-		Ppgtt *alloc_ppgtt()
-		{
-			return new (ppgtt_allocator) Igd::Ppgtt(&ppgtt_scratch.pdp);
-		}
-
-		void free_ppgtt(Ppgtt *ppgtt)
-		{
-			destroy(ppgtt_allocator, ppgtt);
-		}
-
-		uint64_t plm4(Ppgtt *ppgtt)
-		{
-			/* get PML4 address */
-			addr_t ppgtt_phys_addr = _ppgtt_phys_addr(ppgtt_allocator,
-			                                          ppgtt);
-			uint64_t plm4 = ppgtt_phys_addr | 1;
-			return plm4;
-		}
-
-		void schedule_ppgtt(Ppgtt *p, uint64_t plm4)
-		{
-			ppgtt = p;
-			context->plm4_addr(plm4);
 		}
 
 		size_t ring_size() const { return RING_PAGES * PAGE_SIZE; }
@@ -596,7 +581,7 @@ struct Igd::Device
 		uint32_t                  const  _id;
 		Engine<Rcs_context>              rcs;
 		uint32_t                         active_fences    { 0 };
-		uint64_t                         _current_seqno   { 0 };
+		uint64_t                        _current_seqno { 0 };
 
 		Genode::Attached_ram_dataspace  _info_dataspace;
 		Gpu::Info_intel                &_info {
@@ -997,9 +982,10 @@ struct Igd::Device
 
 		Execlist &el = *gpu->rcs.execlist;
 		el.ring_update_head(gpu->rcs.context->head_offset());
-
 		if (curr_seqno != comp_seqno)
 			return false;
+		warning(__func__, ":", __LINE__, " cs: ", curr_seqno, " cmp: ", comp_seqno,
+		       "sigh valid: ", gpu->completion_sigh().valid());
 
 		Genode::Signal_transmitter(gpu->completion_sigh()).submit();
 
@@ -1535,58 +1521,13 @@ class Gpu::Session_component : public Genode::Session_object<Gpu::Session>
 		Igd::Device       &_device;
 		Igd::Device::Vgpu  _vgpu;
 
-		struct Context
-		{
-			Attached_ram_dataspace ds;
-			Igd::Ppgtt *ppgtt { nullptr };
-			uint64_t plm4 { 0 };
-
-			Context(Ram_allocator &ram, Region_map &rm, size_t size)
-			:
-			  ds(ram, rm, size)
-			{ }
-		};
+		Constructible<Attached_ram_dataspace> ds;
 
 		struct Buffer_mapping
 		{
 			Buffer_id id;
 			addr_t ppgtt_addr;
 		};
-
-		Constructible<Context> _contexts[32];
-
-		Context &_alloc_context(Ram_allocator &ram, Region_map &rm, size_t size)
-		{
-			for (unsigned i = 0; i < 32; i++) {
-				if (_contexts[i].constructed()) continue;
-
-				_contexts[i].construct(ram, rm, size);
-				return *_contexts[i];
-			}
-			throw -1;
-		}
-
-		void _free_context(Dataspace_capability ds)
-		{
-			for (unsigned i = 0; i < 32; i++) {
-				if (!_contexts[i].constructed()) continue;
-
-				if (_contexts[i]->ds.cap() == ds)
-					_contexts[i].destruct();
-			}
-		}
-
-		Context &_context(Dataspace_capability ds)
-		{
-			for (unsigned i = 0; i < 32; i++) {
-				if (!_contexts[i].constructed()) continue;
-
-				if (_contexts[i]->ds.cap() == ds)
-					return *_contexts[i];
-			}
-
-			throw -2;
-		}
 
 		struct Buffer
 		{
@@ -1615,12 +1556,14 @@ class Gpu::Session_component : public Genode::Session_object<Gpu::Session>
 			virtual ~Buffer() { }
 		};
 
-		Genode::Registry<Genode::Registered<Buffer>> _buffer_registry { };
+		using Buffer_registry = Registry<Registered<Buffer>>;
+		Buffer_registry  _buffer_registry_instance { };
+		Buffer_registry *_buffer_registry {& _buffer_registry_instance };
 
 		template <typename FN>
 		void _apply_buffer(Gpu::Buffer_id id, FN const &fn)
 		{
-			_buffer_registry.for_each([&] (Buffer &buffer) {
+			_buffer_registry->for_each([&] (Buffer &buffer) {
 				if (id.value != buffer.id.value) {
 					return;
 				}
@@ -1651,7 +1594,7 @@ class Gpu::Session_component : public Genode::Session_object<Gpu::Session>
 				_device.free_buffer(_heap, buffer.cap);
 				Genode::destroy(&_heap, &buffer);
 			};
-			_buffer_registry.for_each(lookup_and_free);
+			_buffer_registry->for_each(lookup_and_free);
 		}
 
 		void _throw_if_avail_quota_insufficient(Cap_quota caps, Ram_quota ram)
@@ -1694,7 +1637,8 @@ class Gpu::Session_component : public Genode::Session_object<Gpu::Session>
 
 		~Session_component()
 		{
-			_free_buffers();
+			if (_buffer_registry == &_buffer_registry_instance)
+				_free_buffers();
 		}
 
 		/*********************************
@@ -1715,19 +1659,16 @@ class Gpu::Session_component : public Genode::Session_object<Gpu::Session>
 			return _vgpu.info_dataspace();
 		}
 
-		Gpu::Sequence_number exec_buffer(Buffer_id id,
-		                                 Dataspace_capability ds) override
+		Gpu::Sequence_number exec_buffer(Buffer_id id, size_t) override
 		{
-
-			Context &context = _context(ds);
-			_vgpu.rcs.schedule_ppgtt(context.ppgtt, context.plm4);
-			Buffer_mapping *mapping = context.ds.local_addr<Buffer_mapping>();
-
+			Buffer_mapping *mapping = ds->local_addr<Buffer_mapping>();
+			log(__func__, ":", __LINE__);
 			while (mapping->ppgtt_addr) {
 				_map_buffer_ppgtt(mapping->id, mapping->ppgtt_addr);
 				mapping++;
 			}
 
+			log(__func__, ":", __LINE__);
 			bool found = false;
 
 			_apply_buffer(id, [&] (Buffer &buffer) {
@@ -1745,14 +1686,13 @@ class Gpu::Session_component : public Genode::Session_object<Gpu::Session>
 				throw Gpu::Session::Invalid_state();
 
 			_device.vgpu_activate(_vgpu);
+			log(__func__, ":", __LINE__);
 			return { .value = _vgpu.current_seqno() };
 		}
 
-		void unmap_context(Dataspace_capability ds)
+		void unmap_buffers() override
 		{
-			Context &context = _context(ds);
-			_vgpu.rcs.schedule_ppgtt(context.ppgtt, context.plm4);
-			Buffer_mapping *mapping = context.ds.local_addr<Buffer_mapping>();
+			Buffer_mapping *mapping = ds->local_addr<Buffer_mapping>();
 
 			while (mapping->ppgtt_addr) {
 				_unmap_buffer_ppgtt(mapping->id, mapping->ppgtt_addr);
@@ -1768,6 +1708,11 @@ class Gpu::Session_component : public Genode::Session_object<Gpu::Session>
 		void completion_sigh(Genode::Signal_context_capability sigh) override
 		{
 			_vgpu.completion_sigh(sigh);
+		}
+
+		Genode::Signal_context_capability completion_sigh() override
+		{
+			return _vgpu.completion_sigh();
 		}
 
 		Genode::Dataspace_capability alloc_buffer(Gpu::Buffer_id id,
@@ -1795,7 +1740,7 @@ class Gpu::Session_component : public Genode::Session_object<Gpu::Session>
 					_device.alloc_buffer(_heap, size, _cap_quota_guard(), _ram_quota_guard());
 
 				try {
-					new (&_heap) Genode::Registered<Buffer>(_buffer_registry, id, cap);
+					new (&_heap) Genode::Registered<Buffer>(*_buffer_registry, id, cap);
 				} catch (...) {
 					if (cap.valid())
 						_device.free_buffer(_heap, cap);
@@ -1886,19 +1831,23 @@ class Gpu::Session_component : public Genode::Session_object<Gpu::Session>
 			if (!unmapped) { Genode::error("buffer not mapped"); }
 		}
 
-		Dataspace_capability create_context(size_t size) override
+		Dataspace_capability dataspace(size_t size) override
 		{
-			Context &context = _alloc_context(_ram, _rm, size);
-			context.ppgtt    = _vgpu.rcs.alloc_ppgtt();
-			context.plm4     = _vgpu.rcs.plm4(context.ppgtt);
-			return context.ds.cap();
+			if (ds.constructed())
+				ds.destruct();
+
+			ds.construct(_ram, _rm, size);
+			return ds->cap();
 		}
 
-		void destroy_context(Dataspace_capability ds) override
+		Genode::addr_t share_buffers() override
 		{
-			Context &context = _context(ds);
-			_vgpu.rcs.free_ppgtt(context.ppgtt);
-			_free_context(ds);
+			return (Genode::addr_t)_buffer_registry;
+		}
+
+		void buffers(Genode::addr_t addr) override
+		{
+			_buffer_registry = reinterpret_cast<Buffer_registry *>(addr);
 		}
 
 		bool map_buffer_ppgtt(Gpu::Buffer_id id, Gpu::addr_t va) override { return false; }
@@ -1911,7 +1860,7 @@ class Gpu::Session_component : public Genode::Session_object<Gpu::Session>
 			};
 			_throw_if_avail_quota_insufficient(Cap_quota { CAP_AMOUNT },
 			                                   Ram_quota { RAM_AMOUNT });
-
+Genode::warning(__func__, ":", __LINE__);
 			enum {
 				ALLOC_FAILED_RAM,
 				ALLOC_FAILED_CAPS,
@@ -1922,6 +1871,8 @@ class Gpu::Session_component : public Genode::Session_object<Gpu::Session>
 			auto lookup_and_map = [&] (Buffer &buffer) {
 
 				if (buffer.ppgtt_va_valid) {
+					Genode::warning("ALREADY MAPPED: ", id);
+					result = OK;
 					return;
 				}
 
@@ -1929,12 +1880,15 @@ class Gpu::Session_component : public Genode::Session_object<Gpu::Session>
 					_vgpu.rcs_map_ppgtt(va, buffer.phys_addr, buffer.actual_size);
 					buffer.ppgtt_va = va;
 					buffer.ppgtt_va_valid = true;
+					Genode::error("MAPPED: ", id);
 					result = OK;
 				} catch (Igd::Device::Out_of_caps) {
 					result = ALLOC_FAILED_CAPS;
+					Genode::log("OUT OF CAPS");
 					return;
 				} catch (Igd::Device::Out_of_ram) {
 					result = ALLOC_FAILED_RAM;
+					Genode::log("OUT OF RAM");
 					return;
 				} catch (...) {
 					/* double inseration where the addresses do not match up */

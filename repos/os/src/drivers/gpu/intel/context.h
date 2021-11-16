@@ -595,7 +595,7 @@ class Igd::Ppgtt_context : public Igd::Common_context_regs
 
 	public:
 
-		Ppgtt_context(addr_t base)
+		Ppgtt_context(addr_t base, uint64_t plm4_addr)
 		:
 			Common_context_regs(base)
 		{
@@ -610,13 +610,6 @@ class Igd::Ppgtt_context : public Igd::Common_context_regs
 			write_offset<Pdp_2_ldw_mmio>(RING_BASE);
 			write_offset<Pdp_1_udw_mmio>(RING_BASE);
 			write_offset<Pdp_1_ldw_mmio>(RING_BASE);
-
-			write_offset<R_pwr_clk_state_mmio>(RING_BASE);
-		}
-
-
-		void plm4_addr(uint64_t plm4_addr)
-		{
 			write_offset<Pdp_0_udw_mmio>(RING_BASE);
 			{
 				Genode::uint32_t const udw = (Genode::uint32_t)((plm4_addr >> 16) >> 16);
@@ -627,8 +620,9 @@ class Igd::Ppgtt_context : public Igd::Common_context_regs
 				Genode::uint32_t const ldw = (Genode::uint32_t)plm4_addr;
 				write<Pdp_0_ldw_value>(ldw);
 			}
-		}
 
+			write_offset<R_pwr_clk_state_mmio>(RING_BASE);
+		}
 
 		/*********************
 		 ** Debug interface **
@@ -834,13 +828,14 @@ class Igd::Rcs_context
 		Rcs_context(addr_t     const map_base,
 		            addr_t     const ring_buffer_start,
 		            size_t     const ring_buffer_length,
+		            uint64_t   const plm4_addr,
 		            Generation const gen)
 		:
 			_hw_status_page(map_base),
 			_execlist_context((addr_t)(map_base + HW_STATUS_PAGE_SIZE),
 			                  ring_buffer_start, ring_buffer_length,
 			                  EXECLIST_CTX_IH, gen),
-			_ppgtt_context((addr_t)(map_base + HW_STATUS_PAGE_SIZE)),
+			_ppgtt_context((addr_t)(map_base + HW_STATUS_PAGE_SIZE), plm4_addr),
 			_engine_context(),
 			_ext_engine_context(),
 			_urb_atomic_context()
@@ -848,7 +843,8 @@ class Igd::Rcs_context
 			Genode::log(__func__, ":",
 			            " map_base:", Genode::Hex(map_base),
 			            " ring_buffer_start:", Genode::Hex(ring_buffer_start),
-			            " ring_buffer_length:", Genode::Hex(ring_buffer_length));
+			            " ring_buffer_length:", Genode::Hex(ring_buffer_length),
+			            " plm4_addr:", Genode::Hex(plm4_addr, Genode::Hex::PREFIX, Genode::Hex::PAD));
 
 			using C = Execlist_context<RCS_RING_BASE>;
 
@@ -897,11 +893,6 @@ class Igd::Rcs_context
 		addr_t tail_offset()
 		{
 			return _execlist_context.tail_offset();
-		}
-
-		void plm4_addr(uint64_t plm4_addr)
-		{
-			_ppgtt_context.plm4_addr(plm4_addr);
 		}
 
 		/*********************
