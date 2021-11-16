@@ -49,6 +49,8 @@ class Gpu::Session_client : public Genode::Rpc_client<Session>
 
 		void completion_sigh(Genode::Signal_context_capability sigh) override {
 			call<Rpc_completion_sigh>(sigh); }
+		Genode::Signal_context_capability completion_sigh() override {
+			return call<Rpc_completion_sigh_ret>(); }
 
 		Genode::Dataspace_capability alloc_buffer(Buffer_id id, Genode::size_t size) override {
 			return call<Rpc_alloc_buffer>(id, size); }
@@ -72,6 +74,18 @@ class Gpu::Session_client : public Genode::Rpc_client<Session>
 
 		bool set_tiling(Buffer_id id, unsigned mode) override {
 			return call<Rpc_set_tiling>(id, mode); }
+
+		Genode::Dataspace_capability dataspace(Genode::size_t size) override {
+			return call<Rpc_dataspace>(size); }
+
+		Genode::addr_t share_buffers() override {
+			return call<Rpc_share_buffers>(); }
+
+		void buffers(Genode::addr_t addr) override {
+			call<Rpc_buffers>(addr); }
+
+		void unmap_buffers() override {
+			call<Rpc_unmap_buffers>(); }
 };
 
 #endif /* _INCLUDE__GPU_SESSION__CLIENT_H_ */
