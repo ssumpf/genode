@@ -1,8 +1,17 @@
 diff --git a/src/lib/mesa/src/gallium/drivers/iris/iris_bufmgr.c b/src/lib/mesa/src/gallium/drivers/iris/iris_bufmgr.c
-index 2549729..c0045eb 100644
+index 2549729..5a08598 100644
 --- a/src/lib/mesa/src/gallium/drivers/iris/iris_bufmgr.c
 +++ b/src/lib/mesa/src/gallium/drivers/iris/iris_bufmgr.c
-@@ -1417,7 +1417,7 @@ iris_bo_import_dmabuf(struct iris_bufmgr *bufmgr, int prime_fd,
+@@ -101,6 +101,8 @@
+ 
+ #define FILE_DEBUG_FLAG DEBUG_BUFMGR
+ 
++off_t drm_lseek(int fd, off_t offset, int whence);
++
+ static inline int
+ atomic_add_unless(int *v, int add, int unless)
+ {
+@@ -1417,7 +1419,7 @@ iris_bo_import_dmabuf(struct iris_bufmgr *bufmgr, int prime_fd,
      * later, we can lseek on the prime fd to get the size.  Older
      * kernels will just fail, in which case we fall back to the
      * provided (estimated or guess size). */
