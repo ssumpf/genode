@@ -892,7 +892,7 @@ class Drm_call
 			return 0;
 		}
 
-		void _device_gem_context_destroy(void *arg)
+		int _device_gem_context_destroy(void *arg)
 		{
 			unsigned id = reinterpret_cast<drm_i915_gem_context_destroy *>(arg)->ctx_id;
 
@@ -907,6 +907,8 @@ class Drm_call
 
 				destroy(_heap, &context);
 			});
+
+			return 0;
 		}
 
 		int _device_gem_context_set_param(void *arg)
@@ -1249,7 +1251,7 @@ class Drm_call
 			case DRM_I915_GEM_MMAP_GTT:         return _device_gem_mmap_gtt(arg);
 			case DRM_I915_GEM_SET_DOMAIN:       return _device_gem_set_domain(arg);
 			case DRM_I915_GEM_CONTEXT_CREATE:   return _device_gem_context_create(arg);
-			case DRM_I915_GEM_CONTEXT_DESTROY:         _device_gem_context_destroy(arg);
+			case DRM_I915_GEM_CONTEXT_DESTROY:  return _device_gem_context_destroy(arg);
 			case DRM_I915_GEM_SET_TILING:       return _device_gem_set_tiling(arg);
 			case DRM_I915_GEM_SW_FINISH:        return _device_gem_sw_finish(arg);
 			case DRM_I915_GEM_EXECBUFFER2:      return _device_gem_execbuffer2(arg);
