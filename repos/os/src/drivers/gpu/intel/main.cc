@@ -1476,7 +1476,7 @@ class Gpu::Session_base
 
 	protected:
 
-		Constructible<Attached_ram_dataspace> ds;
+		Constructible<Attached_ram_dataspace> ds { };
 
 		struct Resource_guard
 		{
@@ -1618,6 +1618,8 @@ class Gpu::Session_base
 		  _resource_guard(resource_guard),
 		  _buffer_registry(buffer_registry)
 		  { }
+
+		virtual ~Session_base() { }
 
 		template <typename FN>
 		void _apply_buffer(Gpu::Buffer_id id, FN const &fn)
@@ -1831,7 +1833,7 @@ class Gpu::Context_component : public Genode::Rpc_object<Gpu::Session>,
 			_master.free_buffer(id); }
 
 		Dataspace_capability map_buffer(Gpu::Buffer_id id, bool aperture,
-		                                Gpu::Mapping_attributes attrs) {
+		                                Gpu::Mapping_attributes attrs) override {
 			return _master.map_buffer(id, aperture, attrs); }
 
 		void unmap_buffer(Gpu::Buffer_id id) override {
@@ -1872,12 +1874,12 @@ class Gpu::Session_component : public Genode::Session_object<Gpu::Session>,
 		struct Context
 		{
 			Session_capability cap;
-			Igd::Device::Vgpu  *vgpu;
-			Context_component  *component;
+			Igd::Device::Vgpu  &vgpu;
+			Context_component  &component;
 
 			Context(Session_capability cap,
-			        Igd::Device::Vgpu *vgpu,
-			        Context_component *component)
+			        Igd::Device::Vgpu &vgpu,
+			        Context_component &component)
 			: cap(cap), vgpu(vgpu), component(component) { }
 
 			virtual ~Context() { }
@@ -1888,9 +1890,9 @@ class Gpu::Session_component : public Genode::Session_object<Gpu::Session>,
 
 		void _destroy_context(Context &context)
 		{
-			_env.ep().rpc_ep().dissolve(context.component);
-			destroy(_heap, context.component);
-			destroy(_heap, context.vgpu);
+			_env.ep().rpc_ep().dissolve(&context.component);
+			destroy(_heap, &context.component);
+			destroy(_heap, &context.vgpu);
 			destroy(_heap, &context);
 		}
 
@@ -1993,7 +1995,7 @@ class Gpu::Session_component : public Genode::Session_object<Gpu::Session>,
 				                                               _buffer_registry_instance, _resource_guard);
 				_env.ep().rpc_ep().manage(context);
 
-				new (_heap) Registered<Context>(_context_registry, context->cap(), vgpu, context);
+				new (_heap) Registered<Context>(_context_registry, context->cap(), *vgpu, *context);
 
 				reserve.acknowledge();
 
@@ -2027,7 +2029,7 @@ class Gpu::Session_component : public Genode::Session_object<Gpu::Session>,
 			return _exec_buffer(id);
 		}
 
-		void unmap_buffers()
+		void unmap_buffers() override
 		{
 			_unmap_buffers();
 		}
@@ -2182,10 +2184,10 @@ class Gpu::Session_component : public Genode::Session_object<Gpu::Session>,
 			return _address_dataspace(size);
 		}
 
-		bool map_buffer_ppgtt(Gpu::Buffer_id id, Gpu::addr_t va) override { return false; }
+		bool map_buffer_ppgtt(Gpu::Buffer_id /* id */, Gpu::addr_t /* va */) override { return false; }
 
-		void unmap_buffer_ppgtt(Gpu::Buffer_id id,
-		                        Gpu::addr_t va) override { }
+		void unmap_buffer_ppgtt(Gpu::Buffer_id /* id */,
+		                        Gpu::addr_t /* va */) override { }
 
 		bool set_tiling(Gpu::Buffer_id id,
 		                Genode::uint32_t const mode) override
