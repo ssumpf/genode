@@ -20,7 +20,6 @@
 #include <base/registry.h>
 #include <base/shared_object.h>
 #include <base/sleep.h>
-#include <os/backtrace.h>
 #include <gui_session/connection.h>
 #include <gpu_session/client.h>
 #include <gpu_session/connection.h>
@@ -41,20 +40,6 @@ namespace Libc {
 #include <fcntl.h>
 #include <unistd.h>
 }
-extern "C"
-void genode_blit_3d(uint8_t *buf, uint32_t offset, uint32_t pitch, uint32_t stride, uint32_t height);
-
-
-
-extern "C" void
-intel_tiled_to_linear(uint32_t xt1, uint32_t xt2, 
-                      uint32_t yt1, uint32_t yt2, 
-                      char *dst, const char *src,
-                      int32_t dst_pitch, uint32_t src_pitch,
-                      bool has_swizzling,
-                      unsigned tiling,
-                      unsigned copy_type);
-
 
 using Genode::addr_t;
 using Genode::Attached_dataspace;
@@ -969,43 +954,6 @@ class Drm_call
 
 			return ok ? 0 : -1;
 		}
-
-		struct Gui3d
-		{
-			Genode::Env &_env; 
-			Gui::Connection _3d;
-			Gui::Session::View_handle  _3d_view { _3d.create_view() };
-			Framebuffer::Mode const    _3d_mode { .area = { 300, 300 }};
-			Constructible<Genode::Attached_dataspace> _3d_ds { };
-			uint8_t *_framebuffer { nullptr };
-
-			void _init_3d()
-			{
-				_3d.buffer(_3d_mode, false);
-
-				_3d_ds.construct(_env.rm(), _3d.framebuffer()->dataspace());
-				_framebuffer = _3d_ds->local_addr<uint8_t>();
-
-				using Command = Gui::Session::Command;
-				using namespace Gui;
-
-				_3d.enqueue<Command::Geometry>(_3d_view, Gui::Rect(Gui::Point(0, 0), _3d_mode.area));
-				_3d.enqueue<Command::To_front>(_3d_view, Gui::Session::View_handle());
-				_3d.enqueue<Command::Title>(_3d_view, "3D from back end");
-				_3d.execute();
-			}
-
-			Gui3d(Genode::Env &env, Genode::String<16> name) : 
-			_env(env), _3d(env, name.string()){ _init_3d(); }
-
-			unsigned char *fb() const { return _framebuffer; }
-
-			void refresh() {
-				_3d.framebuffer()->refresh(0, 0, _3d_mode.area.w(), _3d_mode.area.h());
-			}
-		};
-
-		Constructible<Gui3d> _3dfb[10] { };
 
 		int _device_gem_sw_finish(void *)
 		{
