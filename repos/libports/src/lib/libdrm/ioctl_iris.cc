@@ -20,7 +20,6 @@
 #include <base/registry.h>
 #include <base/shared_object.h>
 #include <base/sleep.h>
-#include <gui_session/connection.h>
 #include <gpu_session/client.h>
 #include <gpu_session/connection.h>
 #include <gpu/info_intel.h>
