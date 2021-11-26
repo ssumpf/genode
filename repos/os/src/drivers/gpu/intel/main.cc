@@ -1473,10 +1473,12 @@ class Gpu::Session_base
 		Igd::Device::Vgpu &_vgpu;
 		Ram_allocator     &_ram;
 		Region_map        &_rm;
+		size_t             _address_dataspace_size { 0 };
 
 	protected:
 
 		Constructible<Attached_ram_dataspace> ds { };
+
 
 		struct Resource_guard
 		{
@@ -1484,13 +1486,14 @@ class Gpu::Session_base
 			 * Estimations that work well enough with the current
 			 * test-cases.
 			 */
-			Cap_quota const map_buffer_cap_amount       {    2  };
-			Ram_quota const map_buffer_ram_amount       { 1024  };
-			Cap_quota const map_buffer_ppgtt_cap_amount {    2  };
-			Ram_quota const map_buffer_ppgtt_ram_amount { 4096  };
-			Cap_quota const alloc_buffer_cap_amount     {    4  };
-			Ram_quota const create_session_ram_amount   { 12228 };
-			Cap_quota const create_session_cap_amount   { 4     };
+			Cap_quota const map_buffer_cap_amount        {    2  };
+			Ram_quota const map_buffer_ram_amount        { 1024  };
+			Cap_quota const map_buffer_ppgtt_cap_amount  {    2  };
+			Ram_quota const map_buffer_ppgtt_ram_amount  { 4096  };
+			Cap_quota const alloc_buffer_cap_amount      {    4  };
+			Ram_quota const create_session_ram_amount    { 128*1024 };
+			Cap_quota const create_session_cap_amount    { 4     };
+			Cap_quota const dataspace_cap_amount         { 1     };
 
 			struct Reservation
 			{
@@ -1567,8 +1570,19 @@ class Gpu::Session_base
 				_cap_quota_guard.replenish(create_session_cap_amount);
 				_ram_quota_guard.replenish(create_session_ram_amount);
 			}
-		};
 
+			Reservation alloc_dataspace(size_t size)
+			{
+				return Reservation  { _cap_quota_guard, dataspace_cap_amount,
+				                      _ram_quota_guard, Ram_quota { size } };
+			}
+
+			void free_dataspace(size_t size)
+			{
+				_cap_quota_guard.replenish(dataspace_cap_amount);
+				_ram_quota_guard.replenish(Ram_quota { size } );
+			}
+		};
 		Resource_guard &_resource_guard;
 
 		struct Buffer_mapping
@@ -1635,11 +1649,25 @@ class Gpu::Session_base
 
 		Dataspace_capability _address_dataspace(size_t size)
 		{
-			if (ds.constructed())
-				ds.destruct();
+			try {
+				if (ds.constructed()) {
+					ds.destruct();
+					_resource_guard.free_dataspace(_address_dataspace_size);
+				}
 
-			ds.construct(_ram, _rm, size);
-			return ds->cap();
+				Resource_guard::Reservation reserve = _resource_guard.alloc_dataspace(size);
+				ds.construct(_ram, _rm, size);
+				_address_dataspace_size = size;
+				reserve.acknowledge();
+
+				return ds->cap();
+			} catch (Cap_quota_guard::Limit_exceeded) {
+				throw Gpu::Session::Out_of_caps();
+			} catch (Ram_quota_guard::Limit_exceeded) {
+				throw Gpu::Session::Out_of_ram();
+			}
+			error("_address_dataspace: failed");
+			return Dataspace_capability();
 		}
 
 		bool _map_buffer_ppgtt(Gpu::Buffer_id id, Gpu::addr_t va)
