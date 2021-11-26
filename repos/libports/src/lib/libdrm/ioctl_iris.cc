@@ -490,6 +490,59 @@ class Drm_call
 				_gpu.unmap_buffer(buffer.id());
 			}
 
+			enum { CREATE_SESSION_CAP_AMOUNT = 4 };
+			enum { CREATE_SESSION_RAM_AMOUNT = 128*1024+1024*1024 }; /* context + page table allocator */
+
+			Gpu::Session_capability create_session()
+			{
+				Cap_quota caps { CREATE_SESSION_CAP_AMOUNT };
+				Ram_quota ram  { CREATE_SESSION_RAM_AMOUNT };
+
+				Gpu::Session_capability cap { };
+				try {
+					_perform_gpu_op(caps, ram, [&] () {
+						cap = _gpu.create_session();
+					});
+				} catch (Upgrade_failed) { }
+
+				return cap;
+			}
+
+			void destroy_session()
+			{
+				Cap_quota caps { CREATE_SESSION_CAP_AMOUNT };
+				Ram_quota ram  { CREATE_SESSION_RAM_AMOUNT };
+
+				_replenish(caps);
+				_replenish(ram);
+			}
+
+			enum { ADDRESS_DATASPACE_CAP_AMOUNT = 4 };
+
+			Genode::Dataspace_capability
+			address_dataspace(Genode::size_t size, Gpu::Session_client &gpu_session)
+			{
+				Cap_quota caps { ADDRESS_DATASPACE_CAP_AMOUNT };
+				Ram_quota ram  { size };
+
+				Genode::Dataspace_capability ds { };
+				try {
+					_perform_gpu_op(caps, ram, [&] () {
+						ds = gpu_session.address_dataspace(size);
+					});
+				} catch (Upgrade_failed) { }
+
+				return ds;
+			}
+
+			void free_address_dataspace(Genode::size_t size)
+			{
+				Cap_quota caps { ADDRESS_DATASPACE_CAP_AMOUNT };
+				_replenish(caps);
+				Ram_quota ram { size };
+				_replenish(ram);
+			}
+
 			void dump()
 			{
 				Genode::error("Resource_guard: ",
@@ -510,19 +563,26 @@ class Drm_call
 			Genode::Env &env;
 			unsigned id;
 			Gpu::Session_client &gpu_session;
-			Genode::Dataspace_capability ds { gpu_session.address_dataspace(16*1024) };
+			Resource_guard &resource_guard;
+			Genode::Dataspace_capability ds { };
 			Buffer_mapping *buffers;
 
-			Context(Genode::Env &env, unsigned id, Gpu::Session_client &gpu_session)
+			Context(Genode::Env &env, unsigned id, Gpu::Session_client &gpu_session,
+			        Resource_guard &resource_guard)
 			  :
-			    env(env), id(id), gpu_session(gpu_session)
+			    env(env), id(id), gpu_session(gpu_session), resource_guard(resource_guard)
 			{
+				ds = resource_guard.address_dataspace(16*1024, gpu_session);
+				if (!ds.valid())
+					throw -1;
+
 				buffers = env.rm().attach(ds);
 			}
 
 			virtual ~Context()
 			{
 				env.rm().detach(buffers);
+				resource_guard.free_address_dataspace(16*1024);
 			}
 		};
 
@@ -852,24 +912,18 @@ class Drm_call
 				gpu_session = &_gpu_session;
 				_context_connection_avail = false;
 			} else {
-				Gpu::Session_capability cap = Genode::retry<Gpu::Session::Out_of_ram>(
-				[&]() {
-					return Genode::retry<Gpu::Session::Out_of_caps>(
-					[&] () {
-						return _gpu_session.create_session();
-					},
-					[&] () {
-						_gpu_session.upgrade_caps(2);
-					});
-				},
-				[&] () {
-					_gpu_session.upgrade_ram(8192);
-				});
+				Gpu::Session_capability cap = _resources.create_session();
+				if (cap.valid() == false) {
+					Genode::error("Sub session creation failed");
+					return -1;
+				}
+
 				gpu_session = new (_heap) Gpu::Session_client(cap);
 			}
 
-			_gpu_session.upgrade_ram(5*4096);
-			new (_heap) Genode::Registered(_context_registry, _env, _context_id, *gpu_session);
+			new (_heap) Genode::Registered(_context_registry, _env, _context_id, *gpu_session,
+			                               _resources);
+
 			drm_i915_gem_context_create * const p = reinterpret_cast<drm_i915_gem_context_create*>(arg);
 			p->ctx_id = _context_id;
 
@@ -887,6 +941,7 @@ class Drm_call
 				} else {
 					destroy(_heap, &context.gpu_session);
 					_gpu_session.destroy_session(context.gpu_session.rpc_cap());
+					_resources.destroy_session();
 				}
 
 				destroy(_heap, &context);
@@ -1081,7 +1136,7 @@ class Drm_call
 					return context->gpu_session.exec_buffer(command_buffer->id(), 0);
 				},
 				[&] () {
-					_gpu_session.upgrade_caps(10);
+					_gpu_session.upgrade_caps(4);
 				});
 			},
 			[&] () {
