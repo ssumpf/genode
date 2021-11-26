@@ -223,7 +223,8 @@ struct Gpu::Session : public Genode::Session
 	GENODE_RPC_THROW(Rpc_create_session, Genode::Capability<Session>, create_session,
 	                 GENODE_TYPE_LIST(Out_of_caps, Out_of_ram));
 	GENODE_RPC(Rpc_destroy_session, void, destroy_session, Genode::Capability<Session>);
-	GENODE_RPC(Rpc_dataspace, Genode::Dataspace_capability, address_dataspace, Genode::size_t);
+	GENODE_RPC_THROW(Rpc_dataspace, Genode::Dataspace_capability, address_dataspace,
+	                 GENODE_TYPE_LIST(Out_of_caps, Out_of_ram), Genode::size_t);
 	GENODE_RPC(Rpc_unmap_buffers, void, unmap_buffers);
 
 	GENODE_RPC_INTERFACE(Rpc_info_dataspace, Rpc_exec_buffer,
