@@ -16,7 +16,7 @@ FILTER_OUT = lempar.c lighttpd-angel.c lemon.c \
              mod_trigger_b4_dl.c mod_uploadprogress.c mod_userdir.c \
              mod_usertrack.c mod_vhostdb.c mod_vhostdb_dbi.c \
              mod_vhostdb_ldap.c mod_vhostdb_mysql.c mod_vhostdb_pgsql.c \
-             mod_webdav.c mod_wstunnel.c
+             mod_webdav.c mod_wstunnel.c mod_openssl.c
 SRC_C = $(filter-out $(FILTER_OUT),$(notdir $(wildcard $(LIGHTTPD_DIR)/src/*.c)))
 
 vpath %.c $(LIGHTTPD_DIR)/src
@@ -39,7 +39,7 @@ CC_OPT += -DLIGHTTPD_VERSION_ID='($(LIGHTTPD_MAIN) << 16 | $(LIGHTTPD_MAJOR) << 
 CC_OPT += -DPACKAGE_VERSION="\"$(LIGHTTPD_MAIN).$(LIGHTTPD_MAJOR).$(LIGHTTPD_MINOR)\""
 CC_OPT += -DLIBRARY_DIR="\"/lib\""
 CC_OPT += -DLIGHTTPD_STATIC
-CC_OPT += -DHAVE_LIBSSL -DUSE_OPENSSL -DUSE_OPENSSL_CRYPTO
+#CC_OPT += -DHAVE_LIBSSL -DUSE_OPENSSL -DUSE_OPENSSL_CRYPTO
 
 CC_WARN = -Wall -Wno-unused-variable -Wno-unused-function
 
@@ -48,4 +48,4 @@ INC_DIR += $(LIGHTTPD_DIR)/src
 
 LIBS += posix
 LIBS += zlib
-LIBS += libssl
+#LIBS += libssl

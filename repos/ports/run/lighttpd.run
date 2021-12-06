@@ -45,6 +45,7 @@ install_config {
 		<service name="IRQ"/>
 		<service name="IO_PORT"/>
 		<service name="IO_MEM"/>
+		<service name="TRACE"/>
 	</parent-provides>
 	<default-route>
 		<any-service> <parent/> <any-child/> </any-service>
@@ -56,8 +57,18 @@ install_config {
 		<provides><service name="Timer"/></provides>
 	</start>
 
+	<start name="top">
+		<resource name="RAM" quantum="2M"/>
+		<config period_ms="5000" sort_time="ec"/>
+		<route>
+			<service name="Timer"> <child name="timer"/> </service>
+			<any-service> <parent/> </any-service>
+		</route>
+	</start>
+
+
 	<start name="nic_drv" caps="1000" managing_system="yes">
-		<resource name="RAM" quantum="32M"/>
+		<resource name="RAM" quantum="12M"/>
 		<binary name="init"/>
 		<route>
 			<service name="ROM" label="config"> <parent label="drivers.config"/> </service>
@@ -68,7 +79,7 @@ install_config {
 	</start>
 
 	<start name="nic_router" caps="200">
-		<resource name="RAM" quantum="10M"/>
+		<resource name="RAM" quantum="6M"/>
 		<provides>
 			<service name="Nic"/>
 			<service name="Uplink"/>
@@ -107,7 +118,7 @@ install_config {
 
 	<start name="lighttpd" caps="200">
 		<resource name="RAM" quantum="1G" />
-		<config>
+		<config ld_verbose="yes">
 			<arg value="lighttpd" />
 			<arg value="-f" />
 			<arg value="/etc/lighttpd/lighttpd.conf" />
@@ -127,7 +138,7 @@ server.document-root   = "/website"
 server.event-handler   = "select"
 server.network-backend = "write"
 server.upload-dirs     = ( "/tmp" )
-server.modules         = ("mod_openssl")
+#server.modules         = ("mod_openssl")
 index-file.names     = (
   "index.xhtml", "index.html", "index.htm"
 )
@@ -135,10 +146,10 @@ mimetype.assign      = (
   ".html"         =>      "text/html",
   ".htm"          =>      "text/html"
 )
-$SERVER["socket"] == ":443" {
-	ssl.engine  = "enable"
-	ssl.pemfile = "/etc/lighttpd/example.pem"
-}
+#$SERVER["socket"] == ":443" {
+#	ssl.engine  = "enable"
+#	ssl.pemfile = "/etc/lighttpd/example.pem"
+#}
 						</inline>
 						<inline name="example.pem">
 -----BEGIN PRIVATE KEY-----
@@ -194,6 +205,7 @@ EpA5DBBklj8UE2CdONvN
 					</dir>
 				</dir>
 				<dir name="website">
+					<rom name="init"/>
 					<inline name="index.html">
 <html>
 	<head>
@@ -220,8 +232,8 @@ EpA5DBBklj8UE2CdONvN
 	</start>
 </config>}
 
-#build            { }
-build_boot_image { }
+build            { lib/vfs/lwip drivers/nic/opencores server/nic_router app/top }
+build_boot_image { vfs_lwip.lib.so opencores_nic_drv nic_router top }
 
 append qemu_args " -nographic "
 append_qemu_nic_args "hostfwd=tcp::5555-:80,hostfwd=tcp::5556-:443"
