@@ -60,6 +60,7 @@ void Libc::Component::construct(Libc::Env &env)
 
 	memcpy_test<Bytewise_test>();
 	memcpy_test<Genode_cpy_test>();
+#if 0
 	memcpy_test<Genode_set_test>();
 	memcpy_test<Libc_cpy_test>();
 	memcpy_test<Libc_set_test>();
@@ -71,6 +72,6 @@ void Libc::Component::construct(Libc::Env &env)
 	                             nullptr, BUF_SIZE);
 	memcpy_test<Genode_cpy_test>(nullptr, uncached_ds.local_addr<void>(),
 	                             BUF_SIZE);
-
+#endif
 	log("Memcpy testsuite finished");
 }
