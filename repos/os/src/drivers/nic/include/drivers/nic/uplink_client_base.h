@@ -130,7 +130,7 @@ class Genode::Uplink_client_base : Noncopyable
 				       _conn->rx()->ready_to_ack()) {
 
 					Packet_descriptor const conn_rx_pkt {
-						_conn->rx()->get_packet() };
+						_conn->rx()->peek_packet() };
 
 					if (conn_rx_pkt.size() > 0 &&
 					    _conn->rx()->packet_valid(conn_rx_pkt)) {
@@ -144,6 +144,7 @@ class Genode::Uplink_client_base : Noncopyable
 						case Transmit_result::ACCEPTED:
 
 							pkts_transmitted = true;
+							_conn->rx()->get_packet();
 							_conn->rx()->acknowledge_packet(conn_rx_pkt);
 							break;
 
@@ -152,6 +153,7 @@ class Genode::Uplink_client_base : Noncopyable
 							warning("failed to forward packet from "
 							        "Uplink-connection RX to driver");
 
+							_conn->rx()->get_packet();
 							_conn->rx()->acknowledge_packet(conn_rx_pkt);
 							break;
 
@@ -165,6 +167,7 @@ class Genode::Uplink_client_base : Noncopyable
 
 						warning("ignoring invalid packet from Uplink-"
 						        "connection RX");
+						_conn->rx()->get_packet();
 					}
 				}
 
