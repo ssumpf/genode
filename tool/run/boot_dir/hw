@@ -3,7 +3,7 @@ proc binary_name_core_a    { } { return "core-hw.a"    }
 proc binary_name_timer     { } { return "hw_timer_drv" }
 
 
-proc run_boot_string { } { return "\nkernel initialized" }
+proc run_boot_string { } { return "kernel initialized" }
 
 
 proc bootstrap_link_address { } {
