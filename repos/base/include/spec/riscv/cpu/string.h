@@ -25,8 +25,29 @@ namespace Genode {
 	 *
 	 * \return      number of bytes not copied
 	 */
-	inline size_t memcpy_cpu(void *, const void *, size_t size) {
-		return size; }
+	inline size_t memcpy_cpu(void *dst, const void *src, size_t size)
+	{
+
+		unsigned char *d = (unsigned char *)dst, *s = (unsigned char *)src;
+
+		size_t d_align = (size_t)dst & 0x7;
+		size_t s_align = (size_t)src & 0x7;
+
+		if (d_align != s_align)
+		return size;
+
+		/* copy to 8 byte alignment */
+		for (; (size > 0) && (s_align > 0) && (s_align < 8);
+		     s_align++, *d++ = *s++, size--);
+
+		uint64_t *d8 = (uint64_t *)d;
+		uint64_t *s8 = (uint64_t *)s;
+
+		for (; size >= 8; size -= 8)
+			*d8++ = *s8++;
+
+		return size;
+	}
 }
 
 #endif /* _INCLUDE__RISCV__CPU__STRING_H_ */
