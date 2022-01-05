@@ -81,14 +81,19 @@ void Thread::start()
 
 			using namespace Foc;
 			l4_kernel_clock_t ec_time = 0;
-			/* syscall does not return ever, if thread is on remote cpu,
-			   see issue #4357
-			addr_t const kcap = (addr_t) platform_thread.pager_object_badge();
-			l4_msgtag_t res = l4_thread_stats_time(kcap, &ec_time);
-			if (l4_error(res))
-				Genode::error("cpu time for ", thread.name(),
-				              " is not available ", l4_error(res));
-			*/
+
+			/*
+			 * The 'l4_thread_stats_time' syscall does not always return if
+			 * the thread is on remote CPU. Disable the feature to keep core
+			 * safe (see issue #4357).
+			 */
+			if (0) {
+				addr_t const kcap = (addr_t) platform_thread.pager_object_badge();
+				l4_msgtag_t res = l4_thread_stats_time(kcap, &ec_time);
+				if (l4_error(res))
+					Genode::error("cpu time for ", thread.name(),
+					              " is not available ", l4_error(res));
+			}
 
 			return { Session_label("core"), thread.name(),
 			         Trace::Execution_time(ec_time, sc_time, 10000,
