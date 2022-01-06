@@ -1,0 +1,12 @@
+<launcher pkg="system_shell">
+	<route>
+		<service name="Gui">                       <child name="wm"/>          </service>
+		<service name="File_system" label="fonts"> <child name="fonts_fs"/>    </service>
+		<service name="File_system">               <parent/>                   </service>
+		<service name="Report" label="clipboard">  <parent label="clipboard"/> </service>
+		<service name="ROM"    label="clipboard">  <parent label="clipboard"/> </service>
+		<service name="ROM"    label="vimrc">      <parent label="vimrc"/>     </service>
+		<service name="ROM" label_last="cached_fs_rom">
+			<parent label="fs_rom"/> </service>
+	</route>
+</launcher>
