@@ -63,7 +63,7 @@ LIBS_TO_VISIT = $(filter-out $(LIBS_READY),$(LIBS))
 #
 # Generate program rule
 #
-gen_prg_rule:
+gen_prg_rule: append_artifact_to_progress_log
 ifneq ($(LIBS),)
 	@for i in $(LIBS_TO_VISIT); do \
 	  $(MAKE) $(VERBOSE_DIR) -f $(BASE_DIR)/mk/dep_lib.mk REP_DIR=$(REP_DIR) LIB=$$i; done
@@ -111,3 +111,6 @@ ifeq ($(FORCE_BUILD_LIBS),yes)
 	@(echo ""; \
 	  echo "all: \$$(addsuffix .lib,\$$(filter-out \$$(INVALID_DEPS), $(LIBS)))") >> $(LIB_DEP_FILE)
 endif
+
+append_artifact_to_progress_log:
+	@echo -e "\n# Build artifact $(TARGET)\n" >> $(LIB_PROGRESS_LOG)
