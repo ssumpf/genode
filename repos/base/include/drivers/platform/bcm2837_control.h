@@ -23,7 +23,8 @@ namespace Genode { class Bcm2837_control; }
 
 class Genode::Bcm2837_control : Mmio
 {
-public:
+	public:
+
 		struct ControlRegister : public Register<0x0, 32>
 		{
 			struct CoreTimeClockSource : Bitfield<8,1> { };
@@ -41,16 +42,18 @@ public:
 
 
 Genode::Bcm2837_control::Bcm2837_control(addr_t const base)
-: Mmio(base)
-{
-}
+:
+	Mmio(base)
+{ }
 
 
 void Genode::Bcm2837_control::initialize_timer_frequency()
 {
-	/* Set prescaler value to achieve divider value equal to 1. Value
-	   taken from chapter "3.1.1 Timer clock" from QA7_rev3.4.pdf
-	   document describing bcm2836 chip */
+	/*
+	 * Set prescaler value to achieve divider value equal to 1.
+	 * Value taken from chapter "3.1.1 Timer clock" from QA7_rev3.4.pdf
+	 * document describing the BCM2836 chip.
+	 */
 	write<CoreTimerPrescaler>(0x80000000);
 }
 
