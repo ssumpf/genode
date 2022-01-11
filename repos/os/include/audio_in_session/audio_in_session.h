@@ -14,7 +14,7 @@
  */
 
 /*
- * Copyright (C) 2015-2017 Genode Labs GmbH
+ * Copyright (C) 2015-2022 Genode Labs GmbH
  *
  * This file is part of the Genode OS framework, which is distributed
  * under the terms of the GNU Affero General Public License version 3.
@@ -194,6 +194,21 @@ class Audio_in::Stream
 				valid |= _buf[i].valid();
 
 			return !valid;
+		}
+
+		/**
+		 * Number of packets between record and allocation position
+		 *
+		 * \return number
+		 */
+		unsigned queued() const
+		{
+			if (_tail > _pos)
+				return _tail - _pos;
+			else if (_pos > _tail)
+				return QUEUE_SIZE - (_pos - _tail);
+			else
+				return 0;
 		}
 
 		/**
