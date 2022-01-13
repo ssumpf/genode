@@ -40,6 +40,7 @@ PORT_DIR := $(call port_dir,$(REP_DIR)/ports/mesa)
 MIRROR_FROM_PORT_DIR := src/lib/mesa/src generated \
 
 content: $(MIRROR_FROM_PORT_DIR)
+	rm -rf generated/.git
 
 $(MIRROR_FROM_PORT_DIR):
 	mkdir -p $(dir $@)
