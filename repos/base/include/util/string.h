@@ -69,14 +69,17 @@ class Genode::Number_of_bytes
 
 
 /**
- * Data structure for describing a buffer
+ * Data structure for describing a byte buffer
+ *
+ * The type is intended to be used as 'Byte_range_ptr const &' argument.
+ * It is deliberately non-copyable.
  */
 struct Genode::Byte_range_ptr
 {
-	char * const         start;
-	Genode::size_t const num_bytes;
+	char * const start;
+	size_t const num_bytes;
 
-	Byte_range_ptr(char * const start, Genode::size_t num_bytes)
+	Byte_range_ptr(char *start, size_t num_bytes)
 	: start(start), num_bytes(num_bytes) { }
 };
 
