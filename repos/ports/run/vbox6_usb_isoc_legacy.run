@@ -1,0 +1,779 @@
+create_boot_directory
+
+set build_components {
+	core init timer
+	drivers/framebuffer
+	drivers/nic
+	drivers/nvme
+	drivers/ps2
+	drivers/rtc
+	drivers/usb_host
+	drivers/usb_hid
+	drivers/gpu/intel
+	server/dynamic_rom
+	server/event_filter
+	server/fs_rom
+	server/gui_fb
+	server/nic_router
+	server/nitpicker
+	server/part_block
+	server/report_rom
+	server/rom_filter
+	server/vfs
+	server/log_terminal
+	lib/mesa/iris
+	lib/vfs/pipe
+	lib/vfs/gpu
+	lib/vfs/import
+	lib/vfs/rump
+	lib/trace/policy/null
+	app/pointer
+	app/usb_report_filter
+	app/top
+	app/usb_webcam
+	virtualbox6
+}
+
+
+set use_os $::env(VBOX5_USB_ISOC_OS)
+
+proc get_os { } {
+	global use_os
+	return $use_os
+}
+
+set use_iso [expr $::env(VBOX5_USB_USE_ISO)]
+
+puts "use_iso: $use_iso"
+
+source ${genode_dir}/repos/base/run/platform_drv.inc
+
+lappend build_components server/cpu_sampler
+lappend build_components lib/cpu_sampler_platform-nova
+
+append_platform_drv_build_components
+
+build $build_components
+
+
+
+append config {
+<config verbose="yes" prio_levels="4">
+	<parent-provides>
+		<service name="ROM"/>
+		<service name="IRQ"/>
+		<service name="IO_MEM"/>
+		<service name="IO_PORT"/>
+		<service name="PD"/>
+		<service name="RM"/>
+		<service name="CPU"/>
+		<service name="LOG"/>
+		<service name="VM"/>
+		<service name="TRACE"/>
+	</parent-provides>
+	<default-route>
+		<any-service> <parent/> <any-child/> </any-service>
+	</default-route>
+	<default caps="100"/>
+
+	<start name="timer">
+		<resource name="RAM" quantum="1M"/>
+		<provides><service name="Timer"/></provides>
+		<route>
+			<any-service> <parent/> </any-service>
+		</route>
+	</start>
+
+<!--
+	<start name="top">
+		<resource name="RAM" quantum="2M"/>
+		<config period_ms="10000" sort_time="ec"/>
+		<route>
+			<service name="Timer"> <child name="timer"/> </service>
+			<any-service> <parent/> </any-service>
+		</route>
+	</start>
+-->
+	<!-- must be some priority as client, otherwise priority boost XXX -->
+<!--
+	<start name="cpu_sampler" priority="-2" caps="300">
+		<resource name="RAM" quantum="32M"/>
+		<provides>
+			<service name="CPU"/>
+		</provides>
+		<config sample_interval_ms="1" sample_duration_s="120">
+			<policy label="vbox -> ep" />
+			<policy label="vbox -> vbox 3 -> vCPU"/>
+			<policy label="vbox -> EMT"/>
+		</config>
+		<route>
+			<service name="Timer"> <child name="timer"/> </service>
+			<any-service> <parent/> </any-service>
+		</route>
+	</start>
+-->
+
+	<start name="nvme_drv" priority="-1">
+		<resource name="RAM" quantum="8M"/>
+		<provides><service name="Block"/></provides>
+		<config>
+			<policy label_prefix="part_block" device="0" writeable="yes"/>
+		</config>
+		<route>
+			<service name="Platform"> <child name="platform_drv"/> </service>
+			<service name="Timer"> <child name="timer"/> </service>
+			<any-service> <parent/> </any-service>
+		</route>
+	</start>
+
+	<start name="part_block" priority="-1">
+		<resource name="RAM" quantum="16M"/>
+		<provides><service name="Block"/></provides>
+		<config>
+			<policy label_prefix="rump_fs" partition="5" writeable="yes"/>
+		</config>
+		<route>
+			<any-service><child name="nvme_drv"/> <parent/><any-child/></any-service>
+		</route>
+	</start>
+
+	<start name="rump_fs" priority="-1" caps="200">
+		<binary name="vfs"/>
+		<resource name="RAM" quantum="64M"/>
+		<provides><service name="File_system"/></provides>
+		<config ld_verbose="yes">
+			<vfs>
+				<rump fs="ext2fs" ram="48M"/>
+			</vfs>
+			<default-policy root="/usb_isoc/} [get_os] {" writeable="true"/>
+		</config>
+		<route>
+			<any-service><child name="part_block"/> <parent/><any-child/></any-service>
+		</route>
+	</start>
+
+	<start name="shared_fs" priority="-1" caps="200">
+		<binary name="vfs"/>
+		<resource name="RAM" quantum="64M"/>
+		<provides><service name="File_system"/></provides>
+		<config ld_verbose="yes">
+			<vfs>
+				<dir name="test">
+					<inline name="foo.txt">
+Kannste irgendwas rein hacken.
+</inline>
+				<rom name="init"/>
+				<ram/>
+				</dir>
+			</vfs>
+			<default-policy root="/" writeable="true"/>
+		</config>
+		<route>
+			<any-service><parent/><any-child/></any-service>
+		</route>
+	</start>
+
+	<start name="acpi_drv"  priority="-1" caps="350" >
+		<binary name="acpi_drv"/>
+		<resource name="RAM" quantum="4M"/>
+		<route>
+			<service name="IO_MEM"> <parent/> </service>
+			<service name="LOG">    <parent/> </service>
+			<service name="PD">     <parent/> </service>
+			<service name="RM">     <parent/> </service>
+			<service name="CPU">    <parent/> </service>
+			<service name="ROM">    <parent/> </service>
+			<service name="Report"> <child name="acpi_report_rom"/> </service>
+			<service name="ROM" label="platform_info"> <parent/> </service>
+		</route>
+	</start>
+
+	<start name="acpi_report_rom"  priority="-1">
+		<binary name="report_rom"/>
+		<resource name="RAM" quantum="2M"/>
+		<provides>
+			<service name="ROM" />
+			<service name="Report" />
+		</provides>
+		<config>
+			<policy label="smbios_decoder -> smbios_table" report="acpi_drv -> smbios_table"/>
+			<policy label="platform_drv -> acpi"           report="acpi_drv -> acpi"/>
+		</config>
+		<route>
+			<service name="LOG"> <parent/> </service>
+			<service name="PD">     <parent/> </service>
+			<service name="CPU">    <parent/> </service>
+			<service name="ROM">    <parent/> </service>
+		</route>
+	</start>
+
+	<start name="platform_drv"  priority="-1" caps="800" managing_system="yes">
+		<binary name="legacy_pc_platform_drv"/>
+		<resource name="RAM" quantum="4M"/>
+		<provides>
+			<service name="Platform"/>
+			<service name="Acpi"/>
+		</provides>
+		<route>
+			<service name="Timer">            <child name="timer"/> </service>
+			<service name="ROM" label="acpi"> <child name="acpi_report_rom"/> </service>
+			<any-service> <parent/> </any-service>
+		</route><config>
+			<policy label_prefix="ps2_drv">       <device name="PS2"/> </policy>
+			<policy label_prefix="nic_drv">       <pci class="ETHERNET"/> </policy>
+			<policy label_prefix="fb_drv">        <pci class="VGA"/> </policy>
+			<policy label_prefix="wifi_drv">      <pci class="WIFI"/> </policy>
+			<policy label_prefix="usb_host_drv">  <pci class="USB"/> </policy>
+			<policy label_prefix="ahci_drv">      <pci class="AHCI"/> </policy>
+			<policy label_prefix="nvme_drv">      <pci class="NVME"/> </policy>
+			<policy label_prefix="audio_drv">     <pci class="AUDIO"/> <pci class="HDAUDIO"/> </policy>
+			<policy label_prefix="intel_gpu_drv">
+				<pci class="VGA"/>
+				<pci bus="0" device="0" function="0"/>
+				<pci class="ISABRIDGE"/>
+			</policy>
+		</config>
+	</start>
+
+	<start name="ps2_drv" priority="-1">
+		<resource name="RAM" quantum="1M"/>
+		<config/>
+		<route>
+			<service name="Event"> <child name="event_filter" label="ps2"/> </service>
+			<service name="Platform"> <child name="platform_drv"/></service>
+			<any-service> <parent/> <any-child/> </any-service>
+		</route>
+	</start>
+
+<!--
+	<start name="top" priority="-1">
+		<resource name="RAM" quantum="2M"/>
+		<config period_ms="10000"/>
+		<route>
+			<service name="TRACE"><parent/></service>
+			<service name="LOG"><parent/></service>
+			<service name="Timer"><child name="timer"/></service>
+			<service name="Report"><child name="report_rom"/></service>
+			<any-service><parent/></any-service>
+		</route>
+	</start>
+-->
+
+	<start name="usb_config_fs" priority="-1">
+		<binary name="vfs"/>
+		<resource name="RAM" quantum="2M"/>
+		<provides><service name="File_system"/></provides>
+		<config verbose="yes">
+			<vfs>
+				<ram/>
+				<import>
+					<inline name="usb_drv.config">
+<config uhci="yes" ohci="yes" ehci="yes" xhci="yes" bios_handoff="no">
+	<report devices="yes"/>
+		<policy label="usb_webcam -> usb_device" vendor_id="0x04f2" product_id="0xb564"/>
+		<policy label_prefix="vbox" vendor_id="0x058f" product_id="0x9540"/>
+		<policy label_prefix="usb_hid" class="0x3"/>
+</config>
+					</inline>
+					<inline name="usb_report_filter.config">
+<config>
+	<!-- USB device whitelist -->
+	<client label="vbox"/>
+	<!-- Alcor Smartcard Reader Fuji4 -->
+	<device vendor_id="0x058f" product_id="0x9540"/>
+	<!-- FJ camera -->
+	<!-- <device vendor_id="0x04f2" product_id="0xb564"/> -->
+	<!-- beyer headset -->
+	<!-- <device vendor_id="0x0d8c" product_id="0x000c"/> -->
+	<!-- new bee -->
+	<device vendor_id="0x0d8c" product_id="0x0014"/>
+	<!-- play 2 -->
+	<device vendor_id="0x041e" product_id="0x323d"/>
+	<!-- xxx -->
+	<device vendor_id="0x8086" product_id="0x0808"/>
+	<!-- fulla 2 -->
+	<device vendor_id="0x0d8c" product_id="0x1066"/>
+	<!-- sandisk stick -->
+	<device vendor_id="0x0781" product_id="0x556b"/>
+	<!-- DTM30 -->
+	<device vendor_id="0x0951" product_id="0x1666"/>
+	<!-- sandisk usb3 -->
+	<device vendor_id="0x0781" product_id="0x5583"/>
+	<!-- logitech c270 -->
+	<device vendor_id="0x046d" product_id="0x0825"/>
+</config>
+					</inline>
+				</import>
+			</vfs>
+			<policy label_prefix="usb_report_filter" root="/" writeable="yes"/>
+			<policy label_prefix="usb_config_rom" root="/"/>
+		</config>
+		<route>
+			<any-service><parent/><any-child/></any-service>
+		</route>
+	</start>
+
+	<start name="usb_config_rom" priority="-1">
+		<binary name="fs_rom"/>
+		<resource name="RAM" quantum="1200K"/>
+		<provides><service name="ROM"/></provides>
+		<route>
+			<service name="File_system"><child name="usb_config_fs"/></service>
+			<any-service><parent/><any-child/></any-service>
+		</route>
+	</start>
+
+	<start name="usb_report_filter" priority="-1">
+		<resource name="RAM" quantum="1200K"/>
+		<route>
+			<service name="Report"><child name="usb_report_rom"/></service>
+			<service name="ROM" label="config">
+				<child name="usb_config_rom" label="usb_report_filter.config"/>
+			</service>
+			<service name="ROM" label="devices">
+				<child name="usb_report_rom"/>
+			</service>
+			<service name="ROM" label="usb_drv_config">
+				<child name="usb_report_rom"/>
+			</service>
+			<service name="File_system" label="usb_drv.config">
+				<child name="usb_config_fs"/>
+			</service>
+			<any-service><parent/><any-child/></any-service>
+		</route>
+	</start>
+
+	<start name="usb_host_drv" priority="-1" caps="200">
+		<binary name="x86_pc_usb_host_drv"/>
+		<resource name="RAM" quantum="32M"/>
+		<provides> <service name="Usb"/> </provides>
+		<route>
+			<service name="Report"> <child name="usb_report_rom"/> </service>
+			<service name="ROM" label="config">
+				<child name="usb_config_rom" label="usb_drv.config"/> </service>
+			<service name="Platform"> <child name="platform_drv"/></service>
+			<any-service><parent/><any-child/></any-service>
+		</route>
+	</start>
+
+	<start name="usb_hid" caps="140">
+		<binary name="usb_hid_drv"/>
+		<resource name="RAM" quantum="11M"/>
+		<config use_report="yes"/>
+			<route>
+				<service name="Event"> <child name="event_filter" label="usb_hid"/> </service>
+				<service name="ROM" label="report"> <child name="usb_report_rom"/> </service>
+				<any-service> <parent/> <any-child/> </any-service>
+		</route>
+	</start>
+
+	<start name="fb_drv" priority="-1" caps="150">
+		<binary name="intel_fb_drv"/>
+		<resource name="RAM" quantum="48M"/>
+		<config/>
+		<route>
+			<service name="Capture"> <child name="nitpicker"/> </service>
+			<service name="Platform"> <child name="intel_gpu_drv"/></service>
+			<any-service> <parent /> <any-child /> </any-service>
+		</route>
+	</start>
+
+	<start name="rtc_drv" priority="-1">
+		<resource name="RAM" quantum="1M"/>
+		<provides>
+			<service name="Rtc"/>
+		</provides>
+		<route>
+			<any-service> <parent /> <any-child /> </any-service>
+		</route>
+	</start>
+
+	<start name="event_filter">
+		<resource name="RAM" quantum="1M" />
+		<provides>
+			<service name="Event" />
+		</provides>
+		<config>
+			<output>
+				<merge>
+					<input name="ps2"/>
+					<input name="usb_hid"/>
+				</merge>
+			</output>
+			<policy label="ps2" input="ps2"/> 
+			<policy label="usb_hid" input="usb_hid"/>
+		</config>
+		<route>
+			<service name="Event"> <child name="nitpicker"/> </service>
+			<any-service> <parent /> <any-child /> </any-service>
+		</route>
+	</start>
+
+	<start name="nic_router" priority="-1" caps="100">
+		<resource name="RAM" quantum="4M"/>
+		<provides>
+			<service name="Nic"/>
+			<service name="Uplink"/>
+		</provides>
+		<config>
+			<default-policy domain="default"/>
+			<policy label="nic_drv -> " domain="uplink"/>
+			<domain name="uplink">
+				<nat domain="default" tcp-ports="1000" udp-ports="1000" icmp-ids="1000"/>
+			</domain>
+			<domain name="default" interface="10.0.10.1/24">
+				<dhcp-server ip_first="10.0.10.2" ip_last="10.0.10.200" dns_config_from="uplink"/>
+				<tcp dst="0.0.0.0/0">
+					<permit-any domain="uplink"/>
+				</tcp>
+				<udp dst="0.0.0.0/0">
+					<permit-any domain="uplink"/>
+				</udp>
+				<icmp dst="0.0.0.0/0" domain="uplink"/>
+			</domain>
+		</config>
+		<route>
+			<service name="PD"> <parent/> </service>
+			<service name="CPU"> <parent/> </service>
+			<service name="LOG"> <parent/> </service>
+			<service name="ROM"> <parent/> </service>
+			<service name="Timer"> <child name="timer"/> </service>
+		</route>
+	</start>
+
+	<start name="nic_drv" priority="-1">
+		<binary name="ipxe_nic_drv"/>
+		<resource name="RAM" quantum="8M" />
+		<route>
+			<service name="Uplink"> <child name="nic_router"/> </service>
+			<service name="Platform"> <child name="platform_drv"/></service>
+			<any-service> <parent /> <any-child /> </any-service>
+		</route>
+	</start>
+
+	<start name="usb_report_rom">
+		<binary name="report_rom"/>
+		<resource name="RAM" quantum="2M"/>
+		<provides> <service name="Report"/> <service name="ROM"/> </provides>
+		<config verbose="no">
+			<policy label="usb_report_filter -> devices"        report="usb_host_drv -> devices"/>
+			<policy label="usb_report_filter -> usb_drv_config" report="usb_host_drv -> config"/>
+			<policy label="vbox -> usb_devices"                 report="usb_report_filter -> usb_devices"/>
+			<policy label="usb_hid -> report"                   report="usb_host_drv -> devices"/>
+		</config>
+		<route>
+			<any-service> <parent /> <any-child /> </any-service>
+		</route>
+	</start>
+
+	<start name="report_rom">
+		<resource name="RAM" quantum="2M"/>
+		<provides> <service name="Report"/> <service name="ROM"/> </provides>
+		<config verbose="no">
+			<policy label="pointer -> hover"                    report="nitpicker -> hover"/>
+			<policy label="pointer -> xray"                     report="nitpicker -> xray"/>
+			<policy label="cpu_load_display -> trace_subjects"  report="trace_subject_reporter -> trace_subjects"/>
+
+			<policy label="dummy_clipboard_consumer" report="vbox -> clipboard"/>
+			<policy label="vbox -> clipboard"        report="dummy_clipboard_producer"/>
+			<policy label="webcam-state" report="vbox -> capture"/>
+
+			<policy label="menu_view -> dialog" report="top_view -> dialog"/>
+			<policy label="top_view -> hover" report="menu_view -> hover"/>
+			<policy label="graph -> graph" report="top_view -> graph"/>
+
+		</config>
+		<route>
+			<any-service> <parent /> <any-child /> </any-service>
+		</route>
+	</start>
+
+	<start name="nitpicker" priority="-1" caps="150">
+		<resource name="RAM" quantum="12M"/>
+		<provides>
+			<service name="Gui"/> <service name="Capture"/> <service name="Event"/>
+		</provides>
+		<route>
+			<service name="Report"> <child name="report_rom" /> </service>
+			<service name="ROM" label="config">
+				<child name="dynamic-config" label="nitpicker.config"/> </service>
+			<any-service> <parent/> <any-child /> </any-service>
+		</route>
+	</start>
+
+	<start name="gui_fb">
+		<resource name="RAM" quantum="18M"/>
+		<provides> <service name="Framebuffer"/> <service name="Input"/></provides>
+		<config/>
+		<route>
+			<service name="Gui"> <child name="nitpicker"/> </service>
+			<any-service> <parent/> </any-service>
+		</route>
+	</start>
+
+
+
+	<start name="nitpicker_cam" priority="-1" caps="150">
+		<binary name="nitpicker"/>
+		<resource name="RAM" quantum="12M"/>
+		<provides>
+			<service name="Gui"/> <service name="Capture"/>
+		</provides>
+		<config request_framebuffer="yes">
+			<capture/>
+			<domain name="" layer="1" content="client"/>
+			<default-policy domain=""/>
+		</config>
+		<route>
+			<service name="Framebuffer"> <child name="gui_fb"/> </service>
+			<any-service> <parent/> <any-child /> </any-service>
+		</route>
+	</start>
+
+
+	<start name="pointer" priority="-1">
+		<resource name="RAM" quantum="2M"/>
+		<provides> <service name="Report"/> </provides>
+		<config shapes="yes"/>
+		<route>
+			<service name="Gui"> <child name="nitpicker"/>  </service>
+			<service name="ROM" label="hover"> <child name="report_rom"/> </service>
+			<service name="ROM" label="xray"> <child name="report_rom"/> </service>
+			<any-service> <parent/> </any-service>
+		</route>
+	</start>
+
+	<start name="dynamic-config" priority="-1">
+		<binary name="dynamic_rom"/>
+		<resource name="RAM" quantum="1M"/>
+		<provides> <service name="ROM"/> </provides>
+		<config verbose="yes">
+			<rom name="capslock">
+				<inline>
+					<capslock enabled="yes"/>
+				</inline>
+				<sleep milliseconds="5000"/>
+				<inline>
+					<capslock enabled="no"/>
+				</inline>
+				<sleep milliseconds="5000"/>
+			</rom>
+			<rom name="nitpicker.config">
+				<inline description="standard_mode">
+					<config>
+						<capture/> <event/>
+						<report focus="yes" hover="yes" />
+
+						<domain name="pointer"  layer="1" content="client" label="no" origin="pointer" />
+						<domain name="cpu_load" layer="2" content="client" label="no" />
+						<domain name="top"   layer="3" content="client" label="no" xpos="1600" ypos="0" focus="click"/>
+						<domain name="gui_fb"   layer="2" content="client" label="no" xpos="1280" ypos="500" />
+						<domain name="1" layer="3" content="client" label="no" xpos="0" ypos="800" />
+						<domain name="2" layer="3" content="client" label="no" xpos="310" ypos="800" />
+						<domain name="3" layer="3" content="client" label="no" xpos="620" ypos="800" />
+						<domain name="4" layer="3" content="client" label="no" xpos="930" ypos="800" />
+						<domain name="5" layer="3" content="client" label="no" xpos="1240" ypos="800" />
+						<domain name=""         layer="4" content="client" label="no" focus="click" hover="always" width="1280" height="800"/>
+
+						<policy label_prefix="pointer"          domain="pointer"/>
+						<policy label_prefix="cpu_load_display" domain="cpu_load"/>
+						<policy label_prefix="gui_fb" domain="gui_fb"/>
+						<policy label_prefix="menu_view" domain="top"/>
+						<policy label_prefix="graph" domain="top"/>
+						<policy label_suffix="-> 1" domain="1"/>
+						<policy label_suffix="-> 2" domain="2"/>
+						<policy label_suffix="-> 3" domain="3"/>
+						<policy label_suffix="-> 4" domain="4"/>
+						<policy label_suffix="-> 5" domain="5"/>
+						<default-policy domain=""/>
+					</config>
+				</inline>
+				<sleep milliseconds="5000000"/>
+			</rom>
+		</config>
+		<route>
+			<service name="Timer"> <child name="timer"/> </service>
+			<any-service> <parent /> </any-service>
+		</route>
+	</start>
+
+	<start name="log_terminal" priority="-1">
+		<resource name="RAM" quantum="2M"/>
+		<provides>
+			<service name="Terminal"/>
+		</provides>
+		<route>
+			<any-service> <parent /> </any-service>
+		</route>
+	</start>
+
+	<start name="webcam-config">
+		<binary name="rom_filter"/>
+		<resource name="RAM" quantum="1M"/>
+		<provides> <service name="ROM"/> </provides>
+		<config>
+			<input name="webcam_enabled" rom="webcam-state" node="capture">
+				<attribute name="enabled"/>
+			</input>
+
+			<output node="config">
+				<attribute name="enabled" input="webcam_enabled"/>
+				<attribute name="width"   value="640"/>
+				<attribute name="height"  value="480"/>
+				<attribute name="format"  value="mjpeg"/>
+				<attribute name="fps"     value="15"/>
+				<inline>
+					<vfs>
+						<dir name="dev"> <log/> <inline name="rtc">2018-01-01 00:01</inline> </dir>
+						<dir name="pipe"> <pipe/> </dir>
+					</vfs>
+					<libc stdout="/dev/log" stderr="/dev/log" rtc="/dev/rtc" pipe="/pipe"/>
+					<env key="LIBUSB_DEBUG" value="1"/>
+				</inline>
+			</output>
+		</config>
+		<route>
+			<service name="ROM" label="webcam-state">
+				<child name="report_rom" label="webcam-state"/>
+			</service>
+			<any-service> <parent/> </any-service>
+		</route>
+	</start>
+
+	<start name="usb_webcam" caps="350" priority="-1">
+		<resource name="RAM" quantum="64M"/>
+		<route>
+			<service name="ROM" label="config">
+				<child name="webcam-config" label="config"/>
+			</service>
+			<service name="Gui"> <child name="nitpicker_cam"/> </service>
+			<service name="Usb"> <child name="usb_host_drv"/> </service>
+			<service name="Timer"> <child name="timer"/> </service>
+			<any-service> <parent/> <any-child /> </any-service>
+		</route>
+	</start>
+
+	<start name="intel_gpu_drv" caps="1400">
+		<binary name="intel_gpu_drv"/>
+		<resource name="RAM" quantum="64M"/>
+		<provides>
+			<service name="Gpu"/>
+			<service name="Platform"/>
+		</provides>
+		<route>
+			<service name="ROM" label="config"> <parent label="gpu_drv.config"/> </service>
+			<service name="Platform"> <child name="platform_drv"/> </service>
+			<service name="IO_PORT">  <parent/> </service>
+			<service name="IO_MEM">   <parent/> </service>
+			<service name="IRQ">      <parent/> </service>
+			<service name="ROM">      <parent/> </service>
+			<service name="PD">       <parent/> </service>
+			<service name="CPU">      <parent/> </service>
+			<service name="LOG">      <parent/> </service>
+			<service name="RM">      <parent/> </service>
+			<service name="Timer">    <child name="timer"/> </service>
+		</route>
+	</start>
+
+	<start name="vbox" priority="-2" caps="30000">
+
+		<binary name="virtualbox6" />
+		<resource name="RAM" quantum="9600M"/>
+		<config ld_verbose="yes"
+		        vbox_file="virtualbox6.vbox"
+		        vm_name="ubuntu_20_04"
+		        xhci="yes" capslock="NOROM">
+			<webcam width="640" height="480" fps="30" vertical_flip="false" screen_size="false" report="true"/>
+			<libc stdout="/dev/log" stderr="/dev/log" rtc="/dev/rtc" pipe="/pipe"/>
+			<vfs>
+			}
+append_if $use_iso config {
+				<rom name="genode.iso"/>}
+
+append config {
+				<dir name="dev">
+					<log/> <rtc/> <null/> <zero/> <gpu/> <terminal/>
+				</dir>
+				<dir name="pipe"> <pipe/> </dir>
+				<dir name="shared">
+					<fs label="shared"/>
+				</dir>
+				<rom name="VBoxSharedFolders.so"/>
+				<fs/>
+			</vfs>
+			<arg value="virtualbox"/>
+			<env key="VBOX_USER_HOME" value="/"/>
+			<env key="VBOX_LOG_DEST" value="file=/dev/log"/>
+			<env key="VBOX_LOG" value="-*.e.l.f"/>
+			<env key="VBOX_RELEASE_LOG_DEST" value="file=/dev/log"/>
+			<env key="VBOX_RELEASE_LOG" value="-*.e.l.f"/>
+			<!-- <env key="INTEL_DEBUG" value="buf, submit, pc, sync"/> -->
+		</config>
+		<route>
+			<!--<service name="CPU"> <child name="cpu_sampler"/> </service>-->
+			<service name="Nic"> <child name="nic_router"/> </service>
+			<service name="File_system" label="shared"> <child name="shared_fs"/> </service>
+			<service name="File_system">             <child name="rump_fs"/> </service>
+			<service name="Report" label="shape">    <child name="pointer"/></service>
+			<service name="Report">                  <child name="report_rom" /></service>
+			<service name="ROM" label="usb_devices"> <child name="usb_report_rom" /> </service>
+			<service name="ROM" label="clipboard"> <child name="report_rom" /> </service>
+			<service name="ROM" label="VBoxSharedFolders.so">
+				<parent label="virtualbox6-sharedfolders.lib.so"/> </service>
+			<service name="ROM" label="mesa_gpu_drv.lib.so">
+				<parent label="mesa_gpu-iris.lib.so" /> </service>
+			<service name="Report" label="clipboard"> <child name="report_rom" /> </service>
+			<!--<service name="ROM" label="capslock">    <child name="dynamic-config"/> </service>-->
+			<service name="Capture"> <child name="nitpicker_cam"/> </service>
+			<service name="Gui" label="threed"> <child name="nitpicker_cam"/></service>
+			<service name="Gui"> <child name="nitpicker"/> </service>
+			<any-service> <parent/> <any-child /> </any-service>
+		</route>
+	</start>
+</config>}
+
+install_config $config
+
+if {$use_iso} {
+set use_os genode
+} else {
+set use_os [get_os]
+}
+
+#catch { exec rm bin/machine.vbox }
+#exec cp "bin/machine.vbox.$use_os" bin/machine.vbox
+
+append boot_modules {
+	core timer init nvme_drv part_block top cpu_sampler cpu_sampler_platform.lib.so
+	acpi_drv report_rom legacy_pc_platform_drv ps2_drv fs_rom usb_report_filter x86_pc_usb_host_drv rtc_drv
+	log_terminal
+	event_filter ipxe_nic_drv nitpicker pointer dynamic_rom virtualbox6
+	vfs
+	vfs_pipe.lib.so vfs_import.lib.so
+	vfs_rump.lib.so rump.lib.so rump_fs.lib.so
+	libc.lib.so vfs.lib.so libm.lib.so
+	libiconv.lib.so stdcxx.lib.so
+	qemu-usb.lib.so usb_webcam
+	libusb.lib.so libuvc.lib.so libyuv.lib.so
+	jpeg.lib.so
+	gui_fb
+	rom_filter
+	usb_hid_drv nic_router
+	null
+	virtualbox6-sharedfolders.lib.so
+	mesa.lib.so expat.lib.so glapi.lib.so libdrm.lib.so zlib.lib.so egl.lib.so
+	virtualbox6-shaderlib.lib.so gpu_drv.config
+	mesa_gpu-iris.lib.so intel_gpu_drv intel_fb_drv
+	vfs_gpu.lib.so top
+}
+
+append_if $use_iso boot_modules { genode.iso }
+
+# evaluated by the run tool
+proc binary_name_cpu_sampler_platform_lib_so { } {
+	return "cpu_sampler_platform-nova.lib.so"
+}
+
+build_boot_image $boot_modules
+
+run_genode_until forever
