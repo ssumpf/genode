@@ -680,7 +680,7 @@ Kannste irgendwas rein hacken.
 		<binary name="virtualbox6" />
 		<resource name="RAM" quantum="9600M"/>
 		<config ld_verbose="yes"
-		        vbox_file="virtualbox6.vbox"
+		        vbox_file="virtualbox6_debug.vbox"
 		        vm_name="ubuntu_20_04"
 		        xhci="yes" capslock="NOROM">
 			<webcam width="640" height="480" fps="30" vertical_flip="false" screen_size="false" report="true"/>
@@ -699,6 +699,7 @@ append config {
 					<fs label="shared"/>
 				</dir>
 				<rom name="VBoxSharedFolders.so"/>
+				<rom name="virtualbox6_debug.vbox"/>
 				<fs/>
 			</vfs>
 			<arg value="virtualbox"/>
@@ -765,6 +766,7 @@ append boot_modules {
 	virtualbox6-shaderlib.lib.so gpu_drv.config
 	mesa_gpu-iris.lib.so intel_gpu_drv intel_fb_drv
 	vfs_gpu.lib.so top
+	virtualbox6_debug.vbox
 }
 
 append_if $use_iso boot_modules { genode.iso }
