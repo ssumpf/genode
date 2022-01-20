@@ -20,14 +20,15 @@
 		<rom label="mesa.lib.so"/>
 		<rom label="stdcxx.lib.so"/>
 		<rom label="vfs.lib.so"/>
+		<rom label="vfs_gpu.lib.so"/>
 		<rom label="zlib.lib.so"/>
 	</content>
 
-	<config>
+	<config ld_verbose="yes">
 		<libc stdout="/dev/log" stderr="/dev/log" rtc="/dev/rtc" />
 		<vfs>
 			<dir name="dev">
-				<log/> <inline name="rtc">2000-01-01 00:00</inline>
+				<log/> <gpu/> <inline name="rtc">2000-01-01 00:00</inline>
 			</dir>
 		</vfs>
 		<env key="GALLIUM_HUD" value="fps"/>
