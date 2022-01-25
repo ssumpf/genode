@@ -51,3 +51,15 @@ void __free_pages(struct page * page, unsigned int order)
 	lx_emul_mem_free(virt_addr);
 	lx_emul_mem_free(page);
 }
+
+
+struct page * __alloc_pages(gfp_t gfp, unsigned int order, int preferred_nid,
+                            nodemask_t * nodemask)
+{
+	unsigned const nr_pages = (1u << order);
+
+	void const  *ptr  = lx_emul_mem_alloc_aligned(PAGE_SIZE*nr_pages, PAGE_SIZE);
+	struct page *page = lx_emul_virt_to_pages(ptr, nr_pages);
+
+	return page;
+}
