@@ -82,7 +82,7 @@ class Platform::Device::Mmio : Range
 
 	private:
 
-		Genode::Constructible<Genode::Attached_dataspace> _attached_ds { };
+		Constructible<Attached_dataspace> _attached_ds { };
 
 		void *_local_addr();
 
@@ -115,7 +115,7 @@ class Platform::Device::Irq : Noncopyable
 		Device &_device;
 		Index   _index;
 
-		Genode::Constructible<Genode::Irq_session_client> _irq { };
+		Constructible<Irq_session_client> _irq { };
 
 	public:
 

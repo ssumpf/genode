@@ -33,15 +33,15 @@ namespace Platform {
 
 struct Platform::Connection
 {
-	Genode::Env &_env;
+	Env &_env;
 
-	char                                    _devices_node_buffer[4096u] { };
-	Genode::Constructible<Genode::Xml_node> _devices_node { };
+	char                    _devices_node_buffer[4096u] { };
+	Constructible<Xml_node> _devices_node { };
 
-	Genode::Constructible<Legacy_platform::Connection> _legacy_platform { };
+	Constructible<Legacy_platform::Connection> _legacy_platform { };
 	struct Device
 	{
-		using Name = Genode::String<16>;
+		using Name = String<16>;
 
 		Name name { };
 		Legacy_platform::Device_capability cap { };
@@ -51,11 +51,11 @@ struct Platform::Connection
 	};
 
 	enum : unsigned char { MAX_DEVICES = 4 };
-	Genode::Constructible<Device> _devices_list[MAX_DEVICES] { };
+	Constructible<Device> _devices_list[MAX_DEVICES] { };
 
 	Legacy_platform::Device_capability device_cap(char const *name);
 
-	Connection(Genode::Env &);
+	Connection(Env &);
 
 	/********************************
 	 ** Platform session interface **

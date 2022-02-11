@@ -21,7 +21,10 @@
 #include <platform_session/device.h>
 
 
-using Str = Genode::String<16>;
+using namespace Genode;
+
+
+using Str = String<16>;
 
 template <typename T, typename... TAIL>
 static Str to_string(T const &arg, TAIL &&... args)
@@ -44,8 +47,8 @@ static void scan_resources(Legacy_platform::Device &device,
 }
 
 
-static Genode::String<16> create_device_node(Genode::Xml_generator &xml,
-                                             Legacy_platform::Device &device)
+static Str create_device_node(Xml_generator &xml,
+                              Legacy_platform::Device &device)
 {
 	struct {
 		char const    *key;
@@ -98,14 +101,14 @@ static Genode::String<16> create_device_node(Genode::Xml_generator &xml,
 }
 
 
-Platform::Connection::Connection(Genode::Env &env)
+Platform::Connection::Connection(Env &env)
 :
 	_env { env }
 {
 	try {
 		_legacy_platform.construct(env);
 	} catch (...) {
-		Genode::error("could not construct legacy platform connection");
+		error("could not construct legacy platform connection");
 		throw;
 	}
 
@@ -113,9 +116,9 @@ Platform::Connection::Connection(Genode::Env &env)
 	_legacy_platform->upgrade_ram(32768);
 	_legacy_platform->upgrade_caps(8);
 
-	Genode::Xml_generator xml { _devices_node_buffer,
-	                            sizeof (_devices_node_buffer),
-	                            "devices", [&] () {
+	Xml_generator xml { _devices_node_buffer,
+	                    sizeof (_devices_node_buffer),
+	                    "devices", [&] () {
 		_legacy_platform->with_upgrade([&] () {
 
 			/* scan the virtual bus but limit to MAX_DEVICES */
@@ -155,11 +158,11 @@ Platform::Connection::device_cap(char const *name)
 void Platform::Connection::update() { }
 
 
-Genode::Ram_dataspace_capability
+Ram_dataspace_capability
 Platform::Connection::alloc_dma_buffer(size_t size, Cache)
 {
 	return _legacy_platform->with_upgrade([&] () {
-		return _legacy_platform->alloc_dma_buffer(size, Genode::Cache::UNCACHED);
+		return _legacy_platform->alloc_dma_buffer(size, Cache::UNCACHED);
 	});
 }
 
@@ -170,7 +173,7 @@ void Platform::Connection::free_dma_buffer(Ram_dataspace_capability ds_cap)
 }
 
 
-Genode::addr_t Platform::Connection::dma_addr(Ram_dataspace_capability ds_cap)
+addr_t Platform::Connection::dma_addr(Ram_dataspace_capability ds_cap)
 {
 	return _legacy_platform->dma_addr(ds_cap);
 }
@@ -195,7 +198,7 @@ static Legacy_platform::Device::Access_size convert(Platform::Device::Config_spa
 
 template <typename FN>
 static void apply(Platform::Device const &device,
-                  Genode::Xml_node const &devices,
+                  Xml_node const &devices,
                   FN const &fn)
 {
 	using namespace Genode;
@@ -211,7 +214,7 @@ static void apply(Platform::Device const &device,
 
 
 static unsigned bar_size(Platform::Device const &dev,
-                         Genode::Xml_node const &devices, unsigned bar)
+                         Xml_node const &devices, unsigned bar)
 {
 	if (bar > 6)
 		return 0;
@@ -233,10 +236,8 @@ static unsigned bar_size(Platform::Device const &dev,
 
 
 static unsigned char irq_line(Platform::Device const &dev,
-                              Genode::Xml_node const &devices)
+                              Xml_node const &devices)
 {
-	using namespace Genode;
-
 	enum : unsigned char { INVALID_IRQ_LINE = 0xffu };
 	unsigned char irq = INVALID_IRQ_LINE;
 
@@ -261,7 +262,7 @@ Platform::Device::Device(Connection &platform, Name name)
 	_name       { name }
 {
 	if (!_device_cap.valid()) {
-		Genode::error(__func__, ": could not get device capability");
+		error(__func__, ": could not get device capability");
 		throw -1;
 	}
 }
@@ -315,7 +316,7 @@ void Platform::Device::Config_space::write(unsigned char address,
 }
 
 
-Genode::size_t Platform::Device::Mmio::size() const
+size_t Platform::Device::Mmio::size() const
 {
 	return _attached_ds.constructed() ? _attached_ds->size() : 0;
 }
@@ -326,10 +327,10 @@ void *Platform::Device::Mmio::_local_addr()
 	if (!_attached_ds.constructed()) {
 		Legacy_platform::Device_client device { _device._device_cap };
 
-		Genode::uint8_t const id =
-			device.phys_bar_to_virt((Genode::uint8_t)_index.value);
+		uint8_t const id =
+			device.phys_bar_to_virt((uint8_t)_index.value);
 
-		Genode::Io_mem_session_capability io_mem_cap =
+		Io_mem_session_capability io_mem_cap =
 			device.io_mem(id);
 
 		Io_mem_session_client io_mem_client(io_mem_cap);
@@ -349,7 +350,7 @@ Platform::Device::Irq::Irq(Platform::Device &device, Index index)
 {
 	Legacy_platform::Device_client client { _device._device_cap };
 
-	_irq.construct(client.irq((Genode::uint8_t)index.value));
+	_irq.construct(client.irq((uint8_t)index.value));
 }
 
 void Platform::Device::Irq::ack()
