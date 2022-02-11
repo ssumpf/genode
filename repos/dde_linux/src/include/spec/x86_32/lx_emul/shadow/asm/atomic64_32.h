@@ -56,4 +56,4 @@ void arch_atomic64_xor(s64 i, atomic64_t *v);
 #define arch_atomic64_fetch_add arch_atomic64_fetch_add
 #define arch_atomic64_fetch_sub(i, v)   arch_atomic64_fetch_add(-(i), (v))
 
-#endif _ASM__ATOMIC64_32_H_
+#endif /* _ASM__ATOMIC64_32_H_ */

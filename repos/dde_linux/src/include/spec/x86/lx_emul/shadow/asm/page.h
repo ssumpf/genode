@@ -64,7 +64,7 @@ typedef struct page *pgtable_t;
 static inline struct page *virt_to_page(void const *v) { return lx_emul_virt_to_pages(v, 1U); }
 #define page_to_virt(p) ((p)->virtual)
 
-#define virt_addr_valid(kaddr) (kaddr != 0UL)
+#define virt_addr_valid(kaddr) ((unsigned long)kaddr != 0UL)
 
 #endif /* __ASSEMBLY__ */
 
