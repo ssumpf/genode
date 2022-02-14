@@ -220,7 +220,7 @@ class Sd_card::Driver : public  Driver_base,
 		                                          &Driver::_handle_irq };
 		Platform::Device::Irq   _irq            { *this };
 		Card_info               _card_info      { _init() };
-		Adma2::Table            _adma2_table    { _env.ram(), _env.rm() };
+		Adma2::Table            _adma2_table    { _platform };
 
 		static bool _supported_host_version(Hostver::access_t hostver);
 		static void _watermark_level(Wml::access_t &wml);
