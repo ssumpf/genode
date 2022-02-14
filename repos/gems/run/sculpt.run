@@ -849,10 +849,11 @@ exec sed -i "/config/s/arch=\"\"/arch=\"[depot_spec]\"/" [initial_config_file de
 ##
 ## Depot content integrated in the Sculpt image
 ##
-
-create_tar_from_depot_binaries [run_dir]/genode/depot.tar \
-                               {*}[pkg_archive_paths [referenced_pkg_values]]
-
+set referenced_pkg_values [referenced_pkg_values]
+if {[llength $referenced_pkg_values] > 0} {
+	create_tar_from_depot_binaries [run_dir]/genode/depot.tar \
+	                               {*}[pkg_archive_paths $referenced_pkg_values]
+}
 
 #
 # Create initial_config.tar to be mounted at the root of the config fs
