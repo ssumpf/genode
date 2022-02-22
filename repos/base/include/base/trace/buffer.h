@@ -322,7 +322,7 @@ class Genode::Trace::Partitioned_buffer
 		int                volatile _state;
 		int                volatile _consumer_lock;
 
-		Simple_buffer *_secondary;
+		size_t         _secondary_offset;
 		Simple_buffer  _primary[0];
 
 		/*
@@ -330,12 +330,15 @@ class Genode::Trace::Partitioned_buffer
 		 * No other member variables must follow.
 		 */
 
+		Simple_buffer *_secondary() const {
+			return reinterpret_cast<Simple_buffer*>((addr_t)_primary + _secondary_offset); }
+
 		Simple_buffer &_producer()
 		{
 			if (State::Producer::get(_state) == PRIMARY)
 				return *_primary;
 
-			return *_secondary;
+			return *_secondary();
 		}
 
 		Simple_buffer const &_consumer() const
@@ -343,7 +346,7 @@ class Genode::Trace::Partitioned_buffer
 			if (State::Consumer::get(_state) == PRIMARY)
 				return *_primary;
 
-			return *_secondary;
+			return *_secondary();
 		}
 
 		/**

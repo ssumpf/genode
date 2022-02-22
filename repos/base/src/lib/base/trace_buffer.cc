@@ -29,15 +29,14 @@ void Trace::Partitioned_buffer::init(size_t size)
 	/* compute number of bytes available for partitions */
 	size_t const header_size  = (addr_t)&_primary - (addr_t)this;
 	size_t const avail_size   = size - header_size;
-	size_t const primary_size = align_natural(avail_size / 2);
 
-	_secondary = reinterpret_cast<Simple_buffer*>((addr_t)&_primary + primary_size);
+	_secondary_offset = align_natural(avail_size / 2);
 
-	_primary  ->init(primary_size);
-	_secondary->init(avail_size - primary_size);
+	_primary    ->init(_secondary_offset);
+	_secondary()->init(avail_size - _secondary_offset);
 
 	/* mark first entry in secondary partition as padding instead of head */
-	_secondary->_head_entry()->mark(Simple_buffer::_Entry::PADDING);
+	_secondary()->_head_entry()->mark(Simple_buffer::_Entry::PADDING);
 
 	_state = State::Producer::bits(PRIMARY) | State::Consumer::bits(SECONDARY);
 
