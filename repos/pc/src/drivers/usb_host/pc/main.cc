@@ -50,7 +50,37 @@ struct Main : private Entrypoint::Io_progress_handler
 	                                        &Main::handle_signal };
 	Sliced_heap            sliced_heap    { env.ram(), env.rm()  };
 
-	Attached_rom_dataspace config_rom { env, "config" };
+	struct Initial_config
+	{
+		Attached_rom_dataspace _config;
+
+		Io_signal_handler<Initial_config> _sigh;
+
+		void _dummy_handle() { }
+
+		Initial_config(Env &env)
+		:
+			_config(env, "config"),
+			_sigh(env.ep(), *this, &Initial_config::_dummy_handle)
+		{
+			/*
+			 * Defer the startup of the USB driver until the first configuration
+			 * becomes available. This is needed in scenarios where the configuration
+			 * is dynamically generated and supplied to the USB driver via the
+			 * report-ROM service.
+			 */
+
+			_config.sigh(_sigh);
+			_config.update();
+
+			while (_config.xml().type() != "config") {
+				env.ep().wait_and_dispatch_one_io_signal();
+				_config.update();
+			}
+		}
+
+		Xml_node xml() { return _config.xml(); }
+	};
 
 	/**
 	 * Entrypoint::Io_progress_handler
@@ -68,7 +98,11 @@ struct Main : private Entrypoint::Io_progress_handler
 
 	Main(Env & env) : env(env)
 	{
-		_bios_handoff = config_rom.xml().attribute_value("bios_handoff", true);
+		{
+			Initial_config config { env };
+
+			_bios_handoff = config.xml().attribute_value("bios_handoff", true);
+		}
 
 		Lx_kit::initialize(env);
 
