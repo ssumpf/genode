@@ -27,6 +27,7 @@ struct Genode::Sandbox::Library : ::Sandbox::State_reporter::Producer,
                                   ::Sandbox::Child::Default_caps_accessor,
                                   ::Sandbox::Child::Ram_limit_accessor,
                                   ::Sandbox::Child::Cap_limit_accessor,
+                                  ::Sandbox::Child::Cpu_limit_accessor,
                                   ::Sandbox::Start_model::Factory,
                                   ::Sandbox::Parent_provides_model::Factory
 {
@@ -44,6 +45,7 @@ struct Genode::Sandbox::Library : ::Sandbox::State_reporter::Producer,
 	using Prio_levels    = ::Sandbox::Prio_levels;
 	using Ram_info       = ::Sandbox::Ram_info;
 	using Cap_info       = ::Sandbox::Cap_info;
+	using Cpu_quota      = ::Sandbox::Cpu_quota;
 	using Config_model   = ::Sandbox::Config_model;
 	using Start_model    = ::Sandbox::Start_model;
 	using Preservation   = ::Sandbox::Preservation;
@@ -90,6 +92,8 @@ struct Genode::Sandbox::Library : ::Sandbox::State_reporter::Producer,
 
 	unsigned _child_cnt = 0;
 
+	Cpu_quota _avail_cpu { .percent = 100 };
+
 	Ram_quota _avail_ram() const
 	{
 		Ram_quota avail_ram = _env.pd().avail_ram();
@@ -128,6 +132,11 @@ struct Genode::Sandbox::Library : ::Sandbox::State_reporter::Producer,
 	 * Child::Cap_limit_accessor interface
 	 */
 	Cap_quota resource_limit(Cap_quota const &) const override { return _avail_caps(); }
+
+	/**
+	 * Child::Cpu_limit_accessor interface
+	 */
+	Cpu_quota resource_limit(Cpu_quota const &) const override { return _avail_cpu; }
 
 	/**
 	 * State_reporter::Producer interface
@@ -256,6 +265,10 @@ void Genode::Sandbox::Library::_destroy_abandoned_children()
 		/* destroy child once all environment sessions are gone */
 		if (child.env_sessions_closed()) {
 			_children.remove(&child);
+
+			/* replenish available CPU quota */
+			_avail_cpu.percent += child.cpu_quota().percent;
+
 			destroy(_heap, &child);
 		}
 	});
@@ -301,10 +314,12 @@ bool Genode::Sandbox::Library::ready_to_create_child(Start_model::Name    const 
 		Child &child = *new (_heap)
 			Child(_env, _heap, *_verbose,
 			      Child::Id { ++_child_cnt }, _state_reporter,
-			      start_node, *this, *this, _children,
-			      *this, *this, _prio_levels, _effective_affinity_space(),
+			      start_node, *this, *this, _children, *this, *this, *this,
+			      _prio_levels, _effective_affinity_space(),
 			      _parent_services, _child_services, _local_services);
 		_children.insert(&child);
+
+		_avail_cpu.percent -= min(_avail_cpu.percent, child.cpu_quota().percent);
 
 		if (start_node.has_sub_node("provides"))
 			_server_appeared_or_disappeared = true;
