@@ -41,6 +41,12 @@
 ##
 
 #
+# We initially enforce .SHELLFLAGS flags in case build.mk called recursively
+# (from tool/run) as SHELL will be reset to /bin/sh before setting up bash.
+#
+.SHELLFLAGS := -c
+
+#
 # Whenever using the 'run/%' rule and the run tool spawns this Makefile again
 # when encountering a 'build' step, the build.conf is included a second time,
 # with the content taken from the environment variable. We need to reset the
