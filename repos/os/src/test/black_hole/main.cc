@@ -63,14 +63,16 @@ class Black_hole_test::Nic_test
 		{
 			for (; _nr_of_sent_pkts < 40; _nr_of_sent_pkts++) {
 
-				if (!_connection.tx()->ready_to_submit())
-					break;
-
+				if (!_connection.tx()->ready_to_submit()) {
+					class Submit_queue_full { };
+					throw Submit_queue_full { };
+				}
 				Packet_descriptor pkt;
 				try { pkt = _connection.tx()->alloc_packet(PKT_SIZE); }
 				catch (...) {
-					break; }
-
+					class Packet_alloc_failed { };
+					throw Packet_alloc_failed { };
+				}
 				_connection.tx()->submit_packet(pkt);
 			}
 		}
@@ -168,14 +170,16 @@ class Black_hole_test::Uplink_test
 		{
 			for (; _nr_of_sent_pkts < 30; _nr_of_sent_pkts++) {
 
-				if (!_connection->tx()->ready_to_submit())
-					break;
-
+				if (!_connection->tx()->ready_to_submit()) {
+					class Submit_queue_full { };
+					throw Submit_queue_full { };
+				}
 				Packet_descriptor pkt;
 				try { pkt = _connection->tx()->alloc_packet(PKT_SIZE); }
 				catch (...) {
-					break; }
-
+					class Packet_alloc_failed { };
+					throw Packet_alloc_failed { };
+				}
 				_connection->tx()->submit_packet(pkt);
 			}
 		}
