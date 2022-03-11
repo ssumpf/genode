@@ -18,14 +18,18 @@
 #include <base/env.h>
 #include <base/attached_rom_dataspace.h>
 
-namespace Lx_kit { struct Initial_config; }
+namespace Lx_kit {
+	using namespace Genode;
+
+	struct Initial_config;
+}
 
 
 struct Lx_kit::Initial_config
 {
 	Attached_rom_dataspace rom;
 
-	void _handle_signal() { }
+	void _handle_signal() { rom.update(); }
 
 	Initial_config(Genode::Env &env) : rom(env, "config")
 	{
@@ -40,12 +44,12 @@ struct Lx_kit::Initial_config
 			env.ep(), *this, &Initial_config::_handle_signal };
 
 		rom.sigh(sigh);
-		rom.update();
+		_handle_signal();
 
-		while (rom.xml().type() != "config") {
+		while (rom.xml().type() != "config")
 			env.ep().wait_and_dispatch_one_io_signal();
-			rom.update();
-		}
+
+		rom.sigh(Signal_context_capability());
 	}
 };
 
