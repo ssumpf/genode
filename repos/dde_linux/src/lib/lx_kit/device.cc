@@ -110,7 +110,7 @@ bool Device::io_mem(addr_t phys_addr, size_t size)
 }
 
 
-void * Device::io_mem_local_addr(addr_t phys_addr, size_t size)
+void * Device::io_mem_local_addr(addr_t phys_addr, size_t size, Cache cache)
 {
 	void * ret = nullptr;
 	_for_each_io_mem([&] (Io_mem & io) {
@@ -122,7 +122,7 @@ void * Device::io_mem_local_addr(addr_t phys_addr, size_t size)
 		if (!io.io_mem.constructed())
 			io.io_mem.construct(*_pdev, io.idx);
 
-		ret = (void*)((addr_t)io.io_mem->local_addr<void>()
+		ret = (void*)((addr_t)io.io_mem->local_addr<void>(cache)
 		              + (phys_addr - io.addr));
 	});
 	return ret;

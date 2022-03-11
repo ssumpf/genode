@@ -86,10 +86,11 @@ class Platform::Device::Mmio : Range
 
 		Constructible<Attached_dataspace> _attached_ds { };
 
-		void *_local_addr();
+		void *_local_addr(Cache);
 
 		Device &_device;
 		Index   _index;
+		Cache   _cache { Cache::UNCACHED };
 
 	public:
 
@@ -102,7 +103,8 @@ class Platform::Device::Mmio : Range
 		size_t size() const;
 
 		template <typename T>
-		T *local_addr() { return reinterpret_cast<T *>(_local_addr()); }
+		T *local_addr(Cache cache) {
+			return reinterpret_cast<T *>(_local_addr(cache)); }
 };
 
 

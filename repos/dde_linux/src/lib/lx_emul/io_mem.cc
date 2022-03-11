@@ -23,7 +23,26 @@ void * lx_emul_io_mem_map(unsigned long phys_addr,
 	void * ret = nullptr;
 	env().devices.for_each([&] (Device & d) {
 		if (d.io_mem(phys_addr, size))
-			ret = d.io_mem_local_addr(phys_addr, size);
+			ret = d.io_mem_local_addr(phys_addr, size, Cache::UNCACHED);
+	});
+
+	if (!ret)
+		error("memory-mapped I/O resource ", Hex(phys_addr),
+		      " (size=", Hex(size), ") unavailable");
+	return ret;
+}
+
+
+void * lx_emul_io_mem_map_wc(unsigned long phys_addr,
+                             unsigned long size)
+{
+	using namespace Lx_kit;
+	using namespace Genode;
+
+	void * ret = nullptr;
+	env().devices.for_each([&] (Device & d) {
+		if (d.io_mem(phys_addr, size))
+			ret = d.io_mem_local_addr(phys_addr, size, Cache::WRITE_COMBINED);
 	});
 
 	if (!ret)

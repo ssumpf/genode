@@ -139,7 +139,7 @@ class Lx_kit::Device : List<Device>::Element
 		clk *  clock(const char * name);
 		clk *  clock(unsigned idx);
 		bool   io_mem(addr_t phys_addr, size_t size);
-		void * io_mem_local_addr(addr_t phys_addr, size_t size);
+		void * io_mem_local_addr(addr_t phys_addr, size_t size, Cache);
 		bool   irq_unmask(unsigned irq);
 		void   irq_mask(unsigned irq);
 		void   irq_ack(unsigned irq);

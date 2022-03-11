@@ -19,6 +19,7 @@ extern "C" {
 #endif
 
 void * lx_emul_io_mem_map(unsigned long phys_addr, unsigned long size);
+void * lx_emul_io_mem_map_wc(unsigned long phys_addr, unsigned long size);
 
 #ifdef __cplusplus
 }

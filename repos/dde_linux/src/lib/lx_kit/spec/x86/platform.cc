@@ -348,7 +348,7 @@ size_t Platform::Device::Mmio::size() const
 }
 
 
-void *Platform::Device::Mmio::_local_addr()
+void *Platform::Device::Mmio::_local_addr(Cache cache)
 {
 	if (!_attached_ds.constructed()) {
 		Legacy_platform::Device_client device { _device._device_cap };
@@ -357,13 +357,23 @@ void *Platform::Device::Mmio::_local_addr()
 			device.phys_bar_to_virt((uint8_t)_index.value);
 
 		Io_mem_session_capability io_mem_cap =
-			device.io_mem(id);
+			device.io_mem(id, cache);
+
+		_cache = cache;
 
 		Io_mem_session_client io_mem_client(io_mem_cap);
 
 		_attached_ds.construct(Lx_kit::env().env.rm(),
 		                       io_mem_client.dataspace());
 	}
+
+	if (_cache != cache)
+		error("io_mem caching attributes are not same !!!",
+		      _cache == Cache::UNCACHED ? "UNCACHED" :
+		      _cache == Cache::WRITE_COMBINED ? "WRITECOMBINED" : "CACHED",
+		      " , requested ",
+		      cache == Cache::UNCACHED ? "UNCACHED" :
+		      cache == Cache::WRITE_COMBINED ? "WRITECOMBINED" : "CACHED");
 
 	return _attached_ds->local_addr<void*>();
 }
