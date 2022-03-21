@@ -116,6 +116,8 @@ static void reconfigure(void * data)
 	struct drm_display_mode *mode           = NULL;
 	struct drm_display_mode  mode_preferred = {};
 	struct drm_mode_set     *mode_set       = NULL;
+	struct fb_info           report_fb_info = {};
+	bool                     report_fb      = false;
 
 	if (!i915_fb())
 		return;
@@ -125,6 +127,19 @@ static void reconfigure(void * data)
 
 	if (!preferred_mode(&mode_preferred))
 		return;
+
+	if (!mode_preferred.hdisplay && !mode_preferred.vdisplay) {
+		/*
+		 * Set a mode, otherwise during boot we get distorted output in case
+		 * multiple connectors are attached, they have different maximal
+		 * resolutions and the chosen virtual resolution is bigger than
+		 * the physical fb.
+		 */
+		if (i915_fb()->fbdev) {
+			mode_preferred.hdisplay = i915_fb()->fbdev->var.xres_virtual;
+			mode_preferred.vdisplay = i915_fb()->fbdev->var.yres_virtual;
+		}
+	}
 
 	if (mode_preferred.hdisplay && mode_preferred.vdisplay) {
 		unsigned ret = 0;
@@ -146,6 +161,9 @@ static void reconfigure(void * data)
 
 	if (!i915_fb()->fb)
 		return;
+
+	/* data is adjusted if virtual resolution is not same size as physical fb */
+	report_fb_info = *i915_fb()->fbdev;
 
 	drm_client_for_each_modeset(mode_set, &(i915_fb()->client)) {
 		struct drm_display_mode *mode_match = NULL;
@@ -179,9 +197,8 @@ static void reconfigure(void * data)
 				break;
 			}
 
-			/* if nothing or invalid mode is configured use first */
+			/* if invalid, mode is configured in second loop below */
 			if (conf_mode.width == 0 || conf_mode.height == 0) {
-				mode_match = mode;
 				break;
 			}
 
@@ -216,8 +233,9 @@ static void reconfigure(void * data)
 
 			/* no matching mode ? */
 			if (!mode_match) {
-				/* use first mode and enforce the preferred one */
+				/* use first mode */
 				mode_match = mode;
+				/* set up preferred resolution as virtual, if nothing is enforced */
 				if (!conf_mode.preferred &&
 					mode_preferred.hdisplay &&
 					mode_preferred.vdisplay) {
@@ -266,20 +284,14 @@ static void reconfigure(void * data)
 
 				DRM_MODESET_LOCK_ALL_END(i915_fb()->dev, ctx, ret);
 
-				if (!conf_mode.enabled)
-					printk("%s: disable -> encoder=%p encoder->crtc=%p\n",
-					       connector->name, connector->encoder, connector->encoder ? connector->encoder->crtc : NULL);
-
 				if (!ret) {
-					struct fb_info report = *i915_fb()->fbdev;
+					report_fb = true;
 
 					/* report forced resolution */
 					if (conf_mode.preferred) {
-						report.var.xres_virtual = conf_mode.width;
-						report.var.yres_virtual = conf_mode.height;
+						report_fb_info.var.xres_virtual = conf_mode.width;
+						report_fb_info.var.yres_virtual = conf_mode.height;
 					}
-
-					register_framebuffer(&report);
 				}
 			}
 
@@ -292,6 +304,9 @@ static void reconfigure(void * data)
 			break;
 		}
 	}
+
+	if (report_fb)
+		register_framebuffer(&report_fb_info);
 }
 
 

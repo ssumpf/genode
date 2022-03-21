@@ -220,7 +220,8 @@ extern "C" void lx_emul_framebuffer_ready(void * base, unsigned long,
                                           unsigned phys_height)
 {
 	auto &env = Lx_kit::env().env;
-	auto &fb  = driver(env).fb;
+	auto &drv = driver(env);
+	auto &fb  = drv.fb;
 
 	Capture::Area area(xres, yres);
 	Capture::Area area_phys(phys_width, phys_height);
@@ -240,6 +241,10 @@ extern "C" void lx_emul_framebuffer_ready(void * base, unsigned long,
 
 	Genode::log("framebuffer reconstructed - virtual=", xres, "x", yres,
 	            " physical=", phys_width, "x", phys_height);
+
+	/* re-read config and apply if auto boot config is strange */
+	if (area.count() > area_phys.count())
+		Genode::Signal_transmitter(drv.config_handler).submit();
 }
 
 
@@ -265,8 +270,7 @@ void lx_emul_i915_report_connector(void * lx_data, void * genode_xml,
 		if (brightness <= MAX_BRIGHTNESS)
 			xml.attribute("brightness", brightness);
 
-		if (connected)
-			lx_emul_i915_iterate_modes(lx_data, &xml);
+		lx_emul_i915_iterate_modes(lx_data, &xml);
 	});
 }
 
