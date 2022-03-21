@@ -574,7 +574,11 @@ void Driver_manager::Main::_generate_init_config(Reporter &init_config) const
 
 		xml.node("report", [&] () {
 			xml.attribute("child_ram", true);
+			xml.attribute("child_caps", true);
 			xml.attribute("delay_ms", 2500);
+			xml.attribute("provided", true);
+			xml.attribute("requested", true);
+			xml.attribute("buffer", 1024*1024);
 		});
 
 		xml.node("heartbeat", [&] () { xml.attribute("rate_ms", 2500); });
@@ -712,7 +716,7 @@ void Driver_manager::Main::_generate_usb_drv_config(Reporter &usb_drv_config,
 {
 	Reporter::Xml_generator xml(usb_drv_config, [&] () {
 
-		xml.attribute("bios_handoff", true);
+		xml.attribute("bios_handoff", false);
 
 		xml.node("report", [&] () {
 			xml.attribute("config",  true);
