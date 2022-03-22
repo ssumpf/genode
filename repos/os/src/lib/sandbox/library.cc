@@ -147,6 +147,10 @@ struct Genode::Sandbox::Library : ::Sandbox::State_reporter::Producer,
 	{
 		Cpu_quota const remaining { 100 - min(100u, _transferred_cpu.percent) };
 
+		/* prevent division by zero in 'quota_lim_upscale' */
+		if (remaining.percent == 0)
+			return;
+
 		size_t const fraction =
 			Cpu_session::quota_lim_upscale(quota.percent, remaining.percent);
 
