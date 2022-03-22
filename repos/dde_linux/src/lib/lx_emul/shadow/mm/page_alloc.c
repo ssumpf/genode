@@ -12,6 +12,7 @@
  */
 
 #include <linux/gfp.h>
+#include <linux/version.h>
 #include <lx_emul/page_virt.h>
 
 unsigned long __alloc_pages_bulk(gfp_t gfp,int preferred_nid,
@@ -56,6 +57,10 @@ void __free_pages(struct page * page, unsigned int order)
 }
 
 
+/*
+ * In earlier kernel versions, '__alloc_pages' was an inline function.
+ */
+#if LINUX_VERSION_CODE > KERNEL_VERSION(5,12,0)
 struct page * __alloc_pages(gfp_t gfp, unsigned int order, int preferred_nid,
                             nodemask_t * nodemask)
 {
@@ -68,3 +73,4 @@ struct page * __alloc_pages(gfp_t gfp, unsigned int order, int preferred_nid,
 
 	return page;
 }
+#endif
