@@ -64,26 +64,25 @@ static Str create_device_node(Xml_generator &xml,
 	unsigned char pbdf[3];
 	device.bus_address(&pbdf[0], &pbdf[1], &pbdf[2]);
 
-	unsigned char vbdf[3] = { 0, 0, 0 };
-
 	/*
 	 * The host-bridge is only required by the Intel framebuffer
 	 * driver and has to be located at 00:00.0. For every other
 	 * type of device we simply count upwards.
 	 */
+	unsigned char vbdf[3] = { 0, 0, 0 };
 	unsigned const class_code = device.class_code() >> 8;
 	if (class_code != 0x600 /* host-bridge */) {
 		vbdf[0] = bdf[0]; vbdf[1] = bdf[1]; vbdf[2] = bdf[2];
 		bdf[1]++;
 	}
 
-	warning("override physical BDF ",
-	        Hex(pbdf[0], Hex::OMIT_PREFIX), ":",
-	        Hex(pbdf[1], Hex::OMIT_PREFIX), ".",
-	        Hex(pbdf[2], Hex::OMIT_PREFIX), " -> ",
-	        Hex(vbdf[0], Hex::OMIT_PREFIX), ":",
-	        Hex(vbdf[1], Hex::OMIT_PREFIX), ".",
-	        Hex(vbdf[2], Hex::OMIT_PREFIX));
+	log("override physical BDF ",
+	    Hex(pbdf[0], Hex::OMIT_PREFIX), ":",
+	    Hex(pbdf[1], Hex::OMIT_PREFIX), ".",
+	    Hex(pbdf[2], Hex::OMIT_PREFIX), " -> ",
+	    Hex(vbdf[0], Hex::OMIT_PREFIX), ":",
+	    Hex(vbdf[1], Hex::OMIT_PREFIX), ".",
+	    Hex(vbdf[2], Hex::OMIT_PREFIX));
 
 	Str name = to_string("pci-",
 	                     Hex(vbdf[0], Hex::OMIT_PREFIX), ":",
