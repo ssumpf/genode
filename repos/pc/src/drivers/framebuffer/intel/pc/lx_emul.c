@@ -24,6 +24,10 @@
 #include <drm/drm_managed.h>
 
 
+/* support for arch/x86/lib/delay.c, normally defined in init/main.c */
+unsigned long loops_per_jiffy = (1<<12);
+
+
 struct dma_fence_ops const i915_fence_ops;
 
 /* early_identify_cpu() in linux sets this up normally, used by drm_cache */
@@ -130,30 +134,9 @@ int dma_supported(struct device * dev, u64 mask)
 }
 
 
-void __const_udelay(unsigned long xloops)
-{
-	lx_emul_trace(__func__);
-	lx_emul_time_udelay(xloops / 0x10C7UL);
-}
-
-
-void __udelay(unsigned long usecs)
-{
-	lx_emul_trace(__func__);
-	lx_emul_time_udelay(usecs);
-}
-
-
 void yield()
 {
-	unsigned long usecs = 10;
-
-	lx_emul_trace(__func__);
-
-	printk("%s: called ? -> %lu us\n", __func__, usecs);
-
-	lx_emul_time_udelay(usecs);
-
+	lx_emul_task_schedule(false /* no block */);
 }
 
 

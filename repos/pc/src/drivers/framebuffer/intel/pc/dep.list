@@ -17,11 +17,13 @@ arch/x86/include/asm/kvm_para.h
 arch/x86/include/asm/memtype.h
 arch/x86/include/asm/mmu_context.h
 arch/x86/include/asm/nmi.h
+arch/x86/include/asm/mwait.h
 arch/x86/include/asm/paravirt.h
 arch/x86/include/asm/pci.h
 arch/x86/include/asm/pti.h
 arch/x86/include/asm/set_memory.h
 arch/x86/include/asm/special_insns.h
+arch/x86/include/asm/timer.h
 arch/x86/include/asm/tlbflush.h
 arch/x86/include/asm/tlb.h
 arch/x86/include/asm/vga.h
