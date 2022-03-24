@@ -380,3 +380,11 @@ void intel_vgpu_detect(struct drm_i915_private * dev_priv)
 
 	printk("disabling PPGTT to avoid GPU code paths\n");
 }
+
+
+void call_rcu(struct rcu_head * head, rcu_callback_t func)
+{
+	lx_emul_trace(__func__);
+
+	func(head);
+}

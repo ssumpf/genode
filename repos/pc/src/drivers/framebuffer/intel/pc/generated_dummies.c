@@ -243,14 +243,6 @@ bool bxt_dsi_pll_is_enabled(struct drm_i915_private * dev_priv)
 }
 
 
-#include <linux/rcupdate.h>
-
-void call_rcu(struct rcu_head * head,rcu_callback_t func)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 #include <linux/fb.h>
 
 void cfb_copyarea(struct fb_info * p,const struct fb_copyarea * area)
