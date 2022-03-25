@@ -338,6 +338,24 @@ void gen8_gt_irq_handler(struct intel_gt * gt,u32 master_ctl)
 }
 
 
+void gen11_gt_irq_reset(struct intel_gt * gt)
+{
+	lx_emul_trace(__func__);
+}
+
+
+void gen11_gt_irq_handler(struct intel_gt * gt, const u32 master_ctl)
+{
+	lx_emul_trace(__func__);
+}
+
+
+void gen11_gt_irq_postinstall(struct intel_gt * gt)
+{
+	lx_emul_trace(__func__);
+}
+
+
 void gen8_gt_irq_reset(struct intel_gt * gt)
 {
 	lx_emul_trace(__func__);
@@ -663,12 +681,6 @@ int __init i915_global_scheduler_init(void)
 }
 
 
-void intel_ggtt_init_fences(struct i915_ggtt * ggtt)
-{
-	lx_emul_trace(__func__);
-}
-
-
 void pci_fixup_device(enum pci_fixup_pass pass,struct pci_dev * dev)
 {
 	lx_emul_trace(__func__);
@@ -736,4 +748,10 @@ bool irq_work_queue(struct irq_work * work)
 void iomap_free(resource_size_t base, unsigned long size)
 {
 	lx_emul_trace_and_stop(__func__);
+}
+
+
+void i915_gem_object_release_mmap_offset(struct drm_i915_gem_object * obj)
+{
+	lx_emul_trace(__func__);
 }

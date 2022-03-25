@@ -6,6 +6,7 @@ arch/x86/include/asm/e820/types.h
 arch/x86/include/asm/exec.h
 arch/x86/include/asm/fb.h
 arch/x86/include/asm/hypervisor.h
+arch/x86/include/asm/intel-mid.h
 arch/x86/include/asm/invpcid.h
 arch/x86/include/asm/io_apic.h
 arch/x86/include/asm/io.h
@@ -369,6 +370,7 @@ include/linux/fb.h
 include/linux/firmware.h
 include/linux/fs_parser.h
 include/linux/genetlink.h
+include/linux/gpio/machine.h
 include/linux/hdmi.h
 include/linux/hugetlb.h
 include/linux/hypervisor.h
@@ -397,6 +399,7 @@ include/linux/list_sort.h
 include/linux/livepatch.h
 include/linux/mdio.h
 include/linux/memblock.h
+include/linux/mfd/intel_soc_pmic.h
 include/linux/migrate.h
 include/linux/mii.h
 include/linux/mii_timestamper.h
@@ -422,6 +425,7 @@ include/linux/pci_ids.h
 include/linux/phy.h
 include/linux/pinctrl/consumer.h
 include/linux/pinctrl/devinfo.h
+include/linux/pinctrl/machine.h
 include/linux/pinctrl/pinctrl-state.h
 include/linux/pkeys.h
 include/linux/platform_data/x86/apple.h
@@ -435,6 +439,7 @@ include/linux/pvclock_gtod.h
 include/linux/pwm.h
 include/linux/rbtree_augmented.h
 include/linux/rcupdate_wait.h
+include/linux/regmap.h
 include/linux/regulator/consumer.h
 include/linux/relay.h
 include/linux/ring_buffer.h
@@ -534,6 +539,7 @@ include/uapi/linux/utsname.h
 include/uapi/linux/xattr.h
 include/video/display_timing.h
 include/video/of_videomode.h
+include/video/mipi_display.h
 include/video/vga.h
 include/video/videomode.h
 include/xen/balloon.h

@@ -339,13 +339,6 @@ int iomap_create_wc(resource_size_t base, unsigned long size, pgprot_t *prot)
 }
 
 
-int i915_vma_pin_fence(struct i915_vma * vma)
-{
-	lx_emul_trace(__func__);
-	return 0;
-}
-
-
 void intel_rps_mark_interactive(struct intel_rps * rps, bool interactive)
 {
 	lx_emul_trace(__func__);

@@ -236,13 +236,6 @@ void bust_spinlocks(int yes)
 }
 
 
-extern bool bxt_dsi_pll_is_enabled(struct drm_i915_private * dev_priv);
-bool bxt_dsi_pll_is_enabled(struct drm_i915_private * dev_priv)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 #include <linux/fb.h>
 
 void cfb_copyarea(struct fb_info * p,const struct fb_copyarea * area)
@@ -431,30 +424,6 @@ void dma_unmap_page_attrs(struct device * dev,dma_addr_t addr,size_t size,enum d
 }
 
 
-#include <drm/drm_dsc.h>
-
-int drm_dsc_compute_rc_parameters(struct drm_dsc_config * vdsc_cfg)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <drm/drm_dsc.h>
-
-void drm_dsc_dp_pps_header_init(struct dp_sdp_header * pps_header)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <drm/drm_dsc.h>
-
-void drm_dsc_pps_payload_pack(struct drm_dsc_picture_parameter_set * pps_payload,const struct drm_dsc_config * dsc_cfg)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 #include <drm/drm_ioctl.h>
 
 int drm_invalid_op(struct drm_device * dev,void * data,struct drm_file * file_priv)
@@ -498,14 +467,6 @@ void drm_lease_revoke(struct drm_master * top)
 #include <drm/drm_ioctl.h>
 
 int drm_noop(struct drm_device * dev,void * data,struct drm_file * file_priv)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <drm/drm_damage_helper.h>
-
-void drm_plane_enable_fb_damage_clips(struct drm_plane * plane)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -615,27 +576,6 @@ struct fwnode_handle * fwnode_create_software_node(const struct property_entry *
 #include <linux/property.h>
 
 void fwnode_remove_software_node(struct fwnode_handle * fwnode)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-extern void gen11_gt_irq_handler(struct intel_gt * gt,const u32 master_ctl);
-void gen11_gt_irq_handler(struct intel_gt * gt,const u32 master_ctl)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-extern void gen11_gt_irq_postinstall(struct intel_gt * gt);
-void gen11_gt_irq_postinstall(struct intel_gt * gt)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-extern void gen11_gt_irq_reset(struct intel_gt * gt);
-void gen11_gt_irq_reset(struct intel_gt * gt)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -989,13 +929,6 @@ int i915_gem_object_attach_phys(struct drm_i915_gem_object * obj,int align)
 }
 
 
-extern void i915_gem_object_do_bit_17_swizzle(struct drm_i915_gem_object * obj,struct sg_table * pages);
-void i915_gem_object_do_bit_17_swizzle(struct drm_i915_gem_object * obj,struct sg_table * pages)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 extern int i915_gem_object_pread_phys(struct drm_i915_gem_object * obj,const struct drm_i915_gem_pread * args);
 int i915_gem_object_pread_phys(struct drm_i915_gem_object * obj,const struct drm_i915_gem_pread * args)
 {
@@ -1019,20 +952,6 @@ int i915_gem_object_pwrite_phys(struct drm_i915_gem_object * obj,const struct dr
 
 extern void i915_gem_object_release_mmap_gtt(struct drm_i915_gem_object * obj);
 void i915_gem_object_release_mmap_gtt(struct drm_i915_gem_object * obj)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-extern void i915_gem_object_release_mmap_offset(struct drm_i915_gem_object * obj);
-void i915_gem_object_release_mmap_offset(struct drm_i915_gem_object * obj)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-extern void i915_gem_object_save_bit_17_swizzle(struct drm_i915_gem_object * obj,struct sg_table * pages);
-void i915_gem_object_save_bit_17_swizzle(struct drm_i915_gem_object * obj,struct sg_table * pages)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -1283,27 +1202,6 @@ int i915_vm_map_pt_stash(struct i915_address_space * vm,struct i915_vm_pt_stash 
 }
 
 
-extern void i915_vma_revoke_fence(struct i915_vma * vma);
-void i915_vma_revoke_fence(struct i915_vma * vma)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-extern void icl_dsi_frame_update(struct intel_crtc_state * crtc_state);
-void icl_dsi_frame_update(struct intel_crtc_state * crtc_state)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-extern void icl_dsi_init(struct drm_i915_private * dev_priv);
-void icl_dsi_init(struct drm_i915_private * dev_priv)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 #include <linux/pseudo_fs.h>
 
 struct pseudo_fs_context * init_pseudo(struct fs_context * fc,unsigned long magic)
@@ -1359,20 +1257,6 @@ unsigned int intel_engines_has_context_isolation(struct drm_i915_private * i915)
 
 extern int intel_freq_opcode(struct intel_rps * rps,int val);
 int intel_freq_opcode(struct intel_rps * rps,int val)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-extern void intel_ggtt_fini_fences(struct i915_ggtt * ggtt);
-void intel_ggtt_fini_fences(struct i915_ggtt * ggtt)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-extern void intel_ggtt_restore_fences(struct i915_ggtt * ggtt);
-void intel_ggtt_restore_fences(struct i915_ggtt * ggtt)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -1678,22 +1562,6 @@ unsigned long long memparse(const char * ptr,char ** retptr)
 #include <linux/io.h>
 
 void memunmap(void * addr)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <drm/drm_mipi_dsi.h>
-
-ssize_t mipi_dsi_compression_mode(struct mipi_dsi_device * dsi,bool enable)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <drm/drm_mipi_dsi.h>
-
-ssize_t mipi_dsi_picture_parameter_set(struct mipi_dsi_device * dsi,const struct drm_dsc_picture_parameter_set * pps)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -2224,13 +2092,6 @@ void unregister_irq_proc(unsigned int irq,struct irq_desc * desc)
 #include <linux/vmalloc.h>
 
 void vfree(const void * addr)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-extern void vlv_dsi_init(struct drm_i915_private * dev_priv);
-void vlv_dsi_init(struct drm_i915_private * dev_priv)
 {
 	lx_emul_trace_and_stop(__func__);
 }
