@@ -18,7 +18,8 @@
 
 #ifndef __ASSEMBLY__
 
-#include <asm-generic/delay.h>
+#include <linux/delay.h>
+#include <linux/jiffies.h>
 
 extern u64 jiffies_64;
 
@@ -31,10 +32,9 @@ static __always_inline void rep_nop(void)
 
 static __always_inline void cpu_relax(void)
 {
-	rep_nop();
 	/* break busy loop of slchi() in drivers/i2c/algos/i2c-algo-bit.c */
-	udelay(1);
-	jiffies_64 += 1;
+	u64 const us = jiffies_to_usecs(1);
+	usleep_range(us, us);
 }
 
 #endif /* __ASSEMBLY__ */
