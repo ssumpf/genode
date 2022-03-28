@@ -197,7 +197,7 @@ void Sculpt::Network::_handle_nic_router_config(Xml_node config)
 						target = Nic_target::WIRED;
 						throw Break();
 					}
-					if (uplink.attribute_value("label", String<16>()) == "wifi_drv -> ") {
+					if (uplink.attribute_value("label", String<16>()) == "wifi_drv -> wlan0") {
 						target = Nic_target::WIFI;
 						throw Break();
 					}
