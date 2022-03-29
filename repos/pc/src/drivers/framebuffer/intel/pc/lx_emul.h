@@ -39,7 +39,6 @@ unsigned int   lx_emul_io_port_inl(unsigned short port);
 
 void *emul_alloc_shmem_file_buffer(unsigned long);
 
-void * lx_emul_vbt_io_mem_map(unsigned long long offset, unsigned long size);
 
 #include "lx_i915.h"
 

@@ -356,7 +356,7 @@ void * memremap(resource_size_t offset, size_t size, unsigned long flags)
 {
 	lx_emul_trace(__func__);
 
-	return lx_emul_vbt_io_mem_map(offset, size);
+	return NULL;
 }
 
 
