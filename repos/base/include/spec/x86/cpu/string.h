@@ -41,7 +41,7 @@ namespace Genode {
 		size_t s_align = (size_t)s & MASK;
 
 		/* only same alignments work */
-		if ((d_align & MASK) != (s_align & MASK))
+		if (d_align != s_align)
 			return size;
 
 		/* copy to word alignment */
