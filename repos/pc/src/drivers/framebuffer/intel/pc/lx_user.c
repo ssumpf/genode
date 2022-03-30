@@ -36,27 +36,16 @@ static struct drm_fb_helper * i915_fb(void) { return &i915->fbdev->helper; }
 /*
  * Heuristic to calculate max resolution across all connectors
  */
-static bool preferred_mode(struct drm_display_mode *prefer_mode)
+static void preferred_mode(struct drm_display_mode *prefer)
 {
-	struct drm_connector          *connector       = NULL;
-	struct drm_display_mode       *mode            = NULL;
-	bool                           modes_available = false;
+	struct drm_connector          *connector  = NULL;
+	struct drm_display_mode       *mode       = NULL;
 	struct drm_connector_list_iter conn_iter;
 
+	/* read Genode's config per connector */
 	drm_connector_list_iter_begin(i915_fb()->dev, &conn_iter);
 	drm_client_for_each_connector_iter(connector, &conn_iter) {
-		struct genode_mode conf_mode = { .enabled = 1, .name[0] = 0,
-		                                 .width = 0, .height = 0 };
-
-		/* if all connectors have no modes we can't configure anything */
-		if (!modes_available) {
-			list_for_each_entry(mode, &connector->modes, head) {
-				if (!mode)
-					continue;
-
-				modes_available = true;
-			}
-		}
+		struct genode_mode conf_mode = { .enabled = 1 };
 
 		/* check for connector configuration on Genode side */
 		lx_emul_i915_connector_config(connector->name, &conf_mode);
@@ -64,15 +53,29 @@ static bool preferred_mode(struct drm_display_mode *prefer_mode)
 		if (!conf_mode.enabled || !conf_mode.width || !conf_mode.height)
 			continue;
 
-		if ((conf_mode.width > prefer_mode->hdisplay) ||
-		    (conf_mode.height > prefer_mode->vdisplay)) {
-			prefer_mode->hdisplay = conf_mode.width;
-			prefer_mode->vdisplay = conf_mode.height;
+		if (conf_mode.width * conf_mode.height > prefer->hdisplay * prefer->vdisplay) {
+			prefer->hdisplay = conf_mode.width;
+			prefer->vdisplay = conf_mode.height;
 		}
 	}
 	drm_connector_list_iter_end(&conn_iter);
 
-	return modes_available;
+	/* if nothing was configured by Genode's config, apply heuristic */
+	if (!prefer->hdisplay || !prefer->vdisplay) {
+		drm_connector_list_iter_begin(i915_fb()->dev, &conn_iter);
+		drm_client_for_each_connector_iter(connector, &conn_iter) {
+			list_for_each_entry(mode, &connector->modes, head) {
+				if (!mode)
+					continue;
+
+				if (mode->hdisplay * mode->vdisplay > prefer->hdisplay * prefer->vdisplay) {
+					prefer->hdisplay = mode->hdisplay;
+					prefer->vdisplay = mode->vdisplay;
+				}
+			}
+		}
+		drm_connector_list_iter_end(&conn_iter);
+	}
 }
 
 
@@ -111,38 +114,25 @@ static unsigned get_brightness(struct drm_connector * const connector,
 }
 
 
-static void reconfigure(void * data)
+static bool reconfigure(void * data)
 {
 	struct drm_display_mode *mode           = NULL;
 	struct drm_display_mode  mode_preferred = {};
 	struct drm_mode_set     *mode_set       = NULL;
 	struct fb_info           report_fb_info = {};
 	bool                     report_fb      = false;
+	bool                     retry          = false;
 
 	if (!i915_fb())
-		return;
+		return retry;
 
 	BUG_ON(!i915_fb()->funcs);
 	BUG_ON(!i915_fb()->funcs->fb_probe);
 
-	if (!preferred_mode(&mode_preferred))
-		return;
-
-	if (!mode_preferred.hdisplay && !mode_preferred.vdisplay) {
-		/*
-		 * Set a mode, otherwise during boot we get distorted output in case
-		 * multiple connectors are attached, they have different maximal
-		 * resolutions and the chosen virtual resolution is bigger than
-		 * the physical fb.
-		 */
-		if (i915_fb()->fbdev) {
-			mode_preferred.hdisplay = i915_fb()->fbdev->var.xres_virtual;
-			mode_preferred.vdisplay = i915_fb()->fbdev->var.yres_virtual;
-		}
-	}
+	preferred_mode(&mode_preferred);
 
 	if (mode_preferred.hdisplay && mode_preferred.vdisplay) {
-		unsigned ret = 0;
+		unsigned err = 0;
 		struct drm_fb_helper_surface_size sizes = {};
 
 		sizes.surface_depth  = 32;
@@ -152,15 +142,15 @@ static void reconfigure(void * data)
 		sizes.surface_width  = sizes.fb_width;
 		sizes.surface_height = sizes.fb_height;
 
-		ret = (*i915_fb()->funcs->fb_probe)(i915_fb(), &sizes);
+		err = (*i915_fb()->funcs->fb_probe)(i915_fb(), &sizes);
 		/* i915_fb()->fb contains adjusted drm_frambuffer object */
 
-		if (ret || !i915_fb()->fbdev)
-			printk("setting up framebuffer failed\n");
+		if (err || !i915_fb()->fbdev)
+			printk("setting up framebuffer failed - error=%d\n", err);
 	}
 
 	if (!i915_fb()->fb)
-		return;
+		return retry;
 
 	/* data is adjusted if virtual resolution is not same size as physical fb */
 	report_fb_info = *i915_fb()->fbdev;
@@ -223,7 +213,7 @@ static void reconfigure(void * data)
 		mode_id = 0;
 		list_for_each_entry(mode, &connector->modes, head) {
 			struct drm_mode_set set;
-			int                 ret      = -1;
+			int                 err      = -1;
 			bool                no_match = false;
 
 			mode_id ++;
@@ -243,23 +233,12 @@ static void reconfigure(void * data)
 					conf_mode.width  = mode_preferred.hdisplay;
 					conf_mode.height = mode_preferred.vdisplay;
 				}
-				no_match = true;
+				no_match = mode->hdisplay != conf_mode.width ||
+				           mode->vdisplay != conf_mode.height;
 			}
 
 			if (mode_match != mode)
 				continue;
-
-			printk("%s: %s name='%s' id=%u %ux%u@%u%s",
-			       connector->name,
-			       conf_mode.enabled ? "enable" : "disable",
-			       mode->name, mode_id, mode->hdisplay,
-			       mode->vdisplay, drm_mode_vrefresh(mode),
-			       no_match ? "" : "\n");
-			if (no_match) {
-				printk(" - no mode match: %ux%u\n",
-				       mode_preferred.hdisplay,
-				       mode_preferred.vdisplay);
-			}
 
 			set.crtc           = mode_set->crtc;
 			set.x              = 0;
@@ -276,15 +255,17 @@ static void reconfigure(void * data)
 
 				DRM_MODESET_LOCK_ALL_BEGIN(i915_fb()->dev, ctx,
 				                           DRM_MODESET_ACQUIRE_INTERRUPTIBLE,
-				                           ret);
-				ret = set.crtc->funcs->set_config(&set, &ctx);
+				                           err);
+				err = set.crtc->funcs->set_config(&set, &ctx);
 
-				if (!ret && conf_mode.enabled && conf_mode.brightness <= MAX_BRIGHTNESS)
+				if (!err && conf_mode.enabled && conf_mode.brightness <= MAX_BRIGHTNESS)
 					set_brightness(conf_mode.brightness, connector);
 
-				DRM_MODESET_LOCK_ALL_END(i915_fb()->dev, ctx, ret);
+				DRM_MODESET_LOCK_ALL_END(i915_fb()->dev, ctx, err);
 
-				if (!ret) {
+				if (err)
+					retry = true;
+				else {
 					report_fb = true;
 
 					/* report forced resolution */
@@ -295,11 +276,20 @@ static void reconfigure(void * data)
 				}
 			}
 
-			if (ret)
-				printk("%s: %s mode_id=%u %s failed\n",
-				       connector->name,
-				       conf_mode.enabled ? "enable" : "disable",
-				       mode_id, (mode && mode->name) ? mode->name : "");
+			printk("%s: %s name='%s' id=%u %ux%u@%u%s",
+			       connector->name ? connector->name : "unnamed",
+			       conf_mode.enabled ? " enable" : "disable",
+			       mode->name ? mode->name : "noname",
+			       mode_id, mode->hdisplay,
+			       mode->vdisplay, drm_mode_vrefresh(mode),
+			       (err || no_match) ? "" : "\n");
+
+			if (no_match)
+				printk(" - no mode match: %ux%u\n",
+				       conf_mode.width,
+				       conf_mode.height);
+			if (err)
+				printk(" - failed, error=%d\n", err);
 
 			break;
 		}
@@ -307,13 +297,27 @@ static void reconfigure(void * data)
 
 	if (report_fb)
 		register_framebuffer(&report_fb_info);
+
+	return retry;
 }
 
 
 static int configure_connectors(void * data)
 {
+	unsigned retry_count = 0;
+
 	while (true) {
-		reconfigure(data);
+		bool retry = reconfigure(data);
+
+		if (retry && retry_count < 3) {
+			retry_count ++;
+
+			printk("retry applying configuration in 1s\n");
+			msleep(1000);
+			continue;
+		}
+
+		retry_count = 0;
 
 		lx_emul_task_schedule(true);
 	}
