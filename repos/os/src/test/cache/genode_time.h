@@ -31,7 +31,7 @@ struct Time
 		Timestamp diff = t2._ts - t1._ts;
 		if (t2._ts < t1._ts) diff--;
 
-		return Duration { diff };
+		return Duration { (unsigned long)diff };
 	}
 };
 
