@@ -327,6 +327,11 @@ static bool open_audio_device(dev_t dev)
 		return false;
 
 	int err = audioopen(dev, FWRITE|FREAD, 0 /* ifmt */, 0 /* proc */);
+
+	/* try to open playback only, if capturing potentially failed */
+	if (err == ENODEV)
+		err = audioopen(dev, FWRITE, 0 /* ifmt */, 0 /* proc */);
+
 	if (err)
 		return false;
 
