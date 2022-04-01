@@ -354,6 +354,12 @@ class Genode::Allocator_avl_tpl : public Allocator_avl_base
 		~Allocator_avl_tpl()
 		{
 			_revert_unused_ranges();
+
+			/*
+			 * The release of empty blocks may add unused ranges (formerly used
+			 * by metadata). Thus, we loop until all empty blocks are freed and
+			 * no additional unused ranges appear.
+			 */
 			do {
 				_metadata.free_empty_blocks();
 			} while (_revert_unused_ranges());
