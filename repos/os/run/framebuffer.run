@@ -3,7 +3,10 @@ import_from_depot [depot_user]/src/[base_src] \
                   [depot_user]/pkg/[drivers_interactive_pkg] \
                   [depot_user]/src/init
 
-build { server/event_dump test/framebuffer }
+build { server/event_dump test/framebuffer
+        drivers/gpu/intel drivers/framebuffer/intel
+        server/dynamic_rom server/report_rom
+      }
 
 install_config {
 <config>
@@ -27,11 +30,12 @@ install_config {
 		<provides><service name="Timer"/></provides>
 	</start>
 
-	<start name="drivers" caps="1500" managing_system="yes">
-		<resource name="RAM" quantum="64M"/>
+	<start name="drivers" caps="3000" managing_system="yes">
+		<resource name="RAM" quantum="512M"/>
 		<binary name="init"/>
 		<route>
 			<service name="ROM" label="config"> <parent label="drivers.config"/> </service>
+			<service name="ROM" label="gpu_drv.config"> <parent/> </service>
 			<service name="Timer">   <child name="timer"/> </service>
 			<service name="Capture"> <child name="test-framebuffer"/> </service>
 			<service name="Event">   <child name="event_dump"/> </service>
@@ -53,6 +57,8 @@ install_config {
 
 </config>}
 
-build_boot_image { event_dump test-framebuffer }
+build_boot_image { event_dump test-framebuffer
+                   intel_gpu_drv intel_fb_drv
+                   dynamic_rom report_rom }
 
 run_genode_until forever
