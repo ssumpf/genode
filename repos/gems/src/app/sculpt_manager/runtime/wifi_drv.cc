@@ -52,6 +52,7 @@ void Sculpt::gen_wifi_drv_start_content(Xml_generator &xml)
 			xml.attribute("name", "Uplink");
 			xml.node("child", [&] () {
 				xml.attribute("name", "nic_router");
+				xml.attribute("label", "wifi_drv -> ");
 			});
 		});
 
