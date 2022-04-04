@@ -75,7 +75,7 @@ class Vfs_capture::Data_file_system : public Single_file_system
 			{
 				_capture->capture_at(Point(0, 0));
 
-				Genode::memcpy(dst, _capture_ds->local_addr<char>(), count);
+				Genode::memcpy(dst, _capture_ds->local_addr<char>(), (size_t)count);
 
 				out_count = count;
 
