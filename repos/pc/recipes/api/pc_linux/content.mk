@@ -108,6 +108,10 @@ LX_FILES += Kbuild \
             tools/include/tools \
             tools/objtool
 
+# needed for src/asn1_compiler.c
+LX_FILES += include/linux/asn1.h \
+            include/linux/asn1_ber_bytecode.h
+
 LX_SCRIPTS_KCONFIG_FILES := $(notdir $(wildcard $(LX_ABS_DIR)/scripts/kconfig/*.c)) \
                             $(notdir $(wildcard $(LX_ABS_DIR)/scripts/kconfig/*.h)) \
                             Makefile lexer.l parser.y
