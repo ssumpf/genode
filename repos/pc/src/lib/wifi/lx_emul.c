@@ -739,13 +739,13 @@ void *page_frag_alloc_align(struct page_frag_cache *nc,
 	unsigned int const order = fragsz / PAGE_SIZE;
 	struct page *page = __alloc_pages(gfp_mask, order, 0, NULL);
 
-	/* see page_frag_free */
-	if (order > 1)
-		printk("%s: alloc might leak memory: fragsz: %u PAGE_SIZE: %u "
-		       "order: %u\n", __func__, fragsz, PAGE_SIZE, order);
-
 	if (!page)
 		return NULL;
+
+	/* see page_frag_free */
+	if (order > 0)
+		printk("%s: alloc might leak memory: fragsz: %u PAGE_SIZE: %u "
+		       "order: %u page: %p addr: %p\n", __func__, fragsz, PAGE_SIZE, order, page, page->virtual);
 
 	return page->virtual;
 }
@@ -756,5 +756,10 @@ void *page_frag_alloc_align(struct page_frag_cache *nc,
 void page_frag_free(void * addr)
 {
 	struct page *page = lx_emul_virt_to_pages(addr, 1ul);
-	__free_pages(page, 1ul);
+	if (!page) {
+		printk("BUG %s: page for addr: %p not found\n", __func__, addr);
+		lx_backtrace();
+	}
+
+	__free_pages(page, 0ul);
 }
