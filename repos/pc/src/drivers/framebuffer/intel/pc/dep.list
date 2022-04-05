@@ -46,6 +46,9 @@ arch/x86/include/asm/hypervisor.h
 arch/x86/include/asm/intel-mid.h
 arch/x86/include/asm/intel_ds.h
 arch/x86/include/asm/invpcid.h
+arch/x86/include/asm/io_apic.h
+arch/x86/include/asm/io.h
+arch/x86/include/asm/iomap.h
 arch/x86/include/asm/iommu.h
 arch/x86/include/asm/iosf_mbi.h
 arch/x86/include/asm/irq.h
