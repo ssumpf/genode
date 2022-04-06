@@ -30,6 +30,9 @@ struct usb_find_request {
 	struct usb_device  * ret;
 };
 
+struct usb_anchor submitted;
+
+
 static int check_usb_device(struct usb_device *usb_dev, void * data)
 {
 	struct usb_find_request * req = (struct usb_find_request *) data;
@@ -425,6 +428,7 @@ handle_transfer_request(struct genode_usb_request_transfer * req,
 	};
 
 	if (!err) {
+		usb_anchor_urb(urb, &submitted);
 		err = usb_submit_urb(urb, GFP_KERNEL);
 
 		if (!err)
@@ -503,6 +507,7 @@ void lx_user_init(void)
 {
 	int pid = kernel_thread(usb_poll_sessions, NULL, CLONE_FS | CLONE_FILES);
 	lx_user_task = find_task_by_pid_ns(pid, NULL);;
+	init_usb_anchor(&submitted);
 }
 
 
@@ -548,6 +553,7 @@ static int raw_notify(struct notifier_block *nb, unsigned long action, void *dat
 
 		case USB_DEVICE_REMOVE:
 		{
+			usb_kill_anchored_urbs(&submitted);
 			genode_usb_discontinue_device(udev->bus->busnum, udev->devnum);
 			break;
 		}
