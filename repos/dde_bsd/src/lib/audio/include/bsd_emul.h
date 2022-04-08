@@ -212,16 +212,12 @@ struct kevent
 
 #include <sys/queue.h>
 
-#define NOTE_SUBMIT 0x01000000
-
 struct knote;
 SLIST_HEAD(klist, knote);
 
-#define FILTEROP_ISFD 0x00000001  /* ident == filedescriptor */
-
 struct filterops
 {
-	int  f_flags;
+	int  f_isfd;
 	int  (*f_attach)(struct knote*);
 	void (*f_detach)(struct knote*);
 	int  (*f_event)(struct knote*, long);
@@ -236,10 +232,6 @@ struct knote
 	const struct filterops *kn_fop;
 	void                   *kn_hook;
 };
-
-void klist_invalidate(struct klist *);
-void klist_insert_locked(struct klist *, struct knote *);
-void klist_remove_locked(struct klist *, struct knote *);
 
 
 /*******************
@@ -304,7 +296,6 @@ void mtx_leave(struct mutex *);
  ** sys/systm.h **
  *****************/
 
-#define KERNEL_ASSERT_LOCKED()
 #define INFSLP  __UINT64_MAX__
 
 extern int nchrdev;
@@ -321,8 +312,6 @@ void *memcpy(void *, const void *, size_t);
 void *memset(void *, int, size_t);
 
 void wakeup(const volatile void*);
-int msleep_nsec(const volatile void *, struct mutex *, int,
-                const char*, uint64_t);
 int tsleep(const volatile void *, int, const char *, int);
 int tsleep_nsec(const volatile void *, int, const char *, uint64_t);
 int msleep(const volatile void *, struct mutex *, int,  const char*, int);
@@ -354,19 +343,9 @@ void delay(int);
  *******************************/
 
 enum {
-	IPL_AUDIO   = 8,
-	IPL_MPSAFE  = 0x100,
-	IPL_SOFTNET = 5,
+	IPL_AUDIO  = 8,
+	IPL_MPSAFE = 0x100,
 };
-
-
-/****************************
- ** machine/include/intr.h **
- ****************************/
-
-void *softintr_establish(int, void (*)(void *), void *);
-void  softintr_disestablish(void *);
-void  softintr_schedule(void *);
 
 
 /*****************
@@ -741,20 +720,13 @@ struct timeval
 
 void microuptime(struct timeval *);
 
-static inline uint64_t
-SEC_TO_NSEC(uint64_t seconds)
-{
-	if (seconds > 0xffffffffffffffffULL / 1000000000ULL)
-		return 0xffffffffffffffffULL;
-	return seconds * 1000000000ULL;
-}
-
 
 /***************************
  ** lib/libkern/libkern.h **
  ***************************/
 
 size_t strlcpy(char *, char const *, size_t);
+
 
 #include <extern_c_end.h>
 
