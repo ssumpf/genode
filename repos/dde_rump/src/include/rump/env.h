@@ -34,9 +34,10 @@ class Rump::Env
 	private:
 
 		Genode::Env                   &_env;
-		Genode::Heap                   _heap   { _env.ram(), _env.rm() };
-		Genode::Attached_rom_dataspace _config { _env, "config" };
-		Timer::Connection              _timer  { _env };
+		Genode::Heap                   _heap      { _env.ram(), _env.rm() };
+		Genode::Attached_rom_dataspace _config    { _env, "config" };
+		Timer::Connection              _timer     { _env };
+		Timed_semaphore                _sleep_sem { _env, _timer };
 
 	public:
 
@@ -46,6 +47,7 @@ class Rump::Env
 		Genode::Heap                   &heap()       { return _heap; }
 		Genode::Attached_rom_dataspace &config_rom() { return _config; }
 		Timer::Connection              &timer()      { return _timer; }
+		Timed_semaphore                &sleep_sem()  { return _sleep_sem; }
 };
 
 /**
