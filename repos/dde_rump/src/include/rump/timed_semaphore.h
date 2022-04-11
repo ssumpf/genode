@@ -165,8 +165,12 @@ class Timed_semaphore
 			 * */
 			queue_element.blockade.block();
 
-			if (queue_element.timed_out)
+			if (queue_element.timed_out) {
+				Genode::Mutex::Guard guard(_meta_lock);
+				_queue.remove(queue_element);
+
 				throw Timeout_exception();
+			}
 		}
 
 	public:
