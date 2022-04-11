@@ -146,12 +146,13 @@ class Timed_semaphore
 
 		Genode::Fifo<Element> _queue { };
 
+		/* _meta_lock must be acquired when calling and is released */
 		void _down_internal(Timed_semaphore_blockade &blockade,
 		                    bool use_timeout, Genode::Microseconds timeout_us)
 		{
 			/*
 			 * Create semaphore queue element representing the thread
-			 * in the wait queue.
+			 * in the wait queue and release _meta_lock.
 			 */
 			Element queue_element { blockade, _timer, use_timeout, timeout_us };
 			_queue.enqueue(queue_element);
@@ -232,6 +233,8 @@ class Timed_semaphore
 			_meta_lock.acquire();
 
 			if (--_cnt < 0) {
+
+				/* _down_internal() releases _meta_lock */
 
 				if (Genode::Thread::myself() == _ep_thread_ptr) {
 					Timed_semaphore_ep_blockade blockade { _env.ep() };
