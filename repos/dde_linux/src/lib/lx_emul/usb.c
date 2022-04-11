@@ -278,7 +278,6 @@ handle_transfer_response(struct genode_usb_request_transfer * req,
 	}
 
 	switch (urb->status) {
-		case -ENOENT:    return NO_DEVICE_ERROR;
 		case -ESHUTDOWN: return NO_DEVICE_ERROR;
 		case -EPROTO:    return PROTOCOL_ERROR;
 		case -EILSEQ:    return PROTOCOL_ERROR;
