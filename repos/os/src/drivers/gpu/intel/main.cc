@@ -56,7 +56,7 @@ namespace Igd {
 
 struct Igd::Device_info
 {
-	enum Platform { UNKNOWN, BROADWELL, SKYLAKE, KABYLAKE, WHISKEYLAKE };
+	enum Platform { UNKNOWN, BROADWELL, SKYLAKE, KABYLAKE, WHISKEYLAKE, TIGERLAKE };
 	enum Stepping { A0, B0, C0, D0, D1, E0, F0, G0 };
 
 	uint16_t    id;
@@ -119,12 +119,15 @@ struct Igd::Device
 
 	} _pci_backend_alloc { _platform };
 
-	Device_info                    _info          { };
-	Gpu::Info_intel::Revision      _revision      { };
-	Gpu::Info_intel::Slice_mask    _slice_mask    { };
-	Gpu::Info_intel::Subslice_mask _subslice_mask { };
-	Gpu::Info_intel::Eu_total      _eus           { };
-	Gpu::Info_intel::Subslices     _subslices     { };
+	Device_info                      _info          { };
+	Gpu::Info_intel::Revision        _revision      { };
+	Gpu::Info_intel::Slice_mask      _slice_mask    { };
+	Gpu::Info_intel::Subslice_mask   _subslice_mask { };
+	Gpu::Info_intel::Eu_total        _eus           { };
+	Gpu::Info_intel::Subslices       _subslices     { };
+	Gpu::Info_intel::Topology        _topology      { };
+	Gpu::Info_intel::Clock_frequency _clock_frequency { };
+
 
 	bool _supported(Xml_node & supported,
 	                uint16_t   dev_id,
@@ -146,10 +149,10 @@ struct Igd::Device
 				return;
 
 			struct Igd::Device_info const info {
-				.id          = device,
-				.generation  = generation,
-				.platform    = platform_type(platform),
-				.features    = 0
+				.id                    = device,
+				.generation            = generation,
+				.platform              = platform_type(platform),
+				.features              = 0,
 			};
 
 			if (info.platform == Igd::Device_info::Platform::UNKNOWN)
@@ -157,8 +160,10 @@ struct Igd::Device
 
 			if (info.id == dev_id) {
 				_info = info;
-				_revision.value = rev_id;
+				_revision.value        = rev_id;
+				_clock_frequency.value = _mmio.clock_frequency(generation);
 
+				Genode::warning("ID: ",  info.id, " FOUND");
 				found = true;
 				return;
 			}
@@ -177,13 +182,14 @@ struct Igd::Device
 			return Igd::Device_info::Platform::KABYLAKE;
 		if (platform == "whiskeylake")
 			return Igd::Device_info::Platform::WHISKEYLAKE;
+		if (platform == "tigerlake")
+			return Igd::Device_info::Platform::TIGERLAKE;
 		return Igd::Device_info::UNKNOWN;
 	}
 
 	/**********
 	 ** GGTT **
 	 **********/
-
 
 	size_t _ggtt_size()
 	{
@@ -574,7 +580,9 @@ struct Igd::Device
 			                        _device._slice_mask,
 			                        _device._subslice_mask,
 			                        _device._eus,
-			                        _device._subslices);
+			                        _device._subslices,
+			                        _device._clock_frequency,
+			                        _device._topology);
 		}
 
 		~Vgpu()
@@ -621,10 +629,13 @@ struct Igd::Device
 			                  + ((_device.generation().value == 9) ? 6 : 0)
 			                  + ((_device.generation().value == 8) ? 20 : 22) /* epilog + w/a */
 			                  + (dc_flush_wa ? 12 : 0);
-			if (!el.ring_avail(need)) { el.ring_reset_and_fill_zero(); }
+			if (!el.ring_avail(need)) { 
+				warning("RESET fill zero");
+				el.ring_reset_and_fill_zero(); }
 
 			/* save old tail */
 			Ring_buffer::Index const tail = el.ring_tail();
+			warning("INDEX: ", Hex(tail));
 
 			/*
 			 * IHD-OS-BDW-Vol 7-11.15 p. 18 ff.
@@ -834,6 +845,8 @@ struct Igd::Device
 			/* tail_offset must be specified in qword */
 			rcs.context->tail_offset((offset % (rcs.ring_size())) / 8);
 
+			Genode::warning("END INDEX: ", Hex(el.ring_tail()), " el: ", &el, " VCPU: ", this);
+
 			return true;
 		}
 
@@ -887,6 +900,25 @@ struct Igd::Device
 		_mmio.write<Igd::Mmio::EXECLIST_SUBMITPORT_RSCUNIT>(desc[0]);
 	}
 
+	void _submit_execlist_gen12(Engine<Rcs_context> &engine)
+	{
+		if (_mmio.read<Igd::Mmio::GEN12_EXECLIST_STATUS_RSCUNIT::Execution_queue_invalid>() == 0)
+			return;
+Genode::error("SCHEDULE GEN12");
+		Execlist &el = *engine.execlist;
+
+		_mmio.write<Igd::Mmio::GEN12_EXECLIST_SQ_CONTENTS_RSCUNIT>(el.elem0().low(), 0);
+		_mmio.write<Igd::Mmio::GEN12_EXECLIST_SQ_CONTENTS_RSCUNIT>(el.elem0().high(), 1);
+
+		for (unsigned i = 2; i < 16; i++)
+			_mmio.write<Igd::Mmio::GEN12_EXECLIST_SQ_CONTENTS_RSCUNIT>(0, i);
+
+		/* load SQ to EQ */
+		Genode::warning("LOAD EQ");
+		_mmio.write<Igd::Mmio::GEN12_EXECLIST_CONTROL_RSCUNIT::Load>(1);
+		Genode::warning("LOADED EQ");
+	}
+
 	Vgpu *_unschedule_current_vgpu()
 	{
 		Vgpu *result = nullptr;
@@ -915,7 +947,10 @@ struct Igd::Device
 
 		_mmio.flush_gfx_tlb();
 
-		_submit_execlist(rcs);
+		if (_info.generation < 12)
+			_submit_execlist(rcs);
+		else
+			_submit_execlist_gen12(rcs);
 
 		_active_vgpu = gpu;
 		_timer.trigger_once(WATCHDOG_TIMEOUT);
@@ -924,11 +959,6 @@ struct Igd::Device
 	/**********
 	 ** INTR **
 	 **********/
-
-	void _clear_rcs_iir(Mmio::GT_0_INTERRUPT_IIR::access_t const v)
-	{
-		_mmio.write_post<Mmio::GT_0_INTERRUPT_IIR>(v);
-	}
 
 	/**
 	 * \return true, if Vgpu is done and has not further work
@@ -988,7 +1018,8 @@ struct Igd::Device
 		if (!_active_vgpu) { return; }
 
 		Genode::error("watchdog triggered: engine stuck,"
-		              " vGPU=", _active_vgpu->id());
+		              " vGPU=", _active_vgpu->id(), " IRQ: ",
+		              Hex(_mmio.read_irq_vector(_info.generation)));
 		_mmio.dump();
 		_mmio.error_dump();
 		_mmio.fault_dump();
@@ -1020,7 +1051,7 @@ struct Igd::Device
 		_mmio.reset(_info.generation);
 		_mmio.clear_errors();
 		_mmio.init();
-		_mmio.enable_intr();
+		_mmio.enable_intr(_info.generation);
 	}
 
 	/**
@@ -1084,12 +1115,59 @@ struct Igd::Device
 
 			_init_eu_total(3, SUBSLICE_MAX, 8);
 		} else
+		if (_info.generation == 12) {
+			_init_topology_gen12();
+		} else
 			Genode::error("unsupported platform ", (int)_info.platform);
 
 		/* apply generation specific workarounds */
 		apply_workarounds(_mmio, _info.generation);
 
 		_timer.sigh(_watchdog_timeout_sigh);
+	}
+
+	void _init_topology_gen12()
+	{
+		Genode::error(__func__);
+		/* NOTE: This needs to be different for DG2 and Xe_HP */
+		_topology.max_slices           = 1;
+		_topology.max_subslices        = 6;
+		_topology.max_eus_per_subslice = 16;
+		_topology.ss_stride = 1; /* roundup(6/8) */
+		_topology.eu_stride = 2; /* 16/8 */
+
+		/* NOTE: 1 for >=12.5 */
+		_topology.slice_mask = _mmio.read<Igd::Mmio::MIRROR_GT_SLICE_EN::Enabled>();
+		if (_topology.slice_mask > 1)
+			error("topology: slices > 1");
+
+		uint32_t dss_en = _mmio.read<Igd::Mmio::MIRROR_GT_DSS_ENABLE>();
+		memcpy(_topology.subslice_mask, &dss_en, sizeof(dss_en));
+
+		/* Gen12 uses dual-subslices */
+		uint8_t eu_en_fuse = ~_mmio.read<Igd::Mmio::MIRROR_EU_DISABLE0::Disabled>();
+		uint16_t eu_en { 0 };
+		for (unsigned i = 0; i < _topology.max_eus_per_subslice / 2; i++) {
+			if (eu_en_fuse & (1u << i)) {
+				_eus.value += 2;
+				eu_en |= (3u << (i * 2));
+			}
+		}
+
+		Genode::warning("slice_mask: ", Hex(_topology.slice_mask), " dss: ", Hex(dss_en),
+		                " eu_en: ", Hex(eu_en));
+
+		for (unsigned i = 0; i < _topology.max_subslices; i++) {
+			if (_topology.has_subslice(0, i)) {
+				_subslices.value++;
+				unsigned offset = _topology.eu_idx(0, i);
+				for (unsigned j = 0; j < _topology.eu_stride; j++) {
+					_topology.eu_mask[offset + j] = (eu_en >> (8 * j)) & 0xff;
+				}
+			}
+		}
+
+		_topology.valid = true;
 	}
 
 	void _clock_gating()
@@ -1381,22 +1459,28 @@ struct Igd::Device
 		_clear_fence(id);
 	}
 
-	unsigned handle_irq()
+	bool handle_irq()
 	{
-		Mmio::MASTER_INT_CTL::access_t master = _mmio.read<Mmio::MASTER_INT_CTL>();
+		bool display_irq = _mmio.display_irq(_info.generation);
+		Genode::error("IRQ GW0: ", 
+			Hex(_mmio.read<Mmio::GEN12_GT_INTR_DW0>()));
 
 		/* handle render interrupts only */
-		if (Mmio::MASTER_INT_CTL::Render_interrupts_pending::get(master) == 0)
-			return master;
+		if (_mmio.render_irq(_info.generation) == false)
+			return display_irq;
 
-		_mmio.disable_master_irq();
+Genode::warning("RENDER IRQ: true DISPLAY IRQ: ", display_irq);
+		_mmio.disable_master_irq(_info.generation);
 
-		Mmio::GT_0_INTERRUPT_IIR::access_t const v = _mmio.read<Mmio::GT_0_INTERRUPT_IIR>();
+		Mmio::GEN12_RENDER_INTR_VEC::access_t const v = _mmio.read_irq_vector(_info.generation);
+Genode::warning("VECTOR: ", Hex(v));
+		bool const ctx_switch    = Mmio::GEN12_RENDER_INTR_VEC::Cs_ctx_switch_interrupt::get(v);
+		bool const user_complete = Mmio::GEN12_RENDER_INTR_VEC::Cs_mi_user_interrupt::get(v);
 
-		bool const ctx_switch    = Mmio::GT_0_INTERRUPT_IIR::Cs_ctx_switch_interrupt::get(v);
-		bool const user_complete = Mmio::GT_0_INTERRUPT_IIR::Cs_mi_user_interrupt::get(v);
-
-		if (v) { _clear_rcs_iir(v); }
+		if (v) {
+			error("CLEAR render IRQ");
+			_mmio.clear_render_irq(_info.generation, v);
+	}
 
 		Vgpu *notify_gpu = nullptr;
 		if (user_complete) {
@@ -1427,10 +1511,10 @@ struct Igd::Device
 			}
 		}
 
-		return master;
+		return display_irq;
 	}
 
-	void enable_master_irq() { _mmio.enable_master_irq(); }
+	void enable_master_irq() { _mmio.enable_master_irq(_info.generation); }
 
 	private:
 
@@ -2206,9 +2290,9 @@ struct Main : Irq_ack_handler, Gpu_reset_handler
 
 	void handle_irq()
 	{
-		unsigned master = 0;
+		bool display_irq = false;
 		if (_igd_device.constructed())
-			master = _igd_device->handle_irq();
+			display_irq = _igd_device->handle_irq();
 		/* GPU not present forward all IRQs to platform client */
 		else {
 			_platform_root.handle_irq();
@@ -2219,10 +2303,9 @@ struct Main : Irq_ack_handler, Gpu_reset_handler
 		 * GPU present check for display engine related IRQs before calling platform
 		 * client
 		 */
-		using Master = Igd::Mmio::MASTER_INT_CTL;
-		if (Master::De_interrupts_pending::get(master) &&
-		    (_platform_root.handle_irq()))
+		if (display_irq && _platform_root.handle_irq()) {
 			return;
+		}
 
 		ack_irq();
 	}
