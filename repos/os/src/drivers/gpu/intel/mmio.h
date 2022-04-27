@@ -213,9 +213,10 @@ class Igd::Mmio : public Platform::Device::Mmio
 		};
 
 		/* p. 1091 */
-		struct GEN12_INTR_IDENTITY_REG0 : Register<0x190060, 32, true>
+		struct GEN12_INTR_IDENTITY_REG0 : Register<0x190060, 32>
 		{
-			struct Engine_interrupt : Register<0, 16> { };
+			struct Valid            : Bitfield<31, 1> { };
+			struct Engine_interrupt : Bitfield<0, 16> { };
 		};
 
 		/*
@@ -224,7 +225,7 @@ class Igd::Mmio : public Platform::Device::Mmio
 		 * Select engine ID to read INTR_IDENTITY from, use only one bit at a time,
 		 * layout is as INTR_DW0 register
 		 */
-		struct GEN12_INTR_IIR_SELECTOR0 : Register<0x190070, 32>
+		struct GEN12_INTR_IIR_SELECTOR0 : Register<0x190070, 32, true>
 		{
 			struct Rcs0 : Bitfield<0, 1> { };
 		};
@@ -1780,7 +1781,16 @@ class Igd::Mmio : public Platform::Device::Mmio
 				vec = read<GT_0_INTERRUPT_IIR>();
 			} else {
 				write<GEN12_INTR_IIR_SELECTOR0::Rcs0>(1);
-				vec = read<GEN12_INTR_IDENTITY_REG0>();
+
+				try {
+					wait_for(Attempts(50), Microseconds(500), _delayer,
+					         GEN12_INTR_IDENTITY_REG0::Valid::Equal(1));
+				} catch (Polling_timeout) {
+					Genode::error(__func__, " IRQ vector not valid");
+					return vec;
+				}
+				vec = read<GEN12_INTR_IDENTITY_REG0::Engine_interrupt>();
+				write<GEN12_INTR_IDENTITY_REG0::Valid>(1);
 			}
 
 			return vec;
@@ -1796,6 +1806,7 @@ class Igd::Mmio : public Platform::Device::Mmio
 
 		bool display_irq(unsigned const generation)
 		{
+			Genode::warning(__func__, " MASTER: ", Genode::Hex(read<GEN12_GFX_MSTR_INTR>()));
 			if (generation < 11)
 				return read<MASTER_INT_CTL::De_pch_interrupts_pending>() != 0;
 			else

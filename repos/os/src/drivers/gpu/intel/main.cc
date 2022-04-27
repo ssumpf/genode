@@ -847,6 +847,8 @@ struct Igd::Device
 			/* tail_offset must be specified in qword */
 			rcs.context->tail_offset((offset % (rcs.ring_size())) / 8);
 
+			Genode::warning("END INDEX: ", Hex(el.ring_tail()), " el: ", &el, " VCPU: ", this);
+
 			return true;
 		}
 
@@ -1016,7 +1018,8 @@ Genode::error("SCHEDULE GEN12");
 		if (!_active_vgpu) { return; }
 
 		Genode::error("watchdog triggered: engine stuck,"
-		              " vGPU=", _active_vgpu->id());
+		              " vGPU=", _active_vgpu->id(), " IRQ: ",
+		              Hex(_mmio.read_irq_vector(_info.generation)));
 		_mmio.dump();
 		_mmio.error_dump();
 		_mmio.fault_dump();
@@ -1459,12 +1462,14 @@ Genode::error("SCHEDULE GEN12");
 	bool handle_irq()
 	{
 		bool display_irq = _mmio.display_irq(_info.generation);
+		Genode::error("IRQ GW0: ", 
+			Hex(_mmio.read<Mmio::GEN12_GT_INTR_DW0>()));
 
 		/* handle render interrupts only */
 		if (_mmio.render_irq(_info.generation) == false)
 			return display_irq;
 
-Genode::warning("RENDER IRQ");
+Genode::warning("RENDER IRQ: true DISPLAY IRQ: ", display_irq);
 		_mmio.disable_master_irq(_info.generation);
 
 		Mmio::GEN12_RENDER_INTR_VEC::access_t const v = _mmio.read_irq_vector(_info.generation);
@@ -1472,7 +1477,10 @@ Genode::warning("VECTOR: ", Hex(v));
 		bool const ctx_switch    = Mmio::GEN12_RENDER_INTR_VEC::Cs_ctx_switch_interrupt::get(v);
 		bool const user_complete = Mmio::GEN12_RENDER_INTR_VEC::Cs_mi_user_interrupt::get(v);
 
-		if (v) { _mmio.clear_render_irq(_info.generation, v); }
+		if (v) {
+			error("CLEAR render IRQ");
+			_mmio.clear_render_irq(_info.generation, v);
+	}
 
 		Vgpu *notify_gpu = nullptr;
 		if (user_complete) {
@@ -2297,6 +2305,7 @@ struct Main : Irq_ack_handler, Gpu_reset_handler
 		 */
 		if (display_irq && _platform_root->handle_irq())
 			return;
+		}
 
 		ack_irq();
 	}
