@@ -23,15 +23,12 @@ install_config {
 	</parent-provides>
 	<default caps="100"/>
 
-	<start name="platform_drv">
+	<start name="platform_drv" managing_system="yes">
 		<resource name="RAM" quantum="1M"/>
 		<provides><service name="Platform"/></provides>
 		<config>
-			<device name="card" type="arm,pl18x">
-				<io_mem address="0x10005000" size="0x1000"/>
-			</device>
 			<policy label="pl180_sd_card_drv -> ">
-				<device name="card"/>
+				<device name="mmc0"/>
 			</policy>
 		</config>
 		<route>
@@ -70,6 +67,7 @@ install_config {
 	</start>
 </config> }
 
+file copy [select_from_repositories board/[board]/devices] [run_dir]/genode/devices
 build_boot_image { pl180_sd_card_drv block_tester }
 
 set disk_image "bin/sd_card.img"
