@@ -631,10 +631,13 @@ struct Igd::Device
 			                  + ((_device.generation().value == 9) ? 6 : 0)
 			                  + ((_device.generation().value == 8) ? 20 : 22) /* epilog + w/a */
 			                  + (dc_flush_wa ? 12 : 0);
-			if (!el.ring_avail(need)) { el.ring_reset_and_fill_zero(); }
+			if (!el.ring_avail(need)) { 
+				warning("RESET fill zero");
+				el.ring_reset_and_fill_zero(); }
 
 			/* save old tail */
 			Ring_buffer::Index const tail = el.ring_tail();
+			warning("INDEX: ", Hex(tail));
 
 			/*
 			 * IHD-OS-BDW-Vol 7-11.15 p. 18 ff.
@@ -1465,7 +1468,7 @@ Genode::warning("RENDER IRQ");
 		_mmio.disable_master_irq(_info.generation);
 
 		Mmio::GEN12_RENDER_INTR_VEC::access_t const v = _mmio.read_irq_vector(_info.generation);
-
+Genode::warning("VECTOR: ", Hex(v));
 		bool const ctx_switch    = Mmio::GEN12_RENDER_INTR_VEC::Cs_ctx_switch_interrupt::get(v);
 		bool const user_complete = Mmio::GEN12_RENDER_INTR_VEC::Cs_mi_user_interrupt::get(v);
 

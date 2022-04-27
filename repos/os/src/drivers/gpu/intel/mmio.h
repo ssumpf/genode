@@ -213,9 +213,20 @@ class Igd::Mmio : public Platform::Device::Mmio
 		};
 
 		/* p. 1091 */
-		struct GEN12_INTR_IDENTITY_REG0 : Register<0x190060, 32>
+		struct GEN12_INTR_IDENTITY_REG0 : Register<0x190060, 32, true>
 		{
 			struct Engine_interrupt : Register<0, 16> { };
+		};
+
+		/*
+		 * p. 1092
+		 *
+		 * Select engine ID to read INTR_IDENTITY from, use only one bit at a time,
+		 * layout is as INTR_DW0 register
+		 */
+		struct GEN12_INTR_IIR_SELECTOR0 : Register<0x190070, 32>
+		{
+			struct Rcs0 : Bitfield<0, 1> { };
 		};
 
 		/* p. 1077 */
@@ -1768,6 +1779,7 @@ class Igd::Mmio : public Platform::Device::Mmio
 			if (generation < 11) {
 				vec = read<GT_0_INTERRUPT_IIR>();
 			} else {
+				write<GEN12_INTR_IIR_SELECTOR0::Rcs0>(1);
 				vec = read<GEN12_INTR_IDENTITY_REG0>();
 			}
 
