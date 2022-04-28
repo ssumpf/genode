@@ -38,7 +38,7 @@ privilege, Sculpt OS gives users ultimate control over the system resources
 exposed to each component. The new version equips the user with additional
 means to exercise control over the deployed software: A new optional
 component called black hole can now be used as placeholder for various system
-resources when deploying an application. For example, virtual machine can
+resources when deploying an application. For example, a virtual machine can
 be shielded from the network by connecting its network traffic to the black
 hole. This also works for audio, video capturing, USB, and other commonly used
 system resources. As this mechanism works at the level of individual services,
