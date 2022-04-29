@@ -354,7 +354,7 @@ proc run_genode_until {{wait_for_re forever} {timeout_value 0} {running_spawn_id
 			continue;
 		}
 
-		if {![run_log $wait_for_re $timeout_value]} {
+		if {![run_log $wait_for_re 1000]} {
 			puts "Log step failed, retry."
 			incr retry -1;
 			continue;
