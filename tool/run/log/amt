@@ -108,6 +108,6 @@ proc run_log { wait_for_re timeout_value } {
 		}
 	}
 
-	wait_for_output $wait_for_re $timeout_value $output_spawn_id
+	wait_for_output $wait_for_re 1000 $output_spawn_id
 	return true
 }
