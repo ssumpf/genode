@@ -578,6 +578,11 @@ bool is_software_node(const struct fwnode_handle * fwnode)
 }
 
 
+#include <linux/jiffies.h>
+
+unsigned long volatile __cacheline_aligned_in_smp __jiffy_arch_data jiffies;
+
+
 #include <linux/kobject.h>
 
 struct kobject *kernel_kobj;

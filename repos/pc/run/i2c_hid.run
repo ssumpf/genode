@@ -1,0 +1,91 @@
+assert_spec x86_64
+
+set build_components {
+	core init timer
+	drivers/i2c_hid/pc
+	server/event_dump
+}
+
+source ${genode_dir}/repos/base/run/platform_drv.inc
+
+proc platform_drv_policy {} {
+	return {
+			<pci-fixup bus="0" device="0x15" function="3">
+				<bar id="0" address="0x4017002000"/>
+			</pci-fixup>
+			<policy label_prefix="pc_i2c_hid_drv">
+				<pci bus="0" device="0x15" function="3"/>
+				<device name="INT34C5"/>
+			</policy>
+			<device name="INT34C5" type="acpi">
+				<irq number="14" mode="level" polarity="low"/>
+				<io_mem address="0xfd690000" size="0x1000"/>
+				<io_mem address="0xfd6a0000" size="0x1000"/>
+				<io_mem address="0xfd6d0000" size="0x1000"/>
+				<io_mem address="0xfd6e0000" size="0x1000"/>
+				<!-- <io_port_range address="" size=""/>  -->
+			</device>
+	}
+}
+
+append_platform_drv_build_components
+
+build $build_components
+
+create_boot_directory
+
+append config {
+<config prio_levels="2">
+	<parent-provides>
+		<service name="LOG"/>
+		<service name="PD"/>
+		<service name="CPU"/>
+		<service name="ROM"/>
+		<service name="IO_MEM"/>
+		<service name="IRQ"/>
+		<service name="RM"/>
+	</parent-provides>
+
+	<default caps="100"/>
+
+	<default-route>
+		<any-service> <parent/> <any-child/> </any-service>
+	</default-route>
+
+	<start name="timer" priority="0">
+		<resource name="RAM" quantum="1M"/>
+		<provides> <service name="Timer"/> </provides>
+	</start>
+
+	<start name="pc_i2c_hid_drv" priority="-1">
+		<resource name="RAM" quantum="8M"/>
+		<config ld_verbose="yes"/>
+	</start>
+
+	<start name="event_dump">
+		<resource name="RAM" quantum="1M"/>
+		<provides> <service name="Event"/> </provides>
+	</start>
+}
+
+append_platform_drv_config
+
+append config {
+</config>
+}
+
+install_config $config
+
+set boot_modules {
+	core ld.lib.so init timer
+	pc_i2c_hid_drv
+	event_dump
+}
+
+append_platform_drv_boot_modules
+
+build_boot_image $boot_modules
+
+run_genode_until forever
+
+# vi: set ft=tcl :
