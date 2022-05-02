@@ -378,3 +378,30 @@ void ieee80211_free_led_names(struct ieee80211_local * local)
 {
 	lx_emul_trace(__func__);
 }
+
+
+#include <linux/pinctrl/devinfo.h>
+
+int pinctrl_bind_pins(struct device * dev)
+{
+	lx_emul_trace(__func__);
+	return 0;
+}
+
+
+#include <linux/pinctrl/devinfo.h>
+
+int pinctrl_init_done(struct device * dev)
+{
+	lx_emul_trace(__func__);
+	return 0;
+}
+
+
+#include <linux/property.h>
+
+int software_node_notify(struct device * dev,unsigned long action)
+{
+	lx_emul_trace(__func__);
+	return 0;
+}
