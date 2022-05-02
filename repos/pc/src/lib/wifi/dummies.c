@@ -355,3 +355,30 @@ int pci_enable_msix_range(struct pci_dev *dev, struct msix_entry *entries,
 	lx_emul_trace(__func__);
 	return -ENOSYS;
 }
+
+
+#include <linux/pinctrl/devinfo.h>
+
+int pinctrl_bind_pins(struct device * dev)
+{
+	lx_emul_trace(__func__);
+	return 0;
+}
+
+
+#include <linux/pinctrl/devinfo.h>
+
+int pinctrl_init_done(struct device * dev)
+{
+	lx_emul_trace(__func__);
+	return 0;
+}
+
+
+#include <linux/property.h>
+
+int software_node_notify(struct device * dev,unsigned long action)
+{
+	lx_emul_trace(__func__);
+	return 0;
+}
