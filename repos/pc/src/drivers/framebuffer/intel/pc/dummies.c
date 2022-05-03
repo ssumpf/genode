@@ -33,81 +33,9 @@
 #include <linux/timekeeper_internal.h>
 
 
-unsigned long init_stack[THREAD_SIZE / sizeof(unsigned long)];
-unsigned long lpj_fine = 0;
-
-
 const guid_t pci_acpi_dsm_guid =
 	GUID_INIT(0xe5c937d0, 0x3553, 0x4d7a,
 		  0x91, 0x17, 0xea, 0x4d, 0x19, 0xc3, 0x43, 0x4d);
-
-
-void rcu_barrier(void)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-int __cpuhp_setup_state(enum cpuhp_state state,const char * name,bool invoke,int (* startup)(unsigned int cpu),int (* teardown)(unsigned int cpu),bool multi_instance)
-{
-	lx_emul_trace(__func__);
-	return 0;
-}
-
-
-void update_vsyscall(struct timekeeper * tk)
-{
-	lx_emul_trace(__func__);
-}
-
-
-void clocksource_arch_init(struct clocksource * cs)
-{
-	lx_emul_trace(__func__);
-}
-
-
-void ignore_signals(struct task_struct * t)
-{
-	lx_emul_trace(__func__);
-}
-
-
-void calc_global_load(void)
-{
-	lx_emul_trace(__func__);
-}
-
-
-void account_process_tick(struct task_struct * p,int user_tick)
-{
-	lx_emul_trace(__func__);
-}
-
-
-void rcu_sched_clock_irq(int user)
-{
-	lx_emul_trace(__func__);
-}
-
-
-void kernfs_get(struct kernfs_node * kn)
-{
-	lx_emul_trace(__func__);
-}
-
-
-void kernfs_put(struct kernfs_node * kn)
-{
-	lx_emul_trace(__func__);
-}
-
-
-int software_node_notify(struct device * dev,unsigned long action)
-{
-	lx_emul_trace(__func__);
-	return 0;
-}
 
 
 void get_random_bytes(void * buf,int nbytes)
@@ -123,161 +51,16 @@ int __must_check get_random_bytes_arch(void * buf,int nbytes)
 }
 
 
-int add_random_ready_callback(struct random_ready_callback * rdy)
-{
-	lx_emul_trace(__func__);
-	return 0;
-}
-
-
-void add_interrupt_randomness(int irq,int irq_flags)
-{
-	lx_emul_trace(__func__);
-}
-
-
-int sysfs_create_files(struct kobject * kobj,const struct attribute * const * ptr)
-{
-	lx_emul_trace(__func__);
-	return 0;
-}
-
-
-int sysfs_create_bin_file(struct kobject * kobj,const struct bin_attribute * attr)
-{
-	lx_emul_trace(__func__);
-	return 0;
-}
-
-
-void sysfs_remove_file_ns(struct kobject * kobj,const struct attribute * attr,const void * ns)
-{
-	lx_emul_trace(__func__);
-}
-
-
-int sysfs_create_dir_ns(struct kobject * kobj,const void * ns)
-{
-	lx_emul_trace(__func__);
-	return 0;
-}
-
-
-int sysfs_create_file_ns(struct kobject * kobj,const struct attribute * attr,const void * ns)
-{
-	lx_emul_trace(__func__);
-	return 0;
-}
-
-
-int sysfs_create_link(struct kobject * kobj,struct kobject * target,const char * name)
-{
-	lx_emul_trace(__func__);
-	return 0;
-}
-
-
-int sysfs_create_groups(struct kobject * kobj,const struct attribute_group ** groups)
-{
-	lx_emul_trace(__func__);
-	return 0;
-}
-
-
-void sysfs_remove_link(struct kobject * kobj,const char * name)
-{
-	lx_emul_trace(__func__);
-}
-
-
-void sysfs_remove_groups(struct kobject * kobj,const struct attribute_group ** groups)
-{
-	lx_emul_trace(__func__);
-}
-
-
-void sysfs_remove_dir(struct kobject * kobj)
-{
-	lx_emul_trace(__func__);
-}
-
-
-void sysfs_remove_bin_file(struct kobject * kobj,const struct bin_attribute * attr)
-{
-	lx_emul_trace(__func__);
-}
-
-
-bool sysfs_remove_file_self(struct kobject * kobj,const struct attribute * attr)
-{
-	lx_emul_trace(__func__);
-	return false;
-}
-
-
-void sysfs_remove_files(struct kobject * kobj,const struct attribute * const * ptr)
-{
-	lx_emul_trace(__func__);
-}
-
-
-void sysfs_delete_link(struct kobject * kobj,struct kobject * targ,const char * name)
-{
-	lx_emul_trace(__func__);
-}
-
-
-int sysfs_emit(char * buf,const char * fmt,...)
-{
-	lx_emul_trace(__func__);
-	return PAGE_SIZE;
-}
-
-
-int sysfs_emit_at(char * buf, int at, const char * fmt,...)
-{
-	lx_emul_trace(__func__);
-	return at > PAGE_SIZE ? PAGE_SIZE : PAGE_SIZE - at;
-}
-
-
-void sysfs_notify(struct kobject * kobj,const char * dir,const char * attr)
-{
-	lx_emul_trace(__func__);
-}
-
-
-
 void intel_engines_add_sysfs(struct drm_i915_private * i915)
 {
 	lx_emul_trace(__func__);
 }
 
 
-
 void register_syscore_ops(struct syscore_ops * ops)
 {
 	wait_bit_init();
 	lx_emul_trace(__func__);
-}
-
-
-void pci_allocate_vc_save_buffers(struct pci_dev * dev)
-{
-	lx_emul_trace(__func__);
-}
-
-
-void pci_vpd_init(struct pci_dev * dev)
-{
-	lx_emul_trace(__func__);
-}
-
-
-int pci_proc_attach_device(struct pci_dev * dev)
-{
-	lx_emul_trace(__func__);
-	return 0;
 }
 
 
@@ -290,20 +73,6 @@ void i915_pmu_init(void)
 void i915_pmu_register(struct drm_i915_private * i915)
 {
 	lx_emul_trace(__func__);
-}
-
-
-bool parse_option_str(const char *str, const char *option)
-{
-	lx_emul_trace(__func__);
-	return false;
-}
-
-
-int __register_chrdev(unsigned int major,unsigned int baseminor,unsigned int count,const char * name,const struct file_operations * fops)
-{
-	lx_emul_trace(__func__);
-	return 0;
 }
 
 
@@ -429,18 +198,6 @@ void gen5_gt_irq_reset(struct intel_gt * gt)
 
 
 void gen5_gt_irq_postinstall(struct intel_gt * gt)
-{
-	lx_emul_trace(__func__);
-}
-
-
-void register_irq_proc(unsigned int irq,struct irq_desc * desc)
-{
-	lx_emul_trace(__func__);
-}
-
-
-void register_handler_proc(unsigned int irq,struct irqaction * action)
 {
 	lx_emul_trace(__func__);
 }
@@ -708,20 +465,6 @@ int __init i915_global_scheduler_init(void)
 	lx_emul_trace(__func__);
 	return 0;
 }
-
-
-void pci_fixup_device(enum pci_fixup_pass pass,struct pci_dev * dev)
-{
-	lx_emul_trace(__func__);
-}
-
-
-int pci_dev_specific_reset(struct pci_dev * dev,int probe)
-{
-	lx_emul_trace(__func__);
-	return 0;
-}
-
 
 
 int register_acpi_notifier(struct notifier_block * nb)

@@ -31,3 +31,8 @@ SRC_CC  += lx_emul/pci_init.cc
 SRC_CC  += lx_kit/device.cc
 SRC_CC  += lx_kit/memory_dma.cc
 SRC_CC  += lx_kit/spec/x86/platform.cc
+
+SRC_C   += lx_emul/shadow/fs/sysfs/dir.c
+SRC_C   += lx_emul/shadow/fs/sysfs/file.c
+SRC_C   += lx_emul/shadow/fs/sysfs/group.c
+SRC_C   += lx_emul/shadow/fs/sysfs/symlink.c

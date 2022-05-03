@@ -726,6 +726,22 @@ void netdev_rss_key_fill(void * buffer,size_t len)
 struct irq_chip no_irq_chip;
 
 
+#include <linux/irq.h>
+
+void note_interrupt(struct irq_desc * desc,irqreturn_t action_ret)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/vt_kern.h>
+
+void unblank_screen(void)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
 #include <linux/fs.h>
 
 loff_t no_llseek(struct file * file,loff_t offset,int whence)
@@ -1200,46 +1216,6 @@ int suppress_printk;
 #include <linux/srcutiny.h>
 
 void synchronize_srcu(struct srcu_struct * ssp)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/sysfs.h>
-
-void sysfs_delete_link(struct kobject * kobj,struct kobject * targ,const char * name)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/sysfs.h>
-
-int sysfs_emit(char * buf,const char * fmt,...)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/sysfs.h>
-
-int sysfs_emit_at(char * buf,int at,const char * fmt,...)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/sysfs.h>
-
-bool sysfs_remove_file_self(struct kobject * kobj,const struct attribute * attr)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/sysfs.h>
-
-void sysfs_remove_group(struct kobject * kobj,const struct attribute_group * grp)
 {
 	lx_emul_trace_and_stop(__func__);
 }

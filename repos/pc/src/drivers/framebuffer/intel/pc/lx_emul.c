@@ -88,17 +88,6 @@ struct inode * alloc_anon_inode(struct super_block * s)
 }
 
 
-struct proc_dir_entry { char dummy [512]; };
-
-struct proc_dir_entry * proc_create_seq_private(const char * name,umode_t mode,struct proc_dir_entry * parent,const struct seq_operations * ops,unsigned int state_size,void * data)
-{
-	static struct proc_dir_entry ret;
-
-	lx_emul_trace(__func__);
-	return &ret;
-}
-
-
 void si_meminfo(struct sysinfo * val)
 {
 	/* 4M, ttm actually use only half - more or configurable XXX ? */
@@ -154,13 +143,6 @@ int fb_get_options(const char * name,char ** option)
 void ack_bad_irq(unsigned int irq)
 {
 	lx_emul_trace(__func__);
-}
-
-
-bool pat_enabled(void)
-{
-	lx_emul_trace(__func__);
-	return true;
 }
 
 

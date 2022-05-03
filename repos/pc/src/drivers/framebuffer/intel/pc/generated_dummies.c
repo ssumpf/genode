@@ -1,12 +1,10 @@
 /*
  * \brief  Dummy definitions of Linux Kernel functions
  * \author Automatically generated file - do no edit
- * \date   2022-03-29
+ * \date   2022-05-03
  */
 
 #include <lx_emul.h>
-
-#include "i915_drv.h"
 
 #include <linux/proc_fs.h>
 
@@ -1224,14 +1222,23 @@ struct pseudo_fs_context * init_pseudo(struct fs_context * fc,unsigned long magi
 }
 
 
-#include <linux/utsname.h>
-
-struct user_namespace init_user_ns;
-
-
 #include <linux/init.h>
 
 bool initcall_debug;
+
+
+extern void intel_dsb_indexed_reg_write(const struct intel_crtc_state * crtc_state,i915_reg_t reg,u32 val);
+void intel_dsb_indexed_reg_write(const struct intel_crtc_state * crtc_state,i915_reg_t reg,u32 val)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+extern void intel_dsb_reg_write(const struct intel_crtc_state * crtc_state,i915_reg_t reg,u32 val);
+void intel_dsb_reg_write(const struct intel_crtc_state * crtc_state,i915_reg_t reg,u32 val)
+{
+	lx_emul_trace_and_stop(__func__);
+}
 
 
 extern int intel_dsi_dcs_init_backlight_funcs(struct intel_connector * intel_connector);
@@ -1475,13 +1482,6 @@ void iput(struct inode * inode)
 }
 
 
-extern bool irq_wait_for_poll(struct irq_desc * desc);
-bool irq_wait_for_poll(struct irq_desc * desc)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 #include <linux/irq_work.h>
 
 void irq_work_tick(void)
@@ -1573,14 +1573,6 @@ void memunmap(void * addr)
 }
 
 
-#include <net/netlink.h>
-
-int netlink_rcv_skb(struct sk_buff * skb,int (* cb)(struct sk_buff *,struct nlmsghdr *,struct netlink_ext_ack *))
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 #include <linux/netlink.h>
 
 int netlink_broadcast(struct sock * ssk,struct sk_buff * skb,u32 portid,u32 group,gfp_t allocation)
@@ -1608,6 +1600,14 @@ void netlink_kernel_release(struct sock * sk)
 #include <linux/netlink.h>
 
 bool netlink_ns_capable(const struct sk_buff * skb,struct user_namespace * user_ns,int cap)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <net/netlink.h>
+
+int netlink_rcv_skb(struct sk_buff * skb,int (* cb)(struct sk_buff *,struct nlmsghdr *,struct netlink_ext_ack *))
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -1694,27 +1694,6 @@ void pci_assign_unassigned_bus_resources(struct pci_bus * bus)
 
 extern unsigned long pci_cardbus_resource_alignment(struct resource * res);
 unsigned long pci_cardbus_resource_alignment(struct resource * res)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-extern int pci_dev_specific_acs_enabled(struct pci_dev * dev,u16 acs_flags);
-int pci_dev_specific_acs_enabled(struct pci_dev * dev,u16 acs_flags)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-extern int pci_dev_specific_disable_acs_redir(struct pci_dev * dev);
-int pci_dev_specific_disable_acs_redir(struct pci_dev * dev)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-extern int pci_dev_specific_enable_acs(struct pci_dev * dev);
-int pci_dev_specific_enable_acs(struct pci_dev * dev)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -1874,14 +1853,6 @@ void seq_printf(struct seq_file * m,const char * f,...)
 #include <linux/seq_file.h>
 
 void seq_puts(struct seq_file * m,const char * s)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/seq_file.h>
-
-void seq_vprintf(struct seq_file * m,const char * f,va_list args)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -2110,16 +2081,3 @@ void wake_q_add_safe(struct wake_q_head * head,struct task_struct * task)
 	lx_emul_trace_and_stop(__func__);
 }
 
-
-void intel_dsb_reg_write(const struct intel_crtc_state *crtc_state,
-			 i915_reg_t reg, u32 val)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-void intel_dsb_indexed_reg_write(const struct intel_crtc_state *crtc_state,
-				 i915_reg_t reg, u32 val)
-{
-	lx_emul_trace_and_stop(__func__);
-}

@@ -37,6 +37,13 @@ endif
 
 INC_DIR    += $(LX_SRC_DIR)/drivers/gpu/drm/i915
 
+#
+# The generated dummies file pulls in functions without header
+# includes so we force the inclusion of i915_drv explicitly for
+# this compilation unit.
+# 
+CC_OPT_generated_dummies += -include $(LX_SRC_DIR)/drivers/gpu/drm/i915/i915_drv.h
+
 CC_C_OPT += -Wno-unused-label
 
 #

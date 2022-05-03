@@ -17,6 +17,9 @@ SRC_C   += common_dummies.c
 SRC_C   += lx_emul/spec/x86/pci.c
 SRC_C   += lx_emul/usb.c
 
+SRC_C   += lx_emul/shadow/lib/kobject_uevent.c
+vpath %.c $(REP_DIR)/src/lib/pc
+
 vpath %.c $(REL_PRG_DIR)
 vpath %.cc $(REL_PRG_DIR)
 vpath common_dummies.c $(REP_DIR)/src/lib/pc/lx_emul
