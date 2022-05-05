@@ -22,15 +22,6 @@ void register_syscore_ops(struct syscore_ops * ops)
 }
 
 
-#include <linux/mm.h>
-
-bool is_vmalloc_addr(const void * x)
-{
-	lx_emul_trace(__func__);
-	return false;
-}
-
-
 const unsigned long module_cert_size = 0;
 const u8 system_certificate_list[] = { };
 const unsigned long system_certificate_list_size = sizeof (system_certificate_list);

@@ -43,15 +43,6 @@ void register_syscore_ops(struct syscore_ops * ops)
 }
 
 
-#include <linux/mm.h>
-
-bool is_vmalloc_addr(const void * x)
-{
-	lx_emul_trace(__func__);
-	return false;
-}
-
-
 #include <linux/kobject.h>
 
 int acpi_platform_notify(struct device *dev, enum kobject_action action)
@@ -126,6 +117,7 @@ struct irq_domain *pci_host_bridge_acpi_msi_domain(struct pci_bus *bus)
 
 
 typedef void * acpi_handle;
+typedef struct { unsigned dummy; } guid_t;
 
 union acpi_object *acpi_evaluate_dsm(acpi_handle handle, const guid_t *guid,
                                      u64 rev, u64 func, union acpi_object *argv4)

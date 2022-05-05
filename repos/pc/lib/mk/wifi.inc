@@ -10,7 +10,6 @@ LIBS    += base pc_linux_generated pc_lx_emul
 INC_DIR := $(TARGET_LIB_DIR)
 SRC_CC  += wlan.cc
 SRC_CC  += misc.cc
-SRC_CC  += time.cc
 SRC_CC  += firmware.cc
 SRC_CC  += socket_call.cc
 SRC_CC  += random.cc
@@ -35,7 +34,8 @@ CC_C_OPT += -Wno-address-of-packed-member
 
 
 SRC_C   += lx_emul/shadow/lib/kobject_uevent.c
-vpath %.c $(REP_DIR)/src/lib/pc
+vpath %.c  $(REP_DIR)/src/lib/pc
+vpath %.cc $(REP_DIR)/src/lib/pc
 
 vpath %.c $(TARGET_LIB_DIR)
 vpath %.cc $(TARGET_LIB_DIR)

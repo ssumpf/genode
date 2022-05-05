@@ -47,6 +47,25 @@ const struct trace_print_flags pageflag_names[] = { {0,NULL}};
 
 struct kernel_stat kstat;
 
+#include <linux/delay.h>
+
+/* support for arch/x86/lib/delay.c, normally defined in init/main.c */
+unsigned long loops_per_jiffy = (1<<12);
+
+
+#include <asm/processor.h>
+
+/*
+ * Early_identify_cpu() in linux sets this up normally, used by drm_cache
+ * as well as arch/x86/lib/delay.c.
+ */
+struct cpuinfo_x86 boot_cpu_data =
+{
+    .x86_clflush_size    = (sizeof(void*) == 8) ? 64 : 32,
+    .x86_cache_alignment = (sizeof(void*) == 8) ? 64 : 32,
+    .x86_phys_bits       = (sizeof(void*) == 8) ? 36 : 32,
+    .x86_virt_bits       = (sizeof(void*) == 8) ? 48 : 32
+};
 
 unsigned long init_stack[THREAD_SIZE / sizeof(unsigned long)];
 

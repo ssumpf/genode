@@ -1,10 +1,11 @@
 /*
  * \brief  Dummy definitions of Linux Kernel functions
  * \author Automatically generated file - do no edit
- * \date   2022-05-03
+ * \date   2022-05-06
  */
 
 #include <lx_emul.h>
+
 
 #include <linux/proc_fs.h>
 
@@ -85,14 +86,6 @@ void __srcu_read_unlock(struct srcu_struct * ssp,int idx)
 }
 
 
-#include <linux/interrupt.h>
-
-void __tasklet_schedule(struct tasklet_struct * t)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 #include <linux/fs.h>
 
 void __unregister_chrdev(unsigned int major,unsigned int baseminor,unsigned int count,const char * name)
@@ -128,6 +121,13 @@ bool _drm_lease_held(struct drm_file * file_priv,int id)
 #include <linux/mm.h>
 
 atomic_long_t _totalram_pages;
+
+
+extern void ack_bad_irq(unsigned int irq);
+void ack_bad_irq(unsigned int irq)
+{
+	lx_emul_trace_and_stop(__func__);
+}
 
 
 #include <acpi/acpi_bus.h>
@@ -405,24 +405,8 @@ void dma_buf_unmap_attachment(struct dma_buf_attachment * attach,struct sg_table
 }
 
 
-#include <linux/dma-mapping.h>
-
-dma_addr_t dma_map_page_attrs(struct device * dev,struct page * page,size_t offset,size_t size,enum dma_data_direction dir,unsigned long attrs)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 extern void dma_resv_prune(struct dma_resv * resv);
 void dma_resv_prune(struct dma_resv * resv)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/dma-mapping.h>
-
-void dma_unmap_page_attrs(struct device * dev,dma_addr_t addr,size_t size,enum dma_data_direction dir,unsigned long attrs)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -1466,14 +1450,6 @@ long __sched io_schedule_timeout(long timeout)
 }
 
 
-#include <asm-generic/logic_io.h>
-
-void iounmap(volatile void __iomem * addr)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 #include <linux/fs.h>
 
 void iput(struct inode * inode)
@@ -1905,14 +1881,6 @@ void show_state_filter(unsigned int state_filter)
 }
 
 
-#include <linux/fs.h>
-
-void simple_release_fs(struct vfsmount ** mount,int * count)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 #include <linux/skbuff.h>
 
 struct sk_buff * skb_copy_expand(const struct sk_buff * skb,int newheadroom,int newtailroom,gfp_t gfp_mask)
@@ -2045,14 +2013,6 @@ void unregister_framebuffer(struct fb_info * fb_info)
 
 extern void unregister_irq_proc(unsigned int irq,struct irq_desc * desc);
 void unregister_irq_proc(unsigned int irq,struct irq_desc * desc)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/vmalloc.h>
-
-void vfree(const void * addr)
 {
 	lx_emul_trace_and_stop(__func__);
 }

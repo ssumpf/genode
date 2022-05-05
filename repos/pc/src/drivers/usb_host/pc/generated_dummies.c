@@ -1,7 +1,7 @@
 /*
  * \brief  Dummy definitions of Linux Kernel functions
  * \author Automatically generated file - do no edit
- * \date   2022-05-03
+ * \date   2022-05-06
  */
 
 #include <lx_emul.h>
@@ -26,14 +26,6 @@ int ___ratelimit(struct ratelimit_state * rs,const char * func)
 #include <linux/clk-provider.h>
 
 const char * __clk_get_name(const struct clk * clk)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/gfp.h>
-
-unsigned long __get_free_pages(gfp_t gfp_mask,unsigned int order)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -153,14 +145,6 @@ asmlinkage __visible void dump_stack(void)
 #include <linux/capability.h>
 
 bool file_ns_capable(const struct file * file,struct user_namespace * ns,int cap)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/gfp.h>
-
-void free_pages(unsigned long addr,unsigned int order)
 {
 	lx_emul_trace_and_stop(__func__);
 }

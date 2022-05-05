@@ -1,5 +1,5 @@
 /*
- * \brief  Dummy definitions of Linux Kernel sysfs functions
+ * \brief  Replaces fs/sysfs/symlink.c
  * \author Josef Soentgen
  * \date   2022-04-05
  */
