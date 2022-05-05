@@ -13,6 +13,7 @@ SRC_C  += $(notdir $(wildcard $(REL_PRG_DIR)/generated_dummies.c))
 SRC_C  += common_dummies.c
 SRC_C  += dummies.c
 SRC_C  += lx_emul.c
+SRC_C  += lx_emul/spec/x86/pci.c
 
 vpath %.c  $(REL_PRG_DIR)
 vpath %.cc $(REL_PRG_DIR)

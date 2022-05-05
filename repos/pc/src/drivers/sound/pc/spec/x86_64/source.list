@@ -1,3 +1,4 @@
+arch/x86/pci/legacy.c
 drivers/base/bus.c
 drivers/base/class.c
 drivers/base/component.c
@@ -13,11 +14,16 @@ drivers/base/regmap/regcache-rbtree.c
 drivers/base/regmap/regmap.c
 drivers/pci/access.c
 drivers/pci/bus.c
+drivers/pci/host-bridge.c
+drivers/pci/msi.c
 drivers/pci/pci.c
 drivers/pci/pci-driver.c
-drivers/pci/probe.c
-drivers/pci/search.c
 drivers/pci/pci-sysfs.c
+drivers/pci/probe.c
+drivers/pci/rom.c
+drivers/pci/search.c
+drivers/pci/setup-res.c
+drivers/pci/slot.c
 kernel/irq/chip.c
 kernel/irq/devres.c
 kernel/irq/handle.c

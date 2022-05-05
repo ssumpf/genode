@@ -1,7 +1,7 @@
 /*
  * \brief  Dummy definitions of Linux Kernel functions
  * \author Automatically generated file - do no edit
- * \date   2022-05-04
+ * \date   2022-05-05
  */
 
 #include <lx_emul.h>
@@ -230,6 +230,14 @@ const struct acpi_device_id * acpi_match_device(const struct acpi_device_id * id
 #include <linux/acpi.h>
 
 int acpi_platform_notify(struct device * dev,enum kobject_action action)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/random.h>
+
+void add_interrupt_randomness(int irq,int irq_flags)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -742,6 +750,13 @@ void iowrite32(u32 val,void __iomem * addr)
 }
 
 
+extern bool irq_wait_for_poll(struct irq_desc * desc);
+bool irq_wait_for_poll(struct irq_desc * desc)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
 #include <linux/irq_work.h>
 
 void irq_work_tick(void)
@@ -901,6 +916,14 @@ loff_t noop_llseek(struct file * file,loff_t offset,int whence)
 }
 
 
+#include <linux/irq.h>
+
+void note_interrupt(struct irq_desc * desc,irqreturn_t action_ret)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
 #include <linux/reboot.h>
 
 enum reboot_mode panic_reboot_mode;
@@ -952,14 +975,6 @@ void pci_allocate_vc_save_buffers(struct pci_dev * dev)
 
 #include <linux/pci.h>
 
-void pci_assign_irq(struct pci_dev * dev)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/pci.h>
-
 void pci_assign_unassigned_bridge_resources(struct pci_dev * bridge)
 {
 	lx_emul_trace_and_stop(__func__);
@@ -974,9 +989,8 @@ void pci_assign_unassigned_bus_resources(struct pci_bus * bus)
 }
 
 
-#include <linux/pci.h>
-
-void pci_dev_assign_slot(struct pci_dev * dev)
+extern unsigned long pci_cardbus_resource_alignment(struct resource * res);
+unsigned long pci_cardbus_resource_alignment(struct resource * res)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -1010,29 +1024,6 @@ int pci_dev_specific_reset(struct pci_dev * dev,int probe)
 }
 
 
-extern void pci_disable_bridge_window(struct pci_dev * dev);
-void pci_disable_bridge_window(struct pci_dev * dev)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/pci.h>
-
-int pci_enable_resources(struct pci_dev * dev,int mask)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/pci.h>
-
-struct pci_host_bridge * pci_find_host_bridge(struct pci_bus * bus)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 #include <linux/pci.h>
 
 void pci_fixup_device(enum pci_fixup_pass pass,struct pci_dev * dev)
@@ -1044,13 +1035,6 @@ void pci_fixup_device(enum pci_fixup_pass pass,struct pci_dev * dev)
 #include <linux/pci.h>
 
 unsigned int pci_flags;
-
-
-extern struct device * pci_get_host_bridge_device(struct pci_dev * dev);
-struct device * pci_get_host_bridge_device(struct pci_dev * dev)
-{
-	lx_emul_trace_and_stop(__func__);
-}
 
 
 #include <linux/pci.h>
@@ -1070,29 +1054,7 @@ int pci_idt_bus_quirk(struct pci_bus * bus,int devfn,u32 * l,int timeout)
 
 #include <linux/pci.h>
 
-void __iomem * pci_map_rom(struct pci_dev * pdev,size_t * size)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/pci.h>
-
 int pci_mmap_resource_range(struct pci_dev * pdev,int bar,struct vm_area_struct * vma,enum pci_mmap_state mmap_state,int write_combine)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-extern void pci_msi_init(struct pci_dev * dev);
-void pci_msi_init(struct pci_dev * dev)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-extern void pci_msix_init(struct pci_dev * dev);
-void pci_msix_init(struct pci_dev * dev)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -1100,13 +1062,6 @@ void pci_msix_init(struct pci_dev * dev)
 
 extern int pci_proc_attach_device(struct pci_dev * dev);
 int pci_proc_attach_device(struct pci_dev * dev)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-extern void pci_put_host_bridge_device(struct device * dev);
-void pci_put_host_bridge_device(struct device * dev)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -1141,22 +1096,6 @@ void pci_stop_and_remove_bus_device_locked(struct pci_dev * dev)
 }
 
 
-#include <linux/pci.h>
-
-void pci_unmap_rom(struct pci_dev * pdev,void __iomem * rom)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/pci.h>
-
-void pci_update_resource(struct pci_dev * dev,int resno)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 extern void pci_vpd_init(struct pci_dev * dev);
 void pci_vpd_init(struct pci_dev * dev)
 {
@@ -1173,22 +1112,6 @@ void pci_vpd_release(struct pci_dev * dev)
 
 extern unsigned int pcibios_assign_all_busses(void);
 unsigned int pcibios_assign_all_busses(void)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/pci.h>
-
-void pcibios_bus_to_resource(struct pci_bus * bus,struct resource * res,struct pci_bus_region * region)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/pci.h>
-
-void pcibios_resource_to_bus(struct pci_bus * bus,struct pci_bus_region * region,struct resource * res)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -1313,6 +1236,14 @@ struct proc_dir_entry * proc_symlink(const char * name,struct proc_dir_entry * p
 #include <linux/pid.h>
 
 void put_pid(struct pid * pid)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/pci.h>
+
+int raw_pci_read(unsigned int domain,unsigned int bus,unsigned int devfn,int reg,int len,u32 * val)
 {
 	lx_emul_trace_and_stop(__func__);
 }
