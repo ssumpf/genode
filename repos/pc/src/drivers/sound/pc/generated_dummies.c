@@ -163,14 +163,6 @@ void ack_bad_irq(unsigned int irq)
 }
 
 
-#include <linux/acpi.h>
-
-int acpi_dev_gpio_irq_get_by(struct acpi_device * adev,const char * name,int index)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 #include <acpi/acpi_bus.h>
 
 bool acpi_dev_present(const char * hid,const char * uid,s64 hrv)
@@ -214,14 +206,6 @@ bool acpi_driver_match_device(struct device * dev,const struct device_driver * d
 #include <acpi/acpi_bus.h>
 
 enum dev_dma_attr acpi_get_dma_attr(struct acpi_device * adev)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/acpi.h>
-
-const struct acpi_device_id * acpi_match_device(const struct acpi_device_id * ids,const struct device * dev)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -386,14 +370,6 @@ void cpu_latency_qos_remove_request(struct pm_qos_request * req)
 #include <linux/pm_qos.h>
 
 bool cpu_latency_qos_request_active(struct pm_qos_request * req)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/pm_qos.h>
-
-void cpu_latency_qos_update_request(struct pm_qos_request * req,s32 new_value)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -715,20 +691,6 @@ unsigned int ioread32(const void __iomem * addr)
 #include <asm-generic/logic_io.h>
 
 void __iomem * ioremap(resource_size_t phys_addr,unsigned long size)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-extern bool iosf_mbi_available(void);
-bool iosf_mbi_available(void)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-extern int iosf_mbi_read(u8 port,u8 opcode,u32 offset,u32 * mdr);
-int iosf_mbi_read(u8 port,u8 opcode,u32 offset,u32 * mdr)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -1549,16 +1511,6 @@ struct snd_soc_acpi_mach snd_soc_acpi_intel_adl_sdw_machines[] = {};
 
 #include <sound/soc-acpi-intel-match.h>
 
-struct snd_soc_acpi_mach snd_soc_acpi_intel_baytrail_machines[] = {};
-
-
-#include <sound/soc-acpi-intel-match.h>
-
-struct snd_soc_acpi_mach snd_soc_acpi_intel_cherrytrail_machines[] = {};
-
-
-#include <sound/soc-acpi-intel-match.h>
-
 struct snd_soc_acpi_mach snd_soc_acpi_intel_ehl_machines[] = {};
 
 
@@ -1638,14 +1590,6 @@ int sysfs_create_file_ns(struct kobject * kobj,const struct attribute * attr,con
 
 #include <linux/sysfs.h>
 
-int sysfs_create_group(struct kobject * kobj,const struct attribute_group * grp)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/sysfs.h>
-
 int sysfs_create_groups(struct kobject * kobj,const struct attribute_group ** groups)
 {
 	lx_emul_trace_and_stop(__func__);
@@ -1711,14 +1655,6 @@ void sysfs_remove_file_ns(struct kobject * kobj,const struct attribute * attr,co
 #include <linux/sysfs.h>
 
 bool sysfs_remove_file_self(struct kobject * kobj,const struct attribute * attr)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/sysfs.h>
-
-void sysfs_remove_group(struct kobject * kobj,const struct attribute_group * grp)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -1819,13 +1755,6 @@ void vunmap(const void * addr)
 #include <linux/sched/wake_q.h>
 
 void wake_q_add_safe(struct wake_q_head * head,struct task_struct * task)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-extern const struct x86_cpu_id * x86_match_cpu(const struct x86_cpu_id * match);
-const struct x86_cpu_id * x86_match_cpu(const struct x86_cpu_id * match)
 {
 	lx_emul_trace_and_stop(__func__);
 }

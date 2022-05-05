@@ -135,16 +135,6 @@ sound/soc/codecs/ac97.c
 sound/soc/codecs/dmic.c
 sound/soc/codecs/hdac_hda.c
 sound/soc/codecs/hdac_hdmi.c
-sound/soc/intel/atom/sst-atom-controls.c
-sound/soc/intel/atom/sst-mfld-platform-compress.c
-sound/soc/intel/atom/sst-mfld-platform-pcm.c
-sound/soc/intel/atom/sst/sst_acpi.c
-sound/soc/intel/atom/sst/sst_drv_interface.c
-sound/soc/intel/atom/sst/sst_ipc.c
-sound/soc/intel/atom/sst/sst_loader.c
-sound/soc/intel/atom/sst/sst.c
-sound/soc/intel/atom/sst/sst_pvt.c
-sound/soc/intel/atom/sst/sst_stream.c
 sound/soc/intel/boards/hda_dsp_common.c
 sound/soc/intel/boards/skl_hda_dsp_common.c
 sound/soc/intel/boards/skl_hda_dsp_generic.c
