@@ -69,7 +69,10 @@ struct Pci::Config : Genode::Mmio
 
 	struct Iface_class_code : Register<0x9, 8> {};
 	struct Sub_class_code   : Register<0xa, 8> {};
-	struct Base_class_code  : Register<0xb, 8> {};
+	struct Base_class_code  : Register<0xb, 8>
+	{
+		enum { BRIDGE = 6 };
+	};
 
 	struct Header_type : Register<0xe, 8>
 	{
@@ -83,7 +86,7 @@ struct Pci::Config : Genode::Mmio
 		{
 			struct Memory_space_indicator : Bitfield<0,1>
 			{
-				enum { MEMORY = 0 };
+				enum { MEMORY = 0, IO = 1 };
 			};
 
 			struct Memory_type : Bitfield<1,2>
@@ -91,47 +94,43 @@ struct Pci::Config : Genode::Mmio
 				enum { SIZE_32BIT = 0, SIZE_64BIT = 2 };
 			};
 
+			struct Io_base     : Bitfield<2, 30> {};
 			struct Memory_base : Bitfield<7, 25> {};
 		};
 
-		struct Bar_64bit : Register<0, 64>
-		{
-			struct Memory_base : Bitfield<7, 57> {};
-		};
+		struct Upper_bits : Register<0x4, 32> { };
 
-		using Mmio::Mmio;
+		Bar_32bit::access_t _conf { 0 };
 
-		bool valid()
+		Base_address(Genode::addr_t base) : Mmio(base)
 		{
 			Bar_32bit::access_t v = read<Bar_32bit>();
 			write<Bar_32bit>(0xffffffff);
-			bool valid = read<Bar_32bit>();
+			_conf = read<Bar_32bit>();
 			write<Bar_32bit>(v);
-			return valid;
 		}
 
+		bool valid() { return _conf != 0; }
+
 		bool memory() {
-			return !(read<Bar_32bit::Memory_space_indicator>()); }
+			return !Bar_32bit::Memory_space_indicator::get(_conf); }
 
 		bool bit64()
 		{
-			return read<Bar_32bit::Memory_type>() ==
+			return Bar_32bit::Memory_type::get(_conf) ==
 			       Bar_32bit::Memory_type::SIZE_64BIT;
 		}
 
 		Genode::size_t size()
 		{
-			Bar_32bit::access_t v = read<Bar_32bit>();
-			write<Bar_32bit>(0xffffffff);
-			Bar_32bit::access_t sz = read<Bar_32bit>();
-			write<Bar_32bit>(v);
-			return (~sz) + 1;
+			return 1 + (memory() ? ~Bar_32bit::Memory_base::masked(_conf)
+			                     : ~Bar_32bit::Io_base::masked(_conf));
 		}
 
 		Genode::uint64_t addr()
 		{
-			return bit64() ? Bar_64bit::Memory_base::masked(read<Bar_64bit>())
-			               : Bar_32bit::Memory_base::masked(read<Bar_32bit>());
+			return (bit64() ? ((Genode::uint64_t)read<Upper_bits>()<<32) : 0UL)
+			       | Bar_32bit::Memory_base::masked(read<Bar_32bit>());
 		}
 	};
 
@@ -200,13 +199,28 @@ struct Pci::Config : Genode::Mmio
 		};
 
 		struct Address_32 : Register<0x4, 32> {};
-		struct Data_32    : Register<0x8,  8> {};
+		struct Data_32    : Register<0x8, 16> {};
 
 		struct Address_64_lower : Register<0x4, 32> {};
 		struct Address_64_upper : Register<0x8, 32> {};
-		struct Data_64          : Register<0xc,  8> {};
+		struct Data_64          : Register<0xc, 16> {};
 
 		using Pci_capability::Pci_capability;
+
+		void enable(Genode::addr_t   address,
+		            Genode::uint16_t data)
+		{
+			if (read<Control::Large_address_capable>()) {
+				Genode::uint64_t addr = address;
+				write<Address_64_upper>((Genode::uint32_t)(addr >> 32));
+				write<Address_64_lower>((Genode::uint32_t)addr);
+				write<Data_64>(data);
+			} else {
+				write<Address_32>((Genode::uint32_t)address);
+				write<Data_32>(data);
+			}
+			write<Control::Enable>(1);
+		};
 	};
 
 
@@ -219,8 +233,30 @@ struct Pci::Config : Genode::Mmio
 			struct Enable        : Bitfield<15, 1> {};
 		};
 
-		struct Table_offset             : Register<0x4, 32> {};
-		struct Pending_bit_array_offset : Register<0x8, 32> {};
+		struct Table : Register<0x4, 32>
+		{
+			struct Bar_index : Bitfield<0, 3>  {};
+			struct Offset    : Bitfield<3, 29> {};
+		};
+
+		struct Pending_bit_array : Register<0x8, 32>
+		{
+			struct Bar_index : Bitfield<0, 3>  {};
+			struct Offset    : Bitfield<3, 29> {};
+		};
+
+		struct Table_entry : Genode::Mmio
+		{
+			struct Address_64_lower : Register<0x0, 32> { };
+			struct Address_64_upper : Register<0x4, 32> { };
+			struct Data             : Register<0x8, 32> { };
+			struct Vector_control   : Register<0xc, 32>
+			{
+				struct Mask : Bitfield <0, 1> { };
+			};
+
+			using Genode::Mmio::Mmio;
+		};
 
 		using Pci_capability::Pci_capability;
 	};
@@ -453,8 +489,14 @@ struct Pci::Config : Genode::Mmio
 	bool valid() {
 		return read<Vendor>() != Vendor::INVALID; }
 
-	template <typename FN>
-	void for_each_memory_range(FN const & fn)
+	bool bridge()
+	{
+		return read<Header_type::Type>() == 1 ||
+		       read<Base_class_code>() == Base_class_code::BRIDGE;
+	}
+
+	template <typename MEM_FN, typename IO_FN>
+	void for_each_bar(MEM_FN const & memory, IO_FN const & io)
 	{
 		Genode::addr_t const reg_addr = base() + BASE_ADDRESS_0;
 		Genode::size_t const reg_cnt  =
@@ -465,8 +507,11 @@ struct Pci::Config : Genode::Mmio
 			Base_address reg0(reg_addr + i*0x4);
 			if (!reg0.valid())
 				continue;
-			if (reg0.bit64())  i++;
-			if (reg0.memory()) fn(reg0.addr(), reg0.size());
+			if (reg0.memory()) {
+				if (reg0.bit64()) i++;
+				memory(reg0.addr(), reg0.size());
+			} else
+				io(reg0.addr(), reg0.size());
 		}
 	};
 };
@@ -507,6 +552,15 @@ struct Pci::Config_type1 : Pci::Config
 	};
 
 	using Pci::Config::Config;
+
+	bus_t primary_bus_number() {
+		return (bus_t) read<Sec_lat_timer_bus::Primary_bus>(); }
+
+	bus_t secondary_bus_number() {
+		return (bus_t) read<Sec_lat_timer_bus::Secondary_bus>(); }
+
+	bus_t subordinate_bus_number() {
+		return (bus_t) read<Sec_lat_timer_bus::Sub_bus>(); }
 };
 
 #endif /* __INCLUDE__PCI__CONFIG_H__ */

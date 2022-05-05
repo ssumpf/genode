@@ -17,7 +17,10 @@
 #include <util/list_model.h>
 #include <util/register.h>
 
+#include <bridge.h>
+
 using namespace Genode;
+using namespace Pci;
 
 
 struct Irq_override : List_model<Irq_override>::Element
@@ -35,17 +38,17 @@ struct Irq_override : List_model<Irq_override>::Element
 		};
 	};
 
-	Pci::irq_line_t from;
-	Pci::irq_line_t to;
+	irq_line_t from;
+	irq_line_t to;
 
 	Flags::access_t flags;
 
-	Irq_override(Pci::irq_line_t from,
-	             Pci::irq_line_t to,
+	Irq_override(irq_line_t      from,
+	             irq_line_t      to,
 	             Flags::access_t flags)
 	: from(from), to(to), flags(flags) {}
 
-	void generate(Xml_generator & generator, Pci::irq_line_t & irq)
+	void generate(Xml_generator & generator, irq_line_t & irq)
 	{
 		if (irq != from)
 			return;
@@ -101,23 +104,25 @@ struct Irq_override_policy : List_model<Irq_override>::Update_policy
 
 struct Irq_routing : List_model<Irq_routing>::Element
 {
-	Pci::bus_t      bus;
-	Pci::dev_t      dev;
-	Pci::irq_pin_t  pin;
-	Pci::irq_line_t to;
+	Bdf        bridge_bdf;
+	dev_t      dev;
+	irq_pin_t  pin;
+	irq_line_t to;
 
-	Irq_routing(Pci::bus_t      bus,
-	            Pci::dev_t      dev,
-	            Pci::irq_pin_t  pin,
-	            Pci::irq_line_t to)
-	: bus(bus), dev(dev), pin(pin), to(to) {}
+	Irq_routing(Bdf        bridge_bdf,
+	            dev_t      dev,
+	            irq_pin_t  pin,
+	            irq_line_t to)
+	:
+		bridge_bdf(bridge_bdf),
+		dev(dev), pin(pin), to(to) {}
 
-	void route(Pci::bus_t        b,
-	           Pci::dev_t        d,
-	           Pci::irq_pin_t    p,
-	           Pci::irq_line_t & irq)
+	void route(Bridge     & bridge,
+	           dev_t        device,
+	           irq_pin_t    p,
+	           irq_line_t & irq)
 	{
-		if (!(bus == b && dev == d && pin == p))
+		if (!(bridge_bdf == bridge.bdf && dev == device && pin == p))
 			return;
 
 		irq = to;
@@ -134,8 +139,9 @@ struct Irq_routing_policy : List_model<Irq_routing>::Update_policy
 
 	Irq_routing & create_element(Xml_node node)
 	{
+		rid_t bridge_bdf = node.attribute_value<rid_t>("bridge_bdf", 0xff);
 		return *(new (heap)
-			Irq_routing(node.attribute_value<uint8_t>("bridge_bdf", 0xff),
+			Irq_routing(Bdf::bdf(bridge_bdf),
 			            node.attribute_value<uint8_t>("device",     0xff),
 			            node.attribute_value<uint8_t>("device_pin", 0xff),
 			            node.attribute_value<uint8_t>("gsi",        0xff)));
@@ -146,7 +152,8 @@ struct Irq_routing_policy : List_model<Irq_routing>::Update_policy
 	static bool element_matches_xml_node(Irq_routing const & ir,
 	                                     Genode::Xml_node    node)
 	{
-		return ir.bus == node.attribute_value<uint8_t>("bridge_bdf", 0xff) &&
+		rid_t bridge_bdf = node.attribute_value<rid_t>("bridge_bdf", 0xff);
+		return ir.bridge_bdf == Bdf::bdf(bridge_bdf) &&
 		       ir.dev == node.attribute_value<uint8_t>("device",     0xff) &&
 		       ir.pin == node.attribute_value<uint8_t>("device_pin", 0xff);
 	}

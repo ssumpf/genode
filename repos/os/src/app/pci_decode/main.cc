@@ -34,6 +34,7 @@ struct Main
 	Signal_handler<Main>   sys_rom_handler { env.ep(), *this,
 	                                         &Main::sys_rom_update     };
 	Expanding_reporter     pci_reporter    { env, "devices", "devices" };
+	Registry<Bridge>       bridge_registry {}; /* contains host bridges */
 
 	unsigned msi_number { 0U };
 
@@ -45,8 +46,8 @@ struct Main
 
 	Constructible<Attached_io_mem_dataspace> pci_config_ds {};
 
-	void parse_pci_function(bus_t bus, dev_t dev, func_t fn,
-	                        Config & cfg, addr_t cfg_phys_base,
+	void parse_pci_function(Bdf bdf, Config & cfg,
+	                        addr_t cfg_phys_base,
 	                        Xml_generator & generator);
 	void parse_pci_bus(bus_t bus, bus_t offset, addr_t base,
 	                   addr_t phys_base, Xml_generator & generator);
@@ -55,13 +56,18 @@ struct Main
 	void parse_pci_config_spaces(Xml_node & xml);
 	void sys_rom_update();
 
+	template <typename FN>
+	void for_bridge(Pci::bus_t bus, FN const & fn)
+	{
+		bridge_registry.for_each([&] (Bridge & b) {
+			if (b.behind(bus)) b.find_bridge(bus, fn); });
+	}
+
 	Main(Env & env);
 };
 
 
-void Main::parse_pci_function(bus_t           bus,
-                              dev_t           dev,
-                              func_t          fn,
+void Main::parse_pci_function(Bdf             bdf,
                               Config        & cfg,
                               addr_t          cfg_phys_base,
                               Xml_generator & generator)
@@ -75,8 +81,14 @@ void Main::parse_pci_function(bus_t           bus,
 	Config::Class_code_rev_id::Class_code::access_t dclass =
 		cfg.read<Config::Class_code_rev_id::Class_code>();
 
-	String<16> name(Hex(bus, Hex::OMIT_PREFIX, Hex::PAD), ":",
-	                Hex(dev, Hex::OMIT_PREFIX, Hex::PAD), ".", fn);
+	if (type) {
+		for_bridge(bdf.bus, [&] (Bridge & parent) {
+			Config_type1 bcfg(cfg.base());
+			new (heap) Bridge(parent.sub_bridges, bdf,
+			                  bcfg.secondary_bus_number(),
+			                  bcfg.subordinate_bus_number());
+		});
+	}
 
 	bool      msi     = cfg.msi_cap.constructed();
 	bool      msi_x   = cfg.msi_x_cap.constructed();
@@ -84,29 +96,35 @@ void Main::parse_pci_function(bus_t           bus,
 
 	generator.node("device", [&]
 	{
-		generator.attribute("name", name);
+		generator.attribute("name", Bdf::string(bdf));
 		generator.attribute("type", "pci");
 
 		generator.node("pci-config", [&]
 		{
 		generator.attribute("address",   String<16>(Hex(cfg_phys_base)));
-		generator.attribute("bus",       String<16>(Hex(bus)));
-		generator.attribute("device",    String<16>(Hex(dev)));
-		generator.attribute("function",  String<16>(Hex(fn)));
+		generator.attribute("bus",       String<16>(Hex(bdf.bus)));
+		generator.attribute("device",    String<16>(Hex(bdf.dev)));
+		generator.attribute("function",  String<16>(Hex(bdf.fn)));
 		generator.attribute("vendor_id", String<16>(Hex(vendor)));
 		generator.attribute("device_id", String<16>(Hex(device)));
 		generator.attribute("class",     String<16>(Hex(dclass)));
-		generator.attribute("bridge",    type ? "yes" : "no");
+		generator.attribute("bridge",    cfg.bridge() ? "yes" : "no");
 		});
 
-		cfg.for_each_memory_range([&] (uint64_t addr, size_t size)
-		{
+		cfg.for_each_bar([&] (uint64_t addr, size_t size) {
 			generator.node("io_mem", [&]
 			{
 				generator.attribute("address", String<16>(Hex(addr)));
 				generator.attribute("size",    String<16>(Hex(size)));
 			});
+		}, [&] (uint64_t addr, size_t size) {
+			generator.node("io_port_range", [&]
+			{
+				generator.attribute("address", String<16>(Hex(addr)));
+				generator.attribute("size",    String<16>(Hex(size)));
+			});
 		});
+
 
 		/* IRQ pins count from 1-4 (INTA-D), zero means no IRQ defined */
 		if (!irq_pin)
@@ -128,8 +146,10 @@ void Main::parse_pci_function(bus_t           bus,
 
 			irq_line_t irq = cfg.read<Config::Irq_line>();
 
-			irq_routing_list.for_each([&] (Irq_routing & ir) {
-				ir.route(bus, dev, irq_pin-1, irq); });
+			for_bridge(bdf.bus, [&] (Bridge & b) {
+				irq_routing_list.for_each([&] (Irq_routing & ir) {
+					ir.route(b, bdf.dev, irq_pin-1, irq); });
+			});
 
 			irq_override_list.for_each([&] (Irq_override & io) {
 				io.generate(generator, irq); });
@@ -152,7 +172,7 @@ void Main::parse_pci_bus(bus_t           bus,
 		if (!cfg.valid())
 			return true;
 
-		parse_pci_function(bus+offset, dev, fn, cfg,
+		parse_pci_function({(bus_t)(bus+offset), dev, fn}, cfg,
 		                   config_phys_base, generator);
 
 		return !(fn == 0 && !cfg.read<Config::Header_type::Multi_function>());
@@ -176,18 +196,28 @@ void Main::parse_pci_config_spaces(Xml_node & xml)
 {
 	pci_reporter.generate([&] (Xml_generator & generator)
 	{
+		unsigned host_bridge_num = 0;
+
 		xml.for_each_sub_node("bdf", [&] (Xml_node & xml)
 		{
 			addr_t const start = xml.attribute_value("start",  0UL);
-			addr_t const base  = xml.attribute_value("base",  0UL);
-			size_t const count = xml.attribute_value("count", 0UL);
+			addr_t const base  = xml.attribute_value("base",   0UL);
+			size_t const count = xml.attribute_value("count",  0UL);
 
-			uint8_t const bus_off = (uint8_t) (start / FUNCTION_PER_BUS_MAX);
-			size_t  const bus_count = count / FUNCTION_PER_BUS_MAX;
+			bus_t const bus_off   = (bus_t) (start / FUNCTION_PER_BUS_MAX);
+			bus_t const bus_count = (bus_t) (count / FUNCTION_PER_BUS_MAX);
+
+			if (host_bridge_num++) {
+				error("We do not support multiple host bridges by now!");
+				return;
+			}
+
+			new (heap) Bridge(bridge_registry, { bus_off, 0, 0 },
+			                  bus_off, bus_count);
 
 			pci_config_ds.construct(env, base, count * FUNCTION_CONFIG_SPACE_SIZE);
 
-			for (size_t bus = 0; bus < bus_count; bus++)
+			for (bus_t bus = 0; bus < bus_count; bus++)
 				parse_pci_bus((bus_t)bus, bus_off,
 				              (addr_t)pci_config_ds->local_addr<void>(),
 				              base, generator);
