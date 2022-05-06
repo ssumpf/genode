@@ -71,14 +71,6 @@ void __srcu_read_unlock(struct srcu_struct * ssp,int idx)
 }
 
 
-#include <linux/interrupt.h>
-
-void __tasklet_schedule(struct tasklet_struct * t)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 #include <asm-generic/delay.h>
 
 void __udelay(unsigned long usecs)
@@ -166,14 +158,6 @@ enum dev_dma_attr acpi_get_dma_attr(struct acpi_device * adev)
 }
 
 
-#include <linux/random.h>
-
-void add_interrupt_randomness(int irq,int irq_flags)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 #include <linux/kobject.h>
 
 int add_uevent_var(struct kobj_uevent_env * env,const char * format,...)
@@ -225,14 +209,6 @@ void async_synchronize_full_domain(struct async_domain * domain)
 #include <linux/kernel.h>
 
 void bust_spinlocks(int yes)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/rcupdate.h>
-
-void call_rcu(struct rcu_head * head,rcu_callback_t func)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -333,14 +309,6 @@ bool dma_can_mmap(struct device * dev)
 #include <linux/dma-mapping.h>
 
 int dma_mmap_attrs(struct device * dev,struct vm_area_struct * vma,void * cpu_addr,dma_addr_t dma_addr,size_t size,unsigned long attrs)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/dma-mapping.h>
-
-int dma_supported(struct device * dev,u64 mask)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -484,11 +452,6 @@ struct pseudo_fs_context * init_pseudo(struct fs_context * fc,unsigned long magi
 }
 
 
-#include <linux/utsname.h>
-
-struct user_namespace init_user_ns;
-
-
 #include <linux/init.h>
 
 bool initcall_debug;
@@ -574,32 +537,9 @@ unsigned int ioread32(const void __iomem * addr)
 }
 
 
-#include <asm-generic/logic_io.h>
-
-void __iomem * ioremap(resource_size_t phys_addr,unsigned long size)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <asm-generic/logic_io.h>
-
-void iounmap(volatile void __iomem * addr)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 #include <asm-generic/iomap.h>
 
 void iowrite32(u32 val,void __iomem * addr)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-extern bool irq_wait_for_poll(struct irq_desc * desc);
-bool irq_wait_for_poll(struct irq_desc * desc)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -616,14 +556,6 @@ void irq_work_tick(void)
 #include <linux/property.h>
 
 bool is_software_node(const struct fwnode_handle * fwnode)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/mm.h>
-
-bool is_vmalloc_addr(const void * x)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -680,11 +612,6 @@ void ledtrig_audio_set(enum led_audio type,enum led_brightness state)
 {
 	lx_emul_trace_and_stop(__func__);
 }
-
-
-#include <linux/delay.h>
-
-unsigned long lpj_fine;
 
 
 #include <linux/kernel.h>
@@ -755,27 +682,6 @@ void pci_assign_unassigned_bus_resources(struct pci_bus * bus)
 
 extern unsigned long pci_cardbus_resource_alignment(struct resource * res);
 unsigned long pci_cardbus_resource_alignment(struct resource * res)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-extern int pci_dev_specific_acs_enabled(struct pci_dev * dev,u16 acs_flags);
-int pci_dev_specific_acs_enabled(struct pci_dev * dev,u16 acs_flags)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-extern int pci_dev_specific_disable_acs_redir(struct pci_dev * dev);
-int pci_dev_specific_disable_acs_redir(struct pci_dev * dev)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-extern int pci_dev_specific_enable_acs(struct pci_dev * dev);
-int pci_dev_specific_enable_acs(struct pci_dev * dev)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -941,20 +847,6 @@ void refcount_warn_saturate(refcount_t * r,enum refcount_saturation_type t)
 }
 
 
-extern void register_handler_proc(unsigned int irq,struct irqaction * action);
-void register_handler_proc(unsigned int irq,struct irqaction * action)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-extern void register_irq_proc(unsigned int irq,struct irq_desc * desc);
-void register_irq_proc(unsigned int irq,struct irq_desc * desc)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 #include <linux/firmware.h>
 
 void release_firmware(const struct firmware * fw)
@@ -1003,14 +895,6 @@ void seq_printf(struct seq_file * m,const char * f,...)
 }
 
 
-#include <linux/seq_file.h>
-
-void seq_vprintf(struct seq_file * m,const char * f,va_list args)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 extern int set_memory_wb(unsigned long addr,int numpages);
 int set_memory_wb(unsigned long addr,int numpages)
 {
@@ -1036,14 +920,6 @@ void show_mem(unsigned int filter,nodemask_t * nodemask)
 #include <linux/sched/debug.h>
 
 void show_state_filter(unsigned int state_filter)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/fs.h>
-
-void simple_release_fs(struct vfsmount ** mount,int * count)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -1150,62 +1026,6 @@ void synchronize_srcu(struct srcu_struct * ssp)
 }
 
 
-#include <linux/sysfs.h>
-
-int sysfs_emit(char * buf,const char * fmt,...)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/sysfs.h>
-
-int sysfs_emit_at(char * buf,int at,const char * fmt,...)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/sysfs.h>
-
-void sysfs_remove_bin_file(struct kobject * kobj,const struct bin_attribute * attr)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/sysfs.h>
-
-void sysfs_remove_dir(struct kobject * kobj)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/sysfs.h>
-
-bool sysfs_remove_file_self(struct kobject * kobj,const struct attribute * attr)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/sysfs.h>
-
-void sysfs_remove_groups(struct kobject * kobj,const struct attribute_group ** groups)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/sysfs.h>
-
-void sysfs_remove_link(struct kobject * kobj,const char * name)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 #include <linux/task_work.h>
 
 int task_work_add(struct task_struct * task,struct callback_head * work,enum task_work_notify_mode notify)
@@ -1240,14 +1060,6 @@ void unregister_handler_proc(unsigned int irq,struct irqaction * action)
 #include <linux/uuid.h>
 
 const u8 uuid_index[16] = {};
-
-
-#include <linux/vmalloc.h>
-
-void vfree(const void * addr)
-{
-	lx_emul_trace_and_stop(__func__);
-}
 
 
 #include <linux/mm.h>

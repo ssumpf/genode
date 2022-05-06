@@ -18,6 +18,8 @@ SRC_C  += lx_emul/spec/x86/pci.c
 
 SRC_BIN += nhlt-fuji5c.dat
 
+vpath %.c  $(REP_DIR)/src/lib/pc
+vpath %.cc $(REP_DIR)/src/lib/pc
 vpath %.c  $(REL_PRG_DIR)
 vpath %.cc $(REL_PRG_DIR)
 vpath common_dummies.c $(REP_DIR)/src/lib/pc/lx_emul
