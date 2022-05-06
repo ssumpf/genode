@@ -59,6 +59,7 @@ kernel/time/timer_list.c
 kernel/workqueue.c
 lib/bitmap.c
 lib/bsearch.c
+lib/ctype.c
 lib/find_bit.c
 lib/hexdump.c
 lib/hweight.c
@@ -84,7 +85,6 @@ sound/core/control_led.c
 sound/core/control.c
 sound/core/ctljack.c
 sound/core/device.c
-sound/core/info.c
 sound/core/init.c
 sound/core/jack.c
 sound/core/memalloc.c
@@ -127,7 +127,6 @@ sound/pci/hda/hda_codec.c
 sound/pci/hda/hda_controller.c
 sound/pci/hda/hda_eld.c
 sound/pci/hda/hda_generic.c
-sound/pci/hda/hda_intel.c
 sound/pci/hda/hda_jack.c
 sound/pci/hda/patch_hdmi.c
 sound/pci/hda/patch_realtek.c
