@@ -18,7 +18,7 @@ set use_mixer 0
 
 set build_components {
 	core init timer
-	drivers/audio
+	drivers/sound/pc
 	test/audio_out
 }
 

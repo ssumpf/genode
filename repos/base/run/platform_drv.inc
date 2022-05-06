@@ -19,7 +19,7 @@ proc usb_host_drv_binary { } {
 #
 proc audio_drv_binary { } {
 	if {[have_board linux]} { return linux_audio_drv }
-	if {[have_board pc]}    { return pci_audio_drv }
+	if {[have_board pc]}    { return pc_sound }
 	return no_audio_drv_available
 }
 
