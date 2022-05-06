@@ -31,14 +31,6 @@ const char * __clk_get_name(const struct clk * clk)
 }
 
 
-#include <asm-generic/delay.h>
-
-noinline void __const_udelay(unsigned long xloops)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 #include <linux/file.h>
 
 unsigned long __fdget(unsigned int fd)
@@ -66,14 +58,6 @@ void __put_task_struct(struct task_struct * tsk)
 #include <linux/srcu.h>
 
 void __srcu_read_unlock(struct srcu_struct * ssp,int idx)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <asm-generic/delay.h>
-
-void __udelay(unsigned long usecs)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -113,14 +97,6 @@ unsigned long _copy_to_user(void __user * to,const void * from,unsigned long n)
 
 extern void ack_bad_irq(unsigned int irq);
 void ack_bad_irq(unsigned int irq)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <acpi/acpi_bus.h>
-
-bool acpi_dev_present(const char * hid,const char * uid,s64 hrv)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -405,27 +381,6 @@ void gpiod_set_value_cansleep(struct gpio_desc * desc,int value)
 #include <linux/uuid.h>
 
 const u8 guid_index[16] = {};
-
-
-extern void hda_widget_sysfs_exit(struct hdac_device * codec);
-void hda_widget_sysfs_exit(struct hdac_device * codec)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-extern int hda_widget_sysfs_init(struct hdac_device * codec);
-int hda_widget_sysfs_init(struct hdac_device * codec)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-extern int hda_widget_sysfs_reinit(struct hdac_device * codec,hda_nid_t start_nid,int num_nodes);
-int hda_widget_sysfs_reinit(struct hdac_device * codec,hda_nid_t start_nid,int num_nodes)
-{
-	lx_emul_trace_and_stop(__func__);
-}
 
 
 #include <linux/hdmi.h>
@@ -879,14 +834,6 @@ int request_firmware(const struct firmware ** firmware_p,const char * name,struc
 }
 
 
-#include <linux/sched.h>
-
-void sched_set_fifo(struct task_struct * p)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 #include <linux/seq_file.h>
 
 void seq_printf(struct seq_file * m,const char * f,...)
@@ -1021,14 +968,6 @@ int suppress_printk;
 #include <linux/srcutiny.h>
 
 void synchronize_srcu(struct srcu_struct * ssp)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/task_work.h>
-
-int task_work_add(struct task_struct * task,struct callback_head * work,enum task_work_notify_mode notify)
 {
 	lx_emul_trace_and_stop(__func__);
 }

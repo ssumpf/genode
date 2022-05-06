@@ -23,6 +23,15 @@ int acpi_platform_notify(struct device * dev,enum kobject_action action)
 
 
 #include <acpi/acpi_bus.h>
+//XXX:might be needed
+bool acpi_dev_present(const char * hid,const char * uid,s64 hrv)
+{
+	lx_emul_trace(__func__);
+	return false;
+}
+
+
+#include <acpi/acpi_bus.h>
 
 bool is_acpi_device_node(const struct fwnode_handle * fwnode)
 {
@@ -78,4 +87,46 @@ int pci_acpi_program_hp_params(struct pci_dev * dev)
 	lx_emul_trace(__func__);
 	return 0;
 }
+
+
+#include <linux/sched.h>
+
+void sched_set_fifo(struct task_struct * p)
+{
+	lx_emul_trace(__func__);
+}
+
+
+#include <linux/task_work.h>
+
+int task_work_add(struct task_struct * task,struct callback_head * work,enum task_work_notify_mode notify)
+{
+	lx_emul_trace(__func__);
+	return -1;
+}
+
+
+extern int hda_widget_sysfs_reinit(struct hdac_device * codec,hda_nid_t start_nid,int num_nodes);
+int hda_widget_sysfs_reinit(struct hdac_device * codec,hda_nid_t start_nid,int num_nodes)
+{
+	lx_emul_trace(__func__);
+	return 0;
+}
+
+
+extern int hda_widget_sysfs_init(struct hdac_device * codec);
+int hda_widget_sysfs_init(struct hdac_device * codec)
+{
+	lx_emul_trace(__func__);
+	return 0;
+}
+
+
+extern void hda_widget_sysfs_exit(struct hdac_device * codec);
+void hda_widget_sysfs_exit(struct hdac_device * codec)
+{
+	lx_emul_trace(__func__);
+}
+
+
 
