@@ -129,4 +129,26 @@ void hda_widget_sysfs_exit(struct hdac_device * codec)
 }
 
 
+extern void snd_hda_sysfs_init(struct hda_codec * codec);
+void snd_hda_sysfs_init(struct hda_codec * codec)
+{
+	lx_emul_trace(__func__);
+}
+
+
+extern int snd_hda_get_int_hint(struct hda_codec * codec,const char * key,int * valp);
+int snd_hda_get_int_hint(struct hda_codec * codec,const char * key,int * valp)
+{
+	lx_emul_trace(__func__);
+	return -ENOENT;
+}
+
+
+extern int snd_hda_get_bool_hint(struct hda_codec * codec,const char * key);
+int snd_hda_get_bool_hint(struct hda_codec * codec,const char * key)
+{
+	lx_emul_trace(__func__);
+	return -ENOENT;
+}
+
 

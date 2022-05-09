@@ -26,6 +26,8 @@ extern "C" void lx_user_init()
 	Genode::error("lx_user_init");
 }
 
+extern "C" void lx_emul_module_params(void);
+
 struct Main
 {
 	Env &env;
@@ -33,10 +35,12 @@ struct Main
 	Main(Env & env) : env(env)
 	{
 		Lx_kit::initialize(env);
+
+		lx_emul_module_params();
+
 		env.exec_static_constructors();
 
 		lx_emul_start_kernel(nullptr);
-
 	}
 };
 

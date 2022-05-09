@@ -5,10 +5,12 @@ REL_PRG_DIR := $(PRG_DIR)/../..
 TARGET := pc_sound
 LIBS   := base pc_lx_emul
 
-INC_DIR += $(REL_PRG_DIR)
+INC_DIR += $(REL_PRG_DIR) $(REL_PRG_DIR)/shadow
 
+SRC_CC += firmware.cc
 SRC_CC += main.cc
 SRC_CC += misc.cc
+SRC_CC += lx_vmap.cc
 SRC_C  += $(notdir $(wildcard $(REL_PRG_DIR)/generated_dummies.c))
 SRC_C  += acpi.c
 SRC_C  += common_dummies.c

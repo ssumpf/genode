@@ -1,7 +1,7 @@
 /*
  * \brief  Dummy definitions of Linux Kernel functions
  * \author Automatically generated file - do no edit
- * \date   2022-05-06
+ * \date   2022-05-09
  */
 
 #include <lx_emul.h>
@@ -802,14 +802,6 @@ void refcount_warn_saturate(refcount_t * r,enum refcount_saturation_type t)
 }
 
 
-#include <linux/firmware.h>
-
-void release_firmware(const struct firmware * fw)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 #include <linux/mm.h>
 
 int remap_pfn_range(struct vm_area_struct * vma,unsigned long addr,unsigned long pfn,unsigned long size,pgprot_t prot)
@@ -821,14 +813,6 @@ int remap_pfn_range(struct vm_area_struct * vma,unsigned long addr,unsigned long
 #include <linux/vmalloc.h>
 
 int remap_vmalloc_range(struct vm_area_struct * vma,void * addr,unsigned long pgoff)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/firmware.h>
-
-int request_firmware(const struct firmware ** firmware_p,const char * name,struct device * device)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -888,29 +872,8 @@ int smp_call_function_single(int cpu,void (* func)(void * info),void * info,int 
 }
 
 
-extern int snd_hda_get_bool_hint(struct hda_codec * codec,const char * key);
-int snd_hda_get_bool_hint(struct hda_codec * codec,const char * key)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-extern int snd_hda_get_int_hint(struct hda_codec * codec,const char * key,int * valp);
-int snd_hda_get_int_hint(struct hda_codec * codec,const char * key,int * valp)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 extern void snd_hda_sysfs_clear(struct hda_codec * codec);
 void snd_hda_sysfs_clear(struct hda_codec * codec)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-extern void snd_hda_sysfs_init(struct hda_codec * codec);
-void snd_hda_sysfs_init(struct hda_codec * codec)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -1004,22 +967,6 @@ const u8 uuid_index[16] = {};
 #include <linux/mm.h>
 
 struct page * vmalloc_to_page(const void * vmalloc_addr)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/vmalloc.h>
-
-void * vmap(struct page ** pages,unsigned int count,unsigned long flags,pgprot_t prot)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/vmalloc.h>
-
-void vunmap(const void * addr)
 {
 	lx_emul_trace_and_stop(__func__);
 }
