@@ -151,4 +151,77 @@ int snd_hda_get_bool_hint(struct hda_codec * codec,const char * key)
 	return -ENOENT;
 }
 
+struct input_dev_poller;
+extern void input_dev_poller_finalize(struct input_dev_poller * poller);
+void input_dev_poller_finalize(struct input_dev_poller * poller)
+{
+	lx_emul_trace_and_stop(__func__);
+}
 
+
+extern void input_dev_poller_start(struct input_dev_poller * poller);
+void input_dev_poller_start(struct input_dev_poller * poller)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+extern void input_dev_poller_stop(struct input_dev_poller * poller);
+void input_dev_poller_stop(struct input_dev_poller * poller)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/proc_fs.h>
+
+struct proc_dir_entry { unsigned dummy; };
+
+struct proc_dir_entry * proc_create(const char * name,umode_t mode,struct proc_dir_entry * parent,const struct proc_ops * proc_ops)
+{
+	static struct proc_dir_entry entry;
+	lx_emul_trace(__func__);
+	return &entry;
+}
+
+
+struct proc_dir_entry * proc_mkdir(const char * name,struct proc_dir_entry * parent)
+{
+	static struct proc_dir_entry entry;
+	lx_emul_trace(__func__);
+	return &entry;
+}
+
+
+#include <linux/fs.h>
+
+int alloc_chrdev_region(dev_t * dev,unsigned baseminor,unsigned count,const char * name)
+{
+	lx_emul_trace(__func__);
+	return 0;
+}
+
+
+#include <acpi/acpi_bus.h>
+
+bool is_acpi_data_node(const struct fwnode_handle * fwnode)
+{
+	lx_emul_trace(__func__);
+	return 0;
+}
+
+
+#include <linux/async.h>
+
+void async_synchronize_full_domain(struct async_domain * domain)
+{
+	lx_emul_trace(__func__);
+}
+
+
+#include <linux/leds.h>
+
+void ledtrig_audio_set(enum led_audio type,enum led_brightness state)
+{
+	lx_emul_trace(__func__);
+}

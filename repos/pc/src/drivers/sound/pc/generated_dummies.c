@@ -23,6 +23,14 @@ int ___ratelimit(struct ratelimit_state * rs,const char * func)
 }
 
 
+#include <linux/acpi.h>
+
+int __acpi_node_get_property_reference(const struct fwnode_handle * fwnode,const char * propname,size_t index,size_t num_args,struct fwnode_reference_args * args)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
 #include <linux/clk-provider.h>
 
 const char * __clk_get_name(const struct clk * clk)
@@ -34,6 +42,38 @@ const char * __clk_get_name(const struct clk * clk)
 #include <linux/file.h>
 
 unsigned long __fdget(unsigned int fd)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/kfifo.h>
+
+int __kfifo_alloc(struct __kfifo * fifo,unsigned int size,size_t esize,gfp_t gfp_mask)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/kfifo.h>
+
+void __kfifo_free(struct __kfifo * fifo)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/kfifo.h>
+
+unsigned int __kfifo_in(struct __kfifo * fifo,const void * buf,unsigned int len)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/kfifo.h>
+
+unsigned int __kfifo_out(struct __kfifo * fifo,void * buf,unsigned int len)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -104,6 +144,22 @@ void ack_bad_irq(unsigned int irq)
 
 #include <linux/acpi.h>
 
+void acpi_dev_free_resource_list(struct list_head * list)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/acpi.h>
+
+int acpi_dev_get_resources(struct acpi_device * adev,struct list_head * list,int (* preproc)(struct acpi_resource *,void *),void * preproc_data)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/acpi.h>
+
 int acpi_device_modalias(struct device * dev,char * buf,int size)
 {
 	lx_emul_trace_and_stop(__func__);
@@ -134,6 +190,21 @@ enum dev_dma_attr acpi_get_dma_attr(struct acpi_device * adev)
 }
 
 
+extern acpi_status acpi_get_handle(acpi_handle parent,acpi_string pathname,acpi_handle * ret_handle);
+acpi_status acpi_get_handle(acpi_handle parent,acpi_string pathname,acpi_handle * ret_handle)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/random.h>
+
+void add_input_randomness(unsigned int type,unsigned int code,unsigned int value)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
 #include <linux/kobject.h>
 
 int add_uevent_var(struct kobj_uevent_env * env,const char * format,...)
@@ -150,9 +221,9 @@ void * alloc_pages_exact(size_t size,gfp_t gfp_mask)
 }
 
 
-#include <linux/async.h>
+#include <linux/anon_inodes.h>
 
-async_cookie_t async_schedule_node(async_func_t func,void * data,int node)
+struct file * anon_inode_getfile(const char * name,const struct file_operations * fops,void * priv,int flags)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -160,7 +231,7 @@ async_cookie_t async_schedule_node(async_func_t func,void * data,int node)
 
 #include <linux/async.h>
 
-async_cookie_t async_schedule_node_domain(async_func_t func,void * data,int node,struct async_domain * domain)
+async_cookie_t async_schedule_node(async_func_t func,void * data,int node)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -174,17 +245,17 @@ void async_synchronize_full(void)
 }
 
 
-#include <linux/async.h>
+#include <linux/kernel.h>
 
-void async_synchronize_full_domain(struct async_domain * domain)
+void bust_spinlocks(int yes)
 {
 	lx_emul_trace_and_stop(__func__);
 }
 
 
-#include <linux/kernel.h>
+#include <linux/cdev.h>
 
-void bust_spinlocks(int yes)
+int cdev_device_add(struct cdev * cdev,struct device * dev)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -258,14 +329,6 @@ struct clk * devm_clk_get(struct device * dev,const char * id)
 }
 
 
-#include <linux/gpio/consumer.h>
-
-struct gpio_desc * __must_check devm_gpiod_get_optional(struct device * dev,const char * con_id,enum gpiod_flags flags)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 #include <linux/leds.h>
 
 int devm_led_classdev_register_ext(struct device * parent,struct led_classdev * led_cdev,struct led_init_data * init_data)
@@ -309,6 +372,14 @@ void emergency_restart(void)
 #include <linux/fs.h>
 
 int fasync_helper(int fd,struct file * filp,int on,struct fasync_struct ** fapp)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/file.h>
+
+void fd_install(unsigned int fd,struct file * file)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -370,9 +441,9 @@ int get_option(char ** str,int * pint)
 }
 
 
-#include <linux/gpio/consumer.h>
+#include <linux/file.h>
 
-void gpiod_set_value_cansleep(struct gpio_desc * desc,int value)
+int get_unused_fd_flags(unsigned flags)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -414,47 +485,15 @@ bool initcall_debug;
 
 #include <linux/input.h>
 
-struct input_dev * input_allocate_device(void)
+void input_ff_destroy(struct input_dev * dev)
 {
 	lx_emul_trace_and_stop(__func__);
 }
 
 
-#include <linux/input.h>
+#include <linux/input/mt.h>
 
-void input_event(struct input_dev * dev,unsigned int type,unsigned int code,int value)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/input.h>
-
-void input_free_device(struct input_dev * dev)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/input.h>
-
-int input_register_device(struct input_dev * dev)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/input.h>
-
-void input_set_capability(struct input_dev * dev,unsigned int type,unsigned int code)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/input.h>
-
-void input_unregister_device(struct input_dev * dev)
+void input_mt_destroy_slots(struct input_dev * dev)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -556,14 +595,6 @@ int kobject_synth_uevent(struct kobject * kobj,const char * buf,size_t count)
 #include <linux/leds.h>
 
 enum led_brightness ledtrig_audio_get(enum led_audio type)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/leds.h>
-
-void ledtrig_audio_set(enum led_audio type,enum led_brightness state)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -773,6 +804,14 @@ void put_pid(struct pid * pid)
 }
 
 
+#include <linux/file.h>
+
+void put_unused_fd(unsigned int fd)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
 #include <linux/pci.h>
 
 int raw_pci_read(unsigned int domain,unsigned int bus,unsigned int devfn,int reg,int len,u32 * val)
@@ -818,9 +857,81 @@ int remap_vmalloc_range(struct vm_area_struct * vma,void * addr,unsigned long pg
 }
 
 
+#include <linux/proc_fs.h>
+
+void remove_proc_entry(const char * name,struct proc_dir_entry * parent)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/seq_file.h>
+
+struct list_head * seq_list_next(void * v,struct list_head * head,loff_t * ppos)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/seq_file.h>
+
+struct list_head * seq_list_start(struct list_head * head,loff_t pos)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/seq_file.h>
+
+loff_t seq_lseek(struct file * file,loff_t offset,int whence)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/seq_file.h>
+
+int seq_open(struct file * file,const struct seq_operations * op)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
 #include <linux/seq_file.h>
 
 void seq_printf(struct seq_file * m,const char * f,...)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/seq_file.h>
+
+void seq_putc(struct seq_file * m,char c)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/seq_file.h>
+
+void seq_puts(struct seq_file * m,const char * s)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/seq_file.h>
+
+ssize_t seq_read(struct file * file,char __user * buf,size_t size,loff_t * ppos)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/seq_file.h>
+
+int seq_release(struct inode * inode,struct file * file)
 {
 	lx_emul_trace_and_stop(__func__);
 }

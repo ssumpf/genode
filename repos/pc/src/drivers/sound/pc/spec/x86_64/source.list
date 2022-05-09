@@ -13,6 +13,11 @@ drivers/base/regmap/regcache.c
 drivers/base/regmap/regcache-flat.c
 drivers/base/regmap/regcache-rbtree.c
 drivers/base/regmap/regmap.c
+drivers/gpio/gpiolib.c
+drivers/gpio/gpiolib-acpi.c
+drivers/gpio/gpiolib-cdev.c
+drivers/gpio/gpiolib-devres.c
+drivers/input/input.c
 drivers/pci/access.c
 drivers/pci/bus.c
 drivers/pci/host-bridge.c

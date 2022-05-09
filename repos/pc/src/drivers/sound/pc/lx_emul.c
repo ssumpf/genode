@@ -1,5 +1,6 @@
 #include <lx_emul.h>
 
+#include <linux/async.h>
 #include <linux/firmware.h>
 #include <linux/moduleparam.h>
 #include <linux/proc_fs.h>
@@ -10,6 +11,7 @@
 
 const struct attribute_group hdac_dev_attr_groups;
 const struct attribute_group pci_dev_acpi_attr_group;
+const struct attribute_group input_poller_attribute_group;
 
 pteval_t __default_kernel_pte_mask __read_mostly = ~0;
 
@@ -102,3 +104,14 @@ void lx_emul_module_params(void)
 	printk("%s:%d HDA_MODEL: %p\n", __func__, __LINE__, module_param_hda_model());
 	*hda_model = kstrdup("dell-headset-multi", GFP_KERNEL);
 }
+
+
+/*
+ * async
+ */
+async_cookie_t async_schedule_node_domain(async_func_t func,void * data,int node,struct async_domain * domain)
+{
+	func(data, 0);
+	return 0;
+}
+
