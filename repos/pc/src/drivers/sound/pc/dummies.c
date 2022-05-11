@@ -202,6 +202,13 @@ int alloc_chrdev_region(dev_t * dev,unsigned baseminor,unsigned count,const char
 }
 
 
+int nonseekable_open(struct inode * inode,struct file * filp)
+{
+	lx_emul_trace(__func__);
+	return 0;
+}
+
+
 int stream_open(struct inode * inode,struct file * filp)
 {
 	lx_emul_trace(__func__);
@@ -232,3 +239,12 @@ void ledtrig_audio_set(enum led_audio type,enum led_brightness state)
 {
 	lx_emul_trace(__func__);
 }
+
+
+bool dma_can_mmap(struct device * dev)
+{
+	lx_emul_trace(__func__);
+	return false;
+}
+
+

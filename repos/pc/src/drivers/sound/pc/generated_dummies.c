@@ -205,13 +205,6 @@ int add_uevent_var(struct kobj_uevent_env * env,const char * format,...)
 }
 
 
-#include <linux/gfp.h>
-
-void * alloc_pages_exact(size_t size,gfp_t gfp_mask)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
 
 #include <linux/anon_inodes.h>
 
@@ -331,14 +324,6 @@ int devm_led_classdev_register_ext(struct device * parent,struct led_classdev * 
 
 #include <linux/dma-mapping.h>
 
-bool dma_can_mmap(struct device * dev)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/dma-mapping.h>
-
 int dma_mmap_attrs(struct device * dev,struct vm_area_struct * vma,void * cpu_addr,dma_addr_t dma_addr,size_t size,unsigned long attrs)
 {
 	lx_emul_trace_and_stop(__func__);
@@ -388,14 +373,6 @@ bool file_ns_capable(const struct file * file,struct user_namespace * ns,int cap
 #include <linux/file.h>
 
 void fput(struct file * file)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/gfp.h>
-
-void free_pages_exact(void * virt,size_t size)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -608,14 +585,6 @@ struct irq_chip no_irq_chip;
 #include <linux/fs.h>
 
 loff_t no_llseek(struct file * file,loff_t offset,int whence)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/fs.h>
-
-int nonseekable_open(struct inode * inode,struct file * filp)
 {
 	lx_emul_trace_and_stop(__func__);
 }

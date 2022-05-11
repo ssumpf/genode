@@ -5,6 +5,7 @@
 #include <linux/slab.h>
 #include <sound/asound.h>
 #include <sound/core.h>
+#include <sound/pcm.h>
 
 
 static int sound_ioctl(struct file *file, unsigned cmd, void *arg)
@@ -145,6 +146,47 @@ int __register_chrdev(unsigned int major, unsigned int baseminor,
 }
 
 
+static int sound_device_open(struct snd_card *card, int dev)
+{
+	struct snd_device *device;
+	struct snd_pcm *pcm;
+	struct file  *file;
+	struct inode *inode;
+	bool found = false;
+	int cidx;
+	struct device *pcm_device;
+
+	list_for_each_entry(device, &card->devices, list) {
+		pcm = device->device_data;
+		if (pcm->device == dev) {
+			found = true;
+			break;
+		}
+	}
+
+	if (!found) {
+		printk("%s:%d: dev %d not found\n", __func__, __LINE__, dev);
+		return -ENODEV;
+	}
+
+	for (cidx = 0; cidx < 2; cidx++) {
+		if (pcm->streams[cidx].substream != NULL)
+			break;
+	}
+	printk("PCM cidx: %d\n", cidx);
+	pcm_device = &pcm->streams[cidx].dev;
+	printk("PCM device major: %u minor: %u\n",
+	        MAJOR(pcm_device->devt), MINOR(pcm_device->devt));
+
+
+	inode = alloc_anon_inode(NULL);
+	inode->i_rdev = MKDEV(MAJOR(pcm_device->devt), MINOR(pcm_device->devt));
+	file = (struct file *)kzalloc(sizeof (struct file), 0);
+
+	return _alsa_fops->open(inode, file);
+}
+
+
 static int sound_card_task(void *data)
 {
 	int i, err;
@@ -180,6 +222,10 @@ static int sound_card_task(void *data)
 
 	dump_card_info(file, &info);
 	enumerate_pcm_devices(file, info.card);
+
+	printk("open device 0\n");
+	err = sound_device_open(card, 0);
+	printk("open device returned: %d\n", err);
 
 	lx_emul_task_schedule(true);
 	return 0;
