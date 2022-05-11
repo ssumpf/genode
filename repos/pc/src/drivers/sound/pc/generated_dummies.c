@@ -127,14 +127,6 @@ unsigned long _copy_from_user(void * to,const void __user * from,unsigned long n
 }
 
 
-#include <linux/uaccess.h>
-
-unsigned long _copy_to_user(void __user * to,const void * from,unsigned long n)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 extern void ack_bad_irq(unsigned int irq);
 void ack_bad_irq(unsigned int irq)
 {
@@ -1016,14 +1008,6 @@ void srcu_drive_gp(struct work_struct * wp)
 #include <linux/jump_label.h>
 
 bool static_key_initialized;
-
-
-#include <linux/fs.h>
-
-int stream_open(struct inode * inode,struct file * filp)
-{
-	lx_emul_trace_and_stop(__func__);
-}
 
 
 #include <linux/string_helpers.h>

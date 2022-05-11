@@ -115,3 +115,14 @@ async_cookie_t async_schedule_node_domain(async_func_t func,void * data,int node
 	return 0;
 }
 
+
+/*
+ * uaccess
+ */
+unsigned long _copy_to_user(void __user * to,const void * from,unsigned long n)
+{
+	memcpy(to, from, n);
+	return 0;
+}
+
+

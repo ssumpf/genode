@@ -202,6 +202,13 @@ int alloc_chrdev_region(dev_t * dev,unsigned baseminor,unsigned count,const char
 }
 
 
+int stream_open(struct inode * inode,struct file * filp)
+{
+	lx_emul_trace(__func__);
+	return 0;
+}
+
+
 #include <acpi/acpi_bus.h>
 
 bool is_acpi_data_node(const struct fwnode_handle * fwnode)

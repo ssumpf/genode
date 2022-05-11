@@ -17,6 +17,7 @@ SRC_C  += common_dummies.c
 SRC_C  += dummies.c
 SRC_C  += lx_emul.c
 SRC_C  += lx_emul/spec/x86/pci.c
+SRC_C  += lx_user.c
 
 SRC_BIN += nhlt-fuji5c.dat
 

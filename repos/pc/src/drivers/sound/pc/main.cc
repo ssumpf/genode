@@ -21,11 +21,6 @@
 
 using namespace Genode;
 
-extern "C" void lx_user_init()
-{
-	Genode::error("lx_user_init");
-}
-
 extern "C" void lx_emul_module_params(void);
 
 struct Main
