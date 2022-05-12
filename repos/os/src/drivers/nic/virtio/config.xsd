@@ -19,7 +19,6 @@
 
 	<xs:element name="config">
 		<xs:complexType>
-			<xs:attribute name="mode"           type="Nic_driver_mode" />
 			<xs:attribute name="verbose"        type="Boolean" />
 			<xs:attribute name="mac"            type="Mac_address" />
 			<xs:attribute name="rx_queue_size"  type="Virtio_queue_size" />
