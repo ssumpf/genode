@@ -146,7 +146,76 @@ int __register_chrdev(unsigned int major, unsigned int baseminor,
 }
 
 
-static int sound_device_open(struct snd_card *card, int dev)
+static void hw_set_mask(struct snd_pcm_hw_params *params, unsigned index, unsigned bit)
+{
+	if (bit == ~0u)
+		memset(params->masks[index].bits, 0xff, sizeof(params->masks[index].bits));
+	else
+		params->masks[index].bits[0] = 1u << bit;
+
+	params->rmask |= 1u << index;
+}
+
+
+static void hw_set_interval(struct snd_pcm_hw_params *params, unsigned index, unsigned value)
+{
+	unsigned i = index - SNDRV_PCM_HW_PARAM_FIRST_INTERVAL;
+	struct snd_interval *interval = &params->intervals[i];
+
+	interval->min = interval->max = value;
+	if (value == ~0u) {
+		interval->min = 0;
+		interval->max = value;
+	}
+	else {
+		interval->min = interval->max = value;
+		interval->integer = 1;
+	}
+
+	params->rmask |= 1u << index;
+}
+
+
+static void hw_init_params(struct snd_pcm_hw_params *params)
+{
+	unsigned i;
+	for (i = 0; i <= SNDRV_PCM_HW_PARAM_LAST_MASK; i++)
+		hw_set_mask(params, i, ~0u);
+
+	for (i = SNDRV_PCM_HW_PARAM_FIRST_INTERVAL; i <= SNDRV_PCM_HW_PARAM_LAST_INTERVAL; i++)
+		hw_set_interval(params, i, ~0u);
+
+	params->cmask = 0;
+	params->info  = 0;
+}
+
+
+static void hw_param_configure(struct file *pcm_file)
+{
+	int err;
+	struct snd_pcm_hw_params *params = kzalloc(sizeof(*params), 0);
+
+	hw_init_params(params);
+
+	printk("%s:%d: ioctl refine\n", __func__, __LINE__);
+	err = sound_ioctl(pcm_file, SNDRV_PCM_IOCTL_HW_REFINE, params);
+	printk("%s:%d ioctl refine ret: %d access: %x\n", __func__, __LINE__, err, params->masks[0].bits[0]);
+	hw_set_mask(params, SNDRV_PCM_HW_PARAM_ACCESS, SNDRV_PCM_ACCESS_RW_INTERLEAVED);
+	hw_set_mask(params, SNDRV_PCM_HW_PARAM_FORMAT, SNDRV_PCM_FORMAT_S16_LE);
+	hw_set_mask(params, SNDRV_PCM_HW_PARAM_SUBFORMAT, SNDRV_PCM_SUBFORMAT_STD);
+	hw_set_interval(params, SNDRV_PCM_HW_PARAM_RATE, 48000);
+	hw_set_interval(params, SNDRV_PCM_HW_PARAM_CHANNELS, 2);
+	/* period_size = period * format_size * channels = 512 * 2 * 2 */
+	hw_set_interval(params, SNDRV_PCM_HW_PARAM_PERIOD_SIZE, 2048);
+
+	printk("%s:%d ioctl params\n", __func__, __LINE__);
+	err = sound_ioctl(pcm_file, SNDRV_PCM_IOCTL_HW_PARAMS, params);
+	printk("%s:%d ioctl params: %d\n", __func__, __LINE__, err);
+	kfree(params);
+}
+
+
+static struct file *sound_device_open(struct snd_card *card, int dev)
 {
 	struct snd_device *device;
 	struct snd_pcm *pcm;
@@ -155,6 +224,7 @@ static int sound_device_open(struct snd_card *card, int dev)
 	bool found = false;
 	int cidx;
 	struct device *pcm_device;
+	int err;
 
 	list_for_each_entry(device, &card->devices, list) {
 		pcm = device->device_data;
@@ -166,7 +236,7 @@ static int sound_device_open(struct snd_card *card, int dev)
 
 	if (!found) {
 		printk("%s:%d: dev %d not found\n", __func__, __LINE__, dev);
-		return -ENODEV;
+		return NULL;
 	}
 
 	for (cidx = 0; cidx < 2; cidx++) {
@@ -183,7 +253,12 @@ static int sound_device_open(struct snd_card *card, int dev)
 	inode->i_rdev = MKDEV(MAJOR(pcm_device->devt), MINOR(pcm_device->devt));
 	file = (struct file *)kzalloc(sizeof (struct file), 0);
 
-	return _alsa_fops->open(inode, file);
+	err = _alsa_fops->open(inode, file);
+	if (err) {
+		printk("failed to open sound device: %d\n", err);
+		return NULL;
+	}
+	return file;
 }
 
 
@@ -224,8 +299,10 @@ static int sound_card_task(void *data)
 	enumerate_pcm_devices(file, info.card);
 
 	printk("open device 0\n");
-	err = sound_device_open(card, 0);
-	printk("open device returned: %d\n", err);
+	file = sound_device_open(card, 0);
+	if (file) {
+		hw_param_configure(file);
+	}
 
 	lx_emul_task_schedule(true);
 	return 0;

@@ -84,6 +84,7 @@ lib/string.c
 lib/timerqueue.c
 lib/vsprintf.c
 lib/xarray.c
+lib/math/gcd.c
 mm/util.c
 sound/ac97_bus.c
 sound/core/compress_offload.c

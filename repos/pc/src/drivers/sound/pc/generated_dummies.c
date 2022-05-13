@@ -1,7 +1,7 @@
 /*
  * \brief  Dummy definitions of Linux Kernel functions
  * \author Automatically generated file - do no edit
- * \date   2022-05-09
+ * \date   2022-05-13
  */
 
 #include <lx_emul.h>
@@ -119,14 +119,6 @@ void * __vmalloc_node(unsigned long size,unsigned long align,gfp_t gfp_mask,int 
 }
 
 
-#include <linux/uaccess.h>
-
-unsigned long _copy_from_user(void * to,const void __user * from,unsigned long n)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 extern void ack_bad_irq(unsigned int irq);
 void ack_bad_irq(unsigned int irq)
 {
@@ -205,7 +197,6 @@ int add_uevent_var(struct kobj_uevent_env * env,const char * format,...)
 }
 
 
-
 #include <linux/anon_inodes.h>
 
 struct file * anon_inode_getfile(const char * name,const struct file_operations * fops,void * priv,int flags)
@@ -276,23 +267,7 @@ struct system_counterval_t convert_art_to_tsc(u64 art)
 
 #include <linux/pm_qos.h>
 
-void cpu_latency_qos_add_request(struct pm_qos_request * req,s32 value)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/pm_qos.h>
-
 void cpu_latency_qos_remove_request(struct pm_qos_request * req)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/pm_qos.h>
-
-bool cpu_latency_qos_request_active(struct pm_qos_request * req)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -389,14 +364,6 @@ struct fwnode_handle * fwnode_create_software_node(const struct property_entry *
 #include <linux/property.h>
 
 void fwnode_remove_software_node(struct fwnode_handle * fwnode)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/gcd.h>
-
-unsigned long gcd(unsigned long a,unsigned long b)
 {
 	lx_emul_trace_and_stop(__func__);
 }

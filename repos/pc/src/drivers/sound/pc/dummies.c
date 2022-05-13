@@ -248,3 +248,20 @@ bool dma_can_mmap(struct device * dev)
 }
 
 
+#include <linux/pm_qos.h>
+
+bool cpu_latency_qos_request_active(struct pm_qos_request * req)
+{
+	lx_emul_trace(__func__);
+	return false;
+}
+
+
+void cpu_latency_qos_add_request(struct pm_qos_request * req,s32 value)
+{
+	lx_emul_trace(__func__);
+}
+
+
+
+

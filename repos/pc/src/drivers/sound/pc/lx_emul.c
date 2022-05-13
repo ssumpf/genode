@@ -109,7 +109,8 @@ void lx_emul_module_params(void)
 /*
  * async
  */
-async_cookie_t async_schedule_node_domain(async_func_t func,void * data,int node,struct async_domain * domain)
+async_cookie_t async_schedule_node_domain(async_func_t func, void * data, int node,
+                                         struct async_domain * domain)
 {
 	func(data, 0);
 	return 0;
@@ -119,9 +120,15 @@ async_cookie_t async_schedule_node_domain(async_func_t func,void * data,int node
 /*
  * uaccess
  */
-unsigned long _copy_to_user(void __user * to,const void * from,unsigned long n)
+unsigned long _copy_to_user(void __user * to, const void * from, unsigned long n)
 {
 	memcpy(to, from, n);
 	return 0;
 }
 
+
+unsigned long _copy_from_user(void * to, const void __user * from, unsigned long n)
+{
+	memcpy(to, from, n);
+	return 0;
+}
