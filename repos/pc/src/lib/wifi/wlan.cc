@@ -67,7 +67,6 @@ void wifi_set_rfkill(bool blocked)
 	lx_emul_task_unblock(uplink_task_struct_ptr);
 	Lx_kit::env().scheduler.schedule();
 
-
 	Genode::Signal_transmitter(_rfkill_sigh_cap).submit();
 }
 
@@ -115,15 +114,19 @@ struct Wlan
 Genode::Blockade *wpa_blockade;
 
 
-void wifi_init(Genode::Env                       &env,
-               Genode::Blockade                  &blockade,
-               bool                               disable_11n,
-               Genode::Signal_context_capability  rfkill)
+void wifi_init(Genode::Env      &env,
+               Genode::Blockade &blockade,
+               bool              disable_11n)
 {
 	(void)disable_11n;
-	_rfkill_sigh_cap = rfkill;
 
 	wpa_blockade = &blockade;
 
 	static Wlan wlan(env);
+}
+
+
+void wifi_set_rfkill_sigh(Genode::Signal_context_capability cap)
+{
+	_rfkill_sigh_cap = cap;
 }
