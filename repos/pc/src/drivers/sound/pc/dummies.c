@@ -216,6 +216,14 @@ int stream_open(struct inode * inode,struct file * filp)
 }
 
 
+void kill_fasync(struct fasync_struct ** fp,int sig,int band)
+{
+	lx_emul_trace(__func__);
+}
+
+
+
+
 #include <acpi/acpi_bus.h>
 
 bool is_acpi_data_node(const struct fwnode_handle * fwnode)

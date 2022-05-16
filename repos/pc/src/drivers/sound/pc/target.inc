@@ -20,6 +20,7 @@ SRC_C  += lx_emul/spec/x86/pci.c
 SRC_C  += lx_user.c
 
 SRC_BIN += nhlt-fuji5c.dat
+SRC_BIN += sinus.s16
 
 vpath %.c  $(REP_DIR)/src/lib/pc
 vpath %.cc $(REP_DIR)/src/lib/pc
@@ -27,3 +28,4 @@ vpath %.c  $(REL_PRG_DIR)
 vpath %.cc $(REL_PRG_DIR)
 vpath common_dummies.c $(REP_DIR)/src/lib/pc/lx_emul
 vpath %.dat $(REL_PRG_DIR)/acpi
+vpath %.s16 $(REL_PRG_DIR)

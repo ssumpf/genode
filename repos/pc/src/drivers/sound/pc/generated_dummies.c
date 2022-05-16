@@ -504,14 +504,6 @@ void kill_anon_super(struct super_block * sb)
 }
 
 
-#include <linux/fs.h>
-
-void kill_fasync(struct fasync_struct ** fp,int sig,int band)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 #include <linux/kmsg_dump.h>
 
 void kmsg_dump(enum kmsg_dump_reason reason)

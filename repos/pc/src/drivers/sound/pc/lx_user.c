@@ -7,6 +7,31 @@
 #include <sound/core.h>
 #include <sound/pcm.h>
 
+struct timespec {
+	__kernel_old_time_t	tv_sec;		/* seconds */
+	long			tv_nsec;	/* nanoseconds */
+};
+
+typedef signed long time_t;
+typedef struct { unsigned char pad[sizeof(time_t) - sizeof(int)]; } __time_pad;
+struct snd_pcm_status {
+	snd_pcm_state_t state;		/* stream state */
+	__time_pad pad1;		/* align to timespec */
+	struct timespec trigger_tstamp;	/* time when stream was started/stopped/paused */
+	struct timespec tstamp;		/* reference timestamp */
+	snd_pcm_uframes_t appl_ptr;	/* appl ptr */
+	snd_pcm_uframes_t hw_ptr;	/* hw ptr */
+	snd_pcm_sframes_t delay;	/* current delay in frames */
+	snd_pcm_uframes_t avail;	/* number of frames available */
+	snd_pcm_uframes_t avail_max;	/* max frames available on hw since last status */
+	snd_pcm_uframes_t overrange;	/* count of ADC (capture) overrange detections from last status */
+	snd_pcm_state_t suspended_state; /* suspended stream state */
+	__u32 audio_tstamp_data;	 /* needed for 64-bit alignment, used for configs/report to/from userspace */
+	struct timespec audio_tstamp;	/* sample counter, wall clock, PHC or on-demand sync'ed */
+	struct timespec driver_tstamp;	/* useful in case reference system tstamp is reported with delay */
+	__u32 audio_tstamp_accuracy;	/* in ns units, only valid if indicated in audio_tstamp_data */
+	unsigned char reserved[52-2*sizeof(struct timespec)]; /* must be filled with zero */
+};
 
 static int sound_ioctl(struct file *file, unsigned cmd, void *arg)
 {
@@ -215,6 +240,92 @@ static void hw_param_configure(struct file *pcm_file)
 }
 
 
+int hw_prepare(struct file *file)
+{
+	int err;
+	printk("%s:%d\n", __func__, __LINE__);
+	err = sound_ioctl(file, SNDRV_PCM_IOCTL_PREPARE, NULL);
+	printk("%s:%d err=%d\n", __func__, __LINE__, err);
+	return err;
+}
+
+
+static const char *const state_labels[] = {
+    [SNDRV_PCM_STATE_OPEN] = "open",
+    [SNDRV_PCM_STATE_SETUP] = "setup",
+    [SNDRV_PCM_STATE_PREPARED] = "prepared",
+    [SNDRV_PCM_STATE_RUNNING] = "running",
+    [SNDRV_PCM_STATE_XRUN] = "xrun",
+    [SNDRV_PCM_STATE_DRAINING] = "draining",
+    [SNDRV_PCM_STATE_PAUSED] = "paused",
+    [SNDRV_PCM_STATE_SUSPENDED] = "suspended",
+    [SNDRV_PCM_STATE_DISCONNECTED] = "disconnected",
+};
+
+
+void dump_state(struct file *file)
+{
+	int err;
+	struct snd_pcm_status status = { 0 };
+
+	printk("%s:%d\n", __func__, __LINE__);
+	err = sound_ioctl(file, SNDRV_PCM_IOCTL_STATUS, &status);
+	if (err) printk("%s:%d err=%d\n", __func__, __LINE__, err);
+	else printk("%s:%d status: %s\n", __func__, __LINE__, state_labels[status.state]);
+
+}
+
+
+#define SOUND_DATA _binary_sinus_s16_start
+extern char SOUND_DATA[];
+
+void hw_play(struct file *file)
+{
+	struct snd_xferi xfer;
+	int i, err;
+	void *buffer = kmalloc(2048, 0);
+
+
+#if 0
+	xfer.result = 0;
+	xfer.buf = buffer;
+	xfer.frames = 512;
+	err = sound_ioctl(file, SNDRV_PCM_IOCTL_WRITEI_FRAMES, &xfer);
+	if (err) {
+		printk("%s:%d err=%d\n", __func__, __LINE__, err);
+		return;
+	}
+#endif
+#if 0
+	dump_state(file);
+
+	printk("%s:%d\n", __func__, __LINE__);
+	err = sound_ioctl(file, SNDRV_PCM_IOCTL_START, NULL);
+	if (err) {
+		printk("%s:%d err=%d\n", __func__, __LINE__, err);
+		return;
+	}
+
+	dump_state(file);
+#endif
+	for (i = 0; i < 1000; i++) {
+		memcpy(buffer, &SOUND_DATA[(i * 2048) % 128], 2048);
+		xfer.result = 0;
+		xfer.buf = buffer;
+		xfer.frames = 512;
+
+		printk("%s:%d i=%d\n", __func__, __LINE__, i);
+		err = sound_ioctl(file, SNDRV_PCM_IOCTL_WRITEI_FRAMES, &xfer);
+		if (err) {
+			printk("%s:%d i=%d err=%d\n", __func__, __LINE__, i, err);
+			return;
+		}
+
+		dump_state(file);
+	}
+}
+
+
 static struct file *sound_device_open(struct snd_card *card, int dev)
 {
 	struct snd_device *device;
@@ -302,6 +413,9 @@ static int sound_card_task(void *data)
 	file = sound_device_open(card, 0);
 	if (file) {
 		hw_param_configure(file);
+		hw_prepare(file);
+		dump_state(file);
+		hw_play(file);
 	}
 
 	lx_emul_task_schedule(true);
