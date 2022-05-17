@@ -7,6 +7,8 @@
 #include <sound/core.h>
 #include <sound/pcm.h>
 
+static struct task_struct * lx_user_task = NULL;
+
 struct timespec {
 	__kernel_old_time_t	tv_sec;		/* seconds */
 	long			tv_nsec;	/* nanoseconds */
@@ -233,7 +235,7 @@ static void hw_param_configure(struct file *pcm_file)
 	hw_set_interval(params, SNDRV_PCM_HW_PARAM_RATE, 48000);
 	hw_set_interval(params, SNDRV_PCM_HW_PARAM_CHANNELS, 2);
 	/* period_size = period * format_size * channels = 512 * 2 * 2 */
-	hw_set_interval(params, SNDRV_PCM_HW_PARAM_PERIOD_SIZE, 2048);
+	hw_set_interval(params, SNDRV_PCM_HW_PARAM_PERIOD_SIZE, 512);
 
 	printk("%s:%d ioctl params\n", __func__, __LINE__);
 	err = sound_ioctl(pcm_file, SNDRV_PCM_IOCTL_HW_PARAMS, params);
@@ -713,12 +715,26 @@ void hw_play(struct file *file)
 		err = sound_ioctl(file, SNDRV_PCM_IOCTL_WRITEI_FRAMES, &xfer);
 		if (err) {
 			printk("%s:%d i=%d err=%d\n", __func__, __LINE__, i, err);
+			//dump_state(file);
 			return;
 		}
 
-		dump_state(file);
+		//dump_state(file);
+
+		if (i > 2) lx_emul_task_schedule(true);
 	}
+
+	err = sound_ioctl(file, SNDRV_PCM_IOCTL_DRAIN, NULL);
+	printk("%s:%d DRAIN: %d\n", __func__, __LINE__, err);
 }
+
+
+/* called at end IRQ handler */
+void kill_fasync(struct fasync_struct ** fp,int sig,int band)
+{
+	lx_emul_task_unblock(lx_user_task);
+}
+
 
 
 static struct file *sound_device_open(struct snd_card *card, int dev)
@@ -813,7 +829,7 @@ static int sound_card_task(void *data)
 	mixer->card_info = info;
 	mixer->is_card_info_retrieved = true;
 
-	err = mixer_ctl_set_value(&mixer->ctl[18], 0, 87);
+	err = mixer_ctl_set_value(&mixer->ctl[18], 0, 32);
 	printk("Master 87: %d\n", err);
 	err = mixer_ctl_set_value(&mixer->ctl[19], 0, 1);
 	printk("Master On: %d\n", err);
@@ -823,13 +839,14 @@ static int sound_card_task(void *data)
 	printk("open device 0\n");
 	file = sound_device_open(card, 0);
 	if (file) {
+		printk("sound device: fops: %p\n", file->f_op);
 		hw_param_configure(file);
 		hw_prepare(file);
 		dump_state(file);
 		hw_play(file);
 	}
 
-	lx_emul_task_schedule(true);
+	while (1) lx_emul_task_schedule(true);
 	return 0;
 }
 
@@ -837,4 +854,5 @@ static int sound_card_task(void *data)
 void lx_user_init(void)
 {
 	int pid = kernel_thread(sound_card_task, NULL, CLONE_FS | CLONE_FILES);
+	lx_user_task = find_task_by_pid_ns(pid, NULL);
 }
