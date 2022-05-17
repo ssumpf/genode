@@ -1,4 +1,3 @@
-arch/x86/lib/delay.c
 arch/x86/pci/legacy.c
 certs/common.c
 crypto/acompress.c

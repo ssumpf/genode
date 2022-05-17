@@ -13,6 +13,7 @@ SRC_CC  += misc.cc
 SRC_CC  += firmware.cc
 SRC_CC  += socket_call.cc
 SRC_CC  += random.cc
+SRC_CC  += time.cc
 
 SRC_C   += dummies.c
 SRC_C   += lx_emul.c
