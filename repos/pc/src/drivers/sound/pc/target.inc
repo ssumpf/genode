@@ -7,6 +7,7 @@ LIBS   := base pc_lx_emul
 
 INC_DIR += $(REL_PRG_DIR) $(REL_PRG_DIR)/shadow
 
+SRC_CC += audio.cc
 SRC_CC += firmware.cc
 SRC_CC += main.cc
 SRC_CC += misc.cc

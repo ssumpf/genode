@@ -19,9 +19,12 @@
 #include <lx_kit/init.h>
 #include <lx_kit/initial_config.h>
 
+#include "audio.h"
+
 using namespace Genode;
 
 extern "C" void lx_emul_module_params(void);
+
 
 struct Main
 {
@@ -34,6 +37,8 @@ struct Main
 		lx_emul_module_params();
 
 		env.exec_static_constructors();
+
+		genode_audio_init(genode_env_ptr(env));
 
 		lx_emul_start_kernel(nullptr);
 	}
