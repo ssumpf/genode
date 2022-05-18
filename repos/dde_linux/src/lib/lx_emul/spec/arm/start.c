@@ -30,8 +30,16 @@ void time_init(void)
 }
 
 
+#include <asm/pgtable.h>
+
+unsigned long empty_zero_page[PAGE_SIZE / sizeof(unsigned long)]
+__attribute__((aligned(PAGE_SIZE)));
+
 void lx_emul_setup_arch(void *dtb)
 {
+	/* fill zero page */
+	memset(empty_zero_page, 0, PAGE_SIZE);
+
 	/* calls from setup_arch of arch/arm64/kernel/setup.c */
 	early_init_dt_scan(dtb);
 	unflatten_device_tree();
