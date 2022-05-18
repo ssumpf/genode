@@ -162,6 +162,7 @@ Platform::Connection::Connection(Env &env)
 
 	_devices_node.construct(_devices_node_buffer,
 	                        sizeof (_devices_node_buffer));
+	Genode::warning("DEVICES: ", *_devices_node);
 }
 
 

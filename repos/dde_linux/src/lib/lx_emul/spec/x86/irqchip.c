@@ -43,13 +43,15 @@ int lx_emul_irq_task_function(void * data)
 {
 	int irq;
 
+	static unsigned long c = 0;
+
 	for (;;) {
 		lx_emul_task_schedule(true);
 
 		irq_enter();
 
 		irq = lx_emul_irq_last();
-
+		printk("%s:%d IRQ: %d C: %lu\n", __func__, __LINE__, irq, ++c);
 		if (!irq) {
 			ack_bad_irq(irq);
 			WARN_ONCE(true, "Unexpected interrupt %d received!\n",
