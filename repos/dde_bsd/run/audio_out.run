@@ -124,6 +124,7 @@ if {![file exists bin/sample.raw]} {
 append boot_modules {
 	core ld.lib.so init timer } [audio_drv_binary] {
 	test-audio_out sample.raw
+	sof-tgl.ri sof-hda-generic-2ch.tplg
 }
 
 lappend_if $use_mixer boot_modules mixer
