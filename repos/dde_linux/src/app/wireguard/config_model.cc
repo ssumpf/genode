@@ -41,14 +41,14 @@ void Config_model::update(genode_wg_config_callbacks &callbacks,
 			node.attribute_value("interface", Ipv4_address_prefix { }));
 
 		uint8_t private_key[WG_KEY_LEN];
-		if (!_config->private_key_b64.valid() ||
-			!key_from_base64(private_key, _config->private_key_b64.string())) {
+		if (!_config->private_key_b64().valid() ||
+			!key_from_base64(private_key, _config->private_key_b64().string())) {
 
 			error("Invalid private key!");
 		}
-		callbacks.add_device(_config->listen_port, private_key);
+		callbacks.add_device(_config->listen_port(), private_key);
 	}
-	Peer_update_policy policy { _alloc, callbacks, _config->listen_port };
+	Peer_update_policy policy { _alloc, callbacks, _config->listen_port() };
 	_peers.update_from_xml(policy, node);
 }
 
@@ -61,9 +61,9 @@ Config_model::Config::Config(Key_base64          private_key_b64,
                              uint16_t            listen_port,
                              Ipv4_address_prefix interface)
 :
-	private_key_b64 { private_key_b64 },
-	listen_port     { listen_port },
-	interface       { interface }
+	_private_key_b64 { private_key_b64 },
+	_listen_port     { listen_port },
+	_interface       { interface }
 { }
 
 

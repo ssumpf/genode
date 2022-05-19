@@ -40,24 +40,24 @@ class Wireguard::Config_model
 		class Peer;
 		class Peer_update_policy;
 
-		struct Config
+		class Config
 		{
-/*
-			friend class Config_model;
-
 			private:
-*/
 
-				Key_base64 const               private_key_b64;
-				Genode::uint16_t const         listen_port;
-				Net::Ipv4_address_prefix const interface;
-/*
+				Key_base64 const               _private_key_b64;
+				Genode::uint16_t const         _listen_port;
+				Net::Ipv4_address_prefix const _interface;
+
 			public:
-*/
 
 				Config(Key_base64               private_key_b64,
 				       Genode::uint16_t         listen_port,
 				       Net::Ipv4_address_prefix interface);
+
+
+				Key_base64               const &private_key_b64() const { return _private_key_b64; }
+				Genode::uint16_t                listen_port()     const { return _listen_port; }
+				Net::Ipv4_address_prefix const &interface()       const { return _interface; }
 		};
 
 		Genode::Allocator             &_alloc;
