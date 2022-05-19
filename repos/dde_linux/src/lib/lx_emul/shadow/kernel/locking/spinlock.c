@@ -24,11 +24,6 @@
 void __lockfunc _raw_spin_lock(raw_spinlock_t * lock)
 {
 	arch_spin_lock(&lock->raw_lock);
-//	if (atomic_read(SPINLOCK_VALUE_PTR(lock))) {
-//		printk("Error: spinlock contention!");
-//		lx_emul_trace_and_stop(__func__);
-//	}
-//	atomic_set(SPINLOCK_VALUE_PTR(lock), 1);
 }
 
 
@@ -44,7 +39,6 @@ unsigned long __lockfunc _raw_spin_lock_irqsave(raw_spinlock_t * lock)
 void __lockfunc _raw_spin_unlock(raw_spinlock_t * lock)
 {
 	arch_spin_unlock(&lock->raw_lock);
-	//atomic_set(SPINLOCK_VALUE_PTR(lock), 0);
 }
 
 
@@ -71,27 +65,16 @@ void __lockfunc _raw_spin_unlock_irq(raw_spinlock_t * lock)
 int __lockfunc _raw_spin_trylock(raw_spinlock_t * lock)
 {
 	arch_spin_trylock(&lock->raw_lock);
-//	if (atomic_read(SPINLOCK_VALUE_PTR(lock)))
-//		return 0;
-//
-//	_raw_spin_lock(lock);
-//	return 1;
 }
 
 
 void __lockfunc _raw_write_lock(rwlock_t * lock)
 {
 	arch_write_lock(&(lock)->raw_lock);
-//	if (RWLOCK_VALUE(lock)) {
-//		printk("Error: rwlock contention!");
-//		lx_emul_trace_and_stop(__func__);
-//	}
-//	RWLOCK_VALUE(lock) = 1;
 }
 
 
 void __lockfunc _raw_write_unlock(rwlock_t * lock)
 {
 	arch_write_unlock(&(lock)->raw_lock);
-	//RWLOCK_VALUE(lock) = 0;
 }
