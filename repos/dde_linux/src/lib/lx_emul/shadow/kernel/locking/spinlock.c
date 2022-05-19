@@ -64,7 +64,7 @@ void __lockfunc _raw_spin_unlock_irq(raw_spinlock_t * lock)
 
 int __lockfunc _raw_spin_trylock(raw_spinlock_t * lock)
 {
-	arch_spin_trylock(&lock->raw_lock);
+	return arch_spin_trylock(&lock->raw_lock);
 }
 
 
