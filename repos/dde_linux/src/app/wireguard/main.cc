@@ -40,7 +40,8 @@ using namespace Genode;
 namespace Wireguard { class  Main; }
 
 
-class Wireguard::Main : private Entrypoint::Io_progress_handler
+class Wireguard::Main : private Entrypoint::Io_progress_handler,
+                        private Nic_connection_notifier
 {
 	private:
 
@@ -52,7 +53,7 @@ class Wireguard::Main : private Entrypoint::Io_progress_handler
 		Io_signal_handler<Main>           _signal_handler        { _env.ep(), *this, &Main::_handle_signal };
 		Config_model                      _config_model          { _heap };
 		Signal_handler<Main>              _nic_ip_config_handler { _env.ep(), *this, &Main::_handle_nic_ip_config };
-		Nic_connection                    _nic_connection        { _env, _heap, _signal_handler, _config_rom.xml(), _timer, _nic_ip_config_handler };
+		Nic_connection                    _nic_connection        { _env, _heap, _signal_handler, _config_rom.xml(), _timer, *this };
 		Constructible<Uplink_connection>  _uplink_connection     { };
 
 		void _handle_signal()
@@ -64,6 +65,16 @@ class Wireguard::Main : private Entrypoint::Io_progress_handler
 		void _handle_config() { _config_rom.update(); }
 
 		void _handle_nic_ip_config();
+
+
+		/*****************************
+		 ** Nic_connection_notifier **
+		 *****************************/
+
+		void notify_about_ip_config_update() override
+		{
+			_nic_ip_config_handler.local_submit();
+		}
 
 	public:
 

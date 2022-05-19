@@ -43,8 +43,17 @@ namespace Net {
 
 namespace Wireguard {
 
+	class Nic_connection_notifier;
 	class Nic_connection;
 }
+
+
+class Wireguard::Nic_connection_notifier : Genode::Interface
+{
+	public:
+
+		virtual void notify_about_ip_config_update() = 0;
+};
 
 
 class Wireguard::Nic_connection
@@ -82,6 +91,7 @@ class Wireguard::Nic_connection
 		enum Send_pkt_result { SUCCEEDED, FAILED, PACKET_WAITS_FOR_ARP };
 
 		Genode::Allocator                      &_alloc;
+		Nic_connection_notifier                &_notifier;
 		Net::Dhcp_client                        _dhcp_client;
 		Genode::Reconstructible<Ipv4_config>    _ip_config;
 		Nic::Packet_allocator                   _packet_alloc       { &_alloc };
@@ -92,7 +102,6 @@ class Wireguard::Nic_connection
 		Net::Mac_address const                  _mac_address        { _connection.mac_address() };
 		bool const                              _verbose            { true };
 		bool const                              _verbose_pkt_drop   { true };
-		Genode::Signal_transmitter              _ip_config_sigh;
 		Genode::Signal_handler<Nic_connection>  _link_state_handler;
 
 		Send_pkt_result
@@ -161,7 +170,7 @@ class Wireguard::Nic_connection
 		               Genode::Signal_context_capability  pkt_stream_sigh,
 		               Genode::Xml_node const            &config_node,
 		               Timer::Connection                 &timer,
-		               Genode::Signal_context_capability  ip_config_sigh);
+		               Nic_connection_notifier           &notifier);
 
 		void for_each_rx_packet(Handle_packet_func handle_packet);
 

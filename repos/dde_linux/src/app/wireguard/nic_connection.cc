@@ -180,14 +180,14 @@ Nic_connection::Nic_connection(Env                       &env,
                                Signal_context_capability  pkt_stream_sigh,
                                Xml_node const            &config_node,
                                Timer::Connection         &timer,
-                               Signal_context_capability  ip_config_sigh)
+                               Nic_connection_notifier   &notifier)
 :
 	_alloc              { alloc },
+	_notifier           { notifier },
 	_dhcp_client        { timer, *this },
 	_ip_config          { config_node },
 	_connection         { env, &_packet_alloc, BUF_SIZE, BUF_SIZE,
 	                      "nic_session" },
-	_ip_config_sigh     { ip_config_sigh },
 	_link_state_handler { env.ep(), *this, &Nic_connection::_handle_link_state }
 {
 	_connection.rx_channel()->sigh_ready_to_ack(pkt_stream_sigh);
@@ -197,7 +197,7 @@ Nic_connection::Nic_connection(Env                       &env,
 	_connection.link_state_sigh(_link_state_handler);
 
 	if (ip_config().valid()) {
-		_ip_config_sigh.submit();
+		_notifier.notify_about_ip_config_update();
 	} else {
 		_dhcp_client.discover();
 	}
@@ -275,14 +275,14 @@ void Nic_connection::notify_peer()
 void Nic_connection::discard_ip_config()
 {
 	_ip_config.construct();
-	_ip_config_sigh.submit();
+	_notifier.notify_about_ip_config_update();
 }
 
 
 void Nic_connection::ip_config_from_dhcp_ack(Net::Dhcp_packet &dhcp_ack)
 {
 	_ip_config.construct(dhcp_ack);
-	_ip_config_sigh.submit();
+	_notifier.notify_about_ip_config_update();
 }
 
 
