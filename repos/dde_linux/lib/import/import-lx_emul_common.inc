@@ -76,8 +76,8 @@ else
 TARGET_SOURCE_LIST := $(PRG_DIR)/source.list
 endif
 
-SHADOW_INC_DIR      := $(DDE_LINUX_DIR)/src/include/lx_emul/shadow
-SPEC_SHADOW_INC_DIR := $(DDE_LINUX_DIR)/src/include/spec/$(LX_ARCH)/lx_emul/shadow
+SHADOW_INC_DIR      := $(DDE_LINUX_DIR)/src/include/lx_emul/shadow/include
+SPEC_SHADOW_INC_DIR := $(DDE_LINUX_DIR)/src/include/lx_emul/shadow/arch/$(LX_ARCH)/include
 
 SRC_C   += lx_emul/spec/$(GEN_ARCH)/irqchip.c
 SRC_C   += lx_emul/spec/$(GEN_ARCH)/start.c
