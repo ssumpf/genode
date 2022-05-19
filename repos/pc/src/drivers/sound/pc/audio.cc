@@ -47,6 +47,7 @@ class Audio_out::Out
 	private:
 
 		Genode::Env                            &_env;
+		Genode::Signal_handler<Audio_out::Out>  _data_avail_dispatcher;
 
 		Stream *left()  { return channel_acquired[LEFT]->stream(); }
 		Stream *right() { return channel_acquired[RIGHT]->stream(); }
@@ -72,12 +73,15 @@ class Audio_out::Out
 				channel_right->alloc_submit();
 		}
 
+		void _handle_data_avail() { }
+
 
 	public:
 
 		Out(Genode::Env &env)
 		:
-			_env(env)
+			_env(env),
+			_data_avail_dispatcher(env.ep(), *this, &Audio_out::Out::_handle_data_avail)
 		{ }
 
 		static bool channel_number(const char     *name,
@@ -101,9 +105,11 @@ class Audio_out::Out
 			return false;
 		}
 
+		Signal_context_capability data_avail() { return _data_avail_dispatcher; }
+
 		genode_packet play_packet()
 		{
-			genode_packet packet = { 0, 0 };
+			genode_packet packet = { nullptr, 0 };
 
 			unsigned lpos = left()->pos();
 			unsigned rpos = right()->pos();
@@ -225,7 +231,7 @@ class Audio_out::Root : public Audio_out::Root_component
 };
 
 
-static bool audio_out_active()
+static bool _audio_out_active()
 {
 	using namespace Audio_out;
 	return  channel_acquired[LEFT] && channel_acquired[RIGHT] &&
@@ -233,35 +239,31 @@ static bool audio_out_active()
 }
 
 
-static Audio_out::Out &audio_out(Genode::Env *env = nullptr)
+static Audio_out::Out &_audio_out(Audio_out::Out *out = nullptr)
 {
-	static Genode::Constructible<Audio_out::Out> out;
-	if (env && !out.constructed()) out.construct(*env);
-
-	return *out;
-}
-
-static Audio_out::Root &audio_out_root()
-{
+	static Audio_out::Out &_out = *out;
+	return _out;
 }
 
 /**
  * C-interface
  */
-
-static Genode::Constructible<Audio_out::Root> _out_root { };                                                        | 47 »·private:
-
-
-extern "C" void genode_audio_init(struct genode_env *env_ptr)
+extern "C" void genode_audio_init(struct genode_env *env_ptr,
+                                  struct genode_allocator *alloc_ptr)
 {
-	Genode::Env *env = static_cast<Env*>(env_ptr);
+	Env *env = static_cast<Env*>(env_ptr);
+	Allocator *md_alloc = static_cast<Allocator*>(alloc_ptr);
 
-	_out.construct(env);
+	static Audio_out::Out out { *env };
+	static Audio_out::Root root { *env, *md_alloc, out.data_avail() };
+
+	_audio_out(&out);
+	env->parent().announce(env->ep().manage(root));
 }
 
 
 extern "C" struct genode_packet genode_play_packet(void)
 {
 	
-	return audio_out_active() ? _out->play_packet() : genode_packet { 0, 0 };
+	return _audio_out_active() ? _audio_out().play_packet() : genode_packet { nullptr, 0 };
 }

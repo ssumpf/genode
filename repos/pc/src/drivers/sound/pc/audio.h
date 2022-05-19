@@ -15,7 +15,9 @@ struct genode_packet
 	unsigned long size;
 };
 
-void   genode_audio_init(struct genode_env *env_ptr);
+void   genode_audio_init(struct genode_env *env_ptr,
+                         struct genode_allocator *alloc_ptr);
+
 struct genode_packet genode_play_packet(void);
 
 #ifdef __cplusplus

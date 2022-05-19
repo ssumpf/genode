@@ -716,14 +716,6 @@ void printk_safe_flush_on_panic(void)
 }
 
 
-#include <linux/pid.h>
-
-void put_pid(struct pid * pid)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 #include <linux/file.h>
 
 void put_unused_fd(unsigned int fd)

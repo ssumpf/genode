@@ -265,5 +265,13 @@ void cpu_latency_qos_add_request(struct pm_qos_request * req,s32 value)
 }
 
 
+#include <linux/pid.h>
+
+void put_pid(struct pid * pid)
+{
+	lx_emul_trace(__func__);
+}
+
+
 
 

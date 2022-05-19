@@ -29,6 +29,7 @@ extern "C" void lx_emul_module_params(void);
 struct Main
 {
 	Env &env;
+	Heap heap { env.ram(), env.rm() };
 
 	Main(Env & env) : env(env)
 	{
@@ -38,7 +39,8 @@ struct Main
 
 		env.exec_static_constructors();
 
-		genode_audio_init(genode_env_ptr(env));
+		genode_audio_init(genode_env_ptr(env),
+		                  genode_allocator_ptr(heap));
 
 		lx_emul_start_kernel(nullptr);
 	}
