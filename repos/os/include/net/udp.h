@@ -73,7 +73,7 @@ class Net::Udp_packet
 		}
 
 		template <typename SIZE_GUARD>
-		void memcpy_to_data(void           *src_base,
+		void memcpy_to_data(void const     *src_base,
 		                    Genode::size_t  src_size,
 		                    SIZE_GUARD     &size_guard)
 		{
