@@ -7,9 +7,10 @@
 #include <sound/core.h>
 #include <sound/pcm.h>
 
+#include <audio.h>
+
 static struct task_struct *_lx_user_task;
 static struct file_operations const *_alsa_fops;
-
 
 enum Stream_direction {
 	PLAYBACK = SNDRV_PCM_STREAM_PLAYBACK,
@@ -121,6 +122,94 @@ struct sound_handle {
 };
 
 
+static int sound_ioctl(struct sound_handle *handle, unsigned cmd, void *arg)
+{
+	struct file *file = handle->file;
+	return file->f_op->unlocked_ioctl(file, cmd, (unsigned long)arg);
+}
+
+/*
+ * Hardware parameter
+ */
+static void sound_param_set_mask(struct snd_pcm_hw_params *params, unsigned index, unsigned bit)
+{
+	if (bit == ~0u)
+		memset(params->masks[index].bits, 0xff, sizeof(params->masks[index].bits));
+	else
+		params->masks[index].bits[0] = 1u << bit;
+
+	params->rmask |= 1u << index;
+}
+
+
+static void sound_param_set_interval(struct snd_pcm_hw_params *params, unsigned index, unsigned value)
+{
+	unsigned i = index - SNDRV_PCM_HW_PARAM_FIRST_INTERVAL;
+	struct snd_interval *interval = &params->intervals[i];
+
+	interval->min = interval->max = value;
+	if (value == ~0u) {
+		interval->min = 0;
+		interval->max = value;
+	}
+	else {
+		interval->min = interval->max = value;
+		interval->integer = 1;
+	}
+
+	params->rmask |= 1u << index;
+}
+
+
+static void sound_param_init(struct snd_pcm_hw_params *params)
+{
+	unsigned i;
+	for (i = 0; i <= SNDRV_PCM_HW_PARAM_LAST_MASK; i++)
+		sound_param_set_mask(params, i, ~0u);
+
+	for (i = SNDRV_PCM_HW_PARAM_FIRST_INTERVAL; i <= SNDRV_PCM_HW_PARAM_LAST_INTERVAL; i++)
+		sound_param_set_interval(params, i, ~0u);
+
+	params->cmask = 0;
+	params->info  = 0;
+}
+
+
+static void sound_param_configure(struct sound_handle *handle)
+{
+	int err;
+	struct snd_pcm_hw_params *params = kzalloc(sizeof(*params), 0);
+
+	if (!params) return;
+
+	sound_param_init(params);
+
+	err = sound_ioctl(handle, SNDRV_PCM_IOCTL_HW_REFINE, params);
+	if (err) {
+		printk("Error: IOCTL_HW_REFINE: %d\n", err);
+		return;
+	}
+
+	sound_param_set_mask(params, SNDRV_PCM_HW_PARAM_ACCESS,    SNDRV_PCM_ACCESS_RW_INTERLEAVED);
+	sound_param_set_mask(params, SNDRV_PCM_HW_PARAM_FORMAT,    SNDRV_PCM_FORMAT_S16_LE);
+	sound_param_set_mask(params, SNDRV_PCM_HW_PARAM_SUBFORMAT, SNDRV_PCM_SUBFORMAT_STD);
+
+	sound_param_set_interval(params, SNDRV_PCM_HW_PARAM_RATE,        48000);
+	sound_param_set_interval(params, SNDRV_PCM_HW_PARAM_CHANNELS,    2);
+	sound_param_set_interval(params, SNDRV_PCM_HW_PARAM_PERIOD_SIZE, 512);
+
+
+	err = sound_ioctl(handle, SNDRV_PCM_IOCTL_HW_PARAMS, params);
+	if (err)
+		printk("IOCTL_HW_PARAMS: %d\n", err);
+
+	kfree(params);
+}
+
+
+/*
+ * sound handles
+ */
 void free_sound_handle(struct sound_handle *handle)
 {
 	if (!handle) return;
@@ -150,6 +239,9 @@ err:
 }
 
 
+/*
+ * open/close
+ */
 static struct sound_handle *sound_devt_open(dev_t devt)
 {
 	int err;
@@ -210,6 +302,45 @@ static int sound_device_close(struct sound_handle *handle)
 }
 
 
+static void *silence_data(void)
+{
+	static char data[4096];
+	return data;
+}
+
+
+/*
+ * play
+ */
+static void sound_play(struct sound_handle *handle)
+{
+	struct snd_xferi xfer;
+	int err;
+	void *buffer;
+
+	struct genode_packet packet = genode_play_packet();
+
+	if (packet.size < genode_audio_period() * 4)
+		buffer = silence_data();
+	else
+		buffer = packet.data;
+
+	xfer.result = 0;
+	xfer.buf    = buffer;
+	xfer.frames = genode_audio_period();
+
+	printk("%s:%d\n", __func__, __LINE__);
+	err = sound_ioctl(handle, SNDRV_PCM_IOCTL_WRITEI_FRAMES, &xfer);
+	if (err) {
+		printk("%s:%d err=%d\n", __func__, __LINE__, err);
+		return;
+	}
+
+	//err = sound_ioctl(file, SNDRV_PCM_IOCTL_DRAIN, NULL);
+	//printk("%s:%d DRAIN: %d\n", __func__, __LINE__, err);
+}
+
+
 static void sleep_forever(void)
 {
 	while (1) lx_emul_task_schedule(true);
@@ -230,11 +361,12 @@ static int sound_card_task(void *data)
 
 	handle = sound_device_open(card, "pcmC0D0c");
 	printk("opened: %p\n", handle);
+	sound_param_configure(handle);
+	printk("configured\n");
 	err = sound_device_close(handle);
 	printk("closed: %d\n", err);
 
 	sleep_forever();
-
 	return 0;
 }
 

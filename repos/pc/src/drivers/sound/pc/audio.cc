@@ -16,6 +16,7 @@ namespace Audio_out {
 	class  Out;
 	class  Root;
 	struct Root_policy;
+	enum Channel_number { LEFT, RIGHT, MAX_CHANNELS, INVALID = MAX_CHANNELS };
 	static Session_component *channel_acquired[MAX_CHANNELS];
 }
 
@@ -259,6 +260,12 @@ extern "C" void genode_audio_init(struct genode_env *env_ptr,
 
 	_audio_out(&out);
 	env->parent().announce(env->ep().manage(root));
+}
+
+
+extern "C" unsigned long genode_audio_period(void)
+{
+	return Audio_out::PERIOD;
 }
 
 
