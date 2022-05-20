@@ -24,6 +24,14 @@ static const char *const direction_labels[] = {
 };
 
 
+static const char *const control_labels[] = {
+	[SNDRV_CTL_ELEM_TYPE_NONE]       = "none",
+	[SNDRV_CTL_ELEM_TYPE_BOOLEAN]    = "bool",
+	[SNDRV_CTL_ELEM_TYPE_INTEGER]    = "int",
+	[SNDRV_CTL_ELEM_TYPE_ENUMERATED] = "enum",
+};
+
+
 /* retrieve ALSA file operations */
 int __register_chrdev(unsigned int major, unsigned int baseminor,
                       unsigned int count, const char * name,
@@ -245,7 +253,14 @@ err:
 static struct sound_handle *sound_devt_open(dev_t devt)
 {
 	int err;
-	struct sound_handle *handle = alloc_sound_handle();
+	struct sound_handle *handle;
+
+	if (!_alsa_fops) {
+		printk("Error: No ALSA file operations registered\n");
+		return NULL;
+	}
+
+	handle = alloc_sound_handle();
 	if (!handle) return NULL;
 
 	handle->inode->i_rdev = MKDEV(MAJOR(devt), MINOR(devt));
@@ -302,6 +317,177 @@ static int sound_device_close(struct sound_handle *handle)
 }
 
 
+/*
+ * mixer controls
+ */
+struct mixer;
+
+enum { MAX_CTL_VALS = 2 };
+
+struct mixer_control
+{
+	struct snd_ctl_elem_info info;
+	struct mixer            *mixer;
+	int                      value[MAX_CTL_VALS];
+	char                   **enum_strings;
+};
+
+
+struct mixer
+{
+	struct sound_handle  *handle;
+	struct mixer_control *controls;
+	unsigned              control_count;
+};
+
+
+static void report_mixer_controls(struct mixer *mixer)
+{
+	unsigned i, j;
+	struct snd_ctl_elem_info *info;
+
+	for (i = 0; i < mixer->control_count; i++) {
+		info = &mixer->controls[i].info;
+
+		if (info->type == SNDRV_CTL_ELEM_TYPE_BYTES) continue;
+
+		printk("control: %u ", i);
+		printk("type: %s ", control_labels[info->type]);
+		printk("count: %u ", info->count);
+		printk("name: %s ", (char const *)info->id.name);
+
+		printk("values: ");
+		for (j = 0; j < info->count; j++) {
+			printk("%d", mixer->controls[i].value[j]);
+			if (j + 1 < info->count) printk(",");
+			printk(" ");
+		}
+
+		if (info->type == SNDRV_CTL_ELEM_TYPE_INTEGER)
+			printk("min: %d max: %d", info->value.integer.min,
+			      info->value.integer.max);
+
+		if (info->type != SNDRV_CTL_ELEM_TYPE_ENUMERATED) {
+			printk("\n");
+			continue;
+		}
+
+		printk("enum_values:");
+		for (j = 0; j < info->value.enumerated.items; j++) {
+			printk(" %s%s",
+			       mixer->controls[i].value[0] == j ? "> " : "",
+			       mixer->controls[i].enum_strings[j]);
+		}
+
+		printk("\n");
+	}
+}
+
+
+static int mixer_control_value(struct mixer_control *control, unsigned id)
+{
+	struct snd_ctl_elem_value element = { 0 };
+	int err;
+
+	if (!control || id > control->info.count) return -EINVAL;
+
+	element.id.numid = control->info.id.numid;
+	err = sound_ioctl(control->mixer->handle, SNDRV_CTL_IOCTL_ELEM_READ, &element);
+	if (err) return err;
+
+	switch (control->info.type) {
+	case SNDRV_CTL_ELEM_TYPE_BOOLEAN:
+	case SNDRV_CTL_ELEM_TYPE_INTEGER:
+		return element.value.integer.value[id];
+	case SNDRV_CTL_ELEM_TYPE_ENUMERATED:
+		return element.value.enumerated.item[id];
+	default:
+		return -EINVAL;
+	}
+}
+
+
+static int mixer_control_enum_strings(struct mixer_control *control)
+{
+	unsigned i;
+	char **names;
+	int err;
+	unsigned enum_count = control->info.value.enumerated.items;
+
+	if (control->enum_strings) return 0;
+
+	names = kcalloc(enum_count, sizeof(char*), 0);
+	if (!names) return -ENOMEM;
+
+	for (i = 0; i < enum_count; i++) {
+
+		struct snd_ctl_elem_info info = { 0 };
+		info.id.numid = control->info.id.numid;
+		info.value.enumerated.item = i;
+
+		err = sound_ioctl(control->mixer->handle, SNDRV_CTL_IOCTL_ELEM_INFO, &info);
+		if (err) return err;
+
+		names[i] = kstrdup(info.value.enumerated.name, 0);
+	}
+	control->enum_strings = names;
+	return 0;
+}
+
+
+static int mixer_add_controls(struct mixer *mixer)
+{
+	struct snd_ctl_elem_list elements = { 0 };
+	struct snd_ctl_elem_id *element_id;
+	struct mixer_control *control;
+	struct snd_ctl_elem_info *info;
+	int err, i;
+	unsigned j;
+
+	err = sound_ioctl(mixer->handle, SNDRV_CTL_IOCTL_ELEM_LIST, &elements);
+	if (err) return err;
+
+	control = kcalloc(elements.count, sizeof(struct mixer_control), 0);
+	if (!control) return -ENOMEM;
+
+	element_id = kcalloc(elements.count, sizeof(struct snd_ctl_elem_id), 0);
+	if (!element_id) return -ENOMEM;
+
+	elements.pids  = element_id;
+	elements.space = elements.count;
+
+	/* changes element_id */
+	err = sound_ioctl(mixer->handle, SNDRV_CTL_IOCTL_ELEM_LIST, &elements);
+	if (err) return err;
+
+	/* fill out element information */
+	for (i = 0; i < elements.count; i++) {
+		control[i].info.id.numid = element_id[i].numid;
+		control[i].mixer = mixer;
+
+		err = sound_ioctl(mixer->handle, SNDRV_CTL_IOCTL_ELEM_INFO, &control[i].info);
+		if (err) return err;
+
+		info = &control[i].info;
+		/* ignore bytes */
+		if (info->type == SNDRV_CTL_ELEM_TYPE_BYTES) continue;
+
+		for (j = 0; j < info->count; j++) {
+			int val = mixer_control_value(&control[i], j);
+			if (j < MAX_CTL_VALS) control[i].value[j] = val;
+		}
+
+		if (info->type == SNDRV_CTL_ELEM_TYPE_ENUMERATED)
+			mixer_control_enum_strings(&control[i]);
+	}
+
+	mixer->control_count = elements.count;
+	mixer->controls      = control;
+
+	return 0;
+}
+
+
 static void *silence_data(void)
 {
 	static char data[4096];
@@ -351,13 +537,28 @@ static int sound_card_task(void *data)
 {
 	struct snd_card *card = wait_for_card();
 	struct sound_handle *handle;
+	struct mixer mixer;
 	int err;
-	printk("Sound card: %s\n", card ? "found" : "not found");
 
-	if (!card)
+	if (!card) {
+		printk("Error: No sound card found\n");
 		sleep_forever();
+	}
+
+	mixer.handle = sound_devt_open(card->ctl_dev.devt);
+	if (!mixer.handle) {
+		printk("Error: Could not open control device for card: %d\n", card->number);
+		sleep_forever();
+	}
+
+	err = mixer_add_controls(&mixer);
+	if (err) {
+		printk("Error: Mixer controls failed: %d\n", err);
+		sleep_forever();
+	}
 
 	report_pcm_devices(card);
+	report_mixer_controls(&mixer);
 
 	handle = sound_device_open(card, "pcmC0D0c");
 	printk("opened: %p\n", handle);
