@@ -407,6 +407,33 @@ static int mixer_control_value(struct mixer_control *control, unsigned id)
 }
 
 
+static int mixer_control_set(struct mixer_control *control, unsigned int id, int value)
+{
+    struct snd_ctl_elem_value element = { 0 };
+    int err;
+
+    if (!control || id >= control->info.count) return -EINVAL;
+
+    element.id.numid = control->info.id.numid;
+    err = sound_ioctl(control->mixer->handle, SNDRV_CTL_IOCTL_ELEM_READ, &element);;
+    if (err < 0) return err;
+
+    switch (control->info.type) {
+    case SNDRV_CTL_ELEM_TYPE_BOOLEAN:
+    case SNDRV_CTL_ELEM_TYPE_INTEGER:
+        element.value.integer.value[id] = value;
+        break;
+    case SNDRV_CTL_ELEM_TYPE_ENUMERATED:
+        element.value.enumerated.item[id] = value;
+        break;
+    default:
+        return -EINVAL;
+    }
+
+    return sound_ioctl(control->mixer->handle, SNDRV_CTL_IOCTL_ELEM_WRITE, &element);
+}
+
+
 static int mixer_control_enum_strings(struct mixer_control *control)
 {
 	unsigned i;
@@ -559,6 +586,11 @@ static int sound_card_task(void *data)
 
 	report_pcm_devices(card);
 	report_mixer_controls(&mixer);
+
+	err = mixer_control_set(&mixer.controls[18], 0, 32);
+	printk("Master 87: %d\n", err);
+	err = mixer_control_set(&mixer.controls[19], 0, 1);
+	printk("Master On: %d\n", err);
 
 	handle = sound_device_open(card, "pcmC0D0c");
 	printk("opened: %p\n", handle);
