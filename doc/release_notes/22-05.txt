@@ -1,0 +1,817 @@
+
+
+              ===============================================
+              Release notes for the Genode OS Framework 22.05
+              ===============================================
+
+                               Genode Labs
+
+
+
+; intro
+; @nfeske
+
+
+WireGuard
+#########
+
+; @m-stein
+
+commit 6382b90d85c43b6186b092ff10de18e68debe388
+Author: Martin Stein <martin.stein@genode-labs.com>
+Date:   Wed May 18 13:09:35 2022 +0200
+
+    net: add methods required for WireGuard port
+    
+    * Adds methods for copying raw data to the data field of Ethernet frames and
+      UDP packets. This is used in the port to wrap the higher-layer packet data
+      prepared by the contrib code with the additionally required headers before
+      sending it at a network session.
+    * Adds a method to cast raw data to an IPv4 packet. This is required in the
+      port in order to check values in stand-alone IP packets produced by the
+      contrib code before sending them at a network session.
+    * Adds methods for setting UDP ports given big endian port values without
+      having to convert to little endian in the app and then back to big endian in
+      the net lib.
+    
+    Ref #4397
+
+commit 66ca1f7100154855133da93545cbb2428cfd7b45
+Author: Martin Stein <martin.stein@genode-labs.com>
+Date:   Tue May 10 11:29:34 2022 +0200
+
+    lx_emul: fix unaligned size arg on DMA alloc
+    
+    The function lx_emul_shared_dma_buffer_allocate takes a size argument but
+    silently expected it to be a multiple of the page size. With this commit, the
+    function rounds up the size argument accordingly before using it.
+    
+    Ref #4397
+
+commit 09eedcd1d74f792bdcf6a124285fcc842f8409c4
+Author: Martin Stein <martin.stein@genode-labs.com>
+Date:   Wed May 18 12:14:47 2022 +0200
+
+    virt_linux: support arm_64
+    
+    This feature was motivated and used only by the WireGuard port, so far.
+    
+    Ref #4397
+
+commit 3449ac085d9ad57bfb0137ac7b60122b59c193d0
+Author: Martin Stein <martin.stein@genode-labs.com>
+Date:   Wed May 18 12:34:23 2022 +0200
+
+    dde_linux: port of WireGuard kernel module
+    
+    A userland component that ports the Linux WireGuard kernel module (originally
+    from kernel version 5.14.21) and integrates it via a NIC session (public
+    network side) and an Uplink session (private network side). The
+    WireGuard-specific device configuration is done through the component
+    configuration. The port is done using lx_emul, lx_kit and the virt_linux
+    targets. The commit adds also 4 corresponding run scripts of which 3 are fully
+    automated of which 1 is added to the autopilot.
+    
+    :Warning:
+    
+    Although in principal functioning, the WireGuard port has not been exposed to a
+    sufficient amount of real-world testing, so far. Therefore, we strongly
+    recommend not to use it in any security-critical scenarios! There is no
+    guarantee that the port meets any of the security goals pursued by the
+    WireGuard protocol or other WireGuard implementations!
+    
+    Ref #4397
+
+
+New generation of DDE-Linux-based PC drivers
+############################################
+
+; @cnuke @alex-ab @skalk
+
+commit 57aab46fc3e45e26b962320eb249be9a61cf2869
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Tue Mar 1 17:05:45 2022 +0100
+
+    platform: introduce I/O ports in API
+    
+    * Introduces Platform::Device::Io_port client utility
+    * Implements I/O ports as common device resources in platform driver
+    
+    Fix genodelabs/genode#4436
+
+commit 2760b67902833d52c1af42e83353ab8a9663569e
+Author: Josef Söntgen <josef.soentgen@genode-labs.com>
+Date:   Tue Feb 22 16:06:37 2022 +0100
+
+    lx_kit/lx_emul: add I/O port support
+    
+    Ref genodelabs/genode#4438
+
+commit 67f797abf232c1395fa54c72984158cea97d2e88
+Author: Josef Söntgen <josef.soentgen@genode-labs.com>
+Date:   Tue Feb 22 15:53:08 2022 +0100
+
+    pc: enable UHCI driver in usb_host
+    
+    Fix genodelabs/genode#4438
+
+commit 9713014130b68de09e275138414a35c5a057d879
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Mon Mar 7 15:32:00 2022 +0100
+
+    dde_linux: add virt_linux lx_emul flavor
+    
+    To support device-less protocol-stacks only ports, we can use a
+    Virt I/O Linux kernel flavor, and export the lx_kit/lx_emul parts
+    not depending on platform API and devices.
+    
+    Ref #4397
+
+commit e95f0a409d7a3cc7563d4f9e17842f0edaf014af
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Tue Mar 8 16:20:38 2022 +0100
+
+    lx_emul: add implementation for Genode's USB C-API
+    
+    Fix #4444
+
+commit dd10e5d977fb19e6f842fa6f31e7ce925c129d02
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Tue Mar 15 08:04:49 2022 +0100
+
+    intel_fb: move to legacy_intel_fb
+    
+    Move the depot recipe and consistently name the old drivers with a legacy_
+    prefix as done with the old usb_host driver.
+    
+    Issue #4450
+
+commit 7813fca9467de99948cbd5b31ab9c134cb974101
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Thu Mar 17 15:06:33 2022 +0100
+
+    gpu/intel: report all devices via next_device
+    
+    The former implementation relied on the behaviour of how the old
+    intel fb driver requested the pci devices. The new lxkit however actually
+    really want to have all available pci devices.
+    
+    Issue #4450
+
+commit c0560ab0cb216bb7b6b998b7fab9137490d66c25
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Fri Jan 21 11:07:28 2022 +0100
+
+    pc: update intel display driver
+    
+    Fixes #4450
+
+commit 8056811b4f23208373bccd302fe60faed6e47d65
+Author: Josef Söntgen <josef.soentgen@genode-labs.com>
+Date:   Mon Mar 28 14:20:25 2022 +0200
+
+    Rename wifi_drv to legacy_wifi_drv
+    
+    Issue #4455.
+
+commit e7e7893f2281db84b094784647edda6a911c47a5
+Author: Josef Söntgen <josef.soentgen@genode-labs.com>
+Date:   Thu Feb 10 18:09:17 2022 +0100
+
+    pc: update wifi driver
+    
+    The driver falls in line with the previous 'legacy_wifi_drv' component
+    where the ported wireless LAN stack and device driver is encapsulated
+    in a library. This library in return is used by the 'Libc::Component'
+    providing the necessary environment for the 'wpa_supplicant'.
+    
+    In constrast to the old driver a 'wifi' VFS plugin is in charge of
+    initalizing the 'Lx_kit::Env' prior to executing any static
+    constructors.
+    
+    Fixes #4455.
+
+commit 543b6c06d4aa428b9f4f903aedeaa3ef8e268eff
+Author: Josef Söntgen <josef.soentgen@genode-labs.com>
+Date:   Tue May 3 17:17:38 2022 +0200
+
+    pc: centralize initcall header
+    
+    Instead of each driver providing its own header file use a central
+    header as the initcall order header should cover _all_ provided
+    initcalls resulting from the used 'pc_linux' kernel config.
+    
+    Note that the 'pc_linux' configuration was extended with the
+    'USB_USBNET' option because the module's initcall is needed for the
+    Genode C API for USB glue-code and the 'PACKET' option needed by
+    the wireless lan driver.
+    
+    The lack of theses options was not noticed as each driver used its
+    own initcall header so far that stemmed from the initial porting
+    effort.
+    
+    Issue #4500.
+
+commit 8a69fbe5685b736a060b7b58c79b97427cab394a
+Author: Josef Söntgen <josef.soentgen@genode-labs.com>
+Date:   Tue May 17 17:20:00 2022 +0200
+
+    Remove legacy wifi driver
+    
+    The driver is superseded by the new driver located in the 'pc'
+    repository.
+    
+    Fixes #4508.
+
+commit f23df6b871cfd954435d98045c2a500000f81587
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Wed May 18 11:56:16 2022 +0200
+
+    Remove legacy intel display driver
+    
+    The driver is superseded by the new driver located in the 'pc'
+    repository.
+    
+    Issue #4508
+
+commit ed4afb619a35bad3fcace023f936f6b3ddacaab9
+Author: Josef Söntgen <josef.soentgen@genode-labs.com>
+Date:   Tue May 3 18:32:20 2022 +0200
+
+    pc: consoldiate LX emul of current drivers
+    
+    This commit de-duplicates the redundant dummy implementations and
+    to some degree also the 'lx_emul.c' implementations while also
+    decluttering the various 'dep.list' files.
+    
+    The code is moved into 'src/lib/pc/lx_emul' where it becomes part
+    of the 'pc_lx_emul' library.
+    
+    Fixes #4500.
+
+commit f985de52f302e51680923425a66c9821a31c32e4
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Tue Feb 1 08:55:03 2022 +0100
+
+    app/pci_decode: prepare pci device information
+    
+    To discharge the generic platform driver from certain PCI bus scanning,
+    and ACPI + kernel specifics, this commit introduces a new component,
+    which consumes the acpi drivers report and the platform_info from core
+    to prepare a devices ROM for the platform driver that contains all
+    PCI devices and its resources.
+    
+    Fix genodelabs/genode#4495
+
+commit 72853554bd24047e6a1a54d70d667e6911cdf7ef
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Thu Apr 28 14:41:17 2022 +0200
+
+    platform_drv: add report facility
+    
+    By adding a 'report' node to the platform driver's configuration
+    one can enable either devices or config reports. The devices
+    report contains all devices and their detailed state, as well as
+    whether it is already in use or not. The config report contains
+    one by one the current configuration of the platform driver.
+    Moreover, this commit adds a README file describing the facilities
+    of the platform driver.
+    
+    Fix genodelabs/genode#4386
+
+commit 2cdfc4d827230ee2de3fc2ca9a3c455a0b2ebb8c
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Mon May 2 11:37:04 2022 +0200
+
+    platform_drv: wait for device's availability
+    
+    Instead of returning an invalid device capability when a device
+    is (not yet) available, e.g. a PCI device is requested before the
+    PCI bus got parsed accordingly, we check the device capability
+    within the Platform::Connection utilities, and register temporarily
+    an Io_signal_handler to wait for changes of the devices ROM, and
+    try the device aquisition again. Thereby, simple drivers so not have
+    to take the burden to do so.
+    
+    To enable this feature for all drivers, we always have to export a
+    devices ROM, but limit the information about physical resources
+    (I/O memory addresses, IRQ numbers, I/O port ranges) to clients with
+    'info=yes' in their policy description.
+    
+    Fix genodelabs/genode#4496
+
+commit 02cdd11502fde40e312e347b510fdec7df51322b
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Mon May 2 14:56:14 2022 +0200
+
+    platform_drv: consider IRQ type, mode, polarity
+    
+    Parse the devices ROM for additional interrupt information, and
+    pass them to the IRQ connection when needed.
+    
+    Fix genodelabs/genode#4497
+
+commit 21ab73d5f90cf99063eeee0b994d1e42a4d86af6
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Tue May 3 13:36:27 2022 +0200
+
+    platform_drv: add PCI device support
+    
+    * Parse PCI specific information from devices ROM
+    * Enable DMA, I/O memory and I/O port access dependent on BARs in config space
+    * Introduce device PD for Nova + IOMMU support
+    * Enable MSIs if available
+    * Add PCI specific policy rules
+    
+    Fixes genodelabs/genode#4502
+
+commit 580d9f9941cad355323ee60048c07e2ca7b5765a
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Wed May 11 14:27:09 2022 +0200
+
+    platform_drv: make devices ROM name configureable
+    
+    Fix genodelabs/genode#4504
+
+
+Updated and new documentation
+#############################
+
+Genode Platforms
+----------------
+
+; @nfeske
+
+: <div class="visualClear"><!-- --></div>
+: <p>
+:  <div style="clear: both; float: left; margin-right:20px;">
+:   <a class="internal-link" href="https://genode.org">
+:    <img class="image-inline" src="https://genode.org/documentation/genode-platforms-title.png">
+:   </a>
+:  </div>
+: </p>
+
+* Working with bare-bones Linux kernels
+* Network driver based on DDE-Linux
+* Display
+* Touchscreen
+* Clocks, resets, and power controls
+* Modem control and telephony
+
+:Second revision of the Genode Platforms document:
+
+  [https://genode.org/documentation/genode-platforms-22-05.pdf]
+
+
+Genode Foundations
+------------------
+
+The "Genode Foundations" book received its annual update. It is available at
+the [https://genode.org] website as a PDF document and an online version.
+The most noteworthy additions and changes are:
+
+: <div class="visualClear"><!-- --></div>
+: <p>
+:  <div style="clear: both; float: left; margin-right:20px;">
+:   <a class="internal-link" href="https://genode.org">
+:    <img class="image-inline" src="https://genode.org/documentation/genode-foundations-title.png">
+:   </a>
+:  </div>
+: </p>
+
+* Revised under-the-hood section about the base-hw kernel,
+* Adaptation to changed repository structure (pc repository, SoC-specific
+  repositories),
+* Updated API documentation ('Attempt' pattern, and
+* Adjusted package-management description to changed pubkey/download location.
+
+: <div class="visualClear"><!-- --></div>
+
+To examine the changes in detail, please refer to the book's
+[https://github.com/nfeske/genode-manual/commits/master - revision history].
+
+
+Base framework and OS-level infrastructure
+##########################################
+
+Revised tracing facilities
+==========================
+
+; @nfeske
+
+commit 34a3209e9bff91bf8c624cb7ad6cd694d93230fc
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Thu Mar 10 17:59:24 2022 +0100
+
+    base/log.h: add GENODE_TRACE_TSC
+    
+    The new macros GENODE_TRACE_TSC and GENODE_TRACE_TSC_NAMED complement
+    the existing GENODE_LOG_TSC and GENODE_LOG_TSC_NAMED macros to simplify
+    TSC measurements at a low overhead of the trace mechanism.
+
+
+commit be0a1742ac3fb2c84239b1f969e569d63112427c
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Fri Mar 11 14:06:16 2022 +0100
+
+    base: distinct TRACED from ATTACHED trace subjects
+    
+    This patch makes the trace-subject state as reflected to the trace
+    monitor more accurate.
+    
+    Until now, a subject could be in UNTRACED or TRACED state. In reality,
+    however, there exists an intermediate state after the trace monitor
+    called 'trace' for the subject but before the subject locally activated
+    the tracing (done when passing a trace point). This intermediate state
+    was reflected as UNTRACED. Consequently, threads that never pass a trace
+    point (e.g., just waiting for I/O) would remain to appear as UNTRACED
+    even after enabling its tracing by the trace monitor. This is confusing.
+    
+    This patch replaces the former UNTRACED and TRACED states by three
+    distinct states:
+    
+      UNATTACHED  prior any call of 'trace'
+      ATTACHED    after a trace monitor called 'trace'
+                  but before the tracing is active
+      TRACE       tracing is active
+    
+    Fixes #4447
+
+commit ceb91732bfa02bca39dc67878c9aeaa38cb67731
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Fri Mar 11 14:27:06 2022 +0100
+
+    trace_logger: update state after adding subjects
+    
+    This patch splits the creation and updating of monitor objects into two
+    stages. The creation of a monitor object changes the state of the
+    associated trace subject. The patch ensures that the new state is
+    captured by the update of the monitor object.
+    
+    Issue #4448
+
+commit f7270c44cb1c4afe570921d711ee124a43c9e69b
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Fri Mar 11 15:13:39 2022 +0100
+
+    trace_logger: omit inactive subjects by default
+    
+    This patch reduces repetitive log output by omitting inactive trace
+    subjects from the log output. The information about all subjects can
+    still be dumped by setting 'verbose="yes"'.
+    
+    Issue #4448
+
+commit 3394f97f861bacfd252ef4c2cbd127bdbdc68878
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Fri Mar 11 17:50:01 2022 +0100
+
+    trace_logger: make output format more concise
+    
+    This patch changes the output format of the trace logger to become
+    better suitable for human consumption. For example, when instrumenting
+    the VFS server in Sculpt using the GENODE_TRACE_TSC utility, the
+    trace logger now generates tabular output as follows.
+    
+      Report 4
+    
+      PD "init -> runtime -> arch_vbox6 -> vbox -> " ----------------
+       Thread "vCPU"           at (0,0)  total:12909024 recent:989229
+       Thread "vCPU"           at (1,0)  total:5643234  recent:786437
+    
+      PD "init -> runtime -> ahci-0.fs" -----------------------------
+       Thread "ahci-0.fs"      at (0,0)  total:910497   recent:6335
+       Thread "ep"             at (0,0)  total:0        recent:0
+        71919692932: TSC process_packets: 8005M (4998 calls, last 4932K)
+        71921558516: TSC process_packets: 8006M (4999 calls, last 1596K)
+        71922760220: TSC process_packets: 8007M (5000 calls, last 1006K)
+        71929853586: TSC process_packets: 8009M (5001 calls, last 1840K)
+        71931315246: TSC process_packets: 8011M (5002 calls, last 1253K)
+        72127999920: TSC process_packets: 8016M (5003 calls, last 5606K)
+        72129568198: TSC process_packets: 8018M (5004 calls, last 1345K)
+        77161908178: TSC process_packets: 8029M (5005 calls, last 11349K)
+        77643225736: TSC process_packets: 8029M (5006 calls, last 217K)
+        89422100594: TSC process_packets: 8035M (5007 calls, last 5656K)
+        89422123632: TSC process_packets: 8035M (5008 calls, last 1342)
+       Thread "signal handler" at (0,0)  total:36329    recent:3001
+       Thread "signal_proxy"   at (0,0)  total:51838    recent:13099
+       Thread "pdaemon"        at (0,0)  total:97184    recent:332
+       Thread "vdrain"         at (0,0)  total:1266     recent:286
+       Thread "vrele"          at (0,0)  total:1904     recent:516
+    
+      PD "init -> runtime -> nic_drv" -------------------------------
+       Thread "nic_drv"        at (0,0)  total:34044    recent:897
+       Thread "signal handler" at (0,0)  total:369      recent:142
+    
+      ...
+    
+    Subjects that belong to the same PD are grouped together. The formerly
+    optional affinity and activity options have been removed. Those
+    information are now unconditionally displayed. The trace entries
+    belonging to a thread appear as slightly indented.
+    
+    The patch also updates the coding style, avoiding excessively long
+    lines.
+    
+    Issue #4448
+
+commit bb26a986e6eb4b295e3a5f8d4a8ae81a18062c56
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Tue Mar 15 11:50:05 2022 +0100
+
+    sculpt: add trace_logger as optional launcher
+    
+    This patch adds the trace-logger utility to the default set of packages
+    along with an optional launcher. With this change, only two steps are
+    needed to use Genode's tracing mechanism with Sculpt:
+    
+    - Add 'trace_logger' to the 'launcher:' list of the .sculpt file
+    
+    - Either manually select the 'trace_logger' from the '+' menu,
+      or add the following entry to the deploy configuration:
+    
+        <start name="trace_logger"/>
+    
+    By default, the trace logger is configured to trace all threads
+    executed in the runtime subsystem and to print a report every 10
+    seconds. This default policy can be refined in the launcher's <config>
+    node. Note that the trace logger does not respond to configuration
+    changes during runtime. Changes come into effect not before restarting
+    the component.
+    
+    Issue #4448
+
+
+Memcopy and memset optimization
+===============================
+
+; @jschlatow
+
+commit 0104a740285bf42922d9479cf835097d986923dc
+Author: Johannes Schlatow <johannes.schlatow@genode-labs.com>
+Date:   Fri Mar 25 10:12:46 2022 +0100
+
+    memcpy (arm): cache align and use pld for speedup
+    
+    Preloading a few cache lines ahead brings a significant speedup in
+    memcpy throughput. Note, the particular (optimal) value was empirically
+    determined on a Cortex-A9 (Zynq-7000) SoC @ 666Mhz. It is best combined
+    with L2 prefetching enabled (including double linefills and prefetch
+    offset 7). Yet, even without L2 prefetching this seems to be the sweet
+    spot.
+    
+    genodelabs/genode#4456
+
+commit 9409f814a41fef978c73733c7ae988571656b624
+Author: Johannes Schlatow <johannes.schlatow@genode-labs.com>
+Date:   Fri Mar 25 13:30:53 2022 +0100
+
+    memcpy (x86): implement memcpy_cpu
+    
+    By changing the bytewise copy into a wordwise copy, we get a speedup of
+    ~3 (on base-linux x86_64).
+    
+    genodelabs/genode#4456
+
+commit 410099df7091a37354e66de1dfb4dba8a822915d
+Author: Johannes Schlatow <johannes.schlatow@genode-labs.com>
+Date:   Fri Mar 25 11:52:20 2022 +0100
+
+    base/memset: speedup implementation
+    
+    Compared to the bytewise memset, a wordwise memset (or even multi-word)
+    achieves a speedup of ~6.
+    
+    On Zynq-7000/Cortex-A9:
+    317 MiB/s -> 2040 MiB/s
+    
+    On base-linux x86_64:
+    3580 MiB/s -> 23700 MiB/s
+    
+    genodelabs/genode#4456
+
+
+Extended black-hole component
+=============================
+
+; @m-stein
+
+commit 046ebc3d3493445e913d046ef9a9569d46fee1d8
+Author: Martin Stein <martin.stein@genode-labs.com>
+Date:   Fri Mar 11 22:34:57 2022 +0100
+
+    black_hole: provide ROM service
+    
+    Ref #4419
+
+commit 50fc2aa2519e5c57b006ed13e0bb974bd10c5549
+Author: Martin Stein <martin.stein@genode-labs.com>
+Date:   Mon Mar 14 17:30:33 2022 +0100
+
+    black_hole: provide Gpu service
+    
+    Ref #4419
+
+commit ecd4006514691694f2253c4f617fb1c91ff86be2
+Author: Martin Stein <martin.stein@genode-labs.com>
+Date:   Thu Apr 7 17:24:36 2022 +0200
+
+    black_hole: initial support for Usb service
+    
+    The service is merely announced but trying to request a session always causes a
+    Service_denied exception. This helps in scenarios where the client is
+    won't open a session anyway but expects the service to be available. This is
+    considered a temporary solution.
+    
+    Ref #4419
+
+commit 6a61b60a5db9afd4a8ae5939cbaa3fa00dad9d3d
+Author: Martin Stein <martin.stein@genode-labs.com>
+Date:   Fri Apr 8 13:03:22 2022 +0200
+
+    black_hole: serve real USB sessions
+    
+    * The server now answers session requests with a session instead of an
+      exception#
+    * The test expects a session but doesn't access it so far
+    
+    Ref #4419
+
+
+Refined Block::Request_stream API
+=================================
+
+; @nfeske
+
+commit d815322efe814558463ebe062d8009536ed97585
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Tue Apr 12 15:17:22 2022 +0200
+
+    os: simplify split block operations
+    
+    This patch changes the meaning of the 'offset' parameter of the
+    'produce_write_content' and 'consume_read_result' hook functions.
+    The value used to reflect the absolute byte position but in practice,
+    a job-relative byte offset is desired.
+    
+    Issue #4474
+
+commit 7d6c5924174d19ea7e6c39d617d4bcefdc22d64d
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Wed Apr 13 11:41:13 2022 +0200
+
+    vfs/rump: handle split block I/O jobs
+    
+    This patch fixes a potential data corruption issue that could occur when
+    issuing large I/O requests to vfs/rump, which don't fit into the default
+    block I/O buffer of 128 KiB. Note that we haven't observed the problem
+    in practice (Sculpt hosts vfs/rump in a dedicated vfs server, which
+    fragments requests) but spotted the issue while reviewing the code. We
+    could trigger problem by explicitly changing the I/O buffer size to 32
+    KiB.
+    
+    Issue #4474
+
+commit 68af13bb349d21c37bd76f3342669e8389c83ed0
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Wed Apr 13 13:44:46 2022 +0200
+
+    os/vmm: handle split block I/O jobs
+    
+    Issue #4474
+
+commit b3678f44b71159554aa537bf6fddf7ff064ae643
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Wed Apr 13 13:46:07 2022 +0200
+
+    libports/fatfs: handle split block I/O jobs
+    
+    Issue #4474
+
+commit 25ae54223a3fccbebe776a21ed61e1a5eb941ba4
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Wed Apr 13 13:53:04 2022 +0200
+
+    os/part_block: simplify split block-I/O handling
+    
+    Issue #4474
+
+
+Improved touch-event support
+============================
+
+; @nfeske
+
+commit 65355ec0ccb562e9f1f548e055d034635b8ebe1a
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Fri May 20 13:28:37 2022 +0200
+
+    nitpicker: update hover state on touch events
+    
+    The hover state is evaluated for the routing of input events. When
+    routing a touch event, the decision should be based on the most recently
+    observed touch position. Without this patch, however, the hover state kept
+    referring to the initial pointer position (screen center) in the absence
+    of any other motion events.
+    
+    Issue #4514
+
+commit 8f03f3e50f9f8b2e24a424b52ef9ae990b34cf5e
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Fri May 20 14:06:49 2022 +0200
+
+    menu_view: update hover in primary touch events
+    
+    This patch simplifies the use of the menu_view in scenarios where no
+    absolute motion events but only touch events occur. Previously, such
+    scenarios required the creation of artificial absolute motion events
+    via the event filter.
+    
+    Issue #4514
+
+commit ca5ee4ea0b05afe58c2ab8edcf812eded0f2d841
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Fri May 20 14:09:27 2022 +0200
+
+    wm: transpose touch events to window positions
+    
+    This patch enhances the window manager with the ability to transform
+    touch events analogously to absolute motion events.
+    
+    Issue #4514
+
+
+Platforms
+#########
+
+PinePhone
+=========
+
+; @nfeske
+
+; Telephony
+; System-control processor
+
+
+NXP i.MX8
+=========
+
+; @skalk
+
+commit 05b2a5063546361bcc0f783c0d6a00f230407e96
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Mon May 16 16:07:03 2022 +0200
+
+    imx8mq: add Pcie host controller driver
+    
+    The driver configures all devices it gets assigned, and scans
+    the first device behind the Pcie controller. All devices it
+    finds are summarized in a platform driver compatible PCI device
+    report.
+
+commit 56cf717a080c6ad09f43fc4caf03a92ac81a38a9
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Mon May 16 16:04:01 2022 +0200
+
+    mnt_reform2: add Pcie host controller settings
+
+commit 58a8a2c13aad8a9c0c9902ddea6fae03619626cf
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Mon Aug 2 15:41:01 2021 +0200
+
+    mnt_reform2: enable PCI-x IOMUXC settings
+
+
+Xilinx Zynq
+===========
+
+; @jschlatow
+
+commit fdde961cd279a9db72f64a0eba48f8c0d6e6289c
+Author: Johannes Schlatow <johannes.schlatow@genode-labs.com>
+Date:   Wed Mar 2 17:37:48 2022 +0100
+
+    zynq_linux: use mainline linux instead
+    
+    for better dde_linux support
+
+
+commit 825abc6584a8e457a32182f0b5ad69ca272c8ba6
+Author: Johannes Schlatow <johannes.schlatow@genode-labs.com>
+Date:   Thu May 5 17:24:47 2022 +0200
+
+    drivers/spi: use clock from zynq_platform_drv
+
+commit 33859fade207e3f4ad51ea11d548b465f315b143
+Author: Johannes Schlatow <johannes.schlatow@genode-labs.com>
+Date:   Thu May 5 17:00:01 2022 +0200
+
+    replace platform_drv by zynq_platform_drv
+
+commit c281b43369460b401602ea8832ffa911b0f1d297
+Author: Johannes Schlatow <johannes.schlatow@genode-labs.com>
+Date:   Thu May 5 16:30:12 2022 +0200
+
+    add zynq_platform_drv supporting clock readout
+
+
