@@ -51,7 +51,8 @@ int __register_chrdev(unsigned int major, unsigned int baseminor,
 /* called at end IRQ handler */
 void kill_fasync(struct fasync_struct ** fp,int sig,int band)
 {
-	lx_emul_task_unblock(_lx_user_task);
+	if (_lx_user_task)
+		lx_emul_task_unblock(_lx_user_task);
 }
 
 
@@ -515,6 +516,51 @@ static int mixer_add_controls(struct mixer *mixer)
 }
 
 
+static const char *const state_labels[] = {
+	[SNDRV_PCM_STATE_OPEN] = "open",
+	[SNDRV_PCM_STATE_SETUP] = "setup",
+	[SNDRV_PCM_STATE_PREPARED] = "prepared",
+	[SNDRV_PCM_STATE_RUNNING] = "running",
+	[SNDRV_PCM_STATE_XRUN] = "xrun",
+	[SNDRV_PCM_STATE_DRAINING] = "draining",
+	[SNDRV_PCM_STATE_PAUSED] = "paused",
+	[SNDRV_PCM_STATE_SUSPENDED] = "suspended",
+	[SNDRV_PCM_STATE_DISCONNECTED] = "disconnected",
+};
+
+
+void dump_pcm_state(struct sound_handle *handle)
+{
+	int err;
+	struct snd_pcm_status64 status = { 0 };
+
+	err = sound_ioctl(handle, SNDRV_PCM_IOCTL_STATUS64, &status);
+	if (err) printk("%s:%d err=%d\n", __func__, __LINE__, err);
+	else printk("%s:%d status: %s avail: %lu "
+	            "appl_ptr: %lu hw_ptr: %lu\n", __func__, __LINE__,
+	            state_labels[status.state], status.avail,
+	            status.appl_ptr, status.hw_ptr);
+}
+
+
+bool sound_pcm_frames_watermark(struct sound_handle *handle)
+{
+	int err;
+	struct snd_pcm_status64 status = { 0 };
+	snd_pcm_uframes_t frames = 0;
+
+	err = sound_ioctl(handle, SNDRV_PCM_IOCTL_STATUS64, &status);
+	if (err) {
+		printk("%s:%d err=%d\n", __func__, __LINE__, err);
+		return false;
+	}
+
+	frames = status.appl_ptr - status.hw_ptr;
+	/* keep two perids on card */
+	return frames > genode_audio_period() ? false : true;
+}
+
+
 static void *silence_data(void)
 {
 	static char data[4096];
@@ -527,30 +573,38 @@ static void *silence_data(void)
  */
 static void sound_play(struct sound_handle *handle)
 {
-	struct snd_xferi xfer;
 	int err;
 	void *buffer;
-
 	struct genode_packet packet = genode_play_packet();
 
-	if (packet.size < genode_audio_period() * 4)
-		buffer = silence_data();
-	else
-		buffer = packet.data;
+	while (sound_pcm_frames_watermark(handle)) {
 
-	xfer.result = 0;
-	xfer.buf    = buffer;
-	xfer.frames = genode_audio_period();
+		struct snd_xferi xfer = { 0 };
 
-	printk("%s:%d\n", __func__, __LINE__);
-	err = sound_ioctl(handle, SNDRV_PCM_IOCTL_WRITEI_FRAMES, &xfer);
-	if (err) {
-		printk("%s:%d err=%d\n", __func__, __LINE__, err);
-		return;
+		if (packet.size < genode_audio_period() * 4) {
+			buffer = silence_data();
+		}
+		else {
+			buffer = packet.data;
+		}
+
+		xfer.buf    = buffer;
+		xfer.frames = genode_audio_period();
+
+		err = sound_ioctl(handle, SNDRV_PCM_IOCTL_WRITEI_FRAMES, &xfer);
+		if (err) {
+			printk("%s:%d err=%d\n", __func__, __LINE__, err);
+			dump_pcm_state(handle);
+			return;
+		}
 	}
-
-	//err = sound_ioctl(file, SNDRV_PCM_IOCTL_DRAIN, NULL);
+#if 0
+	if (err == -EPIPE) {
+		//err = sound_ioctl(handle, SNDRV_PCM_IOCTL_DRAIN, NULL);
+		err = sound_ioctl(handle, SNDRV_PCM_IOCTL_PREPARE, NULL);
+	}
 	//printk("%s:%d DRAIN: %d\n", __func__, __LINE__, err);
+#endif
 }
 
 
@@ -587,15 +641,25 @@ static int sound_card_task(void *data)
 	report_pcm_devices(card);
 	report_mixer_controls(&mixer);
 
-	err = mixer_control_set(&mixer.controls[18], 0, 32);
+	err = mixer_control_set(&mixer.controls[18], 0, 87);
 	printk("Master 87: %d\n", err);
 	err = mixer_control_set(&mixer.controls[19], 0, 1);
 	printk("Master On: %d\n", err);
 
-	handle = sound_device_open(card, "pcmC0D0c");
+	handle = sound_device_open(card, "pcmC0D0p");
 	printk("opened: %p\n", handle);
 	sound_param_configure(handle);
 	printk("configured\n");
+
+	/* play two packets */
+	printk("%s:%d\n", __func__, __LINE__);
+	err = sound_ioctl(handle, SNDRV_PCM_IOCTL_PREPARE, NULL);
+	printk("%s:%d err=%d\n", __func__, __LINE__, err);
+
+	while (1) {
+		sound_play(handle);
+		lx_emul_task_schedule(true);
+	}
 	err = sound_device_close(handle);
 	printk("closed: %d\n", err);
 
@@ -608,4 +672,6 @@ void lx_user_init(void)
 {
 	int pid = kernel_thread(sound_card_task, NULL, CLONE_FS | CLONE_FILES);
 	_lx_user_task = find_task_by_pid_ns(pid, NULL);
+	/* highest prio because this is time critical */
+	lx_emul_task_priority(_lx_user_task, 0);
 }
