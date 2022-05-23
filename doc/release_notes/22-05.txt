@@ -15,72 +15,48 @@
 WireGuard
 #########
 
-; @m-stein
+[https://www.wireguard.com/ - WireGuard] is a protocol for encrypted, virtual
+private networks (VPNs) with the goal of bringing ease-of-use and
+state-of-the-art network security together. Furthermore, it is designed to be
+implemented both light-weighted and highly performant at the same time. For
+years now, we were keen to support WireGuard also in Genode as a native
+standard solution for peer-to-peer encryption. With Genode 22.05, we could
+finally accomplish that goal.
 
-commit 6382b90d85c43b6186b092ff10de18e68debe388
-Author: Martin Stein <martin.stein@genode-labs.com>
-Date:   Wed May 18 13:09:35 2022 +0200
+After we had considered all the options, we choose to port the Linux kernel
+implementation of WireGuard using our modernized DDE-Linux tool set. The
+outcome is a user-land component that acts as client to one NIC session and one
+Uplink session. At the Uplink session, the WireGuard component plays the role
+of a VPN-internal network device that communicates plain-text with the VPN
+participants. At the NIC session, however, the component drives an encrypted
+UDP tunnel through the public network towards other WireGuard instances.
 
-    net: add methods required for WireGuard port
-    
-    * Adds methods for copying raw data to the data field of Ethernet frames and
-      UDP packets. This is used in the port to wrap the higher-layer packet data
-      prepared by the contrib code with the additionally required headers before
-      sending it at a network session.
-    * Adds a method to cast raw data to an IPv4 packet. This is required in the
-      port in order to check values in stand-alone IP packets produced by the
-      contrib code before sending them at a network session.
-    * Adds methods for setting UDP ports given big endian port values without
-      having to convert to little endian in the app and then back to big endian in
-      the net lib.
-    
-    Ref #4397
+In Genode, a WireGuard instance receives its parameters through the component
+configuration with the peer configuration being re-configurable:
 
-commit 66ca1f7100154855133da93545cbb2428cfd7b45
-Author: Martin Stein <martin.stein@genode-labs.com>
-Date:   Tue May 10 11:29:34 2022 +0200
+! <config private_key="0CtU34qsl97IGiYKSO4tMaF/SJvy04zzeQkhZEbZSk0="
+!         listen_port="49001">
+!
+!   <peer public_key="GrvyALPZ3PQ2AWM+ovxJqnxSqKpmTyqUui5jH+C8I0E="
+!         endpoint_ip="10.1.2.1"
+!         endpoint_port="49002"
+!         allowed_ip="10.0.9.2/32" />
+!
+! </config>
 
-    lx_emul: fix unaligned size arg on DMA alloc
-    
-    The function lx_emul_shared_dma_buffer_allocate takes a size argument but
-    silently expected it to be a multiple of the page size. With this commit, the
-    function rounds up the size argument accordingly before using it.
-    
-    Ref #4397
+For examples on how to integrate and route WireGuard in Genode, you may refer
+to the new run scripts 'wg_ping_inwards.run', 'wg_ping_outwards.run',
+'wg_lighttpd.run', and 'wg_fetchurl.run', all located in 'repos/dde_linux/run'.
 
-commit 09eedcd1d74f792bdcf6a124285fcc842f8409c4
-Author: Martin Stein <martin.stein@genode-labs.com>
-Date:   Wed May 18 12:14:47 2022 +0200
+Please be aware that this is only the first official version of Genode's
+WireGuard component. Although we are convinced of the quality the underlying
+Linux implementation proved to have over the years, we strongly recommend not
+to base security-critical scenarios on Genode's port before it had the time to
+mature through real-world testing as well.
 
-    virt_linux: support arm_64
-    
-    This feature was motivated and used only by the WireGuard port, so far.
-    
-    Ref #4397
-
-commit 3449ac085d9ad57bfb0137ac7b60122b59c193d0
-Author: Martin Stein <martin.stein@genode-labs.com>
-Date:   Wed May 18 12:34:23 2022 +0200
-
-    dde_linux: port of WireGuard kernel module
-    
-    A userland component that ports the Linux WireGuard kernel module (originally
-    from kernel version 5.14.21) and integrates it via a NIC session (public
-    network side) and an Uplink session (private network side). The
-    WireGuard-specific device configuration is done through the component
-    configuration. The port is done using lx_emul, lx_kit and the virt_linux
-    targets. The commit adds also 4 corresponding run scripts of which 3 are fully
-    automated of which 1 is added to the autopilot.
-    
-    :Warning:
-    
-    Although in principal functioning, the WireGuard port has not been exposed to a
-    sufficient amount of real-world testing, so far. Therefore, we strongly
-    recommend not to use it in any security-critical scenarios! There is no
-    guarantee that the port meets any of the security goals pursued by the
-    WireGuard protocol or other WireGuard implementations!
-    
-    Ref #4397
+For the whole story behind the new WireGuard support in Genode, have a look at
+the corresponding
+[http://genodians.org/m-stein/2022-05-31-wireguard-1 - Genodians article].
 
 
 New generation of DDE-Linux-based PC drivers
