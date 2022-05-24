@@ -1,6 +1,7 @@
 
 #include <linux/delay.h>
 #include <linux/fs.h>
+#include <linux/input.h>
 #include <linux/sched/task.h>
 #include <linux/slab.h>
 #include <sound/asound.h>
@@ -9,18 +10,117 @@
 
 #include <audio.h>
 
+/* routes, needs to be configured per platform */
+struct sound_routing
+{
+	char const name[64];
+	char const playback[64];
+	char const mic_headset[64];
+	char const mic_internal[64];
+
+	/* mixer ids */
+	unsigned const mute_headset;
+	unsigned const mute_speaker;
+};
+
+
+/* routes for tigerlake */
+struct sound_routing tigerlake = {
+	.name = "TigerLake",
+	.playback     = "pcmC0D0p",
+	.mic_headset  = "pcmC0D0c",
+	.mic_internal = "pcmC0D6c",
+	.mute_headset = 1,
+	.mute_speaker = 3,
+};
+
+
+/* mixer */
+struct mixer;
+
+enum { MAX_CTL_VALS = 2 };
+
+struct mixer_control
+{
+	struct snd_ctl_elem_info info;
+	struct mixer            *mixer;
+	int                      value[MAX_CTL_VALS];
+	char                   **enum_strings;
+};
+
+
+struct mixer
+{
+	struct sound_handle  *handle;
+	struct mixer_control *controls;
+	unsigned              control_count;
+};
+
+
+/* device events */
+enum Sound_event {
+	INALID = 0,
+	PLAYBACK,
+	PLAYBACK_STOP,
+	JACK_PLUGGED,
+	JACK_UNPLUGGED,
+	CAPTURE,
+	CAPTURE_STOP
+};
+
+
+/* modes for jack operation */
+enum Jack_mode {
+	HEADPHONE,
+	HEADSET,
+	MICROPHONE,
+	DEFAULT = HEADSET
+};
+
+
+static const char *const jack_mode_labels[] = {
+	[HEADPHONE]  = "headphone",
+	[HEADSET]    = "headset",
+	[MICROPHONE] = "microphone",
+};
+
+
+/* handle for PCM device */
+struct sound_handle
+{
+	struct file  *file;
+	struct inode *inode;
+};
+
+
+/*
+ * used for private data in drivers
+ */
+struct sound_card
+{
+	unsigned              sound_events;
+	enum Jack_mode        jack_mode;
+	struct sound_routing *routing;
+	struct mixer         *mixer;
+	struct sound_handle  *playback;
+	struct sound_handle  *mic_headset;
+	struct sound_handle  *mic_internal;
+};
+
+
 static struct task_struct *_lx_user_task;
 static struct file_operations const *_alsa_fops;
 
+
 enum Stream_direction {
-	PLAYBACK = SNDRV_PCM_STREAM_PLAYBACK,
-	CAPTURE  = SNDRV_PCM_STREAM_CAPTURE,
+	DIR_PLAYBACK = SNDRV_PCM_STREAM_PLAYBACK,
+	DIR_CAPTURE  = SNDRV_PCM_STREAM_CAPTURE,
 };
 
 
 static const char *const direction_labels[] = {
-	[PLAYBACK] = "playback",
-	[CAPTURE]  = "capture"
+	[DIR_PLAYBACK] = "playback",
+	[DIR_CAPTURE]  = "capture"
 };
 
 
@@ -32,27 +132,27 @@ static const char *const control_labels[] = {
 };
 
 
-/* retrieve ALSA file operations */
-int __register_chrdev(unsigned int major, unsigned int baseminor,
-                      unsigned int count, const char * name,
-                      const struct file_operations * fops)
+/*
+ * Helper
+ */
+static void sound_event_set(struct sound_card *card, enum Sound_event event)
 {
-	lx_emul_trace(__func__);
+	enum Sound_event clear;
 
-	if (major == CONFIG_SND_MAJOR) {
-		printk("Registered sound fops\n");
-		_alsa_fops = fops;
-	}
+	if (event == JACK_PLUGGED)
+		clear = JACK_UNPLUGGED;
 
-	return 0;
+	if (event == JACK_UNPLUGGED)
+		clear = JACK_PLUGGED;
+
+	card->sound_events |= 1u << event;
+	card->sound_events &= ~(1u << clear);
 }
 
 
-/* called at end IRQ handler */
-void kill_fasync(struct fasync_struct ** fp,int sig,int band)
+static bool sound_event(struct sound_card *card, enum Sound_event event)
 {
-	if (_lx_user_task)
-		lx_emul_task_unblock(_lx_user_task);
+	return !!(card->sound_events & (1u << event));
 }
 
 
@@ -70,7 +170,7 @@ static struct snd_pcm_str *for_each_stream(struct snd_card *card,
 
 		pcm = device->device_data;
 		if (pcm->internal) continue;
-		for (i = PLAYBACK; i <= CAPTURE; i++) {
+		for (i = DIR_PLAYBACK; i <= DIR_CAPTURE; i++) {
 			if (pcm->streams[i].substream == NULL) continue;
 			if(func(&pcm->streams[i], arg))
 				return &pcm->streams[i];
@@ -79,6 +179,7 @@ static struct snd_pcm_str *for_each_stream(struct snd_card *card,
 
 	return NULL;
 }
+
 
 /* generate report later */
 static int _report_pcm_device(struct snd_pcm_str *stream, void *arg)
@@ -125,17 +226,49 @@ static struct snd_card *wait_for_card(void)
 }
 
 
-struct sound_handle {
-	struct file  *file;
-	struct inode *inode;
-};
-
-
 static int sound_ioctl(struct sound_handle *handle, unsigned cmd, void *arg)
 {
 	struct file *file = handle->file;
 	return file->f_op->unlocked_ioctl(file, cmd, (unsigned long)arg);
 }
+
+
+/*
+ * Linux implementations
+ */
+
+/* retrieve ALSA file operations */
+int __register_chrdev(unsigned int major, unsigned int baseminor,
+                      unsigned int count, const char * name,
+                      const struct file_operations * fops)
+{
+	lx_emul_trace(__func__);
+
+	if (major == CONFIG_SND_MAJOR) {
+		printk("Registered sound fops\n");
+		_alsa_fops = fops;
+	}
+
+	return 0;
+}
+
+
+/* called at end of IRQ handler for playback */
+void kill_fasync(struct fasync_struct **fp,int sig,int band)
+{
+	struct sound_card *card;
+
+	if (fp[0] && fp[0]->fa_file) {
+		card = (struct sound_card *)fp[0]->fa_file;
+		sound_event_set(card, PLAYBACK);
+		printk("%s:%d: %p\n", __func__, __LINE__, fp[0]->fa_file);
+	}
+
+	if (_lx_user_task)
+		lx_emul_task_unblock(_lx_user_task);
+}
+
+
 
 /*
  * Hardware parameter
@@ -289,9 +422,12 @@ static int _match_node(struct snd_pcm_str *stream, void *arg)
 
 
 static
-struct sound_handle *sound_device_open(struct snd_card *card, char const *node)
+struct sound_handle *sound_device_open(struct snd_card *card, char const *node,
+                                       void *data)
 {
 	struct snd_pcm_str *stream;
+	struct sound_handle *handle;
+	struct fasync_struct *fasync;
 
 	stream = for_each_stream(card, _match_node, node);
 
@@ -300,10 +436,21 @@ struct sound_handle *sound_device_open(struct snd_card *card, char const *node)
 		return NULL;
 	}
 
+	printk("%s:%d runtime: %p\n", __func__, __LINE__, stream->substream->runtime);
 	printk("PCM device major: %u minor: %u\n",
 	        MAJOR(stream->dev.devt), MINOR(stream->dev.devt));
 
-	return sound_devt_open(stream->dev.devt);
+	handle =  sound_devt_open(stream->dev.devt);
+
+	/* hide data in fasync of runtime */
+	if (stream->substream->runtime && data) {
+		fasync = kzalloc(sizeof(struct fasync_struct), 0);
+		if (!fasync) return NULL;
+		fasync->fa_file = data;
+		stream->substream->runtime->fasync = fasync;
+	}
+
+	return handle;
 }
 
 
@@ -321,27 +468,6 @@ static int sound_device_close(struct sound_handle *handle)
 /*
  * mixer controls
  */
-struct mixer;
-
-enum { MAX_CTL_VALS = 2 };
-
-struct mixer_control
-{
-	struct snd_ctl_elem_info info;
-	struct mixer            *mixer;
-	int                      value[MAX_CTL_VALS];
-	char                   **enum_strings;
-};
-
-
-struct mixer
-{
-	struct sound_handle  *handle;
-	struct mixer_control *controls;
-	unsigned              control_count;
-};
-
-
 static void report_mixer_controls(struct mixer *mixer)
 {
 	unsigned i, j;
@@ -608,22 +734,107 @@ static void sound_play(struct sound_handle *handle)
 }
 
 
+/*
+ * jack handler
+ */
+int jack_connect(struct input_handler *handler, struct input_dev *dev,
+                 const struct input_device_id *id)
+{
+	int err;
+	struct sound_card *card = handler->private;
+
+	struct input_handle *handle = kzalloc(sizeof(struct input_handle), 0);
+
+	if (!handle) return -ENOMEM;
+
+	printk("%s:%d JACK CONNECT %u\n", __func__, __LINE__, test_bit(SW_HEADPHONE_INSERT, dev->sw));
+
+	/* check if jack input is connected */
+	if (test_bit(SW_HEADPHONE_INSERT, dev->sw))
+		sound_event_set(card, JACK_PLUGGED);
+
+	handle->handler = handler;
+	handle->name    = kstrdup(handle->name, 0);
+	handle->dev     = dev;
+	handle->private = card;
+
+
+	err = input_register_handle(handle);
+	if (err) {
+		printk("%s:%d err=%d\n", __func__, __LINE__, err);
+		return err;
+	}
+
+
+	err = input_open_device(handle);
+	if (err) {
+		printk("%s:%d err=%d\n", __func__, __LINE__, err);
+		return err;
+	}
+
+	return 0;
+}
+
+
+void jack_event(struct input_handle *handle, unsigned int type,
+                unsigned int code, int value)
+{
+	struct sound_card *card = handle->private;
+
+	printk("%s:%d type: %u code: %u value: %u\n", __func__, __LINE__, type, code, value);
+
+	if (type != EV_SW || code != SW_HEADPHONE_INSERT) return;
+
+	sound_event(card, value ? JACK_PLUGGED : JACK_UNPLUGGED);
+
+	if (_lx_user_task)
+		lx_emul_task_unblock(_lx_user_task);
+}
+
+
+static const struct input_device_id jack_ids[] = {
+	{ .driver_info = 1 }, /* Matches all devices */
+	{ }, /* Terminating zero entry */
+};
+
+
+struct input_handler jack_handler = {
+	.connect  = jack_connect,
+	.event    = jack_event,
+	.id_table = jack_ids,
+};
+
+
 static void sleep_forever(void)
 {
 	while (1) lx_emul_task_schedule(true);
 }
 
-
 static int sound_card_task(void *data)
 {
 	struct snd_card *card = wait_for_card();
-	struct sound_handle *handle;
 	struct mixer mixer;
 	int err;
+
+	struct sound_card sound_card = {
+		.sound_events = 0,
+		.jack_mode    = DEFAULT,
+		.routing      = data,
+		.mixer        = &mixer,
+	};
 
 	if (!card) {
 		printk("Error: No sound card found\n");
 		sleep_forever();
+	}
+
+	sound_event_set(&sound_card, JACK_UNPLUGGED);
+
+	/* register jack handler */
+	jack_handler.private = &card;
+	err = input_register_handler(&jack_handler);
+	if (err) {
+		printk("Error: Could not register jack input handler (err=%d\n", err);
 	}
 
 	mixer.handle = sound_devt_open(card->ctl_dev.devt);
@@ -646,31 +857,36 @@ static int sound_card_task(void *data)
 	err = mixer_control_set(&mixer.controls[19], 0, 1);
 	printk("Master On: %d\n", err);
 
-	handle = sound_device_open(card, "pcmC0D0p");
-	printk("opened: %p\n", handle);
-	sound_param_configure(handle);
-	printk("configured\n");
+	sound_card.playback = sound_device_open(card, sound_card.routing->playback, &sound_card);
+	if (!sound_card.playback) {
+		printk("%s:%d: Error could not open '%s'\n", __func__, __LINE__, 
+		       sound_card.routing->playback);
+		sleep_forever();
+	}
+	sound_param_configure(sound_card.playback);
 
+#if 1
 	/* play two packets */
 	printk("%s:%d\n", __func__, __LINE__);
-	err = sound_ioctl(handle, SNDRV_PCM_IOCTL_PREPARE, NULL);
+	err = sound_ioctl(sound_card.playback, SNDRV_PCM_IOCTL_PREPARE, NULL);
 	printk("%s:%d err=%d\n", __func__, __LINE__, err);
 
 	while (1) {
-		sound_play(handle);
+		sound_play(sound_card.playback);
 		lx_emul_task_schedule(true);
 	}
-	err = sound_device_close(handle);
-	printk("closed: %d\n", err);
+	//err = sound_device_close(handle);
+	//printk("closed: %d\n", err);
 
 	sleep_forever();
+#endif
 	return 0;
 }
 
 
 void lx_user_init(void)
 {
-	int pid = kernel_thread(sound_card_task, NULL, CLONE_FS | CLONE_FILES);
+	int pid = kernel_thread(sound_card_task, &tigerlake, CLONE_FS | CLONE_FILES);
 	_lx_user_task = find_task_by_pid_ns(pid, NULL);
 	/* highest prio because this is time critical */
 	lx_emul_task_priority(_lx_user_task, 0);

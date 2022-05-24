@@ -272,7 +272,7 @@ void dump_state(struct file *file)
 	int err;
 	struct snd_pcm_status status = { 0 };
 
-	printk("%s:%d\n", __func__, __LINE__);
+	printk("%s:%d size: %u\n", __func__, __LINE__, sizeof(status));
 	err = sound_ioctl(file, SNDRV_PCM_IOCTL_STATUS, &status);
 	if (err) printk("%s:%d err=%d\n", __func__, __LINE__, err);
 	else printk("%s:%d status: %s\n", __func__, __LINE__, state_labels[status.state]);
@@ -705,7 +705,7 @@ void hw_play(struct file *file)
 	dump_state(file);
 #endif
 
-	for (i = 0; i < 50; i++) {
+	for (i = 0; i < 1024; i++) {
 		memcpy(buffer, &SOUND_DATA[(i % 128) * 2048], 2048);
 		xfer.result = 0;
 		xfer.buf = buffer;

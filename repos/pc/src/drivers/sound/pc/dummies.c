@@ -64,6 +64,12 @@ int __must_check get_random_bytes_arch(void * buf,int nbytes)
 }
 
 
+void add_input_randomness(unsigned int type,unsigned int code,unsigned int value)
+{
+	lx_emul_trace(__func__);
+}
+
+
 #include <linux/syscore_ops.h>
 
 void register_syscore_ops(struct syscore_ops * ops)

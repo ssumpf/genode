@@ -1,7 +1,7 @@
 /*
  * \brief  Dummy definitions of Linux Kernel functions
  * \author Automatically generated file - do no edit
- * \date   2022-05-13
+ * \date   2022-05-23
  */
 
 #include <lx_emul.h>
@@ -176,14 +176,6 @@ enum dev_dma_attr acpi_get_dma_attr(struct acpi_device * adev)
 
 extern acpi_status acpi_get_handle(acpi_handle parent,acpi_string pathname,acpi_handle * ret_handle);
 acpi_status acpi_get_handle(acpi_handle parent,acpi_string pathname,acpi_handle * ret_handle)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/random.h>
-
-void add_input_randomness(unsigned int type,unsigned int code,unsigned int value)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -941,6 +933,14 @@ int string_escape_mem(const char * src,size_t isz,char * dst,size_t osz,unsigned
 #include <linux/printk.h>
 
 int suppress_printk;
+
+
+#include <linux/rcupdate.h>
+
+void synchronize_rcu(void)
+{
+	lx_emul_trace_and_stop(__func__);
+}
 
 
 #include <linux/srcutiny.h>
