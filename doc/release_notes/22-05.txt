@@ -671,10 +671,30 @@ Platforms
 PinePhone
 =========
 
-; @nfeske
+Telephony
+~~~~~~~~~
 
-; Telephony
-; System-control processor
+The current release introduces the principle ability to issue and receive
+voice calls with the PinePhone. This work involved two topics. First,
+we had to tackle the integration, configuration, and operation of the LTE
+modem. The second piece of the puzzle was the configuration of the audio paths
+between the mic, the speaker, and the modem. Since the complexity of those
+topics would exceed the scope of the release documentation, the technical
+details are covered in the following dedicated article.
+
+:Pine fun - Telephony _(Roger, Roger?)_:
+
+  [https://genodians.org/ssumpf/2022-05-09-telephony]
+
+[image pinephone_telephony]
+
+The image above illustrates a simple system exemplified by the
+[https://github.com/genodelabs/genode-allwinner/blob/master/run/modem_pinephone.run - modem_pinephone.run]
+script. It allows a terminal emulator on a host machine connected to
+the serial connector of the Pinephone to interact with the command interface
+of the modem, e.g., allowing the user to unlock the SIM card via the 'AT+CPIN'
+command, or to issue a call using the 'ATD' command.
+
 
 Custom system-control processor (SCP) firmware
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
