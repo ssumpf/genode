@@ -577,63 +577,24 @@ Date:   Fri Apr 8 13:03:22 2022 +0200
     Ref #4419
 
 
-Refined Block::Request_stream API
-=================================
+Refined low-level block I/O interfaces
+======================================
 
-; @nfeske
+In the original version of the 'Block::Connection::Job' API introduced in
+[https://genode.org/documentation/release-notes/19.05#Modernized_block-storage_interfaces - version 19.05],
+split read/write operations were rather difficult to accommodate, and
+remained largely unsupported by clients of the block-session interface. In
+practice, this limitation was side-stepped by dimensioning the default I/O
+buffer sizes large enough to avoid splitting. The current release addresses
+this limitation by changing the meaning of the 'offset' parameter of the
+'produce_write_content' and 'consume_read_result' hook functions. The value
+used to reflect the absolute byte position. In the new version, it is relative
+to the job's operation.
+_This API change requires the adaptation of existing block-session clients._
 
-commit d815322efe814558463ebe062d8009536ed97585
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Tue Apr 12 15:17:22 2022 +0200
-
-    os: simplify split block operations
-    
-    This patch changes the meaning of the 'offset' parameter of the
-    'produce_write_content' and 'consume_read_result' hook functions.
-    The value used to reflect the absolute byte position but in practice,
-    a job-relative byte offset is desired.
-    
-    Issue #4474
-
-commit 7d6c5924174d19ea7e6c39d617d4bcefdc22d64d
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Wed Apr 13 11:41:13 2022 +0200
-
-    vfs/rump: handle split block I/O jobs
-    
-    This patch fixes a potential data corruption issue that could occur when
-    issuing large I/O requests to vfs/rump, which don't fit into the default
-    block I/O buffer of 128 KiB. Note that we haven't observed the problem
-    in practice (Sculpt hosts vfs/rump in a dedicated vfs server, which
-    fragments requests) but spotted the issue while reviewing the code. We
-    could trigger problem by explicitly changing the I/O buffer size to 32
-    KiB.
-    
-    Issue #4474
-
-commit 68af13bb349d21c37bd76f3342669e8389c83ed0
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Wed Apr 13 13:44:46 2022 +0200
-
-    os/vmm: handle split block I/O jobs
-    
-    Issue #4474
-
-commit b3678f44b71159554aa537bf6fddf7ff064ae643
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Wed Apr 13 13:46:07 2022 +0200
-
-    libports/fatfs: handle split block I/O jobs
-    
-    Issue #4474
-
-commit 25ae54223a3fccbebe776a21ed61e1a5eb941ba4
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Wed Apr 13 13:53:04 2022 +0200
-
-    os/part_block: simplify split block-I/O handling
-    
-    Issue #4474
+We adapted all block-session clients accordingly, including part_block,
+vfs/rump, vfs/fatfs, and Genode's ARM virtual machine monitor. Those
+components thereby became able to work with arbitrary block I/O buffer sizes.
 
 
 Improved touch-event support
