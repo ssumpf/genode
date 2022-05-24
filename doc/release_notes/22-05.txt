@@ -662,7 +662,7 @@ implements the rudimentary widget set as used by Sculpt OS' administrative
 user interface, evaluates touch events for generating hover reports now.
 Combined, these changes make the existing GUI stack fit for our anticipated
 touch-screen based usage scenarios such as the user interface for Genode on
-the Pinephone.
+the PinePhone.
 
 
 Platforms
@@ -675,6 +675,69 @@ PinePhone
 
 ; Telephony
 ; System-control processor
+
+Custom system-control processor (SCP) firmware
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Battery lifetime is one of the most pressing concerns for mobile phones.
+While exploring the PinePhone hardware, we discovered early on that the key
+for sophisticated energy management lies in the so-called system control
+processor (SCP), which is a low-power companion microcontroller that
+complements the high-performance application processor. The SCP can remain
+active even if the device is visibly switched off.
+Surprisingly, even though its designated purpose is rather narrow, the SCP is a
+freely programmable general-purpose CPU (called AR100) with ultimate access to
+every corner of the SoC. It can control all peripherals including the modem,
+and access the entirety of physical memory.
+
+In contrast to most consumer devices, which operate their SCPs with proprietary
+firmware, the PinePhone gives users the freedom to use an open-source
+firmware called [https://github.com/crust-firmware/crust - Crust].
+Moreover, the Crust developers thoroughly documented their findings of the
+[https://linux-sunxi.org/AR100 - AR100 limitations] and its
+[https://linux-sunxi.org/AR100/HardwareSharing - interplay with the ARM CPU].
+
+Given that the Crust firmware was specifically developed to augment a
+Linux-based OS with suspend-resume functionality, its fixed-function feature
+set is rather constrained. For running Genode on the PinePhone, we'd like to
+move more freely, e.g., letting the SCP interact with the modem while the
+application processor is powered off. To break free from the limitations of a
+fixed-function feature set of an SCP firmware implemented in C, we explored
+the opportunity to deploy a minimal-complexity Forth interpreter as the basis
+for a custom SCP firmware. The story behind this line of development is
+covered by the following dedicated article:
+
+:Darling, I FORTHified my PinePhone!:
+
+  [https://genodians.org/nfeske/2022-03-29-pinephone-forth]
+
+
+Inter-communication between SCP and ARM
+---------------------------------------
+
+To enable a tight interplay of Genode with the SCP, we introduce a new
+[https://github.com/genodelabs/genode-allwinner/tree/master/include/scp_session - interface] and
+[https://github.com/genodelabs/genode-allwinner/tree/master/src/drivers/scp/a64 - driver]
+for supplying and invoking custom functionality to the SCP at runtime.
+The new "Scp" service allows clients to supply snippets of Forth code for
+execution at the SCP and retrieve the result. Both the program and the result
+are constrained to 1000 bytes. Hence, the loading of larger programs may need
+multiple subsequent 'Scp::Connection::execute' calls.
+
+As illustrated by the example
+[https://github.com/genodelabs/genode-allwinner/blob/staging/run/a64_scp_drv.run - a64_scp_drv.run]
+script, the mechanism supports multiple clients. Since the SCP's state is
+global, however, all clients are expected to behave cooperatively. Given the
+SCP's ultimate power, SCP clients must be fully trusted anyway.
+
+As a nice tidbit for development, the PinePhone-specific SCP firmware features
+a break-in debug shell for interactive use over UART that can be activated by
+briefly connecting the INT and GND
+[https://wiki.pine64.org/index.php/PinePhone#Pogo_pins - pogo pins].
+Note that this interactive debugging facility works independently from the
+application processor. Hence, it can be invoked it at any time, e.g., to
+inspect any hardware register while running a regular Linux distribution on
+the phone.
 
 
 NXP i.MX8
