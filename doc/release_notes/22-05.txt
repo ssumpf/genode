@@ -76,36 +76,12 @@ New generation of DDE-Linux-based PC drivers
 
 ; @cnuke @alex-ab @skalk
 
-commit 57aab46fc3e45e26b962320eb249be9a61cf2869
-Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
-Date:   Tue Mar 1 17:05:45 2022 +0100
-
-    platform: introduce I/O ports in API
-    
-    * Introduces Platform::Device::Io_port client utility
-    * Implements I/O ports as common device resources in platform driver
-    
-    Fix genodelabs/genode#4436
-
-commit 2760b67902833d52c1af42e83353ab8a9663569e
-Author: Josef Söntgen <josef.soentgen@genode-labs.com>
-Date:   Tue Feb 22 16:06:37 2022 +0100
-
-    lx_kit/lx_emul: add I/O port support
-    
-    Ref genodelabs/genode#4438
-
-commit 67f797abf232c1395fa54c72984158cea97d2e88
-Author: Josef Söntgen <josef.soentgen@genode-labs.com>
-Date:   Tue Feb 22 15:53:08 2022 +0100
-
-    pc: enable UHCI driver in usb_host
-    
-    Fix genodelabs/genode#4438
-
-commit 9713014130b68de09e275138414a35c5a057d879
-Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
-Date:   Mon Mar 7 15:32:00 2022 +0100
+With the last release we started to apply the new DDE Linux approach to the
+Linux-based PC drivers. The first driver to be converted was the USB host-controller
+driver. In this release we finished up this line of work and by now all
+remaining Linux-based PC drivers are converted and updated. Those drivers
+now share the same kernel version 5.14.21 and its configuration and reside
+in the 'pc' repository.
 
     dde_linux: add virt_linux lx_emul flavor
     
@@ -115,127 +91,86 @@ Date:   Mon Mar 7 15:32:00 2022 +0100
     
     Ref #4397
 
-commit e95f0a409d7a3cc7563d4f9e17842f0edaf014af
-Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
-Date:   Tue Mar 8 16:20:38 2022 +0100
+Based on the groundwork laid by the 'pc_usb_host_drv' driver we started
+working on the Intel display and Intel wireless drivers. With the
+stumbling blocks already out of the way, namely the x86 support in the
+DDE Linux, we could focus entirely on the intricacies of each driver.
 
-    lx_emul: add implementation for Genode's USB C-API
-    
-    Fix #4444
+In case of the Intel display driver we could get rid of all our patches to
+the kernel we previousily needed to manage the display connectors. Due to
+the update we gained support for newer Intel Gen11 and Gen12 graphic
+generations found in recent Intel CPUs. The old driver was removed and the
+new driver is now called 'pc_intel_fb_drv'. The configuration, however,
+stayed compatible and is documented in detail in the README of the driver.
 
-commit dd10e5d977fb19e6f842fa6f31e7ce925c129d02
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Tue Mar 15 08:04:49 2022 +0100
+The Intel wireless driver also profited from the version update as it now
+supports 802.11ax capable devices. In particular the driver was tested with
+Intel Wi-Fi6 AX201 cards. The driver's unique physique where the component not
+only incorporates the driver but also the supporting user-land supplicant
+required changes to the way the Linux emulation environment is initialized.
+We utilize the VFS 'wifi' plugin that is executed during the component
+start-up to prepare the emulation environment.
 
-    intel_fb: move to legacy_intel_fb
-    
-    Move the depot recipe and consistently name the old drivers with a legacy_
-    prefix as done with the old usb_host driver.
-    
-    Issue #4450
+The following snippet shows how to configure the driver:
 
-commit 7813fca9467de99948cbd5b31ab9c134cb974101
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Thu Mar 17 15:06:33 2022 +0100
+!<start name="pc_wifi_drv" caps="250">
+!  <resource name="RAM" quantum="32M"/>
+!  <provides><service name="Nic"/></provides>
+!  <config>
+!    <libc stdout="/dev/null" stderr="/dev/null" rtc="/dev/rtc"/>
+!    <vfs>
+!      <dir name="dev">
+!        <log/> <null/> <rtc/> <wifi/>
+!        <jitterentropy name="random"/>
+!        <jitterentropy name="urandom"/>
+!      </dir>
+!    </vfs>
+!  </config>
+!  <route>
+!    <service name="Rtc"> <any-child /> </service>
+!    <any-service> <parent/> <any-child /> </any-service>
+!  </route>
+!</start
 
-    gpu/intel: report all devices via next_device
-    
-    The former implementation relied on the behaviour of how the old
-    intel fb driver requested the pci devices. The new lxkit however actually
-    really want to have all available pci devices.
-    
-    Issue #4450
+Apart from the added VFS plugin the configuration remained unchanged and using
+the new driver is opaque to the user. The old driver was removed and the new
+driver is now called 'pc_wifi_drv'. Instead of preparing the 'dde_linux' port
+the 'libnl' and 'wpa_supplicant' ports are now required
 
-commit c0560ab0cb216bb7b6b998b7fab9137490d66c25
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Fri Jan 21 11:07:28 2022 +0100
+! tool/ports/prepare libnl wpa_supplicant
 
-    pc: update intel display driver
-    
-    Fixes #4450
+for building the driver. Those ports are used unchanged from the old driver
+and will be updated in a later release.
 
-commit 8056811b4f23208373bccd302fe60faed6e47d65
-Author: Josef Söntgen <josef.soentgen@genode-labs.com>
-Date:   Mon Mar 28 14:20:25 2022 +0200
 
-    Rename wifi_drv to legacy_wifi_drv
-    
-    Issue #4455.
+; commit e95f0a409d7a3cc7563d4f9e17842f0edaf014af
+; Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+; Date:   Tue Mar 8 16:20:38 2022 +0100
+; 
+;     lx_emul: add implementation for Genode's USB C-API
+;     
+;     Fix #4444
 
-commit e7e7893f2281db84b094784647edda6a911c47a5
-Author: Josef Söntgen <josef.soentgen@genode-labs.com>
-Date:   Thu Feb 10 18:09:17 2022 +0100
+Additionally to both driver updates we wrapped up working on the
+'pc_usb_host_drv' driver component by enabling the UHCI host-controller driver.
+Support for such controllers was omitted in the previous release and supporting
+the driver required us to add I/O port support to the 'lx_kit' for x86. The
+'legacy_pc_usb_host_drv' driver component is removed in for favour of the new
+one. Furthermore the Genode C-API for USB glue code, which was initially copied
+from the i.MX8 USB host-controller driver, was consolidated and moved into the
+'dde_linux' repository where it now is referenced by all recent USB
+host-controller drivers.
 
-    pc: update wifi driver
-    
-    The driver falls in line with the previous 'legacy_wifi_drv' component
-    where the ported wireless LAN stack and device driver is encapsulated
-    in a library. This library in return is used by the 'Libc::Component'
-    providing the necessary environment for the 'wpa_supplicant'.
-    
-    In constrast to the old driver a 'wifi' VFS plugin is in charge of
-    initalizing the 'Lx_kit::Env' prior to executing any static
-    constructors.
-    
-    Fixes #4455.
 
-commit 543b6c06d4aa428b9f4f903aedeaa3ef8e268eff
-Author: Josef Söntgen <josef.soentgen@genode-labs.com>
-Date:   Tue May 3 17:17:38 2022 +0200
+With all updated drivers in place it was time to make inventory and
+de-duplicate the drivers since each driver accumulated redundant bits and
+pieces of code and this consolidation effort simplyfied things greatly. We
+moved most of the code shared by all drivers into the 'pc_lx_emul' library,
+which is the back bone of those ported drivers. Since not all of them require
+the same sophistication when it comes to the implementation we followed the
+same modular pattern already established in the 'dde_linux' repository. This
+allows for mixing and matching of the available dummy implementations.
 
-    pc: centralize initcall header
-    
-    Instead of each driver providing its own header file use a central
-    header as the initcall order header should cover _all_ provided
-    initcalls resulting from the used 'pc_linux' kernel config.
-    
-    Note that the 'pc_linux' configuration was extended with the
-    'USB_USBNET' option because the module's initcall is needed for the
-    Genode C API for USB glue-code and the 'PACKET' option needed by
-    the wireless lan driver.
-    
-    The lack of theses options was not noticed as each driver used its
-    own initcall header so far that stemmed from the initial porting
-    effort.
-    
-    Issue #4500.
-
-commit 8a69fbe5685b736a060b7b58c79b97427cab394a
-Author: Josef Söntgen <josef.soentgen@genode-labs.com>
-Date:   Tue May 17 17:20:00 2022 +0200
-
-    Remove legacy wifi driver
-    
-    The driver is superseded by the new driver located in the 'pc'
-    repository.
-    
-    Fixes #4508.
-
-commit f23df6b871cfd954435d98045c2a500000f81587
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Wed May 18 11:56:16 2022 +0200
-
-    Remove legacy intel display driver
-    
-    The driver is superseded by the new driver located in the 'pc'
-    repository.
-    
-    Issue #4508
-
-commit ed4afb619a35bad3fcace023f936f6b3ddacaab9
-Author: Josef Söntgen <josef.soentgen@genode-labs.com>
-Date:   Tue May 3 18:32:20 2022 +0200
-
-    pc: consoldiate LX emul of current drivers
-    
-    This commit de-duplicates the redundant dummy implementations and
-    to some degree also the 'lx_emul.c' implementations while also
-    decluttering the various 'dep.list' files.
-    
-    The code is moved into 'src/lib/pc/lx_emul' where it becomes part
-    of the 'pc_lx_emul' library.
-    
-    Fixes #4500.
 
 commit f985de52f302e51680923425a66c9821a31c32e4
 Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
@@ -299,6 +234,20 @@ Date:   Mon May 2 14:56:14 2022 +0200
     
     Fix genodelabs/genode#4497
 
+commit 57aab46fc3e45e26b962320eb249be9a61cf2869
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Tue Mar 1 17:05:45 2022 +0100
+
+    platform: introduce I/O ports in API
+    
+    * Introduces Platform::Device::Io_port client utility
+    * Implements I/O ports as common device resources in platform driver
+    
+    Fix genodelabs/genode#4436
+
+commit 9713014130b68de09e275138414a35c5a057d879
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Mon Mar 7 15:32:00 2022 +0100
 commit 21ab73d5f90cf99063eeee0b994d1e42a4d86af6
 Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
 Date:   Tue May 3 13:36:27 2022 +0200
