@@ -373,149 +373,100 @@ Base framework and OS-level infrastructure
 Revised tracing facilities
 ==========================
 
-; @nfeske
+Even though a light-weight event tracing mechanism has been with Genode since
+[https://genode.org/documentation/release-notes/13.08#Light-weight_event_tracing - version 13.08],
+in practice, this powerful tool remains sparingly used because it is arguable
+less convenient than plain old debug instrumentation.
 
-commit 34a3209e9bff91bf8c624cb7ad6cd694d93230fc
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Thu Mar 10 17:59:24 2022 +0100
+Event though the trace-logger component introduced later in version
+[https://genode.org/documentation/release-notes/18.02#New_trace-logging_component - version 18.02]
+tried to lower the barrier, tracing remains being an underused feature.
+The current release brings a number of usability improvements that will
+hopefully make the tool more attractive for routine use.
 
-    base/log.h: add GENODE_TRACE_TSC
-    
-    The new macros GENODE_TRACE_TSC and GENODE_TRACE_TSC_NAMED complement
-    the existing GENODE_LOG_TSC and GENODE_LOG_TSC_NAMED macros to simplify
-    TSC measurements at a low overhead of the trace mechanism.
+Concise human-oriented output format
+------------------------------------
+
+First, we changed the output format of the trace logger to become
+better suitable for human consumption, reducing syntactic noise and
+filtering out repetitive information. For example, when instrumenting
+the VFS server in Sculpt using the new GENODE_TRACE_TSC utility (see below),
+the trace logger now generates tabular output as follows.
+
+! Report 4
+!
+! PD "init -> runtime -> arch_vbox6 -> vbox -> " ----------------
+!  Thread "vCPU"           at (0,0)  total:12909024 recent:989229
+!  Thread "vCPU"           at (1,0)  total:5643234  recent:786437
+!
+! PD "init -> runtime -> ahci-0.fs" -----------------------------
+!  Thread "ahci-0.fs"      at (0,0)  total:910497   recent:6335
+!  Thread "ep"             at (0,0)  total:0        recent:0
+!   71919692932: TSC process_packets: 8005M (4998 calls, last 4932K)
+!   71921558516: TSC process_packets: 8006M (4999 calls, last 1596K)
+!   71922760220: TSC process_packets: 8007M (5000 calls, last 1006K)
+!   71929853586: TSC process_packets: 8009M (5001 calls, last 1840K)
+!   71931315246: TSC process_packets: 8011M (5002 calls, last 1253K)
+!   72127999920: TSC process_packets: 8016M (5003 calls, last 5606K)
+!   72129568198: TSC process_packets: 8018M (5004 calls, last 1345K)
+!   77161908178: TSC process_packets: 8029M (5005 calls, last 11349K)
+!   77643225736: TSC process_packets: 8029M (5006 calls, last 217K)
+!   89422100594: TSC process_packets: 8035M (5007 calls, last 5656K)
+!   89422123632: TSC process_packets: 8035M (5008 calls, last 1342)
+!  Thread "signal handler" at (0,0)  total:36329    recent:3001
+!  Thread "signal_proxy"   at (0,0)  total:51838    recent:13099
+!  Thread "pdaemon"        at (0,0)  total:97184    recent:332
+!  Thread "vdrain"         at (0,0)  total:1266     recent:286
+!  Thread "vrele"          at (0,0)  total:1904     recent:516
+!
+! PD "init -> runtime -> nic_drv" -------------------------------
+!  Thread "nic_drv"        at (0,0)  total:34044    recent:897
+!  Thread "signal handler" at (0,0)  total:369      recent:142
+!
+! ...
+
+Subjects that belong to the same PD are grouped together. The formerly
+optional affinity and activity options have been removed. Those
+information are now unconditionally displayed. The trace entries
+belonging to a thread appear as slightly indented. Trace subjects with
+no activity do not produce any output. This way, the new version can
+be easily used capture CPU usage of all threads over time, as a possible
+alternative to the top tool, which gives only momentarily sampled information.
 
 
-commit be0a1742ac3fb2c84239b1f969e569d63112427c
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Fri Mar 11 14:06:16 2022 +0100
+Straight-forward trace logging with Sculpt OS
+---------------------------------------------
 
-    base: distinct TRACED from ATTACHED trace subjects
-    
-    This patch makes the trace-subject state as reflected to the trace
-    monitor more accurate.
-    
-    Until now, a subject could be in UNTRACED or TRACED state. In reality,
-    however, there exists an intermediate state after the trace monitor
-    called 'trace' for the subject but before the subject locally activated
-    the tracing (done when passing a trace point). This intermediate state
-    was reflected as UNTRACED. Consequently, threads that never pass a trace
-    point (e.g., just waiting for I/O) would remain to appear as UNTRACED
-    even after enabling its tracing by the trace monitor. This is confusing.
-    
-    This patch replaces the former UNTRACED and TRACED states by three
-    distinct states:
-    
-      UNATTACHED  prior any call of 'trace'
-      ATTACHED    after a trace monitor called 'trace'
-                  but before the tracing is active
-      TRACE       tracing is active
-    
-    Fixes #4447
+Second, we added the trace-logger utility to the default set of packages
+along with an optional launcher. With this change, only two steps are
+needed to use the tracing mechanism with the
+[https://genode.org/documentation/release-notes/22.02#Framework_for_special-purpose_Sculpt-based_operating_systems - modularized Sculpt]:
 
-commit ceb91732bfa02bca39dc67878c9aeaa38cb67731
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Fri Mar 11 14:27:06 2022 +0100
+# Add 'trace_logger' to the 'launcher:' list of the .sculpt file
 
-    trace_logger: update state after adding subjects
-    
-    This patch splits the creation and updating of monitor objects into two
-    stages. The creation of a monitor object changes the state of the
-    associated trace subject. The patch ensures that the new state is
-    captured by the update of the monitor object.
-    
-    Issue #4448
+# Either manually select the 'trace_logger' from the '+' menu,
+  or add the following entry to the deploy configuration:
 
-commit f7270c44cb1c4afe570921d711ee124a43c9e69b
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Fri Mar 11 15:13:39 2022 +0100
+  ! <start name="trace_logger"/>
 
-    trace_logger: omit inactive subjects by default
-    
-    This patch reduces repetitive log output by omitting inactive trace
-    subjects from the log output. The information about all subjects can
-    still be dumped by setting 'verbose="yes"'.
-    
-    Issue #4448
+By default, the trace logger is configured to trace all threads executed in
+the runtime subsystem and to print a report every 10 seconds. This default
+policy can be refined in the launcher's '<config>' node. Note that the trace
+logger does not respond to configuration changes during runtime. Changes come
+into effect not before restarting the component.
 
-commit 3394f97f861bacfd252ef4c2cbd127bdbdc68878
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Fri Mar 11 17:50:01 2022 +0100
 
-    trace_logger: make output format more concise
-    
-    This patch changes the output format of the trace logger to become
-    better suitable for human consumption. For example, when instrumenting
-    the VFS server in Sculpt using the GENODE_TRACE_TSC utility, the
-    trace logger now generates tabular output as follows.
-    
-      Report 4
-    
-      PD "init -> runtime -> arch_vbox6 -> vbox -> " ----------------
-       Thread "vCPU"           at (0,0)  total:12909024 recent:989229
-       Thread "vCPU"           at (1,0)  total:5643234  recent:786437
-    
-      PD "init -> runtime -> ahci-0.fs" -----------------------------
-       Thread "ahci-0.fs"      at (0,0)  total:910497   recent:6335
-       Thread "ep"             at (0,0)  total:0        recent:0
-        71919692932: TSC process_packets: 8005M (4998 calls, last 4932K)
-        71921558516: TSC process_packets: 8006M (4999 calls, last 1596K)
-        71922760220: TSC process_packets: 8007M (5000 calls, last 1006K)
-        71929853586: TSC process_packets: 8009M (5001 calls, last 1840K)
-        71931315246: TSC process_packets: 8011M (5002 calls, last 1253K)
-        72127999920: TSC process_packets: 8016M (5003 calls, last 5606K)
-        72129568198: TSC process_packets: 8018M (5004 calls, last 1345K)
-        77161908178: TSC process_packets: 8029M (5005 calls, last 11349K)
-        77643225736: TSC process_packets: 8029M (5006 calls, last 217K)
-        89422100594: TSC process_packets: 8035M (5007 calls, last 5656K)
-        89422123632: TSC process_packets: 8035M (5008 calls, last 1342)
-       Thread "signal handler" at (0,0)  total:36329    recent:3001
-       Thread "signal_proxy"   at (0,0)  total:51838    recent:13099
-       Thread "pdaemon"        at (0,0)  total:97184    recent:332
-       Thread "vdrain"         at (0,0)  total:1266     recent:286
-       Thread "vrele"          at (0,0)  total:1904     recent:516
-    
-      PD "init -> runtime -> nic_drv" -------------------------------
-       Thread "nic_drv"        at (0,0)  total:34044    recent:897
-       Thread "signal handler" at (0,0)  total:369      recent:142
-    
-      ...
-    
-    Subjects that belong to the same PD are grouped together. The formerly
-    optional affinity and activity options have been removed. Those
-    information are now unconditionally displayed. The trace entries
-    belonging to a thread appear as slightly indented.
-    
-    The patch also updates the coding style, avoiding excessively long
-    lines.
-    
-    Issue #4448
+Capturing performance measurements as trace events
+--------------------------------------------------
 
-commit bb26a986e6eb4b295e3a5f8d4a8ae81a18062c56
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Tue Mar 15 11:50:05 2022 +0100
-
-    sculpt: add trace_logger as optional launcher
-    
-    This patch adds the trace-logger utility to the default set of packages
-    along with an optional launcher. With this change, only two steps are
-    needed to use Genode's tracing mechanism with Sculpt:
-    
-    - Add 'trace_logger' to the 'launcher:' list of the .sculpt file
-    
-    - Either manually select the 'trace_logger' from the '+' menu,
-      or add the following entry to the deploy configuration:
-    
-        <start name="trace_logger"/>
-    
-    By default, the trace logger is configured to trace all threads
-    executed in the runtime subsystem and to print a report every 10
-    seconds. This default policy can be refined in the launcher's <config>
-    node. Note that the trace logger does not respond to configuration
-    changes during runtime. Changes come into effect not before restarting
-    the component.
-    
-    Issue #4448
+Finally, to leverage the high efficiency of the tracing mechanism for
+performance analysis, we complement the convenient
+[https://genodians.org/nfeske/2021-04-07-performance - GENODE_LOG_TSC]
+measurement device provided by _base/log.h_ with new versions that target the
+trace buffer. The new macros GENODE_TRACE_TSC and GENODE_TRACE_TSC_NAMED
+thereby simplify the capturing of highly accurate time-stamp-counter-based
+measurements for performance-critical code paths that prohibit the use of
+regular log messages.
 
 
 Memcopy and memset optimization
@@ -676,45 +627,30 @@ Date:   Wed Apr 13 13:53:04 2022 +0200
 Improved touch-event support
 ============================
 
-; @nfeske
+Until recently, Genode's GUI stack largely relies on the notion of absolute
+pointer position. For targeting touch-screen devices, our initial approach
+was the translation of touch events to absolution motion events using the
+event-filter component
+([https://genode.org/documentation/release-notes/21.11#Event_filter_for_converting_touch_to_pointer_input] - version 21.11).
 
-commit 65355ec0ccb562e9f1f548e055d034635b8ebe1a
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Fri May 20 13:28:37 2022 +0200
+However, the event types are subtle different, which creates uncertainties.
+Whereas a pointer has always a defined (most recent) position that can be used
+to infer a hovered UI element in any situation, touch input yields a valid
+position only while touching. Because the nature of both event types are
+different, the conversion of touch input to pointer motion can only be an
+intermediate solution. The current release enhances several components of
+Genode's GUI stack with ability to handle touch events directly.
 
-    nitpicker: update hover state on touch events
-    
-    The hover state is evaluated for the routing of input events. When
-    routing a touch event, the decision should be based on the most recently
-    observed touch position. Without this patch, however, the hover state kept
-    referring to the initial pointer position (screen center) in the absence
-    of any other motion events.
-    
-    Issue #4514
-
-commit 8f03f3e50f9f8b2e24a424b52ef9ae990b34cf5e
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Fri May 20 14:06:49 2022 +0200
-
-    menu_view: update hover in primary touch events
-    
-    This patch simplifies the use of the menu_view in scenarios where no
-    absolute motion events but only touch events occur. Previously, such
-    scenarios required the creation of artificial absolute motion events
-    via the event filter.
-    
-    Issue #4514
-
-commit ca5ee4ea0b05afe58c2ab8edcf812eded0f2d841
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Fri May 20 14:09:27 2022 +0200
-
-    wm: transpose touch events to window positions
-    
-    This patch enhances the window manager with the ability to transform
-    touch events analogously to absolute motion events.
-    
-    Issue #4514
+In particular, the nitpicker GUI server has become able to take touch events
+into consideration for steering the keyboard focus and the routing of
+input-event sequences. The window-manager component (wm) has been enhanced to
+transform touch events similarly to motion events by using one virtual
+coordinate system per window. Finally, the menu-view component, which
+implements the rudimentary widget set as used by Sculpt OS' administrative
+user interface, evaluates touch events for generating hover reports now.
+Combined, these changes make the existing GUI stack fit for our anticipated
+touch-screen based usage scenarios such as the user interface for Genode on
+the Pinephone.
 
 
 Platforms
