@@ -44,8 +44,20 @@ configuration with the peer configuration being re-configurable:
 !
 ! </config>
 
-For examples on how to integrate and route WireGuard in Genode, you may refer
-to the new run scripts 'wg_ping_inwards.run', 'wg_ping_outwards.run',
+A typical integration scenario would use two instances of Genode's NIC router.
+One router serves the public network side of WireGuard and connects to the
+internet via the device driver whereas the other router uses the private
+network side of WireGuard as uplink interface. In this scenario, there's no way
+around the WireGuard tunnel towards the Internet even when looking only at
+components and sessions. However, we can accomplish the same goal with only one
+router instance in contexts that allow us to trust in the integrity of the
+router's own security domains.
+
+[image wireguard_integration]
+  A typical integration scenario for WireGuard
+
+For more details on how to integrate and route WireGuard in Genode, you may
+refer to the new run scripts 'wg_ping_inwards.run', 'wg_ping_outwards.run',
 'wg_lighttpd.run', and 'wg_fetchurl.run', all located in 'repos/dde_linux/run'.
 
 Please be aware that this is only the first official version of Genode's
