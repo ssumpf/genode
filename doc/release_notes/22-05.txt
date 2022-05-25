@@ -74,22 +74,12 @@ the corresponding
 New generation of DDE-Linux-based PC drivers
 ############################################
 
-; @cnuke @alex-ab @skalk
-
 With the last release we started to apply the new DDE Linux approach to the
 Linux-based PC drivers. The first driver to be converted was the USB host-controller
 driver. In this release we finished up this line of work and by now all
 remaining Linux-based PC drivers are converted and updated. Those drivers
 now share the same kernel version 5.14.21 and its configuration and reside
 in the 'pc' repository.
-
-    dde_linux: add virt_linux lx_emul flavor
-    
-    To support device-less protocol-stacks only ports, we can use a
-    Virt I/O Linux kernel flavor, and export the lx_kit/lx_emul parts
-    not depending on platform API and devices.
-    
-    Ref #4397
 
 Based on the groundwork laid by the 'pc_usb_host_drv' driver we started
 working on the Intel display and Intel wireless drivers. With the
@@ -143,14 +133,6 @@ for building the driver. Those ports are used unchanged from the old driver
 and will be updated in a later release.
 
 
-; commit e95f0a409d7a3cc7563d4f9e17842f0edaf014af
-; Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
-; Date:   Tue Mar 8 16:20:38 2022 +0100
-; 
-;     lx_emul: add implementation for Genode's USB C-API
-;     
-;     Fix #4444
-
 Additionally to both driver updates we wrapped up working on the
 'pc_usb_host_drv' driver component by enabling the UHCI host-controller driver.
 Support for such controllers was omitted in the previous release and supporting
@@ -170,105 +152,6 @@ which is the back bone of those ported drivers. Since not all of them require
 the same sophistication when it comes to the implementation we followed the
 same modular pattern already established in the 'dde_linux' repository. This
 allows for mixing and matching of the available dummy implementations.
-
-
-commit f985de52f302e51680923425a66c9821a31c32e4
-Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
-Date:   Tue Feb 1 08:55:03 2022 +0100
-
-    app/pci_decode: prepare pci device information
-    
-    To discharge the generic platform driver from certain PCI bus scanning,
-    and ACPI + kernel specifics, this commit introduces a new component,
-    which consumes the acpi drivers report and the platform_info from core
-    to prepare a devices ROM for the platform driver that contains all
-    PCI devices and its resources.
-    
-    Fix genodelabs/genode#4495
-
-commit 72853554bd24047e6a1a54d70d667e6911cdf7ef
-Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
-Date:   Thu Apr 28 14:41:17 2022 +0200
-
-    platform_drv: add report facility
-    
-    By adding a 'report' node to the platform driver's configuration
-    one can enable either devices or config reports. The devices
-    report contains all devices and their detailed state, as well as
-    whether it is already in use or not. The config report contains
-    one by one the current configuration of the platform driver.
-    Moreover, this commit adds a README file describing the facilities
-    of the platform driver.
-    
-    Fix genodelabs/genode#4386
-
-commit 2cdfc4d827230ee2de3fc2ca9a3c455a0b2ebb8c
-Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
-Date:   Mon May 2 11:37:04 2022 +0200
-
-    platform_drv: wait for device's availability
-    
-    Instead of returning an invalid device capability when a device
-    is (not yet) available, e.g. a PCI device is requested before the
-    PCI bus got parsed accordingly, we check the device capability
-    within the Platform::Connection utilities, and register temporarily
-    an Io_signal_handler to wait for changes of the devices ROM, and
-    try the device aquisition again. Thereby, simple drivers so not have
-    to take the burden to do so.
-    
-    To enable this feature for all drivers, we always have to export a
-    devices ROM, but limit the information about physical resources
-    (I/O memory addresses, IRQ numbers, I/O port ranges) to clients with
-    'info=yes' in their policy description.
-    
-    Fix genodelabs/genode#4496
-
-commit 02cdd11502fde40e312e347b510fdec7df51322b
-Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
-Date:   Mon May 2 14:56:14 2022 +0200
-
-    platform_drv: consider IRQ type, mode, polarity
-    
-    Parse the devices ROM for additional interrupt information, and
-    pass them to the IRQ connection when needed.
-    
-    Fix genodelabs/genode#4497
-
-commit 57aab46fc3e45e26b962320eb249be9a61cf2869
-Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
-Date:   Tue Mar 1 17:05:45 2022 +0100
-
-    platform: introduce I/O ports in API
-    
-    * Introduces Platform::Device::Io_port client utility
-    * Implements I/O ports as common device resources in platform driver
-    
-    Fix genodelabs/genode#4436
-
-commit 9713014130b68de09e275138414a35c5a057d879
-Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
-Date:   Mon Mar 7 15:32:00 2022 +0100
-commit 21ab73d5f90cf99063eeee0b994d1e42a4d86af6
-Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
-Date:   Tue May 3 13:36:27 2022 +0200
-
-    platform_drv: add PCI device support
-    
-    * Parse PCI specific information from devices ROM
-    * Enable DMA, I/O memory and I/O port access dependent on BARs in config space
-    * Introduce device PD for Nova + IOMMU support
-    * Enable MSIs if available
-    * Add PCI specific policy rules
-    
-    Fixes genodelabs/genode#4502
-
-commit 580d9f9941cad355323ee60048c07e2ca7b5765a
-Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
-Date:   Wed May 11 14:27:09 2022 +0200
-
-    platform_drv: make devices ROM name configureable
-    
-    Fix genodelabs/genode#4504
 
 
 Updated and new documentation
@@ -554,6 +437,176 @@ touch-screen based usage scenarios such as the user interface for Genode on
 the PinePhone.
 
 
+Platform driver
+===============
+
+The architecture-independent platform driver that unified the platform API
+since release 22.02, still missed some features to replace the deprecated
+x86-specific variant. Most importantly it was not aware of PCI devices and
+their special treatment.
+
+PCI decode component
+--------------------
+
+The platform driver is a central resource multiplexer in the system, and literally
+all device drivers depend on it. Therefore, it is crucial to keep it as simple
+as possible to minimize its code-complexity. To facilitate PCI device resource
+handling of the platform driver, we introduce a new component called
+'pci_decode'. It examines information delivered by the ACPI driver about the
+location of the PCI configuration spaces of PCI host bridges, as well as
+additional interrupt re-routing information, and finally probes for all
+available PCI devices, and their functions. Dependent on additional
+kernel-related facilities, e.g. whether the micro-kernel supports
+message-signaled interrupts, it publishs a report about all PCI devices and
+their related resources finally.
+
+An example report looks like the following:
+
+! <devices>
+!   <device name="00:02.0" type="pci">
+!     <pci-config    address="0xf8010000" bus="0x0" device="0x2" function="0x0"
+!                    vendor_id="0x8086" device_id="0x1616" class="0x30000"
+!                    bridge="no"/>
+!     <io_mem        address="0xf0000000" size="0x1000000"/>
+!     <io_mem        address="0xe0000000" size="0x10000000"/>
+!     <io_port_range address="0x3000"     size="0xffff0040"/>
+!     <irq type="msi" number="11"/>
+!   </device>
+! 
+!   ...
+! </devices>
+
+The device and resource description in this report is compatible with the
+device configuration patterns already used by the platform driver before.
+
+Devices ROM
+-----------
+
+To better cope with device information gathered at runtime, like the one
+provided by the PCI decoder, the platform driver no longer retrieves the devices
+information from its configuration. Instead it requests a devices ROM
+explicitely. The policy information about which devices are assigned to which
+client remain integral part of the platform driver's configuration.
+The devices ROM gets requested via the label "devices" by default. If you need
+to name the ROM differently, you can state the label in the configuration, like
+the following:
+
+! <config devices_rom="config"/>
+
+Using above example, you can emulate the former behaviour of the platform
+driver. It will still request its configuration ROM to retrieve its devices
+information.
+
+Static devices information for a specific SoC respectively board does now reside
+in the board-specific repository within the 'board' directory. For instance, the
+devices information for the MNT Reform 2 resides in the genode-imx repository
+under 'board/mnt_reform2/devices'. All scenarios and test-scripts can refer to
+this central file.
+
+Report facility
+---------------
+
+The platform driver can report its current view on devices as well as its
+configuration. An external management component might use this information to
+control it. With the following configuration switches one can enable the reports
+"config" and "devices":
+
+! <config>
+!   <report devices="yes" config="yes"/>
+!   ...
+! </config>
+
+Interrupt configuration
+-----------------------
+
+The need for additional information to setup interrupts appropriatedly led to a
+changes in the interrupt resource description consumed by the platform driver.
+It can now parse additional attributes, like mode, type, and polarity. It
+distinguishes "msi" and "legacy" as type, "high" and "low" as polarity,
+"level" and "edge" as mode. Dependent on the stated information in the
+devices ROM, the platform driver will open the IRQ session for the client
+accordingly.
+
+I/O ports
+---------
+
+A new resource type in the device description interpreted by the platform driver
+is the I/O port range. It looks like the following:
+
+! <devices>
+!   <device name="00:1f.2" type="pci">
+!     ...
+!     <io_port_range address="0x3080" size="0x8"/>
+!     ...
+!   </device>
+!   ...
+! </devices>
+
+The generic platform API's device interface got extended to deliver an IO_PORTS
+session capability for a given index. The index is dependent on, which I/O port
+ranges are stated for the given device.
+
+The helper utility 'Platform::Device::Io_port_range' simplifies the usage of I/O
+ports by device driver clients. It can be found in
+'repos/os/include/platform_session/device.h'.
+
+DMA protection
+--------------
+
+The generic platform driver now uses device PD's and attaches all DMA buffers
+requested by a client to it. Moreover, it assigns PCI devices to the device PD
+too. On kernels that support IOMMUs these informations get used to configure the
+IOMMU correspondingly.
+
+PCI device clients
+------------------
+
+The platform API and its utilities no longer differentiate in between PCI and
+non-PCI devices. However, under the hood the platform driver is doing additional
+initialization when a PCI device gets acquired. Dependent on the resources
+assigned to the device, the platform driver enables I/O and memory access in the
+PCI configuration space of the device. Moreover, it enables bus-master access
+for DMA transfers.
+
+To assign PCI devices to a client, the policy rules in the platform driver can
+refer to it either by a device/vendor ID tuple, or by stating a PCI class. The
+PCI class names are the same supported by the previous x86-specific platform
+driver. Of course, you can still refer to any device via its unique name.
+Here is an example for a policy set:
+
+! <config>
+!   <policy label="usb_drv -> ">
+!     <pci class="USB"/>
+!   </policy>
+!   <policy label="nvme_drv -> ">
+!     <pci vendor_id="0x1987" device_id="0x5007"/>
+!   </policy>
+!   <policy label="ps2_drv -> ">
+!     <device name="ps2"/>
+!   </policy>
+! </config>
+
+Wait for platform device availability
+-------------------------------------
+
+Now, that devices information can be gathered dynamically at runtime it might
+happen that a client already opens a session to the platform driver before the
+device is available. As long as a valid policy is defined for the client, the
+platform driver will establish the connection, but deliver an empty devices ROM
+to the client.
+
+To simplify the usage by device drivers, the utilities to acquire a device from
+the platform driver in 'Platform::Device' and 'Platform::Connection' will wait
+for the availability of the device. This is done by implicity register a signal
+handler for devices ROM updates at the platform driver when the acquisition
+failed, and waiting for ROM updates until the device is available.
+
+Any signal handler that was registered before gets lost in this case. The
+developer of a device driver shall register a devices ROM signal handler once
+its devices were acquired, or shall only acquire devices known to be available,
+after inspecting the devices ROM independently.
+
+
 Platforms
 #########
 
@@ -652,31 +705,12 @@ the phone.
 NXP i.MX8
 =========
 
-; @skalk
-
-commit 05b2a5063546361bcc0f783c0d6a00f230407e96
-Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
-Date:   Mon May 16 16:07:03 2022 +0200
-
-    imx8mq: add Pcie host controller driver
-    
-    The driver configures all devices it gets assigned, and scans
-    the first device behind the Pcie controller. All devices it
-    finds are summarized in a platform driver compatible PCI device
-    report.
-
-commit 56cf717a080c6ad09f43fc4caf03a92ac81a38a9
-Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
-Date:   Mon May 16 16:04:01 2022 +0200
-
-    mnt_reform2: add Pcie host controller settings
-
-commit 58a8a2c13aad8a9c0c9902ddea6fae03619626cf
-Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
-Date:   Mon Aug 2 15:41:01 2021 +0200
-
-    mnt_reform2: enable PCI-x IOMUXC settings
-
+Analoque to the PCI decoder introduced in section [PCI decode component] a
+component to retrieve PCI information on the i.MX 8MQ is part of this release.
+It reports all PCI devices found behind the PCI Express host controller(s)
+detected. In contrast to the PCI decoder, it has to initialize the PCI Express
+host controller first, and needs device resources from the platform driver to do
+so before.  The component is called 'imx8mq_pci_host_drv'.
 
 Xilinx Zynq
 ===========
