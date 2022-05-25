@@ -760,7 +760,7 @@ By enabling device reporting, the zynq_driver_manager is able to react upon
 device changes and updates the _init.config_ for a drivers subsystem
 accordingly.  An example is available in _run/zynq_driver_manager.run_.
 
-; TODO figure
+[image zynq_driver_manager]
 
 As a prerequisite for port the first driver for the Zynq following our new DDE
 Linux approach, we added a zynq_linux target that builds a stripped-down Linux
