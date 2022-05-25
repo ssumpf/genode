@@ -484,50 +484,29 @@ regular log messages.
 Memcopy and memset optimization
 ===============================
 
-; @jschlatow
+With the improving support for the Zynq-7000 SoC, it was time to collect a few
+basic performance metrics. For the purpose of evaluating memory throughput,
+there exists a test suite in 'libports/run/memcpy.run'. It takes a couple of
+measurements for different memcpy and memset implementations. There also exists
+a Makefile in 'libports/src/test/memcpy/linux' to build a similar test suite for
+Linux that serves as a baseline. By comparing the results, we get an indicator
+of whether our board support is setting up the hardware correctly.  Looking at
+the numbers for the Zynq-7000 SoC, however, we were puzzled about why we
+achieved significantly less memcpy throughput on Genode than on Linux. This
+eventually sparked an in-depth investigation of memcpy implementations and of
+the Cortex-A9's memory subsystem.
 
-commit 0104a740285bf42922d9479cf835097d986923dc
-Author: Johannes Schlatow <johannes.schlatow@genode-labs.com>
-Date:   Fri Mar 25 10:12:46 2022 +0100
+As it turned out, the major difference was caused by our Linux tests hitting the
+kernel's copy-on-write optimization and, therefore, accidentally mimicking a
+memset scenario rather than a memcpy scenario. Nevertheless, in the debugging
+process, we were able to identify a few low-hanging fruits for general
+optimization of Genode's memset and memcpy implementations:
+Replacing the bytewise memset implementation with a wordwise memset yielded a
+speedup of ~6 on Cortex-A9 (base-hw) and x86 (base-linux). Similarly, we
+achieved a memcpy speedup of ~3 on x86. On arm_v7, we also experimented with
+the preloading instruction (pld) and L2 prefetching. On Zynq-7000 (Cortex-A9),
+we gained a speedup of ~2-3 by tuning these parameters.
 
-    memcpy (arm): cache align and use pld for speedup
-    
-    Preloading a few cache lines ahead brings a significant speedup in
-    memcpy throughput. Note, the particular (optimal) value was empirically
-    determined on a Cortex-A9 (Zynq-7000) SoC @ 666Mhz. It is best combined
-    with L2 prefetching enabled (including double linefills and prefetch
-    offset 7). Yet, even without L2 prefetching this seems to be the sweet
-    spot.
-    
-    genodelabs/genode#4456
-
-commit 9409f814a41fef978c73733c7ae988571656b624
-Author: Johannes Schlatow <johannes.schlatow@genode-labs.com>
-Date:   Fri Mar 25 13:30:53 2022 +0100
-
-    memcpy (x86): implement memcpy_cpu
-    
-    By changing the bytewise copy into a wordwise copy, we get a speedup of
-    ~3 (on base-linux x86_64).
-    
-    genodelabs/genode#4456
-
-commit 410099df7091a37354e66de1dfb4dba8a822915d
-Author: Johannes Schlatow <johannes.schlatow@genode-labs.com>
-Date:   Fri Mar 25 11:52:20 2022 +0100
-
-    base/memset: speedup implementation
-    
-    Compared to the bytewise memset, a wordwise memset (or even multi-word)
-    achieves a speedup of ~6.
-    
-    On Zynq-7000/Cortex-A9:
-    317 MiB/s -> 2040 MiB/s
-    
-    On base-linux x86_64:
-    3580 MiB/s -> 23700 MiB/s
-    
-    genodelabs/genode#4456
 
 
 Extended black-hole component
@@ -753,33 +732,40 @@ Date:   Mon Aug 2 15:41:01 2021 +0200
 Xilinx Zynq
 ===========
 
-; @jschlatow
+For the Zynq-7000 SoCs, we focused on two main topics in this release. First, we
+leveraged the aforementioned improvements on the generic platform driver to
+handle the (dis)appearance of devices in consequence of FPGA reconfiguration.
+Second, we applied our new DDE Linux approach in order to port the SD card
+driver.
 
-commit fdde961cd279a9db72f64a0eba48f8c0d6e6289c
-Author: Johannes Schlatow <johannes.schlatow@genode-labs.com>
-Date:   Wed Mar 2 17:37:48 2022 +0100
+The platform driver for the Xilinx Zynq is now available as
+_src/zynq_platform_drv_. The default devices ROMs are provided by the
+_raw/[board]-devices_ archives. In addition to the generic driver, it features
+the readout of clock frequencies. You can use _zynq_clocks.run_ to dump the
+frequencies of all clocks.
 
-    zynq_linux: use mainline linux instead
-    
-    for better dde_linux support
+Since the Xilinx Zynq comprises an FPGA that can be reconfigured at run time,
+we also need to handle the appearance and disappearance of devices. For this
+purpose, we added a driver manager that consumes the platform driver's devices
+report and launches resp. kills device drivers accordingly. This scenario is
+accompanied by the _pkg/drivers_fpga-zynq_ archive that assembles the _devices_
+ROM for the platform driver depending on the FPGA's reconfiguration state.
+The figure below illustrates this scenario: The subsystem provided by the
+_pkg/drivers_fpga-zynq_ archive is a replacement for the platform driver. It
+consumes the _fpga.bit_ ROM that contains the FPGA's bitstream. Once the
+bitstream has been loaded, the _fpga_devices_ ROM is merged with the _devices_
+ROM provided by the _raw/[board]-devices_ archive. The _policy_ ROM contains the
+config of the internal zynq_platform_driver (policies and reporting config).
+By enabling device reporting, the zynq_driver_manager is able to react upon
+device changes and updates the _init.config_ for a drivers subsystem
+accordingly.  An example is available in _run/zynq_driver_manager.run_.
 
+; TODO figure
 
-commit 825abc6584a8e457a32182f0b5ad69ca272c8ba6
-Author: Johannes Schlatow <johannes.schlatow@genode-labs.com>
-Date:   Thu May 5 17:24:47 2022 +0200
-
-    drivers/spi: use clock from zynq_platform_drv
-
-commit 33859fade207e3f4ad51ea11d548b465f315b143
-Author: Johannes Schlatow <johannes.schlatow@genode-labs.com>
-Date:   Thu May 5 17:00:01 2022 +0200
-
-    replace platform_drv by zynq_platform_drv
-
-commit c281b43369460b401602ea8832ffa911b0f1d297
-Author: Johannes Schlatow <johannes.schlatow@genode-labs.com>
-Date:   Thu May 5 16:30:12 2022 +0200
-
-    add zynq_platform_drv supporting clock readout
-
-
+As a prerequisite for port the first driver for the Zynq following our new DDE
+Linux approach, we added a zynq_linux target that builds a stripped-down Linux
+kernel for the Xilinx Zynq. Although Xilinx provides its own a vendor kernel,
+most drivers have been mainlined. To eliminate version mismatch issues, we
+therefore use our mainline Linux port from _repos/dde_linux_ instead. With this
+foundation, we were able to port the SD card driver, which is now available as
+_src/zynq_sd_card_drv_.
