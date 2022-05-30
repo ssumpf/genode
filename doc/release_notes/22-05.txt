@@ -340,52 +340,25 @@ the preloading instruction (pld) and L2 prefetching. On Zynq-7000 (Cortex-A9),
 we gained a speedup of ~2-3 by tuning these parameters.
 
 
-
 Extended black-hole component
 =============================
 
-; @m-stein
+The black-hole component introduced in
+[https://genode.org/documentation/release-notes/22.02#Black-hole_server_component - version 22.02]
+provides pseudo services for commonly used session interfaces and is thereby
+able to satisfy the resource requirements of a component without handing out
+real resources. This is especially useful for deploying highly flexible
+subsystems like VirtualBox, which supports many host-guest integration
+features, most of which are desired only in a few scenarios. For example, to
+shield a virtual machine from the network, the NIC session requested by the
+VirtualBox instance can simply be assigned to the black-hole server.
 
-commit 046ebc3d3493445e913d046ef9a9569d46fee1d8
-Author: Martin Stein <martin.stein@genode-labs.com>
-Date:   Fri Mar 11 22:34:57 2022 +0100
-
-    black_hole: provide ROM service
-    
-    Ref #4419
-
-commit 50fc2aa2519e5c57b006ed13e0bb974bd10c5549
-Author: Martin Stein <martin.stein@genode-labs.com>
-Date:   Mon Mar 14 17:30:33 2022 +0100
-
-    black_hole: provide Gpu service
-    
-    Ref #4419
-
-commit ecd4006514691694f2253c4f617fb1c91ff86be2
-Author: Martin Stein <martin.stein@genode-labs.com>
-Date:   Thu Apr 7 17:24:36 2022 +0200
-
-    black_hole: initial support for Usb service
-    
-    The service is merely announced but trying to request a session always causes a
-    Service_denied exception. This helps in scenarios where the client is
-    won't open a session anyway but expects the service to be available. This is
-    considered a temporary solution.
-    
-    Ref #4419
-
-commit 6a61b60a5db9afd4a8ae5939cbaa3fa00dad9d3d
-Author: Martin Stein <martin.stein@genode-labs.com>
-Date:   Fri Apr 8 13:03:22 2022 +0200
-
-    black_hole: serve real USB sessions
-    
-    * The server now answers session requests with a session instead of an
-      exception#
-    * The test expects a session but doesn't access it so far
-    
-    Ref #4419
+The current release extends the black-hole component to cover ROM, GPU, and
+USB services in addition to the already supported NIC, uplink, audio, capture,
+and event services. The ROM service hands out a static '<empty/>' XML node.
+The USB and GPU services accept the creation of new sessions but respond in a
+denying way to any invocation of the session interfaces. The black-hole server
+is located at _os/src/server/black_hole/_.
 
 
 Refined low-level block I/O interfaces
