@@ -8,8 +8,44 @@
 
 
 
-; intro
-; @nfeske
+The Genode release 22.05 stay true to this year's
+[https://genode.org/about/road-map - roadmap].
+According to the plan, we continue our tradition of revising the framework's
+documentation as part of the May release. Since last year, the Genode
+Foundations book is accompanied with the Genode Platform's document that
+covers low-level topics. The second revision has just doubled in size
+(Section [Updated and new documentation]).
+
+Functionality-wise, the added support for WireGuard-based virtual private
+networks is certainly the flagship feature of the release. Section
+[WireGuard] briefly introduces the new component while leaving in-depth
+information to a
+[https://genodians.org/m-stein/2022-05-26-wireguard-1 - dedicated article].
+
+Among the other topics of the release, our continued work on device drivers
+stands out. We managed to bring Genode's lineup of PC drivers ported from the
+Linux kernel up to the kernel version 5.14.21 using Genode's unique DDE-Linux
+porting approach.
+As described by Section [New generation of DDE-Linux-based PC drivers], this
+work comprises complex drivers like the Intel Wifi stack and the latest
+Intel display driver. At the framework's side, the modernization of Genode's
+platform driver for PC hardware is in full swing. Even though not yet used by
+default, the new driver has reached feature parity with the original PC-specific
+platform driver while sharing much of its code base with the growing number of
+ARM platform drivers such as the FPGA-aware platform-driver for Xilinx Zynq
+(Section [Xilinx Zynq]).
+
+Regarding the PinePhone, Genode 22.05 introduces the basic ability to
+issue and receive phone calls, which entails the proper routing of audio
+signals and the controlling the LTE modem. Furthermore, in anticipation of
+implementing advanced energy-management strategies, the release features a
+custom developed firmware for the PinePhone's system-control processor. Both
+topics are outlined in Section [PinePhone] while further details and examples
+are given in dedicated articles.
+
+The release is wrapped up by usability improvements of the framework's
+light-weight event-tracing mechanism, low-level optimizations, and API
+refinements.
 
 
 WireGuard
