@@ -24,7 +24,7 @@ standard solution for peer-to-peer network encryption. With Genode 22.05, we cou
 finally accomplish that goal.
 
 After we had considered various implementations as starting point,
-we choose to port the Linux kernel
+we chose to port the Linux kernel
 implementation of WireGuard using our modernized DDE-Linux tool set. The
 outcome is a user-land component that acts as client to one NIC session and one
 uplink session. At the uplink session, the WireGuard component plays the role
@@ -91,13 +91,13 @@ in the _pc_ repository.
 
 Based on the groundwork laid by the USB host-controller driver, we started
 working on the Intel display and Intel wireless drivers. With the
-stumbling blocks already out of the way, namely the x86 support in the
+stumbling blocks already out of the way, namely the x86 support in
 DDE Linux, we could focus entirely on the intricacies of each driver.
 
 In case of the Intel display driver, we could eliminate all our patches to
 the kernel that we previously needed to manage the display connectors. Due to
 the update, we gained support for newer Intel Gen11 and Gen12 graphics
-generations as found in recent Intel CPUs. The old driver was removed and the
+generations as found in recent Intel CPUs. The old driver has been removed and the
 new driver is now called _pc_intel_fb_drv_. Its configuration, however,
 remained compatible and is documented in detail in the README of the driver.
 
@@ -320,8 +320,8 @@ measurements for performance-critical code paths that prohibit the use of
 regular log messages.
 
 
-Memcopy and memset optimization
-===============================
+Memcpy and memset optimization
+==============================
 
 With the improving support for the Zynq-7000 SoC, it was time to collect a few
 basic performance metrics. For the purpose of evaluating memory throughput,
@@ -465,7 +465,7 @@ Devices ROM
 -----------
 
 To better cope with device information gathered at runtime, like the one
-provided by the PCI decoder, the platform driver no longer retrieves the devices
+provided by the PCI decoder, the platform driver no longer retrieves the device
 information from its configuration. Instead, it requests a devices ROM
 explicitly. The policy information about which devices are assigned to which
 client remains integral part of the platform driver's configuration.
@@ -474,13 +474,13 @@ to name the ROM differently, one can state the label in the configuration:
 
 ! <config devices_rom="config"/>
 
-Using the above example, the former behavior can be emulated. It prompts the
-platform driver to obtain both its policy configuration and devices information
+Using the example above, the former behavior can be emulated. It prompts the
+platform driver to obtain both its policy configuration and device information
 from the same "config" ROM.
 
-Static devices information for a specific SoC respectively board does now reside
+Static device information for a specific SoC respectively board does now reside
 in the SoC-specific repositories within the _board/_ directory. For instance, the
-devices information for the MNT Reform 2 resides in the genode-imx repository
+device information for the MNT Reform 2 resides in the genode-imx repository
 under _board/mnt_reform2/devices_. All scenarios and test-scripts can refer to
 this central file.
 
@@ -525,7 +525,7 @@ is the I/O port range. It looks like the following:
 
 The generic platform API's device interface got extended to deliver an IO_PORTS
 session capability for a given index. The index is dependent on which I/O port
-ranges are stated for the given device.
+ranges are stated for a given device.
 
 The helper utility 'Platform::Device::Io_port_range' simplifies the usage of I/O
 ports by device driver clients. It can be found in
@@ -570,7 +570,7 @@ Here is an example for a policy set:
 Wait for platform device availability
 -------------------------------------
 
-Now that devices information can be gathered dynamically at runtime it might
+Now that device information can be gathered dynamically at runtime it might
 happen that a client opens a session to the platform driver before the
 device becomes available. As long as a valid policy is defined for the client, the
 platform driver will establish the connection, but deliver an empty devices ROM
