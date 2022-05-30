@@ -181,8 +181,7 @@ year ago, the content has doubled. Among the new topics are
 
 * Working with bare-bones Linux kernels,
 * Network driver based on DDE-Linux,
-* Display,
-* Touchscreen,
+* Display and touchscreen,
 * Clocks, resets, and power controls, and
 * Modem control and telephony.
 
@@ -397,7 +396,7 @@ Until recently, Genode's GUI stack largely relies on the notion of an absolute
 pointer position. For targeting touch-screen devices, our initial approach
 was the translation of touch events to absolution motion events using the
 event-filter component
-([https://genode.org/documentation/release-notes/21.11#Event_filter_for_converting_touch_to_pointer_input] - version 21.11).
+([https://genode.org/documentation/release-notes/21.11#Event_filter_for_converting_touch_to_pointer_input - version 21.11]).
 
 However, the event types are subtle different, which creates uncertainties.
 Whereas a pointer has always a defined (most recent) position that can be used
