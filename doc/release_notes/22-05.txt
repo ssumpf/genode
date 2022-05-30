@@ -48,7 +48,7 @@ configuration with the peer configuration being re-configurable:
 A typical integration scenario would use two instances of Genode's NIC router.
 One router serves the public network side of WireGuard and connects to the
 internet via the device driver whereas the other router uses the private
-network side of WireGuard as uplink interface. In this scenario, there's no way
+network side of WireGuard as uplink interface. In this scenario, there is no way
 around the WireGuard tunnel towards the Internet even when looking only at
 components and sessions. Alternatively, we could accomplish the same goal with only one
 router instance in contexts that allow us to trust in the integrity of the
@@ -62,7 +62,7 @@ refer to the new run scripts _wg_ping_inwards.run_, _wg_ping_outwards.run_,
 _wg_lighttpd.run_, and _wg_fetchurl.run_, which are located at _repos/dde_linux/run/_.
 
 Please be aware that this is the first official version of the
-WireGuard component. Although we are convinced of the quality the underlying
+WireGuard component. Although we are convinced of the quality of the underlying
 time-tested Linux implementation, we strongly recommend against
 basing security-critical scenarios on Genode's port before it had the time to
 mature through real-world testing as well.
@@ -85,7 +85,7 @@ we started to apply the
 to Linux-based PC drivers.
 The first driver to be converted was the USB host-controller
 driver. In the current release, we finished up this line of work. By now, all
-remaining Linux-based PC drivers are converted and updated. Those drivers
+remaining Linux-based PC drivers have been converted and updated. Those drivers
 now share the same kernel version 5.14.21. The ports and configuration reside
 in the _pc_ repository.
 
@@ -143,7 +143,7 @@ Support for such controllers was omitted in the previous release and supporting
 the driver required us to add I/O port support to the 'lx_kit' for x86. With
 this remaining feature gap closed, the _legacy_pc_usb_host_drv_ driver
 component has been removed in favour of the new
-one. Furthermore the Genode C-API for USB glue code, which was initially copied
+one. Furthermore, the Genode C-API for USB glue code, which was initially copied
 from the i.MX8 USB host-controller driver, was consolidated and moved into the
 _dde_linux_ repository where it now is referenced by all recent USB
 host-controller drivers.
@@ -278,7 +278,7 @@ the trace logger now generates tabular output as follows.
 
 Subjects that belong to the same protection domain are grouped together.
 The formerly optional affinity and activity options have been removed.
-Those information are now unconditionally displayed. The trace entries
+These pieces of information are now unconditionally displayed. The trace entries
 belonging to a thread appear as slightly indented. Trace subjects with
 no activity do not produce any output. This way, the new version can
 be easily used to capture CPU usage of all threads over time, as a possible
@@ -392,13 +392,13 @@ components thereby became able to work with arbitrary block I/O buffer sizes.
 Improved touch-event support
 ============================
 
-Until recently, Genode's GUI stack largely relies on the notion of an absolute
+Until recently, Genode's GUI stack largely relied on the notion of an absolute
 pointer position. For targeting touch-screen devices, our initial approach
 was the translation of touch events to absolution motion events using the
 event-filter component
 ([https://genode.org/documentation/release-notes/21.11#Event_filter_for_converting_touch_to_pointer_input - version 21.11]).
 
-However, the event types are subtle different, which creates uncertainties.
+However, the event types are subtly different, which creates uncertainties.
 Whereas a pointer has always a defined (most recent) position that can be used
 to infer a hovered UI element in any situation, touch input yields a valid
 position only while touching. Because both event types are different after all,
@@ -424,7 +424,7 @@ Platform driver
 The architecture-independent platform driver that unified the platform API since
 [https://genode.org/documentation/release-notes/22.02#Platform_driver - release 22.02],
 still missed some features to replace the deprecated
-x86-specific variant. Most importantly it was not aware of PCI devices and
+x86-specific variant. Most importantly, it was not aware of PCI devices and
 their special treatment.
 
 PCI decode component
@@ -432,7 +432,7 @@ PCI decode component
 
 The platform driver is a central resource multiplexer in the system, and literally
 all device drivers depend on it. Therefore, it is crucial to keep it as simple
-as possible to minimize its code-complexity. To facilitate PCI device resource
+as possible to minimize its code complexity. To facilitate PCI-device resource
 handling of the platform driver, we introduce a new component called
 _pci_decode_. It examines information delivered by the ACPI driver about the
 location of the PCI configuration spaces of PCI host bridges, as well as
@@ -466,9 +466,9 @@ Devices ROM
 
 To better cope with device information gathered at runtime, like the one
 provided by the PCI decoder, the platform driver no longer retrieves the devices
-information from its configuration. Instead it requests a devices ROM
+information from its configuration. Instead, it requests a devices ROM
 explicitly. The policy information about which devices are assigned to which
-client remain integral part of the platform driver's configuration.
+client remains integral part of the platform driver's configuration.
 The devices ROM is requested via the label "devices" by default. If one needs
 to name the ROM differently, one can state the label in the configuration:
 
@@ -500,7 +500,7 @@ enable the reports "config" and "devices":
 Interrupt configuration
 -----------------------
 
-The need for additional information to setup interrupts appropriately led to
+The need for additional information to set up interrupts appropriately led to
 changes in the interrupt resource description consumed by the platform driver.
 It can now parse additional attributes, like mode, type, and polarity. It
 distinguishes "msi" and "legacy" as type, "high" and "low" as polarity,
@@ -524,7 +524,7 @@ is the I/O port range. It looks like the following:
 ! </devices>
 
 The generic platform API's device interface got extended to deliver an IO_PORTS
-session capability for a given index. The index is dependent on, which I/O port
+session capability for a given index. The index is dependent on which I/O port
 ranges are stated for the given device.
 
 The helper utility 'Platform::Device::Io_port_range' simplifies the usage of I/O
@@ -534,7 +534,7 @@ ports by device driver clients. It can be found in
 DMA protection
 --------------
 
-The generic platform driver now uses device PD's and attaches all DMA buffers
+The generic platform driver now uses device PDs and attaches all DMA buffers
 requested by a client to it. Moreover, it assigns PCI devices to the device PD
 too. On the NOVA kernel, which supports IOMMUs, this information is used to
 configure the IOMMU correspondingly.
@@ -678,7 +678,7 @@ a break-in debug shell for interactive use over UART that can be activated by
 briefly connecting the INT and GND
 [https://wiki.pine64.org/index.php/PinePhone#Pogo_pins - pogo pins].
 Note that this interactive debugging facility works independently from the
-application processor. Hence, it can be invoked it at any time, e.g., to
+application processor. Hence, it can be invoked at any time, e.g., to
 inspect any hardware register while running a regular Linux distribution on
 the phone.
 
