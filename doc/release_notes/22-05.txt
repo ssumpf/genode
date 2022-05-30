@@ -160,7 +160,10 @@ Updated and new documentation
 Genode Platforms
 ----------------
 
-; @nfeske
+The second revision of the "Genode Platforms" document condenses two years of
+practical work with enabling Genode on a new hardware platform, taking the
+PinePhone as concrete example. Compared to the first version published one
+year ago, the content has doubled. Among the new topics are
 
 : <div class="visualClear"><!-- --></div>
 : <p>
@@ -171,12 +174,12 @@ Genode Platforms
 :  </div>
 : </p>
 
-* Working with bare-bones Linux kernels
-* Network driver based on DDE-Linux
-* Display
-* Touchscreen
-* Clocks, resets, and power controls
-* Modem control and telephony
+* Working with bare-bones Linux kernels,
+* Network driver based on DDE-Linux,
+* Display,
+* Touchscreen,
+* Clocks, resets, and power controls, and
+* Modem control and telephony.
 
 :Second revision of the Genode Platforms document:
 
