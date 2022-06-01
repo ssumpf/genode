@@ -24,6 +24,10 @@
 extern "C" {
 #endif
 
+struct ieee80211_local;
+struct iwl_priv;
+struct iwl_mvm;
+
 int  lx_emul_rfkill_get_any(void);
 void lx_emul_rfkill_switch_all(int blocked);
 
