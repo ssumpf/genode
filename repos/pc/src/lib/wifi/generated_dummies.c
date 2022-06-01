@@ -1,7 +1,7 @@
 /*
  * \brief  Dummy definitions of Linux Kernel functions
  * \author Automatically generated file - do no edit
- * \date   2022-07-29
+ * \date   2022-11-03
  */
 
 #include <lx_emul.h>
@@ -485,6 +485,20 @@ int gnet_stats_copy_queue(struct gnet_dump * d,struct gnet_stats_queue __percpu 
 const u8 guid_index[16] = {};
 
 
+extern void ieee80211_free_led_names(struct ieee80211_local * local);
+void ieee80211_free_led_names(struct ieee80211_local * local)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+extern void ieee80211_led_exit(struct ieee80211_local * local);
+void ieee80211_led_exit(struct ieee80211_local * local)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
 #include <linux/uio.h>
 
 ssize_t import_iovec(int type,const struct iovec __user * uvec,unsigned nr_segs,unsigned fast_segs,struct iovec ** iovp,struct iov_iter * i)
@@ -570,9 +584,32 @@ bool is_software_node(const struct fwnode_handle * fwnode)
 }
 
 
-#include <linux/jiffies.h>
+extern void iwl_leds_exit(struct iwl_priv * priv);
+void iwl_leds_exit(struct iwl_priv * priv)
+{
+	lx_emul_trace_and_stop(__func__);
+}
 
-unsigned long volatile __cacheline_aligned_in_smp __jiffy_arch_data jiffies;
+
+extern void iwl_leds_init(struct iwl_priv * priv);
+void iwl_leds_init(struct iwl_priv * priv)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+extern void iwl_mvm_leds_exit(struct iwl_mvm * mvm);
+void iwl_mvm_leds_exit(struct iwl_mvm * mvm)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+extern void iwlagn_led_enable(struct iwl_priv * priv);
+void iwlagn_led_enable(struct iwl_priv * priv)
+{
+	lx_emul_trace_and_stop(__func__);
+}
 
 
 #include <linux/kobject.h>
@@ -639,6 +676,22 @@ void kmsg_dump(enum kmsg_dump_reason reason)
 #include <linux/kobject.h>
 
 int kobject_synth_uevent(struct kobject * kobj,const char * buf,size_t count)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/leds.h>
+
+void led_trigger_blink_oneshot(struct led_trigger * trig,unsigned long * delay_on,unsigned long * delay_off,int invert)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/leds.h>
+
+void led_trigger_unregister(struct led_trigger * trig)
 {
 	lx_emul_trace_and_stop(__func__);
 }

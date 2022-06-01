@@ -24,6 +24,10 @@
 extern "C" {
 #endif
 
+struct ieee80211_local;
+struct iwl_priv;
+struct iwl_mvm;
+
 void lx_backtrace(void);
 
 void lx_emul_time_udelay(unsigned long usec);
