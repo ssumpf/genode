@@ -1,7 +1,7 @@
 /*
  * \brief  Dummy definitions of Linux Kernel functions
  * \author Automatically generated file - do no edit
- * \date   2022-05-06
+ * \date   2022-06-01
  */
 
 #include <lx_emul.h>
@@ -196,6 +196,14 @@ int acpi_dev_get_resources(struct acpi_device * adev,struct list_head * list,int
 
 #include <linux/acpi.h>
 
+int acpi_dev_gpio_irq_get_by(struct acpi_device * adev,const char * name,int index)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/acpi.h>
+
 bool acpi_dev_resource_interrupt(struct acpi_resource * ares,int index,struct resource * res)
 {
 	lx_emul_trace_and_stop(__func__);
@@ -336,6 +344,22 @@ int device_add_software_node(struct device * dev,const struct software_node * no
 #include <linux/property.h>
 
 void device_remove_software_node(struct device * dev)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/gpio/consumer.h>
+
+struct gpio_desc * __must_check devm_gpiod_get(struct device * dev,const char * con_id,enum gpiod_flags flags)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/gpio/consumer.h>
+
+struct gpio_desc * __must_check devm_gpiod_get_index(struct device * dev,const char * con_id,unsigned int idx,enum gpiod_flags flags)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -631,6 +655,78 @@ u32 get_random_u32(void)
 #include <linux/random.h>
 
 u64 get_random_u64(void)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/gpio/machine.h>
+
+void gpiod_add_lookup_table(struct gpiod_lookup_table * table)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/gpio/consumer.h>
+
+int gpiod_direction_output(struct gpio_desc * desc,int value)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/gpio/consumer.h>
+
+struct gpio_desc * __must_check gpiod_get(struct device * dev,const char * con_id,enum gpiod_flags flags)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/gpio/consumer.h>
+
+int gpiod_get_direction(struct gpio_desc * desc)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/gpio/consumer.h>
+
+int gpiod_get_value_cansleep(const struct gpio_desc * desc)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/gpio/consumer.h>
+
+void gpiod_put(struct gpio_desc * desc)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/gpio/machine.h>
+
+void gpiod_remove_lookup_table(struct gpiod_lookup_table * table)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/gpio/consumer.h>
+
+void gpiod_set_value(struct gpio_desc * desc,int value)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/gpio/consumer.h>
+
+void gpiod_set_value_cansleep(struct gpio_desc * desc,int value)
 {
 	lx_emul_trace_and_stop(__func__);
 }
