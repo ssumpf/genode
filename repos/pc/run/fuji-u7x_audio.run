@@ -1,0 +1,182 @@
+assert_spec x86
+
+if {[have_include "power_on/qemu"]} {
+	puts "\nAudio_in test running on Qemu is not supported.\n"
+	exit 0
+}
+
+if {[have_spec linux]} {
+	puts "\nAudio_in test running on Linux is not supported.\n"
+	exit 0
+}
+
+set build_components {
+	core init timer
+	app/pci_decode
+	drivers/acpi
+	drivers/platform
+	server/report_rom
+	server/rom_filter
+	drivers/audio/pc
+	test/audio_in
+}
+
+build $build_components
+
+create_boot_directory
+
+# Firmware images
+import_from_depot [depot_user]/raw/sof_firmware
+
+append config {
+<config prio_levels="2">
+	<parent-provides>
+		<service name="LOG"/>
+		<service name="PD"/>
+		<service name="CPU"/>
+		<service name="ROM"/>
+		<service name="IO_MEM"/>
+		<service name="IO_PORT"/>
+		<service name="IRQ"/>
+		<service name="RM"/>
+	</parent-provides>
+
+	<default caps="200"/>
+
+	<default-route>
+		<any-service> <parent/> <any-child/> </any-service>
+	</default-route>
+
+	<start name="timer" priority="0">
+		<resource name="RAM" quantum="1M"/>
+		<provides> <service name="Timer"/> </provides>
+	</start>
+
+	<start name="drivers_reports" caps="100">
+		<binary name="report_rom"/>
+		<resource name="RAM" quantum="1M"/>
+		<provides>
+			<service name="Report"/>
+			<service name="ROM"/>
+		</provides>
+		<config verbose="yes">
+			<policy label="pci_decode -> system" report="acpi_drv -> acpi"/>
+			<policy label="rom_filter -> pci_devices" report="pci_decode -> devices"/>
+		</config>
+	</start>
+
+	<start name="acpi_drv" caps="350">
+		<resource name="RAM" quantum="4M"/>
+		<route>
+			<service name="Report"> <child name="drivers_reports"/> </service>
+			<any-service> <parent/> <any-child/> </any-service>
+		</route>
+	</start>
+
+	<start name="pci_decode" caps="350">
+		<resource name="RAM" quantum="1M"/>
+		<route>
+			<service name="ROM" label="system"> <child name="drivers_reports"/> </service>
+			<service name="Report"> <child name="drivers_reports"/> </service>
+			<any-service> <parent/> <any-child/> </any-service>
+		</route>
+	</start>
+
+	<start name="rom_filter" caps="70">
+		<resource name="RAM" quantum="1M"/>
+		<provides> <service name="ROM"/> </provides>
+		<config buffer="32K">
+			<input name="devices"/>
+			<input name="pci_devices"/>
+			<output node="devices">
+				<input name="devices"     skip_toplevel="yes"/>
+				<input name="pci_devices" skip_toplevel="yes"/>
+			</output>
+		</config>
+		<route>
+			<service name="ROM" label="pci_devices"> <child name="drivers_reports"/> </service>
+			<service name="LOG"> <parent/> </service>
+			<service name="PD">  <parent/> </service>
+			<service name="CPU"> <parent/> </service>
+			<service name="ROM"> <parent/> </service>
+		</route>
+	</start>
+
+	<start name="platform_drv" caps="400" managing_system="yes">
+		<resource name="RAM" quantum="4M"/>
+		<provides>
+			<service name="Platform"/>
+		</provides>
+		<config>
+			<report devices="yes"/>
+			<policy label_prefix="pc_audio_drv" info="yes">  <pci class="AUDIO"/> <pci class="HDAUDIO"/> </policy>
+		</config>
+		<route>
+			<service name="ROM" label="devices"> <child name="rom_filter"/> </service>
+			<service name="Report"> <child name="drivers_reports"/> </service>
+			<any-service> <parent/> <any-child/> </any-service>
+		</route>
+	</start>
+
+	<start name="mixer_report_rom">
+		<binary name="report_rom"/>
+		<resource name="RAM" quantum="1M"/>
+		<provides> <service name="Report"/> <service name="ROM"/> </provides>
+		<config verbose="yes">
+			<default-policy report="audio_drv -> mixer"/>
+		</config>
+	</start>
+
+	<start name="pc_audio_drv">
+		<resource name="RAM" quantum="8M"/>
+		<provides>
+			<service name="Audio_out"/>
+			<service name="Audio_in"/>
+		</provides>
+		<config report_mixer="true">
+
+			<!-- playback controls -->
+			<control type="bool" id="19" channel="0" name="Master Playback Switch" value="true"/>
+			<control type="int"  id="18" channel="0" name="Master Playback Volume" value="75" min="0" max="87"/>
+			<control type="int"  id="0"  channel="0" name="Headphone Playback Volume" value="87" min="0" max="87"/>
+			<control type="int"  id="0"  channel="1" name="Headphone Playback Volume" value="87" min="0" max="87"/>
+			<control type="int"  id="2"  channel="0" name="Speaker Playback Volume" value="87" min="0" max="87"/>
+			<control type="int"  id="2"  channel="1" name="Speaker Playback Volume" value="87" min="0" max="87"/>
+
+			<!-- capture controls -->
+			<control type="bool" id="13" channel="0" name="Capture Switch" value="true"/>
+			<control type="int"  id="12" channel="0" name="Capture Volume" value="63" min="0" max="63"/>
+			<control type="int"  id="12" channel="1" name="Capture Volume" value="63" min="0" max="63"/>
+			<control type="int"  id="5"  channel="0" name="Headset Mic Playback Volume" value="31" min="0" max="31"/>
+			<control type="int"  id="5"  channel="1" name="Headset Mic Playback Volume" value="31" min="0" max="31"/>
+			<control type="int"  id="32" channel="0" name="Dmic0 Capture Volume" value="50" min="0" max="70"/>
+			<control type="int"  id="32" channel="1" name="Dmic0 Capture Volume" value="50" min="0" max="70"/>
+		</config>
+		<route>
+			<service name="Report"> <child name="mixer_report_rom"/> </service>
+			<any-service> <parent/> <any-child/> </any-service>
+		</route>
+	</start>
+
+	<start name="test-audio_in">
+		<resource name="RAM" quantum="8M"/>
+	</start>
+</config>}
+
+install_config $config
+
+# non PCI devices for platform_drv: ps2/pit and ACPI HID
+file copy [select_from_repositories board/[board]/devices] [run_dir]/genode/devices
+
+set boot_modules {
+	core ld.lib.so init timer report_rom rom_filter
+	platform_drv pci_decode acpi_drv
+	pc_audio_drv
+	test-audio_in
+}
+
+build_boot_image $boot_modules
+
+run_genode_until forever
+
+# vi: set ft=tcl :
