@@ -16,6 +16,7 @@
 
 #include "i915_drv.h"
 
+#include <linux/acpi.h>
 #include <acpi/acpixf.h>
 #include <acpi/video.h>
 #include <linux/clocksource.h>
@@ -187,6 +188,22 @@ acpi_status acpi_install_address_space_handler(acpi_handle device,
 }
 
 
+acpi_status acpi_evaluate_object(acpi_handle handle, acpi_string pathname,
+                                 struct acpi_object_list *external_params,
+                                 struct acpi_buffer *return_buffer)
+{
+	lx_emul_trace(__func__);
+	return (AE_NOT_FOUND);
+}
+
+
+acpi_status acpi_get_handle(acpi_handle parent,acpi_string pathname,acpi_handle * ret_handle)
+{
+	lx_emul_trace(__func__);
+	return (AE_NOT_FOUND);
+}
+
+
 int acpi_video_register(void)
 {
 	lx_emul_trace(__func__);
@@ -298,13 +315,6 @@ int register_acpi_notifier(struct notifier_block * nb)
 
 
 int unregister_acpi_notifier(struct notifier_block * nb)
-{
-	lx_emul_trace(__func__);
-	return 0;
-}
-
-
-int acpi_reconfig_notifier_register(struct notifier_block * nb)
 {
 	lx_emul_trace(__func__);
 	return 0;

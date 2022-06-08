@@ -82,3 +82,15 @@ int __printk_ratelimit(const char * func)
 	/* suppress */
 	return 0;
 }
+
+
+#include <linux/acpi.h>
+#include <acpi/acpixf.h>
+
+acpi_status acpi_evaluate_object(acpi_handle handle, acpi_string pathname,
+                                 struct acpi_object_list *external_params,
+                                 struct acpi_buffer *return_buffer)
+{
+	lx_emul_trace(__func__);
+	return (AE_NOT_FOUND);
+}

@@ -1,6 +1,7 @@
 /*
  * \brief  Legacy platform session wrapper
  * \author Josef Soentgen
+ * \author Christian Helmuth
  * \date   2022-01-14
  */
 
@@ -47,19 +48,19 @@ static void scan_resources(Legacy_platform::Device &device,
 }
 
 
-static Str create_device_node(Xml_generator &xml,
-                              Legacy_platform::Device &device)
+/* start arbitrarily and count up */
+static unsigned char irq = 8;
+
+/* start arbitrarily at 1 GiB */
+static unsigned long mmio_phys_addr = 0x40000000;
+
+static Str create_pci_device_node(Xml_generator &xml,
+                                  Legacy_platform::Device &device)
 {
 	using namespace Genode;
 
-	/* start arbitrarily and count up */
-	static unsigned char irq = 8;
-
 	/* start arbitrarily at the dev 1 for the first device */
 	static unsigned char bdf[3] = { 0, 1, 0 };
-
-	/* start arbitrarily at 1 GiB */
-	static unsigned long mmio_phys_addr = 0x40000000;
 
 	unsigned char pbdf[3];
 	device.bus_address(&pbdf[0], &pbdf[1], &pbdf[2]);
@@ -126,6 +127,51 @@ static Str create_device_node(Xml_generator &xml,
 }
 
 
+static void create_acpi_device_node(Xml_generator           &xml,
+                                    String<10>        const &hid,
+                                    Legacy_platform::Device &device)
+{
+	using namespace Genode;
+
+	log("ACPI device ", hid);
+
+	xml.node("device", [&] () {
+		xml.attribute("name", hid);
+		xml.attribute("type", Str("acpi"));
+
+		/* just assume one IRQ line as they are not discoverable with the old interface */
+		xml.node("irq", [&] () {
+			xml.attribute("number", irq++);
+		});
+
+		using R = Legacy_platform::Device::Resource;
+
+		/* iterate over all resources until we get Resource::INVALID */
+		for (unsigned idx = 0; ; idx++) {
+			R const r = device.resource(idx);
+			if (r.type() == R::INVALID)
+				break;
+
+			bool const memory = r.type() == R::MEMORY;
+
+			if (memory) {
+				xml.node("io_mem",  [&] () {
+					xml.attribute("phys_addr", to_string(Hex(mmio_phys_addr)));
+					xml.attribute("size",      to_string(Hex(r.size())));
+				});
+
+				mmio_phys_addr += align_addr(r.size(), 12);
+			} else {
+				xml.node("io_port", [&] () {
+					xml.attribute("phys_addr", to_string(Hex(r.bar())));
+					xml.attribute("size",      to_string(Hex(r.size())));
+				});
+			}
+		}
+	});
+}
+
+
 Platform::Connection::Connection(Env &env)
 :
 	_env { env }
@@ -142,26 +188,55 @@ Platform::Connection::Connection(Env &env)
 	_legacy_platform->upgrade_caps(8);
 
 	Xml_generator xml { _devices_node_buffer,
-	                    sizeof (_devices_node_buffer),
+	                    sizeof(_devices_node_buffer),
 	                    "devices", [&] () {
-		_legacy_platform->with_upgrade([&] () {
-
-			/* scan the virtual bus but limit to MAX_DEVICES */
+		{ /* scan the virtual bus but limit to MAX_DEVICES */
 			Legacy_platform::Device_capability cap { };
 			for (auto &dev : _devices_list) {
 
-				cap = _legacy_platform->next_device(cap, 0x0u, 0x0u);
+				_legacy_platform->with_upgrade([&] () {
+					cap = _legacy_platform->next_device(cap, 0x0u, 0x0u); });
 				if (!cap.valid()) break;
 
 				Legacy_platform::Device_client device { cap };
-				Str name = create_device_node(xml, device);
+				Str name = create_pci_device_node(xml, device);
 				dev.construct(name, cap);
 			}
-		});
+		}
+		{ /* request platform/ACPI devices */
+			Legacy_platform::Device_capability cap { };
+			for (auto &dev : _devices_list) {
+				if (dev.constructed())
+					continue;
+
+				/* FIXME
+				 *
+				 * We just take the first device, assume it's INT34C5, and
+				 * break the loop. The device name cannot be reflected from the
+				 * legacy platform drivers, which means we would need local
+				 * config for this (and also for other static ACPI
+				 * configuration like EPTP as in lx_emul/acpi.cc and
+				 * acpi/scan.c.
+				 */
+				String<10> hid { "INT34C5" };
+				_legacy_platform->with_upgrade([&] () {
+					cap = _legacy_platform->device(hid.string()); });
+
+				if (cap.valid()) {
+
+					Legacy_platform::Device_client device { cap };
+					create_acpi_device_node(xml, hid, device);
+					dev.construct(hid, cap);
+
+				}
+
+				break;
+			}
+		}
 	} };
 
 	_devices_node.construct(_devices_node_buffer,
-	                        sizeof (_devices_node_buffer));
+	                        sizeof(_devices_node_buffer));
 }
 
 

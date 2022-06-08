@@ -1,6 +1,7 @@
 /*
  * \brief  Globally available Lx_kit environment, needed in the C-ish lx_emul
  * \author Stefan Kalkowski
+ * \author Christian Helmuth
  * \date   2021-04-14
  */
 
@@ -134,6 +135,16 @@ class Lx_kit::Device : List<Device>::Element
 
 		const char * compatible();
 		const char * name();
+
+		template <typename IOMEM_FN, typename IOPORT_FN, typename IRQ_FN>
+		void for_each_resource(IOMEM_FN  const &iomem_fn,
+		                       IOPORT_FN const &ioport_fn,
+		                       IRQ_FN    const &irq_fn)
+		{
+			_for_each_io_mem([&] (Io_mem const &r) { iomem_fn(r.addr, r.size); });
+			_for_each_io_port([&] (Io_port const &r) { ioport_fn(r.addr, r.size); });
+			_for_each_irq([&] (Irq const &r) { irq_fn(r.number); });
+		}
 
 		void   enable();
 		clk *  clock(const char * name);

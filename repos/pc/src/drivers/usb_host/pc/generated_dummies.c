@@ -1,7 +1,7 @@
 /*
  * \brief  Dummy definitions of Linux Kernel functions
  * \author Automatically generated file - do no edit
- * \date   2022-05-06
+ * \date   2022-06-24
  */
 
 #include <lx_emul.h>
@@ -145,6 +145,14 @@ asmlinkage __visible void dump_stack(void)
 #include <linux/capability.h>
 
 bool file_ns_capable(const struct file * file,struct user_namespace * ns,int cap)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/property.h>
+
+struct fwnode_handle * fwnode_create_software_node(const struct property_entry * properties,const struct fwnode_handle * parent)
 {
 	lx_emul_trace_and_stop(__func__);
 }
