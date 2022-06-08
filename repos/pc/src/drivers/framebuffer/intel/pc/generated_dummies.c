@@ -1,7 +1,7 @@
 /*
  * \brief  Dummy definitions of Linux Kernel functions
  * \author Automatically generated file - do no edit
- * \date   2022-07-28
+ * \date   2022-10-19
  */
 
 #include <lx_emul.h>
@@ -130,54 +130,6 @@ void ack_bad_irq(unsigned int irq)
 }
 
 
-#include <acpi/acpi_bus.h>
-
-int acpi_bus_attach_private_data(acpi_handle handle,void * data)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <acpi/acpi_bus.h>
-
-void acpi_bus_detach_private_data(acpi_handle handle)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <acpi/acpi_bus.h>
-
-int acpi_bus_get_device(acpi_handle handle,struct acpi_device ** device)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <acpi/acpi_bus.h>
-
-int acpi_bus_get_private_data(acpi_handle handle,void ** data)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <acpi/acpi_bus.h>
-
-int acpi_bus_get_status(struct acpi_device * device)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <acpi/acpi_bus.h>
-
-void acpi_dev_clear_dependencies(struct acpi_device * supplier)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 #include <linux/acpi.h>
 
 void acpi_dev_free_resource_list(struct list_head * list)
@@ -197,29 +149,6 @@ int acpi_dev_get_resources(struct acpi_device * adev,struct list_head * list,int
 #include <linux/acpi.h>
 
 bool acpi_dev_resource_interrupt(struct acpi_resource * ares,int index,struct resource * res)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-extern acpi_status acpi_get_handle(acpi_handle parent,acpi_string pathname,acpi_handle * ret_handle);
-acpi_status acpi_get_handle(acpi_handle parent,acpi_string pathname,acpi_handle * ret_handle)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <acpi/acpi_bus.h>
-
-int acpi_match_device_ids(struct acpi_device * device,const struct acpi_device_id * ids)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <acpi/acpi_bus.h>
-
-void acpi_set_modalias(struct acpi_device * adev,const char * default_id,char * modalias,size_t len)
 {
 	lx_emul_trace_and_stop(__func__);
 }
