@@ -1,7 +1,7 @@
 /*
  * \brief  Dummy definitions of Linux Kernel functions
  * \author Automatically generated file - do no edit
- * \date   2023-06-06
+ * \date   2023-06-13
  */
 
 #include <lx_emul.h>
@@ -214,6 +214,14 @@ void cpu_latency_qos_remove_request(struct pm_qos_request * req)
 #include <net/ip6_checksum.h>
 
 __sum16 csum_ipv6_magic(const struct in6_addr * saddr,const struct in6_addr * daddr,__u32 len,__u8 proto,__wsum sum)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/property.h>
+
+int device_create_managed_software_node(struct device * dev,const struct property_entry * properties,const struct software_node * parent)
 {
 	lx_emul_trace_and_stop(__func__);
 }

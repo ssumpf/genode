@@ -23,6 +23,7 @@ CC_OPT_sound/pci/hda/hda_controller += -I$(LX_SRC_DIR)/sound/pci/hda
 CC_OPT_sound/pci/hda/hda_intel      += -I$(LX_SRC_DIR)/sound/pci/hda
 CC_OPT_drivers/base/regmap/regmap   += -I$(LX_SRC_DIR)/drivers/base/regmap
 
+SRC_CC  += lx_emul/acpi.cc
 SRC_CC  += lx_emul/clock.cc
 SRC_CC  += lx_emul/io_mem.cc
 SRC_CC  += lx_emul/io_port.cc

@@ -1,7 +1,7 @@
 /*
  * \brief  Dummy definitions of Linux Kernel functions
  * \author Automatically generated file - do no edit
- * \date   2023-04-11
+ * \date   2023-06-13
  */
 
 #include <lx_emul.h>
@@ -10,14 +10,6 @@
 #include <linux/ratelimit_types.h>
 
 int ___ratelimit(struct ratelimit_state * rs,const char * func)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/acpi.h>
-
-int __acpi_node_get_property_reference(const struct fwnode_handle * fwnode,const char * propname,size_t index,size_t num_args,struct fwnode_reference_args * args)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -149,14 +141,6 @@ acpi_status acpi_get_handle(acpi_handle parent,acpi_string pathname,acpi_handle 
 #include <linux/acpi.h>
 
 int acpi_get_override_irq(u32 gsi,int * is_level,int * active_low)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <acpi/acpi_bus.h>
-
-bool acpi_has_method(acpi_handle handle,char * name)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -368,17 +352,14 @@ void finish_rcuwait(struct rcuwait * w)
 }
 
 
+#include <linux/kobject.h>
+
+struct kobject *firmware_kobj;
+
+
 #include <linux/file.h>
 
 void fput(struct file * file)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/kernel.h>
-
-int get_option(char ** str,int * pint)
 {
 	lx_emul_trace_and_stop(__func__);
 }

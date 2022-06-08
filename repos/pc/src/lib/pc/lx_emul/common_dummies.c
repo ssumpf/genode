@@ -282,12 +282,6 @@ bool parse_option_str(const char * str,const char * option)
 
 #include <linux/pci.h>
 
-void pci_fixup_device(enum pci_fixup_pass pass,struct pci_dev * dev)
-{
-	lx_emul_trace(__func__);
-}
-
-
 int pci_disable_link_state(struct pci_dev * pdev,int state)
 {
 	lx_emul_trace(__func__);
