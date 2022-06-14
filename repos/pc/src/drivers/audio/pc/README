@@ -163,3 +163,11 @@ Known issues
 
 * No VirtualBox5 support
 
+* In the current state this driver is not ready for Genode upstream. For
+  upstream we need to have access to the ACPI NHLT table of the machine in order
+  to support other Tigerlake platforms. Also other hardware than Tigerlake's HDA
+  is not supported at the moment and would have to be enabled separately.
+  Additionally, the 48KHz sampling rate limitation of SOF has to be addressed by
+  our audio session with the addition of possible resampling support. This is
+  unsolved in Genode at the moment.
+
