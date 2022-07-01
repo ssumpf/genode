@@ -71,6 +71,7 @@ struct Gpu::Session : public Genode::Session
 	struct Out_of_caps    : Genode::Exception { };
 	struct Invalid_state  : Genode::Exception { };
 	struct Conflicting_id : Genode::Exception { };
+	struct Service_denied : Genode::Exception { };
 	struct Mapping_buffer_failed  : Genode::Exception { };
 
 	enum { REQUIRED_QUOTA = 1024 * 1024, CAP_QUOTA = 32, };
@@ -227,20 +228,23 @@ struct Gpu::Session : public Genode::Session
 	GENODE_RPC(Rpc_completion_sigh, void, completion_sigh,
 	           Genode::Signal_context_capability);
 	GENODE_RPC_THROW(Rpc_alloc_buffer, Genode::Dataspace_capability, alloc_buffer,
-	                 GENODE_TYPE_LIST(Out_of_caps, Out_of_ram),
+	                 GENODE_TYPE_LIST(Out_of_caps, Out_of_ram, Service_denied),
 	                 Gpu::Buffer_id, Genode::size_t);
 	GENODE_RPC(Rpc_free_buffer, void, free_buffer, Gpu::Buffer_id);
 	GENODE_RPC(Rpc_export_buffer, Gpu::Buffer_capability, export_buffer, Gpu::Buffer_id);
 	GENODE_RPC_THROW(Rpc_import_buffer, void, import_buffer,
-	                 GENODE_TYPE_LIST(Out_of_caps, Out_of_ram, Conflicting_id, Invalid_state),
+	                 GENODE_TYPE_LIST(Out_of_caps, Out_of_ram, Conflicting_id, Invalid_state,
+	                                  Service_denied),
 	                 Gpu::Buffer_capability, Gpu::Buffer_id);
 	GENODE_RPC_THROW(Rpc_map_buffer, Genode::Dataspace_capability, map_buffer,
-	                 GENODE_TYPE_LIST(Mapping_buffer_failed, Out_of_caps, Out_of_ram),
+	                 GENODE_TYPE_LIST(Mapping_buffer_failed, Out_of_caps, Out_of_ram,
+	                                  Service_denied),
 	                 Gpu::Buffer_id, bool, Gpu::Mapping_attributes);
 	GENODE_RPC(Rpc_unmap_buffer, void, unmap_buffer,
 	           Gpu::Buffer_id);
 	GENODE_RPC_THROW(Rpc_map_buffer_ppgtt, bool, map_buffer_ppgtt,
-	                 GENODE_TYPE_LIST(Mapping_buffer_failed, Out_of_caps, Out_of_ram),
+	                 GENODE_TYPE_LIST(Mapping_buffer_failed, Out_of_caps, Out_of_ram,
+	                                  Service_denied),
 	                 Gpu::Buffer_id, Gpu::addr_t);
 	GENODE_RPC(Rpc_unmap_buffer_ppgtt, void, unmap_buffer_ppgtt,
 	           Gpu::Buffer_id, Gpu::addr_t);
