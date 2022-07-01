@@ -1516,7 +1516,7 @@ class Gpu::Session_component : public Genode::Session_object<Gpu::Session>
 			{ }
 
 			/* worst case */
-			bool avail_caps() { return _cap_quota_guard.have_avail(Cap_quota { 5 }); }
+			bool avail_caps() { return _cap_quota_guard.have_avail(Cap_quota { 6 }); }
 
 			/* size + possible heap allocations */
 			bool avail_ram(size_t size = 0) {
@@ -1527,13 +1527,20 @@ class Gpu::Session_component : public Genode::Session_object<Gpu::Session>
 				try {
 					_cap_quota_guard.withdraw(Cap_quota { caps });
 					_ram_quota_guard.withdraw(Ram_quota { ram });
-				} catch (... /* intentional catch-all */) {
+				} catch (Genode::Out_of_caps) {
 					/*
 					 * At this point something in the accounting went wrong
 					 * and as quick-fix let the client abort rather than the
 					 * multiplexer.
 					 */
-					throw Service_denied();
+					Genode::error("Quota guard out of caps! from ", __builtin_return_address(0));
+					throw Gpu::Session::Service_denied();
+				} catch (Genode::Out_of_ram) {
+					Genode::error("Quota guard out of ram! from ", __builtin_return_address(0));
+					throw Gpu::Session::Service_denied();
+				} catch (...) {
+					Genode::error("Unknown exception in 'Resourcd_guard::withdraw'");
+					throw Gpu::Session::Service_denied();
 				}
 			}
 
