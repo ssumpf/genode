@@ -839,17 +839,17 @@ static const char *const state_labels[] = {
 };
 
 
-static void dump_pcm_state(struct sound_handle *handle)
+static void dump_pcm_state(struct sound_handle *handle, char const *msg)
 {
 	int err;
 	struct snd_pcm_status64 status = { 0 };
 
 	err = sound_ioctl(handle, SNDRV_PCM_IOCTL_STATUS64, &status);
 	if (err) printk("%s:%d err=%d\n", __func__, __LINE__, err);
-	else printk("%s:%d status: %s avail: %lu avail_max: %lu "
-	            "appl_ptr: %lu hw_ptr: %lu from %p\n", __func__, __LINE__,
+	else printk("%s: %s avail: %lu avail_max: %lu "
+	            "appl_ptr: %lu hw_ptr: %lu from %s\n", __func__,
 	            state_labels[status.state], status.avail, status.avail_max,
-	            status.appl_ptr, status.hw_ptr, __builtin_return_address(0) );
+	            status.appl_ptr, status.hw_ptr, msg);
 }
 
 
@@ -866,8 +866,9 @@ bool sound_pcm_play_watermark(struct sound_handle *handle)
 	}
 
 	if (status.state == SNDRV_PCM_STATE_XRUN) {
-		dump_pcm_state(handle);
-
+		dump_pcm_state(handle, __func__);
+		err = sound_ioctl(handle, SNDRV_PCM_IOCTL_DRAIN, NULL);
+		if (err) printk("%s:%d err=%d\n", __func__, __LINE__, err);
 		err = sound_ioctl(handle, SNDRV_PCM_IOCTL_PREPARE, NULL);
 		if (err) printk("%s:%d err=%d\n", __func__, __LINE__, err);
 		return false;
@@ -895,7 +896,7 @@ bool sound_pcm_capture_watermark(struct sound_handle *handle)
 	}
 
 	if (status.state == SNDRV_PCM_STATE_XRUN) {
-		dump_pcm_state(handle);
+		dump_pcm_state(handle, __func__);
 		err = sound_ioctl(handle, SNDRV_PCM_IOCTL_DRAIN, NULL);
 		if (err) printk("%s:%d err=%d\n", __func__, __LINE__, err);
 		err = sound_ioctl(handle, SNDRV_PCM_IOCTL_PREPARE, NULL);
@@ -941,7 +942,7 @@ static void sound_play(struct sound_handle *handle)
 		err = sound_ioctl(handle, SNDRV_PCM_IOCTL_WRITEI_FRAMES, &xfer);
 		if (err) {
 			printk("%s:%d err=%d\n", __func__, __LINE__, err);
-			dump_pcm_state(handle);
+			dump_pcm_state(handle, __func__);
 			return;
 		}
 	}
@@ -976,7 +977,7 @@ static void sound_capture(struct sound_handle *handle)
 		err = sound_ioctl(handle, SNDRV_PCM_IOCTL_READI_FRAMES, &xfer);
 		if (err) {
 			printk("%s:%d err=%d\n", __func__, __LINE__, err);
-			dump_pcm_state(handle);
+			dump_pcm_state(handle, __func__);
 			return;
 		}
 		genode_record_packet(packet);
