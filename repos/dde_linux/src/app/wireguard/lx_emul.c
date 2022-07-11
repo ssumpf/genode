@@ -37,7 +37,7 @@ int wait_for_random_bytes(void)
 
 u32 get_random_u32(void)
 {
-	return lx_emul_gen_random_uint();
+	return lx_emul_gen_random_u32();
 }
 
 
@@ -45,7 +45,7 @@ u32 get_random_u32(void)
 
 u32 prandom_u32(void)
 {
-	return lx_emul_gen_random_uint();
+	return lx_emul_gen_random_u32();
 }
 
 
