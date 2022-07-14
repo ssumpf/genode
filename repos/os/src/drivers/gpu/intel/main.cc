@@ -97,8 +97,8 @@ struct Igd::Device
 
 		Ram_dataspace_capability alloc(size_t size) override
 		{
-			return _pci.retry_with_upgrade(Genode::Ram_quota{PAGE_SIZE},
-			                               Genode::Cap_quota{8}, [&] () {
+			return _pci.retry_with_upgrade(Genode::Ram_quota{8*PAGE_SIZE},
+			                               Genode::Cap_quota{2}, [&] () {
 				return _pci.alloc_dma_buffer(size, Genode::UNCACHED); });
 		}
 
@@ -118,7 +118,6 @@ struct Igd::Device
 		}
 
 	} _pci_backend_alloc { _platform };
-
 
 	Device_info                    _info          { };
 	Gpu::Info_intel::Revision      _revision      { };
@@ -1483,11 +1482,12 @@ class Gpu::Session_component : public Genode::Session_object<Gpu::Session>
 			{ }
 
 			/* worst case */
-			bool avail_caps() { return _cap_quota_guard.have_avail(Cap_quota { 6 }); }
+			bool avail_caps() { return _cap_quota_guard.have_avail(Cap_quota { 10 }); }
 
-			/* size + possible heap allocations */
+			/* size + possible heap allocations  + possible page table allocation +
+			 * unkown overhead */
 			bool avail_ram(size_t size = 0) {
-				return _ram_quota_guard.have_avail(Ram_quota { size + 2*1024*1024 }); }
+				return _ram_quota_guard.have_avail(Ram_quota { size + 2*1024*1024+4096 + 1024*1024 + 1024*1024}); }
 
 			void withdraw(size_t caps, size_t ram)
 			{
@@ -1504,6 +1504,7 @@ class Gpu::Session_component : public Genode::Session_object<Gpu::Session>
 					throw Gpu::Session::Service_denied();
 				} catch (Genode::Out_of_ram) {
 					Genode::error("Quota guard out of ram! from ", __builtin_return_address(0));
+					Genode::error("guard ram: ", _ram_quota_guard.avail().value, " requested: ", ram);
 					throw Gpu::Session::Service_denied();
 				} catch (...) {
 					Genode::error("Unknown exception in 'Resourcd_guard::withdraw'");
@@ -1781,11 +1782,11 @@ class Gpu::Session_component : public Genode::Session_object<Gpu::Session>
 			size_t caps_after = _env.pd().avail_caps().value;
 			size_t ram_after  = _env.pd().avail_ram().value;
 
-			/* limit to buffer size */
+			/* limit to buffer size for replenish */
 			buffer->ram_used = min(ram_before - ram_after, size);
 			buffer->caps_used = (caps_before - caps_after) > 0;
 
-			_resource_guard.withdraw(caps_before - caps_after, buffer->ram_used);
+			_resource_guard.withdraw(caps_before - caps_after, ram_before - ram_after);
 
 			return ds_cap;
 		}
