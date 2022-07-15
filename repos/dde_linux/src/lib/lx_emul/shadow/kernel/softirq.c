@@ -78,11 +78,7 @@ void __local_bh_enable_ip(unsigned long ip,unsigned int cnt)
 void __init softirq_init(void) {}
 
 
-void irq_enter(void)
-{
-	/* check restarting ticking which may stopped in idle task */
-	tick_nohz_idle_restart_tick();
-}
+void irq_enter(void) {}
 
 
 void irq_exit(void) {}

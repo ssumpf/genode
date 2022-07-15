@@ -79,6 +79,10 @@ static void timer_loop(void)
 
 		lx_emul_task_schedule(true);
 		lx_emul_time_handle();
+
+		/* check restarting ticking */
+		tick_nohz_idle_restart_tick();
+
 		tick_nohz_idle_exit();
 	}
 }
