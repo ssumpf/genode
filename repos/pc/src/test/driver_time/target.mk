@@ -1,4 +1,4 @@
-REQUIRES := x86_x64
+REQUIRES := x86_64
 
 TARGET  := test-driver_time
 LIBS    := base pc_lx_emul jitterentropy
