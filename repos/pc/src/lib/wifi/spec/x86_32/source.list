@@ -1,3 +1,4 @@
+arch/x86/kernel/irq_32.c
 arch/x86/lib/hweight.S
 arch/x86/pci/legacy.c
 certs/common.c
@@ -148,12 +149,15 @@ kernel/sched/clock.c
 kernel/sched/completion.c
 kernel/sched/swait.c
 kernel/sched/wait.c
+kernel/sched/wait_bit.c
 kernel/smpboot.c
+kernel/softirq.c
 kernel/time/clockevents.c
 kernel/time/clocksource.c
 kernel/time/hrtimer.c
 kernel/time/jiffies.c
 kernel/time/ntp.c
+kernel/time/tick-broadcast.c
 kernel/time/tick-common.c
 kernel/time/tick-oneshot.c
 kernel/time/tick-sched.c

@@ -318,3 +318,16 @@ bool irq_work_needs_cpu(void)
 {
 	return false;
 }
+
+
+#include <asm/smp.h>
+
+struct smp_ops smp_ops = { };
+EXPORT_SYMBOL_GPL(smp_ops);
+
+
+extern void synchronize_rcu_expedited(void);
+void synchronize_rcu_expedited(void)
+{
+	lx_emul_trace_and_stop(__func__);
+}
