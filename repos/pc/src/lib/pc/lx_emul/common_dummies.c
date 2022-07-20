@@ -386,14 +386,6 @@ int __srcu_read_lock(struct srcu_struct * ssp)
 }
 
 
-#include <linux/spinlock.h>
-
-void __lockfunc _raw_read_lock(rwlock_t * lock)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 #include <linux/cpu.h>
 
 void cpu_hotplug_disable(void)
