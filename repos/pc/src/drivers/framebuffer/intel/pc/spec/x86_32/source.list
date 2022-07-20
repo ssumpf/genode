@@ -1,5 +1,4 @@
 arch/x86/lib/hweight.S
-arch/x86/kernel/irq_32.c
 arch/x86/pci/legacy.c
 arch/x86/platform/intel/iosf_mbi.c
 drivers/base/bus.c
