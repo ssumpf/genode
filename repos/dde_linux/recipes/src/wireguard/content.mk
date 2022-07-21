@@ -55,13 +55,38 @@ LX_FILES += Kbuild \
             arch/x86/include/asm/Kbuild \
             arch/x86/include/asm/atomic64_32.h \
             arch/x86/include/asm/cmpxchg_32.h \
+            arch/x86/include/asm/cpufeature.h \
+            arch/x86/include/asm/current.h \
+            arch/x86/include/asm/fpu/xstate.h \
+            arch/x86/include/asm/ia32.h \
+            arch/x86/include/asm/io.h \
+            arch/x86/include/asm/irqflags.h \
+            arch/x86/include/asm/nospec-branch.h \
+            arch/x86/include/asm/page.h \
+            arch/x86/include/asm/page_64.h \
+            arch/x86/include/asm/pgtable.h \
+            arch/x86/include/asm/pgtable_64.h \
+            arch/x86/include/asm/pgtable-invert.h \
+            arch/x86/include/asm/pkru.h \
+            arch/x86/include/asm/qrwlock.h \
+            arch/x86/include/asm/qspinlock.h \
+            arch/x86/include/asm/sigframe.h \
+            arch/x86/include/asm/special_insns.h \
+            arch/x86/include/asm/spinlock.h \
+            arch/x86/include/asm/spinlock_types.h \
             arch/x86/include/asm/string.h \
             arch/x86/include/asm/string_32.h \
             arch/x86/include/asm/string_64.h \
+            arch/x86/include/asm/suspend.h \
+            arch/x86/include/asm/suspend_64.h \
+            arch/x86/include/asm/sync_core.h \
+            arch/x86/include/asm/uaccess_64.h \
+            arch/x86/include/asm/x86_init.h \
             arch/x86/include/uapi/asm/Kbuild \
             arch/x86/include/uapi/asm/posix_types.h \
             arch/x86/include/uapi/asm/posix_types_32.h \
             arch/x86/include/uapi/asm/posix_types_64.h \
+            arch/x86/include/uapi/asm/ucontext.h \
             arch/x86/tools/Makefile \
             arch/x86/tools/relocs.c \
             arch/x86/tools/relocs.h \
@@ -77,12 +102,16 @@ LX_FILES += Kbuild \
             arch/arm64/tools/gen-cpucaps.awk \
             arch/arm64/tools/cpucaps \
             include/asm-generic/bitops/fls64.h \
+            include/asm-generic/current.h \
             include/asm-generic/Kbuild \
+            include/asm-generic/qrwlock.h \
+            include/asm-generic/qspinlock.h \
             include/linux/compiler-version.h \
             include/linux/kbuild.h \
             include/linux/license.h \
             include/uapi/Kbuild \
             include/uapi/asm-generic/Kbuild \
+            include/uapi/asm-generic/ucontext.h \
             kernel/configs/tiny-base.config \
             kernel/configs/tiny.config \
             scripts/Kbuild.include \
