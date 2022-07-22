@@ -567,3 +567,10 @@ s64 arch_atomic64_add_return(s64 i, atomic64_t *v)
 	return v->counter;
 }
 #endif
+
+
+void kvfree_call_rcu(struct rcu_head * head,rcu_callback_t func)
+{
+	void *ptr = (void *) head - (unsigned long) func;
+	kvfree(ptr);
+}

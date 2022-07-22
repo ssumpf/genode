@@ -326,8 +326,7 @@ struct smp_ops smp_ops = { };
 EXPORT_SYMBOL_GPL(smp_ops);
 
 
-extern void synchronize_rcu_expedited(void);
 void synchronize_rcu_expedited(void)
 {
-	lx_emul_trace_and_stop(__func__);
+	lx_emul_trace(__func__);
 }

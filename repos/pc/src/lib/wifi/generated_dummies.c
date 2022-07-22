@@ -639,14 +639,6 @@ int kobject_synth_uevent(struct kobject * kobj,const char * buf,size_t count)
 }
 
 
-#include <linux/rcutree.h>
-
-void kvfree_call_rcu(struct rcu_head * head,rcu_callback_t func)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 #include <linux/kernel.h>
 
 unsigned long long memparse(const char * ptr,char ** retptr)

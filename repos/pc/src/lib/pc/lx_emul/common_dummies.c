@@ -373,7 +373,7 @@ bool pat_enabled(void)
 
 #include <linux/cpumask.h>
 
-atomic_t __num_online_cpus;
+atomic_t __num_online_cpus = ATOMIC_INIT(1);
 
 unsigned long __per_cpu_offset[NR_CPUS] = { 0UL };
 

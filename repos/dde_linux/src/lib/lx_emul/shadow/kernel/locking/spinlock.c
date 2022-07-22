@@ -32,6 +32,7 @@ void __lockfunc _raw_spin_lock(raw_spinlock_t * lock)
 #ifndef CONFIG_INLINE_SPIN_LOCK_BH
 void __lockfunc _raw_spin_lock_bh(raw_spinlock_t * lock)
 {
+	__local_bh_disable_ip(_RET_IP_, SOFTIRQ_LOCK_OFFSET);
 	_raw_spin_lock(lock);
 }
 #endif
@@ -76,6 +77,7 @@ void __lockfunc _raw_spin_unlock(raw_spinlock_t * lock)
 void __lockfunc _raw_spin_unlock_bh(raw_spinlock_t * lock)
 {
 	_raw_spin_unlock(lock);
+	__local_bh_enable_ip(_RET_IP_, SOFTIRQ_LOCK_OFFSET);
 }
 #endif
 
