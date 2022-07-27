@@ -24,8 +24,7 @@ int cpumask_next_and(int                    n,
                      const struct cpumask * src1p,
                      const struct cpumask * src2p)
 {
-	/* This should never happen */
-	lx_emul_trace_and_stop(__func__);
+	return n + 1;
 }
 
 
