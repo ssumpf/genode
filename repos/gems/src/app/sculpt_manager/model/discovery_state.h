@@ -52,6 +52,10 @@ struct Sculpt::Discovery_state
 		if (!all_devices_discovered)
 			return Storage_target { };
 
+		/* XXX always use ram_fs */
+		_done = true;
+		return { "ram_fs", Partition::Number() };
+
 		/*
 		 * Search for a partition with the magic label "GENODE*", or - if no
 		 * such partition is present - a whole-device file system.
@@ -61,6 +65,7 @@ struct Sculpt::Discovery_state
 		 * a file system (the Sculpt EA way), this block device is selected.
 		 */
 		Storage_target target { };
+
 		auto check_partitions = [&] (Storage_device const &device) {
 
 			device.for_each_partition([&] (Partition const &partition) {
