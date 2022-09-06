@@ -1,4 +1,4 @@
-content: include/libc-plugin lib/mk LICENSE
+content: include/libc-plugin src/lib/libc lib/mk LICENSE
 
 LIBC_PORT_DIR := $(call port_dir,$(REP_DIR)/ports/libc)
 LIBM_PORT_DIR := $(LIBC_PORT_DIR)
