@@ -830,6 +830,7 @@ class Genode::New_file : public Genode::Append_file
 		:
 			Append_file(dir, path)
 		{
+			_handle.seek(0);
 			_handle.fs().ftruncate(&_handle, 0);
 		}
 };
