@@ -840,7 +840,8 @@ void ::Root::handle_empty_sessions()
 
 void ::Root::decrement_session_id(genode_usb_session_handle_t id)
 {
-	if (id <= MAX_SESSIONS) _session_ids[id-1]->dec();
+	if (id > 0 && id <= MAX_SESSIONS)
+		_session_ids[id-1]->dec();
 }
 
 
