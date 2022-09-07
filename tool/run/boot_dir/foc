@@ -157,7 +157,7 @@ proc run_boot_dir_arm { binaries } {
 
 	global run_target
 
-	build { lib/ld/foc kernel/foc }
+	build { lib/ld-foc kernel/foc }
 
 	build_core_image $binaries
 
