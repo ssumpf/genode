@@ -164,13 +164,16 @@ DST_DIRS := *
 endif
 
 #
+# Detect use of obsoleted LIB=<libname> option
+#
+ifneq ($(LIB),)
+$(error the 'LIB=$(LIB)' option is no longer supported, use 'make lib/$(LIB)')
+endif
+
+#
 # Determine library targets specified as lib/<libname> at the command line
 #
 LIBS := $(notdir $(filter lib/%,$(MAKECMDGOALS)))
-
-ifneq ($(LIB),)  # compatibility with old LIB=<libname> option
-LIBS := $(LIB)
-endif
 
 ifeq ($(MAKECMDGOALS),)
 ALL_LIB_MK_DIRS  := $(wildcard \
@@ -270,10 +273,6 @@ TARGETS_TO_VISIT := $(shell find $(wildcard $(REPOSITORIES:=/src)) -false \
                                       -or -path "*/src/$(DST)/**target.mk" \
                                           -printf " %P "))
 TARGETS_TO_VISIT := $(sort $(TARGETS_TO_VISIT))
-
-ifneq ($(LIB),)  # compatibility with original LIB=<libname> option
-TARGETS_TO_VISIT :=
-endif
 
 #
 # Perform sanity check for non-existing targets being specified at the command
