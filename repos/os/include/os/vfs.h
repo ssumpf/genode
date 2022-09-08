@@ -672,7 +672,8 @@ class Genode::File_content
 
 
 /**
- * 
+ * Base class of `New_file` and `Append_file` providing open for write, sync,
+ * and append functionality.
  */
 class Genode::Writeable_file : Noncopyable
 {
@@ -684,9 +685,7 @@ class Genode::Writeable_file : Noncopyable
 
 	protected:
 
-		static Vfs::Vfs_handle &_init_handle(Vfs::File_system      &fs,
-		                                     Allocator             &alloc,
-		                                     Directory             &dir,
+		static Vfs::Vfs_handle &_init_handle(Directory             &dir,
 		                                     Directory::Path const &rel_path)
 		{
 			/* create compound directory */
@@ -705,7 +704,7 @@ class Genode::Writeable_file : Noncopyable
 
 			Vfs::Vfs_handle *handle_ptr = nullptr;
 			Vfs::Directory_service::Open_result const res =
-				fs.open(path.string(), mode, &handle_ptr, alloc);
+				dir._fs.open(path.string(), mode, &handle_ptr, dir._alloc);
 
 			if (res != Vfs::Directory_service::OPEN_OK || (handle_ptr == nullptr)) {
 				error("failed to create/open file '", path, "' for writing, res=", (int)res);
@@ -800,8 +799,6 @@ class Genode::Append_file : public Writeable_file
 	private:
 
 		Entrypoint       &_ep;
-		Allocator        &_alloc;
-		Vfs::File_system &_fs;
 		Vfs::Vfs_handle  &_handle;
 
 	public:
@@ -813,8 +810,8 @@ class Genode::Append_file : public Writeable_file
 		 */
 		Append_file(Directory &dir, Directory::Path const &path)
 		:
-			_ep(dir._ep), _alloc(dir._alloc), _fs(dir._fs),
-			_handle(_init_handle(_fs, _alloc, dir, path))
+			_ep(dir._ep),
+			_handle(_init_handle(dir, path))
 		{
 			Vfs::Directory_service::Stat stat { };
 			if (_handle.ds().stat(path.string(), stat) == Vfs::Directory_service::STAT_OK)
@@ -840,8 +837,6 @@ class Genode::New_file : public Writeable_file
 	private:
 
 		Entrypoint       &_ep;
-		Allocator        &_alloc;
-		Vfs::File_system &_fs;
 		Vfs::Vfs_handle  &_handle;
 
 	public:
@@ -856,8 +851,8 @@ class Genode::New_file : public Writeable_file
 		 */
 		New_file(Directory &dir, Directory::Path const &path)
 		:
-			_ep(dir._ep), _alloc(dir._alloc), _fs(dir._fs),
-			_handle(_init_handle(_fs, _alloc, dir, path))
+			_ep(dir._ep),
+			_handle(_init_handle(dir, path))
 		{ _handle.fs().ftruncate(&_handle, 0); }
 
 		~New_file()
