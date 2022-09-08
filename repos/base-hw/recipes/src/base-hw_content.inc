@@ -128,8 +128,8 @@ SRC_CORE += $(notdir $(wildcard $(BASE_HW_DIR)/src/core/*.cc)) \
 # names of the lib/mk/ files to consider for inclusion in the src archive
 LIB_MK_FILES := base-common.inc base-hw-common.mk \
                 base.inc base-hw.mk \
-                bootstrap-hw.inc bootstrap-hw-$(BOARD).mk \
-                core-hw.inc core-hw-$(BOARD).mk \
+                bootstrap-hw.inc bootstrap-hw-$(BOARD).inc bootstrap-hw-$(BOARD).mk \
+                core-hw.inc core-hw-$(BOARD).inc core-hw-$(BOARD).mk \
                 startup.inc startup-hw.mk \
                 timeout-hw.mk cxx.mk ld-hw.mk syscall-hw.mk
 
