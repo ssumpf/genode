@@ -27,6 +27,7 @@ namespace Genode {
 	struct File;
 	class  Readonly_file;
 	class  File_content;
+	class  Writeable_file;
 	class  Append_file;
 	class  New_file;
 	class  Watcher;
@@ -125,6 +126,7 @@ struct Genode::Directory : Noncopyable, Interface
 		friend class Readonly_file;
 		friend class Root_directory;
 		friend class Watcher;
+		friend class Writeable_file;
 		friend class Append_file;
 		friend class New_file;
 
@@ -670,27 +672,22 @@ class Genode::File_content
 
 
 /**
- * Utility for appending data to an existing file via the Genode VFS library
+ * 
  */
-class Genode::Append_file : Noncopyable
+class Genode::Writeable_file : Noncopyable
 {
 	public:
 
 		struct Create_failed : Exception { };
 
-	private:
-
-		Entrypoint       &_ep;
-		Allocator        &_alloc;
-		Vfs::File_system &_fs;
+		enum class Append_result { OK, WRITE_ERROR };
 
 	protected:
 
-		Vfs::Vfs_handle  &_handle;
-
-	private:
-
-		Vfs::Vfs_handle &_init_handle(Directory &dir, Directory::Path const &rel_path)
+		static Vfs::Vfs_handle &_init_handle(Vfs::File_system      &fs,
+		                                     Allocator             &alloc,
+		                                     Directory             &dir,
+		                                     Directory::Path const &rel_path)
 		{
 			/* create compound directory */
 			{
@@ -708,41 +705,24 @@ class Genode::Append_file : Noncopyable
 
 			Vfs::Vfs_handle *handle_ptr = nullptr;
 			Vfs::Directory_service::Open_result const res =
-				_fs.open(path.string(), mode, &handle_ptr, _alloc);
+				fs.open(path.string(), mode, &handle_ptr, alloc);
 
 			if (res != Vfs::Directory_service::OPEN_OK || (handle_ptr == nullptr)) {
-				error("failed to create/open file '", path, "', res=", (int)res);
+				error("failed to create/open file '", path, "' for writing, res=", (int)res);
 				throw Create_failed();
 			}
-
-			Vfs::Directory_service::Stat stat { };
-			if (handle_ptr->ds().stat(path.string(), stat) == Vfs::Directory_service::STAT_OK)
-				handle_ptr->seek(stat.size);
 
 			return *handle_ptr;
 		}
 
-	public:
-
-		/**
-		 * Constructor
-		 *
-		 * \throw Create_failed
-		 */
-		Append_file(Directory &dir, Directory::Path const &path)
-		:
-			_ep(dir._ep), _alloc(dir._alloc), _fs(dir._fs),
-			_handle(_init_handle(dir, path))
-		{ }
-
-		~Append_file()
+		static void _sync(Vfs::Vfs_handle &handle, Entrypoint &ep)
 		{
-			while (_handle.fs().queue_sync(&_handle) == false)
-				_ep.wait_and_dispatch_one_io_signal();
+			while (handle.fs().queue_sync(&handle) == false)
+				ep.wait_and_dispatch_one_io_signal();
 
 			for (bool sync_done = false; !sync_done; ) {
 
-				switch (_handle.fs().complete_sync(&_handle)) {
+				switch (handle.fs().complete_sync(&handle)) {
 
 				case Vfs::File_io_service::SYNC_QUEUED:
 					break;
@@ -758,14 +738,12 @@ class Genode::Append_file : Noncopyable
 				}
 
 				if (!sync_done)
-					_ep.wait_and_dispatch_one_io_signal();
+					ep.wait_and_dispatch_one_io_signal();
 			}
-			_handle.ds().close(&_handle);
 		}
 
-		enum class Append_result { OK, WRITE_ERROR };
-
-		Append_result append(char const *src, size_t size)
+		static Append_result _append(Vfs::Vfs_handle &handle, Entrypoint &ep,
+		                             char const *src, size_t size)
 		{
 			bool write_error = false;
 
@@ -780,7 +758,7 @@ class Genode::Append_file : Noncopyable
 
 					using Write_result = Vfs::File_io_service::Write_result;
 
-					switch (_handle.fs().write(&_handle, src, remaining_bytes,
+					switch (handle.fs().write(&handle, src, remaining_bytes,
 					                           out_count)) {
 
 					case Write_result::WRITE_ERR_AGAIN:
@@ -798,7 +776,7 @@ class Genode::Append_file : Noncopyable
 						out_count = min((Vfs::file_size)remaining_bytes, out_count);
 						remaining_bytes -= (size_t)out_count;
 						src             += out_count;
-						_handle.advance_seek(out_count);
+						handle.advance_seek(out_count);
 						break;
 					};
 				}
@@ -806,7 +784,7 @@ class Genode::Append_file : Noncopyable
 					stalled = true; }
 
 				if (stalled)
-					_ep.wait_and_dispatch_one_io_signal();
+					ep.wait_and_dispatch_one_io_signal();
 			}
 			return write_error ? Append_result::WRITE_ERROR
 			                   : Append_result::OK;
@@ -815,11 +793,61 @@ class Genode::Append_file : Noncopyable
 
 
 /**
+ * Utility for appending data to an existing file via the Genode VFS library
+ */
+class Genode::Append_file : public Writeable_file
+{
+	private:
+
+		Entrypoint       &_ep;
+		Allocator        &_alloc;
+		Vfs::File_system &_fs;
+		Vfs::Vfs_handle  &_handle;
+
+	public:
+
+		/**
+		 * Constructor
+		 *
+		 * \throw Create_failed
+		 */
+		Append_file(Directory &dir, Directory::Path const &path)
+		:
+			_ep(dir._ep), _alloc(dir._alloc), _fs(dir._fs),
+			_handle(_init_handle(_fs, _alloc, dir, path))
+		{
+			Vfs::Directory_service::Stat stat { };
+			if (_handle.ds().stat(path.string(), stat) == Vfs::Directory_service::STAT_OK)
+				_handle.seek(stat.size);
+		}
+
+		~Append_file()
+		{
+			_sync(_handle, _ep);
+			_handle.ds().close(&_handle);
+		}
+
+		Append_result append(char const *src, size_t size) {
+			return _append(_handle, _ep, src, size); }
+};
+
+
+/**
  * Utility for writing data to a new file via the Genode VFS library
  */
-class Genode::New_file : public Genode::Append_file
+class Genode::New_file : public Writeable_file
 {
+	private:
+
+		Entrypoint       &_ep;
+		Allocator        &_alloc;
+		Vfs::File_system &_fs;
+		Vfs::Vfs_handle  &_handle;
+
 	public:
+
+		using Writeable_file::Append_result;
+		using Writeable_file::Create_failed;
 
 		/**
 		 * Constructor
@@ -828,11 +856,18 @@ class Genode::New_file : public Genode::Append_file
 		 */
 		New_file(Directory &dir, Directory::Path const &path)
 		:
-			Append_file(dir, path)
+			_ep(dir._ep), _alloc(dir._alloc), _fs(dir._fs),
+			_handle(_init_handle(_fs, _alloc, dir, path))
+		{ _handle.fs().ftruncate(&_handle, 0); }
+
+		~New_file()
 		{
-			_handle.seek(0);
-			_handle.fs().ftruncate(&_handle, 0);
+			_sync(_handle, _ep);
+			_handle.ds().close(&_handle);
 		}
+
+		Append_result append(char const *src, size_t size) {
+			return _append(_handle, _ep, src, size); }
 };
 
 
