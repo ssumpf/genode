@@ -78,7 +78,7 @@ class Net::Domain_dict : public Dictionary<Domain, Domain_name>
 		Domain &deprecated_find_by_name(Domain_name const &domain_name)
 		{
 			Domain *dom_ptr { nullptr };
-			apply(
+			with_element(
 				domain_name,
 				[&] /* match_fn */ (Domain &dom) { dom_ptr = &dom; },
 				[&] /* no_match_fn */ () { throw NO_MATCH_EXCEPTION { }; }

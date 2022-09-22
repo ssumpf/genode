@@ -124,7 +124,7 @@ Configuration::Configuration(Env                             &env,
 			Domain_name const name {
 				node.attribute_value("name", Domain_name { }) };
 
-			_domains.apply(
+			_domains.with_element(
 				name,
 				[&] /* match_fn */ (Domain &other_domain)
 				{
@@ -210,7 +210,7 @@ Configuration::Configuration(Env                             &env,
 			Domain_name const domain {
 				node.attribute_value("domain", Domain_name { }) };
 
-			_nic_clients.apply(
+			_nic_clients.with_element(
 				label,
 				[&] /* match */ (Nic_client &nic_client)
 				{

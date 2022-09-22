@@ -51,7 +51,7 @@ Net::Nic_client::Nic_client(Session_label const &label_arg,
 	_config                  { config },
 	_domain                  { domain_arg }
 {
-	old_nic_clients.apply(
+	old_nic_clients.with_element(
 		label(),
 		[&] /* handle_match */ (Nic_client &old_nic_client)
 		{

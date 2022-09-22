@@ -386,7 +386,7 @@ void Interface::_update_domain_object(Domain &new_domain) {
 
 void Interface::attach_to_domain()
 {
-	_config().domains().apply(
+	_config().domains().with_element(
 		_policy.determine_domain_name(),
 		[&] /* match_fn */ (Domain &domain)
 		{
@@ -2158,7 +2158,7 @@ void Interface::_update_own_arp_waiters(Domain &domain)
 	{
 		Arp_waiter &arp_waiter { *le.object() };
 		bool dismiss_arp_waiter { true };
-		_config().domains().apply(
+		_config().domains().with_element(
 			arp_waiter.dst().name(),
 			[&] /* match_fn */ (Domain &dst)
 			{
@@ -2207,7 +2207,7 @@ void Interface::handle_config_1(Configuration &config)
 			return; }
 
 		/* interface stays with its domain, so, try to reuse IP config */
-		config.domains().apply(
+		config.domains().with_element(
 			new_domain_name,
 			[&] /* match_fn */ (Domain &new_domain)
 			{
@@ -2246,7 +2246,7 @@ void Interface::handle_config_2()
 	Domain_name const &new_domain_name = _policy.determine_domain_name();
 	try {
 		Domain &old_domain = domain();
-		_config().domains().apply(
+		_config().domains().with_element(
 			new_domain_name,
 			[&] /* match_fn */ (Domain &new_domain)
 			{
@@ -2297,7 +2297,7 @@ void Interface::handle_config_2()
 	catch (Pointer<Domain>::Invalid) {
 
 		/* the interface had no domain but now it may get one */
-		_config().domains().apply(
+		_config().domains().with_element(
 			new_domain_name,
 			[&] /* match_fn */ (Domain &new_domain)
 			{

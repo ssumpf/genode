@@ -46,7 +46,7 @@ class Net::Dictionary : public Genode::Dictionary<OBJECT_T, NAME_T>
 		void destroy_each(Genode::Deallocator &dealloc)
 		{
 			while (
-				this->apply_any(
+				this->with_any_element(
 					[&] (OBJECT_T &obj)
 					{
 						destroy(dealloc, &obj);
