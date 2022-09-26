@@ -114,8 +114,6 @@ class Ahci::Driver : Noncopyable
 		Driver(Env &env, Dispatch &dispatch, bool support_atapi)
 		: _env(env), _dispatch(dispatch), _enable_atapi(support_atapi)
 		{
-			_plat.with_xml([&] (Xml_node xml) { log(xml); });
-
 			/* search for devices */
 			_scan_ports(env.rm());
 		}
