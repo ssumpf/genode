@@ -1,6 +1,15 @@
 assert_spec x86
 
-set wget [installed_command wget]
+if {[have_include "power_on/qemu"]} {
+	puts "\nAudio_out test running on Qemu is not supported.\n"
+	exit 0
+}
+
+if {[have_spec linux]} {
+	puts"\nAudio_out test running on Linux is not supported.\n"
+	exit 0
+}
+
 
 create_boot_directory
 build {
@@ -14,12 +23,11 @@ build {
 }
 
 install_config {
-<config>
+<config verbose="yes">
 	<parent-provides>
 		<service name="ROM"/>
 		<service name="IRQ"/>
 		<service name="IO_MEM"/>
-		<service name="IO_PORT"/>
 		<service name="PD"/>
 		<service name="RM"/>
 		<service name="CPU"/>
@@ -79,7 +87,6 @@ install_config {
 			<service name="ROM" label="devices"> <child name="report_rom"/> </service>
 			<service name="IRQ">     <parent/> </service>
 			<service name="IO_MEM">  <parent/> </service>
-			<service name="IO_PORT"> <parent/> </service>
 			<service name="ROM">     <parent/> </service>
 			<service name="PD">      <parent/> </service>
 			<service name="CPU">     <parent/> </service>
@@ -91,15 +98,10 @@ install_config {
 		</config>
 	</start>
 
-	<start name="audio_drv">
+	<start name="audio_drv" caps="150">
 		<binary name="pci_audio_drv"/>
 		<resource name="RAM" quantum="8M"/>
 		<provides> <service name="Audio_out"/> </provides>
-		<!--
-			The proper ALSA device might need to be configured, e.g.
-			<config alsa_device="hw:CARD=Schiit,DEV=0"/>
-			when using Linux.
-		-->
 		<config/>
 	</start>
 
@@ -118,10 +120,6 @@ install_config {
 # Get sample file
 #
 
-if {[info exists env(GENODE_SAMPLE_RAW)]} {
-	catch { exec $wget $::env(GENODE_SAMPLE_RAW) -O bin/sample.raw }
-}
-
 if {![file exists bin/sample.raw]} {
 	puts ""
 	puts "The sample file is missing. Please take a look at"
@@ -137,7 +135,6 @@ build_boot_image {
 	pci_audio_drv test-audio_out sample.raw
 }
 
-append qemu_args "  -nographic -soundhw es1370 "
 
 #
 # For obvious reasons the timeout depends on the total
