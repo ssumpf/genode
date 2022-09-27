@@ -64,7 +64,7 @@ class Ahci::Driver : Noncopyable
 
 		Platform::Connection _plat   { _env };
 		Platform::Device     _device { _plat };
-		Hba                  _hba    { _device, _handler };
+		Hba                  _hba    { _device, _handler, _plat };
 
 		Constructible<Ata::Protocol>   _ata[MAX_PORTS];
 		Constructible<Atapi::Protocol> _atapi[MAX_PORTS];

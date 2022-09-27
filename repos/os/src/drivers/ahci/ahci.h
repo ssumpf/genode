@@ -44,13 +44,47 @@ namespace Ahci {
 struct Ahci::Hba : private Platform::Device::Mmio
 {
 	using Platform::Device::Mmio::base;
+	using Index = Platform::Device::Mmio::Index;
 
 	Platform::Device::Irq _irq;
 
+	/*
+	 * mmio region of AHCI controller is always in BAR 5
+	 */
+	class No_bar : Genode::Exception { };
+
+	Index _mmio_index(Platform::Connection &platform)
+	{
+		unsigned index = 0;
+		unsigned bar5  = ~0u;
+
+		platform.update();
+
+		platform.with_xml([&] (Xml_node & xml) {
+			xml.with_optional_sub_node("device", [&] (Xml_node xml) {
+				xml.for_each_sub_node("io_mem", [&] (Xml_node node) {
+					unsigned bar = node.attribute_value("pci_bar", ~0u);
+					if (bar == 5) bar5 = index;
+					index++;
+				});
+			});
+		});
+
+		if (bar5 == ~0u) {
+			error("MMIO region of HBA (BAR 5) not found. Try adding\n"
+			      "<policy info=\"yes\" ...>\n"
+			      "to platform driver configuration.");
+			throw No_bar();
+		}
+
+		return { bar5 };
+	}
+
 	Hba(Platform::Device        & dev,
-	    Signal_context_capability cap)
+	    Signal_context_capability cap,
+	    Platform::Connection    & platform)
 	:
-		Platform::Device::Mmio(dev),
+		Platform::Device::Mmio(dev, _mmio_index(platform)),
 		_irq(dev)
 	{
 		log("version: "
