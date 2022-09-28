@@ -125,9 +125,9 @@ struct Platform::Device_client : Rpc_client<Device_interface>
 		return call<Rpc_irq>(id);
 	}
 
-	Io_mem_session_capability io_mem(unsigned id, Range &range, Cache cache)
+	Io_mem_session_capability io_mem(unsigned id, Range &range)
 	{
-		return call<Rpc_io_mem>(id, range, cache);
+		return call<Rpc_io_mem>(id, range);
 	}
 
 	Dataspace_capability io_mem_dataspace(unsigned id = 0)
