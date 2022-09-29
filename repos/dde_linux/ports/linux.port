@@ -5,3 +5,6 @@ DOWNLOADS := linux.archive
 URL(linux) := https://cdn.kernel.org/pub/linux/kernel/v5.x/linux-$(VERSION).tar.xz
 SHA(linux) := f41a259cb2002dd2e3286524b2bb4e803f4f982992d092706ecea613584023b3
 DIR(linux) := src/linux
+
+PATCHES   := patches/sof_ipc_timeout.patch
+PATCH_OPT := -p1 -d ${DIR(linux)}
