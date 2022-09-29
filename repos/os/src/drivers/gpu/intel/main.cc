@@ -145,9 +145,6 @@ struct Igd::Device
 			String<16> const platform   = node.attribute_value("platform", String<16>("unknown"));
 			//String<64> const desc       = node.attribute_value("description", String<64>("unknown"));
 
-			error("vendor: ", Hex(vendor), " device: ", Hex(device), " gen: ", Hex(generation),
-			      " platform: ", platform, " desc: ", desc, " ID: ", Hex(_device.device_id()));
-
 			if (vendor != 0x8086 /* Intel */ || generation < 8)
 				return;
 
@@ -155,8 +152,7 @@ struct Igd::Device
 				.id                    = device,
 				.generation            = generation,
 				.platform              = platform_type(platform),
-				.features              = 0
-				_clock_frequency.value = _mmio.clock_frequency(generation);
+				.features              = 0,
 			};
 
 			if (info.platform == Igd::Device_info::Platform::UNKNOWN)
@@ -164,8 +160,9 @@ struct Igd::Device
 
 			if (info.id == dev_id) {
 				_info = info;
+				_clock_frequency.value = _mmio.clock_frequency(generation);
 
-				Genode::warning("ID: ",  _device.device_id(), " FOUND");
+				Genode::warning("ID: ",  info.id, " FOUND");
 				found = true;
 				return;
 			}
@@ -2303,7 +2300,7 @@ struct Main : Irq_ack_handler, Gpu_reset_handler
 		 * GPU present check for display engine related IRQs before calling platform
 		 * client
 		 */
-		if (display_irq && _platform_root->handle_irq())
+		if (display_irq && _platform_root.handle_irq()) {
 			return;
 		}
 
