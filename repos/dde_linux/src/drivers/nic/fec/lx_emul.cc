@@ -133,7 +133,7 @@ struct Platform::Device_client : Rpc_client<Device_interface>
 	Dataspace_capability io_mem_dataspace(unsigned id = 0)
 	{
 		Range range { };
-		return Io_mem_session_client(io_mem(id, range, UNCACHED)).dataspace();
+		return Io_mem_session_client(io_mem(id, range)).dataspace();
 	}
 };
 
