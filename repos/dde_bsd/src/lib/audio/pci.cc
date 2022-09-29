@@ -46,14 +46,25 @@ class Pci_driver
 
 		Genode::Env          & _env;
 		Platform::Connection   _pci    { _env };
-		Platform::Device       _dev    { _pci };
-		Platform::Device::Irq  _irq    { _dev };
-		Platform::Device::Mmio _mmio   { _dev };
 		Platform::Dma_buffer   _buffer { _pci, DMA_SIZE, Genode::UNCACHED };
 		Genode::Allocator_avl  _alloc;
 
-		uint16_t _vendor     { 0U };
-		uint16_t _device     { 0U };
+		struct Device
+		{
+			Platform::Device       dev;
+			Platform::Device::Irq  irq;
+			Platform::Device::Mmio mmio;
+
+			Device(Platform::Connection &pci,
+			       Platform::Device::Name const &name)
+			: dev { pci, name }, irq { dev }, mmio { dev }
+			{ }
+		};
+
+		Genode::Constructible<Device> _device { };
+
+		uint16_t _vendor_id  { 0U };
+		uint16_t _device_id  { 0U };
 		uint32_t _class_code { 0U };
 		uint16_t _sub_vendor { 0U };
 		uint16_t _sub_device { 0U };
@@ -79,14 +90,47 @@ class Pci_driver
 		Genode::addr_t _buffer_base() {
 			return (Genode::addr_t)_buffer.local_addr<char>(); }
 
+		void _handle_device_list() { /* intentionally left empty */ }
+
+		void _wait_for_device_list(Genode::Entrypoint &ep,
+		                                  Platform::Connection &pci)
+		{
+			using namespace Genode;
+			Constructible<Io_signal_handler<Pci_driver>> handler { };
+
+			bool device_list = false;
+			while (!device_list) {
+				pci.update();
+				pci.with_xml([&] (Xml_node & xml) {
+					if (xml.num_sub_nodes()) {
+						pci.sigh(Signal_context_capability());
+						if (handler.constructed())
+							handler.destruct();
+						device_list = true;
+						return;
+					}
+
+					if (!handler.constructed()) {
+						handler.construct(ep, *this,
+						                  &Pci_driver::_handle_device_list);
+						pci.sigh(*handler);
+					}
+
+					ep.wait_and_dispatch_one_io_signal();
+				});
+			}
+		}
+
 	public:
 
 		Pci_driver(Genode::Env &env, Genode::Allocator & alloc)
 		:
 			_env(env), _alloc(&alloc)
 		{
-			_irq.sigh(_irq_handler);
 			_alloc.add_range(_buffer_base(), DMA_SIZE);
+
+			/* will "block" until device list becomes available */
+			_wait_for_device_list(_env.ep(), _pci);
 		}
 
 		uint16_t sub_device() { return _sub_device; }
@@ -114,24 +158,29 @@ class Pci_driver
 				{
 					if (found) return;
 
+					String<16> name = node.attribute_value("name", String<16>());
+
 					node.with_optional_sub_node("pci-config", [&] (Xml_node node)
 					{
-						String<16> name = node.attribute_value("name", String<16>());
-						_vendor     = node.attribute_value("vendor_id", 0U);
-						_device     = node.attribute_value("device_id", 0U);
+						_vendor_id  = node.attribute_value("vendor_id", 0U);
+						_device_id  = node.attribute_value("device_id", 0U);
 						_class_code = node.attribute_value("class", 0U);
 
-						if ((_device == PCI_PRODUCT_INTEL_CORE4G_HDA_2) ||
-						    (_vendor == PCI_VENDOR_INTEL && name == "00:03.0")) {
+						if ((_device_id == PCI_PRODUCT_INTEL_CORE4G_HDA_2) ||
+						    (_vendor_id == PCI_VENDOR_INTEL && name == "00:03.0")) {
 							warning("ignore ", name,
 							        ", not supported HDMI/DP HDA device");
 							return;
 						}
 
+						/* we only construct the first useable device we find */
+						_device.construct(_pci, name);
+						_device->irq.sigh(_irq_handler);
+
 						/* we do the shifting to match OpenBSD's assumptions */
 						_pa.pa_tag   = 0x80000000UL;
 						_pa.pa_class = _class_code << 8;
-						_pa.pa_id    = _vendor | _device << 16;
+						_pa.pa_id    = _vendor_id | _device_id << 16;
 
 						if (probe_cfdata(&_pa))
 							found = true;
@@ -151,7 +200,7 @@ class Pci_driver
 		void handle_irq()
 		{
 			_irq_func(_irq_arg);
-			_irq.ack();
+			_device->irq.ack();
 		}
 
 
@@ -159,16 +208,16 @@ class Pci_driver
 		 ** Mmio management **
 		 *********************/
 
-		Genode::addr_t mmio_base() { return _mmio.base(); }
-		Genode::size_t mmio_size() { return _mmio.size(); }
+		Genode::addr_t mmio_base() { return _device->mmio.base(); }
+		Genode::size_t mmio_size() { return _device->mmio.size(); }
 
 		template <typename T>
 		T read(Genode::size_t offset) {
-			return *(volatile T*)(_mmio.base() + offset); }
+			return *(volatile T*)(_device->mmio.base() + offset); }
 
 		template <typename T>
 		void write(Genode::size_t offset, T value) {
-			*(volatile T*)(_mmio.base() + offset) = value; }
+			*(volatile T*)(_device->mmio.base() + offset) = value; }
 
 
 		/********************
