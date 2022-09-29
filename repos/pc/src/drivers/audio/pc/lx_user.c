@@ -90,21 +90,6 @@ enum Sound_event {
 };
 
 
-/* TODO: modes for jack operation */
-enum Jack_mode {
-	HEADPHONE,
-	HEADSET,
-	MICROPHONE,
-	DEFAULT = HEADSET
-};
-
-
-static const char *const jack_mode_labels[] = {
-	[HEADPHONE]  = "headphone",
-	[HEADSET]    = "headset",
-	[MICROPHONE] = "microphone",
-};
-
 
 /* handle for PCM device */
 struct sound_handle
@@ -121,6 +106,7 @@ struct sound_card
 {
 	unsigned              sound_events;
 	enum Jack_mode        jack_mode;
+	bool                  jack_plugged;
 	struct sound_routing *routing;
 	struct mixer         *mixer;
 	struct sound_handle  *playback;
@@ -1050,31 +1036,44 @@ struct input_handler jack_handler = {
 	.id_table = jack_ids,
 };
 
-
-static void sound_headset(struct sound_card *card, bool on)
+static void update_jack(struct sound_card *card)
 {
+	int err;
+	if (card->playback) {
+		err = sound_ioctl(card->playback, SNDRV_PCM_IOCTL_DRAIN, NULL);
+		if (err) printk("%s:%d err=%d\n", __func__, __LINE__ ,err);
+		err = sound_ioctl(card->playback, SNDRV_PCM_IOCTL_PREPARE, NULL);
+		if (err) printk("%s:%d err=%d\n", __func__, __LINE__ ,err);
+	}
+
+	if (card->capture) {
+		err = sound_ioctl(card->capture, SNDRV_PCM_IOCTL_DRAIN, NULL);
+		if (err) printk("%s:%d err=%d\n", __func__, __LINE__ ,err);
+		err = sound_ioctl(card->capture, SNDRV_PCM_IOCTL_DROP, NULL);
+		if (err) printk("%s:%d err=%d\n", __func__, __LINE__ ,err);
+	}
+
 	struct mixer *mixer = card->mixer;
+
 	unsigned index = card->routing->mute_headset;
-	mixer_control_set(&mixer->controls[index], 0, on);
-	mixer_control_set(&mixer->controls[index], 1, on);
+	mixer_control_set(&mixer->controls[index], 0, card->jack_mode != MICROPHONE && card->jack_plugged);
+	mixer_control_set(&mixer->controls[index], 1, card->jack_mode != MICROPHONE && card->jack_plugged);
 
 	index = card->routing->mute_mic_headset;
-	mixer_control_set(&mixer->controls[index], 0, on);
-	mixer_control_set(&mixer->controls[index], 1, on);
-}
+	mixer_control_set(&mixer->controls[index], 0, card->jack_mode != HEADPHONE && card->jack_plugged);
+	mixer_control_set(&mixer->controls[index], 1, card->jack_mode != HEADPHONE && card->jack_plugged);
 
-
-static void sound_internal(struct sound_card *card, bool on)
-{
-	struct mixer *mixer = card->mixer;
-
-	unsigned index = card->routing->mute_speaker;
-	mixer_control_set(&mixer->controls[index], 0, on);
-	mixer_control_set(&mixer->controls[index], 1, on);
+	index = card->routing->mute_speaker;
+	mixer_control_set(&mixer->controls[index], 0, !(card->jack_mode != MICROPHONE && card->jack_plugged));
+	mixer_control_set(&mixer->controls[index], 1, !(card->jack_mode != MICROPHONE && card->jack_plugged));
 
 	index = card->routing->mute_mic_internal;
-	mixer_control_set(&mixer->controls[index], 0, on);
-	mixer_control_set(&mixer->controls[index], 1, on);
+	mixer_control_set(&mixer->controls[index], 0, !(card->jack_mode != HEADPHONE && card->jack_plugged));
+	mixer_control_set(&mixer->controls[index], 1, !(card->jack_mode != HEADPHONE && card->jack_plugged));
+
+	card->capture = (card->jack_mode != HEADPHONE && card->jack_plugged) ? card->mic_headset : card->mic_internal;
+	err = sound_ioctl(card->capture, SNDRV_PCM_IOCTL_PREPARE, NULL);
+	if (err) printk("%s:%d err=%d\n", __func__, __LINE__ ,err);
 }
 
 
@@ -1084,39 +1083,32 @@ static void sound_internal(struct sound_card *card, bool on)
 
 static void sound_dispatch(struct sound_card *card, struct snd_card *c)
 {
-	int err;
 	while (true) {
 
 		if (sound_event(card, EVENT_JACK_UNPLUGGED) ||
 		    sound_event(card, EVENT_JACK_PLUGGED)) {
-			bool internal = sound_event(card, EVENT_JACK_UNPLUGGED) ? true : false;
+			card->jack_plugged = sound_event(card, EVENT_JACK_PLUGGED);
 
-			if (card->playback) {
-				err = sound_ioctl(card->playback, SNDRV_PCM_IOCTL_DRAIN, NULL);
-				if (err) printk("%s:%d err=%d\n", __func__, __LINE__ ,err);
-				err = sound_ioctl(card->playback, SNDRV_PCM_IOCTL_PREPARE, NULL);
-				if (err) printk("%s:%d err=%d\n", __func__, __LINE__ ,err);
-			}
+			update_jack(card);
 
-			if (card->capture) {
-				err = sound_ioctl(card->capture, SNDRV_PCM_IOCTL_DRAIN, NULL);
-				if (err) printk("%s:%d err=%d\n", __func__, __LINE__ ,err);
-				err = sound_ioctl(card->capture, SNDRV_PCM_IOCTL_DROP, NULL);
-				if (err) printk("%s:%d err=%d\n", __func__, __LINE__ ,err);
-			}
-
-			sound_headset(card, !internal);
-			sound_internal(card, internal);
-			card->capture = internal ? card->mic_internal : card->mic_headset;
-
-			err = sound_ioctl(card->capture, SNDRV_PCM_IOCTL_PREPARE, NULL);
-			if (err) printk("%s:%d err=%d\n", __func__, __LINE__ ,err);
 			mixer_report_controls(card->mixer);
 		}
 
 		if (sound_event(card, EVENT_MIXER)) {
 			if (mixer_update_controls(card->mixer))
 				mixer_report_controls(card->mixer);
+
+			if(genode_jack_mode() != card->jack_mode)
+			{
+				card->jack_mode = genode_jack_mode();
+
+				if(card->jack_plugged)
+				{
+					update_jack(card);
+				}
+
+				mixer_report_controls(card->mixer);
+			}
 		}
 
 		if (sound_event(card, EVENT_PCM)) {

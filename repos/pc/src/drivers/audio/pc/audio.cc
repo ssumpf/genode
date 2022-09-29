@@ -437,6 +437,7 @@ struct Audio
 		&Audio::config_update };
 
 	bool mixer_update { false };
+	Jack_mode jack_mode = Jack_mode::DEFAULT;
 
 	Audio_out::Out  out { env };
 	Audio_out::Root out_root { env, alloc, out.data_avail() };
@@ -466,6 +467,7 @@ struct Audio
 			mixer.destruct();
 
 		mixer_update = config.xml().has_sub_node("control");
+		jack_mode = Jack_mode(config.xml().attribute_value("jack_mode", (unsigned) Jack_mode::DEFAULT));
 		devices.enabled(config.xml().attribute_value("report_devices", false));
 	}
 };
@@ -566,6 +568,11 @@ static void report_enum(Reporter::Xml_generator &xml, genode_mixer_control *cont
 extern "C" bool genode_mixer_update(void)
 {
 	return _audio().mixer_update;
+}
+
+extern "C" enum Jack_mode genode_jack_mode(void)
+{
+	return _audio().jack_mode;
 }
 
 
