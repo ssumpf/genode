@@ -44,6 +44,12 @@ bool Device::Io_port::match(uint16_t addr)
 
 void Device::Irq::handle()
 {
+	if (masked) {
+		occured = true;
+		return;
+	}
+
+	occured = false;
 	env().last_irq = number;
 	env().scheduler.unblock_irq_handler();
 	env().scheduler.schedule();
@@ -139,12 +145,14 @@ bool Device::irq_unmask(unsigned number)
 		ret = true;
 		enable();
 
-		if (irq.session.constructed())
-			return;
+		if (!irq.session.constructed()) {
+			irq.session.construct(*_pdev, irq.idx);
+			irq.session->sigh_omit_initial_signal(irq.handler);
+			irq.session->ack();
+		}
 
-		irq.session.construct(*_pdev, irq.idx);
-		irq.session->sigh_omit_initial_signal(irq.handler);
-		irq.session->ack();
+		irq.masked = false;
+		if (irq.occured) irq.handle();
 	});
 
 	return ret;
@@ -157,10 +165,7 @@ void Device::irq_mask(unsigned number)
 		return;
 
 	for_each_irq([&] (Irq & irq) {
-		if (irq.number != number)
-			return;
-		irq.session.destruct();
-	});
+		if (irq.number == number) irq.masked = true; });
 
 }
 
