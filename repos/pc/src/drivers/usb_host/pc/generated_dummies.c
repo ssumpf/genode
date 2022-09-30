@@ -356,22 +356,6 @@ struct pci_dev * pci_get_slot(struct pci_bus * bus,unsigned int devfn)
 
 #include <linux/pci.h>
 
-void __iomem * pci_ioremap_bar(struct pci_dev * pdev,int bar)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/pci.h>
-
-int pci_read_config_dword(const struct pci_dev * dev,int where,u32 * val)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/pci.h>
-
 int pci_set_power_state(struct pci_dev * dev,pci_power_t state)
 {
 	lx_emul_trace_and_stop(__func__);

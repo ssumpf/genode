@@ -144,6 +144,8 @@ static void pci_add_single_device_callback(void       * data,
 		return;
 	}
 
+	lx_emul_execute_pci_fixup(dev);
+
 	dev->match_driver = true;
 	if (device_attach(&dev->dev)) {
 		list_del(&dev->bus_list);

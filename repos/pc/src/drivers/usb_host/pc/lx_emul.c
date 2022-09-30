@@ -14,6 +14,13 @@
 #include <lx_emul.h>
 #include <linux/pci.h>
 
+void __iomem * pci_ioremap_bar(struct pci_dev * pdev, int bar)
+{
+	struct resource *res = &pdev->resource[bar];
+	return ioremap(res->start, resource_size(res));
+}
+
+
 enum {
 	UHCI_USBLEGSUP          = 0xc0,
 	UHCI_USBRES_INTEL       = 0xc4,
@@ -26,7 +33,7 @@ int pci_read_config_byte(const struct pci_dev * dev,int where,u8 * val)
 {
 	switch (where) {
 	case EHCI_SERIAL_BUS_RELEASE:
-		*val = 0;
+		*val = 0x20;
 		return 0;
 	};
 	lx_emul_trace_and_stop(__func__);
@@ -36,6 +43,9 @@ int pci_read_config_byte(const struct pci_dev * dev,int where,u8 * val)
 int pci_read_config_word(const struct pci_dev * dev,int where,u16 * val)
 {
 	switch (where) {
+	case PCI_COMMAND:
+		*val = 0x7;
+		return 0;
 	case EHCI_PORT_WAKE:
 		*val = 0;
 		return 0;
@@ -45,6 +55,13 @@ int pci_read_config_word(const struct pci_dev * dev,int where,u16 * val)
 		return 0;
 	};
 	lx_emul_trace_and_stop(__func__);
+}
+
+
+int pci_read_config_dword(const struct pci_dev * dev,int where,u32 * val)
+{
+	*val = 0;
+	return 0;
 }
 
 
