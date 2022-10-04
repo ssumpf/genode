@@ -20,19 +20,17 @@ using Driver::Shared_interrupt_session;
 void Shared_interrupt::_handle()
 {
 	_sessions.for_each([&] (Shared_interrupt_session & session) {
-		if (session.signal()) _wait_for_acks++; });
+		session.signal(); });
 }
 
 
 void Shared_interrupt::enable(Irq_session::Trigger  mode,
                               Irq_session::Polarity polarity)
 {
-	if (_irq.constructed())
-		return;
-
-	_irq.construct(_env, _number, mode, polarity);
-	_irq->sigh(_handler);
-	_irq->ack_irq();
+	if (!_irq.constructed()) {
+		_irq.construct(_env, _number, mode, polarity);
+		_irq->sigh(_handler);
+	}
 }
 
 
@@ -50,16 +48,18 @@ void Shared_interrupt::disable()
 
 void Shared_interrupt::ack()
 {
-	if (_wait_for_acks && ((--_wait_for_acks) == 0))
-		_irq->ack_irq();
+	unsigned out_standing = 0;
+	_sessions.for_each([&] (Shared_interrupt_session & session) {
+		if (session.out_standing()) out_standing++; });
+	if (!out_standing) _irq->ack_irq();
 }
 
 
-bool Shared_interrupt_session::signal()
+void Shared_interrupt_session::signal()
 {
 	if (!_cap.valid())
-		return false;
+		return;
 
+	_out_standing = true;
 	Signal_transmitter(_cap).submit(1);
-	return true;
 }

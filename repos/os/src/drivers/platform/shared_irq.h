@@ -36,7 +36,6 @@ class Driver::Shared_interrupt :
 		Io_signal_handler<Shared_interrupt> _handler;
 		Constructible<Irq_connection>       _irq {};
 		Registry<Shared_interrupt_session>  _sessions {};
-		unsigned                            _wait_for_acks { 0 };
 
 		void _handle();
 
@@ -70,7 +69,7 @@ class Driver::Shared_interrupt_session :
 
 		Shared_interrupt        & _sirq;
 		Signal_context_capability _cap {};
-		bool                      _first_ack { true };
+		bool                      _out_standing { true };
 
 	public:
 
@@ -86,7 +85,8 @@ class Driver::Shared_interrupt_session :
 
 		~Shared_interrupt_session() { _sirq.disable(); }
 
-		bool signal();
+		bool out_standing() { return _out_standing; }
+		void signal();
 
 
 		/***************************
@@ -95,8 +95,8 @@ class Driver::Shared_interrupt_session :
 
 		void ack_irq() override
 		{
-			if (_first_ack) _first_ack = false;
-			else            _sirq.ack();
+			_out_standing = false;
+			_sirq.ack();
 		}
 
 		void sigh(Signal_context_capability cap) override { _cap = cap; }
