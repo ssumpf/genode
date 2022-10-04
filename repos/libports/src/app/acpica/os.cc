@@ -123,7 +123,7 @@ struct Acpica::Main
 		void *context;
 	} irq_handler;
 
-	void init_acpica(Acpica::Wait_acpi_ready, Acpica::Act_as_acpi_drv);
+	void init_acpica(Acpica::Act_as_acpi_drv);
 
 	Main(Genode::Env &env)
 	:
@@ -134,14 +134,12 @@ struct Acpica::Main
 		bool const enable_reset    = config.xml().attribute_value("reset", false);
 		bool const enable_poweroff = config.xml().attribute_value("poweroff", false);
 		bool const enable_report   = config.xml().attribute_value("report", false);
-		bool const enable_ready    = config.xml().attribute_value("acpi_ready", false);
 		bool const act_as_acpi_drv = config.xml().attribute_value("act_as_acpi_drv", false);
 
 		if (enable_report)
 			report = new (heap) Acpica::Reportstate(env);
 
-		init_acpica(Wait_acpi_ready{enable_ready},
-		            Act_as_acpi_drv{act_as_acpi_drv});
+		init_acpica(Act_as_acpi_drv{act_as_acpi_drv});
 
 		if (enable_report)
 			report->enable();
@@ -162,16 +160,6 @@ struct Acpica::Main
 
 		sci_conn->sigh(sci_irq);
 		sci_conn->ack_irq();
-
-		if (!enable_ready)
-			return;
-
-		/* we are ready - signal it via changing system state */
-		static Genode::Reporter _system_rom(env, "system", "acpi_ready");
-		_system_rom.enabled(true);
-		Genode::Reporter::Xml_generator xml(_system_rom, [&] () {
-			xml.attribute("state", "acpi_ready");
-		});
 	}
 
 	void acpi_irq()
@@ -249,10 +237,9 @@ ACPI_STATUS Bridge::detect(ACPI_HANDLE bridge, UINT32, void * m,
 	return AE_OK;
 }
 
-void Acpica::Main::init_acpica(Wait_acpi_ready wait_acpi_ready,
-                               Act_as_acpi_drv act_as_acpi_drv)
+void Acpica::Main::init_acpica(Act_as_acpi_drv act_as_acpi_drv)
 {
-	Acpica::init(env, heap, wait_acpi_ready, act_as_acpi_drv);
+	Acpica::init(env, heap, act_as_acpi_drv);
 
 	/* enable debugging: */
 	if (false) {
