@@ -72,6 +72,7 @@ class Lx_kit::Device : List<Device>::Element
 
 			Irq(Entrypoint & ep, unsigned idx, unsigned number);
 
+			void _handle();
 			void handle();
 		};
 
