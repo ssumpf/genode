@@ -48,10 +48,10 @@ void Shared_interrupt::disable()
 
 void Shared_interrupt::ack()
 {
-	unsigned out_standing = 0;
+	unsigned outstanding = 0;
 	_sessions.for_each([&] (Shared_interrupt_session & session) {
-		if (session.out_standing()) out_standing++; });
-	if (!out_standing) _irq->ack_irq();
+		if (session.outstanding()) outstanding++; });
+	if (!outstanding) _irq->ack_irq();
 }
 
 
@@ -60,6 +60,6 @@ void Shared_interrupt_session::signal()
 	if (!_cap.valid())
 		return;
 
-	_out_standing = true;
+	_outstanding = true;
 	Signal_transmitter(_cap).submit(1);
 }

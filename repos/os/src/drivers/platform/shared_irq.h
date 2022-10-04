@@ -69,7 +69,7 @@ class Driver::Shared_interrupt_session :
 
 		Shared_interrupt        & _sirq;
 		Signal_context_capability _cap {};
-		bool                      _out_standing { true };
+		bool                      _outstanding { true };
 
 	public:
 
@@ -85,7 +85,7 @@ class Driver::Shared_interrupt_session :
 
 		~Shared_interrupt_session() { _sirq.disable(); }
 
-		bool out_standing() { return _out_standing; }
+		bool outstanding() { return _outstanding; }
 		void signal();
 
 
@@ -95,7 +95,7 @@ class Driver::Shared_interrupt_session :
 
 		void ack_irq() override
 		{
-			_out_standing = false;
+			_outstanding = false;
 			_sirq.ack();
 		}
 
