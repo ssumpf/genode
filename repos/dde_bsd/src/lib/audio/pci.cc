@@ -63,11 +63,11 @@ class Pci_driver
 
 		Genode::Constructible<Device> _device { };
 
-		uint16_t _vendor_id  { 0U };
-		uint16_t _device_id  { 0U };
-		uint32_t _class_code { 0U };
-		uint16_t _sub_vendor { 0U };
-		uint16_t _sub_device { 0U };
+		uint16_t _vendor_id     { 0U };
+		uint16_t _device_id     { 0U };
+		uint32_t _class_code    { 0U };
+		uint16_t _sub_vendor_id { 0U };
+		uint16_t _sub_device_id { 0U };
 
 		typedef int (*intrh_t)(void*);
 
@@ -133,8 +133,8 @@ class Pci_driver
 			_wait_for_device_list(_env.ep(), _pci);
 		}
 
-		uint16_t sub_device() { return _sub_device; }
-		uint16_t sub_vendor() { return _sub_vendor; }
+		uint16_t sub_device_id() { return _sub_device_id; }
+		uint16_t sub_vendor_id() { return _sub_vendor_id; }
 
 		int probe()
 		{
@@ -162,9 +162,11 @@ class Pci_driver
 
 					node.with_optional_sub_node("pci-config", [&] (Xml_node node)
 					{
-						_vendor_id  = node.attribute_value("vendor_id", 0U);
-						_device_id  = node.attribute_value("device_id", 0U);
-						_class_code = node.attribute_value("class", 0U);
+						_vendor_id      = node.attribute_value("vendor_id", 0U);
+						_device_id      = node.attribute_value("device_id", 0U);
+						_class_code     = node.attribute_value("class", 0U);
+						_sub_vendor_id  = node.attribute_value("sub_vendor_id", 0U);
+						_sub_device_id  = node.attribute_value("sub_device_id", 0U);
 
 						if ((_device_id == PCI_PRODUCT_INTEL_CORE4G_HDA_2) ||
 						    (_vendor_id == PCI_VENDOR_INTEL && name == "00:03.0")) {
@@ -337,7 +339,7 @@ extern "C" pcireg_t pci_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 	switch (reg) {
 	case 0x4:  return 0x207; /* command register */
 	case 0x10: return drv->mmio_base();
-	case 0x2c: return drv->sub_device() << 16 | drv->sub_vendor();
+	case 0x2c: return drv->sub_device_id() << 16 | drv->sub_vendor_id();
 	default:
 		if (debug)
 			Genode::warning("Ignore reading of PCI config space @ ", reg);
