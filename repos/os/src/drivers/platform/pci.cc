@@ -152,8 +152,11 @@ void Driver::pci_msi_enable(Env                   & env,
 				using Entry = Config::Msi_x_capability::Table_entry;
 				Entry e (msix_table_start + Entry::SIZE * i);
 				if (!i) {
-					e.write<Entry::Address_64_lower>(info.address & 0xfffffffc);
-					e.write<Entry::Address_64_upper>((uint32_t)(info.address >> 32));
+					uint32_t lower = info.address & 0xfffffffc;
+					uint32_t upper = sizeof(info.address) > 4 ?
+						(uint32_t)(info.address >> 32) : 0;
+					e.write<Entry::Address_64_lower>(lower);
+					e.write<Entry::Address_64_upper>(upper);
 					e.write<Entry::Data>((uint32_t)info.value);
 					e.write<Entry::Vector_control::Mask>(0);
 				} else
