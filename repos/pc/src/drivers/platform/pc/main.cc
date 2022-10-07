@@ -60,6 +60,9 @@ void Driver::Main::_reset()
 	{
 		uint16_t const io_port = reset.attribute_value<uint16_t>("io_port", 0);
 		uint8_t  const value   = reset.attribute_value<uint8_t>("value",    0);
+
+		log("trigger reset by writing value ", value, " to I/O port ", Hex(io_port));
+
 		try {
 			Io_port_connection reset_port { _env, io_port, 1 };
 			reset_port.outb(io_port, value);
