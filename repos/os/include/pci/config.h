@@ -284,7 +284,8 @@ struct Pci::Config : Genode::Mmio
 		Genode::uint8_t bar() {
 			return (Genode::uint8_t) read<Table::Bar_index>(); }
 
-		Genode::size_t table_offset() { return read<Table::Offset>(); }
+		Genode::size_t table_offset() {
+			return read<Table::Offset>() << 3; }
 
 		unsigned slots() { return read<Control::Slots>(); }
 
