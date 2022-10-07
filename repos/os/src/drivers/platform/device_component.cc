@@ -101,7 +101,7 @@ Genode::Irq_session_capability Device_component::irq(unsigned idx)
 			                  pci_cfg_addr);
 			Irq_session::Info info = irq.irq->info();
 			if (info.type == Irq_session::Info::MSI)
-				pci_msi_enable(_env, *this, pci_cfg_addr, info);
+				pci_msi_enable(_env, *this, pci_cfg_addr, info, irq.type);
 		}
 
 		if (irq.shared && !irq.sirq.constructed())
