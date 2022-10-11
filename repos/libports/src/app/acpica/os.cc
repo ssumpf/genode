@@ -123,7 +123,7 @@ struct Acpica::Main
 		void *context;
 	} irq_handler;
 
-	void init_acpica(Acpica::Act_as_acpi_drv);
+	void init_acpica();
 
 	Main(Genode::Env &env)
 	:
@@ -134,12 +134,11 @@ struct Acpica::Main
 		bool const enable_reset    = config.xml().attribute_value("reset", false);
 		bool const enable_poweroff = config.xml().attribute_value("poweroff", false);
 		bool const enable_report   = config.xml().attribute_value("report", false);
-		bool const act_as_acpi_drv = config.xml().attribute_value("act_as_acpi_drv", false);
 
 		if (enable_report)
 			report = new (heap) Acpica::Reportstate(env);
 
-		init_acpica(Act_as_acpi_drv{act_as_acpi_drv});
+		init_acpica();
 
 		if (enable_report)
 			report->enable();
@@ -237,9 +236,9 @@ ACPI_STATUS Bridge::detect(ACPI_HANDLE bridge, UINT32, void * m,
 	return AE_OK;
 }
 
-void Acpica::Main::init_acpica(Act_as_acpi_drv act_as_acpi_drv)
+void Acpica::Main::init_acpica()
 {
-	Acpica::init(env, heap, act_as_acpi_drv);
+	Acpica::init(env, heap);
 
 	/* enable debugging: */
 	if (false) {
@@ -414,32 +413,6 @@ void Acpica::Main::init_acpica(Act_as_acpi_drv act_as_acpi_drv)
 	if (status != AE_OK) {
 		Genode::error("AcpiGetDevices (FUJ02E3) failed, status=", status);
 		return;
-	}
-
-	if (act_as_acpi_drv.enabled) {
-		/* lookup PCI root bridge */
-		void * pci_bridge = (void *)PCI_ROOT_HID_STRING;
-		status = AcpiGetDevices(ACPI_STRING(PCI_ROOT_HID_STRING), Bridge::detect,
-		                        this, &pci_bridge);
-		if (status != AE_OK || pci_bridge == (void *)PCI_ROOT_HID_STRING)
-			pci_bridge = nullptr;
-
-		/* lookup PCI Express root bridge */
-		void * pcie_bridge = (void *)PCI_EXPRESS_ROOT_HID_STRING;
-		status = AcpiGetDevices(ACPI_STRING(PCI_EXPRESS_ROOT_HID_STRING),
-		                        Bridge::detect, this, &pcie_bridge);
-		if (status != AE_OK || pcie_bridge == (void *)PCI_EXPRESS_ROOT_HID_STRING)
-			pcie_bridge = nullptr;
-
-		if (pcie_bridge && pci_bridge)
-			Genode::log("PCI and PCIE root bridge found - using PCIE for IRQ "
-			            "routing information");
-
-		Bridge *bridge = pcie_bridge ? reinterpret_cast<Bridge *>(pcie_bridge)
-		                             : reinterpret_cast<Bridge *>(pci_bridge);
-
-		/* Generate report for platform driver */
-		Acpica::generate_report(env, bridge);
 	}
 }
 

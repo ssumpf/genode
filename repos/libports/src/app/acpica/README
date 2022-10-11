@@ -40,25 +40,13 @@ Furthermore the ACPICA library may trigger, dependent on the ACPI ASL code,
 various I/O port and I/O mem accesses to hardware. Accesses to PCI devices are
 ignored and dropped by this component.
 
-Acpica as acpi_drv replacement
-------------------------------
-
-The application acpica may also be run as replacement of the original acpi_drv
-when the 'act_as_acpi_drv' attribute is set to yes:
-
-!  <config ... act_as_acpi_drv="yes"/>
-
-The acpica driver will parse in this mode the ACPI tables and will generate
-the same content in the ACPI report, which is transformed by a report_rom
-service into a ACPI ROM expected initially by the platform driver.
-
 Excerpt of important parts of the acpica configuration
 ------------------------------------------------------
 
 !<start name="acpica">
 !  <!-- <binary name="debug-acpica"/> -->
 !  ...
-!  <config reset="no" poweroff="no" report="yes" act_as_acpi_drv="no"/>
+!  <config reset="no" poweroff="no" report="yes"/>
 !  <route>
 !    <service name="ROM" label="system"> <child name="..."/> </service>
 !    <service name="Report"> <child name="..."/> </service>

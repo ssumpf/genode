@@ -21,9 +21,7 @@ namespace Genode {
 
 namespace Acpica {
 
-	struct Act_as_acpi_drv { bool enabled; };
-
-	void init(Genode::Env &, Genode::Allocator &, Act_as_acpi_drv);
+	void init(Genode::Env &, Genode::Allocator &);
 	void use_platform_drv();
 }
 

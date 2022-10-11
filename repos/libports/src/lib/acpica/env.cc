@@ -46,12 +46,9 @@ Platform::Client  & Acpica::platform()
 }
 
 
-void Acpica::init(Genode::Env &env, Genode::Allocator &heap,
-                  Act_as_acpi_drv const act_as_acpi_drv)
+void Acpica::init(Genode::Env &env, Genode::Allocator &heap)
 {
 	instance.construct(env, heap);
 
-	/* if not running as acpi_drv, block until original acpi_drv is done */
-	if (!act_as_acpi_drv.enabled)
-		platform();
+	platform();
 }
