@@ -200,7 +200,6 @@ struct Acpica::Main
 #include "lid.h"
 #include "sb.h"
 #include "ec.h"
-#include "bridge.h"
 #include "fujitsu.h"
 
 ACPI_STATUS init_pic_mode()
@@ -220,21 +219,6 @@ ACPI_STATUS init_pic_mode()
 	                          &arguments, nullptr);
 }
 
-ACPI_STATUS Bridge::detect(ACPI_HANDLE bridge, UINT32, void * m,
-                           void **return_bridge)
-{
-	Acpica::Main * main = reinterpret_cast<Acpica::Main *>(m);
-	Bridge * dev_obj = new (main->heap) Bridge(main->report, bridge);
-
-	if (*return_bridge == (void *)PCI_ROOT_HID_STRING)
-		Genode::log("detected - bridge - PCI root bridge");
-	if (*return_bridge == (void *)PCI_EXPRESS_ROOT_HID_STRING)
-		Genode::log("detected - bridge - PCIE root bridge");
-
-	*return_bridge = dev_obj;
-
-	return AE_OK;
-}
 
 void Acpica::Main::init_acpica()
 {
