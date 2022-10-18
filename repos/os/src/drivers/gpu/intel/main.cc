@@ -947,7 +947,7 @@ Genode::error("SCHEDULE GEN12");
 
 		_mmio.flush_gfx_tlb();
 
-		if (_info.generation < 12)
+		if (_info.generation < 11)
 			_submit_execlist(rcs);
 		else
 			_submit_execlist_gen12(rcs);
@@ -1462,8 +1462,8 @@ Genode::error("SCHEDULE GEN12");
 	bool handle_irq()
 	{
 		bool display_irq = _mmio.display_irq(_info.generation);
-		Genode::error("IRQ GW0: ", 
-			Hex(_mmio.read<Mmio::GEN12_GT_INTR_DW0>()));
+		Genode::error("IRQ GW0: ");
+			//Hex(_mmio.read<Mmio::GEN12_GT_INTR_DW0>()));
 
 		/* handle render interrupts only */
 		if (_mmio.render_irq(_info.generation) == false)

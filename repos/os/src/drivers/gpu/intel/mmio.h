@@ -1737,7 +1737,8 @@ class Igd::Mmio : public Platform::Device::Mmio
 		}
 
 		void enable_intr(unsigned const generation)
-		{
+		{	
+			Genode::warning("_____ENABLE MASTER_____");
 			write<Igd::Mmio::RCS_EMR>(0xffffff00);
 
 			if (generation < 11)
@@ -1808,7 +1809,7 @@ class Igd::Mmio : public Platform::Device::Mmio
 		{
 			Genode::warning(__func__, " MASTER: ", Genode::Hex(read<GEN12_GFX_MSTR_INTR>()));
 			if (generation < 11)
-				return read<MASTER_INT_CTL::De_pch_interrupts_pending>() != 0;
+				return read<MASTER_INT_CTL::De_interrupts_pending>() != 0;
 			else
 				return read<GEN12_GFX_MSTR_INTR::Display>() == 1;
 		}
