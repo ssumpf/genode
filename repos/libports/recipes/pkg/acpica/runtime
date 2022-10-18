@@ -16,6 +16,6 @@
 		<rom label="acpica"/>
 	</content>
 
-	<config reset="yes" poweroff="yes" report="yes" report_period_ms="2000"/>
+	<config reset="yes" poweroff="yes" report="yes" report_period_ms="20000"/>
 
 </runtime>
