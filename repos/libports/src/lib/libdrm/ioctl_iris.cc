@@ -50,7 +50,7 @@ namespace Drm
 	struct Context;
 }
 
-enum { verbose_ioctl = true };
+enum { verbose_ioctl = false };
 
 namespace Utils
 {
