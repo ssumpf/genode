@@ -163,7 +163,6 @@ struct Igd::Device
 				_revision.value        = rev_id;
 				_clock_frequency.value = _mmio.clock_frequency(generation);
 
-				Genode::warning("ID: ",  info.id, " FOUND");
 				found = true;
 				return;
 			}
@@ -629,13 +628,12 @@ struct Igd::Device
 			                  + ((_device.generation().value == 9) ? 6 : 0)
 			                  + ((_device.generation().value == 8) ? 20 : 22) /* epilog + w/a */
 			                  + (dc_flush_wa ? 12 : 0);
-			if (!el.ring_avail(need)) { 
-				warning("RESET fill zero");
-				el.ring_reset_and_fill_zero(); }
+
+			if (!el.ring_avail(need))
+				el.ring_reset_and_fill_zero();
 
 			/* save old tail */
 			Ring_buffer::Index const tail = el.ring_tail();
-			warning("INDEX: ", Hex(tail));
 
 			/*
 			 * IHD-OS-BDW-Vol 7-11.15 p. 18 ff.
@@ -845,8 +843,6 @@ struct Igd::Device
 			/* tail_offset must be specified in qword */
 			rcs.context->tail_offset((offset % (rcs.ring_size())) / 8);
 
-			Genode::warning("END INDEX: ", Hex(el.ring_tail()), " el: ", &el, " VCPU: ", this);
-
 			return true;
 		}
 
@@ -904,7 +900,7 @@ struct Igd::Device
 	{
 		if (_mmio.read<Igd::Mmio::GEN12_EXECLIST_STATUS_RSCUNIT::Execution_queue_invalid>() == 0)
 			return;
-Genode::error("SCHEDULE GEN12");
+
 		Execlist &el = *engine.execlist;
 
 		_mmio.write<Igd::Mmio::GEN12_EXECLIST_SQ_CONTENTS_RSCUNIT>(el.elem0().low(), 0);
@@ -914,9 +910,7 @@ Genode::error("SCHEDULE GEN12");
 			_mmio.write<Igd::Mmio::GEN12_EXECLIST_SQ_CONTENTS_RSCUNIT>(0, i);
 
 		/* load SQ to EQ */
-		Genode::warning("LOAD EQ");
 		_mmio.write<Igd::Mmio::GEN12_EXECLIST_CONTROL_RSCUNIT::Load>(1);
-		Genode::warning("LOADED EQ");
 	}
 
 	Vgpu *_unschedule_current_vgpu()
@@ -1128,7 +1122,6 @@ Genode::error("SCHEDULE GEN12");
 
 	void _init_topology_gen12()
 	{
-		Genode::error(__func__);
 		/* NOTE: This needs to be different for DG2 and Xe_HP */
 		_topology.max_slices           = 1;
 		_topology.max_subslices        = 6;
@@ -1153,9 +1146,6 @@ Genode::error("SCHEDULE GEN12");
 				eu_en |= (3u << (i * 2));
 			}
 		}
-
-		Genode::warning("slice_mask: ", Hex(_topology.slice_mask), " dss: ", Hex(dss_en),
-		                " eu_en: ", Hex(eu_en));
 
 		for (unsigned i = 0; i < _topology.max_subslices; i++) {
 			if (_topology.has_subslice(0, i)) {
@@ -1462,23 +1452,19 @@ Genode::error("SCHEDULE GEN12");
 	bool handle_irq()
 	{
 		bool display_irq = _mmio.display_irq(_info.generation);
-		Genode::error("IRQ GW0: ");
-			//Hex(_mmio.read<Mmio::GEN12_GT_INTR_DW0>()));
 
 		/* handle render interrupts only */
 		if (_mmio.render_irq(_info.generation) == false)
 			return display_irq;
 
-Genode::warning("RENDER IRQ: true DISPLAY IRQ: ", display_irq);
 		_mmio.disable_master_irq(_info.generation);
 
 		Mmio::GEN12_RENDER_INTR_VEC::access_t const v = _mmio.read_irq_vector(_info.generation);
-Genode::warning("VECTOR: ", Hex(v));
+
 		bool const ctx_switch    = Mmio::GEN12_RENDER_INTR_VEC::Cs_ctx_switch_interrupt::get(v);
 		bool const user_complete = Mmio::GEN12_RENDER_INTR_VEC::Cs_mi_user_interrupt::get(v);
 
 		if (v) {
-			error("CLEAR render IRQ");
 			_mmio.clear_render_irq(_info.generation, v);
 	}
 

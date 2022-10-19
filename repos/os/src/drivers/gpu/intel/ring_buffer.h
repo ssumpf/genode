@@ -60,7 +60,6 @@ class Igd::Ring_buffer
 		 */
 		void reset()
 		{
-			Genode::warning("RING RESET");
 			Genode::memset(_dwords, 0, _max * sizeof(uint32_t));
 			_tail = 0;
 		}
@@ -70,7 +69,6 @@ class Igd::Ring_buffer
 		 */
 		void reset_and_fill_zero()
 		{
-			Genode::warning("RING RESET AND ZERO");
 			Genode::size_t const bytes = (_max - _tail) * sizeof(uint32_t);
 			Genode::memset(_dwords + _tail, 0, bytes);
 			_tail = 0;

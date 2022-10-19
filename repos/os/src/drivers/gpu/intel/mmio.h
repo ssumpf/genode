@@ -1165,7 +1165,6 @@ class Igd::Mmio : public Platform::Device::Mmio
 			using namespace Genode;
 
 			while (read<typename REG_ACK::Kernel>()) {
-				log(__func__, " ", __LINE__, " wait ", Hex(read<REG_ACK>()));
 				_delayer.usleep(500 * 1000);
 
 				_fw_enable_wa<REG, REG_ACK>();
@@ -1190,7 +1189,6 @@ class Igd::Mmio : public Platform::Device::Mmio
 			using namespace Genode;
 
 			while (read<typename REG_ACK::Fallback_kernel>()) {
-				log(__func__, " ", __LINE__, " wait ", Hex(read<REG_ACK>()));
 				_delayer.usleep(500 * 1000);
 			}
 
@@ -1201,12 +1199,7 @@ class Igd::Mmio : public Platform::Device::Mmio
 
 			_delayer.usleep(100 * 1000);
 
-			log(__func__, " ", __LINE__, " ",
-			    Genode::Hex(read<REG>()), " ",
-			    Genode::Hex(read<REG_ACK>()));
-
 			while (!(read<typename REG_ACK::Fallback_kernel>())) {
-				log(__func__, " ", __LINE__, " wait ", Hex(read<REG_ACK>()));
 				_delayer.usleep(500 * 1000);
 			}
 
@@ -1234,8 +1227,6 @@ class Igd::Mmio : public Platform::Device::Mmio
 			write<REG>(v);
 
 			while (read<typename REG_ACK::Kernel>()) {
-				Genode::log(__func__, " ", __LINE__, " wait ",
-				            Genode::Hex(read<REG_ACK>()));
 				_delayer.usleep(500 * 1000);
 			}
 		}
@@ -1630,14 +1621,9 @@ class Igd::Mmio : public Platform::Device::Mmio
 
 		void forcewake_gen9_enable()
 		{
-			Genode::log("FORCE WAKE GT");
 			_fw_enable_gt();
-			Genode::log("FORCE WAKE RENDER");
 			_fw_enable_render();
-			Genode::log("FORCE WAKE DONE");
-			//Genode::log("FORCE WAKE RENDER");
 			//_fw_enable_media();
-			//Genode::log("FORCE WAKE DONE");
 		}
 
 		void forcewake_gen9_disable()
@@ -1738,7 +1724,6 @@ class Igd::Mmio : public Platform::Device::Mmio
 
 		void enable_intr(unsigned const generation)
 		{	
-			Genode::warning("_____ENABLE MASTER_____");
 			write<Igd::Mmio::RCS_EMR>(0xffffff00);
 
 			if (generation < 11)
@@ -1807,7 +1792,6 @@ class Igd::Mmio : public Platform::Device::Mmio
 
 		bool display_irq(unsigned const generation)
 		{
-			Genode::warning(__func__, " MASTER: ", Genode::Hex(read<GEN12_GFX_MSTR_INTR>()));
 			if (generation < 11)
 				return read<MASTER_INT_CTL::De_interrupts_pending>() != 0;
 			else
