@@ -91,21 +91,51 @@ struct Igd::Device
 
 	struct Pci_backend_alloc : Utils::Backend_alloc
 	{
+		Env                  &_env;
 		Platform::Connection &_pci;
 
-		Pci_backend_alloc(Platform::Connection &pci) : _pci(pci) { }
+		Pci_backend_alloc(Env &env, Platform::Connection &pci)
+		: _env(env), _pci(pci) { }
 
 		Ram_dataspace_capability alloc(size_t size) override
 		{
-			return _pci.retry_with_upgrade(Genode::Ram_quota{8*PAGE_SIZE},
-			                               Genode::Cap_quota{2}, [&] () {
-				return _pci.alloc_dma_buffer(size, Genode::UNCACHED); });
+			enum {
+				UPGRADE_RAM      = 8 * PAGE_SIZE,
+				UPGRADE_CAPS     = 2,
+				UPGRADE_ATTEMPTS = ~0U
+			};
+
+			return retry<Out_of_ram>(
+				[&] () {
+					return retry<Out_of_caps>(
+						[&] () { return _pci.alloc_dma_buffer(size, UNCACHED); },
+						[&] ()
+						{
+							if (_env.pd().avail_caps().value < UPGRADE_CAPS) {
+								warning("alloc dma buffer: out if caps");
+								throw Gpu::Session::Out_of_caps();
+							}
+
+							_pci.upgrade_caps(UPGRADE_CAPS);
+						},
+						UPGRADE_ATTEMPTS);
+				},
+				[&] ()
+				{
+					if (_env.pd().avail_ram().value < UPGRADE_RAM) {
+						warning("alloc dma buffer: out of ram");
+						throw Gpu::Session::Out_of_ram();
+					}
+
+					_pci.upgrade_ram(UPGRADE_RAM);
+				},
+				UPGRADE_ATTEMPTS);
 		}
 
 		void free(Ram_dataspace_capability cap) override
 		{
 			if (!cap.valid()) {
-				Genode::error("could not free, capability invalid");
+				error("could not free, capability invalid");
 				return;
 			}
 
@@ -117,7 +147,7 @@ struct Igd::Device
 			return _pci.dma_addr(ds_cap);
 		}
 
-	} _pci_backend_alloc { _platform };
+	} _pci_backend_alloc { _env, _platform };
 
 	Device_info                      _info          { };
 	Gpu::Info_intel::Revision        _revision      { };
@@ -1571,14 +1601,14 @@ class Gpu::Session_component : public Genode::Session_object<Gpu::Session>
 					 * multiplexer.
 					 */
 					Genode::error("Quota guard out of caps! from ", __builtin_return_address(0));
-					throw Gpu::Session::Service_denied();
+					throw Gpu::Session::Out_of_caps();
 				} catch (Genode::Out_of_ram) {
 					Genode::error("Quota guard out of ram! from ", __builtin_return_address(0));
 					Genode::error("guard ram: ", _ram_quota_guard.avail().value, " requested: ", ram);
-					throw Gpu::Session::Service_denied();
+					throw Gpu::Session::Out_of_ram();
 				} catch (...) {
 					Genode::error("Unknown exception in 'Resourcd_guard::withdraw'");
-					throw Gpu::Session::Service_denied();
+					throw;
 				}
 			}
 
