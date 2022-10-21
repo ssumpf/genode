@@ -18,6 +18,7 @@
 #include <base/env.h>
 #include <base/capability.h>
 #include <base/log.h>
+#include <os/backtrace.h>
 
 namespace Genode {
 
@@ -62,6 +63,10 @@ class Genode::Connection_base : Noncopyable, Interface
 
 		void upgrade_ram(size_t bytes)
 		{
+			if (bytes > 1024*1024u) {
+				Genode::log("UPGRADE: ", bytes);
+				Genode::backtrace();
+			}
 			upgrade(Session::Resources { Ram_quota{bytes}, Cap_quota{0} });
 		}
 
