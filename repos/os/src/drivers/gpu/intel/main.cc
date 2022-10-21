@@ -89,7 +89,7 @@ struct Igd::Device
 	 ** PCI **
 	 *********/
 
-	struct Pci_backend_alloc : Utils::Backend_alloc
+	struct Pci_backend_alloc : Utils::Backend_alloc, Ram_allocator
 	{
 		Env                  &_env;
 		Platform::Connection &_pci;
@@ -104,10 +104,10 @@ struct Igd::Device
 				UPGRADE_CAPS     = 2,
 				UPGRADE_ATTEMPTS = ~0U
 			};
-
-			return retry<Out_of_ram>(
+			Genode::warning(__func__, " s: ", size);
+			return retry<Genode::Out_of_ram>(
 				[&] () {
-					return retry<Out_of_caps>(
+					return retry<Genode::Out_of_caps>(
 						[&] () { return _pci.alloc_dma_buffer(size, UNCACHED); },
 						[&] ()
 						{
@@ -122,12 +122,13 @@ struct Igd::Device
 				},
 				[&] ()
 				{
-					if (_env.pd().avail_ram().value < UPGRADE_RAM) {
+					if (_env.pd().avail_ram().value < size) {
 						warning("alloc dma buffer: out of ram");
 						throw Gpu::Session::Out_of_ram();
 					}
-
-					_pci.upgrade_ram(UPGRADE_RAM);
+					Genode::log("UPGRADE RAM: ", (unsigned)UPGRADE_RAM, " avail: ", _env.pd().avail_ram().value);
+					_pci.upgrade_ram(size);
+					Genode::log("UPGRADE RAM DONE: ", (unsigned)UPGRADE_RAM, " avail: ", _env.pd().avail_ram().value);
 				},
 				UPGRADE_ATTEMPTS);
 		}
@@ -145,6 +146,17 @@ struct Igd::Device
 		addr_t dma_addr(Ram_dataspace_capability ds_cap) override
 		{
 			return _pci.dma_addr(ds_cap);
+		}
+
+		/**
+		 * RAM allocator interface
+		 */
+
+		size_t dataspace_size(Ram_dataspace_capability) const override { return 0; }
+
+		Alloc_result try_alloc(size_t size, Cache) override
+		{
+			return alloc(size);
 		}
 
 	} _pci_backend_alloc { _env, _platform };
@@ -1589,6 +1601,8 @@ class Gpu::Session_component : public Genode::Session_object<Gpu::Session>
 			bool avail_ram(size_t size = 0) {
 				return _ram_quota_guard.have_avail(Ram_quota { size + 2*1024*1024+4096 + 1024*1024 + 1024*1024}); }
 
+			void print_avail_ram() { Genode::log("RAM: ", _ram_quota_guard.avail()); }
+
 			void withdraw(size_t caps, size_t ram)
 			{
 				try {
@@ -1853,6 +1867,8 @@ class Gpu::Session_component : public Genode::Session_object<Gpu::Session>
 		Genode::Dataspace_capability alloc_buffer(Gpu::Buffer_id id,
 		                                          Genode::size_t size) override
 		{
+			Genode::log(__func__, ": ", __LINE__);
+			_resource_guard.print_avail_ram();
 			/* roundup to next page size */
 			size = align_addr(size, 12);
 
@@ -1866,12 +1882,15 @@ class Gpu::Session_component : public Genode::Session_object<Gpu::Session>
 			size_t ram_before  = _env.pd().avail_ram().value;
 
 			Ram_dataspace_capability ds_cap = _device.alloc_buffer(_heap, size);
+			Genode::log(__func__, ": ", __LINE__);
+			_resource_guard.print_avail_ram();
 			addr_t phys_addr = _device.dma_addr(ds_cap);
 			Buffer *buffer = new (&_heap) Buffer(ds_cap, phys_addr, _session_cap);
 			_env.ep().manage(*buffer);
-
+			Genode::log(__func__, ": ", __LINE__);
 			try {
 				new (&_heap) Buffer_local(buffer->cap(), size, _buffer_space, id);
+				Genode::log(__func__, ": ", __LINE__);
 			} catch (Id_space<Buffer_local>::Conflicting_id) {
 				_env.ep().dissolve(*buffer);
 				destroy(&_heap, buffer);
@@ -1887,6 +1906,8 @@ class Gpu::Session_component : public Genode::Session_object<Gpu::Session>
 			buffer->caps_used = (caps_before - caps_after) > 0;
 
 			_resource_guard.withdraw(caps_before - caps_after, ram_before - ram_after);
+			Genode::log(__func__, ":", __LINE__);
+			_resource_guard.print_avail_ram();
 
 			return ds_cap;
 		}
@@ -2189,7 +2210,7 @@ class Gpu::Root : public Gpu::Root_component
 				using namespace Genode;
 
 				return new (md_alloc())
-					Session_component(_env, _env.ep(), _env.ram(), _env.rm(),
+					Session_component(_env, _env.ep(), _device->_pci_backend_alloc, _env.rm(),
 					                  resources,
 					                  session_label_from_args(args),
 					                  session_diag_from_args(args),
@@ -2345,6 +2366,7 @@ struct Main : Irq_ack_handler, Gpu_reset_handler
 
 void Component::construct(Genode::Env &env)
 {
+	Genode::error("____START_______");
 	static Constructible<Main> main;
 	try {
 		main.construct(env);
