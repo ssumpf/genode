@@ -201,6 +201,31 @@ bool Allocator_avl_base::_revert_unused_ranges()
 }
 
 
+void Genode::Allocator_avl_base::print(Genode::Output & out) const
+{
+	using Genode::print;
+	unsigned long mem_size  = 0;
+	unsigned long mem_avail = 0;
+
+	print(out, "Allocator ", this, " dump:\n");
+
+	_addr_tree.for_each([&] (Block const & b)
+	{
+		print(out, " Block: ", Hex_range<addr_t>(b.addr(), b.size()), " "
+		      "size=",      Number_of_bytes(b.size()), " "
+		      "avail=",     Number_of_bytes(b.avail()), " "
+		      "max_avail=", Number_of_bytes(b.max_avail()), "\n");
+		mem_size  += b.size();
+		mem_avail += b.avail();
+	});
+
+	print(out, " => mem_size=", mem_size, " (", mem_size / 1024 / 1024 ,
+	      " MB) / mem_avail=" , mem_avail , " (" , mem_avail / 1024 / 1024 ,
+	      " MB)\n");
+}
+
+
+
 void Allocator_avl_base::_revert_allocations_and_ranges()
 {
 	/* revert all allocations */
@@ -213,10 +238,12 @@ void Allocator_avl_base::_revert_allocations_and_ranges()
 		free((void *)addr);
 	}
 
-	if (dangling_allocations)
+	if (dangling_allocations) {
 		warning(dangling_allocations, " dangling allocation",
 		        (dangling_allocations > 1) ? "s" : "",
 		        " at allocator destruction time");
+		Genode::log(*this);
+	}
 
 	/* destroy all remaining blocks */
 	_revert_block_ranges([&] () { return _addr_tree.first(); });

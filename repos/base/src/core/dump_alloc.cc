@@ -14,7 +14,7 @@
 
 #include <util/string.h>
 #include <base/allocator_avl.h>
-
+#if 0
 void Genode::Allocator_avl_base::print(Genode::Output & out) const
 {
 	using Genode::print;
@@ -37,3 +37,5 @@ void Genode::Allocator_avl_base::print(Genode::Output & out) const
 	      " MB) / mem_avail=" , mem_avail , " (" , mem_avail / 1024 / 1024 ,
 	      " MB)\n");
 }
+
+#endif
