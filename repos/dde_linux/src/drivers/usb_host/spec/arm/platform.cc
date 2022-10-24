@@ -192,7 +192,10 @@ void backend_alloc_init(Env & env, Ram_allocator&, Allocator&)
 
 Ram_dataspace_capability Lx::backend_alloc(addr_t size, Cache cache)
 {
-	return resource_env().platform.alloc_dma_buffer(size, cache);
+	return resource_env().platform.retry_with_upgrade(Ram_quota{size},
+	                                                  Cap_quota{2},
+	                                                  [&] () {
+		return resource_env().platform.alloc_dma_buffer(size, cache); });
 }
 
 

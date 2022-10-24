@@ -1497,7 +1497,10 @@ void backend_alloc_init(Genode::Env&, Genode::Ram_allocator&,
 
 Genode::Ram_dataspace_capability Lx::backend_alloc(addr_t size, Cache cache)
 {
-	return platform_connection().alloc_dma_buffer(size, cache);
+	return platform_connection().retry_with_upgrade(Ram_quota{size},
+	                                                Cap_quota{2},
+	                                                [&] () {
+		return platform_connection().alloc_dma_buffer(size, cache); });
 }
 
 
