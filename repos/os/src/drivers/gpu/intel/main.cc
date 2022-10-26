@@ -1574,10 +1574,10 @@ class Gpu::Session_component : public Genode::Session_object<Gpu::Session>
 		Genode::Env              &_env;
 		Genode::Region_map       &_rm;
 		Constrained_ram_allocator _ram;
-		Heap                      _heap { _ram, _rm };
+		Igd::Device              &_device;
+		Heap                      _heap { _device._pci_backend_alloc, _rm };
 		Capability<Gpu::Session>  _session_cap { cap() };
 
-		Igd::Device       &_device;
 		Igd::Device::Vgpu  _vgpu;
 
 		struct Resource_guard
