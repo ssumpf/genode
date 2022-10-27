@@ -94,7 +94,7 @@ class Vfs::Log_file_system : public Single_file_system
 				Read_result read(char *, file_size, file_size &out_count) override
 				{
 					out_count = 0;
-					return READ_OK;
+					return READ_QUEUED;
 				}
 
 				Write_result write(char const *src, file_size count,
