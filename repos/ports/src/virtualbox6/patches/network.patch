@@ -1,8 +1,8 @@
-network.patch
-
+diff --git a/src/virtualbox6/src/VBox/Devices/Network/DevE1000.cpp b/src/virtualbox6/src/VBox/Devices/Network/DevE1000.cpp
+index 2c2e366..b45855b 100644
 --- a/src/virtualbox6/src/VBox/Devices/Network/DevE1000.cpp
 +++ b/src/virtualbox6/src/VBox/Devices/Network/DevE1000.cpp
-@@ -7992,6 +7992,33 @@ static DECLCALLBACK(int) e1kR3Construct(PPDMDEVINS pDevIns, int iInstance, PCFGM
+@@ -8151,6 +8151,35 @@ static DECLCALLBACK(int) e1kR3Construct(PPDMDEVINS pDevIns, int iInstance, PCFGM
              pDevIns->fR0Enabled ? "enabled" : "disabled",
              pDevIns->fRCEnabled ? "enabled" : "disabled"));
  
@@ -23,6 +23,8 @@ network.patch
 +        pThisR0->pDrvR0 = PDMIBASER0_QUERY_INTERFACE(PDMIBASE_QUERY_INTERFACE(pThisCC->pDrvBase, PDMIBASER0), PDMINETWORKUP);
 +        pThisRC->pDrvRC = PDMIBASERC_QUERY_INTERFACE(PDMIBASE_QUERY_INTERFACE(pThisCC->pDrvBase, PDMIBASERC), PDMINETWORKUP);
 +#endif
++       /* Mark device as attached. */
++       pThis->fIsAttached = true;
 +    }
 +    else if (   rc == VERR_PDM_NO_ATTACHED_DRIVER
 +             || rc == VERR_PDM_CFG_MISSING_DRIVER_NAME)
@@ -36,7 +38,7 @@ network.patch
      /*
       * Initialize sub-components and register everything with the VMM.
       */
-@@ -8131,27 +8158,6 @@ static DECLCALLBACK(int) e1kR3Construct(PPDMDEVINS pDevIns, int iInstance, PCFGM
+@@ -8290,29 +8319,6 @@ static DECLCALLBACK(int) e1kR3Construct(PPDMDEVINS pDevIns, int iInstance, PCFGM
          return PDMDEV_SET_ERROR(pDevIns, rc, N_("Failed to attach the status LUN"));
      pThisCC->pLedsConnector = PDMIBASE_QUERY_INTERFACE(pBase, PDMILEDCONNECTORS);
  
@@ -51,6 +53,8 @@ network.patch
 -        pThisR0->pDrvR0 = PDMIBASER0_QUERY_INTERFACE(PDMIBASE_QUERY_INTERFACE(pThisCC->pDrvBase, PDMIBASER0), PDMINETWORKUP);
 -        pThisRC->pDrvRC = PDMIBASERC_QUERY_INTERFACE(PDMIBASE_QUERY_INTERFACE(pThisCC->pDrvBase, PDMIBASERC), PDMINETWORKUP);
 -#endif
+-        /* Mark device as attached. */
+-        pThis->fIsAttached = true;
 -    }
 -    else if (   rc == VERR_PDM_NO_ATTACHED_DRIVER
 -             || rc == VERR_PDM_CFG_MISSING_DRIVER_NAME)
@@ -64,6 +68,8 @@ network.patch
      rc = PDMDevHlpSUPSemEventCreate(pDevIns, &pThis->hEventMoreRxDescAvail);
      AssertRCReturn(rc, rc);
  
+diff --git a/src/virtualbox6/src/VBox/Devices/Network/DevPCNet.cpp b/src/virtualbox6/src/VBox/Devices/Network/DevPCNet.cpp
+index bb69ca7..6d75de0 100644
 --- a/src/virtualbox6/src/VBox/Devices/Network/DevPCNet.cpp
 +++ b/src/virtualbox6/src/VBox/Devices/Network/DevPCNet.cpp
 @@ -5340,6 +5340,11 @@ static DECLCALLBACK(int) pcnetR3Construct(PPDMDEVINS pDevIns, int iInstance, PCF
