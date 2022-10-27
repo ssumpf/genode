@@ -1,6 +1,5 @@
 drvtap.patch
 qemu-xhci.patch
-narrowing.patch
 network.patch
 smp_sipi.patch
 tm_poke.patch
@@ -10,3 +9,4 @@ devsvga.patch
 shaderlib.patch
 svga.patch
 audio.patch
+pgmphys.patch
