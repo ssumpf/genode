@@ -1896,6 +1896,8 @@ class Gpu::Session_component : public Genode::Session_object<Gpu::Session>
 			buffer->ram_used = min(ram_before - ram_after, size);
 			buffer->caps_used = (caps_before - caps_after) > 0;
 
+			if (caps_before - caps_after > 10) { Genode::error("CAPS TOO LARGE: ", caps_before - caps_after); }
+
 			_resource_guard.withdraw(caps_before - caps_after, ram_before - ram_after);
 
 			return ds_cap;
@@ -2355,7 +2357,6 @@ struct Main : Irq_ack_handler, Gpu_reset_handler
 
 void Component::construct(Genode::Env &env)
 {
-	Genode::error("____START_______");
 	static Constructible<Main> main;
 	try {
 		main.construct(env);
