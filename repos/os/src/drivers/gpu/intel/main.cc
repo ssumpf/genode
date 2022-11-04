@@ -44,6 +44,7 @@
 #include <ring_buffer.h>
 #include <workarounds.h>
 
+#include <os/backtrace.h>
 using namespace Genode;
 
 
@@ -1598,7 +1599,9 @@ class Gpu::Session_component : public Genode::Session_object<Gpu::Session>
 			 * unkown overhead */
 			bool avail_ram(size_t size = 0) {
 				return _ram_quota_guard.have_avail(Ram_quota { size + 2*1024*1024+4096 + 1024*1024 + 1024*1024}); }
-
+			size_t test_ram(size_t size) {
+				return size + 2*1024*1024+4096 + 1024*1024 + 1024*1024;
+			}
 			void withdraw(size_t caps, size_t ram)
 			{
 				try {
@@ -1718,9 +1721,14 @@ class Gpu::Session_component : public Genode::Session_object<Gpu::Session>
 		void _apply_buffer_local(Gpu::Buffer_id id, FN const &fn)
 		{
 			Buffer_local::Id_space::Id local_id { .value = id.value };
-			_buffer_space.apply<Buffer_local>(local_id, [&] (Buffer_local &buffer) {
-				fn(buffer);
-			});
+			try {
+				_buffer_space.apply<Buffer_local>(local_id, [&] (Buffer_local &buffer) {
+					fn(buffer);
+				});
+			} catch (Buffer_local::Id_space::Unknown_id) {
+				error("Unknown id: ", id.value);
+				Genode::backtrace();
+			}
 		}
 
 		Genode::uint64_t seqno { 0 };
@@ -1886,7 +1894,7 @@ class Gpu::Session_component : public Genode::Session_object<Gpu::Session>
 				_env.ep().dissolve(*buffer);
 				destroy(&_heap, buffer);
 				_device.free_buffer(_heap, ds_cap);
-				throw Gpu::Session_component::Conflicting_id();
+				return Dataspace_capability();
 			}
 
 			size_t caps_after = _env.pd().avail_caps().value;
@@ -1896,8 +1904,15 @@ class Gpu::Session_component : public Genode::Session_object<Gpu::Session>
 			buffer->ram_used = min(ram_before - ram_after, size);
 			buffer->caps_used = (caps_before - caps_after) > 0;
 
-			if (caps_before - caps_after > 10) { Genode::error("CAPS TOO LARGE: ", caps_before - caps_after); }
-
+			if (caps_before - caps_after > 10) {
+				Genode::error("CAPS TOO LARGE: ", caps_before - caps_after,
+                      " before: ", caps_before, " after: ", caps_after); }
+			if (_resource_guard.test_ram(size) < ram_before - ram_after) {
+				Genode::error("Predicted RAM: ", 
+                      _resource_guard.test_ram(size)/1024, " KB < ",
+			                (ram_before - ram_after)/1024, " KB ",
+                      " before: ", ram_before, " after: ", ram_after);
+			}
 			_resource_guard.withdraw(caps_before - caps_after, ram_before - ram_after);
 
 			return ds_cap;
