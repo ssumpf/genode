@@ -90,6 +90,7 @@ class Driver::Session_component
 		struct Dma_buffer : Registry<Dma_buffer>::Element
 		{
 			Ram_dataspace_capability const cap;
+			addr_t dma_addr { 0 };
 
 			Dma_buffer(Registry<Dma_buffer> & registry,
 			           Ram_dataspace_capability const cap)
@@ -111,6 +112,7 @@ class Driver::Session_component
 		bool                           _info;
 		Policy_version                 _version;
 		Device_pd                      _device_pd { _env,
+		                                            _md_alloc,
 		                                            _ram_quota_guard(),
 		                                            _cap_quota_guard() };
 
