@@ -57,6 +57,12 @@ class Driver::Common : Device_reporter
 void Driver::Common::_handle_devices()
 {
 	_devices_rom.update();
+
+	/* check for enabled IOMMU */
+	_devices_rom.xml().with_optional_sub_node("iommu", [&] (Xml_node const) {
+		_root.iommu(true);
+	});
+
 	_devices.update(_devices_rom.xml());
 	update_report();
 	_root.update_policy();

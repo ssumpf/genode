@@ -33,6 +33,14 @@ void Driver::Root::update_policy()
 }
 
 
+void Driver::Root::iommu(bool enabled)
+{
+	_iommu = enabled;
+	_sessions.for_each([&] (Session_component & sc)  {
+		sc.device_pd().iommu(_iommu); });
+}
+
+
 Driver::Session_component * Driver::Root::_create_session(const char *args)
 {
 	Session_component * sc = nullptr;
@@ -47,6 +55,7 @@ Driver::Session_component * Driver::Root::_create_session(const char *args)
 			                  session_diag_from_args(args),
 			                  policy.attribute_value("info", false),
 			                  policy.attribute_value("version", Version()));
+			sc->device_pd().iommu(_iommu);
 	} catch (Session_policy::No_policy_defined) {
 		error("Invalid session request, no matching policy for ",
 		      "'", label_from_args(args).string(), "'");
