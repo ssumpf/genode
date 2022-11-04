@@ -44,6 +44,7 @@ void Session_component::_release_device(Device_component & dc)
 void Session_component::_free_dma_buffer(Dma_buffer & buf)
 {
 	Ram_dataspace_capability cap = buf.cap;
+	_device_pd.free_dma_mem(buf.dma_addr);
 	destroy(heap(), &buf);
 	_env_ram.free(cap);
 }
@@ -198,7 +199,7 @@ Session_component::alloc_dma_buffer(size_t const size, Cache cache)
 	try {
 		Dma_buffer & buf =
 			*(new (heap()) Dma_buffer(_buffer_registry, ram_cap));
-		_device_pd.attach_dma_mem(ram_cap, _env.pd().dma_addr(buf.cap));
+		buf.dma_addr = _device_pd.attach_dma_mem(ram_cap, _env.pd().dma_addr(buf.cap), false);
 	} catch (Out_of_ram)  {
 		_env_ram.free(ram_cap);
 		throw;
@@ -230,7 +231,7 @@ Genode::addr_t Session_component::dma_addr(Ram_dataspace_capability ram_cap)
 
 	_buffer_registry.for_each([&] (Dma_buffer const & buf) {
 		if (buf.cap.local_name() == ram_cap.local_name())
-			ret = _env.pd().dma_addr(buf.cap); });
+			ret = buf.dma_addr; });
 
 	return ret;
 }

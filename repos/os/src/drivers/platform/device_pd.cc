@@ -67,14 +67,39 @@ void Device_pd::Region_map_client::upgrade_caps()
 }
 
 
-void Device_pd::attach_dma_mem(Dataspace_capability ds_cap,
-                               addr_t const         dma_addr)
+addr_t Device_pd::_dma_addr(addr_t const phys_addr,
+                            size_t const size,
+                            bool   const force_phys_addr)
+{
+	if (!_iommu || force_phys_addr) {
+		_dma_alloc.remove_range(phys_addr, size);
+		return phys_addr;
+	}
+
+	return _dma_alloc.alloc_aligned(size, 12).convert<addr_t>(
+		[&] (void *ptr) { return (addr_t)ptr; },
+		[&] (Allocator::Alloc_error) -> addr_t {
+			error("Could not allocate DMA area of size: ", size);
+			return 0;
+		});
+}
+
+addr_t Device_pd::attach_dma_mem(Dataspace_capability ds_cap,
+                                 addr_t const         phys_addr,
+                                 bool   const         force_phys_addr)
 {
 	using namespace Genode;
 
-	bool             retry = false;
-	Dataspace_client ds_client(ds_cap);
+	bool retry = false;
 
+	Dataspace_client ds_client(ds_cap);
+	size_t size     = ds_client.size();
+	addr_t dma_addr = _dma_addr(phys_addr, size, force_phys_addr);
+
+	if (dma_addr == 0) return 0;
+
+	Genode::warning("DMA: ", Hex(dma_addr), " - ", Hex(dma_addr+size), " force: ", force_phys_addr,
+	                " size: ", size / (1024), " KB");
 	do {
 		_pd.attach_dma(ds_cap, dma_addr).with_result(
 			[&] (Pd_session::Attach_dma_ok) {
@@ -100,7 +125,19 @@ void Device_pd::attach_dma_mem(Dataspace_capability ds_cap,
 			}
 		);
 	} while (retry);
+
+	return dma_addr;
 }
+
+
+void Device_pd::free_dma_mem(addr_t dma_addr)
+{
+	if (!_iommu) return;
+	_dma_alloc.free((void *)dma_addr);
+}
+
+
+void Device_pd::iommu(bool enabled) { _iommu = enabled; }
 
 
 void Device_pd::assign_pci(Io_mem_dataspace_capability const io_mem_cap,
@@ -125,11 +162,17 @@ void Device_pd::assign_pci(Io_mem_dataspace_capability const io_mem_cap,
 
 
 Device_pd::Device_pd(Env             & env,
+                     Allocator       & md_alloc,
                      Ram_quota_guard & ram_guard,
                      Cap_quota_guard & cap_guard)
 :
 	_pd(env, Pd_connection::Device_pd()),
+	_dma_alloc(&md_alloc),
 	_address_space(env, _pd, ram_guard, cap_guard)
 {
+	/* 0x1000 - 4GB per device PD */
+	enum { DMA_SIZE = 0xffffe000 };
+	_dma_alloc.add_range(0x1000, DMA_SIZE);
+
 	_pd.ref_account(env.pd_session_cap());
 }
