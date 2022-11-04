@@ -37,8 +37,9 @@ struct Main
 	Expanding_reporter     pci_reporter    { env, "devices", "devices" };
 	Registry<Bridge>       bridge_registry {}; /* contains host bridges */
 
-	bool apic_capable { false };
-	bool msi_capable  { false };
+	bool apic_capable  { false };
+	bool msi_capable   { false };
+	bool iommu_capable { false };
 
 	List_model<Irq_routing>  irq_routing_list  {};
 	List_model<Irq_override> irq_override_list {};
@@ -267,6 +268,9 @@ void Main::parse_pci_config_spaces(Xml_node & xml)
 {
 	pci_reporter.generate([&] (Xml_generator & generator)
 	{
+		if (iommu_capable)
+			generator.node("iommu");
+
 		/*
 		 * We count beginning from 1 not 0, because some clients (Linux drivers)
 		 * do not ignore the pseudo MSI number announced, but interpret zero as
