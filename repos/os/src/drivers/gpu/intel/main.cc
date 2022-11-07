@@ -1602,8 +1602,12 @@ class Gpu::Session_component : public Genode::Session_object<Gpu::Session>
 			size_t test_ram(size_t size) {
 				return size + 2*1024*1024+4096 + 1024*1024 + 1024*1024;
 			}
-			void withdraw(size_t caps, size_t ram)
+			void withdraw(size_t caps_old, size_t caps_new,
+			              size_t ram_old, size_t ram_new)
 			{
+				size_t caps = caps_old > caps_new ? caps_old - caps_new : 0;
+				size_t ram  = ram_old > ram_new ? ram_old - ram_new : 0;
+
 				try {
 					_cap_quota_guard.withdraw(Cap_quota { caps });
 					_ram_quota_guard.withdraw(Ram_quota { ram });
@@ -1913,7 +1917,7 @@ class Gpu::Session_component : public Genode::Session_object<Gpu::Session>
 			                (ram_before - ram_after)/1024, " KB ",
                       " before: ", ram_before, " after: ", ram_after);
 			}
-			_resource_guard.withdraw(caps_before - caps_after, ram_before - ram_after);
+			_resource_guard.withdraw(caps_before, caps_after, ram_before, ram_after);
 
 			return ds_cap;
 		}
@@ -2012,8 +2016,8 @@ class Gpu::Session_component : public Genode::Session_object<Gpu::Session>
 
 				size_t caps_after = _env.pd().avail_caps().value;
 				size_t ram_after  = _env.pd().avail_ram().value;
-				_resource_guard.withdraw(caps_before - caps_after,
-				                         ram_before - ram_after);
+				_resource_guard.withdraw(caps_before, caps_after,
+				                         ram_before , ram_after);
 				return true;
 			};
 
@@ -2091,8 +2095,8 @@ class Gpu::Session_component : public Genode::Session_object<Gpu::Session>
 			size_t caps_after = _env.pd().avail_caps().value;
 			size_t ram_after  = _env.pd().avail_ram().value;
 
-			_resource_guard.withdraw(caps_before - caps_after,
-			                         ram_before - ram_after);
+			_resource_guard.withdraw(caps_before, caps_after,
+			                         ram_before, ram_after);
 
 			return true;
 		}
