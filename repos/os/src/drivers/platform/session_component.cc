@@ -196,14 +196,25 @@ Session_component::alloc_dma_buffer(size_t const size, Cache cache)
 
 	if (!ram_cap.valid()) return ram_cap;
 
+	Dma_buffer *buf { nullptr };
 	try {
-		Dma_buffer & buf =
-			*(new (heap()) Dma_buffer(_buffer_registry, ram_cap));
-		buf.dma_addr = _device_pd.attach_dma_mem(ram_cap, _env.pd().dma_addr(buf.cap), false);
+			buf = new (heap()) Dma_buffer(_buffer_registry, ram_cap);
 	} catch (Out_of_ram)  {
 		_env_ram.free(ram_cap);
 		throw;
 	} catch (Out_of_caps) {
+		_env_ram.free(ram_cap);
+		throw;
+	}
+
+	try {
+		buf->dma_addr = _device_pd.attach_dma_mem(ram_cap, _env.pd().dma_addr(buf->cap), false);
+	} catch (Out_of_ram)  {
+		destroy(heap(), buf);
+		_env_ram.free(ram_cap);
+		throw;
+	} catch (Out_of_caps) {
+		destroy(heap(), buf);
 		_env_ram.free(ram_cap);
 		throw;
 	}

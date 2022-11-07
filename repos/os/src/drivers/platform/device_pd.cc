@@ -76,11 +76,20 @@ addr_t Device_pd::_dma_addr(addr_t const phys_addr,
 		return phys_addr;
 	}
 
+	using Alloc_error = Allocator::Alloc_error;
+
 	return _dma_alloc.alloc_aligned(size, 12).convert<addr_t>(
 		[&] (void *ptr) { return (addr_t)ptr; },
-		[&] (Allocator::Alloc_error) -> addr_t {
-			error("Could not allocate DMA area of size: ", size,
-			      " total avail: ", _dma_alloc.avail());
+		[&] (Allocator::Alloc_error err) -> addr_t {
+			switch (err) {
+			case Alloc_error::OUT_OF_RAM:  throw Out_of_ram();
+			case Alloc_error::OUT_OF_CAPS: throw Out_of_caps();
+			case Alloc_error::DENIED:
+				error("Could not allocate DMA area of size: ", size,
+				      " total avail: ", _dma_alloc.avail(),
+				     " (error: ", err, ")");
+				break;
+			};
 			return 0;
 		});
 }
