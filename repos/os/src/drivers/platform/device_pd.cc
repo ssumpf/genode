@@ -79,7 +79,8 @@ addr_t Device_pd::_dma_addr(addr_t const phys_addr,
 	return _dma_alloc.alloc_aligned(size, 12).convert<addr_t>(
 		[&] (void *ptr) { return (addr_t)ptr; },
 		[&] (Allocator::Alloc_error) -> addr_t {
-			error("Could not allocate DMA area of size: ", size);
+			error("Could not allocate DMA area of size: ", size,
+			      " total avail: ", _dma_alloc.avail());
 			return 0;
 		});
 }
@@ -98,8 +99,8 @@ addr_t Device_pd::attach_dma_mem(Dataspace_capability ds_cap,
 
 	if (dma_addr == 0) return 0;
 
-	Genode::warning("DMA: ", Hex(dma_addr), " - ", Hex(dma_addr+size), " force: ", force_phys_addr,
-	                " size: ", size / (1024), " KB");
+	//Genode::warning("DMA: ", Hex(dma_addr), " - ", Hex(dma_addr+size), " force: ", force_phys_addr,
+	//                " size: ", size / (1024), " KB");
 	do {
 		_pd.attach_dma(ds_cap, dma_addr).with_result(
 			[&] (Pd_session::Attach_dma_ok) {
