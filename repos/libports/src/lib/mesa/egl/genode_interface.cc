@@ -15,10 +15,13 @@
 #include <../include/util/list.h>
 #include <blit/blit.h>
 #include <base/log.h>
+#include <os/backtrace.h>
 
 extern "C" {
 #include <platform.h>
 }
+
+extern "C" void genode_backtrace() { Genode::backtrace(); }
 
 void genode_blit(void const *src, unsigned src_w, void *dst, unsigned dst_w, int w, int h)
 {

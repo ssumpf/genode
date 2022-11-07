@@ -80,7 +80,7 @@ CC_OPT_DEP = -MMD -MP -MT '$@ $(@:.o=.d)'
 # Always compile with '-ffunction-sections' to enable the use of the
 # linker option '-gc-sections'
 #
-CC_OPT += -ffunction-sections
+CC_OPT += -ffunction-sections -fno-omit-frame-pointer
 
 #
 # Prevent the compiler from optimizations related to strict aliasing
