@@ -16,8 +16,6 @@
 
 #include <parent/capability.h>
 #include <base/rpc_client.h>
-#include <base/log.h>
-#include <os/backtrace.h>
 
 namespace Genode { struct Parent_client; }
 
@@ -63,8 +61,6 @@ struct Genode::Parent_client : Rpc_client<Parent>
 		call<Rpc_resource_avail_sigh>(sigh); }
 
 	void resource_request(Resource_args const &args) override {
-		Genode::log("RES: ", args);
-		Genode::backtrace();
 		call<Rpc_resource_request>(args); 
 	}
 
