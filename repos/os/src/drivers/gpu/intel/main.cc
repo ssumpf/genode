@@ -1596,12 +1596,12 @@ class Gpu::Session_component : public Genode::Session_object<Gpu::Session>
 			bool avail_caps() { return _cap_quota_guard.have_avail(Cap_quota { 15 }); }
 
 			/* size + possible heap allocations  + possible page table allocation +
-			 * + 16KB for ep.manage unkown overhead */
+			 * + 16KB for 'ep.manage' + unkown overhead */
 			bool avail_ram(size_t size = 0) {
 				return _ram_quota_guard.have_avail(Ram_quota { size + 2*1024*1024+4096 +
 				                                               1024*1024 + 16*1024 + 1024*1024}); }
 			size_t test_ram(size_t size) {
-				return size + 2*1024*1024+4096 + 1024*1024 + 16*1024 * 1024*1024;
+				return size + 2*1024*1024+4096 + 1024*1024 + 16*1024 + 1024*1024;
 			}
 			void withdraw(size_t caps_old, size_t caps_new,
 			              size_t ram_old, size_t ram_new)
@@ -1906,8 +1906,8 @@ class Gpu::Session_component : public Genode::Session_object<Gpu::Session>
 			size_t ram_after  = _env.pd().avail_ram().value;
 
 			/* limit to buffer size for replenish */
-			buffer->ram_used = min(ram_before - ram_after, size);
-			buffer->caps_used = (caps_before - caps_after) > 0;
+			buffer->ram_used  = min(ram_before > ram_after ? ram_before - ram_after : 0, size);
+			buffer->caps_used = caps_before > caps_after ? true  : false;
 
 			if (caps_before - caps_after > 10) {
 				Genode::error("CAPS TOO LARGE: ", caps_before - caps_after,
