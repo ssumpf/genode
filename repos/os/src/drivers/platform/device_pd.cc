@@ -71,16 +71,29 @@ addr_t Device_pd::_dma_addr(addr_t const phys_addr,
                             size_t const size,
                             bool   const force_phys_addr)
 {
-	if (!_iommu || force_phys_addr) {
-		_dma_alloc.remove_range(phys_addr, size);
-		return phys_addr;
-	}
-
+	using Range_ok = Range_allocator::Range_ok;
 	using Alloc_error = Allocator::Alloc_error;
+
+	if (!_iommu || force_phys_addr) {
+			_dma_alloc.remove_range(phys_addr, size).with_result(
+				[&] (Range_ok) -> addr_t { return phys_addr; },
+				[&] (Alloc_error err) -> addr_t {
+					switch (err) {
+					case Alloc_error::OUT_OF_RAM:  throw Out_of_ram();
+					case Alloc_error::OUT_OF_CAPS: throw Out_of_caps();
+					case Alloc_error::DENIED:
+						error("Could not free DMA range ",
+						      Hex(phys_addr), " - ", Hex(phys_addr + size - 1),
+						     " (error: ", err, ")");
+						break;
+					}
+					return 0;
+			});
+	}
 
 	return _dma_alloc.alloc_aligned(size, 12).convert<addr_t>(
 		[&] (void *ptr) { return (addr_t)ptr; },
-		[&] (Allocator::Alloc_error err) -> addr_t {
+		[&] (Alloc_error err) -> addr_t {
 			switch (err) {
 			case Alloc_error::OUT_OF_RAM:  throw Out_of_ram();
 			case Alloc_error::OUT_OF_CAPS: throw Out_of_caps();
@@ -93,6 +106,7 @@ addr_t Device_pd::_dma_addr(addr_t const phys_addr,
 			return 0;
 		});
 }
+
 
 addr_t Device_pd::attach_dma_mem(Dataspace_capability ds_cap,
                                  addr_t const         phys_addr,
