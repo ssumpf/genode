@@ -313,6 +313,7 @@ struct Main : Event_handler
 		}
 	}
 
+	bool const _vbox_event_handler_installed = ( _install_vbox_event_handler(), true );
 	bool const _machine_powered_up = ( _power_up_machine(), true );
 
 	void _power_up_machine()
@@ -328,14 +329,32 @@ struct Main : Event_handler
 			if (state != MachineState_Null)
 				RTThreadSleep(1000);
 
-			attempt([&] () { return _machine->COMGETTER(State)(&state); },
-			        "failed to obtain machine state");
+			//HRESULT const rc = 
+			_machine->COMGETTER(State)(&state);
+			//if (FAILED(rc)) {
+			//	Genode::error("failed to enter running state");
+				/*
+				 * Use keeper to retrieve current error message
+				 */
+				ErrorInfoKeeper eik;
+				Bstr const &text = eik.getText();
+				Genode::log(Utf8Str(text.raw()).c_str());
+			//	throw Fatal();
+			//}
 
 		} while (state == MachineState_Starting);
 
 		if (state != MachineState_Running) {
+#if 0
 			error("machine could not enter running state");
+			//IVirtualBoxErrorInfo *info;
+			
+			progress->COMGETTER(ErrorInfo)(&info);
+			error("GOT INFO");
+			Bstr const &text = info->GetText();
+			Genode::log(Utf8Str(text.raw()).c_str());
 			throw Fatal();
+#endif
 		}
 	}
 
@@ -355,7 +374,6 @@ struct Main : Event_handler
 
 	void handle_vbox_event(VBoxEventType_T, IEvent &) override;
 
-	bool const _vbox_event_handler_installed = ( _install_vbox_event_handler(), true );
 
 	void _install_vbox_event_handler()
 	{
@@ -373,6 +391,7 @@ struct Main : Event_handler
 		event_types.push_back(VBoxEventType_OnKeyboardLedsChanged);
 		event_types.push_back(VBoxEventType_OnStateChanged);
 		event_types.push_back(VBoxEventType_OnAdditionsStateChanged);
+		event_types.push_back(VBoxEventType_OnProgressTaskCompleted);
 
 		ievent_source->RegisterListener(listener, ComSafeArrayAsInParam(event_types), true);
 	}
@@ -526,6 +545,10 @@ void Main::handle_vbox_event(VBoxEventType_T ev_type, IEvent &ev)
 			 */
 			_sync_capslock();
 		} break;
+
+		case VBoxEventType_OnProgressTaskCompleted:
+			Genode::error("TASK COMPLETED");
+			break;
 
 	default: /* ignore other events */ break;
 	}

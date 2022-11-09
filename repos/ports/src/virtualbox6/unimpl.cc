@@ -20,7 +20,6 @@ extern "C" {
 void name(void) { \
 	Genode::error(__func__, ": " #name " called, not implemented, eip=", \
 	              __builtin_return_address(0)); \
-	for (;;); \
 }
 
 DUMMY(DBGFR3CoreWrite)
