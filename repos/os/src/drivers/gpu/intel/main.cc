@@ -108,7 +108,7 @@ struct Igd::Device
 			return retry<Genode::Out_of_ram>(
 				[&] () {
 					return retry<Genode::Out_of_caps>(
-						[&] () { return _pci.alloc_dma_buffer(size, UNCACHED); },
+						[&] () { return _pci.Client::alloc_dma_buffer(size, UNCACHED); },
 						[&] ()
 						{
 							if (_env.pd().avail_caps().value < UPGRADE_CAPS) {
