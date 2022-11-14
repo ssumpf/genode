@@ -256,12 +256,14 @@ Session_component::Session_component(Env                          & env,
                                      Resources      const         & resources,
                                      Diag           const         & diag,
                                      bool           const           info,
-                                     Policy_version const           version)
+                                     Policy_version const           version,
+                                     bool           const           iommu)
 :
 	Session_object<Platform::Session>(env.ep(), resources, label, diag),
 	Session_registry::Element(registry, *this),
 	Dynamic_rom_session::Xml_producer("devices"),
-	_env(env), _config(config), _devices(devices), _info(info), _version(version)
+	_env(env), _config(config), _devices(devices), _info(info), _version(version),
+	_iommu(iommu)
 {
 	/*
 	 * FIXME: As the ROM session does not propagate Out_of_*

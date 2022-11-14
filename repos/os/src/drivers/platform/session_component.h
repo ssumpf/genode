@@ -52,7 +52,8 @@ class Driver::Session_component
 		                  Resources        const       & resources,
 		                  Diag             const       & diag,
 		                  bool             const         info,
-		                  Policy_version   const         version);
+		                  Policy_version   const         version,
+		                  bool             const         iommu);
 
 		~Session_component();
 
@@ -111,10 +112,12 @@ class Driver::Session_component
 		                                              _env.rm(), *this    };
 		bool                           _info;
 		Policy_version                 _version;
+		bool const                     _iommu;
 		Device_pd                      _device_pd { _env,
 		                                            _md_alloc,
 		                                            _ram_quota_guard(),
-		                                            _cap_quota_guard() };
+		                                            _cap_quota_guard(),
+		                                            _iommu };
 
 		Device_capability _acquire(Device & device);
 		void              _release_device(Device_component & dc);

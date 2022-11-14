@@ -74,7 +74,12 @@ addr_t Device_pd::_dma_addr(addr_t const phys_addr,
 	using Range_ok = Range_allocator::Range_ok;
 	using Alloc_error = Allocator::Alloc_error;
 
-	if (!_iommu || force_phys_addr) {
+	if (!_iommu) return phys_addr;
+
+	/*
+	 * 1:1 mapping (remove from DMA memory allocator)
+	 */
+	if (force_phys_addr) {
 			_dma_alloc.remove_range(phys_addr, size).with_result(
 				[&] (Range_ok) -> addr_t { return phys_addr; },
 				[&] (Alloc_error err) -> addr_t {
@@ -154,12 +159,9 @@ addr_t Device_pd::attach_dma_mem(Dataspace_capability ds_cap,
 
 void Device_pd::free_dma_mem(addr_t dma_addr)
 {
-	if (!_iommu) return;
-	_dma_alloc.free((void *)dma_addr);
+	if (_iommu)
+		_dma_alloc.free((void *)dma_addr);
 }
-
-
-void Device_pd::iommu(bool enabled) { _iommu = enabled; }
 
 
 void Device_pd::assign_pci(Io_mem_dataspace_capability const io_mem_cap,
@@ -186,10 +188,11 @@ void Device_pd::assign_pci(Io_mem_dataspace_capability const io_mem_cap,
 Device_pd::Device_pd(Env             & env,
                      Allocator       & md_alloc,
                      Ram_quota_guard & ram_guard,
-                     Cap_quota_guard & cap_guard)
+                     Cap_quota_guard & cap_guard,
+                     bool const iommu)
 :
 	_pd(env, Pd_connection::Device_pd()),
-	_dma_alloc(&md_alloc),
+	_dma_alloc(&md_alloc), _iommu(iommu),
 	_address_space(env, _pd, ram_guard, cap_guard)
 {
 	/* 0x1000 - 4GB per device PD */

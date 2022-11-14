@@ -30,10 +30,10 @@ class Driver::Root : public Root_component<Session_component>
 		Root(Env                          & env,
 		     Sliced_heap                  & sliced_heap,
 		     Attached_rom_dataspace const & config,
-		     Device_model                 & devices);
+		     Device_model                 & devices,
+		     bool const                     iommu);
 
 		void update_policy();
-		void iommu(bool);
 
 	private:
 
@@ -44,8 +44,8 @@ class Driver::Root : public Root_component<Session_component>
 		Env                          & _env;
 		Attached_rom_dataspace const & _config;
 		Device_model                 & _devices;
+		bool const                     _iommu;
 		Registry<Session_component>    _sessions {};
-		bool                           _iommu { false };
 };
 
 #endif /* _SRC__DRIVERS__PLATFORM__ROOT_H_ */
