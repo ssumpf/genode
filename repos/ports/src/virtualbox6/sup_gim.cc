@@ -59,6 +59,17 @@ void Sup::update_gim_system_time(VM &vm, VMCPU &vmcpu)
 	uint64_t uTsc        = 0;
 	uint64_t uVirtNanoTS = 0;
 
+	enum { MAX_MEASUREMENT_DURATION_NS = 400U };
+	/* calculate max duration from tsc */
+	uint64_t max_ticks = MAX_MEASUREMENT_DURATION_NS;
+
+	if(PSUPGLOBALINFOPAGE pGip = g_pSUPGlobalInfoPage) {
+		/* round */
+		uint64_t ticks_per_ns = (pGip->u64CpuHz + 500'000'000) / 1'000'000'000;
+		max_ticks = ticks_per_ns ? ticks_per_ns * MAX_MEASUREMENT_DURATION_NS :
+		                           max_ticks;
+		Genode::error("GIP HZ: ", pGip->u64CpuHz, " MAX: ", max_ticks);
+	}
 	/*
 	 * If we got preempted during the measurement, repeat.
 	 */
@@ -68,9 +79,8 @@ void Sup::update_gim_system_time(VM &vm, VMCPU &vmcpu)
 		uVirtNanoTS               = TMVirtualGetNoCheck(&vm)    | UINT64_C(1);
 		uint64_t const uTsc_again = TMCpuTickGetNoCheck(&vmcpu) | UINT64_C(1);
 
-		enum { MAX_MEASUREMENT_DURATION = 200U };
 
-		if (uTsc_again - uTsc < MAX_MEASUREMENT_DURATION)
+		if (uTsc_again - uTsc < max_ticks)
 			break;
 
 		if (round > 3 && round % 2 == 0)
