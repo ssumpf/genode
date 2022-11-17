@@ -164,6 +164,11 @@ int ShClSvcImplWriteData(PSHCLCLIENT, PSHCLCLIENTCMDCTX, SHCLFORMAT fFormat, voi
 	if (!(fFormat & VBOX_SHCL_FMT_UNICODETEXT))
 		return VERR_NOT_IMPLEMENTED;
 
+	if (pv == nullptr) {
+		warning(__PRETTY_FUNCTION__, " 'pv' is nullptr");
+		return VINF_SUCCESS;
+	}
+
 	Clipboard::Guard guard;
 
 	PCRTUTF16 const utf16_string = (PCRTUTF16)pv;
