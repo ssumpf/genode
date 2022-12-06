@@ -428,6 +428,8 @@ struct Lwip::Socket_dir : Lwip::Directory
 
 		virtual bool read_ready(Lwip_file_handle&) = 0;
 
+		virtual bool write_ready(Lwip_file_handle const &) const = 0;
+
 		/**
 		 * Notify handles waiting for this PCB / socket to be ready
 		 */
@@ -987,6 +989,11 @@ class Lwip::Udp_socket_dir final :
 			return result;
 		}
 
+		bool write_ready(Lwip_file_handle const &) const override
+		{
+			return true;
+		}
+
 		Write_result write(Lwip_file_handle &handle,
 		                   char const *src, file_size count,
 		                   file_size &out_count) override
@@ -1453,6 +1460,30 @@ class Lwip::Tcp_socket_dir final :
 			return Read_result::READ_ERR_INVALID;
 		}
 
+		bool write_ready(Lwip_file_handle const &handle) const override
+		{
+			switch (handle.kind) {
+			case Lwip_file_handle::DATA:
+
+				return tcp_sndbuf(_pcb);
+
+			case Lwip_file_handle::PEEK:
+			case Lwip_file_handle::ACCEPT:
+			case Lwip_file_handle::PENDING:
+			case Lwip_file_handle::BIND:
+			case Lwip_file_handle::REMOTE:
+			case Lwip_file_handle::CONNECT:
+			case Lwip_file_handle::LOCATION:
+			case Lwip_file_handle::LOCAL:
+				return true;
+
+			case Lwip_file_handle::INVALID:
+			case Lwip_file_handle::LISTEN:
+				break;
+			}
+			return false;
+		}
+
 		Write_result write(Lwip_file_handle &handle,
 		                   char const *src, file_size count,
 		                   file_size &out_count) override
@@ -1717,6 +1748,8 @@ class Lwip::File_system final : public Vfs::File_system, public Lwip::Directory
 		                   private Vfs::Remote_io,
 		                   private Lwip::Nic_netif::Wakeup_scheduler
 		{
+			Vfs::Env::User &_vfs_user;
+
 			Remote_io::Peer _peer;
 
 			Tcp_proto_dir tcp_dir;
@@ -1732,6 +1765,7 @@ class Lwip::File_system final : public Vfs::File_system, public Lwip::Directory
 			Vfs_netif(Vfs::Env &vfs_env, Genode::Xml_node config)
 			:
 				Lwip::Nic_netif(vfs_env.env(), vfs_env.alloc(), config, *this),
+				_vfs_user(vfs_env.user()),
 				_peer(vfs_env.deferred_wakeups(), *this),
 				tcp_dir(vfs_env), udp_dir(vfs_env)
 			{ }
@@ -1749,6 +1783,7 @@ class Lwip::File_system final : public Vfs::File_system, public Lwip::Directory
 			 */
 			void schedule_nic_server_wakeup() override
 			{
+				_vfs_user.wakeup_vfs_user();
 				_peer.schedule_wakeup();
 			}
 
@@ -2077,6 +2112,20 @@ class Lwip::File_system final : public Vfs::File_system, public Lwip::Directory
 			 * or a file with no associated socket
 			 */
 			return true;
+		}
+
+		bool write_ready(Vfs_handle const &vfs_handle) const override
+		{
+			if (_netif.tx_saturated())
+				return false;
+
+			Lwip_file_handle const *handle_ptr =
+				dynamic_cast<Lwip_file_handle const *>(&vfs_handle);
+
+			if (handle_ptr && handle_ptr->socket)
+				return handle_ptr->socket->write_ready(*handle_ptr);
+
+			return false;
 		}
 
 		bool notify_read_ready(Vfs_handle *vfs_handle) override
