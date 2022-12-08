@@ -1735,46 +1735,18 @@ void tcp_err_callback(void *arg, err_t)
  ** VFS file-system **
  *********************/
 
-class Lwip::File_system final : public Vfs::File_system, public Lwip::Directory
+class Lwip::File_system final : public Vfs::File_system, public Lwip::Directory,
+                                private Vfs::Remote_io
 {
 	private:
 
 		Genode::Entrypoint &_ep;
 
-		/**
-		 * LwIP connection to Nic service
-		 */
-		struct Vfs_netif : Lwip::Nic_netif,
-		                   private Vfs::Remote_io,
-		                   private Lwip::Nic_netif::Wakeup_scheduler
+		struct Wakeup_scheduler : Lwip::Nic_netif::Wakeup_scheduler
 		{
 			Vfs::Env::User &_vfs_user;
 
 			Remote_io::Peer _peer;
-
-			Tcp_proto_dir tcp_dir;
-			Udp_proto_dir udp_dir;
-
-			Nameserver_registry nameserver_handles { };
-
-			typedef Genode::Fifo_element<Vfs_handle> Handle_element;
-			typedef Genode::Fifo<Vfs_netif::Handle_element> Handle_queue;
-
-			Handle_queue  blocked_handles { };
-
-			Vfs_netif(Vfs::Env &vfs_env, Genode::Xml_node config)
-			:
-				Lwip::Nic_netif(vfs_env.env(), vfs_env.alloc(), config, *this),
-				_vfs_user(vfs_env.user()),
-				_peer(vfs_env.deferred_wakeups(), *this),
-				tcp_dir(vfs_env), udp_dir(vfs_env)
-			{ }
-
-			~Vfs_netif()
-			{
-				/* free the allocated qeueue elements */
-				status_callback();
-			}
 
 			/**
 			 * Lwip::Nic_netif::Wakeup_scheduler interface
@@ -1787,14 +1759,41 @@ class Lwip::File_system final : public Vfs::File_system, public Lwip::Directory
 				_peer.schedule_wakeup();
 			}
 
-			/**
-			 * Remote_io interface
-			 *
-			 * Called from VFS user when going idle.
-			 */
-			void wakeup_remote_peer() override
+			Wakeup_scheduler(Vfs::Env &vfs_env, Remote_io &remote_io)
+			:
+				_vfs_user(vfs_env.user()),
+				_peer(vfs_env.deferred_wakeups(), remote_io)
+			{ }
+
+		} _wakeup_scheduler;
+
+		/**
+		 * LwIP connection to Nic service
+		 */
+		struct Vfs_netif : Lwip::Nic_netif
+		{
+			Tcp_proto_dir tcp_dir;
+			Udp_proto_dir udp_dir;
+
+			Nameserver_registry nameserver_handles { };
+
+			typedef Genode::Fifo_element<Vfs_handle> Handle_element;
+			typedef Genode::Fifo<Vfs_netif::Handle_element> Handle_queue;
+
+			Handle_queue  blocked_handles { };
+
+			Vfs_netif(Vfs::Env &vfs_env, Genode::Xml_node config,
+			          Lwip::Nic_netif::Wakeup_scheduler &wakeup_scheduler)
+			:
+				Lwip::Nic_netif(vfs_env.env(), vfs_env.alloc(), config,
+				                wakeup_scheduler),
+				tcp_dir(vfs_env), udp_dir(vfs_env)
+			{ }
+
+			~Vfs_netif()
 			{
-				Lwip::Nic_netif::wakeup_nic_server();
+				/* free the allocated qeueue elements */
+				status_callback();
 			}
 
 			void enqueue(Vfs_handle &handle)
@@ -1832,8 +1831,17 @@ class Lwip::File_system final : public Vfs::File_system, public Lwip::Directory
 					}
 				});
 			}
-
 		} _netif;
+
+		/**
+		 * Remote_io interface
+		 *
+		 * Called from VFS user when going idle.
+		 */
+		void wakeup_remote_peer() override
+		{
+			_netif.wakeup_nic_server();
+		}
 
 		/**
 		 * Walk a path to a protocol directory and apply procedure
@@ -1863,7 +1871,9 @@ class Lwip::File_system final : public Vfs::File_system, public Lwip::Directory
 
 		File_system(Vfs::Env &vfs_env, Genode::Xml_node config)
 		:
-			_ep(vfs_env.env().ep()), _netif(vfs_env, config)
+			_ep(vfs_env.env().ep()),
+			_wakeup_scheduler(vfs_env, *this),
+			_netif(vfs_env, config, _wakeup_scheduler)
 		{ }
 
 		/**
@@ -1884,6 +1894,7 @@ class Lwip::File_system final : public Vfs::File_system, public Lwip::Directory
 			Genode::warning(__func__, " NOT_IMPLEMENTED");
 			return Read_result::READ_ERR_INVALID;
 		};
+
 
 		/***********************
 		 ** Directory_service **
