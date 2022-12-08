@@ -64,17 +64,21 @@ class Vfs_audit::File_system : public Vfs::File_system
 		} _audit_log;
 
 		template <typename... ARGS>
-		inline void _log(ARGS &&... args) { _audit_log.log(args...); }
+		void _log(ARGS &&... args) { _audit_log.log(args...); }
 
 		Vfs::File_system &_root_dir;
 
 		Absolute_path const _audit_path;
 
+		Absolute_path _expanded_path { }; /* buffer for 'leaf_path' return value */
+
 		/**
 		 * Expand a path to lay within the audit path
 		 */
-		inline Absolute_path _expand(char const *path) {
-			return Absolute_path(path+1, _audit_path.string()); }
+		Absolute_path _expand(char const *path)
+		{
+			return Absolute_path(path+1, _audit_path.string());
+		}
 
 		struct Handle final : Vfs_handle
 		{
@@ -210,7 +214,8 @@ class Vfs_audit::File_system : public Vfs::File_system
 
 		char const *leaf_path(const char *path) override
 		{
-			return path;
+			_expanded_path = _expand(path);
+			return _root_dir.leaf_path(_expanded_path.string());
 		}
 
 
