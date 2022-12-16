@@ -188,9 +188,6 @@ struct Gpu::Buffer
 
 	Constructible<Attached_dataspace> buffer_attached { };
 
-	Genode::Dataspace_capability map_cap    { };
-	Offset                       map_offset { 0 };
-
 	Gpu_virtual_address  gpu_vaddr { };
 	Gpu::Sequence_number seqno { };
 
@@ -558,57 +555,6 @@ class Drm_call
 
 		Genode::Id_space<Sync_obj> _sync_objects { };
 
-		Offset _map_buffer(Buffer &b)
-		{
-			Offset offset = 0;
-
-			if (b.map_cap.valid()) {
-				offset = b.map_offset;
-				return offset;
-			}
-
-			_gpu_op([&] () {
-				b.map_cap = _gpu_session.map_buffer(b.id(), true, Gpu::Mapping_attributes::rw());
-			});
-
-			// XXX attach might faile
-			b.map_offset = static_cast<Offset>(_env.rm().attach(b.map_cap));
-			offset       = b.map_offset;
-
-			_available_gtt_size -= b.size;
-
-			return offset;
-		}
-
-		Offset _map_buffer(Gpu::Buffer_id const id)
-		{
-			Offset offset = 0;
-			try {
-				_buffer_space.apply<Buffer>(id, [&] (Buffer &b) {
-					offset = _map_buffer(b);
-				});
-			} catch (Genode::Id_space<Buffer>::Unknown_id) {
-				Genode::error(__func__, ": invalid handle ", id.value);
-				Genode::sleep_forever();
-			}
-			return offset;
-		}
-
-		void _unmap_buffer(Buffer &buffer)
-		{
-			if (!buffer.map_cap.valid())
-				return;
-
-			_env.rm().detach(buffer.map_offset);
-			buffer.map_offset = 0;
-
-			_gpu_session.unmap_buffer(buffer.id());
-
-			buffer.map_cap = Genode::Dataspace_capability();
-
-			_available_gtt_size += buffer.size;
-		}
-
 		template <typename FUNC>
 		void _alloc_buffer(uint64_t const size, FUNC const &fn)
 		{
@@ -627,9 +573,6 @@ class Drm_call
 		{
 			try {
 				_buffer_space.apply<Buffer>(id, [&] (Buffer &b) {
-
-					/* callee checks for mappings */
-					_unmap_buffer(b);
 
 					_context_space.for_each<Drm::Context>([&] (Drm::Context &context) {
 						context.free_buffer(b.id()); });
@@ -1296,9 +1239,6 @@ class Drm_call
 					Genode::sleep_forever();
 					return;
 				}
-
-				if (b.map_cap.valid())
-					_unmap_buffer(b);
 
 				b.buffer_attached.destruct();
 				found = true;
