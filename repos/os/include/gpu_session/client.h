@@ -81,6 +81,41 @@ class Gpu::Session_client : public Genode::Rpc_client<Session>
 
 		bool set_tiling(Buffer_id id, unsigned mode) override {
 			return call<Rpc_set_tiling>(id, mode); }
+
+		/* VRAM interface */
+		Gpu::Sequence_number execute(Vram_id id, Genode::off_t offset) override {
+			return call<Rpc_execute>(id, offset); }
+
+		Genode::Dataspace_capability alloc_vram(Vram_id id, Genode::size_t size) override {
+			return call<Rpc_alloc_vram>(id, size); }
+
+		void free_vram(Vram_id id) override {
+			call<Rpc_free_vram>(id); }
+
+		Vram_capability export_vram(Vram_id id) override {
+			return call<Rpc_export_vram>(id); }
+
+		void import_vram(Vram_capability cap, Vram_id id) override {
+			call<Rpc_import_vram>(cap, id); }
+
+		Genode::Dataspace_capability map_cpu(Vram_id id, Mapping_attributes attrs) override {
+			return call<Rpc_map_cpu>(id, attrs); }
+
+		void unmap_cpu(Vram_id id) override {
+			call<Rpc_unmap_cpu>(id); }
+
+		bool map_gpu(Vram_id id, Genode::size_t size,
+		             Genode::off_t offset, Gpu::addr_t va)  override {
+			return call<Rpc_map_gpu>(id, size, offset, va); }
+
+		void unmap_gpu(Vram_id id, Genode::off_t offset, Gpu::addr_t va) override {
+			call<Rpc_unmap_gpu>(id, offset, va); }
+
+		Gpu::addr_t query_vram_gpu(Vram_id id, Genode::off_t offset) override {
+			return call<Rpc_query_vram_gpu>(id, offset); }
+
+		bool set_tiling_gpu(Vram_id id, Genode::off_t offset, unsigned mode) override {
+			return call<Rpc_set_tiling_gpu>(id, offset, mode); }
 };
 
 #endif /* _INCLUDE__GPU_SESSION__CLIENT_H_ */
