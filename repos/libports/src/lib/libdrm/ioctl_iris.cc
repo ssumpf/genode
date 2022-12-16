@@ -191,31 +191,6 @@ struct Gpu::Buffer
 	Genode::Dataspace_capability map_cap    { };
 	Offset                       map_offset { 0 };
 
-	struct Tiling
-	{
-		bool     _valid;
-		uint32_t mode;
-		uint32_t stride;
-		uint32_t swizzle;
-
-		Tiling(uint32_t mode, uint32_t stride, uint32_t swizzle)
-		:
-			_valid  { true },
-			mode    { mode },
-			stride  { stride },
-			swizzle { swizzle }
-		{ }
-
-		Tiling()
-		:
-			_valid { false }, mode { 0 }, stride { 0 }, swizzle { 0 }
-		{ }
-
-		bool valid() const { return _valid; }
-	};
-
-	Tiling tiling { };
-
 	Gpu_virtual_address  gpu_vaddr { };
 	Gpu::Sequence_number seqno { };
 
@@ -903,33 +878,15 @@ class Drm_call
 
 		int _device_gem_set_tiling(void *arg)
 		{
-			auto      const p  = reinterpret_cast<drm_i915_gem_set_tiling*>(arg);
-			Gpu::Buffer_id const id { .value = p->handle };
-			uint32_t  const mode    = p->tiling_mode;
-			uint32_t  const stride  = p->stride;
-			uint32_t  const swizzle = p->swizzle_mode;
+			auto const p = reinterpret_cast<drm_i915_gem_set_tiling*>(arg);
+			uint32_t const mode = p->tiling_mode;
 
-			if (verbose_ioctl) {
-				Genode::error(__func__, ": ",
-				              "handle: ", id.value, " "
-				              "mode: ", mode, " "
-				              "stride: ", stride , " "
-				              "swizzle: ", swizzle);
+			if (mode != I915_TILING_NONE) {
+				Genode::error(__func__, " mode != I915_TILING_NONE (", mode, ") unsupported");
+				return 0;
 			}
 
-			bool ok = false;
-			try {
-				_buffer_space.apply<Buffer>(id, [&] (Buffer &b) {
-
-					b.tiling = Gpu::Buffer::Tiling(mode, stride, swizzle);
-					ok = true;
-
-				});
-			} catch (Genode::Id_space<Buffer>::Unknown_id) {
-				Genode::error(__func__, ": invalid handle: ", id.value);
-			}
-
-			return ok ? 0 : -1;
+			return 0;
 		}
 
 		int _device_gem_sw_finish(void *)
