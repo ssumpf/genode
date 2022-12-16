@@ -188,9 +188,6 @@ struct Gpu::Buffer
 
 	Constructible<Attached_dataspace> buffer_attached { };
 
-	Gpu_virtual_address  gpu_vaddr { };
-	Gpu::Sequence_number seqno { };
-
 	Buffer(Gpu::Connection &gpu,
 	       Genode::size_t   size,
 	       Genode::Id_space<Buffer> &space)
