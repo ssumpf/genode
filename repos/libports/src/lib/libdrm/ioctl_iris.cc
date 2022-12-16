@@ -191,9 +191,6 @@ struct Gpu::Buffer
 	Gpu_virtual_address  gpu_vaddr { };
 	Gpu::Sequence_number seqno { };
 
-	bool                         gpu_vaddr_valid { false };
-	bool                         busy            { false };
-
 	Buffer(Gpu::Connection &gpu,
 	       Genode::size_t   size,
 	       Genode::Id_space<Buffer> &space)
@@ -907,7 +904,7 @@ class Drm_call
 
 			try {
 				_buffer_space.apply<Buffer>(id, [&](Buffer const &b) {
-					p->busy = b.busy;
+					p->busy = false;
 				});
 				return 0;
 			} catch (Genode::Id_space<Buffer>::Unknown_id) {
