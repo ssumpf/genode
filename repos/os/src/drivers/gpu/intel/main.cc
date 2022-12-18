@@ -22,12 +22,12 @@
 #include <base/rpc_server.h>
 #include <base/session_object.h>
 #include <dataspace/client.h>
-#include <gpu_session/gpu_session.h>
 #include <gpu/info_intel.h>
 #include <platform_session/dma_buffer.h>
 #include <platform_session/device.h>
 #include <root/component.h>
 #include <timer_session/connection.h>
+#include <util/dictionary.h>
 #include <util/fifo.h>
 #include <util/mmio.h>
 #include <util/retry.h>
@@ -43,6 +43,8 @@
 #include <platform_session.h>
 #include <ring_buffer.h>
 #include <workarounds.h>
+
+#include <gpu_session_deprecated.h>
 
 using namespace Genode;
 
@@ -1567,7 +1569,7 @@ struct Gpu::Buffer : Genode::Interface
 };
 
 
-class Gpu::Session_component : public Genode::Session_object<Gpu::Session>
+class Gpu::Session_component : public Genode::Session_object<Gpu::Session_deprecated>
 {
 	private:
 
@@ -1676,11 +1678,27 @@ class Gpu::Session_component : public Genode::Session_object<Gpu::Session>
 		 */
 		struct Buffer_local
 		{
+			/* keep track of mappings of different offsets */
+			struct Mapping : Dictionary<Mapping, off_t>::Element
+			{
+				addr_t ppgtt_va { 0 };
+				size_t ppgtt_va_size { 0 };
+
+				Mapping(Dictionary<Mapping, off_t> &dict, off_t offset,
+				        addr_t ppgtt_va, size_t ppgtt_va_size)
+				:
+					Dictionary<Mapping, off_t>::Element(dict, offset),
+					ppgtt_va(ppgtt_va), ppgtt_va_size(ppgtt_va_size)
+				{  }
+			};
+
 			using Id_space = Genode::Id_space<Buffer_local>;
 
-			Buffer_capability const buffer_cap;
-			size_t                  size;
-			Id_space::Element const elem;
+			Buffer_capability    const buffer_cap;
+			size_t                     size;
+			Id_space::Element    const elem;
+			Dictionary<Mapping, off_t> mappings { };
+
 			addr_t            ppgtt_va { 0 };
 			bool              ppgtt_va_valid { false };
 
@@ -1736,9 +1754,13 @@ class Gpu::Session_component : public Genode::Session_object<Gpu::Session>
 
 		void _free_local_buffer(Buffer_local &buffer_local)
 		{
-			if (buffer_local.ppgtt_va_valid) {
-				_vgpu.rcs_unmap_ppgtt(buffer_local.ppgtt_va, buffer_local.size);
-			}
+			buffer_local.mappings.for_each([&] (Buffer_local::Mapping const &mapping) {
+				_vgpu.rcs_unmap_ppgtt(mapping.ppgtt_va, mapping.ppgtt_va_size);
+			});
+
+			while (buffer_local.mappings.with_any_element([&] (Buffer_local::Mapping &mapping) {
+				destroy(_heap, &mapping);
+			})) { }
 
 			destroy(&_heap, &buffer_local);
 		}
@@ -1831,8 +1853,7 @@ class Gpu::Session_component : public Genode::Session_object<Gpu::Session>
 			return _vgpu.info_dataspace();
 		}
 
-		Gpu::Sequence_number exec_buffer(Buffer_id id,
-		                                 Genode::size_t) override
+		Gpu::Sequence_number execute(Vram_id id, off_t offset) override
 		{
 			bool found = false;
 
@@ -1843,13 +1864,20 @@ class Gpu::Session_component : public Genode::Session_object<Gpu::Session>
 					return;
 				}
 
-				if (!buffer_local.ppgtt_va_valid) {
+				addr_t ppgtt_va { 0 };
+
+				bool ppgtt_va_valid = buffer_local.mappings.with_element(offset,
+					[&] (Buffer_local::Mapping const &mapping) {
+						ppgtt_va = mapping.ppgtt_va; return true; },
+					[]() { return false; });
+
+				if (!ppgtt_va_valid) {
 					Genode::error("Invalid execbuffer");
 					Genode::Signal_transmitter(_vgpu.completion_sigh()).submit();
 					throw Gpu::Session::Invalid_state();
 				}
 
-				found = _vgpu.setup_ring_buffer(buffer_local.ppgtt_va);
+				found = _vgpu.setup_ring_buffer(ppgtt_va);
 			});
 
 			if (!found)
@@ -1869,8 +1897,8 @@ class Gpu::Session_component : public Genode::Session_object<Gpu::Session>
 			_vgpu.completion_sigh(sigh);
 		}
 
-		Genode::Dataspace_capability alloc_buffer(Gpu::Buffer_id id,
-		                                          Genode::size_t size) override
+		Genode::Dataspace_capability alloc_vram(Gpu::Vram_id id,
+		                                        Genode::size_t size) override
 		{
 			/* roundup to next page size */
 			size = align_addr(size, 12);
@@ -1910,7 +1938,7 @@ class Gpu::Session_component : public Genode::Session_object<Gpu::Session>
 			return ds_cap;
 		}
 
-		void free_buffer(Gpu::Buffer_id id) override
+		void free_vram(Gpu::Vram_id id) override
 		{
 			auto lookup_and_free = [&] (Buffer_local &buffer_local) {
 
@@ -1936,7 +1964,7 @@ class Gpu::Session_component : public Genode::Session_object<Gpu::Session>
 			_apply_buffer_local(id, lookup_and_free);
 		}
 
-		Buffer_capability export_buffer(Buffer_id id) override
+		Vram_capability export_vram(Vram_id id) override
 		{
 			Buffer_capability cap { };
 			_apply_buffer_local(id, [&] (Buffer_local &buffer_local) {
@@ -1946,7 +1974,7 @@ class Gpu::Session_component : public Genode::Session_object<Gpu::Session>
 			return cap;
 		}
 
-		void import_buffer(Buffer_capability cap, Buffer_id id) override
+		void import_vram(Vram_capability cap, Vram_id id) override
 		{
 			if (_buffer_valid(cap) == false)
 				throw Gpu::Session::Invalid_state();
@@ -1966,6 +1994,7 @@ class Gpu::Session_component : public Genode::Session_object<Gpu::Session>
 			}
 		}
 
+#if 0
 		Genode::Dataspace_capability map_buffer(Gpu::Buffer_id id,
 		                                        bool aperture,
 		                                        Gpu::Mapping_attributes attrs) override
@@ -2045,13 +2074,15 @@ class Gpu::Session_component : public Genode::Session_object<Gpu::Session>
 
 			if (!unmapped) { Genode::error("buffer not mapped"); }
 		}
+#endif
 
-		bool map_buffer_ppgtt(Gpu::Buffer_id id, Gpu::addr_t va) override
+		bool map_gpu(Vram_id id, size_t size, off_t offset, Gpu::addr_t va) override
 		{
 			auto lookup_and_map = [&] (Buffer_local &buffer_local) {
-
-				if (buffer_local.ppgtt_va_valid) {
-					Genode::error("buffer already mapped");
+				//log("[", this, "] map gpu: id: ", id.value, " offs: ", Hex(offset),
+				//    " size: ", Hex(size), " va: ", Hex(va));
+				if (buffer_local.mappings.exists(offset)) {
+					Genode::error("buffer already mapped at offset: ", Hex(offset));
 					return;
 				}
 
@@ -2064,9 +2095,20 @@ class Gpu::Session_component : public Genode::Session_object<Gpu::Session>
 					return;
 				}
 
-				_vgpu.rcs_map_ppgtt(va, phys_addr, buffer_local.size);
-				buffer_local.ppgtt_va = va;
-				buffer_local.ppgtt_va_valid = true;
+				try {
+				_vgpu.rcs_map_ppgtt(va, phys_addr + offset, size);
+				} catch (Level_4_translation_table::Double_insertion) {
+					error("PPGTT: Double insertion: va: ", Hex(va), " offset: ", Hex(offset),
+					      "size: ", Hex(size));
+					throw Mapping_vram_failed();
+				} catch(...) {
+					error("PPGTT: invalid address/range/alignment: va: ", Hex(va),
+					      " offset: ", Hex(offset),
+					      "size: ", Hex(size));
+					throw Mapping_vram_failed();
+				}
+
+				new (_heap) Buffer_local::Mapping(buffer_local.mappings, offset, va, size);
 			};
 
 			if (_resource_guard.avail_caps() == false)
@@ -2089,46 +2131,48 @@ class Gpu::Session_component : public Genode::Session_object<Gpu::Session>
 			return true;
 		}
 
-		void unmap_buffer_ppgtt(Gpu::Buffer_id id,
-		                        Gpu::addr_t va) override
+		void unmap_gpu(Vram_id id, off_t offset, Gpu::addr_t va) override
 		{
 			auto lookup_and_unmap = [&] (Buffer_local &buffer_local) {
 
-				if (!buffer_local.ppgtt_va_valid) {
-					Genode::error("buffer not mapped");
-					return;
-				}
+				buffer_local.mappings.with_element(offset,
+					[&] (Buffer_local::Mapping &mapping) {
 
-				if (buffer_local.ppgtt_va != va) {
-					Genode::error("buffer not mapped at ", Genode::Hex(va));
-					return;
-				}
-
-				_vgpu.rcs_unmap_ppgtt(va, buffer_local.size);
-				buffer_local.ppgtt_va_valid = false;
+						if (mapping.ppgtt_va != va) {
+							Genode::error("VRAM: not mapped at ", Hex(va), " offset: ", Hex(offset));
+							return;
+						}
+						//log("[", this, "] unmap gpu: id: ", id.value, " offs: ", Hex(offset),
+						//    " size: ", Hex(mapping.ppgtt_va_size), " va: ", Hex(va));
+						_vgpu.rcs_unmap_ppgtt(va, mapping.ppgtt_va_size);
+						destroy(_heap, &mapping);
+					},
+					[&] () { error("VRAM: nothing mapped at offset ", Hex(offset)); }
+				);
 			};
 			_apply_buffer_local(id, lookup_and_unmap);
 		}
 
-		Gpu::addr_t query_buffer_ppgtt(Gpu::Buffer_id id) override
+		Gpu::addr_t query_vram_gpu(Vram_id id, off_t offset) override
 		{
 			Gpu::addr_t result = (Gpu::addr_t)-1;
 
 			auto lookup_va = [&] (Buffer_local &buffer_local) {
 
-				if (!buffer_local.ppgtt_va_valid) {
-					Genode::error("buffer not mapped");
-					return;
-				}
-
-				result = buffer_local.ppgtt_va;
+				buffer_local.mappings.with_element(offset,
+					[&] (Buffer_local::Mapping &mapping) {
+						result = mapping.ppgtt_va;
+					},
+					[&] () { error("VRAM not mapped at offset", Hex(offset)); }
+				);
 			};
+
 			_apply_buffer_local(id, lookup_va);
 			return result;
 		}
 
-		bool set_tiling(Gpu::Buffer_id id,
-		                Genode::uint32_t const mode) override
+		bool set_tiling_gpu(Vram_id id, off_t offset,
+		                    unsigned mode) override
 		{
 			if (_vgpu.active_fences > Igd::Device::Vgpu::MAX_FENCES) {
 				Genode::error("no free fences left, already active: ", _vgpu.active_fences);
@@ -2155,7 +2199,7 @@ class Gpu::Session_component : public Genode::Session_object<Gpu::Session>
 			if (b->fenced) return true;
 
 			Igd::size_t const size = b->size;
-			Genode::uint32_t const fenced = _device.set_tiling(b->map.offset, size, mode);
+			Genode::uint32_t const fenced = _device.set_tiling(b->map.offset + offset, size, mode);
 
 			b->fenced = fenced;
 			if (fenced != Buffer::INVALID_FENCE) { _vgpu.active_fences++; }
