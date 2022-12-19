@@ -332,6 +332,41 @@ void Main::parse_acpi_device_info(Xml_generator & gen)
 			gen.attribute("size", 4U);
 		});
 	});
+
+	/*
+	 * Intel Tikerlage PCH Pinctrl/GPIO (Fujitsu U7411)
+	 */
+	gen.node("device", [&]
+	{
+		gen.attribute("name", "INT34C5");
+		gen.attribute("type", "acpi");
+		gen.node("irq", [&]
+		{
+			gen.attribute("number", 14U);
+			gen.attribute("mode", "level");
+			gen.attribute("polarity", "low");
+		});
+		gen.node("io_mem", [&]
+		{
+			gen.attribute("address", "0xfd690000");
+			gen.attribute("size",    "0x1000");
+		});
+		gen.node("io_mem", [&]
+		{
+			gen.attribute("address", "0xfd6a0000");
+			gen.attribute("size",    "0x1000");
+		});
+		gen.node("io_mem", [&]
+		{
+			gen.attribute("address", "0xfd6d0000");
+			gen.attribute("size",    "0x1000");
+		});
+		gen.node("io_mem", [&]
+		{
+			gen.attribute("address", "0xfd6e0000");
+			gen.attribute("size",    "0x1000");
+		});
+	});
 }
 
 
