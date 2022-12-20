@@ -59,8 +59,14 @@ Policy_id Session_component::alloc_policy(size_t size)
 	 */
 	Policy_id const id(++_policy_cnt);
 
-	Dataspace_capability ds_cap = _ram.alloc(size);
-	_policies.insert(*this, id, _policies_slab, ds_cap, size);
+	Ram_dataspace_capability ds_cap = _ram.alloc(size); /* may throw */
+
+	try {
+		_policies.insert(*this, id, _policies_slab, ds_cap, size);
+	} catch (...) {
+		_ram.free(ds_cap);
+		throw;
+	}
 
 	return id;
 }
@@ -74,7 +80,11 @@ Dataspace_capability Session_component::policy(Policy_id id)
 
 void Session_component::unload_policy(Policy_id id)
 {
-	_policies.remove(*this, id);
+	try {
+		Dataspace_capability ds_cap = _policies.dataspace(*this, id);
+		_policies.remove(*this, id);
+		_ram.free(static_cap_cast<Ram_dataspace>(ds_cap));
+	} catch (Nonexistent_policy) { }
 }
 
 
