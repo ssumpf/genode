@@ -11,7 +11,8 @@ DIR(linux) := src/linux
 #
 PATCH_FILES := i915_irq.patch i915_alderlake.patch xhci_fix_event_37.patch \
                xhci_abort_ring.patch iwlwifi_enable_irq_before_pnvm.patch \
-               sof_ipc_timeout.patch
+               sof_ipc_timeout.patch \
+               iwlwifi_timeout_hotfix.patch
 PATCHES += $(addprefix patches/,$(PATCH_FILES))
 
 # i915
