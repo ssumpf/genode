@@ -157,22 +157,6 @@ struct file * anon_inode_getfile(const char * name,const struct file_operations 
 }
 
 
-#include <linux/async.h>
-
-async_cookie_t async_schedule_node(async_func_t func,void * data,int node)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/async.h>
-
-void async_synchronize_full(void)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 #include <linux/kernel.h>
 
 void bust_spinlocks(int yes)

@@ -29,6 +29,7 @@ kernel/irq/irqdesc.c
 kernel/irq/irqdomain.c
 kernel/irq/manage.c
 kernel/irq/resend.c
+kernel/async.c
 kernel/kthread.c
 kernel/locking/mutex.c
 kernel/locking/osq_lock.c

@@ -175,14 +175,6 @@ int stream_open(struct inode * inode,struct file * filp)
 }
 
 
-#include <linux/async.h>
-
-void async_synchronize_full_domain(struct async_domain * domain)
-{
-	lx_emul_trace(__func__);
-}
-
-
 #include <linux/leds.h>
 
 void ledtrig_audio_set(enum led_audio type,enum led_brightness state)
