@@ -17,8 +17,10 @@ set build_components {
 	drivers/platform
 	server/report_rom
 	server/rom_filter
+	server/dynamic_rom
 	drivers/audio/pc
 	test/audio_in
+	app/cpu_burner
 }
 
 build $build_components
@@ -59,7 +61,7 @@ append config {
 			<service name="Report"/>
 			<service name="ROM"/>
 		</provides>
-		<config verbose="yes">
+		<config verbose="false">
 			<policy label="pci_decode -> system" report="acpi_drv -> acpi"/>
 			<policy label="rom_filter -> pci_devices" report="pci_decode -> devices"/>
 		</config>
@@ -127,7 +129,35 @@ append config {
 		</config>
 	</start>
 
-	<start name="pc_audio_drv">
+	<start name="dynamic_rom">
+		<resource name="RAM" quantum="4M"/>
+		<provides><service name="ROM"/> </provides>
+		<config verbose="yes">
+			<rom name="config">
+				<inline>
+<config percent="0"/>
+				</inline>
+				<sleep milliseconds="20000"/>
+				<inline>
+<config percent="90"/>
+				</inline>
+				<sleep milliseconds="20000"/>
+			</rom>
+		</config>
+		<route>
+			<any-service><parent/><any-child/></any-service>
+		</route>
+	</start>
+
+	<start name="cpu_burner" caps="100">
+		<resource name="RAM" quantum="2M"/>
+		<route>
+			<service name="ROM" label="config"> <child name="dynamic_rom"/> </service>
+			<any-service><parent/><any-child/></any-service>
+		</route>
+	</start>
+
+	<start name="pc_audio_drv" priority="-1">
 		<resource name="RAM" quantum="8M"/>
 		<provides>
 			<service name="Audio_out"/>
@@ -149,8 +179,8 @@ append config {
 			<control type="int"  id="12" channel="1" name="Capture Volume" value="63" min="0" max="63"/>
 			<control type="int"  id="5"  channel="0" name="Headset Mic Playback Volume" value="31" min="0" max="31"/>
 			<control type="int"  id="5"  channel="1" name="Headset Mic Playback Volume" value="31" min="0" max="31"/>
-			<control type="int"  id="32" channel="0" name="Dmic0 Capture Volume" value="50" min="0" max="70"/>
-			<control type="int"  id="32" channel="1" name="Dmic0 Capture Volume" value="50" min="0" max="70"/>
+			<control type="int"  id="32" channel="0" name="Dmic0 Capture Volume" value="60" min="0" max="70"/>
+			<control type="int"  id="32" channel="1" name="Dmic0 Capture Volume" value="60" min="0" max="70"/>
 		</config>
 		<route>
 			<service name="Report"> <child name="mixer_report_rom"/> </service>
@@ -173,6 +203,8 @@ set boot_modules {
 	platform_drv pci_decode acpi_drv
 	pc_audio_drv
 	test-audio_in
+	cpu_burner
+	dynamic_rom
 }
 
 build_boot_image $boot_modules

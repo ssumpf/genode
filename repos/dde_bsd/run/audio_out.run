@@ -12,18 +12,23 @@ if {[have_spec linux]} {
 
 
 create_boot_directory
+
+import_from_depot [depot_user]/raw/sof_firmware
+
 build {
 	core init timer
 	drivers/acpi
 	drivers/platform
 	app/pci_decode
 	server/report_rom
-	drivers/audio
+	drivers/audio/pc
 	test/audio_out
+	app/cpu_burner
+	server/dynamic_rom
 }
 
 install_config {
-<config verbose="yes">
+<config verbose="yes" prio_levels="2">
 	<parent-provides>
 		<service name="ROM"/>
 		<service name="IRQ"/>
@@ -95,18 +100,51 @@ install_config {
 			<service name="Timer">   <parent/> </service>
 		</route>
 		<config>
-			<policy label="audio_drv -> "> <pci class="AUDIO"/> <pci class="HDAUDIO"/> </policy>
+			<policy label="audio_drv -> " info="yes"> <pci class="AUDIO"/> <pci class="HDAUDIO"/> </policy>
 		</config>
 	</start>
 
-	<start name="audio_drv" caps="150">
-		<binary name="pci_audio_drv"/>
-		<resource name="RAM" quantum="10M"/>
-		<provides> <service name="Audio_out"/> </provides>
-		<config/>
+	<start name="dynamic_rom">
+		<resource name="RAM" quantum="4M"/>
+		<provides><service name="ROM"/> </provides>
+		<config verbose="yes">
+			<rom name="config">
+				<inline>
+<config percent="0"/>
+				</inline>
+				<sleep milliseconds="20000"/>
+				<inline>
+<config percent="90"/>
+				</inline>
+				<sleep milliseconds="20000"/>
+			</rom>
+		</config>
+		<route>
+			<any-service><parent/><any-child/></any-service>
+		</route>
 	</start>
 
-	<start name="test-audio_out">
+	<start name="cpu_burner" caps="100">
+		<resource name="RAM" quantum="2M"/>
+		<route>
+			<service name="ROM" label="config"> <child name="dynamic_rom"/> </service>
+			<any-service><parent/><any-child/></any-service>
+		</route>
+	</start>
+
+	<start name="audio_drv" caps="150" priority="-1">
+		<binary name="pc_audio_drv"/>
+		<resource name="RAM" quantum="10M"/>
+		<provides>
+			<service name="Audio_out"/>
+			<service name="Audio_in"/>
+		</provides>
+		<config>
+			<control type="int"  id="18" channel="0" name="Master Playback Volume" value="50" min="0" max="87"/>
+		</config>
+	</start>
+
+	<start name="test-audio_out" priority="-1">
 		<resource name="RAM" quantum="4M"/>
 		<config>
 			<filename>sample.raw</filename>
@@ -133,7 +171,8 @@ if {![file exists bin/sample.raw]} {
 build_boot_image {
 	core ld.lib.so init timer
 	platform_drv acpi_drv pci_decode report_rom
-	pci_audio_drv test-audio_out sample.raw
+	pc_audio_drv test-audio_out sample.raw
+	cpu_burner dynamic_rom
 }
 
 
@@ -141,4 +180,5 @@ build_boot_image {
 # For obvious reasons the timeout depends on the total
 # length of the used sample file.
 #
+run_genode_until forever
 run_genode_until {.*played.*1 time\(s\)} 60

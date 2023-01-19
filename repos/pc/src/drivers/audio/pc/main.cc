@@ -13,7 +13,7 @@
 
 #include <base/component.h>
 #include <base/env.h>
-
+#include <timer_session/connection.h>
 #include <lx_emul/init.h>
 #include <lx_kit/env.h>
 #include <lx_kit/init.h>
