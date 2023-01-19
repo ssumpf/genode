@@ -21,6 +21,12 @@ $1
 endef
 
 #
+# Utility to read content from a file if it exists and the given file name
+# is not empty.
+#
+_file_content = $(if $(wildcard $1),$(shell cat $1),)
+
+#
 # Lookup port directory by a given port name
 #
 # The location of the port directory is determined by the hash value stored
@@ -38,7 +44,7 @@ endef
 #
 _lookup_port_hash_file  = $(wildcard $(addsuffix /ports/$1.hash,$(REPOSITORIES)))
 _capture_port_hash_file = $(call _capture,$(call _lookup_port_hash_file,$1),PORT_HASH_FILES)
-_hash_of_port           = $(shell echo | cat $(call _capture_port_hash_file,$1))
+_hash_of_port           = $(call _file_content,$(call _capture_port_hash_file,$1))
 _port_dir               = $(wildcard $(CONTRIB_DIR)/$1-$(call _hash_of_port,$1))
 
 #
