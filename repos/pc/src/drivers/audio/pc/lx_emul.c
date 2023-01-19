@@ -114,17 +114,6 @@ void lx_emul_module_params(void)
 
 
 /*
- * async
- */
-async_cookie_t async_schedule_node_domain(async_func_t func, void * data, int node,
-                                         struct async_domain * domain)
-{
-	func(data, 0);
-	return 0;
-}
-
-
-/*
  * uaccess
  */
 unsigned long _copy_to_user(void __user * to, const void * from, unsigned long n)
