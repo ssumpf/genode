@@ -1,4 +1,4 @@
-<runtime ram="4300M" caps="8000" binary="init">
+<runtime ram="10G" caps="8000" binary="init">
 
 	<requires>
 		<file_system label="vm"/>
@@ -49,7 +49,7 @@
 
 		<start name="vbox" caps="7000">
 			<binary name="virtualbox6" />
-			<resource name="RAM" quantum="8G"/>
+			<resource name="RAM" quantum="9G"/>
 			<exit propagate="yes"/>
 			<config vbox_file="machine.vbox6" xhci="yes" vm_name="linux" capslock="rom" ld_verbose="yes">
 				<vfs>
