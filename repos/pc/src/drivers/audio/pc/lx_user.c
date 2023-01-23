@@ -143,7 +143,7 @@ static const char *const control_labels[] = {
 /*
  * Helper
  */
-static void sound_event_set(struct sound_card *card, enum Sound_event event)
+static void sound_events_add(struct sound_card *card, enum Sound_event event)
 {
 	enum Sound_event clear = EVENT_INVALID;
 
@@ -158,9 +158,21 @@ static void sound_event_set(struct sound_card *card, enum Sound_event event)
 }
 
 
-static bool sound_event(struct sound_card *card, enum Sound_event event)
+static void sound_events_clear(struct sound_card *card)
 {
-	return !!(card->sound_events & (1u << event));
+	card->sound_events = EVENT_INVALID;
+}
+
+
+static bool sound_events_empty(struct sound_card *card)
+{
+	return card->sound_events == EVENT_INVALID;
+}
+
+
+static bool _event(unsigned events, enum Sound_event event)
+{
+	return !!(events & (1u << event));
 }
 
 
@@ -287,10 +299,10 @@ void kill_fasync(struct fasync_struct **fp,int sig,int band)
 
 	if (fp[0] && fp[0]->fa_file) {
 		card = (struct sound_card *)fp[0]->fa_file;
-		sound_event_set(card, EVENT_PCM);
+		sound_events_add(card, EVENT_PCM);
 
 		if (genode_mixer_update())
-			sound_event_set(card, EVENT_MIXER);
+			sound_events_add(card, EVENT_MIXER);
 	}
 
 	if (_lx_user_task)
@@ -987,7 +999,7 @@ int jack_connect(struct input_handler *handler, struct input_dev *dev,
 
 	/* check if jack input is connected */
 	if (test_bit(SW_HEADPHONE_INSERT, dev->sw))
-		sound_event_set(card, EVENT_JACK_PLUGGED);
+		sound_events_add(card, EVENT_JACK_PLUGGED);
 
 	handle->handler = handler;
 	handle->name    = kstrdup(handle->name, 0);
@@ -1017,7 +1029,7 @@ void jack_event(struct input_handle *handle, unsigned int type,
 
 	if (type != EV_SW || code != SW_HEADPHONE_INSERT) return;
 
-	sound_event_set(card, value ? EVENT_JACK_PLUGGED : EVENT_JACK_UNPLUGGED);
+	sound_events_add(card, value ? EVENT_JACK_PLUGGED : EVENT_JACK_UNPLUGGED);
 
 	if (_lx_user_task)
 		lx_emul_task_unblock(_lx_user_task);
@@ -1039,6 +1051,9 @@ struct input_handler jack_handler = {
 static void update_jack(struct sound_card *card)
 {
 	int err;
+	struct mixer *mixer = card->mixer;
+	unsigned index = card->routing->mute_headset;
+
 	if (card->playback) {
 		err = sound_ioctl(card->playback, SNDRV_PCM_IOCTL_DRAIN, NULL);
 		if (err) printk("%s:%d err=%d\n", __func__, __LINE__ ,err);
@@ -1053,9 +1068,6 @@ static void update_jack(struct sound_card *card)
 		if (err) printk("%s:%d err=%d\n", __func__, __LINE__ ,err);
 	}
 
-	struct mixer *mixer = card->mixer;
-
-	unsigned index = card->routing->mute_headset;
 	mixer_control_set(&mixer->controls[index], 0, card->jack_mode != MICROPHONE && card->jack_plugged);
 	mixer_control_set(&mixer->controls[index], 1, card->jack_mode != MICROPHONE && card->jack_plugged);
 
@@ -1085,16 +1097,25 @@ static void sound_dispatch(struct sound_card *card, struct snd_card *c)
 {
 	while (true) {
 
-		if (sound_event(card, EVENT_JACK_UNPLUGGED) ||
-		    sound_event(card, EVENT_JACK_PLUGGED)) {
-			card->jack_plugged = sound_event(card, EVENT_JACK_PLUGGED);
+		/*
+		 * Save events and clear on card struct, we need to do this because some of
+		 * the handling code here may block while in the meantime other interrupts
+		 * might trigger (through kill_fasync) from the driver context. In this case
+		 * we need to continue dispatching instead of blocking below
+		 */
+		unsigned events = card->sound_events;
+		sound_events_clear(card);
+
+		if (_event(events, EVENT_JACK_UNPLUGGED) ||
+		    _event(events, EVENT_JACK_PLUGGED)) {
+			card->jack_plugged = _event(events, EVENT_JACK_PLUGGED);
 
 			update_jack(card);
 
 			mixer_report_controls(card->mixer);
 		}
 
-		if (sound_event(card, EVENT_MIXER)) {
+		if (_event(events, EVENT_MIXER)) {
 			if (mixer_update_controls(card->mixer))
 				mixer_report_controls(card->mixer);
 
@@ -1111,13 +1132,14 @@ static void sound_dispatch(struct sound_card *card, struct snd_card *c)
 			}
 		}
 
-		if (sound_event(card, EVENT_PCM)) {
+		if (_event(events, EVENT_PCM)) {
 			sound_capture(card->capture);
 			sound_play(card->playback);
 		}
 
-		card->sound_events = EVENT_INVALID;
-		lx_emul_task_schedule(true);
+		/* don't block in case new events arrived in the meantime */
+		if (sound_events_empty(card))
+			lx_emul_task_schedule(true);
 	}
 }
 
@@ -1141,7 +1163,7 @@ static int sound_card_task(void *data)
 	}
 
 	/* register jack handler */
-	sound_event_set(&sound_card, EVENT_JACK_UNPLUGGED);
+	sound_events_add(&sound_card, EVENT_JACK_UNPLUGGED);
 	jack_handler.private = &sound_card;
 	err = input_register_handler(&jack_handler);
 	if (err) {
@@ -1178,10 +1200,10 @@ static int sound_card_task(void *data)
 	sound_card.routing->defaults(&mixer);
 	/* possibly override mixer defaults */
 	if (genode_mixer_update())
-		sound_event_set(&sound_card, EVENT_MIXER);
+		sound_events_add(&sound_card, EVENT_MIXER);
 
 	/* start event loop */
-	sound_event_set(&sound_card, EVENT_PCM);
+	sound_events_add(&sound_card, EVENT_PCM);
 	sound_dispatch(&sound_card, card);
 
 	err = sound_device_close(sound_card.playback);
