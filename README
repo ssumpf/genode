@@ -79,11 +79,6 @@ The source tree is composed of the following subdirectories:
   Source-code management tools and scripts. Please refer to the README file
   contained in the directory.
 
-:'depot':
-
-  Directory used by Genode's package-management tools. It contains the public
-  keys and download locations of software providers.
-
 
 Additional hardware support
 ###########################
@@ -106,6 +101,17 @@ system scenarios.
 :Genode-world repository:
 
   [https://github.com/genodelabs/genode-world]
+
+
+Community blog
+##############
+
+Genodians.org presents ideas, announcements, experience stories, and tutorials
+around Genode, informally written by Genode users and developers.
+
+:Genodians.org:
+
+  [https://genodians.org]
 
 
 Contact
