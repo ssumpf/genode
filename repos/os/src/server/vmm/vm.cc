@@ -128,12 +128,13 @@ Vm::Vm(Genode::Env & env, Heap & heap, Config & config)
 				Virtio_net(dev.name.string(), (uint64_t)dev.mmio_start,
 				           dev.mmio_size, dev.irq, boot_cpu(), _bus, _ram,
 				           env));
-				return;
+			return;
 		case Config::Virtio_device::BLOCK:
 			_device_list.insert(new (_heap)
 				Virtio_block_device(dev.name.string(), (uint64_t)dev.mmio_start,
 				                    dev.mmio_size, dev.irq, boot_cpu(),
 				                    _bus, _ram, env, heap));
+			return;
 		case Config::Virtio_device::GPU:
 			if (!_gui.constructed()) _gui.construct(env);
 			_device_list.insert(new (_heap)
