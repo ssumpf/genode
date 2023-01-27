@@ -66,7 +66,7 @@ append config {
 	</default-route>
 	<default caps="100"/>
 
-	<start name="report_rom" caps="70">
+	<start name="report_rom" caps="100">
 		<resource name="RAM" quantum="1M"/>
 		<provides>
 			<service name="ROM" />
@@ -115,7 +115,7 @@ append config {
 	</start>
 
 	<start name="platform_drv" caps="100" managing_system="yes">
-		<resource name="RAM" quantum="1M"/>
+		<resource name="RAM" quantum="2M"/>
 		<provides> <service name="Platform"/> </provides>
 		<route>
 			<service name="ROM" label="devices"> <child name="report_rom"/> </service>
