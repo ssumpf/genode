@@ -67,7 +67,7 @@ append config {
 	<default caps="100"/>
 
 	<start name="report_rom" caps="100">
-		<resource name="RAM" quantum="1M"/>
+		<resource name="RAM" quantum="2M"/>
 		<provides>
 			<service name="ROM" />
 			<service name="Report" />
