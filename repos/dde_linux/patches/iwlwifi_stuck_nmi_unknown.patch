@@ -1,0 +1,12 @@
+--- src/linux/drivers/net/wireless/intel/iwlwifi/queue/tx.c
++++ src/linux/drivers/net/wireless/intel/iwlwifi/queue/tx.c
+@@ -1067,7 +1067,8 @@
+ 
+ 	iwl_txq_log_scd_error(trans, txq);
+ 
+-	iwl_force_nmi(trans);
++	/* avoids stuck driver on S938 with 'NMI_INTERRUPT_UNKNOWN' shown by scd_error dump */
++//	iwl_force_nmi(trans);
+ }
+ 
+ int iwl_txq_alloc(struct iwl_trans *trans, struct iwl_txq *txq, int slots_num,
