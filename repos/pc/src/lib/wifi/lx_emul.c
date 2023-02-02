@@ -425,7 +425,10 @@ size_t _copy_to_iter(const void * addr, size_t bytes, struct iov_iter * i)
 
 asmlinkage __visible void dump_stack(void)
 {
+	printk("backtrace omitted\n");
+/*
 	lx_backtrace();
+*/
 }
 
 
