@@ -2,6 +2,7 @@
 # Configure wireless lan
 #
 
+
 proc wifi_ssid { } {
 	return $::env(GENODE_WIFI_SSID)
 }
@@ -77,6 +78,7 @@ set build_components {
 	lib/vfs_wifi
 	lib/vfs_jitterentropy
 	lib/vfs_lwip
+	app/wifi_heartbeat
 }
 
 build $build_components
@@ -271,27 +273,17 @@ append config {
 		<config verbose="yes"/>
 	</start>
 
-	<start name="wifi_drv" caps="250" priority="-1">
-		<binary name="pc_wifi_drv"/>
-		<resource name="RAM" quantum="32M"/>
-		<config ld_verbose="yes">
-			<report mac_address="true"/>
-			<libc stdout="/dev/log" stderr="/dev/log" rtc="/dev/rtc" rng="/dev/urandom"/>
-			<vfs>
-				<dir name="dev"> <log/> <null/> <rtc/>
-					<jitterentropy name="random"/>
-					<jitterentropy name="urandom"/>
-					<wifi/>
-				</dir>
-			</vfs>
-		</config>
+
+	<start name="wifi_drv" caps="500" priority="-1">
+		<binary name="wifi_heartbeat"/>
+		<resource name="RAM" quantum="48M"/>
 		<route>
 			<service name="Uplink"> <child name="nic_router"/> </service>
 			<service name="Rtc"> <any-child/> </service>
-			<service name="Report" label="accesspoints"> <child name="accesspoints_report_rom"/> </service>
-			<service name="Report" label="state"> <child name="state_report_rom"/> </service>
-			<service name="Report" label="devices"> <child name="devices_report_rom"/> </service>
-			<service name="ROM" label="wifi_config"> <child name="config_rom"/> </service>
+			<service name="Report" label_suffix="accesspoints"> <child name="accesspoints_report_rom"/> </service>
+			<service name="Report" label_suffix="state"> <child name="state_report_rom"/> </service>
+			<service name="Report" label_suffix="devices"> <child name="devices_report_rom"/> </service>
+			<service name="ROM" label_suffix="wifi_config"> <child name="config_rom"/> </service>
 			<any-service> <parent/> <any-child/> </any-service>
 		</route>
 	</start>
@@ -333,6 +325,8 @@ set boot_modules {
 	platform_drv acpi_drv pci_decode
 	test-lwip_httpsrv
 	vfs_lwip.lib.so
+	pc_wifi_drv
+	wifi_heartbeat sandbox.lib.so
 }
 
 append boot_modules $firmware_modules
