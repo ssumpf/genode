@@ -6,9 +6,10 @@ set build_components {
 	drivers/acpi
 	drivers/platform
 	server/report_rom
-	server/rom_filter
 	drivers/i2c_hid/pc
 	server/event_dump
+	app/acpica
+	app/acpi_event
 }
 
 build $build_components
@@ -23,6 +24,7 @@ append config {
 		<service name="CPU"/>
 		<service name="ROM"/>
 		<service name="IO_MEM"/>
+		<service name="IO_PORT"/>
 		<service name="IRQ"/>
 		<service name="RM"/>
 	</parent-provides>
@@ -46,8 +48,8 @@ append config {
 			<service name="ROM"/>
 		</provides>
 		<config verbose="yes">
-			<policy label="pci_decode -> system" report="acpi_drv -> acpi"/>
-			<policy label="rom_filter -> pci_devices" report="pci_decode -> devices"/>
+			<policy label="pci_decode -> system"    report="acpi_drv -> acpi"/>
+			<policy label="platform_drv -> devices" report="pci_decode -> devices"/>
 		</config>
 	</start>
 
@@ -68,26 +70,6 @@ append config {
 		</route>
 	</start>
 
-	<start name="rom_filter" caps="70">
-		<resource name="RAM" quantum="1M"/>
-		<provides> <service name="ROM"/> </provides>
-		<config buffer="32K">
-			<input name="devices"/>
-			<input name="pci_devices"/>
-			<output node="devices">
-				<input name="devices"     skip_toplevel="yes"/>
-				<input name="pci_devices" skip_toplevel="yes"/>
-			</output>
-		</config>
-		<route>
-			<service name="ROM" label="pci_devices"> <child name="drivers_reports"/> </service>
-			<service name="LOG"> <parent/> </service>
-			<service name="PD">  <parent/> </service>
-			<service name="CPU"> <parent/> </service>
-			<service name="ROM"> <parent/> </service>
-		</route>
-	</start>
-
 	<start name="platform_drv" caps="400" managing_system="yes">
 		<resource name="RAM" quantum="4M"/>
 		<provides>
@@ -99,9 +81,10 @@ append config {
 				<device name="00:15.3" type="pci"/>
 				<device name="INT34C5" type="acpi"/>
 			</policy>
+			<policy label_prefix="acpica"> <device name="acpi"/> </policy>
 		</config>
 		<route>
-			<service name="ROM" label="devices"> <child name="rom_filter"/> </service>
+			<service name="ROM" label="devices"> <child name="drivers_reports"/> </service>
 			<service name="Report"> <child name="drivers_reports"/> </service>
 			<any-service> <parent/> <any-child/> </any-service>
 		</route>
@@ -116,6 +99,58 @@ append config {
 		<resource name="RAM" quantum="1M"/>
 		<provides> <service name="Event"/> </provides>
 	</start>
+
+	<start name="acpica" caps="200">
+		<resource name="RAM" quantum="8M"/>
+		<config report="yes" report_period_ms="0"/>
+		<route>
+			<service name="Report">  <child name="acpi_state"/> </service>
+			<any-service> <parent/> <any-child/> </any-service>
+		</route>
+	</start>
+
+	<start name="acpi_state" caps="100">
+		<binary name="report_rom"/>
+		<resource name="RAM" quantum="2M"/>
+		<provides>
+			<service name="ROM" />
+			<service name="Report" />
+		</provides>
+		<config verbose="no">
+			<policy label="acpi_event -> acpi_ac"      report="acpica -> acpi_ac"/>
+			<policy label="acpi_event -> acpi_battery" report="acpica -> acpi_battery"/>
+			<policy label="acpi_event -> acpi_ec"      report="acpica -> acpi_ec"/>
+			<policy label="acpi_event -> acpi_fixed"   report="acpica -> acpi_fixed"/>
+			<policy label="acpi_event -> acpi_lid"     report="acpica -> acpi_lid"/>
+			<policy label="acpi_event -> acpi_hid"     report="acpica -> acpi_hid"/>
+		</config>
+		<route>
+			<any-service> <parent/> </any-service>
+		</route>
+	</start>
+
+	<start name="acpi_event" caps="100">
+		<resource name="RAM" quantum="1M"/>
+		<config>
+			<map acpi="fixed"   value="0"          to_key="KEY_POWER" as="PRESS_RELEASE"/>
+			<map acpi="lid"     value="CLOSED"     to_key="KEY_SLEEP" as="PRESS_RELEASE"/>
+			<map acpi="ac"      value="ONLINE"     to_key="KEY_POWER2"/>
+			<map acpi="ac"      value="OFFLINE"    to_key="KEY_POWER2"/>
+			<map acpi="hid"     value="0x00000020" to_key="KEY_WLAN"/>
+			<map acpi="hid"     value="0x04000000" to_key="KEY_VENDOR"/>
+			<map acpi="hid"     value="0x20000000" to_key="KEY_MUTE"/>
+		</config>
+		<route>
+			<service name="ROM" label="acpi_ac">      <child name="acpi_state"/> </service>
+			<service name="ROM" label="acpi_battery"> <child name="acpi_state"/> </service>
+			<service name="ROM" label="acpi_ec">      <child name="acpi_state"/> </service>
+			<service name="ROM" label="acpi_fixed">   <child name="acpi_state"/> </service>
+			<service name="ROM" label="acpi_lid">     <child name="acpi_state"/> </service>
+			<service name="ROM" label="acpi_hid">     <child name="acpi_state"/> </service>
+			<service name="Event"> <child name="event_dump" label="acpi"/> </service>
+			<any-service> <parent/> </any-service>
+		</route>
+	</start>
 </config>
 }
 
@@ -125,10 +160,11 @@ install_config $config
 file copy [select_from_repositories board/[board]/devices] [run_dir]/genode/devices
 
 set boot_modules {
-	core ld.lib.so init timer report_rom rom_filter
+	core ld.lib.so init timer report_rom
 	platform_drv pci_decode acpi_drv
 	pc_i2c_hid_drv
 	event_dump
+	acpica acpi_event
 }
 
 build_boot_image $boot_modules
