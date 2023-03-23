@@ -377,3 +377,128 @@ void ieee80211_free_led_names(struct ieee80211_local * local)
 {
 	lx_emul_trace(__func__);
 }
+
+
+#include <linux/pgtable.h>
+
+pteval_t __default_kernel_pte_mask __read_mostly = ~0;
+
+
+#include <linux/random.h>
+
+u32 __get_random_u32_below(u32 ceil)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+u16 get_random_u16(void)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+u8 get_random_u8(void)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+DEFINE_PER_CPU_READ_MOSTLY(cpumask_var_t, cpu_sibling_map);
+EXPORT_PER_CPU_SYMBOL(cpu_sibling_map);
+
+
+#include <linux/filter.h>
+
+DEFINE_STATIC_KEY_FALSE(bpf_master_redirect_enabled_key);
+EXPORT_SYMBOL_GPL(bpf_master_redirect_enabled_key);
+
+
+extern const struct attribute_group dev_attr_physical_location_group;
+const struct attribute_group dev_attr_physical_location_group = {};
+
+
+#include <linux/acpi.h>
+
+void acpi_device_notify(struct device * dev)
+{
+	lx_emul_trace(__func__);
+}
+
+
+extern bool dev_add_physical_location(struct device * dev);
+bool dev_add_physical_location(struct device * dev)
+{
+	lx_emul_trace(__func__);
+	return false;
+}
+
+
+#include <linux/sysctl.h>
+
+struct ctl_table_header * register_sysctl(const char * path,struct ctl_table * table)
+{
+	lx_emul_trace(__func__);
+	return NULL;
+}
+
+
+#include <net/gen_stats.h>
+
+void gnet_stats_basic_sync_init(struct gnet_stats_basic_sync * b)
+{
+	lx_emul_trace(__func__);
+}
+
+
+#include <linux/iommu.h>
+
+int iommu_device_use_default_domain(struct device * dev)
+{
+	lx_emul_trace(__func__);
+	return 0;
+}
+
+
+#include <linux/context_tracking_irq.h>
+
+noinstr void ct_irq_enter(void)
+{
+	lx_emul_trace(__func__);
+}
+
+
+#include <linux/context_tracking_irq.h>
+
+noinstr void ct_irq_exit(void)
+{
+	lx_emul_trace(__func__);
+}
+
+
+#include <linux/sysctl.h>
+
+void __init __register_sysctl_init(const char * path,struct ctl_table * table,const char * table_name)
+{
+	lx_emul_trace(__func__);
+}
+
+
+#include <linux/sysfs.h>
+
+int sysfs_add_file_to_group(struct kobject * kobj,const struct attribute * attr,const char * group)
+{
+	lx_emul_trace(__func__);
+	return 0;
+}
+
+
+#include <linux/mm.h>
+
+void __folio_put(struct folio * folio)
+{
+	lx_emul_trace(__func__);
+}
+
+
+void * high_memory;

@@ -698,3 +698,24 @@ int pci_read_config_dword(const struct pci_dev * dev,int where,u32 * val)
 	*val = 0;
 	return 0;
 }
+
+
+int kmem_cache_alloc_bulk(struct kmem_cache * s,gfp_t flags,size_t nr,void ** p)
+{
+	size_t i;
+	for (i = 0; i < nr; i++)
+		p[i] = kmem_cache_alloc(s, flags);
+
+	return nr;
+}
+
+
+#include <../mm/slab.h>
+
+void * kmem_cache_alloc_lru(struct kmem_cache * cachep,struct list_lru * lru,gfp_t flags)
+{
+	return kmalloc(cachep->size, flags);
+}
+
+
+unsigned long __FIXADDR_TOP = 0xfffff000;

@@ -17,9 +17,11 @@
 #include <drm/drm_print.h>
 
 #include "i915_drv.h"
+#include "display/intel_backlight.h"
 #include "display/intel_display_types.h"
 #include "display/intel_opregion.h"
 #include "display/intel_panel.h"
+#include "display/intel_fbdev.h"
 
 #include "lx_emul.h"
 
@@ -30,7 +32,10 @@ struct task_struct * lx_user_task = NULL;
 
 static struct drm_i915_private *i915 = NULL;
 
-static struct drm_fb_helper * i915_fb(void) { return &i915->fbdev->helper; }
+static struct drm_fb_helper * i915_fb(void)
+{
+	return i915 ? i915->drm.fb_helper : NULL;
+}
 
 
 /*
@@ -119,7 +124,7 @@ static void set_brightness(unsigned brightness, struct drm_connector * connector
 {
 	struct intel_connector * intel_c = to_intel_connector(connector);
 	if (intel_c)
-		intel_panel_set_backlight_acpi(intel_c->base.state, brightness, MAX_BRIGHTNESS);
+		intel_backlight_set_acpi(intel_c->base.state, brightness, MAX_BRIGHTNESS);
 }
 
 
@@ -202,6 +207,9 @@ static bool reconfigure(void * data)
 				 * will try the old resolution, which failed and fails again,
 				 * instead of using the new smaller resolution.
 				 */
+				// FIXME: struct intel_fbdev is now hidden,
+				//        we have to use DRM/KMS instead!
+#if 0
 				struct intel_fbdev *ifbdev =
 					container_of(i915_fb(), struct intel_fbdev, helper);
 
@@ -209,6 +217,7 @@ static bool reconfigure(void * data)
 					drm_framebuffer_put(&ifbdev->fb->base);
 					ifbdev->fb = NULL;
 				}
+#endif
 
 				width_smaller_as  = mode_preferred.hdisplay;
 				height_smaller_as = mode_preferred.vdisplay;
