@@ -30,8 +30,8 @@ SRC_CC += lx_emul/virt/irq.cc
 SRC_CC += lx_kit/memory_non_dma.cc
 
 ifeq ($(filter-out $(SPECS),x86),)
-	SRC_C += lx_emul/virt/spec/x86/dummies_x86.c
+	SRC_C += lx_emul/virt/spec/x86/dummies_arch.c
 endif
 ifeq ($(filter-out $(SPECS),arm_64),)
-	SRC_C += lx_emul/virt/spec/arm_64/dummies_arm_64.c
+	SRC_C += lx_emul/virt/spec/arm_64/dummies_arch.c
 endif
