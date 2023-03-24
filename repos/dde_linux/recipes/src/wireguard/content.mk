@@ -16,8 +16,7 @@ MIRRORED_FROM_REP_DIR := \
 	src/include/lx_kit \
 	src/include/spec/arm_64/lx_kit \
 	src/include/spec/x86_64/lx_kit \
-	src/include/virt_linux/spec/arm_64 \
-	src/include/virt_linux/spec/x86_64 \
+	src/include/virt_linux \
 	src/lib/lx_emul \
 	src/lib/lx_kit \
 	src/virt_linux/target.inc \
