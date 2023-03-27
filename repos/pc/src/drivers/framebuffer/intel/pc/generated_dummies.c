@@ -1309,20 +1309,6 @@ unsigned int intel_engines_has_context_isolation(struct drm_i915_private * i915)
 }
 
 
-extern int intel_ggtt_gmch_enable_hw(struct drm_i915_private * i915);
-int intel_ggtt_gmch_enable_hw(struct drm_i915_private * i915)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-extern int intel_ggtt_gmch_probe(struct i915_ggtt * ggtt);
-int intel_ggtt_gmch_probe(struct i915_ggtt * ggtt)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 #include <drm/i915_drm.h>
 
 struct resource intel_graphics_stolen_res;

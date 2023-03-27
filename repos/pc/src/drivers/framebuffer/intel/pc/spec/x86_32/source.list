@@ -170,6 +170,7 @@ drivers/gpu/drm/i915/gem/i915_gem_tiling.c
 drivers/gpu/drm/i915/gem/i915_gem_wait.c
 drivers/gpu/drm/i915/gt/intel_ggtt.c
 drivers/gpu/drm/i915/gt/intel_ggtt_fencing.c
+drivers/gpu/drm/i915/gt/intel_ggtt_gmch.c
 drivers/gpu/drm/i915/gt/intel_gtt.c
 drivers/gpu/drm/i915/gt/uc/intel_uc.c
 drivers/gpu/drm/i915/i915_active.c

@@ -109,6 +109,14 @@ int register_pernet_subsys(struct pernet_operations * ops)
 }
 
 
+int set_pages_uc(struct page * page,int numpages)
+{
+	lx_emul_trace(__func__);
+	return 0;
+}
+
+
+
 bool irq_work_queue(struct irq_work * work)
 {
 	lx_emul_trace(__func__);
