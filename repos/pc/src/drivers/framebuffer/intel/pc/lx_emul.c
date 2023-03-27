@@ -207,26 +207,6 @@ struct page *shmem_read_mapping_page_gfp(struct address_space *mapping,
 }
 
 
-#ifdef CONFIG_SWIOTLB
-
-#include <linux/swiotlb.h>
-
-unsigned int swiotlb_max_segment(void)
-{
-	lx_emul_trace(__func__);
-	return PAGE_SIZE * 512;
-}
-
-
-bool is_swiotlb_active(struct device *dev)
-{
-	lx_emul_trace(__func__);
-	return false;
-}
-
-#endif
-
-
 extern int intel_root_gt_init_early(struct drm_i915_private * i915);
 int intel_root_gt_init_early(struct drm_i915_private * i915)
 {
@@ -367,7 +347,8 @@ void kvfree_call_rcu(struct rcu_head * head,rcu_callback_t func)
 
 size_t dma_max_mapping_size(struct device * dev)
 {
-	return 0;
+	lx_emul_trace(__func__);
+	return PAGE_SIZE * 512; /* 2 MB */
 }
 
 
