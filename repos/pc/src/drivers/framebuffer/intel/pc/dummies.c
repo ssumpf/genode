@@ -714,3 +714,35 @@ void *kmalloc_large_node(size_t size, gfp_t flags, int node)
 
 
 void * high_memory;
+
+
+void intel_dsb_prepare(struct intel_crtc_state *crtc_state)
+{
+	lx_emul_trace(__func__);
+}
+
+
+void intel_dsb_cleanup(struct intel_crtc_state *crtc_state)
+{
+	lx_emul_trace(__func__);
+}
+
+
+void intel_dsb_commit(const struct intel_crtc_state *crtc_state)
+{
+	lx_emul_trace(__func__);
+}
+
+
+void intel_dsb_reg_write(const struct intel_crtc_state *crtc_state,
+                         i915_reg_t reg, u32 val)
+{
+	lx_emul_trace(__func__);
+}
+
+
+void intel_dsb_indexed_reg_write(const struct intel_crtc_state *crtc_state,
+                                 i915_reg_t reg, u32 val)
+{
+	lx_emul_trace(__func__);
+}
