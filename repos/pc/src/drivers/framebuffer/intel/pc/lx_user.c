@@ -326,7 +326,7 @@ static bool reconfigure(void * data)
 				/* use first smaller mode */
 				mode_match = mode;
 
-				if (conf_mode.enabled)
+				if (conf_mode.enabled && conf_mode.id)
 					no_match = true;
 			}
 

@@ -32,10 +32,6 @@ struct dma_fence_ops const i915_fence_ops;
 pteval_t __default_kernel_pte_mask __read_mostly = ~0;
 
 
-int acpi_disabled          = 0;
-int intel_iommu_gfx_mapped = 0;
-
-
 void si_meminfo(struct sysinfo * val)
 {
 	unsigned long long const ram_pages = emul_avail_ram() / PAGE_SIZE;
@@ -239,8 +235,23 @@ int intel_root_gt_init_early(struct drm_i915_private * i915)
 	 *
 	 * drivers/gpu/drm/i915/gt/intel_ggtt.c
 	 *  -> gen8_gmch_probe() -> intel_scanout_needs_vtd_wa(i915)
+	 *  ->    return DISPLAY_VER(i915) >= 6 && i915_vtd_active(i915);
+	 *
+	 * i915_vtd_active() uses
+	 *   if (device_iommu_mapped(i915->drm.dev))
+	 *     return true;
+	 *
+	 *   which checks for dev->iommu_group != NULL
+	 *
+	 * The struct iommu_group is solely defined within iommu/iommu.c and
+	 * not public available. iommu/iommu.c is not used by our port, so adding
+	 * a dummy valid pointer is sufficient to get i915_vtd_active working.
 	 */
-	intel_iommu_gfx_mapped = 1;
+	i915->drm.dev->iommu_group = kzalloc(4096, 0);
+	if (!i915_vtd_active(i915))
+		printk("i915_vtd_active is off, which may cause random runtime"
+		       "IOMMU faults on kernels with enabled IOMMUs\n");
+
 	return 0;
 }
 
