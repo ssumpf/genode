@@ -9,11 +9,12 @@ DIR(linux) := src/linux
 #
 # Patches
 #
-PATCH_FILES := i915_irq.patch \
+PATCH_FILES := i915_irq.patch i915_fb_resize.patch \
                iwlwifi_enable_irq_before_pnvm.patch \
                usb_message.patch \
                workqueue_deadlock.patch
 PATCHES += $(addprefix patches/,$(PATCH_FILES))
 
 PATCH_OPT(patches/i915_irq.patch)           := -p1 -d${DIR(linux)}
+PATCH_OPT(patches/i915_fb_resize.patch)     := -p1 -d${DIR(linux)}
 PATCH_OPT(patches/workqueue_deadlock.patch) := -p1 -d${DIR(linux)}

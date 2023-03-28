@@ -194,31 +194,6 @@ static bool reconfigure(void * data)
 			       mode_preferred.hdisplay, mode_preferred.vdisplay, err);
 
 			if (err == -ENOMEM) {
-				/*
-				 * roll back code for intelfb_create() in
-				 * drivers/gpu/drm/i915/display/intel_fbdev.c:
-				 *
-				 * vma = intel_pin_and_fence_fb_obj(&ifbdev->fb->base, false,
-				 *                                  &view, false, &flags);
-				 * if (IS_ERR(vma)) {
-				 *
-				 * If the partial allocation is not reverted, the next
-				 * i915_fb()->funcs->fb_probe (which calls intelfb_create)
-				 * will try the old resolution, which failed and fails again,
-				 * instead of using the new smaller resolution.
-				 */
-				// FIXME: struct intel_fbdev is now hidden,
-				//        we have to use DRM/KMS instead!
-#if 0
-				struct intel_fbdev *ifbdev =
-					container_of(i915_fb(), struct intel_fbdev, helper);
-
-				if (ifbdev && ifbdev->fb) {
-					drm_framebuffer_put(&ifbdev->fb->base);
-					ifbdev->fb = NULL;
-				}
-#endif
-
 				width_smaller_as  = mode_preferred.hdisplay;
 				height_smaller_as = mode_preferred.vdisplay;
 
