@@ -746,3 +746,15 @@ void intel_dsb_indexed_reg_write(const struct intel_crtc_state *crtc_state,
 {
 	lx_emul_trace(__func__);
 }
+
+
+void acpi_device_notify_remove(struct device * dev)
+{
+	lx_emul_trace(__func__);
+}
+
+
+void software_node_notify_remove(struct device * dev)
+{
+	lx_emul_trace(__func__);
+}

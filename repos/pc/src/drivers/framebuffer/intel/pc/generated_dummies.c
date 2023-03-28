@@ -191,14 +191,6 @@ bool acpi_dev_resource_interrupt(struct acpi_resource * ares,int index,struct re
 }
 
 
-#include <linux/acpi.h>
-
-void acpi_device_notify_remove(struct device * dev)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 #include <acpi/acpi_bus.h>
 
 struct acpi_device * acpi_fetch_acpi_dev(acpi_handle handle)
@@ -2027,13 +2019,6 @@ void smp_call_function_many(const struct cpumask * mask,smp_call_func_t func,voi
 #include <linux/smp.h>
 
 int smp_call_function_single(int cpu,smp_call_func_t func,void * info,int wait)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-extern void software_node_notify_remove(struct device * dev);
-void software_node_notify_remove(struct device * dev)
 {
 	lx_emul_trace_and_stop(__func__);
 }
