@@ -42,12 +42,6 @@ void bpf_prog_change_xdp(struct bpf_prog *prev_prog, struct bpf_prog *prog)
 DEFINE_STATIC_KEY_FALSE(bpf_stats_enabled_key);
 
 
-asmlinkage __wsum csum_partial(const void * buff,int len,__wsum sum)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 struct static_key_false init_on_alloc;
 
 
@@ -490,14 +484,6 @@ int sysfs_add_file_to_group(struct kobject * kobj,const struct attribute * attr,
 {
 	lx_emul_trace(__func__);
 	return 0;
-}
-
-
-#include <linux/mm.h>
-
-void __folio_put(struct folio * folio)
-{
-	lx_emul_trace(__func__);
 }
 
 

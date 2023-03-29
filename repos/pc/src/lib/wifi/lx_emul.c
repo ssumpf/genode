@@ -437,6 +437,15 @@ void __put_page(struct page * page)
 }
 
 
+#include <linux/mm.h>
+
+void __folio_put(struct folio * folio)
+{
+	__free_pages(&folio->page, 0);
+	kfree(folio);
+}
+
+
 #include <linux/prandom.h>
 
 void prandom_bytes(void *buf, size_t bytes)

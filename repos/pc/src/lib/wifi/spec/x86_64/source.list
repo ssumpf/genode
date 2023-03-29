@@ -1,3 +1,4 @@
+arch/x86/lib/csum-partial_64.c
 arch/x86/lib/hweight.S
 crypto/acompress.c
 crypto/aead.c
