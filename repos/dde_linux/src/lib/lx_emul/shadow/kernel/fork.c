@@ -80,8 +80,10 @@ pid_t kernel_thread(int (* fn)(void *),void * arg,unsigned long flags)
 	};
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5,17,0)
-	if (!set_kthread_struct(task))
-		goto err_kthread;
+	if (!set_kthread_struct(task)) {
+		kfree(task);
+		goto err_task;
+	}
 #endif
 
 #ifndef CONFIG_THREAD_INFO_IN_TASK
@@ -102,8 +104,6 @@ pid_t kernel_thread(int (* fn)(void *),void * arg,unsigned long flags)
 
 	return task->pid;
 
-err_kthread:
-	kfree(task);
 err_task:
 	kfree(signal);
 err_signal:
