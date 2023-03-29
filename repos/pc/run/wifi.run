@@ -271,9 +271,9 @@ append config {
 		<config verbose="yes"/>
 	</start>
 
-	<start name="wifi_drv" caps="250" priority="-1">
+	<start name="wifi_drv" caps="300" priority="-1">
 		<binary name="pc_wifi_drv"/>
-		<resource name="RAM" quantum="32M"/>
+		<resource name="RAM" quantum="36M"/>
 		<config ld_verbose="yes">
 			<report mac_address="true"/>
 			<libc stdout="/dev/log" stderr="/dev/log" rtc="/dev/rtc" rng="/dev/urandom"/>

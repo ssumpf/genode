@@ -3,8 +3,8 @@ the iwlwifi driver as well as libnl and wpa_supplicant, to Genode.
 
 To start the component the following configuration snippet can be used:
 
-!<start name="pc_wifi_drv" caps="250">
-!  <resource name="RAM" quantum="32M"/>
+!<start name="pc_wifi_drv" caps="300">
+!  <resource name="RAM" quantum="36M"/>
 !  <provides><service name="Nic"/></provides>
 !  <config>
 !    <libc stdout="/dev/null" stderr="/dev/null" rtc="/dev/rtc"/>
