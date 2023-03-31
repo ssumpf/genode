@@ -1,5 +1,6 @@
 arch/arm64/lib/memchr.S
 arch/arm64/lib/memcmp.S
+arch/arm64/lib/strchr.S
 arch/arm64/lib/strcmp.S
 arch/arm64/lib/strlen.S
 kernel/kthread.c

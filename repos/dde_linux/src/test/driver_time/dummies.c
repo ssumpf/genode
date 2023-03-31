@@ -41,11 +41,3 @@ void net_ns_init(void)
 {
 	lx_emul_trace(__func__);
 }
-
-
-#include <linux/string.h>
-
-char *strchr(const char *s, int c)
-{
-	lx_emul_trace_and_stop(__func__);
-}
