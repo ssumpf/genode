@@ -16,7 +16,7 @@
 void Sculpt::gen_wifi_drv_start_content(Xml_generator &xml)
 {
 	gen_common_start_content(xml, "wifi_drv",
-	                         Cap_quota{300}, Ram_quota{36*1024*1024},
+	                         Cap_quota{250}, Ram_quota{32*1024*1024},
 	                         Priority::NETWORK);
 
 	xml.node("binary", [&] () {

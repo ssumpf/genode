@@ -262,7 +262,7 @@ append  config { </wifi_config>
 
 	<start name="nic_drv" caps="300">
 		<binary name="pc_wifi_drv"/>
-		<resource name="RAM" quantum="36M"/>
+		<resource name="RAM" quantum="32M"/>
 		<config>
 			<libc stdout="/dev/null" stderr="/dev/log" rtc="/dev/rtc"/>
 			<vfs>

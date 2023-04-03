@@ -112,7 +112,7 @@ install_config {
 
 	<start name="wifi_drv" caps="300" priority="-1">
 		<binary name="pc_wifi_drv"/>
-		<resource name="RAM" quantum="36M"/>
+		<resource name="RAM" quantum="32M"/>
 		<config ld_verbose="no">
 			<vfs>
 				<dir name="dev"> <log/> <rtc/> <null/> <wifi/>
