@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright (C) 2022 Genode Labs GmbH
+ * Copyright (C) 2023 Genode Labs GmbH
  *
  * This file is distributed under the terms of the GNU General Public License
  * version 2.
@@ -292,6 +292,15 @@ int __register_chrdev(unsigned int major, unsigned int baseminor,
 }
 
 
+int fasync_helper(int fd, struct file *filp, int on, struct fasync_struct **fapp)
+{
+	*fapp = kzalloc(sizeof(struct fasync_struct), 0);
+	if (!*fapp) return -ENOMEM;
+	(*fapp)->fa_file = filp;
+	return 0;
+}
+
+
 /* called at end of IRQ handler for pcm irqs */
 void kill_fasync(struct fasync_struct **fp,int sig,int band)
 {
@@ -469,8 +478,7 @@ struct sound_handle *sound_device_open(struct snd_card *card, char const *node,
 {
 	struct snd_pcm_str *stream;
 	struct sound_handle *handle;
-	struct fasync_struct *fasync;
-
+	struct snd_fasync   *fasync = NULL;
 	stream = for_each_stream(card, _match_node, node);
 
 	if (!stream) {
@@ -482,9 +490,14 @@ struct sound_handle *sound_device_open(struct snd_card *card, char const *node,
 
 	/* hide data in fasync of runtime */
 	if (stream->substream->runtime && data) {
-		fasync = kzalloc(sizeof(struct fasync_struct), 0);
-		if (!fasync) return NULL;
-		fasync->fa_file = data;
+
+		/*
+		 * this will call 'fasyc_helper' above where we will hide the data in
+		 * fa_file
+		 */
+		if (snd_fasync_helper(0, data, 1, &fasync))
+			return NULL;
+
 		stream->substream->runtime->fasync = fasync;
 	}
 
