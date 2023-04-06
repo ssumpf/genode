@@ -15,6 +15,7 @@
 #include <lx_emul.h>
 
 #include <linux/async.h>
+#include <linux/dma-mapping.h>
 #include <linux/firmware.h>
 #include <linux/moduleparam.h>
 #include <linux/proc_fs.h>
@@ -181,4 +182,75 @@ int pci_irq_vector(struct pci_dev *dev, unsigned int nr)
 
 void pci_free_irq_vectors(struct pci_dev *dev)
 {
+}
+
+
+/*
+ * dma mapping
+ */
+
+struct sg_table * dma_alloc_noncontiguous(struct device * dev, size_t size,
+                                          enum dma_data_direction dir, gfp_t gfp,
+                                          unsigned long attrs)
+{
+	struct sg_table    *sgt;
+	struct scatterlist *sgl;
+
+	if (WARN_ON_ONCE(attrs & ~DMA_ATTR_ALLOC_SINGLE_PAGES))
+		return NULL;
+
+	sgt = kmalloc(sizeof(*sgt), gfp);
+	if (!sgt) return NULL;
+
+	sgl = kmalloc(sizeof(*sgl), gfp);
+	if (!sgl) {
+		kfree(sgt);
+		return NULL;
+	}
+
+	/* alloc contiguous ;) */
+	sgl->page_link = (unsigned long) alloc_pages(0, get_order(size));
+	if (!sgl->page_link) goto error;
+
+	sgl->page_link |= SG_END;
+	sgl->offset     = 0;
+	sgl->length     = size;
+
+	if (!dma_map_sg_attrs(NULL, sgl, 1, dir, attrs)) goto error;
+
+	sgt->sgl        = sgl;
+	sgt->nents      = 1;
+	sgt->orig_nents = 1;
+
+	return sgt;
+
+error:
+	kfree(sgl);
+	kfree(sgt);
+	return NULL;
+}
+
+
+void dma_free_noncontiguous(struct device * dev, size_t size,
+                            struct sg_table * sgt, enum dma_data_direction dir)
+{
+	dma_unmap_sg_attrs(NULL, sgt->sgl, sgt->nents, dir, 0);
+
+	__free_pages(sg_page(sgt->sgl), get_order(sgt->sgl->length));
+
+	kfree(sgt->sgl);
+	kfree(sgt);
+}
+
+
+void * dma_vmap_noncontiguous(struct device * dev, size_t size, struct sg_table * sgt)
+{
+	if (!sgt || !sgt->sgl) return NULL;
+	return page_address(sg_page(sgt->sgl));
+}
+
+
+void dma_vunmap_noncontiguous(struct device * dev, void * vaddr)
+{
+	lx_emul_trace(__func__);
 }

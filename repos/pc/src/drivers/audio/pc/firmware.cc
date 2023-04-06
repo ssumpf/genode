@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright (C) 2018-2022 Genode Labs GmbH
+ * Copyright (C) 2018-2023 Genode Labs GmbH
  *
  * This file is distributed under the terms of the GNU General Public License
  * version 2.
@@ -28,8 +28,8 @@ struct Firmware_list
 
 
 Firmware_list fw_list[] = {
-	{ "sof-tgl.ri", 512768 },
-	{ "sof-hda-generic-2ch.tplg", 47643 },
+	{ "sof-tgl.ri", 525056 },
+	{ "sof-hda-generic-2ch.tplg", 44247 },
 };
 
 

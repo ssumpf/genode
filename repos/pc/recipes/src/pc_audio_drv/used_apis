@@ -3,6 +3,7 @@ os
 audio_in_session
 audio_out_session
 genode_c_api
+jitterentropy
 pc_linux
 platform_session
 report_session

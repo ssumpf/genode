@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright (C) 2022 Genode Labs GmbH
+ * Copyright (C) 2023 Genode Labs GmbH
  *
  * This file is distributed under the terms of the GNU General Public License
  * version 2.
@@ -14,6 +14,19 @@
 #include <lx_emul.h>
 
 #include <linux/acpi.h>
+
+
+void acpi_device_notify(struct device * dev)
+{
+	lx_emul_trace(__func__);
+}
+
+
+void acpi_device_notify_remove(struct device * dev)
+{
+	lx_emul_trace(__func__);
+}
+
 
 void acpi_put_table(struct acpi_table_header *table)
 {
@@ -109,6 +122,15 @@ int snd_hda_get_bool_hint(struct hda_codec * codec,const char * key)
 	lx_emul_trace(__func__);
 	return -ENOENT;
 }
+
+
+extern void snd_hda_sysfs_clear(struct hda_codec * codec);
+void snd_hda_sysfs_clear(struct hda_codec * codec)
+{
+	lx_emul_trace(__func__);
+}
+
+
 
 struct input_dev_poller;
 extern void input_dev_poller_finalize(struct input_dev_poller * poller);
@@ -213,32 +235,141 @@ void put_pid(struct pid * pid)
 }
 
 
-#include <linux/pinctrl/devinfo.h>
-
-int pinctrl_bind_pins(struct device * dev)
-{
-	lx_emul_trace(__func__);
-	return 0;
-}
-
-
-int pinctrl_init_done(struct device * dev)
-{
-	lx_emul_trace(__func__);
-	return 0;
-}
-
-
-#include <linux/property.h>
-
-int software_node_notify(struct device * dev,unsigned long action)
-{
-	lx_emul_trace(__func__);
-	return 0;
-}
-
-
 #include <asm/smp.h>
 
 struct smp_ops smp_ops = { };
 
+DEFINE_PER_CPU_READ_MOSTLY(cpumask_var_t, cpu_sibling_map);
+
+
+const struct attribute_group dev_attr_physical_location_group = {};
+
+#include <linux/random.h>
+
+u32 __get_random_u32_below(u32 ceil)
+{
+	lx_emul_trace_and_stop(__func__);
+	return 0;
+}
+
+
+#include <net/net_namespace.h>
+
+void __init net_ns_init(void)
+{
+	lx_emul_trace(__func__);
+}
+
+
+#include <linux/sysctl.h>
+
+struct ctl_table_header * register_sysctl(const char * path,struct ctl_table * table)
+{
+	lx_emul_trace(__func__);
+	return NULL;
+}
+
+
+void __init __register_sysctl_init(const char * path,struct ctl_table * table,const char * table_name)
+{
+	lx_emul_trace(__func__);
+}
+
+
+#include <linux/sysfs.h>
+
+int sysfs_add_file_to_group(struct kobject * kobj,const struct attribute * attr,const char * group)
+{
+	lx_emul_trace(__func__);
+	return 0;
+}
+
+
+#include <linux/iommu.h>
+
+int iommu_device_use_default_domain(struct device * dev)
+{
+	lx_emul_trace(__func__);
+	return 0;
+}
+
+
+void iommu_device_unuse_default_domain(struct device * dev)
+{
+	lx_emul_trace(__func__);
+}
+
+
+#include <linux/context_tracking_irq.h>
+
+noinstr void ct_irq_enter(void)
+{
+	lx_emul_trace(__func__);
+}
+
+
+noinstr void ct_irq_exit(void)
+{
+	lx_emul_trace(__func__);
+}
+
+
+#include <linux/dma-mapping.h>
+
+bool dma_need_sync(struct device * dev,dma_addr_t dma_addr)
+{
+	lx_emul_trace(__func__);
+	return false;
+}
+
+
+const struct dma_map_ops *dma_ops = NULL;
+const guid_t guid_null;
+
+
+#include <../mm/slab.h>
+
+void * kmem_cache_alloc_lru(struct kmem_cache * cachep, struct list_lru * lru,
+                            gfp_t flags)
+{
+	return kmalloc(cachep->size, flags);
+}
+
+
+#include <linux/auxiliary_bus.h>
+
+int auxiliary_device_init(struct auxiliary_device * auxdev)
+{
+	lx_emul_trace(__func__);
+	return 0;
+}
+
+
+int __auxiliary_device_add(struct auxiliary_device * auxdev,const char * modname)
+{
+	lx_emul_trace(__func__);
+	return 0;
+}
+
+
+#include <linux/cdev.h>
+
+void cdev_init(struct cdev * cdev,const struct file_operations * fops)
+{
+	lx_emul_trace(__func__);
+}
+
+
+extern bool dev_add_physical_location(struct device * dev);
+bool dev_add_physical_location(struct device * dev)
+{
+	lx_emul_trace(__func__);
+	return false;
+}
+
+
+extern void software_node_notify_remove(struct device * dev);
+void software_node_notify_remove(struct device * dev)
+{
+	lx_emul_trace(__func__);
+}
