@@ -1,5 +1,7 @@
 assert_spec x86
 
+set audio_in 1
+
 if {[have_include "power_on/qemu"]} {
 	puts "\nAudio_in test running on Qemu is not supported.\n"
 	exit 0
@@ -19,6 +21,7 @@ set build_components {
 	server/rom_filter
 	drivers/audio/pc
 	test/audio_in
+	test/audio_out
 }
 
 build $build_components
@@ -157,11 +160,29 @@ append config {
 			<any-service> <parent/> <any-child/> </any-service>
 		</route>
 	</start>
+}
 
+append_if $audio_in config {
 	<start name="test-audio_in">
 		<resource name="RAM" quantum="8M"/>
 	</start>
-</config>}
+}
+
+append_if [expr !$audio_in] config {
+	<start name="test-audio_out">
+		<resource name="RAM" quantum="4M"/>
+		<config>
+			<filename>sample.raw</filename>
+		</config>
+		<route>
+			<any-service><parent/><any-child/></any-service>
+		</route>
+	</start>
+}
+
+append config {
+</config>
+}
 
 install_config $config
 
@@ -172,7 +193,11 @@ set boot_modules {
 	core ld.lib.so init timer report_rom rom_filter
 	platform_drv pci_decode acpi_drv
 	pc_audio_drv
-	test-audio_in
+	test-audio_in test-audio_out
+}
+
+append_if [expr !$audio_in] boot_modules {
+	sample.raw
 }
 
 build_boot_image $boot_modules
