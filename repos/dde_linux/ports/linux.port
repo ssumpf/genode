@@ -10,6 +10,7 @@ DIR(linux) := src/linux
 # Patches
 #
 PATCH_FILES := \
+               audio_jack.patch \
                i2c_hid_settings.patch \
                i915_memcpy_32bit.patch \
                i915_meteorlake.patch \
