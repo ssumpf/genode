@@ -175,7 +175,7 @@ class Kernel::Cpu : public Core::Cpu, private Irq::Pool, private Timeout
 		/**
 		 * Schedule 'job' at this CPU
 		 */
-		void schedule(Job * const job);
+		void schedule(Job * const job, bool head = true);
 
 		/**
 		 * Return the job that should be executed at next

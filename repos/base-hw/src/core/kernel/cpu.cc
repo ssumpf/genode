@@ -28,7 +28,7 @@ using namespace Kernel;
  ** Cpu_job **
  *************/
 
-void Cpu_job::_activate_own_share() { _cpu->schedule(this); }
+void Cpu_job::_activate_own_share(bool head) { _cpu->schedule(this, head); }
 
 
 void Cpu_job::_deactivate_own_share()
@@ -119,9 +119,9 @@ Cpu::Idle_thread::Idle_thread(Board::Address_space_id_allocator &addr_space_id_a
 }
 
 
-void Cpu::schedule(Job * const job)
+void Cpu::schedule(Job * const job, bool head)
 {
-	_scheduler.ready(job->share());
+	_scheduler.ready(job->share(), head);
 	if (_id != executing_id() && _scheduler.need_to_schedule())
 		trigger_ip_interrupt();
 }

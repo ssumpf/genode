@@ -216,7 +216,7 @@ class Kernel::Thread : private Kernel::Object, public Cpu_job, private Timeout
 		/**
 		 * Activate our CPU-share and those of our helpers
 		 */
-		void _activate_used_shares();
+		void _activate_used_shares(bool head = true);
 
 		/**
 		 * Deactivate our CPU-share and those of our helpers

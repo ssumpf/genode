@@ -270,11 +270,11 @@ void Thread::_deactivate_used_shares()
 }
 
 
-void Thread::_activate_used_shares()
+void Thread::_activate_used_shares(bool head)
 {
-	Cpu_job::_activate_own_share();
+	Cpu_job::_activate_own_share(head);
 	_ipc_node.for_each_helper([&] (Thread &thread) {
-		thread._activate_used_shares(); });
+		thread._activate_used_shares(false); });
 }
 
 

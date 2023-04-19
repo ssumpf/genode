@@ -206,7 +206,7 @@ void Cpu_scheduler::update(time_t time)
 }
 
 
-void Cpu_scheduler::ready(Share &s)
+void Cpu_scheduler::ready(Share &s, bool head)
 {
 	assert(!s._ready && &s != &_idle);
 
@@ -233,11 +233,13 @@ void Cpu_scheduler::ready(Share &s)
 		}
 	}
 
-	_fills.insert_head(&s._fill_item);
-	if (!_head || _head == &_idle) {
+	if (head)
+		_fills.insert_head(&s._fill_item);
+	else
+		_fills.insert_tail(&s._fill_item);
 
+	if (!_head || _head == &_idle)
 		_need_to_schedule = true;
-	}
 }
 
 

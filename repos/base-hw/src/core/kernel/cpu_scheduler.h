@@ -202,7 +202,7 @@ class Kernel::Cpu_scheduler
 		/**
 		 * Set share 's' ready
 		 */
-		void ready(Share &s);
+		void ready(Share &s, bool head = true);
 
 		/**
 		 * Set share 's' unready

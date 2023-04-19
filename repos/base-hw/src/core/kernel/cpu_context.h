@@ -56,7 +56,7 @@ class Kernel::Cpu_job : private Cpu_share
 		/**
 		 * Activate our own CPU-share
 		 */
-		void _activate_own_share();
+		void _activate_own_share(bool head = true);
 
 		/**
 		 * Deactivate our own CPU-share
