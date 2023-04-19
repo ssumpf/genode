@@ -1,0 +1,46 @@
+build "core init timer app/top app/cpu_burner test/signal_loop"
+
+create_boot_directory
+
+install_config {
+	<config prio_levels="1" verbose="yes">
+		<parent-provides>
+			<service name="ROM"/>
+			<service name="IRQ"/>
+			<service name="CAP"/>
+			<service name="PD"/>
+			<service name="RM"/>
+			<service name="CPU"/>
+			<service name="LOG"/>
+			<service name="TRACE" />
+		</parent-provides>
+		<default-route>
+			<any-service> <parent/> <any-child/> </any-service>
+		</default-route>
+		<default caps="100"/>
+		<start name="timer">
+			<resource name="RAM" quantum="1M"/>
+			<provides><service name="Timer"/></provides>
+		</start>
+		<start name="top">
+			<resource name="RAM" quantum="8M"/>
+			<resource name="CPU" quantum="1"/>
+			<config period_ms="5000"/>
+		</start>
+		<start name="test-signal_loop">
+			<resource name="RAM" quantum="2M"/>
+		</start>
+		<start name="cpu_burner.1">
+			<binary name="cpu_burner"/>
+			<resource name="RAM" quantum="2M"/>
+			<config percent="100"/>
+		</start>
+	</config>
+}
+
+
+build_boot_image "core init timer cpu_burner top ld.lib.so test-signal_loop"
+
+append qemu_args "-nographic -m 128"
+
+run_genode_until forever
