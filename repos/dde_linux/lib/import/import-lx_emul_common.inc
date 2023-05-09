@@ -6,6 +6,12 @@ DDE_LINUX_DIR := $(subst /src/include/lx_kit,,$(call select_from_repositories,sr
 LD_OPT += --defsym=jiffies=jiffies_64
 
 #
+# Align memory allocations to 16 byte for all platforms (because we allow FPU
+# use in drivers)
+#
+CC_DEF += -DARCH_DMA_MINALIGN=16 -DARCH_SLAB_MINALIGN=16
+
+#
 # Lx_emul + Lx_kit definitions
 #
 
@@ -64,6 +70,7 @@ LX_ARCH   := x86
 GEN_ARCH  := x86
 SPEC_ARCH := x86_64
 
+
 SRC_C += lx_emul/shadow/arch/x86/kernel/irq.c
 SRC_C += lx_emul/shadow/arch/x86/kernel/setup_percpu.c
 endif
@@ -100,7 +107,6 @@ INC_DIR += $(SPEC_SHADOW_INC_DIR)
 INC_DIR += $(SHADOW_INC_DIR)
 
 vpath % $(DDE_LINUX_DIR)/src/lib
-
 
 #
 # Linux kernel definitions
