@@ -63,7 +63,7 @@ exec >& /dev/null wget -O initrd.gz.md5 $initrd_uri.md5
 exec md5sum -c initrd.gz.md5
 cd ..
 
-build_boot_image [list {*}[build_artifacts] initrd.gz]
+build_boot_image [list {*}[build_artifacts] linux initrd.gz]
 
 # execute and wait for console
 run_genode_until {.*\/ #.*} 220
