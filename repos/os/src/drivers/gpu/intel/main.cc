@@ -964,9 +964,14 @@ struct Igd::Device
 
 	Vgpu *_unschedule_current_vgpu()
 	{
+		if (_active_vgpu == nullptr) return nullptr;
+
 		Vgpu *result = nullptr;
 		_vgpu_list.dequeue([&] (Vgpu &head) {
 			result = &head; });
+
+		_active_vgpu = nullptr;
+
 		return result;
 	}
 
@@ -1372,11 +1377,19 @@ struct Igd::Device
 	 */
 	bool vgpu_active(Vgpu const &vgpu) const
 	{
-		bool result = false;
-		_vgpu_list.head([&] (Vgpu const &curr) {
-			result = (&vgpu == &curr);
-		});
-		return result;
+		return _active_vgpu == &vgpu;
+	}
+
+	/**
+	 * Remove VGPU from scheduling list, if it is enqeued
+	 */
+	void vgpu_unschedule(Vgpu &vgpu)
+	{
+		if (vgpu_active(vgpu)) _active_vgpu = nullptr;
+
+		if (vgpu.enqueued())
+			_vgpu_list.remove(vgpu);
+
 	}
 
 	/*******************
@@ -1532,7 +1545,6 @@ struct Igd::Device
 
 		if (user_complete) {
 			_unschedule_current_vgpu();
-			_active_vgpu = nullptr;
 
 			if (notify_gpu) {
 				if (!_notify_complete(notify_gpu)) {
@@ -1862,6 +1874,11 @@ class Gpu::Session_component : public Genode::Session_object<Gpu::Session>
 		bool vgpu_active() const
 		{
 			return _device.vgpu_active(_vgpu);
+		}
+
+		void vgpu_unschedule()
+		{
+			return _device.vgpu_unschedule(_vgpu);
 		}
 
 		/***************************
@@ -2201,6 +2218,9 @@ class Gpu::Root : public Gpu::Root_component
 				Genode::warning("vGPU active, reset device and hope for the best");
 				_device->reset();
 			}
+
+			/* remove from scheduled list */
+			s->vgpu_unschedule();
 			Genode::destroy(md_alloc(), s);
 		}
 
