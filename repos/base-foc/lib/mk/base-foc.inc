@@ -7,6 +7,3 @@ SRC_CC += cache.cc
 SRC_CC += thread_start.cc
 SRC_CC += signal_transmitter.cc signal.cc
 SRC_CC += stack_area_addr.cc
-
-# prevent undefined reference to 'strlen' link error
-CC_OPT += -fno-tree-loop-distribute-patterns
