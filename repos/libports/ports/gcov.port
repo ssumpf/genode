@@ -9,7 +9,7 @@ SIG(gcov) := ${URL(gcov)}
 KEY(gcov) := GNU
 
 URL(generated) := https://github.com/cproc/genode-generated.git
-REV(generated) := fed75b0ff503c1860df423c22a6980c65e1be01c
+REV(generated) := fa7211312ffe0a7ab4055245bffcea38a3f2fc40
 DIR(generated) := include
 
 TAR_OPT(gcov) := gcc-$(VERSION)/gcc/align.h \
