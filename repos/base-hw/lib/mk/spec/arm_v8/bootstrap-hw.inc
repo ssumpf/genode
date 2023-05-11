@@ -1,4 +1,4 @@
-CC_MARCH ?= -march=armv8-a -mstrict-align
+CC_MARCH  = -march=armv8-a -mstrict-align
 
 SRC_CC   += lib/base/arm_64/kernel/interface.cc
 SRC_CC   += spec/64bit/memory_map.cc
