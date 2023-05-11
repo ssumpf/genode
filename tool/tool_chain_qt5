@@ -57,10 +57,13 @@ $(QMAKE): $(QTBASE_DIR)/configure
 	$(VERBOSE)cd $(BUILD_DIR)/qtbase && $(QTBASE_DIR)/configure \
 	                                    -opensource \
 	                                    -confirm-license \
+	                                    -no-glib \
 	                                    -no-iconv \
-	                                    -no-zstd \
+	                                    -no-icu \
 	                                    -no-opengl \
 	                                    -no-strip \
+	                                    -no-zstd \
+	                                    -qt-pcre \
 	                                    -prefix $(INSTALL_LOCATION)
 
 $(BUILD_DIR)/qtbase/src/Makefile: $(QMAKE)
