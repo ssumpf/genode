@@ -6,12 +6,6 @@ DDE_LINUX_DIR := $(subst /src/include/lx_kit,,$(call select_from_repositories,sr
 LD_OPT += --defsym=jiffies=jiffies_64
 
 #
-# Align memory allocations to 16 byte for all platforms (because we allow FPU
-# use in drivers)
-#
-CC_DEF += -DARCH_DMA_MINALIGN=16 -DARCH_SLAB_MINALIGN=16
-
-#
 # Lx_emul + Lx_kit definitions
 #
 
