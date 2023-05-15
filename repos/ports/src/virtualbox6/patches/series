@@ -9,4 +9,5 @@ devsvga.patch
 shaderlib.patch
 svga.patch
 audio.patch
+gcc-12.patch
 pgmphys.patch
