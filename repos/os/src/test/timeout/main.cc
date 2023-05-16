@@ -18,6 +18,7 @@
 #include <util/fifo.h>
 #include <util/misc_math.h>
 #include <base/attached_rom_dataspace.h>
+#include <cpu/memory_barrier.h>
 
 using namespace Genode;
 
@@ -521,8 +522,7 @@ struct Fast_polling : Test
 
 			/* measure consumed time of a limited busy loop */
 			uint64_t volatile start_ms = timer_2.elapsed_ms();
-			for (unsigned long volatile cnt = 0; cnt < max_cnt; )
-				cnt = cnt + 1;
+			for (unsigned long cnt = 0; cnt < max_cnt; cnt++) memory_barrier();
 			uint64_t volatile end_ms = timer_2.elapsed_ms();
 
 			/*
@@ -569,8 +569,8 @@ struct Fast_polling : Test
 			for (unsigned poll = 0; poll < nr_of_polls; poll++) {
 
 				/* create delay between two polls */
-				for (unsigned long volatile i = 0; i < delay_loops_per_poll_; )
-					i = i + 1;
+				for (unsigned long i = 0; i < delay_loops_per_poll_; i++)
+					memory_barrier();
 
 				/* count delay loops to limit frequency of remote time reading */
 				delay_loops = delay_loops + delay_loops_per_poll_;
