@@ -21,6 +21,7 @@
 #include <base/rpc_client.h>
 #include <util/formatted_output.h>
 #include <trace/timestamp.h>
+#include <cpu/memory_barrier.h>
 
 
 namespace Genode {
@@ -331,8 +332,8 @@ namespace Tlb_shootdown_test {
 		 * We have to wait here, for some time so that all fault
 		 * messages are received before the test finishes.
 		 */
-		for (volatile unsigned i = 0; i < (0x2000000 * cpus.total()); )
-			i = i + 1;
+		for (unsigned i = 0; i < (0x2000000 * cpus.total()); ++i)
+			memory_barrier();
 
 		for (unsigned i = 1; i < cpus.total(); i++) destroy(heap, threads[i]);
 
