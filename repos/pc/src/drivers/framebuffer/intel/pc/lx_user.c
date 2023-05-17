@@ -241,13 +241,13 @@ static bool reconfigure(struct drm_client_dev * const dev)
 	bool                     retry          = false;
 
 	if (!dev || !dev->dev)
-		return true;
+		return false;
 
 	preferred_mode(dev->dev, &mode_preferred, &mode_minimum);
 
 	/* no valid modes on any connector on early boot */
 	if (!mode_minimum.hdisplay || !mode_minimum.vdisplay)
-		return true;
+		return false;
 
 	if (mode_larger(&mode_preferred, &mode_minimum))
 		mode_real = mode_preferred;
