@@ -46,6 +46,7 @@
 
 using namespace Genode;
 
+static constexpr bool DEBUG = true;
 
 namespace Igd {
 
@@ -654,6 +655,8 @@ struct Igd::Device
 		{
 			_current_seqno++;
 
+			unsigned generation = _device.generation().value;
+
 			Execlist &el = *rcs.execlist;
 
 			Ring_buffer::Index advance = 0;
@@ -663,8 +666,8 @@ struct Igd::Device
 			                                 Device_info::Stepping::B0);
 
 			size_t const need = 4 /* batchvram cmd */ + 6 /* prolog */
-			                  + ((_device.generation().value == 9) ? 6 : 0)
-			                  + ((_device.generation().value == 8) ? 20 : 22) /* epilog + w/a */
+			                  + ((generation == 9) ? 6 : 0)
+			                  + ((generation == 8) ? 20 : 22) /* epilog + w/a */
 			                  + (dc_flush_wa ? 12 : 0);
 
 			if (!el.ring_avail(need))
@@ -683,7 +686,7 @@ struct Igd::Device
 			 * on GEN9: emit empty pipe control before VF_CACHE_INVALIDATE
 			 * - Linux 5.13 gen8_emit_flush_rcs()
 			 */
-			if (_device.generation().value == 9) {
+			if (generation == 9) {
 				enum { CMD_NUM = 6 };
 				Genode::uint32_t cmd[CMD_NUM] = {};
 				Igd::Pipe_control pc(CMD_NUM);
@@ -709,7 +712,7 @@ struct Igd::Device
 			/* prolog */
 			if (1)
 			{
-				enum { CMD_NUM = 6, HWS_DATA = 0xc0, };
+				enum { CMD_NUM = 6 };
 				Genode::uint32_t cmd[CMD_NUM] = {};
 				Igd::Pipe_control pc(CMD_NUM);
 				cmd[0] = pc.value;
@@ -753,7 +756,7 @@ struct Igd::Device
 			 *
 			 * batch-vram commands
 			 */
-			if (_device.generation().value == 8)
+			if (generation == 8)
 			{
 				enum { CMD_NUM = 4 };
 				Genode::uint32_t cmd[CMD_NUM] = {};
@@ -774,7 +777,7 @@ struct Igd::Device
 			 *
 			 * batch-vram commands
 			 */
-			if (_device.generation().value >= 9)
+			if (generation >= 9)
 			{
 				enum { CMD_NUM = 6 };
 				Genode::uint32_t cmd[CMD_NUM] = {};
@@ -813,7 +816,8 @@ struct Igd::Device
 			/* epilog 2/3 - gen8_emit_fini_breadcrumb_rcs, gen8_emit_ggtt_write_rcs */
 			if (1)
 			{
-				enum { CMD_NUM = 6, HWS_DATA = 0xc0, };
+				using HWS_DATA = Hardware_status_page::Sequence_number;
+				enum { CMD_NUM = 6 };
 				Genode::uint32_t cmd[CMD_NUM] = {};
 				Igd::Pipe_control pc(CMD_NUM);
 				cmd[0] = pc.value;
@@ -825,7 +829,7 @@ struct Igd::Device
 				tmp |= Igd::Pipe_control::STORE_DATA_INDEX;
 
 				cmd[1] = tmp;
-				cmd[2] = HWS_DATA;
+				cmd[2] = HWS_DATA::OFFSET;
 				cmd[3] = 0; /* upper addr 0 */
 				cmd[4] = _current_seqno & 0xffffffff;
 				cmd[5] = _current_seqno >> 32;
@@ -848,8 +852,34 @@ struct Igd::Device
 				enum { CMD_NUM = 2 };
 				Genode::uint32_t cmd[2] = {};
 				Igd::Mi_user_interrupt ui;
-				cmd[0] = ui.value;
-				cmd[1] = Mi_arb_on_off(true).value;
+				cmd[0] = Mi_arb_on_off(true).value;
+				cmd[1] = ui.value;
+
+				for (size_t i = 0; i < CMD_NUM; i++) {
+					advance += el.ring_append(cmd[i]);
+				}
+			}
+
+			/*
+			 * emit semaphore we can later block on in order to stop ring
+			 *
+			 * 'emit_preempt_busywait' and 'gen12_emit_preempt_busywait'
+			 */
+			if (1)
+			{
+				enum { CMD_NUM = 6 };
+				Genode::uint32_t cmd[CMD_NUM] = { };
+
+				Igd::Mi_semaphore_wait sw;
+				/* number of dwords after [1] */
+				sw.dword_length(generation < 12 ? 2 : 3);
+
+				cmd[0] = Mi_arb_check().value;
+				cmd[1] = sw.value;
+				cmd[2] = 0;                                  /* data word zero */
+				cmd[3] = _device.hw_status_page_semaphore(); /* semaphore address low  */
+				cmd[4] = 0;                                  /* semaphore address high */
+				cmd[5] = generation < 12 ? Mi_noop().value : 0;
 
 				for (size_t i = 0; i < CMD_NUM; i++) {
 					advance += el.ring_append(cmd[i]);
@@ -1076,17 +1106,20 @@ struct Igd::Device
 		Genode::error("watchdog triggered: engine stuck,"
 		              " vGPU=", _active_vgpu->id(), " IRQ: ",
 		              Hex(_mmio.read_irq_vector(_info.generation)));
-		_mmio.dump();
-		_mmio.error_dump();
-		_mmio.fault_dump();
-		_mmio.execlist_status_dump();
 
-		_active_vgpu->rcs.context->dump();
-		_hw_status_page->dump();
-		Execlist &el = *_active_vgpu->rcs.execlist;
-		el.ring_update_head(_active_vgpu->rcs.context->head_offset());
-		el.ring_dump(4096, _active_vgpu->rcs.context->tail_offset() * 2,
-		                   _active_vgpu->rcs.context->head_offset());
+		if (DEBUG) {
+			_mmio.dump();
+			_mmio.error_dump();
+			_mmio.fault_dump();
+			_mmio.execlist_status_dump();
+
+			_active_vgpu->rcs.context->dump();
+			_hw_status_page->dump();
+			Execlist &el = *_active_vgpu->rcs.execlist;
+			el.ring_update_head(_active_vgpu->rcs.context->head_offset());
+			el.ring_dump(4096, _active_vgpu->rcs.context->tail_offset() * 2,
+			                   _active_vgpu->rcs.context->head_offset());
+		}
 
 		_device_reset_and_init();
 
@@ -1277,7 +1310,18 @@ struct Igd::Device
 	/**
 	 * Reset the physical device
 	 */
-	void reset() { _device_reset_and_init(); }
+	void reset()
+	{
+		/* unschedule current vcpu */
+		if (_active_vgpu) vgpu_unschedule(*_active_vgpu);
+
+		/* Stop render engine
+		 *
+		 * WaKBLVECSSemaphoreWaitPoll:kbl (on ALL_ENGINES):
+		 * KabyLake suffers from system hangs when batchbuffer is progressing during
+		 * reset
+		 */
+	}
 
 	/**
 	 * Get chip id of the physical device
@@ -1332,12 +1376,25 @@ struct Igd::Device
 	 ** Hardware status page **
 	 **************************/
 
-	addr_t hw_status_page() const { return _hw_status_ctx->gmaddr(); }
+	addr_t hw_status_page_gmaddr() const { return _hw_status_ctx->gmaddr(); }
 
-	uint64_t seqno() const
+	addr_t hw_status_page_semaphore() const
 	{
-		Utils::clflush((uint32_t*)(_hw_status_ctx->vaddr() + 0xc0));
-		return *(uint32_t*)(_hw_status_ctx->vaddr() + 0xc0);
+		return hw_status_page_gmaddr() + Hardware_status_page::Semaphore::OFFSET;
+	}
+
+	/*
+	 * Pause the physical ring by setting semaphore value programmed by
+	 * 'setup_ring_vram' to 1, causing GPU to spin.
+	 */
+	void hw_status_page_pause_ring(bool pause)
+	{
+		_hw_status_page->semaphore(pause ? 1 : 0);
+	}
+
+	uint64_t seqno()
+	{
+		return _hw_status_page->sequence_number();
 	}
 
 
@@ -2223,12 +2280,13 @@ class Gpu::Root : public Gpu::Root_component
 		void _destroy_session(Session_component *s) override
 		{
 			if (s->vgpu_active()) {
-				Genode::warning("vGPU active, reset device and hope for the best");
+				Genode::warning("XXXXXXX vGPU active, reset device and hope for the best XXXXXXXXX");
 				_device->reset();
+			} else {
+				/* remove from scheduled list */
+				s->vgpu_unschedule();
 			}
 
-			/* remove from scheduled list */
-			s->vgpu_unschedule();
 			Genode::destroy(md_alloc(), s);
 		}
 
