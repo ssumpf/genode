@@ -688,15 +688,6 @@ class Igd::Mmio : public Platform::Device::Mmio
 		struct HWSTAM : Register<0x02098, 32> { };
 
 		/*
-		 * IHD-OS-BDW-Vol 2c-11.15 p. 1320
-		 */
-		struct MI_MODE : Register<0x0209c, 32>
-		{
-			struct Stop_rings : Bitfield<8, 1> { };
-			struct Rings_idle : Bitfield<9, 1> { };
-		};
-
-		/*
 		 * IHD-OS-BDW-Vol 2c-11.15 p. 712
 		 */
 		struct HWS_PGA_RCSUNIT  : Register<0x02080, 32> { };
@@ -874,9 +865,10 @@ class Igd::Mmio : public Platform::Device::Mmio
 		{
 			using B = Register<BASE + 0xD0, 32>;
 
-			struct Mask_bits       : B::template Bitfield<16, 16> { };
-			struct Ready_for_reset : B::template Bitfield< 1,  1> { };
-			struct Request_reset   : B::template Bitfield< 0,  1> { };
+			struct Mask_bits          : B::template Bitfield<16, 16> { };
+			struct Catastrophic_error : B::template Bitfield<2, 1> { };
+			struct Ready_for_reset    : B::template Bitfield< 1,  1> { };
+			struct Request_reset      : B::template Bitfield< 0,  1> { };
 		};
 
 		template <unsigned long BASE>

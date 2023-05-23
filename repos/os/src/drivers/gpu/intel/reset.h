@@ -18,7 +18,7 @@ class Igd::Reset
 		void _stop_engine_cs()
 		{
 			/* write stop bit to render mode */
-			_mmio.write<Mmio::MI_MODE::Stop_rings>(1);
+			_mmio.write<Mmio::CS_MI_MODE_CTRL::Stop_rings>(1);
 
 			/*
 			 * Wa_22011802037 : GEN11, GNE12, Prior to doing a reset, ensure CS is
@@ -29,13 +29,13 @@ class Igd::Reset
 
 			try {
 				_mmio.wait_for(Mmio::Attempts(10), Mmio::Microseconds(100'000), _mmio.delayer(),
-				               Mmio::MI_MODE::Rings_idle::Equal(1));
+				               Mmio::CS_MI_MODE_CTRL::Rings_idle::Equal(1));
 			} catch(Mmio::Polling_timeout) {
 				Genode::warning("stop engine cs timeout");
 			}
 
 			/* read to let GPU writes be flushed to memory */
-			_mmio.read<Mmio::MI_MODE>();
+			_mmio.read<Mmio::CS_MI_MODE_CTRL>();
 		}
 
 		/* not documented
@@ -66,6 +66,35 @@ class Igd::Reset
 			Genode::warning("wait pending force wakeup timeout");
 		}
 
+		void _ready_for_reset()
+		{
+			if (_mmio.read<Mmio::CS_RESET_CTRL::Catastrophic_error>()) {
+				/* For catastrophic errors, ready-for-reset sequence
+				 * needs to be bypassed: HAS#396813
+				 */
+				try {
+					_mmio.wait_for(Mmio::Attempts(7), Mmio::Microseconds(100'000), _mmio.delayer(),
+					               Mmio::CS_RESET_CTRL::Catastrophic_error::Equal(0));
+				} catch (Mmio::Polling_timeout) {
+					Genode::warning("catastrophic error reset not cleared");
+				}
+				return;
+			}
+
+			if (_mmio.read<Mmio::CS_RESET_CTRL::Ready_for_reset>()) return;
+
+			Mmio::CS_RESET_CTRL::access_t request = 0;
+			Mmio::CS_RESET_CTRL::Mask_bits::set(request, 1);
+			Mmio::CS_RESET_CTRL::Request_reset::set(request, 1);
+			_mmio.write_post<Mmio::CS_RESET_CTRL>(request);
+			try {
+				_mmio.wait_for(Mmio::Attempts(7), Mmio::Microseconds(100'000), _mmio.delayer(),
+				               Mmio::CS_RESET_CTRL::Ready_for_reset::Equal(1));
+			} catch (Mmio::Polling_timeout) {
+				Genode::warning("not ready for reset");
+			}
+		}
+
 	public:
 
 		Reset(Igd::Mmio &mmio) : _mmio(mmio) { }
@@ -76,5 +105,6 @@ class Igd::Reset
 
 			_stop_engine_cs();
 			_wait_for_pending_force_wakeups();
+			_ready_for_reset();
 		}
 };
