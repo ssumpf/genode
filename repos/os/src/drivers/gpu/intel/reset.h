@@ -95,6 +95,30 @@ class Igd::Reset
 			}
 		}
 
+		void _unready_for_reset()
+		{
+			Mmio::CS_RESET_CTRL::access_t request = 0;
+			Mmio::CS_RESET_CTRL::Mask_bits::set(request, 1);
+			Mmio::CS_RESET_CTRL::Request_reset::set(request, 0);
+			_mmio.write_post<Mmio::CS_RESET_CTRL>(request);
+		}
+
+		void _reset_gen8()
+		{
+			/* full sw reset */
+			_mmio.write<Mmio::GDRST::Graphics_full_soft_reset_ctl>(1);
+			try {
+				/* do NOT attempt more than 2 times */
+				_mmio.wait_for(Mmio::Attempts(2), Mmio::Microseconds(200'000), _mmio.delayer(),
+				               Mmio::GDRST::Graphics_full_soft_reset_ctl::Equal(0));
+			} catch (Mmio::Polling_timeout) {
+				Genode::error("resetting device failed");
+			}
+
+			/* some devices still show volatile state */
+			_mmio.delayer().usleep(50);
+		}
+
 	public:
 
 		Reset(Igd::Mmio &mmio) : _mmio(mmio) { }
@@ -106,5 +130,10 @@ class Igd::Reset
 			_stop_engine_cs();
 			_wait_for_pending_force_wakeups();
 			_ready_for_reset();
+
+			if (_generation < 11)
+				_reset_gen8();
+
+			_unready_for_reset();
 		}
 };
