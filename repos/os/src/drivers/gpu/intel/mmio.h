@@ -839,6 +839,18 @@ class Igd::Mmio : public Platform::Device::Mmio
 		};
 
 		/*
+		 * MSG idle register (one per engine) force wake status (undocumented)
+		 */
+		struct MSG_IDLE_CS : Register<0x8000, 32>
+		{
+			struct Pending_status : Bitfield<9, 5>  { };
+			struct Pending_mask   : Bitfield<25, 5> { };
+		};
+
+		/* force wake status used with MSG_IDLE_CS (undocumented) */
+		struct GEN9_PWRGT_DOMAIN_STATUS : Register<0xa2a0, 32> { };
+
+		/*
 		 * IHD-OS-BDW-Vol 2c-11.15 p. 703
 		 *
 		 * also known as FORCEWAKE_ACK_HSW in the Linux driver

@@ -38,6 +38,34 @@ class Igd::Reset
 			_mmio.read<Mmio::MI_MODE>();
 		}
 
+		/* not documented
+		 * Wa_22011802037: gen11/gen12: In addition to stopping the cs, we need
+		 * to wait for any pending mi force wakeups
+		 * MSG_IDLE_CS 0x8000 force wake
+		 */
+		void _wait_for_pending_force_wakeups()
+		{
+			if (_generation < 11 && _generation > 12) return;
+
+			unsigned fw_status = _mmio.read<Mmio::MSG_IDLE_CS::Pending_status>();
+			unsigned fw_mask   = _mmio.read<Mmio::MSG_IDLE_CS::Pending_mask>();
+
+			_mmio.delayer().usleep(1);
+
+			for (unsigned i = 0; i < 10; i++) {
+				unsigned status = _mmio.read<Mmio::GEN9_PWRGT_DOMAIN_STATUS>() & fw_mask;
+
+				_mmio.delayer().usleep(1);
+
+				if (status == fw_status) return;
+
+				_mmio.delayer().usleep(50000);
+			}
+
+			_mmio.delayer().usleep(1);
+			Genode::warning("wait pending force wakeup timeout");
+		}
+
 	public:
 
 		Reset(Igd::Mmio &mmio) : _mmio(mmio) { }
@@ -47,5 +75,6 @@ class Igd::Reset
 			_generation = generation;
 
 			_stop_engine_cs();
+			_wait_for_pending_force_wakeups();
 		}
 };
