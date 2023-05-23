@@ -1,11 +1,11 @@
 /*
- * \brief  Broadwell MMIO definitions
+ * \brief  GEN8/9/12 MMIO definitions
  * \author Josef Soentgen
  * \data   2017-03-15
  */
 
 /*
- * Copyright (C) 2017 Genode Labs GmbH
+ * Copyright (C) 2023 Genode Labs GmbH
  *
  * This file is part of the Genode OS framework, which is distributed
  * under the terms of the GNU Affero General Public License version 3.
@@ -526,6 +526,8 @@ class Igd::Mmio : public Platform::Device::Mmio
 
 			struct Privilege_check_disable_mask : Bitfield<16, 1> { };
 			struct Privilege_check_disable      : Bitfield< 0, 1> { };
+
+			struct Gen12_prefetch_disable : Bitfield<10, 1>{ };
 		};
 
 		/*
@@ -684,6 +686,15 @@ class Igd::Mmio : public Platform::Device::Mmio
 		 * IHD-OS-BDW-Vol 2c-11.15 p. 711
 		 */
 		struct HWSTAM : Register<0x02098, 32> { };
+
+		/*
+		 * IHD-OS-BDW-Vol 2c-11.15 p. 1320
+		 */
+		struct MI_MODE : Register<0x0209c, 32>
+		{
+			struct Stop_rings : Bitfield<8, 1> { };
+			struct Rings_idle : Bitfield<9, 1> { };
+		};
 
 		/*
 		 * IHD-OS-BDW-Vol 2c-11.15 p. 712
@@ -1071,7 +1082,6 @@ class Igd::Mmio : public Platform::Device::Mmio
 		struct MI_DISP_PWR_DWN : Register<0x20E0, 32> { };
 		struct MI_ARB_STATE    : Register<0x20E4, 32> { };
 		struct MI_RDRET_STATE  : Register<0x20FC, 32> { };
-		struct MI_MODE         : Register<0x209c, 32> { };
 		struct ECOSKPD         : Register<0x21D0, 32> { };
 
 	private:
@@ -1599,6 +1609,8 @@ class Igd::Mmio : public Platform::Device::Mmio
 
 		Mmio(Platform::Device & device, Genode::Env & env)
 		: Platform::Device::Mmio(device, {0}), _delayer(env) { }
+
+		Delayer &delayer() { return _delayer; }
 
 		template <typename T>
 		void write_post(typename T::access_t const value)

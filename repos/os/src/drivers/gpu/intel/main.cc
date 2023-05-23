@@ -41,6 +41,7 @@
 #include <context.h>
 #include <context_descriptor.h>
 #include <platform_session.h>
+#include <reset.h>
 #include <ring_buffer.h>
 #include <workarounds.h>
 
@@ -82,6 +83,7 @@ struct Igd::Device
 	Platform::Connection   & _platform;
 	Rm_connection          & _rm;
 	Igd::Mmio              & _mmio;
+	Igd::Reset               _reset { _mmio };
 	Platform::Device::Mmio & _gmadr;
 	uint8_t                  _gmch_ctl;
 	Timer::Connection        _timer { _env };
@@ -1321,6 +1323,12 @@ struct Igd::Device
 		 * KabyLake suffers from system hangs when batchbuffer is progressing during
 		 * reset
 		 */
+		hw_status_page_pause_ring(true);
+
+		_reset.execute(generation().value);
+		error("RESET DONE");
+
+		hw_status_page_pause_ring(false);
 	}
 
 	/**
@@ -1622,6 +1630,8 @@ struct Igd::Device
 				_schedule_current_vgpu();
 			}
 		}
+
+		reset();
 
 		return display_irq;
 	}
