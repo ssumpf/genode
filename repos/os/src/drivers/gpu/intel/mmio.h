@@ -636,6 +636,15 @@ class Igd::Mmio : public Platform::Device::Mmio
 		};
 
 		/*
+		 * IHD-OS-BDW-Vol 2c-11.15 p. 535
+		 */
+		struct GAMTARBMODE : Register<0x4a08, 32>
+		{
+			struct Arbiter_mode_control_1 : Bitfield<1, 1> { };
+		};
+
+
+		/*
 		 * IHD-OS-BDW-Vol 2c-11.15 p. 1315 ff.
 		 */
 		struct RC_CTRL0 : Register<0x0A090, 32> { };
@@ -894,6 +903,14 @@ class Igd::Mmio : public Platform::Device::Mmio
 		struct BCS_MI_MODE_CTRL : MI_MODE_CTRL_BASE<0x22000> { };
 
 		/*
+		 * IHD-OS-BDW-Vol 2c-11.15 p. 790 ff.
+		 */
+		struct HSW_IDICR : Register<0x9008, 32>
+		{
+			struct Idi_hash_mask : Bitfield<16, 6> { };
+		};
+
+		/*
 		 * IHD-OS-BDW-Vol 2c-11.15 p. 609 ff.
 		 */
 		struct GDRST : Register<0x0941C, 32>
@@ -962,6 +979,13 @@ class Igd::Mmio : public Platform::Device::Mmio
 			struct Fence_valid       : Bitfield< 0,  1> { };
 		};
 
+		/*
+		 * IHD-OS-BDW-Vol 12-11.15 p. 4
+		 */
+		struct TILECTL : Register<0x101000, 32>
+		{
+			struct SWZCTL : Bitfield<0, 2> { };
+		};
 
 		/*
 		 * IHD-OS-BDW-Vol 12-11.15 p. 5
@@ -1902,8 +1926,9 @@ class Igd::Mmio : public Platform::Device::Mmio
 			struct MASK_WAKEMEM : Bitfield<13, 1> {};
 		};
 		struct DISP_ARB_CTL        : Register<0x45000, 32> {
-			struct DISP_FBC_MEMORY_WAKE : Bitfield<31, 1> {};
-			struct DISP_FBC_WM_DIS      : Bitfield<15, 1> {};
+			struct DISP_FBC_MEMORY_WAKE        : Bitfield<31, 1> {};
+			struct DISP_TILE_SURFACE_SWIZZLING : Bitfield<13, 1> { };
+			struct DISP_FBC_WM_DIS             : Bitfield<15, 1> {};
 		};
 
 		void gen9_clock_gating()

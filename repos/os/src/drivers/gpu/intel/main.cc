@@ -43,7 +43,6 @@
 #include <platform_session.h>
 #include <reset.h>
 #include <ring_buffer.h>
-#include <workarounds.h>
 
 using namespace Genode;
 

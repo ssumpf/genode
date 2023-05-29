@@ -2,6 +2,7 @@
  * \brief Render engine reset based on the Linux driver
  */
 #include "mmio.h"
+#include "workarounds.h"
 
 namespace Igd {
 	class Reset;
@@ -119,6 +120,15 @@ class Igd::Reset
 			_mmio.delayer().usleep(50);
 		}
 
+		void _init_swizzling()
+		{
+			_mmio.write<Mmio::DISP_ARB_CTL::DISP_TILE_SURFACE_SWIZZLING>(1);
+			_mmio.write<Mmio::TILECTL::SWZCTL>(1);
+
+			if (_generation == 8)
+				_mmio.write<Mmio::GAMTARBMODE::Arbiter_mode_control_1>(1);
+		}
+
 	public:
 
 		Reset(Igd::Mmio &mmio) : _mmio(mmio) { }
@@ -135,5 +145,12 @@ class Igd::Reset
 				_reset_gen8();
 
 			_unready_for_reset();
+
+			if (_generation < 9)
+				_mmio.write<Mmio::HSW_IDICR::Idi_hash_mask>(0xf);
+
+			apply_workarounds(_mmio, _generation);
+
+			_init_swizzling();
 		}
 };
