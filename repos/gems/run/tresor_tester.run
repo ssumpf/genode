@@ -36,13 +36,15 @@ proc tresor_ft_size_mb { } {
 	return [expr [tresor_image_size_mb] / 8]
 }
 
-proc benchmark_blk_count_base { } {
+proc benchmark_blk_count { } {
 
-	if {[have_board virt_qemu_arm_v8a]} {
-		return 6400;
-	} else {
-		return 12800;
+	if {[have_board linux]} {
+		return 12800
 	}
+	if {[have_board virt_qemu_arm_v8a]} {
+		return 6400
+	}
+	return 0
 }
 
 append build_components {
@@ -114,6 +116,7 @@ if {[have_board linux]} {
 			</config>
 		</start>
 	}
+
 } else {
 
 	append config {
@@ -551,7 +554,7 @@ append config {
 					<request op="sync"  vba="0"  count="256" sync="yes"/>
 					<check/>
 
-					<log string="Step 16: reinitialize Tresor device, do read/write benchmarks"/>
+					<log string="Step 16: reinitialize Tresor device"/>
 
 					<request op="deinitialize" sync="no"/>
 					<destruct/>
@@ -569,21 +572,27 @@ append config {
 
 					</initialize>
 					<construct/>
+}
+if {[benchmark_blk_count] > 0} {
+
+	append config {
+
+					<log string="Step 17: do read/write benchmarks"/>
 
 					<benchmark op="start" label="read initial data in one request"/>
-					<request op="read" vba="0" count="} [benchmark_blk_count_base] {" sync="no"/>
+					<request op="read" vba="0" count="} [benchmark_blk_count] {" sync="no"/>
 					<benchmark op="stop"/>
 
 					<benchmark op="start" label="overwrite initial data in one request"/>
-					<request op="write" vba="0" count="} [expr 2*[benchmark_blk_count_base]] {" sync="no"/>
+					<request op="write" vba="0" count="} [benchmark_blk_count] {" sync="no"/>
 					<benchmark op="stop"/>
 
 					<benchmark op="start" label="overwrite written data in one request"/>
-					<request op="write" vba="0" count="} [benchmark_blk_count_base] {" sync="no"/>
+					<request op="write" vba="0" count="} [benchmark_blk_count] {" sync="no"/>
 					<benchmark op="stop"/>
 
 					<benchmark op="start" label="read written data in one request"/>
-					<request op="read" vba="0" count="} [benchmark_blk_count_base] {" sync="no"/>
+					<request op="read" vba="0" count="} [benchmark_blk_count] {" sync="no"/>
 					<benchmark op="stop"/>
 
 					<benchmark op="start" label="read written data randomized"/>
@@ -1002,8 +1011,18 @@ append config {
 
 					<benchmark op="stop"/>
 					<check/>
+	}
 
-					<log string="Step 17: test list-snapshots command"/>
+} else {
+
+	append config {
+
+					<log string="Step 17: skip because benchmarks are not disabled for this platform"/>
+	}
+}
+append config {
+
+					<log string="Step 18: test list-snapshots command"/>
 
 					<request op="create_snapshot" sync="no"/>
 					<request op="write" vba="17737" count="70" sync="no" salt="8924"/>
