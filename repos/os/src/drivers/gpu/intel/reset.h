@@ -25,8 +25,12 @@ class Igd::Reset
 			 * Wa_22011802037 : GEN11, GNE12, Prior to doing a reset, ensure CS is
 			 * stopped, set ring stop bit and prefetch disable bit to halt CS
 			 */
-			if (_generation == 11 || _generation == 12)
-				_mmio.write<Mmio::GFX_MODE::Gen12_prefetch_disable>(1);
+			if (_generation == 11 || _generation == 12) {
+				Mmio::GFX_MODE::access_t v = 0;
+				using G = Mmio::GFX_MODE;
+				v = G::set<G::Gen12_prefetch_disable>(v, 1);
+				_mmio.write<Mmio::GFX_MODE>(v);
+			}
 
 			try {
 				_mmio.wait_for(Mmio::Attempts(10), Mmio::Microseconds(100'000), _mmio.delayer(),
@@ -129,6 +133,23 @@ class Igd::Reset
 				_mmio.write<Mmio::GAMTARBMODE::Arbiter_mode_control_1>(1);
 		}
 
+		void _enable_execlist()
+		{
+			_mmio.write_post<Mmio::HWSTAM>(~0u);
+
+			_mmio.write<Mmio::CS_MI_MODE_CTRL::Stop_rings>(0);
+
+			using G = Mmio::GFX_MODE;
+			G::access_t v = 0;
+
+			if (_generation >= 11)
+				v = G::set<G::Gen11_gfx_disable_legacy_mode>(v, 1);
+			else
+				v = G::set<G::Execlist_enable>(v, 1);
+
+			_mmio.write<G>(v);
+		}
+
 	public:
 
 		Reset(Igd::Mmio &mmio) : _mmio(mmio) { }
@@ -152,5 +173,9 @@ class Igd::Reset
 			apply_workarounds(_mmio, _generation);
 
 			_init_swizzling();
+
+			//XXX: init intel_mocs_init_engine, force_wake
+
+			_enable_execlist();
 		}
 };

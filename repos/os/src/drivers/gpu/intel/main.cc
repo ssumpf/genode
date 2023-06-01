@@ -1313,7 +1313,7 @@ struct Igd::Device
 	 */
 	void reset()
 	{
-		/* unschedule current vcpu */
+		/* unschedule current vgpu */
 		if (_active_vgpu) vgpu_unschedule(*_active_vgpu);
 
 		/* Stop render engine
@@ -1326,6 +1326,12 @@ struct Igd::Device
 
 		_reset.execute(generation().value);
 		error("RESET DONE");
+
+		/* set address of global hardware status page */
+		if (_hw_status_ctx.constructed()) {
+			Mmio::HWS_PGA_RCSUNIT::access_t const addr = _hw_status_ctx->gmaddr();
+			_mmio.write_post<Igd::Mmio::HWS_PGA_RCSUNIT>(addr);
+		}
 
 		hw_status_page_pause_ring(false);
 	}

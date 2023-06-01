@@ -513,21 +513,29 @@ class Igd::Mmio : public Platform::Device::Mmio
 		 */
 		struct GFX_MODE : Register<0x0229C, 32>
 		{
+			/* to change bits below, accordings mask bit must be set */
 			struct Mask_bits : Bitfield<16, 16> { };
 
-			struct Execlist_enable_mask : Bitfield<31, 1> { };
-			struct Execlist_enable      : Bitfield<15, 1> { };
+			struct Execlist_enable               : Bitfield<15, 1> { };
+			struct Gen12_prefetch_disable        : Bitfield<10, 1> { };
+			struct Gen11_gfx_disable_legacy_mode : Bitfield< 3, 1> { };
+			struct Privilege_check_disable       : Bitfield< 0, 1> { };
 
-			struct Ppgtt_enable_mask : Bitfield<25, 1> { };
-			struct Ppgtt_enable      : Bitfield< 9, 1> { };
+			struct Execlist_enable_mask          : Bitfield<16+15, 1> { };
+			/*
+			 * these bits are only valid in ringer buffer mode, we use execlist with
+			 * contexts
+			 */
+			struct Ppgtt_enable                  : Bitfield< 9, 1> { };
+			struct Virtual_addressing_enable     : Bitfield< 7, 1> { };
 
-			struct Virtual_addressing_enable_mask : Bitfield<23, 1> { };
-			struct Virtual_addressing_enable      : Bitfield< 7, 1> { };
-
-			struct Privilege_check_disable_mask : Bitfield<16, 1> { };
-			struct Privilege_check_disable      : Bitfield< 0, 1> { };
-
-			struct Gen12_prefetch_disable : Bitfield<10, 1>{ };
+			template <typename T>
+			static access_t set(access_t v, bool bit)
+			{
+				T::set(v, bit);
+				Mask_bits::set(v, 1u << T::SHIFT);
+				return v;
+			}
 		};
 
 		/*
@@ -875,7 +883,7 @@ class Igd::Mmio : public Platform::Device::Mmio
 			using B = Register<BASE + 0xD0, 32>;
 
 			struct Mask_bits          : B::template Bitfield<16, 16> { };
-			struct Catastrophic_error : B::template Bitfield<2, 1> { };
+			struct Catastrophic_error : B::template Bitfield< 2,  1> { };
 			struct Ready_for_reset    : B::template Bitfield< 1,  1> { };
 			struct Request_reset      : B::template Bitfield< 0,  1> { };
 		};
