@@ -1,7 +1,7 @@
 /*
  * \brief  Array defining order of Linux Kernel initcalls
  * \author Automatically generated file - do no edit
- * \date   2023-06-07
+ * \date   2023-06-12
  */
 
 #pragma once
@@ -230,6 +230,8 @@ static const char * lx_emul_initcall_order[] = {
 	"__initcall_phylink_init6",
 	"__initcall_phy_module_init6",
 	"__initcall_fixed_mdio_bus_init6",
+	"__initcall_pcnet32_init_module6",
+	"__initcall_e1000_init_module6",
 	"__initcall_ath9k_init6",
 	"__initcall_ath9k_cmn_init6",
 	"__initcall_iwl_drv_init6",
