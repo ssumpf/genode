@@ -354,12 +354,12 @@ append config {
 						<virtual-block-device
 							nr_of_levels="4"
 							nr_of_children="8"
-							nr_of_leafs="344" />
+							nr_of_leafs="100" />
 
 						<free-tree
 							nr_of_levels="4"
 							nr_of_children="8"
-							nr_of_leafs="344" />
+							nr_of_leafs="100" />
 
 					</initialize>
 					<construct/>
