@@ -1618,8 +1618,16 @@ struct Igd::Device
 
 		unsigned const v = _mmio.read_irq_vector(_info.generation);
 
-		bool const ctx_switch    = Mmio::GEN12_RENDER_INTR_VEC::Cs_ctx_switch_interrupt::get(v);
-		bool const user_complete = Mmio::GEN12_RENDER_INTR_VEC::Cs_mi_user_interrupt::get(v);
+		bool ctx_switch { false };
+		bool user_complete { false };
+
+		if (generation().value < 11) {
+			ctx_switch    = Mmio::GT_0_INTERRUPT_IIR::Cs_ctx_switch_interrupt::get(v);
+			user_complete = Mmio::GT_0_INTERRUPT_IIR::Cs_mi_user_interrupt::get(v);
+		} else {
+			ctx_switch    = Mmio::GEN12_RENDER_INTR_VEC::Cs_ctx_switch_interrupt::get(v);
+			user_complete = Mmio::GEN12_RENDER_INTR_VEC::Cs_mi_user_interrupt::get(v);
+		}
 
 		if (v) {
 			_mmio.clear_render_irq(_info.generation, v);
