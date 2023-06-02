@@ -701,6 +701,9 @@ class Igd::Mmio : public Platform::Device::Mmio
 
 		/*
 		 * IHD-OS-BDW-Vol 2c-11.15 p. 711
+		 *
+		 * "Hardware Status Mask Register", this register controls which IRQs are
+		 * even written to the PCI bus (should be same as unmasked in IMR)
 		 */
 		struct HWSTAM : Register<0x02098, 32> { };
 
@@ -1316,8 +1319,6 @@ class Igd::Mmio : public Platform::Device::Mmio
 				uint32_t tmp = read<GT_0_INTERRUPT_IIR>();
 				if (tmp != 0) { error("GT_0_INTERRUPT_IIR not zero: ", Hex(tmp)); }
 
-				//Hex("IER: ", Hex((unsigned)read<GT_0_INTERRUPT_IER>()), " IMR: ", Hex((unsigned)read<GT_0_INTERRUPT_IMR>()));
-
 				GT_0_INTERRUPT_IER::access_t ier = 0;
 				GT_0_INTERRUPT_IER::Cs_mi_user_interrupt::set(ier, 1);
 				GT_0_INTERRUPT_IER::Cs_ctx_switch_interrupt::set(ier, 1);
@@ -1780,6 +1781,14 @@ class Igd::Mmio : public Platform::Device::Mmio
 				_intr_enable();
 			else
 				_intr_enable_gen12();
+		}
+
+		void restore_hwstam(unsigned const generation)
+		{
+			if (generation < 11)
+				write_post<HWSTAM>(read<GT_0_INTERRUPT_IMR>());
+			else
+				write_post<HWSTAM>(~read<GEN12_RENDER_COPY_INTR_ENABLE::Render_enable>());
 		}
 
 		void disable_master_irq(unsigned const generation)

@@ -1335,10 +1335,16 @@ struct Igd::Device
 		}
 
 		_mmio.clear_errors();
+
 		/* clear pending irqs */
 		unsigned v = _mmio.read_irq_vector(generation().value);
 		_mmio.clear_render_irq(generation().value, v);
-		_mmio.enable_intr(generation().value);
+
+		/*
+		 * Restore "Hardware Status Mask Register", this register controls which
+		 * IRQs are even written to the PCI bus (should be same as unmasked in IMR)
+		 */
+		_mmio.restore_hwstam(generation().value);
 
 		hw_status_page_pause_ring(false);
 		error("RESET DONE");
