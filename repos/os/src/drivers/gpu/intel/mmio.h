@@ -1314,7 +1314,9 @@ class Igd::Mmio : public Platform::Device::Mmio
 			/* GT0 RCS/BCS */
 			{
 				uint32_t tmp = read<GT_0_INTERRUPT_IIR>();
-				if (tmp != 0) { error("GT_0_INTERRUPT_IIR not zero"); }
+				if (tmp != 0) { error("GT_0_INTERRUPT_IIR not zero: ", Hex(tmp)); }
+
+				//Hex("IER: ", Hex((unsigned)read<GT_0_INTERRUPT_IER>()), " IMR: ", Hex((unsigned)read<GT_0_INTERRUPT_IMR>()));
 
 				GT_0_INTERRUPT_IER::access_t ier = 0;
 				GT_0_INTERRUPT_IER::Cs_mi_user_interrupt::set(ier, 1);
@@ -1771,7 +1773,7 @@ class Igd::Mmio : public Platform::Device::Mmio
 		}
 
 		void enable_intr(unsigned const generation)
-		{	
+		{
 			write<Igd::Mmio::RCS_EMR>(0xffffff00);
 
 			if (generation < 11)
@@ -1808,9 +1810,9 @@ class Igd::Mmio : public Platform::Device::Mmio
 			return false;
 		}
 
-		GEN12_RENDER_INTR_VEC::access_t read_irq_vector(unsigned const generation)
+		unsigned read_irq_vector(unsigned const generation)
 		{
-			GEN12_RENDER_INTR_VEC::access_t vec = 0;
+			unsigned vec = 0;
 			if (generation < 11) {
 				vec = read<GT_0_INTERRUPT_IIR>();
 			} else {
@@ -1830,7 +1832,7 @@ class Igd::Mmio : public Platform::Device::Mmio
 			return vec;
 		};
 
-		void clear_render_irq(unsigned const generation, Genode::uint16_t v)
+		void clear_render_irq(unsigned const generation, unsigned v)
 		{
 			if (generation < 11)
 				write_post<GT_0_INTERRUPT_IIR>(v);

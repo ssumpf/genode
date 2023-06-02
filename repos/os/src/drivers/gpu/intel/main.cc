@@ -1313,9 +1313,6 @@ struct Igd::Device
 	 */
 	void reset()
 	{
-		/* unschedule current vgpu */
-		if (_active_vgpu) vgpu_unschedule(*_active_vgpu);
-
 		/* Stop render engine
 		 *
 		 * WaKBLVECSSemaphoreWaitPoll:kbl (on ALL_ENGINES):
@@ -1324,8 +1321,12 @@ struct Igd::Device
 		 */
 		hw_status_page_pause_ring(true);
 
+		/* unschedule current vgpu */
+		//Vgpu *active_vgpu = _active_vgpu;
+		if (_active_vgpu) vgpu_unschedule(*_active_vgpu);
+
+		/* reset */
 		_reset.execute(generation().value);
-		error("RESET DONE");
 
 		/* set address of global hardware status page */
 		if (_hw_status_ctx.constructed()) {
@@ -1333,7 +1334,17 @@ struct Igd::Device
 			_mmio.write_post<Igd::Mmio::HWS_PGA_RCSUNIT>(addr);
 		}
 
+		_mmio.clear_errors();
+		/* clear pending irqs */
+		unsigned v = _mmio.read_irq_vector(generation().value);
+		_mmio.clear_render_irq(generation().value, v);
+		_mmio.enable_intr(generation().value);
+
 		hw_status_page_pause_ring(false);
+		error("RESET DONE");
+		if (_current_vgpu()) {
+			_schedule_current_vgpu();
+		}
 	}
 
 	/**
@@ -1599,7 +1610,7 @@ struct Igd::Device
 
 		_mmio.disable_master_irq(_info.generation);
 
-		Mmio::GEN12_RENDER_INTR_VEC::access_t const v = _mmio.read_irq_vector(_info.generation);
+		unsigned const v = _mmio.read_irq_vector(_info.generation);
 
 		bool const ctx_switch    = Mmio::GEN12_RENDER_INTR_VEC::Cs_ctx_switch_interrupt::get(v);
 		bool const user_complete = Mmio::GEN12_RENDER_INTR_VEC::Cs_mi_user_interrupt::get(v);
@@ -1635,8 +1646,6 @@ struct Igd::Device
 				_schedule_current_vgpu();
 			}
 		}
-
-		reset();
 
 		return display_irq;
 	}
