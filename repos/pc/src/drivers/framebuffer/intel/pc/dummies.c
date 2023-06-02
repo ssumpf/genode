@@ -479,6 +479,11 @@ void __fix_address kfree_skb_reason(struct sk_buff * skb,enum skb_drop_reason re
 }
 
 
+void skb_init()
+{
+	lx_emul_trace(__func__);
+}
+
 #include <linux/sysctl.h>
 
 struct ctl_table_header * register_sysctl(const char * path,struct ctl_table * table)

@@ -247,3 +247,11 @@ int __register_chrdev(unsigned int major,unsigned int baseminor,unsigned int cou
 	lx_emul_trace(__func__);
 	return 0;
 }
+
+
+#include <linux/skbuff.h>
+
+void skb_init()
+{
+	lx_emul_trace(__func__);
+}

@@ -373,3 +373,11 @@ void software_node_notify_remove(struct device * dev)
 {
 	lx_emul_trace(__func__);
 }
+
+
+#include <linux/skbuff.h>
+
+void skb_init()
+{
+	lx_emul_trace(__func__);
+}
