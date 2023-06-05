@@ -57,6 +57,7 @@ create_boot_directory
 append config {
 
 	<config verbose="yes">
+
 		<parent-provides>
 			<service name="ROM"/>
 			<service name="IRQ"/>
@@ -68,38 +69,59 @@ append config {
 			<service name="LOG"/>
 		</parent-provides>
 
-		<default-route>
-			<any-service> <parent/> <any-child/> </any-service>
-		</default-route>
-
-		<default caps="100"/>
-		<start name="timer">
+		<start name="timer" caps="100">
 			<resource name="RAM" quantum="1M"/>
 			<provides><service name="Timer"/></provides>
+			<route>
+				<service name="PD">      <parent/> </service>
+				<service name="ROM">     <parent/> </service>
+				<service name="LOG">     <parent/> </service>
+				<service name="CPU">     <parent/> </service>
+				<service name="IO_PORT"> <parent/> </service>
+				<service name="IRQ">     <parent/> </service>
+			</route>
 		</start>
 
-		<start name="report_rom">
+		<start name="report_rom" caps="100">
 			<resource name="RAM" quantum="32M"/>
 			<provides> <service name="Report"/> <service name="ROM"/> </provides>
 			<config verbose="yes"/>
+			<route>
+				<service name="LOG"> <parent/> </service>
+				<service name="PD">  <parent/> </service>
+				<service name="CPU"> <parent/> </service>
+				<service name="ROM"> <parent/> </service>
+			</route>
 		</start>
 
-		<start name="log_terminal">
+		<start name="log_terminal" caps="100">
 			<resource name="RAM" quantum="1M"/>
 			<provides><service name="Terminal"/></provides>
+			<route>
+				<service name="LOG"> <parent/> </service>
+				<service name="PD">  <parent/> </service>
+				<service name="CPU"> <parent/> </service>
+				<service name="ROM"> <parent/> </service>
+			</route>
 		</start>
 }
 if {[have_board linux]} {
 
 	append config {
 
-		<start name="block_io_fs" ld="no">
+		<start name="block_io_fs" caps="100" ld="no">
 			<binary name="lx_fs"/>
 			<resource name="RAM" quantum="4M"/>
 			<provides> <service name="File_system"/> </provides>
 			<config>
 				<default-policy root="/" writeable="yes"/>
 			</config>
+			<route>
+				<service name="LOG"> <parent/> </service>
+				<service name="PD">  <parent/> </service>
+				<service name="CPU"> <parent/> </service>
+				<service name="ROM"> <parent/> </service>
+			</route>
 		</start>
 	}
 
@@ -154,7 +176,10 @@ append config {
 				<default-policy root="/dev/tresor_trust_anchor" writeable="yes"/>
 			</config>
 			<route>
-				<any-service> <parent/> </any-service>
+				<service name="PD">  <parent/> </service>
+				<service name="ROM"> <parent/> </service>
+				<service name="LOG"> <parent/> </service>
+				<service name="CPU"> <parent/> </service>
 			</route>
 		</start>
 
@@ -1023,11 +1048,14 @@ append config {
 			</config>
 
 			<route>
-				<service name="File_system" label_last="trust_anchor"><child name="trust_anchor_fs"/></service>
+				<service name="File_system" label_last="trust_anchor"> <child name="trust_anchor_fs"/> </service>
 				<service name="File_system"> <child name="block_io_fs"/> </service>
 				<service name="Terminal"> <child name="log_terminal"/> </service>
 				<service name="Timer"> <child name="timer"/> </service>
-				<any-service> <parent/> </any-service>
+				<service name="LOG"> <parent/> </service>
+				<service name="PD">  <parent/> </service>
+				<service name="CPU"> <parent/> </service>
+				<service name="ROM"> <parent/> </service>
 			</route>
 
 		</start>
