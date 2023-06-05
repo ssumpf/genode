@@ -1662,6 +1662,10 @@ class Igd::Mmio : public Platform::Device::Mmio
 		 */
 		void enable_execlist()
 		{
+			/*
+			 * This disables all interrupts delivered to the bus, make sure to
+			 * enable IRQs later
+			 */
 			write_post<HWSTAM>(~0u);
 			write<CS_MI_MODE_CTRL::Stop_rings>(0);
 
