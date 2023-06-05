@@ -75,8 +75,8 @@ struct Igd::Device
 	struct Out_of_ram            : Genode::Exception { };
 	struct Could_not_map_vram    : Genode::Exception { };
 
-	/* 200 ms */
-	enum { WATCHDOG_TIMEOUT = 200*1000 };
+	/* 500 ms */
+	enum { WATCHDOG_TIMEOUT = 500*1000 };
 
 	Env                    & _env;
 	Allocator              & _md_alloc;
@@ -395,6 +395,7 @@ struct Igd::Device
 		Ring_buffer::Index ring_max()   const { return _ring.max(); }
 		void ring_reset_and_fill_zero() { _ring.reset_and_fill_zero(); }
 		void ring_update_head(Ring_buffer::Index head) { _ring.update_head(head); }
+		void ring_reset_to_head(Ring_buffer::Index head) { _ring.reset_to_head(head); }
 
 		void ring_flush(Ring_buffer::Index from, Ring_buffer::Index to)
 		{
@@ -1126,13 +1127,26 @@ struct Igd::Device
 			                   _active_vgpu->rcs.context->head_offset());
 		}
 
+
+		Vgpu *vgpu = reset();
+
+		if (!vgpu)
+			error("reset vgpu is null");
+
 		/*
 		 * Signal completion to vgpu running and possibly causing hang (=skip)
 		 */
-		_active_vgpu->mark_completed();
-		_notify_complete(_active_vgpu);
+		vgpu->mark_completed();
+		_notify_complete(vgpu);
 
-		reset();
+		/*
+		 * Reset tail pointer to new head of ring (is zero on some machines, remains
+		 * the same on others)
+		 */
+		Execlist &el = *vgpu->rcs.execlist;
+		el.ring_reset_to_head(vgpu->rcs.context->head_offset());
+
+		Genode::warning("watchdog done");
 	}
 
 	Genode::Signal_handler<Device> _watchdog_timeout_sigh {
@@ -1313,7 +1327,7 @@ struct Igd::Device
 	/**
 	 * Reset the physical device
 	 */
-	void reset()
+	Vgpu *reset()
 	{
 		/* Stop render engine
 		 *
@@ -1323,8 +1337,13 @@ struct Igd::Device
 		 */
 		hw_status_page_pause_ring(true);
 
+		Vgpu *vgpu { nullptr };
+
 		/* unschedule current vgpu */
-		if (_active_vgpu) vgpu_unschedule(*_active_vgpu);
+		if (_active_vgpu) {
+			vgpu = _active_vgpu;
+			vgpu_unschedule(*_active_vgpu);
+		}
 
 		/* reset */
 		_reset.execute(generation().value);
@@ -1338,8 +1357,7 @@ struct Igd::Device
 		_mmio.clear_errors();
 
 		/* clear pending irqs */
-		unsigned v = _mmio.read_irq_vector(generation().value);
-		_mmio.clear_render_irq(generation().value, v);
+		_mmio.clear_render_irq(generation().value);
 
 		/*
 		 * Restore "Hardware Status Mask Register", this register controls which
@@ -1352,6 +1370,8 @@ struct Igd::Device
 		if (_current_vgpu()) {
 			_schedule_current_vgpu();
 		}
+
+		return vgpu;
 	}
 
 	/**
@@ -1645,7 +1665,7 @@ struct Igd::Device
 		if (fault_valid) { Genode::error("FAULT_REG valid"); }
 
 		if (ctx_switch)
-			_mmio.update_context_status_pointer();
+			_mmio.update_context_status_pointer(generation().value);
 
 		if (user_complete) {
 			_unschedule_current_vgpu();
@@ -1982,7 +2002,7 @@ class Gpu::Session_component : public Genode::Session_object<Gpu::Session>
 
 		void vgpu_unschedule()
 		{
-			return _device.vgpu_unschedule(_vgpu);
+			_device.vgpu_unschedule(_vgpu);
 		}
 
 		/***************************

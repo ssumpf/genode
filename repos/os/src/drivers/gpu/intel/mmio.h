@@ -1831,7 +1831,6 @@ class Igd::Mmio : public Platform::Device::Mmio
 					wait_for(Attempts(50), Microseconds(500), _delayer,
 					         GEN12_INTR_IDENTITY_REG0::Valid::Equal(1));
 				} catch (Polling_timeout) {
-					Genode::error(__func__, " IRQ vector not valid");
 					return vec;
 				}
 				vec = read<GEN12_INTR_IDENTITY_REG0::Engine_interrupt>();
@@ -1847,6 +1846,14 @@ class Igd::Mmio : public Platform::Device::Mmio
 				write_post<GT_0_INTERRUPT_IIR>(v);
 			else
 				write<GEN12_GT_INTR_DW0::Rcs0>(1);
+		}
+
+		void clear_render_irq(unsigned const generation)
+		{
+			unsigned v = 0;
+			if (generation < 11)
+				v = read_irq_vector(generation);
+			clear_render_irq(generation, v);
 		}
 
 		bool display_irq(unsigned const generation)
@@ -1865,10 +1872,12 @@ class Igd::Mmio : public Platform::Device::Mmio
 			write_post<ERROR>(0);
 		}
 
-		void update_context_status_pointer()
+		void update_context_status_pointer(unsigned const generation)
 		{
+			size_t const context_status_size = generation < 11 ? 6 : 12;
+
 			RCS_RING_CONTEXT_STATUS_PTR::access_t const wp = read<RCS_RING_CONTEXT_STATUS_PTR::Write_pointer>();
-			if (wp > 0x05) {
+			if (wp > (context_status_size - 1)) {
 				Genode::warning("ring context status write-pointer invalid", Genode::Hex(wp));
 				return;
 			}

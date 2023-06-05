@@ -1,6 +1,19 @@
-/**
- * \brief Render engine reset based on the Linux driver
+/*
+ * \brief  Render engine reset  based on the Linux driver
+ * \author Sebastian Sumpf
+ * \date   2023-06-05
  */
+
+/*
+ * Copyright (C) 2023 Genode Labs GmbH
+ *
+ * This file is part of the Genode OS framework, which is distributed
+ * under the terms of the GNU Affero General Public License version 3.
+ */
+
+#ifndef _RESET_H_
+#define _RESET_H_
+
 #include "mmio.h"
 #include "workarounds.h"
 
@@ -108,7 +121,7 @@ class Igd::Reset
 			_mmio.write_post<Mmio::CS_RESET_CTRL>(request);
 		}
 
-		void _reset_gen8()
+		void _reset_hw()
 		{
 			/* full sw reset */
 			_mmio.write<Mmio::GDRST::Graphics_full_soft_reset_ctl>(1);
@@ -162,8 +175,7 @@ class Igd::Reset
 			_wait_for_pending_force_wakeups();
 			_ready_for_reset();
 
-			if (_generation < 11)
-				_reset_gen8();
+			_reset_hw();
 
 			_unready_for_reset();
 
@@ -171,11 +183,9 @@ class Igd::Reset
 				_mmio.write<Mmio::HSW_IDICR::Idi_hash_mask>(0xf);
 
 			apply_workarounds(_mmio, _generation);
-
 			_init_swizzling();
-
-			//XXX: init intel_mocs_init_engine, force_wake
-
 			_enable_execlist();
 		}
 };
+
+#endif /* _RESET_H_ */
