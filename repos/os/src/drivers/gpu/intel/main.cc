@@ -46,7 +46,7 @@
 
 using namespace Genode;
 
-static constexpr bool DEBUG = true;
+static constexpr bool DEBUG = false;
 
 namespace Igd {
 
@@ -75,7 +75,8 @@ struct Igd::Device
 	struct Out_of_ram            : Genode::Exception { };
 	struct Could_not_map_vram    : Genode::Exception { };
 
-	enum { WATCHDOG_TIMEOUT = 1*1000*1000, };
+	/* 200 ms */
+	enum { WATCHDOG_TIMEOUT = 200*1000 };
 
 	Env                    & _env;
 	Allocator              & _md_alloc;
@@ -652,6 +653,10 @@ struct Igd::Device
 				Gpu::Sequence_number { .value = _device.seqno() };
 		}
 
+		void mark_completed() {
+			_info.last_completed = Gpu::Sequence_number { .value = current_seqno() };
+		}
+
 		bool setup_ring_vram(Gpu::addr_t const vram_addr)
 		{
 			_current_seqno++;
@@ -1069,7 +1074,6 @@ struct Igd::Device
 	}
 
 
-
 	/************
 	 ** FENCES **
 	 ************/
@@ -1122,15 +1126,13 @@ struct Igd::Device
 			                   _active_vgpu->rcs.context->head_offset());
 		}
 
-		_device_reset_and_init();
+		/*
+		 * Signal completion to vgpu running and possibly causing hang (=skip)
+		 */
+		_active_vgpu->mark_completed();
+		_notify_complete(_active_vgpu);
 
-		if (_active_vgpu == _current_vgpu()) {
-			_unschedule_current_vgpu();
-		}
-
-		if (_current_vgpu()) {
-			_schedule_current_vgpu();
-		}
+		reset();
 	}
 
 	Genode::Signal_handler<Device> _watchdog_timeout_sigh {
@@ -1322,7 +1324,6 @@ struct Igd::Device
 		hw_status_page_pause_ring(true);
 
 		/* unschedule current vgpu */
-		//Vgpu *active_vgpu = _active_vgpu;
 		if (_active_vgpu) vgpu_unschedule(*_active_vgpu);
 
 		/* reset */
@@ -1347,7 +1348,7 @@ struct Igd::Device
 		_mmio.restore_hwstam(generation().value);
 
 		hw_status_page_pause_ring(false);
-		error("RESET DONE");
+
 		if (_current_vgpu()) {
 			_schedule_current_vgpu();
 		}
