@@ -27,7 +27,6 @@ class Igd::Reset
 	private:
 
 		Igd::Mmio &_mmio;
-		unsigned   _generation { 0 };
 
 		void _stop_engine_cs()
 		{
@@ -38,7 +37,7 @@ class Igd::Reset
 			 * Wa_22011802037 : GEN11, GNE12, Prior to doing a reset, ensure CS is
 			 * stopped, set ring stop bit and prefetch disable bit to halt CS
 			 */
-			if (_generation == 11 || _generation == 12) {
+			if (_mmio.generation() == 11 || _mmio.generation() == 12) {
 				Mmio::GFX_MODE::access_t v = 0;
 				using G = Mmio::GFX_MODE;
 				v = G::set<G::Gen12_prefetch_disable>(v, 1);
@@ -63,7 +62,7 @@ class Igd::Reset
 		 */
 		void _wait_for_pending_force_wakeups()
 		{
-			if (_generation < 11 && _generation > 12) return;
+			if (_mmio.generation() < 11 && _mmio.generation() > 12) return;
 
 			unsigned fw_status = _mmio.read<Mmio::MSG_IDLE_CS::Pending_status>();
 			unsigned fw_mask   = _mmio.read<Mmio::MSG_IDLE_CS::Pending_mask>();
@@ -142,35 +141,16 @@ class Igd::Reset
 			_mmio.write<Mmio::DISP_ARB_CTL::DISP_TILE_SURFACE_SWIZZLING>(1);
 			_mmio.write<Mmio::TILECTL::SWZCTL>(1);
 
-			if (_generation == 8)
+			if (_mmio.generation() == 8)
 				_mmio.write<Mmio::GAMTARBMODE::Arbiter_mode_control_1>(1);
-		}
-
-		void _enable_execlist()
-		{
-			_mmio.write_post<Mmio::HWSTAM>(~0u);
-
-			_mmio.write<Mmio::CS_MI_MODE_CTRL::Stop_rings>(0);
-
-			using G = Mmio::GFX_MODE;
-			G::access_t v = 0;
-
-			if (_generation >= 11)
-				v = G::set<G::Gen11_gfx_disable_legacy_mode>(v, 1);
-			else
-				v = G::set<G::Execlist_enable>(v, 1);
-
-			_mmio.write<G>(v);
 		}
 
 	public:
 
 		Reset(Igd::Mmio &mmio) : _mmio(mmio) { }
 
-		void execute(unsigned generation)
+		void execute()
 		{
-			_generation = generation;
-
 			_stop_engine_cs();
 			_wait_for_pending_force_wakeups();
 			_ready_for_reset();
@@ -179,12 +159,12 @@ class Igd::Reset
 
 			_unready_for_reset();
 
-			if (_generation < 9)
+			if (_mmio.generation() < 9)
 				_mmio.write<Mmio::HSW_IDICR::Idi_hash_mask>(0xf);
 
-			apply_workarounds(_mmio, _generation);
+			apply_workarounds(_mmio, _mmio.generation());
 			_init_swizzling();
-			_enable_execlist();
+			_mmio.enable_execlist();
 		}
 };
 

@@ -201,10 +201,13 @@ struct Igd::Device
 			if (info.platform == Igd::Device_info::Platform::UNKNOWN)
 				return;
 
+			/* set generation for device IO as early as possible */
+			_mmio.generation(generation);
+
 			if (info.id == dev_id) {
 				_info = info;
 				_revision.value        = rev_id;
-				_clock_frequency.value = _mmio.clock_frequency(generation);
+				_clock_frequency.value = _mmio.clock_frequency();
 
 				found = true;
 				return;
@@ -1111,7 +1114,7 @@ struct Igd::Device
 
 		Genode::error("watchdog triggered: engine stuck,"
 		              " vGPU=", _active_vgpu->id(), " IRQ: ",
-		              Hex(_mmio.read_irq_vector(_info.generation)));
+		              Hex(_mmio.read_irq_vector()));
 
 		if (DEBUG) {
 			_mmio.dump();
@@ -1145,8 +1148,6 @@ struct Igd::Device
 		 */
 		Execlist &el = *vgpu->rcs.execlist;
 		el.ring_reset_to_head(vgpu->rcs.context->head_offset());
-
-		Genode::warning("watchdog done");
 	}
 
 	Genode::Signal_handler<Device> _watchdog_timeout_sigh {
@@ -1154,10 +1155,10 @@ struct Igd::Device
 
 	void _device_reset_and_init()
 	{
-		_mmio.reset(_info.generation);
+		_mmio.reset();
 		_mmio.clear_errors();
 		_mmio.init();
-		_mmio.enable_intr(_info.generation);
+		_mmio.enable_intr();
 	}
 
 	/**
@@ -1181,6 +1182,7 @@ struct Igd::Device
 
 		if (!_supported(supported, device_id, revision))
 			throw Unsupported_device();
+
 
 		_ggtt.dump();
 
@@ -1346,7 +1348,7 @@ struct Igd::Device
 		}
 
 		/* reset */
-		_reset.execute(generation().value);
+		_reset.execute();
 
 		/* set address of global hardware status page */
 		if (_hw_status_ctx.constructed()) {
@@ -1357,13 +1359,13 @@ struct Igd::Device
 		_mmio.clear_errors();
 
 		/* clear pending irqs */
-		_mmio.clear_render_irq(generation().value);
+		_mmio.clear_render_irq();
 
 		/*
 		 * Restore "Hardware Status Mask Register", this register controls which
 		 * IRQs are even written to the PCI bus (should be same as unmasked in IMR)
 		 */
-		_mmio.restore_hwstam(generation().value);
+		_mmio.restore_hwstam();
 
 		hw_status_page_pause_ring(false);
 
@@ -1629,29 +1631,21 @@ struct Igd::Device
 
 	bool handle_irq()
 	{
-		bool display_irq = _mmio.display_irq(_info.generation);
+		bool display_irq = _mmio.display_irq();
 
 		/* handle render interrupts only */
-		if (_mmio.render_irq(_info.generation) == false)
+		if (_mmio.render_irq() == false)
 			return display_irq;
 
-		_mmio.disable_master_irq(_info.generation);
+		_mmio.disable_master_irq();
 
-		unsigned const v = _mmio.read_irq_vector(_info.generation);
+		unsigned const v = _mmio.read_irq_vector();
 
-		bool ctx_switch { false };
-		bool user_complete { false };
-
-		if (generation().value < 11) {
-			ctx_switch    = Mmio::GT_0_INTERRUPT_IIR::Cs_ctx_switch_interrupt::get(v);
-			user_complete = Mmio::GT_0_INTERRUPT_IIR::Cs_mi_user_interrupt::get(v);
-		} else {
-			ctx_switch    = Mmio::GEN12_RENDER_INTR_VEC::Cs_ctx_switch_interrupt::get(v);
-			user_complete = Mmio::GEN12_RENDER_INTR_VEC::Cs_mi_user_interrupt::get(v);
-		}
+		bool ctx_switch = _mmio.context_switch(v);
+		bool user_complete = _mmio.user_complete(v);
 
 		if (v) {
-			_mmio.clear_render_irq(_info.generation, v);
+			_mmio.clear_render_irq(v);
 	}
 
 		Vgpu *notify_gpu = nullptr;
@@ -1665,7 +1659,7 @@ struct Igd::Device
 		if (fault_valid) { Genode::error("FAULT_REG valid"); }
 
 		if (ctx_switch)
-			_mmio.update_context_status_pointer(generation().value);
+			_mmio.update_context_status_pointer();
 
 		if (user_complete) {
 			_unschedule_current_vgpu();
@@ -1685,7 +1679,7 @@ struct Igd::Device
 		return display_irq;
 	}
 
-	void enable_master_irq() { _mmio.enable_master_irq(_info.generation); }
+	void enable_master_irq() { _mmio.enable_master_irq(); }
 
 	private:
 
@@ -2339,7 +2333,7 @@ class Gpu::Root : public Gpu::Root_component
 		void _destroy_session(Session_component *s) override
 		{
 			if (s->vgpu_active()) {
-				Genode::warning("XXXXXXX vGPU active, reset device and hope for the best XXXXXXXXX");
+				Genode::warning("vGPU active, reset device and hope for the best");
 				_device->reset();
 			} else {
 				/* remove from scheduled list */
