@@ -19,18 +19,35 @@ proc lx_autopilot_tresor_image { } {
 }
 
 proc lx_tresor_image_size_mb { } {
-	return 1024
+	return 400
 }
 
 proc benchmark_blk_count { } {
 
 	if {[have_board linux]} {
+
+		 # benchmarks over 50 mebibyte
 		return 12800
 	}
 	if {[have_board virt_qemu_arm_v8a]} {
+
+		# benchmarks over 25 mebibyte
 		return 6400
 	}
+	# benchmarks turned off
 	return 0
+}
+
+proc block_io_vfs_ram_mb { } {
+
+	if {[benchmark_blk_count] > 0} {
+
+		# when benchmarks turned on
+		set bench_mb [expr (([benchmark_blk_count] * 4096) / 1024 / 1024)]
+		return [expr 8 * $bench_mb]
+	}
+	# when benchmarks turned off
+	return 10
 }
 
 append build_components {
@@ -83,7 +100,7 @@ append config {
 		</start>
 
 		<start name="report_rom" caps="100">
-			<resource name="RAM" quantum="32M"/>
+			<resource name="RAM" quantum="4M"/>
 			<provides> <service name="Report"/> <service name="ROM"/> </provides>
 			<config verbose="yes"/>
 			<route>
@@ -129,9 +146,9 @@ if {[have_board linux]} {
 
 	append config {
 
-		<start name="block_io_fs" caps="2000">
+		<start name="block_io_fs" caps="100">
 			<binary name="vfs"/>
-			<resource name="RAM" quantum="200M"/>
+			<resource name="RAM" quantum="} [block_io_vfs_ram_mb] {M"/>
 			<provides><service name="File_system"/></provides>
 			<config>
 				<vfs>
@@ -157,9 +174,9 @@ if {[have_board linux]} {
 }
 append config {
 
-		<start name="trust_anchor_fs" caps="120">
+		<start name="trust_anchor_fs" caps="100">
 			<binary name="vfs"/>
-			<resource name="RAM" quantum="16M"/>
+			<resource name="RAM" quantum="10M"/>
 			<provides><service name="File_system"/></provides>
 			<config>
 				<vfs>
@@ -183,10 +200,10 @@ append config {
 			</route>
 		</start>
 
-		<start name="test" caps="200">
+		<start name="test" caps="100">
 
 			<binary name="tresor_tester"/>
-			<resource name="RAM" quantum="80M"/>
+			<resource name="RAM" quantum="10M"/>
 			<config ld_verbose="yes">
 
 				<verbose
@@ -1028,7 +1045,7 @@ if {[benchmark_blk_count] > 0} {
 
 	append config {
 
-					<log string="Step 17: skip because benchmarks are not disabled for this platform"/>
+					<log string="Step 17: skip because benchmarks are disabled for this platform"/>
 	}
 }
 append config {
