@@ -1141,13 +1141,32 @@ struct Igd::Device
 		 */
 		vgpu->mark_completed();
 		_notify_complete(vgpu);
+		Execlist &el = *vgpu->rcs.execlist;
+		Genode::log("head: ", Hex(el.ring_head()), " hw_head: ", Hex(vgpu->rcs.context->head_offset()),
+		            " tail: ", Hex(el.ring_tail())); 
 
+		/* set head = tail in context and our ring */
+		size_t head_offset = vgpu->rcs.context->head_offset();
+		el.ring_reset_to_head(head_offset);
+		/* tail in qwords */
+		vgpu->rcs.context->tail_offset((head_offset % (vgpu->rcs.ring_size())) / 8);
+		_vgpu_list.for_each([&](Vgpu &v) {
+			v.mark_completed();
+			Execlist &el = *v.rcs.execlist;
+			size_t head_offset = v.rcs.context->head_offset();
+			el.ring_reset_to_head(head_offset);
+			v.rcs.context->tail_offset((head_offset % (v.rcs.ring_size())) / 8);
+			_notify_complete(&v);
+			vgpu_unschedule(v);
+			});
+#if 0
 		/*
 		 * Reset tail pointer to new head of ring (is zero on some machines, remains
 		 * the same on others)
 		 */
 		Execlist &el = *vgpu->rcs.execlist;
 		el.ring_reset_to_head(vgpu->rcs.context->head_offset());
+#endif
 	}
 
 	Genode::Signal_handler<Device> _watchdog_timeout_sigh {
