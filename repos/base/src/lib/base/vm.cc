@@ -21,22 +21,9 @@ struct Vm_session::Native_vcpu { };
 
 static Vm_session::Native_vcpu dummy;
 
-
-void Vm_connection::Vcpu::run() { }
-
-
-void Vm_connection::Vcpu::pause() { }
-
-
 struct Genode::Vcpu_state { };
 
-Vcpu_state & Vm_connection::Vcpu::state()
-{
-	static char dummy[sizeof(Vcpu_state)];
-
-	return *(Vcpu_state *)dummy;
-}
-
+void Vm_connection::Vcpu::_with_state(Call_with_state &) {};
 
 Vm_connection::Vcpu::Vcpu(Vm_connection &, Allocator &,
                           Vcpu_handler_base &, Exit_config const &)
