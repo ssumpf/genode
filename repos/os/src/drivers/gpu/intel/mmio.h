@@ -1154,6 +1154,23 @@ class Igd::Mmio : public Platform::Device::Mmio
 			read<MISC_CTRL0>();
 		}
 
+		void _fw_reset_gen9()
+		{
+			write_post<FORCEWAKE_MEDIA_GEN9>(FORCEWAKE_MT::RESET);
+			write_post<FORCEWAKE_RENDER_GEN9>(FORCEWAKE_MT::RESET);
+			write_post<FORCEWAKE_GT_GEN9>(FORCEWAKE_MT::RESET);
+		}
+
+		void _forcewake_reset()
+		{
+			if (generation() == 8)
+				_fw_reset_gen8();
+			else if (generation() <= 12)
+				_fw_reset_gen9();
+			else Genode::error(__func__, " unsupported generation", generation());
+		}
+
+
 		/**
 		 * Set forcewake state, i.e., prevent GT from powering down
 		 */
@@ -1199,13 +1216,6 @@ class Igd::Mmio : public Platform::Device::Mmio
 			} catch (Polling_timeout) {
 				error("could not disable force-wake engine");
 			}
-		}
-
-		void _fw_reset_gen9()
-		{
-			write_post<FORCEWAKE_MEDIA_GEN9>(FORCEWAKE_MT::RESET);
-			write_post<FORCEWAKE_RENDER_GEN9>(FORCEWAKE_MT::RESET);
-			write_post<FORCEWAKE_GT_GEN9>(FORCEWAKE_MT::RESET);
 		}
 
 		/**
@@ -1317,6 +1327,16 @@ class Igd::Mmio : public Platform::Device::Mmio
 		{
 			write<GEN12_GFX_MSTR_INTR::Master_interrupt_enable>(0);
 			write_post<HWSTAM>(0xffffffff);
+		}
+
+		void _interrupt_reset()
+		{
+			if (generation() < 11)
+				_intr_reset();
+			else if (generation() <= 12)
+				_intr_reset_gen12();
+			else
+				Genode::error(__func__, " unsupported generation ", generation());
 		}
 
 		/**
@@ -1735,52 +1755,12 @@ class Igd::Mmio : public Platform::Device::Mmio
 			}
 		}
 
+		/* reset used during intialization only */
 		void reset()
 		{
-			switch (generation()) {
-			case 8:
-				reset_gen8();
-				return;
-			case 9:
-				reset_gen9();
-				break;
-			case 12:
-				reset_gen12();
-				break;;
-			default:
-				Genode::error(__func__, " unsupported generation ", generation());
-			}
-		}
-
-		void reset_gen8()
-		{
-			_intr_reset();
-			_fw_reset_gen8();
-			forcewake_gen8_enable();
-			_reset_device();
-			_reset_fences();
-
-			_disable_nde_handshake();
-			_set_page_attributes();
-		}
-
-		void reset_gen9()
-		{
-			_intr_reset();
-			_fw_reset_gen9();
-			forcewake_gen9_enable();
-			_reset_device();
-			_reset_fences();
-
-			_disable_nde_handshake();
-			_set_page_attributes();
-		}
-
-		void reset_gen12()
-		{
-			_intr_reset_gen12();
-			_fw_reset_gen9();
-			forcewake_gen9_enable();
+			_interrupt_reset();
+			_forcewake_reset();
+			forcewake_enable();
 			_reset_device();
 			_reset_fences();
 

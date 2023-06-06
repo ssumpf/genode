@@ -75,8 +75,8 @@ struct Igd::Device
 	struct Out_of_ram            : Genode::Exception { };
 	struct Could_not_map_vram    : Genode::Exception { };
 
-	/* 500 ms */
-	enum { WATCHDOG_TIMEOUT = 500*1000 };
+	/* 200 ms */
+	enum { WATCHDOG_TIMEOUT = 200*1000 };
 
 	Env                    & _env;
 	Allocator              & _md_alloc;
