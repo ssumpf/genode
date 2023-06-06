@@ -849,26 +849,6 @@ struct Igd::Device
 				}
 			}
 
-			/*
-			 * epilog 3/3 - gen8_emit_fini_breadcrumb_rcs, gen8_emit_fini_breadcrumb_tail
-			 *
-			 * IHD-OS-BDW-Vol 2d-11.15 p. 199 ff.
-			 *
-			 * HWS page layout dword 48 - 1023 for driver usage
-			 */
-
-			if (1)
-			{
-				enum { CMD_NUM = 2 };
-				Genode::uint32_t cmd[2] = {};
-				Igd::Mi_user_interrupt ui;
-				cmd[0] = Mi_arb_on_off(true).value;
-				cmd[1] = ui.value;
-
-				for (size_t i = 0; i < CMD_NUM; i++) {
-					advance += el.ring_append(cmd[i]);
-				}
-			}
 
 			/*
 			 * emit semaphore we can later block on in order to stop ring
@@ -896,6 +876,26 @@ struct Igd::Device
 				}
 			}
 
+			if (1)
+			{
+				enum { CMD_NUM = 2 };
+				Genode::uint32_t cmd[2] = {};
+				Igd::Mi_user_interrupt ui;
+				cmd[0] = Mi_arb_on_off(true).value;
+				cmd[1] = ui.value;
+
+				for (size_t i = 0; i < CMD_NUM; i++) {
+					advance += el.ring_append(cmd[i]);
+				}
+			}
+
+			/*
+			 * epilog 3/3 - gen8_emit_fini_breadcrumb_rcs, gen8_emit_fini_breadcrumb_tail
+			 *
+			 * IHD-OS-BDW-Vol 2d-11.15 p. 199 ff.
+			 *
+			 * HWS page layout dword 48 - 1023 for driver usage
+			 */
 			if (1)
 			{
 				/* gen8_emit_fini_breadcrumb_tail -> gen8_emit_wa_tail */
@@ -1108,6 +1108,21 @@ struct Igd::Device
 	 ** watchdog timeout **
 	 **********************/
 
+	void _handle_vgpu_after_reset(Vgpu &vgpu)
+	{
+		 /* signal completion of last job to vgpu */
+		vgpu.mark_completed();
+		_notify_complete(&vgpu);
+
+		/* offset of head in ring context */
+		size_t head_offset = vgpu.rcs.context->head_offset();
+		/* set head = tail in ring and ring context */
+		Execlist &el = *vgpu.rcs.execlist;
+		el.ring_reset_to_head(head_offset);
+		/* set tail in context in qwords */
+		vgpu.rcs.context->tail_offset((head_offset % (vgpu.rcs.ring_size())) / 8);
+	}
+
 	void _handle_watchdog_timeout()
 	{
 		if (!_active_vgpu) { return; }
@@ -1136,37 +1151,8 @@ struct Igd::Device
 		if (!vgpu)
 			error("reset vgpu is null");
 
-		/*
-		 * Signal completion to vgpu running and possibly causing hang (=skip)
-		 */
-		vgpu->mark_completed();
-		_notify_complete(vgpu);
-		Execlist &el = *vgpu->rcs.execlist;
-		Genode::log("head: ", Hex(el.ring_head()), " hw_head: ", Hex(vgpu->rcs.context->head_offset()),
-		            " tail: ", Hex(el.ring_tail())); 
-
-		/* set head = tail in context and our ring */
-		size_t head_offset = vgpu->rcs.context->head_offset();
-		el.ring_reset_to_head(head_offset);
-		/* tail in qwords */
-		vgpu->rcs.context->tail_offset((head_offset % (vgpu->rcs.ring_size())) / 8);
-		_vgpu_list.for_each([&](Vgpu &v) {
-			v.mark_completed();
-			Execlist &el = *v.rcs.execlist;
-			size_t head_offset = v.rcs.context->head_offset();
-			el.ring_reset_to_head(head_offset);
-			v.rcs.context->tail_offset((head_offset % (v.rcs.ring_size())) / 8);
-			_notify_complete(&v);
-			vgpu_unschedule(v);
-			});
-#if 0
-		/*
-		 * Reset tail pointer to new head of ring (is zero on some machines, remains
-		 * the same on others)
-		 */
-		Execlist &el = *vgpu->rcs.execlist;
-		el.ring_reset_to_head(vgpu->rcs.context->head_offset());
-#endif
+		/* the stuck vgpu */
+		_handle_vgpu_after_reset(*vgpu);
 	}
 
 	Genode::Signal_handler<Device> _watchdog_timeout_sigh {
@@ -1526,7 +1512,6 @@ struct Igd::Device
 
 		if (vgpu.enqueued())
 			_vgpu_list.remove(vgpu);
-
 	}
 
 	/*******************
