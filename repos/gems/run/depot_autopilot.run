@@ -659,6 +659,7 @@ set default_test_pkgs {
 	test-expat
 	test-fault_detection
 	test-file_vault_config_report
+	test-file_vault_config_report_no_entropy
 	test-fs_packet
 	test-fs_report
 	test-fs_rom_update
@@ -757,18 +758,22 @@ proc non_executable_supported { } {
 #
 # Whether to skip a test - if undefined for a test, the test is not skipped
 #
-set skip_test(test-fault_detection) [expr [have_spec pistachio] || [have_spec fiasco]]
+set skip_test(test-fault_detection)          [expr [have_spec pistachio] || [have_spec fiasco]]
 set skip_test(test-file_vault_config_report) [expr [have_board rpi]]
-set skip_test(test-fs_packet)       [expr ![interactive] && [have_include "power_on/qemu"]]
-set skip_test(test-libc)            [expr [have_spec sel4] || [have_board rpi] || [have_board imx53_qsb_tz]]
-set skip_test(test-lx_block)        [expr ![have_board linux]]
-set skip_test(test-rm_fault)        [expr [have_board linux] || ![non_executable_supported]]
-set skip_test(test-rm_fault_no_nox) [expr [have_board linux] || ![skip_test test-rm_fault]]
-set skip_test(test-rm_nested)       [expr [have_board linux]]
-set skip_test(test-slab)            [expr ![interactive] && [have_include "power_on/qemu"]]
-set skip_test(test-spark_exception) [expr [have_spec arm]]
-set skip_test(test-tcp_bulk_lwip)   [expr ![have_spec x86] && ![have_include "power_on/qemu"]]
-set skip_test(test-tcp_bulk_lxip)   [expr ![have_spec x86] && ![have_include "power_on/qemu"]]
+set skip_test(test-fs_packet)                [expr ![interactive] && [have_include "power_on/qemu"]]
+set skip_test(test-libc)                     [expr [have_spec sel4] || [have_board rpi] || [have_board imx53_qsb_tz]]
+set skip_test(test-lx_block)                 [expr ![have_board linux]]
+set skip_test(test-rm_fault)                 [expr [have_board linux] || ![non_executable_supported]]
+set skip_test(test-rm_fault_no_nox)          [expr [have_board linux] || ![skip_test test-rm_fault]]
+set skip_test(test-rm_nested)                [expr [have_board linux]]
+set skip_test(test-slab)                     [expr ![interactive] && [have_include "power_on/qemu"]]
+set skip_test(test-spark_exception)          [expr [have_spec arm]]
+set skip_test(test-tcp_bulk_lwip)            [expr ![have_spec x86] && ![have_include "power_on/qemu"]]
+set skip_test(test-tcp_bulk_lxip)            [expr ![have_spec x86] && ![have_include "power_on/qemu"]]
+
+# pbxa9 and zynq_qemu do not support jitterentropy
+set skip_test(test-file_vault_config_report)            [expr   [have_board pbxa9] || [have_board zynq_qemu]]
+set skip_test(test-file_vault_config_report_no_entropy) [expr !([have_board pbxa9] || [have_board zynq_qemu])]
 
 if {[have_spec foc]} {
 	set skip_test(test-entrypoint)    [have_board pbxa9]

@@ -50,6 +50,13 @@ proc block_io_vfs_ram_mb { } {
 	return 10
 }
 
+proc jent_avail { } {
+
+	if {[have_board pbxa9]} { return 0 }
+	if {[have_board zynq_qemu]} { return 0 }
+	return 1
+}
+
 append build_components {
 	core
 	init
@@ -61,8 +68,9 @@ append build_components {
 	lib/vfs_tresor_crypto_aes_cbc
 	lib/vfs_tresor_trust_anchor
 	lib/vfs_import
-	lib/vfs_jitterentropy
 }
+
+append_if [jent_avail] build_components { lib/vfs_jitterentropy }
 
 append_if [have_board linux] build_components { server/lx_fs }
 append_if [have_board linux] build_components { server/lx_block }
@@ -184,8 +192,17 @@ append config {
 						<ram/>
 					</dir>
 
-					<dir name="dev">
-						<jitterentropy name="jitterentropy"/>
+					<dir name="dev"> }
+
+append_if [jent_avail] config {
+
+						<jitterentropy name="jitterentropy"/> }
+
+append_if [expr ![jent_avail]] config {
+
+						<inline name="jitterentropy">0123456789abcdefghijklmnopqrstuv</inline> }
+
+append config {
 						<tresor_trust_anchor name="tresor_trust_anchor" storage_dir="/storage"/>
 					</dir>
 				</vfs>
@@ -1112,8 +1129,9 @@ append boot_modules {
 	vfs_tresor_trust_anchor.lib.so
 	vfs_tresor_crypto_aes_cbc.lib.so
 	vfs_import.lib.so
-	vfs_jitterentropy.lib.so
 }
+
+append_if [jent_avail] boot_modules { vfs_jitterentropy.lib.so }
 
 append_if [have_board linux] boot_modules { lx_fs }
 append_if [have_board linux] boot_modules [tresor_image_name]
