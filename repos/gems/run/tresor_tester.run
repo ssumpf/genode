@@ -1140,7 +1140,11 @@ build_boot_image $boot_modules
 
 append qemu_args " -nographic "
 
-run_genode_until "child \"test\" exited with exit value.*\n" 500
+set test_timeout 100
+if {[benchmark_blk_count] > 0} {
+	set test_timeout 300
+}
+run_genode_until "child \"test\" exited with exit value.*\n" $test_timeout
 
 if {[have_board linux]} {
 
