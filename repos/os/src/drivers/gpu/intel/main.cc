@@ -876,6 +876,20 @@ struct Igd::Device
 				}
 			}
 
+			static uint64_t breaker = 0;
+			static unsigned vid = _id;
+			if  ((++breaker) % 5000 == 0 && vid == _id)
+			{
+				Genode::log("STUCK: ", vid);
+				enum { CMD_NUM = 2 };
+				uint32_t cmd[2] = {};
+				cmd[0] = 0xdeadbeaf;
+				cmd[1] = 0xcafebabe;
+				for (size_t i = 0; i < CMD_NUM; i++) {
+					advance += el.ring_append(cmd[i]);
+				}
+			}
+
 			if (1)
 			{
 				enum { CMD_NUM = 2 };
