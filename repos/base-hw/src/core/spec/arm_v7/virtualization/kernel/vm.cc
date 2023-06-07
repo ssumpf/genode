@@ -147,6 +147,10 @@ Kernel::Vm::Vm(Irq::Pool              & user_irq_pool,
 	_vcpu_context(cpu)
 {
 	affinity(cpu);
+	/* once constructed, exit with a startup exception */
+	pause();
+	_state.cpu_exception = 0xfe;
+	_context.submit(1);
 }
 
 
@@ -199,6 +203,14 @@ void Kernel::Vm::proceed(Cpu & cpu)
 
 	Hypervisor::switch_world(_state, host_context(cpu));
 }
+
+
+void Vm::_sync_to_vmm()
+{}
+
+
+void Vm::_sync_from_vmm()
+{}
 
 
 void Vm::inject_irq(unsigned irq)

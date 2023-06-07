@@ -149,6 +149,11 @@ Vm::Vm(Irq::Pool              & user_irq_pool,
 			_state.ccsidr_data_el1[level] = Cpu::Ccsidr_el1::read();
 		}
 	}
+
+	/* once constructed, exit with a startup exception */
+	pause();
+	_state.exception_type = 0xfe;
+	_context.submit(1);
 }
 
 
@@ -206,6 +211,14 @@ void Vm::proceed(Cpu & cpu)
 
 	Hypervisor::switch_world(guest, host, pic, vttbr_el2);
 }
+
+
+void Vm::_sync_to_vmm()
+{}
+
+
+void Vm::_sync_from_vmm()
+{}
 
 
 void Vm::inject_irq(unsigned irq)

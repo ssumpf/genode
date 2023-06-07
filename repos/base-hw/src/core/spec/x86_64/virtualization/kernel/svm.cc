@@ -156,12 +156,12 @@ void Board::Vcpu_context::initialize_svm(Kernel::Cpu & cpu, void * table)
 }
 
 
-void Board::Vcpu_context::write_vcpu_state(Genode::Vcpu_state &state, unsigned exit_reason)
+void Board::Vcpu_context::write_vcpu_state(Genode::Vcpu_state &state)
 {
 	typedef Genode::Vcpu_state::Range Range;
 
 	state.discharge();
-	state.exit_reason = exit_reason;
+	state.exit_reason = (unsigned) exitcode;
 
 	state.fpu.charge([&] (Genode::Vcpu_state::Fpu::State &fpu) {
 		memcpy(&fpu, (void *) regs->fpu_context(), sizeof(fpu));
