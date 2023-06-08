@@ -455,6 +455,22 @@ struct m : Command_without_separator
 
 
 /**
+ * Query liveliness of thread ID
+ */
+struct T : Command_without_separator
+{
+	T(Commands &c) : Command_without_separator(c, "T") { }
+
+	void execute(State &, Const_byte_range_ptr const &args, Output &out) const override
+	{
+		log("T command args: ", Cstring(args.start, args.num_bytes));
+
+		gdb_ok(out);
+	}
+};
+
+
+/**
  * Disconnect
  */
 struct D : Command_with_separator
@@ -511,6 +527,7 @@ struct Monitor::Gdb::Supported_commands : Commands
 		Cmd::g,
 		Cmd::m,
 		Cmd::D,
+		Cmd::T,
 		Cmd::ask
 		> _instances { *this };
 };
