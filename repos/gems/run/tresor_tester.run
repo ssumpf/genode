@@ -182,7 +182,7 @@ if {[have_board linux]} {
 }
 append config {
 
-		<start name="trust_anchor_fs" caps="100">
+		<start name="trust_anchor_fs" caps="200">
 			<binary name="vfs"/>
 			<resource name="RAM" quantum="10M"/>
 			<provides><service name="File_system"/></provides>
@@ -217,7 +217,7 @@ append config {
 			</route>
 		</start>
 
-		<start name="test" caps="100">
+		<start name="test" caps="200">
 
 			<binary name="tresor_tester"/>
 			<resource name="RAM" quantum="10M"/>
