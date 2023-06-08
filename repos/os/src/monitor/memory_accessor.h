@@ -199,7 +199,12 @@ class Monitor::Memory_accessor : Noncopyable
 
 			if (!_curr_view.constructed()) {
 				addr_t const offset = at.value & ~(WINDOW_SIZE - 1);
-				_curr_view.construct(_env.rm(), pd, offset);
+				try { _curr_view.construct(_env.rm(), pd, offset); }
+				catch (Region_map::Region_conflict) {
+					warning("attempt to read outside the virtual address space: ",
+					        Hex(at.value));
+					return 0;
+				}
 			}
 
 			/* give up after 100 milliseconds */
