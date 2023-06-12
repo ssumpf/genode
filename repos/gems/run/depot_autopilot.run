@@ -770,8 +770,8 @@ proc skip_test_if { condition test } {
 #
 # rpi, pbxa9 and zynq_qemu don't support jitterentropy
 #
-skip_test_if [expr  ([have_board rpi] || [have_board pbxa9] || [have_board zynq_qemu])] test_file_vault_config_report
-skip_test_if [expr !([have_board rpi] || [have_board pbxa9] || [have_board zynq_qemu])] test_file_vault_config_report_no_entropy
+skip_test_if [expr  ([have_board rpi] || [have_board pbxa9] || [have_board zynq_qemu])] test-file_vault_config_report
+skip_test_if [expr !([have_board rpi] || [have_board pbxa9] || [have_board zynq_qemu])] test-file_vault_config_report_no_entropy
 
 set skip_test(test-fault_detection) [expr [have_spec pistachio] || [have_spec fiasco]]
 set skip_test(test-fs_packet)       [expr ![interactive] && [have_include "power_on/qemu"]]
