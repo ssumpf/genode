@@ -84,6 +84,22 @@ void __kfifo_skip_r(struct __kfifo * fifo,size_t recsize)
 }
 
 
+#include <linux/printk.h>
+
+void __printk_safe_enter(void)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/printk.h>
+
+void __printk_safe_exit(void)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
 #include <linux/sched/task.h>
 
 void __put_task_struct(struct task_struct * tsk)
@@ -132,6 +148,13 @@ const unsigned char _ctype[] = {};
 #include <linux/printk.h>
 
 int _printk_deferred(const char * fmt,...)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+extern void ack_bad_irq(unsigned int irq);
+void ack_bad_irq(unsigned int irq)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -252,6 +275,14 @@ asmlinkage __visible void dump_stack(void)
 #include <linux/fs.h>
 
 int fasync_helper(int fd,struct file * filp,int on,struct fasync_struct ** fapp)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/rcuwait.h>
+
+void finish_rcuwait(struct rcuwait * w)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -396,6 +427,14 @@ struct io_tlb_mem io_tlb_default_mem;
 
 #include <linux/interrupt.h>
 
+int irq_can_set_affinity(unsigned int irq)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/interrupt.h>
+
 int irq_set_affinity(unsigned int irq,const struct cpumask * cpumask)
 {
 	lx_emul_trace_and_stop(__func__);
@@ -450,6 +489,14 @@ void led_trigger_event(struct led_trigger * trig,enum led_brightness brightness)
 }
 
 
+#include <net/net_namespace.h>
+
+void __init net_ns_init(void)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
 #include <linux/kernel.h>
 
 bool parse_option_str(const char * str,const char * option)
@@ -477,14 +524,6 @@ void * power_supply_get_drvdata(struct power_supply * psy)
 #include <linux/power_supply.h>
 
 int power_supply_powers(struct power_supply * psy,struct device * dev)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/radix-tree.h>
-
-void * radix_tree_lookup(const struct radix_tree_root * root,unsigned long index)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -550,6 +589,11 @@ void software_node_notify_remove(struct device * dev)
 {
 	lx_emul_trace_and_stop(__func__);
 }
+
+
+#include <linux/jump_label.h>
+
+bool static_key_initialized;
 
 
 #include <linux/fs.h>
@@ -752,6 +796,14 @@ void wake_q_add_safe(struct wake_q_head * head,struct task_struct * task)
 #include <linux/xarray.h>
 
 void xas_clear_mark(const struct xa_state * xas,xa_mark_t mark)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/xarray.h>
+
+void * xas_find(struct xa_state * xas,unsigned long max)
 {
 	lx_emul_trace_and_stop(__func__);
 }
