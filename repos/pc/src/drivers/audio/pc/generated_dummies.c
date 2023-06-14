@@ -1,7 +1,7 @@
 /*
  * \brief  Dummy definitions of Linux Kernel functions
  * \author Automatically generated file - do no edit
- * \date   2023-06-13
+ * \date   2023-06-15
  */
 
 #include <lx_emul.h>
@@ -251,6 +251,14 @@ int debug_locks_off(void)
 #include <linux/property.h>
 
 int device_create_managed_software_node(struct device * dev,const struct property_entry * properties,const struct software_node * parent)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/pinctrl/consumer.h>
+
+struct pinctrl * devm_pinctrl_get(struct device * dev)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -596,6 +604,14 @@ pgprot_t pgprot_writecombine(pgprot_t prot)
 #include <linux/pid.h>
 
 pid_t pid_vnr(struct pid * pid)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/pinctrl/consumer.h>
+
+struct pinctrl_state * pinctrl_lookup_state(struct pinctrl * p,const char * name)
 {
 	lx_emul_trace_and_stop(__func__);
 }

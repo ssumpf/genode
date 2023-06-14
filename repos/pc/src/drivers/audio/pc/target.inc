@@ -12,7 +12,6 @@ SRC_CC += firmware.cc
 SRC_CC += main.cc
 SRC_CC += misc.cc
 SRC_CC += lx_vmap.cc
-SRC_CC += time.cc
 SRC_C  += $(notdir $(wildcard $(REL_PRG_DIR)/generated_dummies.c))
 SRC_C  += acpi.c
 SRC_C  += common_dummies.c

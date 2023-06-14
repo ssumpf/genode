@@ -43,12 +43,25 @@ LX_ENABLE += ATH9K_DEBUGFS
 # Ethernet NIC support
 LX_ENABLE += E1000 E1000E PCNET32
 
-# USB host-controller support
+# USB host-controller support (keep USB_USBNET hook)
+LX_ENABLE += USB_USBNET
 LX_ENABLE += USB_SUPPORT USB USB_ARCH_HAS_HCD USB_XHCI_HCD USB_EHCI_HCD USB_OHCI_HCD
-LX_ENABLE += USB_PCI USB_UHCI_HCD USB_USBNET
+LX_ENABLE += USB_PCI USB_UHCI_HCD
 
 # Intel framebuffer
 LX_ENABLE += DRM DRM_I915
+
+# required for GPIO irqchip on tigerlake
+LX_ENABLE += PINCTRL PINCTRL_TIGERLAKE
+
+# I2C HID touchpad support (keep INPUT_EVDEV hook)
+LX_ENABLE += INPUT_EVDEV HID_GENERIC
+LX_ENABLE += MFD_INTEL_LPSS_PCI
+LX_ENABLE += I2C_DESIGNWARE_PLATFORM
+LX_ENABLE += I2C I2C_HID_ACPI
+
+# no AML code is run that uses this feature
+LX_DISABLE += ACPI_I2C_OPREGION
 
 # to automatically set up screen mode at boot time
 LX_ENABLE += FB
@@ -92,6 +105,10 @@ LX_ENABLE += PROC_FS SYSFS
 #LX_ENABLE += EFI EFI_STUB
 # - network support for NFS root
 #LX_ENABLE += INET IP_PNP IP_PNP_DHCP NFS_FS FILE_LOCKING MULTIUSER ROOT_NFS
+# - log all input events (requires "debug" on the kernel commandline)
+#LX_ENABLE += INPUT_EVBUG
+# - in-kernel symbolic backtraces with show_stack(NULL, NULL, KERN_DEFAULT)
+#LX_ENABLE += KALLSYMS
 
 # disable cpu frequency scaling
 LX_DISABLE += SCHED_MC CPU_FREQ
@@ -100,4 +117,4 @@ LX_DISABLE += SCHED_MC CPU_FREQ
 LX_DISABLE += CC_HAS_ASM_GOTO
 
 # slim down kernel by removing superfluous drivers
-LX_DISABLE += HID HID_GENERIC USB_HID VGA_CONSOLE DUMMY_CONSOLE NLS VGA_ARB DEBUG_LIST
+LX_DISABLE += USB_HID VGA_CONSOLE DUMMY_CONSOLE NLS VGA_ARB DEBUG_LIST

@@ -36,8 +36,6 @@ struct hda_codec;
 struct snd_sof_dev;
 struct sof_ipc_dma_trace_posn;
 
-void lx_emul_time_udelay(unsigned long usec);
-
 void lx_backtrace(void);
 unsigned long long lx_timestamp(void);
 
