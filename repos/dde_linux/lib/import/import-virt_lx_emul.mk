@@ -25,6 +25,7 @@ endif
 -include $(call select_from_repositories,lib/import/import-lx_emul_common.inc)
 
 SRC_C  += lx_emul/shadow/drivers/char/random.c
+SRC_C  += lx_emul/shadow/kernel/rcu/srcutree.c
 SRC_C  += lx_emul/virt/common_dummies.c
 SRC_CC += lx_emul/virt/irq.cc
 SRC_CC += lx_kit/memory_non_dma.cc
