@@ -70,3 +70,12 @@ void register_syscore_ops(struct syscore_ops * ops)
 {
 	lx_emul_trace(__func__);
 }
+
+
+#include <linux/usb.h>
+
+int usb_disabled(void)
+{
+	lx_emul_trace(__func__);
+	return 0;
+}

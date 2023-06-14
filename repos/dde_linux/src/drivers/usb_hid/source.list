@@ -2,6 +2,7 @@ drivers/base/bus.c
 drivers/base/core.c
 drivers/base/class.c
 drivers/base/devres.c
+drivers/base/driver.c
 drivers/base/dd.c
 drivers/base/property.c
 drivers/hid/hid-apple.c
@@ -20,6 +21,7 @@ drivers/input/evdev.c
 drivers/input/input-mt.c
 drivers/input/input.c
 drivers/usb/core/config.c
+drivers/usb/core/driver.c
 drivers/usb/core/generic.c
 drivers/usb/core/quirks.c
 kernel/kthread.c

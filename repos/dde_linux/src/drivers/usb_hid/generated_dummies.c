@@ -256,14 +256,6 @@ int __sched down_trylock(struct semaphore * sem)
 }
 
 
-#include <linux/device/driver.h>
-
-int driver_register(struct device_driver * drv)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 #include <linux/printk.h>
 
 asmlinkage __visible void dump_stack(void)
@@ -660,9 +652,38 @@ int usb_control_msg(struct usb_device * dev,unsigned int pipe,__u8 request,__u8 
 }
 
 
+extern bool usb_device_is_owned(struct usb_device * udev);
+bool usb_device_is_owned(struct usb_device * udev)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+extern void usb_disable_interface(struct usb_device * dev,struct usb_interface * intf,bool reset_hardware);
+void usb_disable_interface(struct usb_device * dev,struct usb_interface * intf,bool reset_hardware)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+extern void usb_enable_interface(struct usb_device * dev,struct usb_interface * intf,bool reset_eps);
+void usb_enable_interface(struct usb_device * dev,struct usb_interface * intf,bool reset_eps)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
 #include <linux/usb.h>
 
 void usb_free_coherent(struct usb_device * dev,size_t size,void * addr,dma_addr_t dma)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/usb.h>
+
+int usb_free_streams(struct usb_interface * interface,struct usb_host_endpoint ** eps,unsigned int num_eps,gfp_t mem_flags)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -702,7 +723,7 @@ void usb_queue_reset_device(struct usb_interface * iface)
 
 #include <linux/usb.h>
 
-int usb_register_driver(struct usb_driver * new_driver,struct module * owner,const char * mod_name)
+int usb_set_interface(struct usb_device * dev,int interface,int alternate)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -727,6 +748,22 @@ int usb_submit_urb(struct urb * urb,gfp_t mem_flags)
 #include <linux/usb.h>
 
 int usb_unlink_urb(struct urb * urb)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/usb.h>
+
+int usb_unlocked_disable_lpm(struct usb_device * udev)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/usb.h>
+
+void usb_unlocked_enable_lpm(struct usb_device * udev)
 {
 	lx_emul_trace_and_stop(__func__);
 }
