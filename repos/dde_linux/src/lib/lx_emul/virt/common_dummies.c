@@ -13,6 +13,10 @@
 
 #include <lx_emul.h>
 
+#include <asm-generic/sections.h>
+
+char __start_rodata[] = {};
+char __end_rodata[]   = {};
 
 extern int __init platform_bus_init(void);
 int __init platform_bus_init(void)
@@ -39,30 +43,31 @@ int add_random_ready_callback(struct random_ready_callback * rdy)
 	return 0;
 }
 
-
+/*
 extern int __init buses_init(void);
 int __init buses_init(void)
 {
 	lx_emul_trace(__func__);
 	return 0;
 }
-
-
+*/
+/*
 extern int __init classes_init(void);
 int __init classes_init(void)
 {
 	lx_emul_trace(__func__);
 	return 0;
 }
+*/
 
-
+/*
 extern int __init devices_init(void);
 int __init devices_init(void)
 {
 	lx_emul_trace(__func__);
 	return 0;
 }
-
+*/
 
 #include <linux/interrupt.h>
 
@@ -140,11 +145,12 @@ void rcu_sched_clock_irq(int user)
 
 #include <linux/rcutree.h>
 
+/*
 void kvfree(const void * addr)
 {
 	lx_emul_trace_and_stop(__func__);
 }
-
+*/
 
 #include <linux/timekeeper_internal.h>
 
@@ -160,3 +166,11 @@ void ignore_signals(struct task_struct * t)
 {
 	lx_emul_trace(__func__);
 }
+
+#include <linux/srcu.h>
+
+void synchronize_srcu(struct srcu_struct * ssp)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
