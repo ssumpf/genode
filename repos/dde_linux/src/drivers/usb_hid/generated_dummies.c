@@ -465,6 +465,14 @@ void kill_fasync(struct fasync_struct ** fp,int sig,int band)
 }
 
 
+#include <linux/slab.h>
+
+void * kmem_cache_alloc_lru(struct kmem_cache * cachep,struct list_lru * lru,gfp_t flags)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
 #include <linux/kobject.h>
 
 int kobject_synth_uevent(struct kobject * kobj,const char * buf,size_t count)
@@ -473,25 +481,9 @@ int kobject_synth_uevent(struct kobject * kobj,const char * buf,size_t count)
 }
 
 
-#include <linux/kobject.h>
-
-int kobject_uevent(struct kobject * kobj,enum kobject_action action)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 #include <linux/leds.h>
 
 void led_trigger_event(struct led_trigger * trig,enum led_brightness brightness)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <net/net_namespace.h>
-
-void __init net_ns_init(void)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -532,22 +524,6 @@ int power_supply_powers(struct power_supply * psy,struct device * dev)
 #include <linux/refcount.h>
 
 void refcount_warn_saturate(refcount_t * r,enum refcount_saturation_type t)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/fs.h>
-
-int register_chrdev_region(dev_t from,unsigned count,const char * name)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/syscore_ops.h>
-
-void register_syscore_ops(struct syscore_ops * ops)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -788,62 +764,6 @@ void * vzalloc(unsigned long size)
 #include <linux/sched/wake_q.h>
 
 void wake_q_add_safe(struct wake_q_head * head,struct task_struct * task)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/xarray.h>
-
-void xas_clear_mark(const struct xa_state * xas,xa_mark_t mark)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/xarray.h>
-
-void * xas_find(struct xa_state * xas,unsigned long max)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/xarray.h>
-
-void * xas_find_marked(struct xa_state * xas,unsigned long max,xa_mark_t mark)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/xarray.h>
-
-void * xas_load(struct xa_state * xas)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/xarray.h>
-
-bool xas_nomem(struct xa_state * xas,gfp_t gfp)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/xarray.h>
-
-void xas_set_mark(const struct xa_state * xas,xa_mark_t mark)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/xarray.h>
-
-void * xas_store(struct xa_state * xas,void * entry)
 {
 	lx_emul_trace_and_stop(__func__);
 }

@@ -57,6 +57,7 @@ lib/klist.c
 lib/kobject.c
 lib/kstrtox.c
 lib/radix-tree.c
+lib/xarray.c
 lib/string.c
 lib/string_helpers.c
 lib/vsprintf.c
