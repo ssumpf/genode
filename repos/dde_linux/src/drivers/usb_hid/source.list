@@ -23,7 +23,9 @@ drivers/input/input.c
 drivers/usb/core/config.c
 drivers/usb/core/driver.c
 drivers/usb/core/generic.c
+drivers/usb/core/hub.c
 drivers/usb/core/quirks.c
+drivers/usb/core/usb.c
 kernel/kthread.c
 kernel/locking/mutex.c
 kernel/locking/osq_lock.c

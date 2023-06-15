@@ -5,7 +5,6 @@ INC_DIR = $(PRG_DIR)
 SRC_C = dummies.c \
         generated_dummies.c \
         lx_emul.c \
-        lx_user.c
 
 SRC_CC = main.cc \
          lx_emul/random.cc

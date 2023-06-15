@@ -72,6 +72,34 @@ void register_syscore_ops(struct syscore_ops * ops)
 }
 
 
+#include <linux/usb/hcd.h>
+
+void __init usb_init_pool_max(void)
+{
+	lx_emul_trace(__func__);
+}
+
+
+extern int usb_major_init(void);
+int usb_major_init(void)
+{
+	lx_emul_trace(__func__);
+	return 0;
+}
+
+
+extern int __init usb_devio_init(void);
+int __init usb_devio_init(void)
+{
+	lx_emul_trace(__func__);
+	return 0;
+}
+
+
+
+
+
+#if 0
 #include <linux/usb.h>
 
 int usb_disabled(void)
@@ -79,3 +107,4 @@ int usb_disabled(void)
 	lx_emul_trace(__func__);
 	return 0;
 }
+#endif

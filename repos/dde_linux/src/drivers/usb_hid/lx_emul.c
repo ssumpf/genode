@@ -3,20 +3,89 @@
 #include <linux/device.h>
 #include <linux/sysfs.h>
 #include <linux/usb.h>
+#include <linux/usb/hcd.h>
+
+#include <usb_hid.h>
 
 const struct attribute_group input_poller_attribute_group;
 pteval_t __default_kernel_pte_mask __read_mostly = ~0;
 
-#if 0
-struct device_type usb_device_type = {
-	.name = "usb_device"
-};
-
 struct device_type usb_if_device_type = {
 	.name = "usb_interface"
 };
+
+struct usb_driver usbfs_driver = {
+	.name =		"usbfs"
+};
+const struct attribute_group *usb_device_groups[] = { };
+
+
+genode_usb_device genode_register_device(void *device_descriptor, void *controller,
+                                         unsigned num, unsigned speed)
+{
+	struct usb_device *udev;
+	int err;
+
+	udev = (struct usb_device *)kzalloc(sizeof(struct usb_device), GFP_KERNEL);
+	udev->bus = (struct usb_bus *)kzalloc(sizeof(struct usb_bus), GFP_KERNEL);
+	udev->bus->bus_name = "usbbus";
+	udev->bus->controller = (struct device *)controller;
+	udev->bus_mA = 900; /* set to maximum USB3.0 */
+
+	memcpy(&udev->descriptor, device_descriptor, sizeof(struct usb_device_descriptor));
+	udev->devnum = num;
+	udev->speed  = (enum usb_device_speed)speed;
+	udev->authorized = 1;
+
+	err = usb_new_device(udev);
+	if (err) {
+		printk("error: usb_new_device failed %d\n", err);
+		return 0;
+	}
+
+	return (unsigned long)udev;
+}
+
+
+/*
+ * message.c
+ */
+
+int usb_get_descriptor(struct usb_device *dev, unsigned char type,
+                       unsigned char index, void *buf, int size)
+{
+	int i;
+	int result;
+
+	if (size <= 0)		/* No point in asking for no data */
+		return -EINVAL;
+
+	memset(buf, 0, size);	/* Make sure we parse really received data */
+
+	for (i = 0; i < 3; ++i) {
+		/* retry on length 0 or error; some devices are flakey */
+		result = usb_control_msg(dev, usb_rcvctrlpipe(dev, 0),
+				USB_REQ_GET_DESCRIPTOR, USB_DIR_IN,
+				(type << 8) + index, 0, buf, size,
+				USB_CTRL_GET_TIMEOUT);
+		if (result <= 0 && result != -ETIMEDOUT)
+			continue;
+		if (result > 1 && ((u8 *)buf)[1] != type) {
+			result = -ENODATA;
+			continue;
+		}
+		break;
+	}
+	return result;
+}
+
+#if 1
+//struct device_type usb_device_type = {
+//	.name = "usb_device"
+//};
+
 #endif
-const char *usbcore_name = "usbcore";
+//const char *usbcore_name = "usbcore";
 
 /*******************
  ** device_driver **
