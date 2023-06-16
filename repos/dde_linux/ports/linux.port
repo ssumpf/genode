@@ -9,9 +9,11 @@ DIR(linux) := src/linux
 #
 # Patches
 #
-PATCH_FILES := i915_min_alignment.patch \
+PATCH_FILES := \
+               i2c_hid_settings.patch \
                i915_memcpy_32bit.patch \
                i915_meteorlake.patch \
+               i915_min_alignment.patch \
                iwlwifi_break_busy_loop.patch \
                iwlwifi_enable_irq_before_pnvm.patch \
                iwlwifi_limit_rx_bufs.patch \
