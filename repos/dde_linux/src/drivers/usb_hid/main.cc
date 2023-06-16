@@ -3,8 +3,6 @@
 #include <base/env.h>
 #include <base/registry.h>
 
-#include <usb_session/connection.h>
-
 #include <lx_emul/init.h>
 #include <lx_kit/env.h>
 #include <lx_user/init.h>
@@ -77,18 +75,23 @@ struct Device : Registry<Device>::Element
 	Task state_task { env.ep(), state_task_entry, this, "state_task" };
 	Task urb_task   { env.ep(), urb_task_entry  , this, "urb_task" };
 
-	Usb::Connection usb { env, &alloc, label.string(),
-	                      512 * 1024, state_task.handler };
-
-	genode_usb_device udev_handle { 0 };
-	bool          updated     { true };
+	genode_usb_client_handle_t usb_handle {
+		genode_usb_client_create(genode_env_ptr(env),
+		                         genode_allocator_ptr(Lx_kit::env().heap),
+		                         genode_range_allocator_ptr(alloc),
+		                         label.string(),
+		                         genode_signal_handler_ptr(state_task.handler)) };
+	bool updated    { true };
+	bool registered { false };
+	unsigned long udev { 0 };
 
 	Device(Env &env, Registry<Device> &registry, Label label)
 	:
 		Registry<Device>::Element(registry, *this),
 		env(env), label(label)
 	{
-		usb.tx_channel()->sigh_ack_avail(urb_task.handler);
+		genode_usb_client_sigh_ack_avail(usb_handle,
+		                                 genode_signal_handler_ptr(urb_task.handler));
 	}
 
 	~Device() { }
@@ -96,20 +99,9 @@ struct Device : Registry<Device>::Element
 	void register_device()
 	{
 		warning("register device");
-
-		if (udev_handle) {
-			error("device already registered!");
-			return;
-		}
-
-		Usb::Device_descriptor dev_desc;
-		Usb::Config_descriptor config_desc;
-		usb.config_descriptor(&dev_desc, &config_desc);
-
-		udev_handle = genode_register_device(&dev_desc, &usb, dev_desc.num,
-		                                     dev_desc.speed);
-		if (!udev_handle)
-			error("could not resgister device ", label);
+		udev = lx_usb_register_device(usb_handle);
+		if (!udev) return;
+		registered = true;
 	}
 
 	void unregister_device() { }
@@ -125,10 +117,10 @@ struct Device : Registry<Device>::Element
 		Genode::warning("State task");
 		for (;;) {
 			while (device.state_task.signal_pending()) {
-				if (device.usb.plugged() && !device.udev_handle)
+				if (genode_usb_client_plugged(device.usb_handle) && !device.registered)
 					device.register_device();
 
-				if (!device.usb.plugged() && device.udev_handle)
+				if (!genode_usb_client_plugged(device.usb_handle) && device.registered)
 					device.unregister_device();
 			}
 			device.state_task.block_and_schedule();
@@ -198,6 +190,7 @@ struct Driver
 			});
 		} catch(...) {
 			error("Error parsing USB devices report");
+			throw;
 		};
 
 		devices.for_each([&] (Device & d) {

@@ -15,32 +15,39 @@ struct device_type usb_if_device_type = {
 };
 
 struct usb_driver usbfs_driver = {
-	.name =		"usbfs"
+	.name = "usbfs"
 };
 const struct attribute_group *usb_device_groups[] = { };
 
 
-genode_usb_device genode_register_device(void *device_descriptor, void *controller,
-                                         unsigned num, unsigned speed)
+unsigned long lx_usb_register_device(genode_usb_client_handle_t handle)
 {
 	struct usb_device *udev;
 	int err;
+	struct genode_usb_device_descriptor dev_descr;
+	struct genode_usb_config_descriptor conf_descr;
+
+	err = genode_usb_client_config_descriptor(handle, &dev_descr, &conf_descr);
+	if (err) {
+		printk("error: failed to read config descriptor\n");
+		return NULL;
+	}
 
 	udev = (struct usb_device *)kzalloc(sizeof(struct usb_device), GFP_KERNEL);
 	udev->bus = (struct usb_bus *)kzalloc(sizeof(struct usb_bus), GFP_KERNEL);
 	udev->bus->bus_name = "usbbus";
-	udev->bus->controller = (struct device *)controller;
+	udev->bus->controller = (struct device *)handle;
 	udev->bus_mA = 900; /* set to maximum USB3.0 */
 
-	memcpy(&udev->descriptor, device_descriptor, sizeof(struct usb_device_descriptor));
-	udev->devnum = num;
-	udev->speed  = (enum usb_device_speed)speed;
+	memcpy(&udev->descriptor, &dev_descr, sizeof(struct usb_device_descriptor));
+	udev->devnum = dev_descr.num;
+	udev->speed  = (enum usb_device_speed)dev_descr.speed;
 	udev->authorized = 1;
 
 	err = usb_new_device(udev);
 	if (err) {
 		printk("error: usb_new_device failed %d\n", err);
-		return 0;
+		return NULL;
 	}
 
 	return (unsigned long)udev;

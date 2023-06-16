@@ -1,12 +1,10 @@
+#include <usb_client.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-typedef unsigned long genode_usb_device;
-
-genode_usb_device genode_register_device(void *device_descriptor, void *controller,
-                                         unsigned num, unsigned speed);
+unsigned long lx_usb_register_device(genode_usb_client_handle_t handle);
 
 #ifdef __cplusplus
 } /* extern "C" */
