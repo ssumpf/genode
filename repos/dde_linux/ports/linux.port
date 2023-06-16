@@ -9,7 +9,8 @@ DIR(linux) := src/linux
 #
 # Patches
 #
-PATCH_FILES := i915_ggtt.patch \
+PATCH_FILES := i2c_hid_settings.patch \
+               i915_ggtt.patch \
                i915_min_alignment.patch \
                i915_memcpy_32bit.patch \
                iwlwifi_break_busy_loop.patch \
