@@ -13,7 +13,8 @@ PATCH_FILES := audio_jack.patch \
                i915_irq.patch \
                iwlwifi_enable_irq_before_pnvm.patch \
                iwlwifi_limit_rx_bufs.patch \
-               workqueue_deadlock.patch
+               workqueue_deadlock.patch \
+               i2c_hid_settings.patch
 PATCHES += $(addprefix patches/,$(PATCH_FILES))
 
 PATCH_OPT(patches/audio_jack.patch)         := -p1 -d${DIR(linux)}
