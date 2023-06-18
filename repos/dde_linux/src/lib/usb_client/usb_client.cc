@@ -2,16 +2,66 @@
 #include <base/id_space.h>
 #include <usb_session/connection.h>
 #include <base/heap.h>
+#include <util/bit_allocator.h>
 #include "usb_client.h"
 
 using namespace Genode;
 
 struct Usb_client;
+struct Usb_completion;
+
 using Usb_id_space = Id_space<Usb_client>;
+
+
+struct Usb_completion : Usb::Completion
+{
+	Usb::Packet_descriptor packet { };
+
+	genode_usb_client_request_packet *request = nullptr;
+
+	void complete(Usb::Packet_descriptor &p) override
+	{
+		packet = p;
+		request->actual_length = (packet.type == Usb::Packet_descriptor::CTRL) ?
+		                         packet.control.actual_size : packet.transfer.actual_size;
+
+		request->error = NO_ERROR;
+
+		if (!packet.succeded) {
+			switch (packet.error) {
+			case Usb::Packet_descriptor::NO_ERROR:
+				request->error = NO_ERROR; break;
+			case Usb::Packet_descriptor::INTERFACE_OR_ENDPOINT_ERROR:
+				request->error = INTERFACE_OR_ENDPOINT_ERROR; break;
+			case Usb::Packet_descriptor::MEMORY_ERROR:
+				request->error = MEMORY_ERROR; break;
+			case Usb::Packet_descriptor::NO_DEVICE_ERROR:
+				request->error = NO_DEVICE_ERROR; break;
+			case Usb::Packet_descriptor::PACKET_INVALID_ERROR:
+				request->error = PACKET_INVALID_ERROR; break;
+			case Usb::Packet_descriptor::PROTOCOL_ERROR:
+				request->error = PROTOCOL_ERROR; break;
+			case Usb::Packet_descriptor::STALL_ERROR:
+				request->error = STALL_ERROR; break;
+			case Usb::Packet_descriptor::TIMEOUT_ERROR:
+				request->error = TIMEOUT_ERROR; break;
+			case Usb::Packet_descriptor::UNKNOWN_ERROR:
+				request->error = UNKNOWN_ERROR; break;
+			}
+		}
+
+		if (request->complete_callback)
+			request->complete_callback(request);
+	}
+};
 
 
 struct Usb_client : Usb::Connection
 {
+	enum { PACKET_SLOTS = Usb::Session::TX_QUEUE_SIZE };
+
+	Usb_completion              completions[PACKET_SLOTS];
+	Bit_allocator<PACKET_SLOTS> slots { };
 	Usb_id_space::Element const elem;
 
 	Usb_client(Env &env, Usb_id_space &space, char const *label,
@@ -22,7 +72,30 @@ struct Usb_client : Usb::Connection
 	{ }
 
 	genode_usb_client_handle_t handle() const { return elem.id().value; }
+
+	Usb_completion *alloc(size_t size)
+	{
+		Usb_completion *completion = nullptr;
+		try {
+			completion = &completions[slots.alloc()];
+			Usb::Packet_descriptor packet = Usb::Session_client::alloc_packet(size);
+			completion->packet = packet;
+			packet.completion  = completion;
+		}
+		catch (...) {  }
+
+		return completion;
+	}
+
+	void release(Usb_completion *completion)
+	{
+		unsigned long slot_idx = (unsigned long)(completion - completions);
+		warning("RELEASE_INDEX: ", slot_idx);
+		source()->release_packet(completion->packet);
+		slots.free(slot_idx);
+	}
 };
+
 
 static Usb_id_space _usb_space { };
 
@@ -89,4 +162,101 @@ bool genode_usb_client_plugged(genode_usb_client_handle_t handle)
 		plugged = usb.plugged(); });
 	
 	return plugged;
+}
+
+
+bool genode_usb_client_request(genode_usb_client_handle_t        handle,
+                               genode_usb_client_request_packet *request)
+{
+	Usb_completion *completion = nullptr;
+
+	usb_client_apply(handle, [&] (Usb_client &usb) {
+		completion = usb.alloc(request->buffer.size);
+
+		if (completion)
+			request->buffer.addr = usb.source()->packet_content(completion->packet);
+	});
+
+	if (!completion) return false;
+
+	completion->request  = request;
+	request->completion  = completion;
+
+	/* setup packet */
+	genode_request_packet_t *req    = &request->request;
+	Usb::Packet_descriptor  *packet = &completion->packet;
+
+	switch(req->type) {
+#if 0
+	case PIPE_INTERRUPT:
+		{
+			struct usb_host_endpoint *ep =
+				usb_pipe_endpoint(_urb.dev, _urb.pipe);
+			_packet.type = Usb::Packet_descriptor::IRQ;
+			_packet.transfer.polling_interval = _urb.interval;
+			_packet.transfer.ep = ep->desc.bEndpointAddress;
+			break;
+		}
+#endif
+
+	case CTRL:
+		{
+			packet->type = Usb::Packet_descriptor::CTRL;
+
+			genode_usb_request_control *ctrl = (genode_usb_request_control *)req->req;
+			packet->control.request      = ctrl->request;
+			packet->control.request_type = ctrl->request_type;
+			packet->control.value        = ctrl->value;
+			packet->control.index        = ctrl->index;
+			packet->control.timeout      = ctrl->timeout;
+			break;
+		}
+#if 0
+	case PIPE_BULK:
+		{
+			struct usb_host_endpoint *ep =
+				usb_pipe_endpoint(_urb.dev, _urb.pipe);
+			_packet.type = Usb::Packet_descriptor::BULK;
+			_packet.transfer.ep = ep->desc.bEndpointAddress;
+
+			if (usb_pipeout(_urb.pipe))
+				Genode::memcpy(_usb.source()->packet_content(_packet),
+							   _urb.transfer_buffer, _urb.transfer_buffer_length);
+			return;
+		}
+#endif
+	default:
+		Genode::error("unknown USB client requested");
+	};
+
+	return true;
+}
+
+
+void genode_usb_client_request_submit(genode_usb_client_handle_t        handle,
+                                      genode_usb_client_request_packet *request)
+{
+	Usb_completion *completion = static_cast<Usb_completion *>(request->completion);
+	usb_client_apply(handle, [&] (Usb_client &usb) {
+		usb.source()->submit_packet(completion->packet); });
+}
+
+
+void genode_usb_client_request_finish(genode_usb_client_handle_t               handle,
+                                      struct genode_usb_client_request_packet *request)
+{
+	Usb_completion *completion = static_cast<Usb_completion *>(request->completion);
+	usb_client_apply(handle, [&] (Usb_client &usb) {
+		usb.release(completion); });
+}
+
+
+void genode_usb_client_execute_completions(genode_usb_client_handle_t handle)
+{
+	usb_client_apply(handle, [&] (Usb_client &usb) {
+		while(usb.source()->ack_avail()) {
+			Usb::Packet_descriptor p = usb.source()->get_acked_packet();
+			if (p.completion) p.completion->complete(p);
+		}
+	});
 }

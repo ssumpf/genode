@@ -1,3 +1,6 @@
+#ifndef __GENODE_C_API__USB_CLIENT_H_
+#define __GENODE_C_API__USB_CLIENT_H_
+
 #include <base/fixed_stdint.h>
 #include <genode_c_api/usb.h>
 
@@ -63,6 +66,30 @@ int genode_usb_client_config_descriptor(genode_usb_client_handle_t handle,
                                         struct genode_usb_config_descriptor *config_descr);
 
 bool genode_usb_client_plugged(genode_usb_client_handle_t handle);
+
+typedef struct genode_usb_request_urb genode_request_packet_t;
+
+struct genode_usb_client_request_packet
+{
+	genode_request_packet_t  request;
+	struct genode_usb_buffer buffer;
+	int                      actual_length;
+	int                      error;
+	void (*complete_callback)(struct genode_usb_client_request_packet *);
+	void *completion;
+	void *opaque_data;
+};
+
+bool genode_usb_client_request(genode_usb_client_handle_t               handle,
+                               struct genode_usb_client_request_packet *request);
+
+void genode_usb_client_request_submit(genode_usb_client_handle_t               handle,
+                                      struct genode_usb_client_request_packet *request);
+
+void genode_usb_client_request_finish(genode_usb_client_handle_t               handle,
+                                      struct genode_usb_client_request_packet *request);
+
+void genode_usb_client_execute_completions(genode_usb_client_handle_t handle);
 #ifdef __cplusplus
 } /* extern "C" */
 
@@ -74,4 +101,6 @@ static inline auto genode_range_allocator_ptr(Genode::Range_allocator &alloc)
 {
 	return static_cast<genode_range_allocator *>(&alloc);
 }
-#endif
+#endif /* __cplusplus */
+
+#endif /* __GENODE_C_API__USB_CLIENT_H_ */
