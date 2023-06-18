@@ -10,8 +10,10 @@ SRC_C = dummies.c \
 
 SRC_CC = main.cc \
          lx_emul/random.cc \
+         lx_emul/urb.c \
          usb_client/usb_client.cc
 
 vpath %.c  $(PRG_DIR)
-vpath %.c  $(PRG_DIR)
+vpath %.cc $(PRG_DIR)
+vpath %.c  $(REP_DIR)/src/lib
 vpath %.cc $(REP_DIR)/src/lib

@@ -131,8 +131,14 @@ struct Device : Registry<Device>::Element
 	static int urb_task_entry(void *arg)
 	{
 		Device &device = *reinterpret_cast<Device *>(arg);
-		Genode::warning("URB task");
-		device.urb_task.block_and_schedule();
+
+		for (;;) {
+			Genode::warning("URB task");
+			if (device.registered)
+				genode_usb_client_execute_completions(device.usb_handle);
+
+			device.urb_task.block_and_schedule();
+		}
 		return 0;
 	}
 };

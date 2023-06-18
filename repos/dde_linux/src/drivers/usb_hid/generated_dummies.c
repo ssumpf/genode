@@ -654,14 +654,6 @@ void __sched up(struct semaphore * sem)
 
 #include <linux/usb.h>
 
-struct urb * usb_alloc_urb(int iso_packets,gfp_t mem_flags)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/usb.h>
-
 void usb_block_urb(struct urb * urb)
 {
 	lx_emul_trace_and_stop(__func__);
@@ -678,14 +670,6 @@ char * usb_cache_string(struct usb_device * udev,int index)
 #include <linux/usb.h>
 
 int usb_clear_halt(struct usb_device * dev,int pipe)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/usb.h>
-
-int usb_control_msg(struct usb_device * dev,unsigned int pipe,__u8 request,__u8 requesttype,__u16 value,__u16 index,void * data,__u16 size,int timeout)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -757,14 +741,6 @@ void usb_enable_interface(struct usb_device * dev,struct usb_interface * intf,bo
 #include <linux/usb.h>
 
 int usb_free_streams(struct usb_interface * interface,struct usb_host_endpoint ** eps,unsigned int num_eps,gfp_t mem_flags)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/usb.h>
-
-void usb_free_urb(struct urb * urb)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -931,14 +907,6 @@ const char * usb_speed_string(enum usb_device_speed speed)
 #include <linux/usb.h>
 
 int usb_string(struct usb_device * dev,int index,char * buf,size_t size)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/usb.h>
-
-int usb_submit_urb(struct urb * urb,gfp_t mem_flags)
 {
 	lx_emul_trace_and_stop(__func__);
 }

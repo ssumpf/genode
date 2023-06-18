@@ -30,7 +30,7 @@ unsigned long lx_usb_register_device(genode_usb_client_handle_t handle)
 	err = genode_usb_client_config_descriptor(handle, &dev_descr, &conf_descr);
 	if (err) {
 		printk("error: failed to read config descriptor\n");
-		return NULL;
+		return 0;
 	}
 
 	udev = (struct usb_device *)kzalloc(sizeof(struct usb_device), GFP_KERNEL);
@@ -47,7 +47,7 @@ unsigned long lx_usb_register_device(genode_usb_client_handle_t handle)
 	err = usb_new_device(udev);
 	if (err) {
 		printk("error: usb_new_device failed %d\n", err);
-		return NULL;
+		return 0;
 	}
 
 	return (unsigned long)udev;
