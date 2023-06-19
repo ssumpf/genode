@@ -52,6 +52,7 @@ kernel/time/timer_list.c
 kernel/workqueue.c
 mm/util.c
 lib/bitmap.c
+lib/ctype.c
 lib/find_bit.c
 lib/hexdump.c
 lib/hweight.c
@@ -62,6 +63,7 @@ lib/kobject.c
 lib/kstrtox.c
 lib/radix-tree.c
 lib/xarray.c
+lib/siphash.c
 lib/string.c
 lib/string_helpers.c
 lib/vsprintf.c

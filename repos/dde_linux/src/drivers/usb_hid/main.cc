@@ -120,7 +120,7 @@ struct Device : Registry<Device>::Element
 	{
 		warning("register device");
 		registered = true;
-		udev = lx_usb_register_device(usb_handle);
+		udev = lx_usb_register_device(usb_handle, label.string());
 		if (!udev) return;
 	}
 

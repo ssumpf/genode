@@ -140,11 +140,6 @@ unsigned long _copy_to_user(void __user * to,const void * from,unsigned long n)
 }
 
 
-#include <linux/ctype.h>
-
-const unsigned char _ctype[] = {};
-
-
 #include <linux/printk.h>
 
 int _printk_deferred(const char * fmt,...)
@@ -521,14 +516,6 @@ int param_set_copystring(const char * val,const struct kernel_param * kp)
 }
 
 
-#include <linux/kernel.h>
-
-bool parse_option_str(const char * str,const char * option)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 #include <linux/power_supply.h>
 
 void power_supply_changed(struct power_supply * psy)
@@ -553,22 +540,6 @@ int power_supply_powers(struct power_supply * psy,struct device * dev)
 }
 
 
-#include <linux/refcount.h>
-
-void refcount_warn_saturate(refcount_t * r,enum refcount_saturation_type t)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/siphash.h>
-
-u64 siphash_1u64(const u64 first,const siphash_key_t * key)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 #include <linux/smp.h>
 
 void smp_call_function_many(const struct cpumask * mask,smp_call_func_t func,void * info,bool wait)
@@ -580,13 +551,6 @@ void smp_call_function_many(const struct cpumask * mask,smp_call_func_t func,voi
 #include <linux/smp.h>
 
 int smp_call_function_single(int cpu,smp_call_func_t func,void * info,int wait)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-extern void software_node_notify(struct device * dev);
-void software_node_notify(struct device * dev)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -660,13 +624,6 @@ void usb_block_urb(struct urb * urb)
 }
 
 
-extern char * usb_cache_string(struct usb_device * udev,int index);
-char * usb_cache_string(struct usb_device * udev,int index)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 #include <linux/usb.h>
 
 int usb_clear_halt(struct usb_device * dev,int pipe)
@@ -677,13 +634,6 @@ int usb_clear_halt(struct usb_device * dev,int pipe)
 
 extern int usb_create_ep_devs(struct device * parent,struct usb_host_endpoint * endpoint,struct usb_device * udev);
 int usb_create_ep_devs(struct device * parent,struct usb_host_endpoint * endpoint,struct usb_device * udev)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-extern int usb_create_sysfs_dev_files(struct usb_device * udev);
-int usb_create_sysfs_dev_files(struct usb_device * udev)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -724,13 +674,6 @@ void usb_disable_interface(struct usb_device * dev,struct usb_interface * intf,b
 }
 
 
-extern void usb_enable_endpoint(struct usb_device * dev,struct usb_host_endpoint * ep,bool reset_ep);
-void usb_enable_endpoint(struct usb_device * dev,struct usb_host_endpoint * ep,bool reset_ep)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 extern void usb_enable_interface(struct usb_device * dev,struct usb_interface * intf,bool reset_eps);
 void usb_enable_interface(struct usb_device * dev,struct usb_interface * intf,bool reset_eps)
 {
@@ -748,14 +691,6 @@ int usb_free_streams(struct usb_interface * interface,struct usb_host_endpoint *
 
 extern int usb_get_device_descriptor(struct usb_device * dev,unsigned int size);
 int usb_get_device_descriptor(struct usb_device * dev,unsigned int size)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/usb/hcd.h>
-
-struct usb_hcd * usb_get_hcd(struct usb_hcd * hcd)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -868,14 +803,6 @@ void usb_remove_sysfs_dev_files(struct usb_device * udev)
 
 extern void usb_remove_sysfs_intf_files(struct usb_interface * intf);
 void usb_remove_sysfs_intf_files(struct usb_interface * intf)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/usb.h>
-
-int usb_set_configuration(struct usb_device * dev,int configuration)
 {
 	lx_emul_trace_and_stop(__func__);
 }
