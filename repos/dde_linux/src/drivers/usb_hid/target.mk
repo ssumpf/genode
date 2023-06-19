@@ -5,7 +5,8 @@ INC_DIR = $(PRG_DIR) $(REP_DIR)/src/lib/usb_client
 
 SRC_C = dummies.c \
         generated_dummies.c \
-        lx_emul.c
+        lx_emul.c \
+        lx_user.c
 
 
 SRC_CC = main.cc \

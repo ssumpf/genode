@@ -4,8 +4,8 @@
 #include <base/registry.h>
 
 #include <lx_emul/init.h>
+#include <lx_emul/task.h>
 #include <lx_kit/env.h>
-#include <lx_user/init.h>
 
 /* C-interface */
 #include <usb_hid.h>
@@ -13,11 +13,12 @@
 using namespace Genode;
 
 
-struct Task
+struct Task_handler
 {
-	Lx_kit::Task          task;
-	Signal_handler<Task>  handler;
-	bool                  handling_signal { false };
+	task_struct                 *task;
+	Signal_handler<Task_handler> handler;
+	bool                         handling_signal { false };
+	bool                         running         { true  };
 
 	/*
 	 * If the task is currently executing and the signal handler
@@ -32,7 +33,7 @@ struct Task
 	void handle_signal()
 	{
 		_signal_pending = true;
-		task.unblock();
+		lx_emul_task_unblock(task);
 		handling_signal = true;
 		Lx_kit::env().scheduler.schedule();
 		handling_signal = false;
@@ -47,15 +48,22 @@ struct Task
 
 	void block_and_schedule()
 	{
-		task.block();
-		task.schedule();
+		lx_emul_task_schedule(true);
 	}
 
-	template <typename... ARGS>
-	Task(Entrypoint & ep, int (*func)(void*), void *data, char const *name)
-	: task(func, data, nullptr, -1, name, Lx_kit::env().scheduler,
-	       Lx_kit::Task::NORMAL),
-	  handler(ep, *this, &Task::handle_signal) {}
+	void destroy_task()
+	{
+		running = false;
+		lx_emul_task_unblock(task);
+		Lx_kit::env().scheduler.schedule();
+	}
+
+	Task_handler(Entrypoint & ep, task_struct *task)
+	: task(task), handler(ep, *this, &Task_handler::handle_signal) { }
+
+	/* non-copyable */
+	Task_handler(const Task_handler&) = delete;
+	Task_handler & operator=(const Task_handler&) = delete;
 };
 
 
@@ -72,15 +80,19 @@ struct Device : Registry<Device>::Element
 	 */
 	Allocator_avl alloc { &Lx_kit::env().heap };
 
-	Task state_task { env.ep(), state_task_entry, this, "state_task" };
-	Task urb_task   { env.ep(), urb_task_entry  , this, "urb_task" };
+	task_struct *state_task { lx_user_new_usb_task(state_task_entry, this) };
+	task_struct *urb_task   { lx_user_new_usb_task(urb_task_entry, this)   };
+
+	Task_handler state_task_handler { env.ep(), state_task };
+	Task_handler urb_task_handler   { env.ep(), urb_task   };
 
 	genode_usb_client_handle_t usb_handle {
 		genode_usb_client_create(genode_env_ptr(env),
 		                         genode_allocator_ptr(Lx_kit::env().heap),
 		                         genode_range_allocator_ptr(alloc),
 		                         label.string(),
-		                         genode_signal_handler_ptr(state_task.handler)) };
+		                         genode_signal_handler_ptr(state_task_handler.handler)) };
+
 	bool updated    { true };
 	bool registered { false };
 	unsigned long udev { 0 };
@@ -91,17 +103,25 @@ struct Device : Registry<Device>::Element
 		env(env), label(label)
 	{
 		genode_usb_client_sigh_ack_avail(usb_handle,
-		                                 genode_signal_handler_ptr(urb_task.handler));
+		                                 genode_signal_handler_ptr(urb_task_handler.handler));
 	}
 
-	~Device() { }
+	~Device()
+	{
+		state_task_handler.destroy_task();
+		urb_task_handler.destroy_task();
+	}
+
+	/* non-copyable */
+	Device(const Device&) = delete;
+	Device & operator=(const Device&) = delete;
 
 	void register_device()
 	{
 		warning("register device");
+		registered = true;
 		udev = lx_usb_register_device(usb_handle);
 		if (!udev) return;
-		registered = true;
 	}
 
 	void unregister_device() { }
@@ -115,16 +135,18 @@ struct Device : Registry<Device>::Element
 	{
 		Device &device = *reinterpret_cast<Device *>(arg);
 		Genode::warning("State task");
-		for (;;) {
-			while (device.state_task.signal_pending()) {
+
+		while (device.state_task_handler.running) {
+			while (device.state_task_handler.signal_pending()) {
 				if (genode_usb_client_plugged(device.usb_handle) && !device.registered)
 					device.register_device();
 
 				if (!genode_usb_client_plugged(device.usb_handle) && device.registered)
 					device.unregister_device();
 			}
-			device.state_task.block_and_schedule();
+			device.state_task_handler.block_and_schedule();
 		}
+		lx_user_destroy_usb_task(device.state_task_handler.task);
 		return 0;
 	}
 
@@ -132,13 +154,16 @@ struct Device : Registry<Device>::Element
 	{
 		Device &device = *reinterpret_cast<Device *>(arg);
 
-		for (;;) {
+		while (device.urb_task_handler.running) {
 			Genode::warning("URB task");
-			if (device.registered)
+			if (device.registered) {
+				warning("call completions");
 				genode_usb_client_execute_completions(device.usb_handle);
+			}
 
-			device.urb_task.block_and_schedule();
+			device.urb_task_handler.block_and_schedule();
 		}
+		lx_user_destroy_usb_task(device.urb_task_handler.task);
 		return 0;
 	}
 };
@@ -148,23 +173,41 @@ struct Driver
 {
 	Env &env;
 
+	Task_handler task_handler;
+
 	Heap &heap { Lx_kit::env().heap };
 
 	/* multi-touch */
 	unsigned long screen_x { 0 };
 	unsigned long screen_y { 0 };
 	bool          multi_touch { false };
-
-	Task main_task { env.ep(), main_task_entry, this, "main_task" };
+	bool          use_report  { false };
 
 	Attached_rom_dataspace report_rom { env, "report" };
 	Attached_rom_dataspace config_rom { env, "config" };
 
 	Registry<Device> devices { };
 
-	Driver(Env &env) : env(env)
+	Driver(Env &env, task_struct *task)
+	: env(env), task_handler(env.ep(), task)
 	{
-		report_rom.sigh(main_task.handler);
+		report_rom.sigh(task_handler.handler);
+
+		try {
+			Xml_node config = config_rom.xml();
+			use_report      = config.attribute_value("use_report", false);
+			multi_touch     = config.attribute_value("multitouch", false);
+			config.attribute("width").value(screen_x);
+			config.attribute("height").value(screen_y);
+		} catch(...) { }
+
+		if (use_report)
+			warning("use compatibility mode: ",
+			        "will claim all HID devices from USB report");
+
+		log("Configured HID screen with ",
+		    screen_x, "x", screen_y,
+		    " (multitouch=", multi_touch ? "true" : "false", ")");
 	}
 
 	void scan_report()
@@ -204,50 +247,8 @@ struct Driver
 				destroy(heap, &d);
 		});
 	}
-
-	/**********
-	 ** Task **
-	 **********/
-
-	static int main_task_entry(void *data)
-	{
-		Driver &driver = *reinterpret_cast<Driver *>(data);
-
-		bool use_report = false;
-		try {
-			Xml_node config    = driver.config_rom.xml();
-			use_report         = config.attribute_value("use_report", false);
-			driver.multi_touch = config.attribute_value("multitouch", false);
-			config.attribute("width").value(driver.screen_x);
-			config.attribute("height").value(driver.screen_y);
-		} catch(...) { }
-
-		if (use_report)
-			warning("use compatibility mode: ",
-			        "will claim all HID devices from USB report");
-
-		log("Configured HID screen with ",
-		    driver.screen_x, "x", driver.screen_y,
-		    " (multitouch=", driver.multi_touch ? "true" : "false", ")");
-
-		for (;;) {
-			while (driver.main_task.signal_pending()) {
-				if (!use_report)
-					static Device dev(driver.env, driver.devices, Device::Label(""));
-				else
-					driver.scan_report();
-			}
-			driver.main_task.block_and_schedule();
-		}
-		return 0;
-	}
 };
 
-
-void lx_user_init()
-{
-	static Driver driver(Lx_kit::env().env);
-}
 
 void Component::construct(Env & env)
 {
@@ -256,3 +257,25 @@ void Component::construct(Env & env)
 	lx_emul_start_kernel(nullptr);
 }
 
+
+/**********
+ ** Task **
+ **********/
+
+int lx_user_main_task(void *data)
+{
+	task_struct *task = *static_cast<task_struct **>(data);
+	error("Main task: ", task);
+	static Driver driver { Lx_kit::env().env, task };
+
+	for (;;) {
+		while (driver.task_handler.signal_pending()) {
+			if (!driver.use_report)
+				static Device dev(driver.env, driver.devices, Device::Label(""));
+			else
+				driver.scan_report();
+		}
+		driver.task_handler.block_and_schedule();
+	}
+	return 0;
+}
