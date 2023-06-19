@@ -16,19 +16,20 @@
 
 /* base includes */
 #include <base/log.h>
+#include <base/sleep.h>
 
 #define ASSERT(condition) \
 	do { \
 		if (!(condition)) { \
 			Genode::error(__FILE__, ":", __LINE__, ": ", " assertion \"", #condition, "\" failed "); \
-			for (;;); \
+			Genode::sleep_forever(); \
 		} \
 	} while (false)
 
 #define ASSERT_NEVER_REACHED \
 	do { \
 		Genode::error(__FILE__, ":", __LINE__, ": ", " should have never been reached"); \
-		for (;;); \
+		Genode::sleep_forever(); \
 	} while (false)
 
 #endif /* _TRESOR__ASSERTION_H_ */
