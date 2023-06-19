@@ -90,6 +90,7 @@ void genode_usb_client_request_finish(genode_usb_client_handle_t               h
                                       struct genode_usb_client_request_packet *request);
 
 void genode_usb_client_execute_completions(genode_usb_client_handle_t handle);
+
 #ifdef __cplusplus
 } /* extern "C" */
 

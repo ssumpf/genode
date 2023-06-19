@@ -73,26 +73,34 @@ struct Usb_client : Usb::Connection
 
 	genode_usb_client_handle_t handle() const { return elem.id().value; }
 
+	void free_completion(Usb_completion *completion)
+	{
+		unsigned long slot_idx = (unsigned long)(completion - completions);
+		slots.free(slot_idx);
+	}
+
 	Usb_completion *alloc(size_t size)
 	{
 		Usb_completion *completion = nullptr;
 		try {
 			completion = &completions[slots.alloc()];
 			Usb::Packet_descriptor packet = Usb::Session_client::alloc_packet(size);
-			completion->packet = packet;
 			packet.completion  = completion;
+			completion->packet = packet;
+		} catch (Tx::Source::Packet_alloc_failed) {
+			free_completion(completion);
+			return nullptr;
+		} catch (Bit_allocator<PACKET_SLOTS>::Out_of_indices) {
+			return nullptr;
 		}
-		catch (...) {  }
 
 		return completion;
 	}
 
 	void release(Usb_completion *completion)
 	{
-		unsigned long slot_idx = (unsigned long)(completion - completions);
-		warning("RELEASE_INDEX: ", slot_idx);
 		source()->release_packet(completion->packet);
-		slots.free(slot_idx);
+		free_completion(completion);
 	}
 };
 
@@ -226,7 +234,7 @@ bool genode_usb_client_request(genode_usb_client_handle_t        handle,
 		}
 #endif
 	default:
-		Genode::error("unknown USB client requested");
+		error("unknown USB client requested");
 	};
 
 	return true;
