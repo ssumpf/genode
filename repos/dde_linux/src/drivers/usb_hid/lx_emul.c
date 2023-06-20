@@ -155,6 +155,10 @@ int usb_set_configuration(struct usb_device *dev, int configuration)
 	struct usb_host_config *cp = NULL;
 	struct usb_interface **new_interfaces = NULL;
 	int n, nintf;
+
+	genode_usb_client_handle_t handle =
+		(genode_usb_client_handle_t)dev->bus->controller;
+
 printk("%s:%d\n", __func__, __LINE__);
 	if (dev->authorized == 0 || configuration == -1)
 		configuration = 0;
@@ -263,16 +267,13 @@ printk("%s:%d\n", __func__, __LINE__);
 	for (i = 0; i < nintf; ++i) {
 		struct usb_interface *intf = cp->interface[i];
 
-		dev_dbg(&dev->dev,
-			"adding %s (config #%d, interface %d)\n",
-			dev_name(&intf->dev), configuration,
-			intf->cur_altsetting->desc.bInterfaceNumber);
-		device_enable_async_suspend(&intf->dev);
 		printk("%s:%d ADD\n", __func__, __LINE__);
+		genode_usb_client_claim_interface(handle, intf->cur_altsetting->desc.bInterfaceNumber);
 		ret = device_add(&intf->dev);
 		printk("%s:%d ADD %d %s\n", __func__, __LINE__, ret, dev_name(&intf->dev));
 		if (ret != 0) {
-			printk("device_add(%s) --> %d\n", dev_name(&intf->dev), ret);
+			printk("error: device_add(%s) --> %d\n", dev_name(&intf->dev), ret);
+			genode_usb_client_release_interface(handle, intf->cur_altsetting->desc.bInterfaceNumber);
 			continue;
 		}
 	}
