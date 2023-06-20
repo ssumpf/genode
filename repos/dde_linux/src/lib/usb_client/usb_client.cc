@@ -81,6 +81,10 @@ struct Usb_client : Usb::Connection
 
 	Usb_completion *alloc(size_t size)
 	{
+		/*
+		 * We don't need to check for 'ready_to_submit' because we have as many
+		 * compltions as packet slots
+		 */
 		Usb_completion *completion = nullptr;
 		try {
 			completion = &completions[slots.alloc()];
@@ -212,18 +216,15 @@ bool genode_usb_client_request(genode_usb_client_handle_t        handle,
 	Usb::Packet_descriptor  *packet = &completion->packet;
 
 	switch(req->type) {
-#if 0
-	case PIPE_INTERRUPT:
+	case IRQ:
 		{
-			struct usb_host_endpoint *ep =
-				usb_pipe_endpoint(_urb.dev, _urb.pipe);
-			_packet.type = Usb::Packet_descriptor::IRQ;
-			_packet.transfer.polling_interval = _urb.interval;
-			_packet.transfer.ep = ep->desc.bEndpointAddress;
+			packet->type = Usb::Packet_descriptor::IRQ;
+
+			genode_usb_request_transfer *transfer = (genode_usb_request_transfer *)req->req;
+			packet->transfer.polling_interval = transfer->polling_interval;
+			packet->transfer.ep               = transfer->ep;
 			break;
 		}
-#endif
-
 	case CTRL:
 		{
 			packet->type = Usb::Packet_descriptor::CTRL;
@@ -236,20 +237,14 @@ bool genode_usb_client_request(genode_usb_client_handle_t        handle,
 			packet->control.timeout      = ctrl->timeout;
 			break;
 		}
-#if 0
-	case PIPE_BULK:
+	case BULK:
 		{
-			struct usb_host_endpoint *ep =
-				usb_pipe_endpoint(_urb.dev, _urb.pipe);
-			_packet.type = Usb::Packet_descriptor::BULK;
-			_packet.transfer.ep = ep->desc.bEndpointAddress;
+			packet->type = Usb::Packet_descriptor::BULK;
 
-			if (usb_pipeout(_urb.pipe))
-				Genode::memcpy(_usb.source()->packet_content(_packet),
-							   _urb.transfer_buffer, _urb.transfer_buffer_length);
-			return;
+			genode_usb_request_transfer *transfer = (genode_usb_request_transfer *)req->req;
+			packet->transfer.ep = transfer->ep;
+			break;
 		}
-#endif
 	default:
 		error("unknown USB client requested");
 	};
