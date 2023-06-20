@@ -172,6 +172,23 @@ bool genode_usb_client_plugged(genode_usb_client_handle_t handle)
 	return plugged;
 }
 
+void genode_usb_client_claim_interface(genode_usb_client_handle_t handle,
+                                       unsigned interface_num)
+{
+	usb_client_apply(handle, [&] (Usb_client &usb) {
+		usb.claim_interface(interface_num);
+	});
+}
+
+
+void genode_usb_client_release_interface(genode_usb_client_handle_t handle,
+                                         unsigned interface_num)
+{
+	usb_client_apply(handle, [&] (Usb_client &usb) {
+		usb.release_interface(interface_num);
+	});
+}
+
 
 bool genode_usb_client_request(genode_usb_client_handle_t        handle,
                                genode_usb_client_request_packet *request)
