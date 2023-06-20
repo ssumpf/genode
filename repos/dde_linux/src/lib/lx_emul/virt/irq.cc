@@ -25,7 +25,7 @@ extern "C" void lx_emul_irq_mask(unsigned int ) { }
 extern "C" void lx_emul_irq_eoi(unsigned int ) { }
 
 
-extern "C" unsigned int lx_emul_irq_last()
+extern "C" int lx_emul_pending_irq()
 {
-	return Lx_kit::env().last_irq;
+	return Lx_kit::env().scheduler.pending_irq();
 }
