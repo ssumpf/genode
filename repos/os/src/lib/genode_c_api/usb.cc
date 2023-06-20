@@ -891,6 +891,7 @@ void ::Root::decrement_session_id(genode_usb_session_handle_t id)
 		_session_ids[i].construct((genode_usb_session_handle_t)(i+1));
 
 	_config.sigh(_config_handler);
+	_config_update();
 }
 
 
