@@ -22,9 +22,6 @@
 
 using namespace Genode;
 
-#define DUMMY_WARNING(fn) \
-	do { warning(fn, " dummy implementation used, returning 0(s)"); } while (0)
-
 void lx_emul_random_gen_bytes(void          *dst,
                               unsigned long  nr_of_bytes)
 {
@@ -34,22 +31,20 @@ void lx_emul_random_gen_bytes(void          *dst,
 		return;
 	}
 
-	DUMMY_WARNING(__func__);
+	warning(__func__, ": dummy implementation used, filling buffer with 0s");
 	memset(dst, 0, nr_of_bytes);
 }
 
 
 genode_uint32_t lx_emul_random_gen_u32()
 {
-	DUMMY_WARNING(__func__);
+	warning(__func__, ": dummy implementation used, returning 0");
 	return 0;
 }
 
 
 genode_uint64_t lx_emul_random_gen_u64()
 {
-	DUMMY_WARNING(__func__);
+	warning(__func__, ": dummy implementation used, returning 0");
 	return 0;
 }
-
-#undef DUMMY_WARNING
