@@ -1,7 +1,8 @@
 /*
  * \brief  urb functions
  * \author Stefan Kalkowski
- * \date   2018-08-25
+ * \author Sebastian Sumpf
+ * \date   2023-06-20
  */
 
 /*
@@ -52,6 +53,7 @@ static int packet_errno(int error)
 
 static void usb_control_msg_complete(struct genode_usb_client_request_packet *packet)
 {
+	printk("%s:%d\n", __func__, __LINE__);
 	complete((struct completion *)packet->opaque_data);
 };
 
@@ -68,9 +70,13 @@ int usb_control_msg(struct usb_device *dev, unsigned int pipe,
 	struct genode_usb_client_request_packet packet;
 	struct genode_usb_request_control       control;
 
-	genode_usb_client_handle_t handle =
-		(genode_usb_client_handle_t)dev->bus->controller;
+	genode_usb_client_handle_t handle;
+	printk("%s:%d\n", __func__, __LINE__);
 
+	if (!dev->bus) return -ENODEV;
+
+	handle = (genode_usb_client_handle_t)dev->bus->controller;
+	printk("%s:%d handle: %lu\n", __func__, __LINE__, handle);
 	/*
 	 * If this function is called with a timeout of 0 to wait forever,
 	 * we wait in pieces of 10s each as 'schedule_timeout' might trigger
@@ -112,13 +118,15 @@ int usb_control_msg(struct usb_device *dev, unsigned int pipe,
 	packet.opaque_data       = &comp;
 
 	genode_usb_client_request_submit(handle, &packet);
+	printk("%s:%d\n", __func__, __LINE__);
 	wait_for_completion(&comp);
+	printk("%s:%d\n", __func__, __LINE__);
 
 	if (packet.actual_length && data && (size >= packet.actual_length))
 		memcpy(data, packet.buffer.addr, packet.actual_length);
 
 	ret = packet.error ? packet_errno(packet.error) : packet.actual_length;
-
+	printk("%s:%d ret: %u\n", __func__, __LINE__, ret);
 	genode_usb_client_request_finish(handle, &packet);
 
 err_request:
@@ -132,8 +140,9 @@ struct urb *usb_alloc_urb(int iso_packets, gfp_t mem_flags)
 {
 	struct urb *urb = (struct urb*)
 		kmalloc(sizeof(struct urb) +
-	            iso_packets * sizeof(struct usb_iso_packet_descriptor),
-	            GFP_KERNEL);
+		        iso_packets * sizeof(struct usb_iso_packet_descriptor),
+		        GFP_KERNEL);
+
 	if (!urb) return NULL;
 	memset(urb, 0, sizeof(*urb));
 	INIT_LIST_HEAD(&urb->anchor_list);
@@ -141,64 +150,114 @@ struct urb *usb_alloc_urb(int iso_packets, gfp_t mem_flags)
 }
 
 
+static void urb_submit_complete(struct genode_usb_client_request_packet *packet)
+{
+	struct urb *urb = (struct urb *)packet->opaque_data;
+	genode_usb_client_handle_t handle = (genode_usb_client_handle_t)urb->hcpriv;
+
+	urb->status = packet->error ? packet_errno(packet->error) : 0;
+
+	if (packet->error == 0 &&
+	    packet->actual_length && urb->transfer_buffer &&
+	    urb->transfer_buffer_length >= packet->actual_length)
+		memcpy(urb->transfer_buffer, packet->buffer.addr, packet->actual_length);
+
+	kfree(packet->request.req);
+	kfree(packet);
+
+	genode_usb_client_request_finish(handle, packet);
+
+	if (urb->complete) urb->complete(urb);
+};
+
+
 int usb_submit_urb(struct urb *urb, gfp_t mem_flags)
 {
+	genode_usb_client_handle_t handle;
+	struct genode_usb_client_request_packet *packet;
+	struct genode_usb_request_transfer *transfer;
+	int ret = 0;
+	unsigned timeout_jiffies = msecs_to_jiffies(10000u);
+
 	printk("%s:%d\n", __func__, __LINE__);
-	while (1) ;
-#if 0
-	if (!urb->dev->bus || !urb->dev->bus->controller)
+	if (!urb->dev->bus)
 		return -ENODEV;
 
-	Urb * u = (Urb *)kzalloc(sizeof(Urb), mem_flags);
-	if (!u)
-		return 1;
+	handle = (genode_usb_client_handle_t)urb->dev->bus->controller;
 
-	Usb::Connection &usb = *(Usb::Connection*)(urb->dev->bus->controller);
+	packet = (struct genode_usb_client_request_packet *)
+		kzalloc(sizeof(*packet), GFP_KERNEL);
+
+	if (!packet) return -ENOMEM;
+
+	transfer = (struct genode_usb_request_transfer *)
+		kzalloc(sizeof(*transfer), GFP_KERNEL);
+
+	if (!transfer) {
+		ret = -ENOMEM;
+		goto transfer;
+	}
+
+	switch(usb_pipetype(urb->pipe)) {
+	case PIPE_INTERRUPT:
+		{
+			struct usb_host_endpoint *ep =
+				usb_pipe_endpoint(urb->dev, urb->pipe);
+			packet->request.type       = IRQ;
+			transfer->polling_interval = urb->interval;
+			transfer->ep               = ep->desc.bEndpointAddress;
+			break;
+		}
+	case PIPE_BULK:
+		{
+			struct usb_host_endpoint *ep =
+				usb_pipe_endpoint(urb->dev, urb->pipe);
+			packet->request.type = BULK;
+			transfer->ep         = ep->desc.bEndpointAddress;
+			break;
+		}
+	default:
+		printk("unknown URB requested: %d\n", usb_pipetype(urb->pipe));
+	}
+
+	packet->request.req       = transfer;
+	packet->buffer.size       = urb->transfer_buffer_length;
+	packet->complete_callback = urb_submit_complete;
+	packet->opaque_data       = urb;
+
 	for (;;) {
-		if (usb.source()->ready_to_submit(1))
-			try {
-				Genode::construct_at<Urb>(u, usb, *urb);
-				break;
-			} catch (...) { }
 
-		(void)wait_for_free_urb(msecs_to_jiffies(10000u));
+		if (genode_usb_client_request(handle, packet)) break;
+
+		timeout_jiffies = wait_for_free_urb(timeout_jiffies);
+		if (!timeout_jiffies) {
+			ret = -ETIMEDOUT;
+			goto err_request;
+		}
 	}
 
-	/*
-	 * Self-destruction of the 'Urb' object in its completion function
-	 * would not work if the 'Usb' session gets closed before the
-	 * completion function was called. So we store the pointer in the
-	 * otherwise unused 'hcpriv' member and free it in a following
-	 * 'usb_submit_urb()' or 'usb_free_urb()' call.
-	 */
+	if (packet->request.type == BULK && usb_pipeout(urb->pipe))
+		memcpy(packet->buffer.addr, urb->transfer_buffer, urb->transfer_buffer_length);
 
-	if (urb->hcpriv) {
-		Urb *prev_urb = (Urb*)urb->hcpriv;
-		prev_urb->~Urb();
-		kfree(urb->hcpriv);
-	}
+	urb->hcpriv = (void *)handle;
 
-	urb->hcpriv = u;
+	genode_usb_client_request_submit(handle, packet);
 
-	u->send();
-#endif
-	return 0;
+	return ret;
+
+err_request:
+	kfree(transfer);
+transfer:
+	kfree(packet);
+
+	return ret;
 }
 
 
 void usb_free_urb(struct urb *urb)
 {
-	struct genode_usb_client_request_packet *packet;
-
 	if (!urb)
 		return;
-
-	/* free genode objects */
-	if (urb->hcpriv) {
-		packet = (struct genode_usb_client_request_packet *)urb->hcpriv;
-		kfree(packet->request.req);
-		kfree(packet);
-	}
 
 	kfree(urb);
 
