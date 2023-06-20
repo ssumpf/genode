@@ -245,14 +245,6 @@ void __sched down(struct semaphore * sem)
 
 #include <linux/semaphore.h>
 
-int __sched down_interruptible(struct semaphore * sem)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/semaphore.h>
-
 int __sched down_trylock(struct semaphore * sem)
 {
 	lx_emul_trace_and_stop(__func__);
@@ -286,22 +278,6 @@ void finish_rcuwait(struct rcuwait * w)
 #include <linux/uuid.h>
 
 const u8 guid_index[16] = {};
-
-
-#include <linux/usb/hcd.h>
-
-void * hcd_buffer_alloc(struct usb_bus * bus,size_t size,gfp_t mem_flags,dma_addr_t * dma)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/usb/hcd.h>
-
-void hcd_buffer_free(struct usb_bus * bus,size_t size,void * addr,dma_addr_t dma)
-{
-	lx_emul_trace_and_stop(__func__);
-}
 
 
 #include <linux/init.h>
@@ -455,14 +431,6 @@ int irq_set_affinity(unsigned int irq,const struct cpumask * cpumask)
 #include <linux/irq_work.h>
 
 void irq_work_tick(void)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/mm.h>
-
-bool is_vmalloc_addr(const void * x)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -632,20 +600,6 @@ int usb_clear_halt(struct usb_device * dev,int pipe)
 }
 
 
-extern int usb_create_ep_devs(struct device * parent,struct usb_host_endpoint * endpoint,struct usb_device * udev);
-int usb_create_ep_devs(struct device * parent,struct usb_host_endpoint * endpoint,struct usb_device * udev)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-extern void usb_create_sysfs_intf_files(struct usb_interface * intf);
-void usb_create_sysfs_intf_files(struct usb_interface * intf)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 extern void usb_devio_cleanup(void);
 void usb_devio_cleanup(void)
 {
@@ -765,20 +719,6 @@ void usb_major_cleanup(void)
 }
 
 
-extern void usb_notify_add_device(struct usb_device * udev);
-void usb_notify_add_device(struct usb_device * udev)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-extern void usb_notify_remove_device(struct usb_device * udev);
-void usb_notify_remove_device(struct usb_device * udev)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 #include <linux/usb/hcd.h>
 
 void usb_put_hcd(struct usb_hcd * hcd)
@@ -833,14 +773,6 @@ const char * usb_speed_string(enum usb_device_speed speed)
 
 #include <linux/usb.h>
 
-int usb_string(struct usb_device * dev,int index,char * buf,size_t size)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/usb.h>
-
 int usb_unlink_urb(struct urb * urb)
 {
 	lx_emul_trace_and_stop(__func__);
@@ -859,21 +791,6 @@ void usb_unpoison_urb(struct urb * urb)
 
 const u8 uuid_index[16] = {};
 
-
-#include <linux/vmalloc.h>
-
-void vfree(const void * addr)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/vmalloc.h>
-
-void * vzalloc(unsigned long size)
-{
-	lx_emul_trace_and_stop(__func__);
-}
 
 
 #include <linux/sched/wake_q.h>

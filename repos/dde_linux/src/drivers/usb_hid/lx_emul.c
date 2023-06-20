@@ -71,6 +71,19 @@ printk("%s:%d\n", __func__, __LINE__);
 }
 
 
+void * hcd_buffer_alloc(struct usb_bus * bus, size_t size, gfp_t mem_flags, dma_addr_t * dma)
+{
+	return kmalloc(size, GFP_KERNEL);
+}
+
+
+void hcd_buffer_free(struct usb_bus * bus, size_t size, void * addr, dma_addr_t dma)
+{
+	kfree(addr);
+}
+
+
+
 /*
  * message.c
  */
@@ -133,6 +146,8 @@ static struct usb_interface_assoc_descriptor *find_iad(struct usb_device *dev,
 	return retval;
 }
 
+extern struct bus_type usb_bus_type;
+extern struct device_type usb_if_device_type;
 
 int usb_set_configuration(struct usb_device *dev, int configuration)
 {
@@ -140,7 +155,7 @@ int usb_set_configuration(struct usb_device *dev, int configuration)
 	struct usb_host_config *cp = NULL;
 	struct usb_interface **new_interfaces = NULL;
 	int n, nintf;
-
+printk("%s:%d\n", __func__, __LINE__);
 	if (dev->authorized == 0 || configuration == -1)
 		configuration = 0;
 	else {
@@ -217,7 +232,8 @@ int usb_set_configuration(struct usb_device *dev, int configuration)
 		intf->cur_altsetting = alt;
 		intf->dev.parent = &dev->dev;
 		intf->dev.driver = NULL;
-		intf->dev.bus = dev->dev.bus;
+		intf->dev.bus = &usb_bus_type;
+		intf->dev.type = &usb_if_device_type;
 		intf->minor = -1;
 		device_initialize(&intf->dev);
 		dev_set_name(&intf->dev, "%d-%s:%d.%d", dev->bus->busnum,
@@ -243,6 +259,23 @@ int usb_set_configuration(struct usb_device *dev, int configuration)
 		return ret;
 	}
 	dev->state = USB_STATE_CONFIGURED;
+
+	for (i = 0; i < nintf; ++i) {
+		struct usb_interface *intf = cp->interface[i];
+
+		dev_dbg(&dev->dev,
+			"adding %s (config #%d, interface %d)\n",
+			dev_name(&intf->dev), configuration,
+			intf->cur_altsetting->desc.bInterfaceNumber);
+		device_enable_async_suspend(&intf->dev);
+		printk("%s:%d ADD\n", __func__, __LINE__);
+		ret = device_add(&intf->dev);
+		printk("%s:%d ADD %d %s\n", __func__, __LINE__, ret, dev_name(&intf->dev));
+		if (ret != 0) {
+			printk("device_add(%s) --> %d\n", dev_name(&intf->dev), ret);
+			continue;
+		}
+	}
 
 	return 0;
 }

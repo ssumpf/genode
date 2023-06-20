@@ -88,6 +88,15 @@ void refcount_warn_saturate(refcount_t * r,enum refcount_saturation_type t)
 }
 
 
+#include <linux/semaphore.h>
+
+int __sched down_interruptible(struct semaphore * sem)
+{
+	lx_emul_trace(__func__);
+	return 0;
+}
+
+
 extern int usb_major_init(void);
 int usb_major_init(void)
 {
@@ -98,6 +107,15 @@ int usb_major_init(void)
 
 extern int __init usb_devio_init(void);
 int __init usb_devio_init(void)
+{
+	lx_emul_trace(__func__);
+	return 0;
+}
+
+
+#include <linux/usb.h>
+
+int usb_string(struct usb_device * dev,int index,char * buf,size_t size)
 {
 	lx_emul_trace(__func__);
 	return 0;
@@ -150,6 +168,37 @@ int usb_create_sysfs_dev_files(struct usb_device * udev)
 	lx_emul_trace(__func__);
 	return 0;
 }
+
+
+extern int usb_create_ep_devs(struct device * parent,struct usb_host_endpoint * endpoint,struct usb_device * udev);
+int usb_create_ep_devs(struct device * parent,struct usb_host_endpoint * endpoint,struct usb_device * udev)
+{
+	lx_emul_trace(__func__);
+	return 0;
+}
+
+
+extern void usb_notify_add_device(struct usb_device * udev);
+void usb_notify_add_device(struct usb_device * udev)
+{
+	lx_emul_trace(__func__);
+}
+
+
+extern void usb_notify_remove_device(struct usb_device * udev);
+void usb_notify_remove_device(struct usb_device * udev)
+{
+	lx_emul_trace(__func__);
+}
+
+
+extern void usb_create_sysfs_intf_files(struct usb_interface * intf);
+void usb_create_sysfs_intf_files(struct usb_interface * intf)
+{
+	lx_emul_trace(__func__);
+}
+
+
 
 
 
