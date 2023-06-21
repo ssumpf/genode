@@ -126,6 +126,15 @@ int kmem_cache_alloc_bulk(struct kmem_cache * s,gfp_t flags, size_t nr,void ** p
 }
 
 
+void kmem_cache_free_bulk(struct kmem_cache * s, size_t size, void ** p)
+{
+	size_t i;
+
+	for (i = 0; i < size; i++)
+		kmem_cache_free(s, p[i]);
+}
+
+
 #include <asm/hardirq.h>
 
 void ack_bad_irq(unsigned int irq)
