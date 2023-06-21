@@ -187,30 +187,6 @@ void async_synchronize_full(void)
 }
 
 
-#include <linux/cdev.h>
-
-int cdev_device_add(struct cdev * cdev,struct device * dev)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/cdev.h>
-
-void cdev_device_del(struct cdev * cdev,struct device * dev)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/cdev.h>
-
-void cdev_init(struct cdev * cdev,const struct file_operations * fops)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 #include <linux/leds.h>
 
 int devm_led_classdev_register_ext(struct device * parent,struct led_classdev * led_cdev,struct led_init_data * init_data)
@@ -230,22 +206,6 @@ int devm_led_trigger_register(struct device * dev,struct led_trigger * trig)
 #include <linux/power_supply.h>
 
 struct power_supply * __must_check devm_power_supply_register(struct device * parent,const struct power_supply_desc * desc,const struct power_supply_config * cfg)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/semaphore.h>
-
-void __sched down(struct semaphore * sem)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/semaphore.h>
-
-int __sched down_trylock(struct semaphore * sem)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -571,14 +531,6 @@ bool timerqueue_del(struct timerqueue_head * head,struct timerqueue_node * node)
 #include <linux/timerqueue.h>
 
 struct timerqueue_node * timerqueue_iterate_next(struct timerqueue_node * node)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/semaphore.h>
-
-void __sched up(struct semaphore * sem)
 {
 	lx_emul_trace_and_stop(__func__);
 }

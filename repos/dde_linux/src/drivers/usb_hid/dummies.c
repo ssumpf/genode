@@ -148,6 +148,31 @@ bool parse_option_str(const char * str,const char * option)
 }
 
 
+#include <linux/semaphore.h>
+
+void __sched up(struct semaphore * sem)
+{
+	lx_emul_trace(__func__);
+}
+
+
+#include <linux/semaphore.h>
+
+void __sched down(struct semaphore * sem)
+{
+	lx_emul_trace(__func__);
+}
+
+
+#include <linux/semaphore.h>
+
+int __sched down_trylock(struct semaphore * sem)
+{
+	lx_emul_trace_and_stop(__func__);
+	return 1;
+}
+
+
 extern void usb_enable_endpoint(struct usb_device * dev,struct usb_host_endpoint * ep,bool reset_ep);
 void usb_enable_endpoint(struct usb_device * dev,struct usb_host_endpoint * ep,bool reset_ep)
 {

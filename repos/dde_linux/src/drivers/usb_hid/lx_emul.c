@@ -1,5 +1,6 @@
 #include <lx_emul.h>
 
+#include <linux/cdev.h>
 #include <linux/device.h>
 #include <linux/sysfs.h>
 #include <linux/usb.h>
@@ -20,12 +21,12 @@ struct usb_driver usbfs_driver = {
 const struct attribute_group *usb_device_groups[] = { };
 
 static struct hc_driver _hc_driver = { };
-struct device sysdev = { };
 
 unsigned long lx_usb_register_device(genode_usb_client_handle_t handle, char const *label)
 {
 	struct usb_device *udev;
 	struct usb_hcd *hcd;
+	struct device *sysdev;
 	int err;
 	struct genode_usb_device_descriptor dev_descr;
 	struct genode_usb_config_descriptor conf_descr;
@@ -36,21 +37,25 @@ unsigned long lx_usb_register_device(genode_usb_client_handle_t handle, char con
 		return 0;
 	}
 
-	device_initialize(&sysdev);
+	//XXX: cleanup sysdev and hcd
+	sysdev = (struct device*)kzalloc(sizeof(*sysdev), GFP_KERNEL);
+
+	device_initialize(sysdev);
 	//udev = (struct usb_device *)kzalloc(sizeof(struct usb_device), GFP_KERNEL);
-	printk("%s:%d ALLOC udev: %px UDEV_DEV: %px\n", __func__, __LINE__, udev, &udev->dev);
+	printk("%s:%d ALLOC udev: %px UDEV_DEV: %px handle %lu\n", __func__, __LINE__, udev, &udev->dev, handle);
 	hcd = (struct usb_hcd *)kzalloc(sizeof(struct usb_hcd), GFP_KERNEL);
 	hcd->driver = & _hc_driver;
 	/* hcd->self is usb_bus */
 	hcd->self.bus_name = "usbbus";
-	hcd->self.controller = (struct device *)handle;
-	hcd->self.sysdev = &sysdev;
+	hcd->self.sysdev = sysdev;
 
 	udev = usb_alloc_dev(NULL, &hcd->self, 0);
 	if (!udev) {
 		printk("error: could not allocate udev for %s\n", label);
 		return 0;
 	}
+	/* usb_alloc_dev set parent to bus->controller if first argument is NULL */
+	hcd->self.controller = (struct device *)handle;
 printk("%s:%d\n", __func__, __LINE__);
 	dev_set_name(&udev->dev, "%s", label);
 	udev->bus_mA = 900; /* set to maximum USB3.0 */

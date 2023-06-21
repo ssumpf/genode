@@ -17,7 +17,6 @@ drivers/hid/hid-quirks.c
 drivers/hid/wacom_sys.c
 drivers/hid/wacom_wac.c
 drivers/hid/usbhid/hid-core.c
-drivers/input/evdev.c
 drivers/input/input-mt.c
 drivers/input/input.c
 drivers/usb/core/config.c
