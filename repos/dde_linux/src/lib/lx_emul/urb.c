@@ -176,6 +176,7 @@ int usb_submit_urb(struct urb *urb, gfp_t mem_flags)
 	genode_usb_client_handle_t handle;
 	struct genode_usb_client_request_packet *packet;
 	struct genode_usb_request_transfer *transfer;
+	struct genode_usb_request_control  *control;
 	int ret = 0;
 	unsigned timeout_jiffies = msecs_to_jiffies(10000u);
 
@@ -190,37 +191,59 @@ int usb_submit_urb(struct urb *urb, gfp_t mem_flags)
 
 	if (!packet) return -ENOMEM;
 
-	transfer = (struct genode_usb_request_transfer *)
-		kzalloc(sizeof(*transfer), GFP_KERNEL);
+	if (usb_pipetype(urb->pipe) == PIPE_CONTROL) {
+		control = (struct genode_usb_request_control *)
+			kzalloc(sizeof(*control), GFP_KERNEL);
 
-	if (!transfer) {
-		ret = -ENOMEM;
-		goto transfer;
+		if (!control) {
+			ret = -ENOMEM;
+			goto transfer;
+		}
+	}
+	else {
+		transfer = (struct genode_usb_request_transfer *)
+			kzalloc(sizeof(*transfer), GFP_KERNEL);
+
+		if (!transfer) {
+			ret = -ENOMEM;
+			goto transfer;
+		}
 	}
 
 	switch(usb_pipetype(urb->pipe)) {
+	case PIPE_CONTROL:
+		{
+			struct usb_ctrlrequest * ctrl = (struct usb_ctrlrequest *)
+				urb->setup_packet;
+			packet->request.type  = CTRL;
+			control->request      = ctrl->bRequest;
+			control->request_type = ctrl->bRequestType;
+			control->value        = ctrl->wValue;
+			control->index        = ctrl->wIndex;
+			packet->request.req   = control;
+			break;
+		}
 	case PIPE_INTERRUPT:
 		{
-			struct usb_host_endpoint *ep =
-				usb_pipe_endpoint(urb->dev, urb->pipe);
+			struct usb_host_endpoint *ep = usb_pipe_endpoint(urb->dev, urb->pipe);
 			packet->request.type       = IRQ;
 			transfer->polling_interval = urb->interval;
 			transfer->ep               = ep->desc.bEndpointAddress;
+			packet->request.req        = transfer;
 			break;
 		}
 	case PIPE_BULK:
 		{
-			struct usb_host_endpoint *ep =
-				usb_pipe_endpoint(urb->dev, urb->pipe);
+			struct usb_host_endpoint *ep = usb_pipe_endpoint(urb->dev, urb->pipe);
 			packet->request.type = BULK;
 			transfer->ep         = ep->desc.bEndpointAddress;
+			packet->request.req  = transfer;
 			break;
 		}
 	default:
 		printk("unknown URB requested: %d\n", usb_pipetype(urb->pipe));
 	}
 
-	packet->request.req       = transfer;
 	packet->buffer.size       = urb->transfer_buffer_length;
 	packet->complete_callback = urb_submit_complete;
 	packet->opaque_data       = urb;
@@ -236,7 +259,7 @@ int usb_submit_urb(struct urb *urb, gfp_t mem_flags)
 		}
 	}
 
-	if (packet->request.type == BULK && usb_pipeout(urb->pipe))
+	if (usb_pipeout(urb->pipe))
 		memcpy(packet->buffer.addr, urb->transfer_buffer, urb->transfer_buffer_length);
 
 	urb->hcpriv = (void *)handle;
@@ -246,7 +269,8 @@ int usb_submit_urb(struct urb *urb, gfp_t mem_flags)
 	return ret;
 
 err_request:
-	kfree(transfer);
+	if (transfer) kfree(transfer);
+	if (control)  kfree(control);
 transfer:
 	kfree(packet);
 
