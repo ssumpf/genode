@@ -71,7 +71,6 @@ int usb_control_msg(struct usb_device *dev, unsigned int pipe,
 	struct genode_usb_request_control       control;
 
 	genode_usb_client_handle_t handle;
-	printk("%s:%d\n", __func__, __LINE__);
 
 	if (!dev->bus) return -ENODEV;
 
@@ -118,15 +117,13 @@ int usb_control_msg(struct usb_device *dev, unsigned int pipe,
 	packet.opaque_data       = &comp;
 
 	genode_usb_client_request_submit(handle, &packet);
-	printk("%s:%d\n", __func__, __LINE__);
 	wait_for_completion(&comp);
-	printk("%s:%d\n", __func__, __LINE__);
+
 
 	if (packet.actual_length && data && (size >= packet.actual_length))
 		memcpy(data, packet.buffer.addr, packet.actual_length);
 
 	ret = packet.error ? packet_errno(packet.error) : packet.actual_length;
-	printk("%s:%d ret: %u\n", __func__, __LINE__, ret);
 	genode_usb_client_request_finish(handle, &packet);
 
 err_request:
@@ -157,10 +154,14 @@ static void urb_submit_complete(struct genode_usb_client_request_packet *packet)
 
 	urb->status = packet->error ? packet_errno(packet->error) : 0;
 
+	printk("%s:%d: %d\n", __func__, __LINE__, usb_pipetype(urb->pipe));
+
 	if (packet->error == 0 &&
 	    packet->actual_length && urb->transfer_buffer &&
 	    urb->transfer_buffer_length >= packet->actual_length)
 		memcpy(urb->transfer_buffer, packet->buffer.addr, packet->actual_length);
+
+	urb->actual_length = packet->actual_length;
 
 	kfree(packet->request.req);
 	kfree(packet);
@@ -227,14 +228,16 @@ int usb_submit_urb(struct urb *urb, gfp_t mem_flags)
 		{
 			packet->request.type       = IRQ;
 			transfer->polling_interval = urb->interval;
-			transfer->ep               = usb_pipeendpoint(urb->pipe);
+			transfer->ep               = usb_pipeendpoint(urb->pipe)
+			                             | (usb_pipein(urb->pipe) ?  USB_DIR_IN : 0);
 			packet->request.req        = transfer;
 			break;
 		}
 	case PIPE_BULK:
 		{
 			packet->request.type = BULK;
-			transfer->ep         =  usb_pipeendpoint(urb->pipe);
+			transfer->ep         = usb_pipeendpoint(urb->pipe)
+			                       | (usb_pipein(urb->pipe) ?  USB_DIR_IN : 0);
 			packet->request.req  = transfer;
 			break;
 		}
@@ -263,7 +266,7 @@ int usb_submit_urb(struct urb *urb, gfp_t mem_flags)
 	urb->hcpriv = (void *)handle;
 
 	genode_usb_client_request_submit(handle, packet);
-
+	printk("%s:%d submitted\n", __func__, __LINE__);
 	return ret;
 
 err_request:
