@@ -180,7 +180,7 @@ int usb_submit_urb(struct urb *urb, gfp_t mem_flags)
 	int ret = 0;
 	unsigned timeout_jiffies = msecs_to_jiffies(10000u);
 
-	printk("%s:%d\n", __func__, __LINE__);
+	printk("%s:%d type: %d\n", __func__, __LINE__, usb_pipetype(urb->pipe));
 	if (!urb->dev->bus)
 		return -ENODEV;
 
@@ -225,18 +225,16 @@ int usb_submit_urb(struct urb *urb, gfp_t mem_flags)
 		}
 	case PIPE_INTERRUPT:
 		{
-			struct usb_host_endpoint *ep = usb_pipe_endpoint(urb->dev, urb->pipe);
 			packet->request.type       = IRQ;
 			transfer->polling_interval = urb->interval;
-			transfer->ep               = ep->desc.bEndpointAddress;
+			transfer->ep               = usb_pipeendpoint(urb->pipe);
 			packet->request.req        = transfer;
 			break;
 		}
 	case PIPE_BULK:
 		{
-			struct usb_host_endpoint *ep = usb_pipe_endpoint(urb->dev, urb->pipe);
 			packet->request.type = BULK;
-			transfer->ep         = ep->desc.bEndpointAddress;
+			transfer->ep         =  usb_pipeendpoint(urb->pipe);
 			packet->request.req  = transfer;
 			break;
 		}
