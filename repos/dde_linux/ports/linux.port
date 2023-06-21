@@ -12,8 +12,11 @@ DIR(linux) := src/linux
 PATCH_FILES := i915_irq.patch \
                iwlwifi_enable_irq_before_pnvm.patch \
                iwlwifi_limit_rx_bufs.patch \
-               workqueue_deadlock.patch
+               workqueue_deadlock.patch \
+               hweight_x86.patch
+
 PATCHES += $(addprefix patches/,$(PATCH_FILES))
 
 PATCH_OPT(patches/i915_irq.patch)           := -p1 -d${DIR(linux)}
 PATCH_OPT(patches/workqueue_deadlock.patch) := -p1 -d${DIR(linux)}
+PATCH_OPT(patches/hweight_x86.patch)        := -p1 -d${DIR(linux)}
