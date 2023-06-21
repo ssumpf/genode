@@ -5,7 +5,7 @@ extern "C" {
 #endif
 
 
-unsigned long lx_usb_register_device(genode_usb_client_handle_t handle, char const *label);
+void *lx_emul_usb_client_register_device(genode_usb_client_handle_t handle, char const *label);
 
 struct task_struct;
 

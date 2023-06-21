@@ -98,6 +98,8 @@ struct Device : Registry<Device>::Element
 	bool updated    { true };
 	bool registered { false };
 
+	void *meta_data { nullptr };
+
 	Device(Env &env, Registry<Device> &registry, Label label)
 	:
 		Registry<Device>::Element(registry, *this),
@@ -121,8 +123,9 @@ struct Device : Registry<Device>::Element
 	{
 		warning("register device");
 		registered = true;
-		if (lx_usb_register_device(usb_handle, label.string()))
-			registered = false;
+		meta_data = lx_emul_usb_client_register_device(usb_handle, label.string());
+
+		if (!meta_data) registered = false;
 	}
 
 	void unregister_device() { }

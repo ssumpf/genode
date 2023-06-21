@@ -22,11 +22,16 @@ const struct attribute_group *usb_device_groups[] = { };
 
 static struct hc_driver _hc_driver = { };
 
-unsigned long lx_usb_register_device(genode_usb_client_handle_t handle, char const *label)
+struct meta_data
 {
+	struct usb_hcd    *hcd;
+	struct device     *sysdev;
 	struct usb_device *udev;
-	struct usb_hcd *hcd;
-	struct device *sysdev;
+};
+
+void *lx_emul_usb_client_register_device(genode_usb_client_handle_t handle, char const *label)
+{
+	struct meta_data  *meta;
 	int err;
 	struct genode_usb_device_descriptor dev_descr;
 	struct genode_usb_config_descriptor conf_descr;
@@ -34,45 +39,59 @@ unsigned long lx_usb_register_device(genode_usb_client_handle_t handle, char con
 	err = genode_usb_client_config_descriptor(handle, &dev_descr, &conf_descr);
 	if (err) {
 		printk("error: failed to read config descriptor\n");
-		return err;
+		return NULL;;
 	}
 
-	//XXX: cleanup sysdev and hcd
-	sysdev = (struct device*)kzalloc(sizeof(*sysdev), GFP_KERNEL);
+	meta = (struct meta_data *)kmalloc(sizeof(meta), GFP_KERNEL);
+	if (!meta) return NULL;
 
-	device_initialize(sysdev);
-	//udev = (struct usb_device *)kzalloc(sizeof(struct usb_device), GFP_KERNEL);
-	printk("%s:%d ALLOC udev: %px UDEV_DEV: %px handle %lu\n", __func__, __LINE__, udev, &udev->dev, handle);
-	hcd = (struct usb_hcd *)kzalloc(sizeof(struct usb_hcd), GFP_KERNEL);
-	hcd->driver = & _hc_driver;
+	meta->sysdev = (struct device*)kzalloc(sizeof(struct device), GFP_KERNEL);
+	if (!meta->sysdev) goto sysdev;
+
+	device_initialize(meta->sysdev);
+
+	meta->hcd = (struct usb_hcd *)kzalloc(sizeof(struct usb_hcd), GFP_KERNEL);
+	if (!meta->hcd) goto hcd;
+
 	/* hcd->self is usb_bus */
-	hcd->self.bus_name = "usbbus";
-	hcd->self.sysdev = sysdev;
+	meta->hcd->driver        = &_hc_driver;
+	meta->hcd->self.bus_name = "usbbus";
+	meta->hcd->self.sysdev   = meta->sysdev;
 
-	udev = usb_alloc_dev(NULL, &hcd->self, 0);
-	if (!udev) {
+	meta->udev = usb_alloc_dev(NULL, &meta->hcd->self, 0);
+	if (!meta->udev) {
 		printk("error: could not allocate udev for %s\n", label);
-		return -ENOMEM;
+		goto udev;
 	}
-	/* usb_alloc_dev set parent to bus->controller if first argument is NULL */
-	hcd->self.controller = (struct device *)handle;
-printk("%s:%d\n", __func__, __LINE__);
-	dev_set_name(&udev->dev, "%s", label);
-	udev->bus_mA = 900; /* set to maximum USB3.0 */
+	/* usb_alloc_dev sets parent to bus->controller if first argument is NULL */
+	meta->hcd->self.controller = (struct device *)handle;
 
-	memcpy(&udev->descriptor, &dev_descr, sizeof(struct usb_device_descriptor));
-	udev->devnum = dev_descr.num;
-	udev->speed  = (enum usb_device_speed)dev_descr.speed;
-	udev->authorized = 1;
+	memcpy(&meta->udev->descriptor, &dev_descr, sizeof(struct usb_device_descriptor));
+	meta->udev->devnum     = dev_descr.num;
+	meta->udev->speed      = (enum usb_device_speed)dev_descr.speed;
+	meta->udev->authorized = 1;
+	meta->udev->bus_mA     = 900; /* set to maximum USB3.0 */
 
+	dev_set_name(&meta->udev->dev, "%s", label);
 
-	err = usb_new_device(udev);
+	err = usb_new_device(meta->udev);
 	if (err) {
 		printk("error: usb_new_device failed %d\n", err);
-		return err;
+		goto new_device;
 	}
 
-	return 0;
+	return meta;
+
+new_device:
+	kfree(meta->udev);
+udev:
+	kfree(meta->hcd);
+hcd:
+	kfree(meta->sysdev);
+sysdev:
+	kfree(meta);
+
+	return NULL;
 }
 
 
