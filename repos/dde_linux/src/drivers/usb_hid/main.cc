@@ -7,6 +7,8 @@
 #include <lx_emul/task.h>
 #include <lx_kit/env.h>
 
+#include <genode_c_api/event.h>
+
 /* C-interface */
 #include <usb_hid.h>
 
@@ -95,7 +97,6 @@ struct Device : Registry<Device>::Element
 
 	bool updated    { true };
 	bool registered { false };
-	unsigned long udev { 0 };
 
 	Device(Env &env, Registry<Device> &registry, Label label)
 	:
@@ -120,8 +121,8 @@ struct Device : Registry<Device>::Element
 	{
 		warning("register device");
 		registered = true;
-		udev = lx_usb_register_device(usb_handle, label.string());
-		if (!udev) return;
+		if (lx_usb_register_device(usb_handle, label.string()))
+			registered = false;
 	}
 
 	void unregister_device() { }
@@ -160,7 +161,7 @@ struct Device : Registry<Device>::Element
 				warning("call completions");
 				genode_usb_client_execute_completions(device.usb_handle);
 			}
-
+			Genode::warning("URB task BLOCK");
 			device.urb_task_handler.block_and_schedule();
 		}
 		lx_user_destroy_usb_task(device.urb_task_handler.task);
@@ -253,7 +254,12 @@ struct Driver
 void Component::construct(Env & env)
 {
 	Lx_kit::initialize(env);
+
 	env.exec_static_constructors();
+
+	genode_event_init(genode_env_ptr(env),
+	                  genode_allocator_ptr(Lx_kit::env().heap));
+
 	lx_emul_start_kernel(nullptr);
 }
 

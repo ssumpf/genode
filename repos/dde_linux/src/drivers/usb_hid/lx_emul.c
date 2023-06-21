@@ -34,7 +34,7 @@ unsigned long lx_usb_register_device(genode_usb_client_handle_t handle, char con
 	err = genode_usb_client_config_descriptor(handle, &dev_descr, &conf_descr);
 	if (err) {
 		printk("error: failed to read config descriptor\n");
-		return 0;
+		return err;
 	}
 
 	//XXX: cleanup sysdev and hcd
@@ -52,7 +52,7 @@ unsigned long lx_usb_register_device(genode_usb_client_handle_t handle, char con
 	udev = usb_alloc_dev(NULL, &hcd->self, 0);
 	if (!udev) {
 		printk("error: could not allocate udev for %s\n", label);
-		return 0;
+		return -ENOMEM;
 	}
 	/* usb_alloc_dev set parent to bus->controller if first argument is NULL */
 	hcd->self.controller = (struct device *)handle;
@@ -69,10 +69,10 @@ printk("%s:%d\n", __func__, __LINE__);
 	err = usb_new_device(udev);
 	if (err) {
 		printk("error: usb_new_device failed %d\n", err);
-		return 0;
+		return err;
 	}
 
-	return (unsigned long)udev;
+	return 0;
 }
 
 

@@ -9,16 +9,21 @@ SRC_C = dummies.c \
         lx_user.c \
         lx_emul/urb.c \
 
+SRC_C += lx_emul/shadow/drivers/input/evdev.c
 
 SRC_CC = main.cc \
-         lx_emul/random.cc \
          usb_client/usb_client.cc \
 
-CC_OPT += -fno-tree-vectorize
-CC_C_OPT += -fno-tree-vectorize
+SRC_CC += lx_emul/event.cc \
+          lx_emul/random.cc
 
+SRC_CC += genode_c_api/event.cc
 
 vpath %.c  $(PRG_DIR)
 vpath %.cc $(PRG_DIR)
 vpath %.c  $(REP_DIR)/src/lib
 vpath %.cc $(REP_DIR)/src/lib
+
+C_API = $(dir $(call select_from_repositories,src/lib/genode_c_api))
+
+vpath genode_c_api/event.cc $(C_API)

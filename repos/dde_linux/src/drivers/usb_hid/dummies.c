@@ -168,8 +168,8 @@ void __sched down(struct semaphore * sem)
 
 int __sched down_trylock(struct semaphore * sem)
 {
-	lx_emul_trace_and_stop(__func__);
-	return 1;
+	lx_emul_trace(__func__);
+	return 0;
 }
 
 
