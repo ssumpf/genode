@@ -18,25 +18,23 @@
 
 using namespace Genode;
 
-using Native_pd_capability = Genode::Capability<Genode::Pd_session::Native_pd>;
 
-
-static Parent *parent_ptr;
-static Pd_session *pd_ptr;
-static Native_pd_capability native_pd_cap;
+static Parent                *parent_ptr;
+static Pd_session::Native_pd *native_pd_ptr;
 
 
 void Genode::init_cap_slab(Pd_session &pd, Parent &parent)
 {
+	static Hw_native_pd_client native_pd(pd.native_pd());
+
 	parent_ptr    = &parent;
-	pd_ptr        = &pd;
-	native_pd_cap = pd.native_pd();
+	native_pd_ptr = &native_pd;
 }
 
 
 void Genode::upgrade_capability_slab()
 {
-	if (!native_pd_cap.valid() || !parent_ptr) {
+	if (!native_pd_ptr || !parent_ptr) {
 		error("missing call of 'init_cap_slab'");
 		return;
 	}
@@ -55,9 +53,7 @@ void Genode::upgrade_capability_slab()
 		[&] () {
 			retry<Genode::Out_of_ram>(
 				[&] () {
-					Genode::Hw_native_pd_client pd(native_pd_cap);
-					pd.upgrade_cap_slab();
-				},
+					native_pd_ptr->upgrade_cap_slab(); },
 				[&] () {
 					request_resources_from_parent(Ram_quota{8192}, Cap_quota{0});
 				});
