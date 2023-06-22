@@ -223,19 +223,3 @@ void usb_create_sysfs_intf_files(struct usb_interface * intf)
 	lx_emul_trace(__func__);
 }
 
-
-
-
-
-
-
-
-#if 0
-#include <linux/usb.h>
-
-int usb_disabled(void)
-{
-	lx_emul_trace(__func__);
-	return 0;
-}
-#endif
