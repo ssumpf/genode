@@ -1,7 +1,7 @@
 /*
  * \brief  Array defining order of Linux Kernel initcalls
  * \author Automatically generated file - do no edit
- * \date   2023-03-27
+ * \date   2023-06-28
  */
 
 #pragma once
@@ -69,8 +69,11 @@ static const char * lx_emul_initcall_order[] = {
 	"__initcall_prng_mod_init4",
 	"__initcall_misc_init4",
 	"__initcall_register_cpu_capacity_sysctl4",
+	"__initcall_usb_common_init4",
+	"__initcall_usb_init4",
 	"__initcall_input_init4",
 	"__initcall_power_supply_class_init4",
+	"__initcall_leds_init4",
 	"__initcall_net_dev_init4",
 	"__initcall_neigh_init4",
 	"__initcall_fib_notifier_init4",
@@ -128,7 +131,18 @@ static const char * lx_emul_initcall_order[] = {
 	"__initcall_blackhole_netdev_init6",
 	"__initcall_virtio_net_driver_init6",
 	"__initcall_net_failover_init6",
+	"__initcall_input_leds_init6",
+	"__initcall_evdev_init6",
 	"__initcall_smccc_devices_init6",
+	"__initcall_hid_init6",
+	"__initcall_hid_generic_init6",
+	"__initcall_apple_driver_init6",
+	"__initcall_ch_driver_init6",
+	"__initcall_holtek_kbd_driver_init6",
+	"__initcall_holtek_mouse_driver_init6",
+	"__initcall_holtek_driver_init6",
+	"__initcall_ms_driver_init6",
+	"__initcall_hid_init6",
 	"__initcall_sock_diag_init6",
 	"__initcall_failover_init6",
 	"__initcall_gre_offload_init6",
