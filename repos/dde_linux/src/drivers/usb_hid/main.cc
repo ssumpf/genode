@@ -75,13 +75,8 @@ struct Task_handler
 	{
 		running = false;
 		lx_emul_task_unblock(task);
-
-		/*
-		 * this us called by 'lx_user_main_task', upon next signal receive the task
-		 * will run from here and don't block again because a signal is pending
-		 */
+		/* will be unblocked by lx_user_destroy_usb_task */
 		lx_emul_task_schedule(true);
-
 	}
 
 	Task_handler(Entrypoint & ep, task_struct *task)
@@ -188,10 +183,13 @@ struct Device : Registry<Device>::Element
 
 	~Device()
 	{
-		state_task_handler.destroy_task();
-		urb_task_handler.destroy_task();
 		genode_usb_client_destroy(usb_handle,
 		                          genode_allocator_ptr(Lx_kit::env().heap));
+		static int d = 0;
+		error("destroy: ", ++d);
+		state_task_handler.destroy_task();
+		urb_task_handler.destroy_task();
+		error("destroy: ", d, " done");
 	}
 
 	/* non-copyable */

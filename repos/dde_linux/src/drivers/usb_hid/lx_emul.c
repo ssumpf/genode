@@ -316,15 +316,14 @@ printk("%s:%d\n", __func__, __LINE__);
 	for (i = 0; i < nintf; ++i) {
 		struct usb_interface *intf = cp->interface[i];
 
-		printk("%s:%d ADD\n", __func__, __LINE__);
-		genode_usb_client_claim_interface(handle, intf->cur_altsetting->desc.bInterfaceNumber);
+		printk("%s:%d ADD h: %lu i: %d\n", __func__, __LINE__, handle, intf->cur_altsetting->desc.bInterfaceNumber);
 		ret = device_add(&intf->dev);
 		printk("%s:%d ADD %d %s\n", __func__, __LINE__, ret, dev_name(&intf->dev));
 		if (ret != 0) {
 			printk("error: device_add(%s) --> %d\n", dev_name(&intf->dev), ret);
-			genode_usb_client_release_interface(handle, intf->cur_altsetting->desc.bInterfaceNumber);
 			continue;
 		}
+		genode_usb_client_claim_interface(handle, intf->cur_altsetting->desc.bInterfaceNumber);
 	}
 
 	return 0;
@@ -353,6 +352,7 @@ void usb_disable_device(struct usb_device *dev, int skip_ep0)
 			interface = dev->actconfig->interface[i];
 			if (!device_is_registered(&interface->dev))
 				continue;
+
 			dev_dbg(&dev->dev, "unregistering interface %s\n",
 				dev_name(&interface->dev));
 			device_del(&interface->dev);

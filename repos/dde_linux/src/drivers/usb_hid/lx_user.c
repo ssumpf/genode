@@ -1,6 +1,7 @@
 #include <linux/sched/task.h>
 #include <usb_hid.h>
 
+static struct task_struct *main_task = NULL;
 
 struct task_struct *lx_user_new_usb_task(int (*func)(void*), void *args)
 {
@@ -17,13 +18,15 @@ void lx_user_destroy_usb_task(struct task_struct *task)
 		return;
 	}
 
+	/* unblock main task which initiated destruction */
+	lx_emul_task_unblock(main_task);
+
 	do_exit(0);
 }
 
 
 void lx_user_init(void)
 {
-	static struct task_struct *main_task = NULL;
 	int pid = kernel_thread(lx_user_main_task, &main_task, CLONE_FS | CLONE_FILES);
 	main_task = find_task_by_pid_ns(pid, NULL);
 }
