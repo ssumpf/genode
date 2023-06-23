@@ -58,6 +58,9 @@ genode_usb_client_create(struct genode_env             *env,
                          char const                    *label,
                          struct genode_signal_handler  *handler);
 
+void genode_usb_client_destroy(genode_usb_client_handle_t handle,
+                               struct genode_allocator *md_alloc);
+
 void genode_usb_client_sigh_ack_avail(genode_usb_client_handle_t handle,
                                       struct genode_signal_handler *handler);
 
