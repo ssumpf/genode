@@ -12,6 +12,8 @@
 /* C-interface */
 #include <usb_hid.h>
 
+#include <led_state.h>
+
 using namespace Genode;
 
 
@@ -73,7 +75,13 @@ struct Task_handler
 	{
 		running = false;
 		lx_emul_task_unblock(task);
-		Lx_kit::env().scheduler.schedule();
+
+		/*
+		 * this us called by 'lx_user_main_task', upon next signal receive the task
+		 * will run from here and don't block again because a signal is pending
+		 */
+		lx_emul_task_schedule(true);
+
 	}
 
 	Task_handler(Entrypoint & ep, task_struct *task)
@@ -82,6 +90,59 @@ struct Task_handler
 	/* non-copyable */
 	Task_handler(const Task_handler&) = delete;
 	Task_handler & operator=(const Task_handler&) = delete;
+};
+
+
+struct Leds
+{
+	Env &env;
+
+	Attached_rom_dataspace &config_rom;
+
+	task_struct *led_task { lx_user_new_usb_task(led_task_entry, this) };
+
+	Task_handler led_task_handler { env.ep(), led_task };
+
+	Usb::Led_state capslock { env, "capslock" },
+	               numlock  { env, "numlock"  },
+	               scrlock  { env, "scrlock"  };
+
+	Leds(Env &env, Attached_rom_dataspace &config_rom)
+	: env(env), config_rom(config_rom) { };
+
+	/* non-copyable */
+	Leds(const Leds&) = delete;
+	Leds & operator=(const Leds&) = delete;
+
+	void handle_config()
+	{
+		config_rom.update();
+		Genode::Xml_node config =config_rom.xml();
+
+		capslock.update(config, led_task_handler.handler);
+		numlock .update(config, led_task_handler.handler);
+		scrlock .update(config, led_task_handler.handler);
+	}
+
+
+	/**********
+	 ** Task **
+	 **********/
+
+	static int led_task_entry(void *arg)
+	{
+		Leds &led = *reinterpret_cast<Leds *>(arg);
+
+		while (true) {
+			led.handle_config();
+
+			lx_led_state_update(led.capslock.enabled(),
+			                    led.numlock.enabled(),
+			                    led.scrlock.enabled());
+
+			led.led_task_handler.block_and_schedule();
+		}
+	}
 };
 
 
@@ -129,6 +190,8 @@ struct Device : Registry<Device>::Element
 	{
 		state_task_handler.destroy_task();
 		urb_task_handler.destroy_task();
+		genode_usb_client_destroy(usb_handle,
+		                          genode_allocator_ptr(Lx_kit::env().heap));
 	}
 
 	/* non-copyable */
@@ -143,8 +206,16 @@ struct Device : Registry<Device>::Element
 		if (!lx_device_handle) registered = false;
 	}
 
-	void unregister_device() { }
-	bool deinit() { return false; }
+	void unregister_device()
+	{
+		warning("unregister device");
+		lx_emul_usb_client_unregister_device(usb_handle, lx_device_handle);
+		registered = false;
+	}
+
+	bool deinit() { return !registered &&
+	                       !state_task_handler.handling_signal &&
+	                       !urb_task_handler.handling_signal; }
 
 	/**********
 	 ** Task **
@@ -205,6 +276,8 @@ struct Driver
 	Attached_rom_dataspace report_rom { env, "report" };
 	Attached_rom_dataspace config_rom { env, "config" };
 
+	Leds leds { env, config_rom };
+
 	Registry<Device> devices { };
 
 	Driver(Env &env, task_struct *task)
@@ -264,8 +337,10 @@ struct Driver
 		};
 
 		devices.for_each([&] (Device & d) {
-			if (!d.updated && d.deinit())
+			if (!d.updated && d.deinit()) {
+				error("destroy: ", &d);
 				destroy(heap, &d);
+			}
 		});
 	}
 };

@@ -42,7 +42,7 @@ void *lx_emul_usb_client_register_device(genode_usb_client_handle_t handle, char
 		return NULL;;
 	}
 
-	meta = (struct meta_data *)kmalloc(sizeof(meta), GFP_KERNEL);
+	meta = (struct meta_data *)kmalloc(sizeof(struct meta_data), GFP_KERNEL);
 	if (!meta) return NULL;
 
 	meta->sysdev = (struct device*)kzalloc(sizeof(struct device), GFP_KERNEL);
@@ -63,6 +63,7 @@ void *lx_emul_usb_client_register_device(genode_usb_client_handle_t handle, char
 		printk("error: could not allocate udev for %s\n", label);
 		goto udev;
 	}
+	printk("%s:%d NAME: %s\n", __func__, __LINE__, meta->udev->dev.bus->name);
 	/* usb_alloc_dev sets parent to bus->controller if first argument is NULL */
 	meta->hcd->self.controller = (struct device *)handle;
 
@@ -71,19 +72,22 @@ void *lx_emul_usb_client_register_device(genode_usb_client_handle_t handle, char
 	meta->udev->speed      = (enum usb_device_speed)dev_descr.speed;
 	meta->udev->authorized = 1;
 	meta->udev->bus_mA     = 900; /* set to maximum USB3.0 */
+	meta->udev->state      = USB_STATE_NOTATTACHED;
 
 	dev_set_name(&meta->udev->dev, "%s", label);
 
+	printk("%s:%d 1: %px 2: %px 3: %px &3: %px\n", __func__, __LINE__, meta->hcd, meta->sysdev, meta->udev, &meta->udev);
 	err = usb_new_device(meta->udev);
+	printk("%s:%d 1: %px 2: %px 3: %px\n", __func__, __LINE__, meta->hcd, meta->sysdev, meta->udev);
+
 	if (err) {
 		printk("error: usb_new_device failed %d\n", err);
 		goto new_device;
 	}
-
 	return meta;
 
 new_device:
-	kfree(meta->udev);
+	usb_put_dev(meta->udev);
 udev:
 	kfree(meta->hcd);
 hcd:
@@ -92,6 +96,27 @@ sysdev:
 	kfree(meta);
 
 	return NULL;
+}
+
+
+void lx_emul_usb_client_unregister_device(genode_usb_client_handle_t handle, void *data)
+{
+	struct meta_data *meta = (struct meta_data *)data;
+
+	printk("%s:%d\n", __func__, __LINE__);
+	printk("%s:%d %s\n", __func__, __LINE__, meta->udev->dev.bus->name);
+	usb_disconnect(&meta->udev);
+	printk("%s:%d\n", __func__, __LINE__);
+	usb_put_dev(meta->udev);
+	printk("%s:%d\n", __func__, __LINE__);
+	kfree(meta->hcd);
+	printk("%s:%d\n", __func__, __LINE__);
+	kobject_put(&meta->sysdev->kobj);
+	printk("%s:%d\n", __func__, __LINE__);
+	kfree(meta->sysdev);
+	printk("%s:%d\n", __func__, __LINE__);
+	kfree(meta);
+	printk("%s:%d\n", __func__, __LINE__);
 }
 
 
@@ -303,6 +328,51 @@ printk("%s:%d\n", __func__, __LINE__);
 	}
 
 	return 0;
+}
+
+void usb_disable_device(struct usb_device *dev, int skip_ep0)
+{
+	int i;
+
+	/* getting rid of interfaces will disconnect
+	 * any drivers bound to them (a key side effect)
+	 */
+	if (dev->actconfig) {
+		/*
+		 * FIXME: In order to avoid self-deadlock involving the
+		 * bandwidth_mutex, we have to mark all the interfaces
+		 * before unregistering any of them.
+		 */
+		for (i = 0; i < dev->actconfig->desc.bNumInterfaces; i++)
+			dev->actconfig->interface[i]->unregistering = 1;
+
+		for (i = 0; i < dev->actconfig->desc.bNumInterfaces; i++) {
+			struct usb_interface	*interface;
+
+			/* remove this interface if it has been registered */
+			interface = dev->actconfig->interface[i];
+			if (!device_is_registered(&interface->dev))
+				continue;
+			dev_dbg(&dev->dev, "unregistering interface %s\n",
+				dev_name(&interface->dev));
+			device_del(&interface->dev);
+		}
+
+		/* Now that the interfaces are unbound, nobody should
+		 * try to access them.
+		 */
+		for (i = 0; i < dev->actconfig->desc.bNumInterfaces; i++) {
+			put_device(&dev->actconfig->interface[i]->dev);
+			dev->actconfig->interface[i] = NULL;
+		}
+
+		dev->actconfig = NULL;
+		if (dev->state == USB_STATE_CONFIGURED)
+			usb_set_device_state(dev, USB_STATE_ADDRESS);
+	}
+
+	dev_dbg(&dev->dev, "%s nuking %s URBs\n", __func__,
+		skip_ep0 ? "non-ep0" : "all");
 }
 #if 1
 //struct device_type usb_device_type = {

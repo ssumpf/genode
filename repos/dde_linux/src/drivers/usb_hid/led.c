@@ -61,7 +61,7 @@ void lx_led_state_update(bool capslock, bool numlock, bool scrlock)
 
 	if (_led_update.state == BLOCKED)
 		complete(&_led_update.update);
-	
+
 	_led_update.state = NONE;
 }
 
@@ -94,7 +94,7 @@ static int led_connect(struct input_handler *handler, struct input_dev *dev,
 	kbd->input_dev = input_get_device(dev);
 	kbd->intf      = container_of(kbd->input_dev->dev.parent->parent, struct usb_interface, dev);
 	kbd->udev      = interface_to_usbdev(kbd->intf);
-	
+
 	INIT_LIST_HEAD(&kbd->list);
 	list_add_tail(&kbd->list, &_keyboards);
 
@@ -113,11 +113,11 @@ err:
 static void led_disconnect(struct input_handle *handle)
 {
 	struct input_dev *dev = handle->dev;
-	struct keyboard  *kbd;
+	struct keyboard  *kbd, *temp;
 
 	wait_for_update();
 
-	list_for_each_entry(kbd, &_keyboards, list) {
+	list_for_each_entry_safe(kbd, temp, &_keyboards, list) {
 		if (keyboard_match(kbd, dev)) {
 			list_del(&kbd->list);
 			kfree(kbd);

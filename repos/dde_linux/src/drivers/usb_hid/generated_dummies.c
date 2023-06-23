@@ -484,13 +484,6 @@ int smp_call_function_single(int cpu,smp_call_func_t func,void * info,int wait)
 }
 
 
-extern void software_node_notify_remove(struct device * dev);
-void software_node_notify_remove(struct device * dev)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 #include <linux/jump_label.h>
 
 bool static_key_initialized;
@@ -499,14 +492,6 @@ bool static_key_initialized;
 #include <linux/fs.h>
 
 int stream_open(struct inode * inode,struct file * filp)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/rcupdate.h>
-
-void synchronize_rcu(void)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -559,29 +544,8 @@ void usb_devio_cleanup(void)
 }
 
 
-extern void usb_disable_device(struct usb_device * dev,int skip_ep0);
-void usb_disable_device(struct usb_device * dev,int skip_ep0)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 extern void usb_disable_endpoint(struct usb_device * dev,unsigned int epaddr,bool reset_hardware);
 void usb_disable_endpoint(struct usb_device * dev,unsigned int epaddr,bool reset_hardware)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-extern void usb_disable_interface(struct usb_device * dev,struct usb_interface * intf,bool reset_hardware);
-void usb_disable_interface(struct usb_device * dev,struct usb_interface * intf,bool reset_hardware)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-extern void usb_enable_interface(struct usb_device * dev,struct usb_interface * intf,bool reset_eps);
-void usb_enable_interface(struct usb_device * dev,struct usb_interface * intf,bool reset_eps)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -626,14 +590,6 @@ int usb_hcd_find_raw_port_number(struct usb_hcd * hcd,int port1)
 }
 
 
-#include <linux/usb/hcd.h>
-
-void usb_hcd_synchronize_unlinks(struct usb_device * udev)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 extern int usb_hub_create_port_device(struct usb_hub * hub,int port1);
 int usb_hub_create_port_device(struct usb_hub * hub,int port1)
 {
@@ -656,45 +612,8 @@ int usb_interrupt_msg(struct usb_device * usb_dev,unsigned int pipe,void * data,
 }
 
 
-#include <linux/usb.h>
-
-void usb_kill_urb(struct urb * urb)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 extern void usb_major_cleanup(void);
 void usb_major_cleanup(void)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/usb/hcd.h>
-
-void usb_put_hcd(struct usb_hcd * hcd)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-extern void usb_remove_ep_devs(struct usb_host_endpoint * endpoint);
-void usb_remove_ep_devs(struct usb_host_endpoint * endpoint)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-extern void usb_remove_sysfs_dev_files(struct usb_device * udev);
-void usb_remove_sysfs_dev_files(struct usb_device * udev)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-extern void usb_remove_sysfs_intf_files(struct usb_interface * intf);
-void usb_remove_sysfs_intf_files(struct usb_interface * intf)
 {
 	lx_emul_trace_and_stop(__func__);
 }

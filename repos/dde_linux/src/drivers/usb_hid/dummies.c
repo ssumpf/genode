@@ -80,6 +80,14 @@ void __init usb_init_pool_max(void)
 }
 
 
+#include <linux/usb/hcd.h>
+
+void usb_hcd_synchronize_unlinks(struct usb_device * udev)
+{
+	lx_emul_trace(__func__);
+}
+
+
 #include <linux/refcount.h>
 
 void refcount_warn_saturate(refcount_t * r,enum refcount_saturation_type t)
@@ -130,12 +138,26 @@ char * usb_cache_string(struct usb_device * udev,int index)
 }
 
 
+void usb_kill_urb(struct urb * urb)
+{
+	lx_emul_trace(__func__);
+}
+
+
 #include <linux/usb/hcd.h>
 
 struct usb_hcd * usb_get_hcd(struct usb_hcd * hcd)
 {
 	lx_emul_trace(__func__);
 	return hcd;
+}
+
+
+#include <linux/usb/hcd.h>
+
+void usb_put_hcd(struct usb_hcd * hcd)
+{
+	lx_emul_trace(__func__);
 }
 
 
@@ -173,6 +195,14 @@ int __sched down_trylock(struct semaphore * sem)
 }
 
 
+#include <linux/rcupdate.h>
+
+void synchronize_rcu(void)
+{
+	lx_emul_trace(__func__);
+}
+
+
 extern void usb_enable_endpoint(struct usb_device * dev,struct usb_host_endpoint * ep,bool reset_ep);
 void usb_enable_endpoint(struct usb_device * dev,struct usb_host_endpoint * ep,bool reset_ep)
 {
@@ -187,6 +217,13 @@ void software_node_notify(struct device * dev)
 }
 
 
+extern void software_node_notify_remove(struct device * dev);
+void software_node_notify_remove(struct device * dev)
+{
+	lx_emul_trace(__func__);
+}
+
+
 extern int usb_create_sysfs_dev_files(struct usb_device * udev);
 int usb_create_sysfs_dev_files(struct usb_device * udev)
 {
@@ -195,11 +232,25 @@ int usb_create_sysfs_dev_files(struct usb_device * udev)
 }
 
 
+extern void usb_remove_sysfs_dev_files(struct usb_device * udev);
+void usb_remove_sysfs_dev_files(struct usb_device * udev)
+{
+	lx_emul_trace(__func__);
+}
+
+
 extern int usb_create_ep_devs(struct device * parent,struct usb_host_endpoint * endpoint,struct usb_device * udev);
 int usb_create_ep_devs(struct device * parent,struct usb_host_endpoint * endpoint,struct usb_device * udev)
 {
 	lx_emul_trace(__func__);
 	return 0;
+}
+
+
+extern void usb_remove_ep_devs(struct usb_host_endpoint * endpoint);
+void usb_remove_ep_devs(struct usb_host_endpoint * endpoint)
+{
+	lx_emul_trace(__func__);
 }
 
 
@@ -223,3 +274,23 @@ void usb_create_sysfs_intf_files(struct usb_interface * intf)
 	lx_emul_trace(__func__);
 }
 
+
+extern void usb_remove_sysfs_intf_files(struct usb_interface * intf);
+void usb_remove_sysfs_intf_files(struct usb_interface * intf)
+{
+	lx_emul_trace(__func__);
+}
+
+
+extern void usb_enable_interface(struct usb_device * dev,struct usb_interface * intf,bool reset_eps);
+void usb_enable_interface(struct usb_device * dev,struct usb_interface * intf,bool reset_eps)
+{
+	lx_emul_trace(__func__);
+}
+
+
+extern void usb_disable_interface(struct usb_device * dev,struct usb_interface * intf,bool reset_hardware);
+void usb_disable_interface(struct usb_device * dev,struct usb_interface * intf,bool reset_hardware)
+{
+	lx_emul_trace(__func__);
+}
