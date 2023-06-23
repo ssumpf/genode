@@ -142,6 +142,17 @@ genode_usb_client_create(struct genode_env             *env,
 }
 
 
+void genode_usb_client_destroy(genode_usb_client_handle_t handle,
+                               struct genode_allocator *md_alloc)
+{
+	genode_usb_client_execute_completions(handle);
+
+	usb_client_apply(handle, [&] (Usb_client &usb) {
+		destroy(md_alloc, &usb);
+	});
+};
+
+
 void genode_usb_client_sigh_ack_avail(genode_usb_client_handle_t handle,
                                       struct genode_signal_handler *handler)
 {
