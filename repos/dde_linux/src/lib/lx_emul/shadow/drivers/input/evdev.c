@@ -25,28 +25,11 @@
 #include <linux/device.h>
 
 
-struct multi_touch
-{
-	unsigned long width;
-	unsigned long height;
-	bool          multi_touch;
-};
-
 struct evdev
 {
 	struct genode_event *event;
 	struct input_handle  handle;
 };
-
-void * (*genode_multi_touch_config)(void);
-
-
-static bool _multi_touch(void)
-{
-	if (genode_multi_touch_config)
-		return ((struct multi_touch *)genode_multi_touch_config())->multi_touch;
-	return false;
-}
 
 
 static void submit_rel_motion(struct genode_event_submit *submit,
@@ -82,190 +65,6 @@ static void submit_key(struct genode_event_submit *submit,
 }
 
 
-/*
- * absolute/multi-touch handling
- */
-
-static struct slot
-{
-	int id;;   /* current tracking id  */
-	int x;     /* last reported x axis */
-	int y;     /* last reported y axis */
-	int event; /* last reported ABS_MT_ event */
-} slots[16];
-
-static int slot = 0; /* store current input slot */
-
-static bool transform(struct input_dev *dev, int *x, int *y)
-{
-	unsigned long screen_x = 0;
-	unsigned long screen_y = 0;
-	int const min_x_dev  = input_abs_get_min(dev, ABS_X);
-	int const min_y_dev  = input_abs_get_min(dev, ABS_Y);
-	int const max_x_dev  = input_abs_get_max(dev, ABS_X);
-	int const max_y_dev  = input_abs_get_max(dev, ABS_Y);
-	int const max_y_norm = max_y_dev - min_y_dev;
-	int const max_x_norm = max_x_dev - min_x_dev;
-
-	if (genode_multi_touch_config) {
-		struct multi_touch *m = genode_multi_touch_config();
-		screen_x = m->width;
-		screen_y = m->height;
-	}
-
-	if (!screen_x || !screen_y) return true;
-
-	if (!max_x_norm   || !max_y_norm   ||
-	    *x < min_x_dev || *y < min_y_dev || *x > max_x_dev || *y > max_y_dev) {
-		printk("ignore input source with coordinates out of range\n");
-		return false;
-	}
-
-	*x = screen_x * (*x - min_x_dev) / (max_x_norm);
-	*y = screen_y * (*y - min_y_dev) / (max_y_norm);
-
-	return true;
-}
-
-
-static void handle_mt_tracking_id(struct genode_event_submit *submit,
-                                  struct input_dev *dev, int value)
-{
-	int x, y;
-
-	if (value != -1) {
-		if (slots[slot].id != -1)
-			printk("old tracking id in use and got new one\n");
-
-		slots[slot].id = value;
-		return;
-	}
-
-	/* send end of slot usage event for clients */
-	x = slots[slot].x < 0 ? 0 : slots[slot].x;
-	y = slots[slot].y < 0 ? 0 : slots[slot].y;
-
-	if (!transform(dev, &x, &y)) return;
-
-	submit->touch_release(submit, slot);
-
-	slots[slot].event = slots[slot].x = slots[slot].y = -1;
-	slots[slot].id = value;
-}
-
-
-static void handle_mt_slot(int value)
-{
-	if ((unsigned)value >= sizeof(slots) / sizeof(slots[0])) {
-		printk("drop multi-touch slot id %d\n", value);
-		return;
-	}
-
-	slot = value;
-}
-
-
-enum Axis { AXIS_X, AXIS_Y };
-
-static void handle_absolute_axis(struct genode_event_submit *submit,
-                                 struct input_dev *dev,
-                                 unsigned code, int value,
-                                 enum Axis axis)
-{
-	enum Type { MOTION, TOUCH };
-	int x, y;
-	enum Type type = MOTION;
-
-	slots[slot].event = code;
-
-	switch (axis) {
-	case AXIS_X:
-		type          = code == ABS_X ? MOTION : TOUCH;
-		slots[slot].x = value;
-		break;
-	case AXIS_Y:
-		type          = code == ABS_Y ? MOTION : TOUCH;
-		slots[slot].y = value;
-		break;
-	}
-
-	x = slots[slot].x;
-	y = slots[slot].y;
-
-	if (x == -1 || y == -1) return;
-
-	if (!transform(dev, &x, &y)) return;
-
-	if (type == MOTION)
-		submit->abs_motion(submit, x, y);
-	else if (type == TOUCH) {
-		struct genode_event_touch_args args = {
-			.finger =  slot,
-			.xpos   =  x,
-			.ypos   =  y
-		};
-		submit->touch(submit, &args);
-	}
-}
-
-
-static void submit_abs_motion(struct genode_event_submit *submit,
-                              struct input_dev *dev,
-                              unsigned code, int value)
-{
-	switch (code) {
-	case ABS_WHEEL:
-		submit->wheel(submit, 0, value);
-		return;
-
-	case ABS_X:
-		if (dev->mt && _multi_touch()) return;
-		handle_absolute_axis(submit, dev, code, value, AXIS_X);
-		return;
-
-	case ABS_MT_POSITION_X:
-		if (!_multi_touch()) return;
-		handle_absolute_axis(submit, dev, code, value, AXIS_X);
-		return;
-
-	case ABS_Y:
-		if (dev->mt && _multi_touch()) return;
-		handle_absolute_axis(submit, dev, code, value, AXIS_Y);
-		return;
-
-	case ABS_MT_POSITION_Y:
-		if (!_multi_touch()) return;
-		handle_absolute_axis(submit, dev, code, value, AXIS_Y);
-		return;
-
-	case ABS_MT_TRACKING_ID:
-		if (!_multi_touch()) return;
-		handle_mt_tracking_id(submit, dev, value);
-		return;
-
-	case ABS_MT_SLOT:
-		if (!_multi_touch()) return;
-		handle_mt_slot(value);
-		return;
-
-	case ABS_MT_TOUCH_MAJOR:
-	case ABS_MT_TOUCH_MINOR:
-	case ABS_MT_ORIENTATION:
-	case ABS_MT_TOOL_TYPE:
-	case ABS_MT_BLOB_ID:
-	case ABS_MT_PRESSURE:
-	case ABS_MT_DISTANCE:
-	case ABS_MT_TOOL_X:
-	case ABS_MT_TOOL_Y:
-		/* ignore unused multi-touch events */
-		return;
-
-	default:
-		printk("unknown absolute event code %u not handled\n", code);
-		return;
-	}
-}
-
 struct genode_event_generator_ctx
 {
 	struct evdev *evdev;
@@ -278,7 +77,6 @@ static void evdev_event_generator(struct genode_event_generator_ctx *ctx,
                                   struct genode_event_submit *submit)
 {
 	int i;
-	struct input_dev *dev = ctx->evdev->handle.dev;
 
 	for (i = 0; i < ctx->count; i++) {
 		unsigned const type  = ctx->values[i].type;
@@ -292,9 +90,8 @@ static void evdev_event_generator(struct genode_event_generator_ctx *ctx,
 		if (type == EV_SYN || type == EV_MSC) continue;
 
 		switch (type) {
-		case EV_KEY: if (!dev->mt || !_multi_touch()) submit_key(submit, code, value);  break;
-		case EV_REL: submit_rel_motion(submit, code, value);      break;
-		case EV_ABS: submit_abs_motion(submit, dev, code, value); break;
+		case EV_KEY: submit_key(submit, code, value);        break;
+		case EV_REL: submit_rel_motion(submit, code, value); break;
 
 		default:
 			printk("Unsupported Event[%u/%u] device=%s, type=%d, code=%d, value=%d dropped\n",
@@ -402,11 +199,6 @@ static struct input_handler evdev_handler = {
 
 static int __init evdev_init(void)
 {
-	int i;
-
-	for (i = 0; i < 16; i++)
-		slots[i].id = slots[i].x = slots[i].y = slots[i].event = -1;
-
 	return input_register_handler(&evdev_handler);
 }
 
