@@ -16,23 +16,6 @@
 
 using namespace Genode;
 
-
-struct multi_touch
-{
-	unsigned long width;
-	unsigned long height;
-	bool multi_touch;
-};
-
-
-static multi_touch _mt;
-extern "C" void * _genode_multi_touch_config(void)
-{
-	return &_mt;
-}
-
-extern void * (*genode_multi_touch_config)(void);
-
 struct Task_handler
 {
 	task_struct                 *task;
@@ -265,10 +248,6 @@ struct Driver
 
 	Heap &heap { Lx_kit::env().heap };
 
-	/* multi-touch */
-	unsigned long screen_x { 0 };
-	unsigned long screen_y { 0 };
-	bool          multi_touch { false };
 	bool          use_report  { false };
 
 	Attached_rom_dataspace report_rom { env, "report" };
@@ -286,20 +265,11 @@ struct Driver
 		try {
 			Xml_node config = config_rom.xml();
 			use_report      = config.attribute_value("use_report", false);
-			_mt.multi_touch =  config.attribute_value("multitouch", false);
-			config.attribute("width").value(screen_x);
-			config.attribute("height").value(screen_y);
-			_mt.width  = screen_x;
-			_mt.height = screen_y;
 		} catch(...) { }
 
 		if (use_report)
 			warning("use compatibility mode: ",
 			        "will claim all HID devices from USB report");
-
-		log("Configured HID screen with ",
-		    screen_x, "x", screen_y,
-		    " (multitouch=", multi_touch ? "true" : "false", ")");
 	}
 
 	void scan_report()
@@ -366,8 +336,6 @@ int lx_user_main_task(void *data)
 	task_struct *task = *static_cast<task_struct **>(data);
 	error("Main task: ", task);
 	static Driver driver { Lx_kit::env().env, task };
-
-	genode_multi_touch_config = _genode_multi_touch_config;
 
 	for (;;) {
 		while (driver.task_handler.signal_pending()) {

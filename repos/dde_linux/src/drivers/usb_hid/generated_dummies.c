@@ -1,7 +1,7 @@
 /*
  * \brief  Dummy definitions of Linux Kernel functions
  * \author Automatically generated file - do no edit
- * \date   2023-06-15
+ * \date   2023-06-26
  */
 
 #include <lx_emul.h>
@@ -18,70 +18,6 @@ int ___ratelimit(struct ratelimit_state * rs,const char * func)
 #include <linux/cpumask.h>
 
 struct cpumask __cpu_active_mask;
-
-
-#include <linux/kfifo.h>
-
-int __kfifo_alloc(struct __kfifo * fifo,unsigned int size,size_t esize,gfp_t gfp_mask)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/kfifo.h>
-
-void __kfifo_free(struct __kfifo * fifo)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/kfifo.h>
-
-unsigned int __kfifo_in(struct __kfifo * fifo,const void * buf,unsigned int len)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/kfifo.h>
-
-unsigned int __kfifo_in_r(struct __kfifo * fifo,const void * buf,unsigned int len,size_t recsize)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/kfifo.h>
-
-unsigned int __kfifo_max_r(unsigned int len,size_t recsize)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/kfifo.h>
-
-unsigned int __kfifo_out(struct __kfifo * fifo,void * buf,unsigned int len)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/kfifo.h>
-
-unsigned int __kfifo_out_r(struct __kfifo * fifo,void * buf,unsigned int len,size_t recsize)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/kfifo.h>
-
-void __kfifo_skip_r(struct __kfifo * fifo,size_t recsize)
-{
-	lx_emul_trace_and_stop(__func__);
-}
 
 
 #include <linux/printk.h>
@@ -111,22 +47,6 @@ void __printk_safe_exit(void)
 #include <linux/sched/task.h>
 
 void __put_task_struct(struct task_struct * tsk)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/vmalloc.h>
-
-void * __vmalloc_node_range(unsigned long size,unsigned long align,unsigned long start,unsigned long end,gfp_t gfp_mask,pgprot_t prot,unsigned long vm_flags,int node,const void * caller)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/uaccess.h>
-
-unsigned long _copy_from_user(void * to,const void __user * from,unsigned long n)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -195,33 +115,9 @@ int devm_led_classdev_register_ext(struct device * parent,struct led_classdev * 
 }
 
 
-#include <linux/leds.h>
-
-int devm_led_trigger_register(struct device * dev,struct led_trigger * trig)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/power_supply.h>
-
-struct power_supply * __must_check devm_power_supply_register(struct device * parent,const struct power_supply_desc * desc,const struct power_supply_config * cfg)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 #include <linux/printk.h>
 
 asmlinkage __visible void dump_stack(void)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/fs.h>
-
-int fasync_helper(int fd,struct file * filp,int on,struct fasync_struct ** fapp)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -266,20 +162,6 @@ void input_dev_poller_stop(struct input_dev_poller * poller)
 }
 
 
-extern int input_event_from_user(const char __user * buffer,struct input_event * event);
-int input_event_from_user(const char __user * buffer,struct input_event * event)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-extern int input_event_to_user(char __user * buffer,const struct input_event * event);
-int input_event_to_user(char __user * buffer,const struct input_event * event)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 #include <linux/input.h>
 
 int input_ff_create_memless(struct input_dev * dev,void * data,int (* play_effect)(struct input_dev *,void *,struct ff_effect *))
@@ -296,21 +178,6 @@ void input_ff_destroy(struct input_dev * dev)
 }
 
 
-extern int input_ff_effect_from_user(const char __user * buffer,size_t size,struct ff_effect * effect);
-int input_ff_effect_from_user(const char __user * buffer,size_t size,struct ff_effect * effect)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/input.h>
-
-int input_ff_erase(struct input_dev * dev,int effect_id,struct file * file)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 #include <linux/input.h>
 
 int input_ff_event(struct input_dev * dev,unsigned int type,unsigned int code,int value)
@@ -319,17 +186,16 @@ int input_ff_event(struct input_dev * dev,unsigned int type,unsigned int code,in
 }
 
 
-#include <linux/input.h>
+#include <linux/input/mt.h>
 
-int input_ff_upload(struct input_dev * dev,struct ff_effect * effect,struct file * file)
+void input_mt_destroy_slots(struct input_dev * dev)
 {
 	lx_emul_trace_and_stop(__func__);
 }
 
 
-#include <linux/math.h>
-
-unsigned long int_sqrt(unsigned long x)
+extern void input_mt_release_slots(struct input_dev * dev);
+void input_mt_release_slots(struct input_dev * dev)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -396,14 +262,6 @@ void irq_work_tick(void)
 }
 
 
-#include <linux/fs.h>
-
-void kill_fasync(struct fasync_struct ** fp,int sig,int band)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 #include <linux/slab.h>
 
 void * kmem_cache_alloc_lru(struct kmem_cache * cachep,struct list_lru * lru,gfp_t flags)
@@ -428,41 +286,9 @@ int kobject_uevent_env(struct kobject * kobj,enum kobject_action action,char * e
 }
 
 
-#include <linux/leds.h>
-
-void led_trigger_event(struct led_trigger * trig,enum led_brightness brightness)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 #include <linux/moduleparam.h>
 
 int param_set_copystring(const char * val,const struct kernel_param * kp)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/power_supply.h>
-
-void power_supply_changed(struct power_supply * psy)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/power_supply.h>
-
-void * power_supply_get_drvdata(struct power_supply * psy)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/power_supply.h>
-
-int power_supply_powers(struct power_supply * psy,struct device * dev)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -487,14 +313,6 @@ int smp_call_function_single(int cpu,smp_call_func_t func,void * info,int wait)
 #include <linux/jump_label.h>
 
 bool static_key_initialized;
-
-
-#include <linux/fs.h>
-
-int stream_open(struct inode * inode,struct file * filp)
-{
-	lx_emul_trace_and_stop(__func__);
-}
 
 
 #include <linux/timerqueue.h>
@@ -661,7 +479,6 @@ void usb_unpoison_urb(struct urb * urb)
 #include <linux/uuid.h>
 
 const u8 uuid_index[16] = {};
-
 
 
 #include <linux/sched/wake_q.h>
