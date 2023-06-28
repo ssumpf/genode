@@ -3,12 +3,12 @@ LIBS    = base jitterentropy virt_lx_emul
 
 INC_DIR = $(PRG_DIR)/../.. $(REP_DIR)/src/lib/usb_client
 
-SRC_C = dummies.c \
-        generated_dummies.c \
-        led.c \
-        lx_emul.c \
-        lx_user.c \
-        lx_emul/urb.c
+SRC_C += dummies.c \
+         generated_dummies.c \
+         led.c \
+         lx_emul.c \
+         lx_user.c \
+         lx_emul/urb.c
 
 SRC_C += lx_emul/shadow/drivers/input/evdev.c
 

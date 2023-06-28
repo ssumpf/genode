@@ -6,11 +6,13 @@ DEFINE_STATIC_KEY_FALSE(force_irqthreads_key);
 
 #include <linux/uaccess.h>
 
+#ifndef clear_user
 unsigned long __must_check clear_user(void __user *mem, unsigned long len)
 {
 	lx_emul_trace_and_stop(__func__);
 	return 0;
 }
+#endif
 
 
 #include <linux/random.h>
