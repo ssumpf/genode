@@ -240,7 +240,13 @@ struct Genode::Startup
 {
 	Component_env env;
 
+	/*
+	 * 'init_ldso_phdr' must be called before 'init_exception_handling' because
+	 * the initial exception thrown by 'init_exception_handling' involves the
+	 * linker's 'dl_iterate_phdr' function.
+	 */
 	bool const ldso_phdr = (init_ldso_phdr(env), true);
+	bool const exception = (init_exception_handling(env.ram(), env.rm()), true);
 
 	/*
 	 * The construction of the main entrypoint does never return.
