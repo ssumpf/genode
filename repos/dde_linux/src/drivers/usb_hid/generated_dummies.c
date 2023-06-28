@@ -172,23 +172,7 @@ int input_ff_create_memless(struct input_dev * dev,void * data,int (* play_effec
 
 #include <linux/input.h>
 
-void input_ff_destroy(struct input_dev * dev)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/input.h>
-
 int input_ff_event(struct input_dev * dev,unsigned int type,unsigned int code,int value)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/input/mt.h>
-
-void input_mt_destroy_slots(struct input_dev * dev)
 {
 	lx_emul_trace_and_stop(__func__);
 }

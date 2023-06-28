@@ -315,15 +315,14 @@ printk("%s:%d\n", __func__, __LINE__);
 
 	for (i = 0; i < nintf; ++i) {
 		struct usb_interface *intf = cp->interface[i];
-
 		printk("%s:%d ADD h: %lu i: %d\n", __func__, __LINE__, handle, intf->cur_altsetting->desc.bInterfaceNumber);
 		ret = device_add(&intf->dev);
 		printk("%s:%d ADD %d %s\n", __func__, __LINE__, ret, dev_name(&intf->dev));
+
 		if (ret != 0) {
 			printk("error: device_add(%s) --> %d\n", dev_name(&intf->dev), ret);
 			continue;
 		}
-		genode_usb_client_claim_interface(handle, intf->cur_altsetting->desc.bInterfaceNumber);
 	}
 
 	return 0;

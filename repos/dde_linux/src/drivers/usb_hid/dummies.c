@@ -203,6 +203,23 @@ void synchronize_rcu(void)
 }
 
 
+#include <linux/input.h>
+
+void input_ff_destroy(struct input_dev * dev)
+{
+	lx_emul_trace(__func__);
+}
+
+
+#include <linux/input/mt.h>
+
+void input_mt_destroy_slots(struct input_dev * dev)
+{
+	lx_emul_trace(__func__);
+}
+
+
+
 extern void usb_enable_endpoint(struct usb_device * dev,struct usb_host_endpoint * ep,bool reset_ep);
 void usb_enable_endpoint(struct usb_device * dev,struct usb_host_endpoint * ep,bool reset_ep)
 {
