@@ -53,6 +53,9 @@ struct Usb_completion : Usb::Completion
 		if (request->complete_callback)
 			request->complete_callback(request);
 	}
+
+	void free() {
+		if (request->free_callback) request->free_callback(request); }
 };
 
 
@@ -145,9 +148,12 @@ genode_usb_client_create(struct genode_env             *env,
 void genode_usb_client_destroy(genode_usb_client_handle_t handle,
                                struct genode_allocator *md_alloc)
 {
-	genode_usb_client_execute_completions(handle);
-
 	usb_client_apply(handle, [&] (Usb_client &usb) {
+		while(usb.source()->ack_avail()) {
+			Usb::Packet_descriptor p = usb.source()->get_acked_packet();
+			if (p.completion) static_cast<Usb_completion *>(p.completion)->free();
+			usb.source()->release_packet(p);
+		}
 		destroy(md_alloc, &usb);
 	});
 };
@@ -278,6 +284,7 @@ void genode_usb_client_request_finish(genode_usb_client_handle_t               h
 {
 	Usb_completion *completion = static_cast<Usb_completion *>(request->completion);
 	usb_client_apply(handle, [&] (Usb_client &usb) {
+		log("finish: ", handle, " comp: ", completion);
 		usb.release(completion); });
 }
 

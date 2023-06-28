@@ -85,6 +85,7 @@ struct genode_usb_client_request_packet
 	int                      actual_length;
 	int                      error;
 	void (*complete_callback)(struct genode_usb_client_request_packet *);
+	void (*free_callback) (struct genode_usb_client_request_packet *);
 	void *completion;
 	void *opaque_data;
 };
