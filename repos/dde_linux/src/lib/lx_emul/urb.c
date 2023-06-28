@@ -114,11 +114,11 @@ int usb_control_msg(struct usb_device *dev, unsigned int pipe,
 
 	init_completion(&comp);
 	packet.complete_callback = usb_control_msg_complete;
+	packet.free_callback     = NULL;
 	packet.opaque_data       = &comp;
 
 	genode_usb_client_request_submit(handle, &packet);
 	wait_for_completion(&comp);
-
 
 	if (packet.actual_length && data && (size >= packet.actual_length))
 		memcpy(data, packet.buffer.addr, packet.actual_length);
@@ -147,6 +147,13 @@ struct urb *usb_alloc_urb(int iso_packets, gfp_t mem_flags)
 }
 
 
+static void free_packet(struct genode_usb_client_request_packet *packet)
+{
+	kfree(packet->request.req);
+	kfree(packet);
+}
+
+
 static void urb_submit_complete(struct genode_usb_client_request_packet *packet)
 {
 	struct urb *urb = (struct urb *)packet->opaque_data;
@@ -163,10 +170,9 @@ static void urb_submit_complete(struct genode_usb_client_request_packet *packet)
 
 	urb->actual_length = packet->actual_length;
 
-	kfree(packet->request.req);
-	kfree(packet);
-
 	genode_usb_client_request_finish(handle, packet);
+
+	free_packet(packet);
 
 	if (urb->complete) urb->complete(urb);
 };
@@ -248,6 +254,7 @@ int usb_submit_urb(struct urb *urb, gfp_t mem_flags)
 	packet->buffer.size       = urb->transfer_buffer_length;
 	packet->complete_callback = urb_submit_complete;
 	packet->opaque_data       = urb;
+	packet->free_callback     = free_packet;
 
 	for (;;) {
 
