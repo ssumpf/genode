@@ -773,6 +773,10 @@ proc skip_test_if { condition test } {
 skip_test_if [expr  ([have_board pbxa9] || [have_board zynq_qemu])] test-file_vault_config_report
 skip_test_if [expr !([have_board pbxa9] || [have_board zynq_qemu])] test-file_vault_config_report_no_entropy
 
+# rpi has a quite limited amount of RAM
+skip_test_if [have_board rpi] test-file_vault_config_report
+skip_test_if [have_board rpi] test-file_vault_config_report_no_entropy
+
 set skip_test(test-fault_detection) [expr [have_spec pistachio] || [have_spec fiasco]]
 set skip_test(test-fs_packet)       [expr ![interactive] && [have_include "power_on/qemu"]]
 set skip_test(test-libc)            [expr [have_spec sel4] || [have_board rpi] || [have_board imx53_qsb_tz]]
