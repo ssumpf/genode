@@ -1,3 +1,4 @@
+arch/x86/lib/hweight.S
 drivers/base/bus.c
 drivers/base/core.c
 drivers/base/class.c
@@ -50,7 +51,6 @@ lib/bitmap.c
 lib/ctype.c
 lib/find_bit.c
 lib/hexdump.c
-lib/hweight.c
 lib/idr.c
 lib/kasprintf.c
 lib/klist.c
