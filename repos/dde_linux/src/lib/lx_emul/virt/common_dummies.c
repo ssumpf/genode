@@ -151,14 +151,14 @@ void kvfree(const void * addr)
 	lx_emul_trace_and_stop(__func__);
 }
 */
-
+#if 0
 #include <linux/timekeeper_internal.h>
 
 void update_vsyscall(struct timekeeper * tk)
 {
 	lx_emul_trace(__func__);
 }
-
+#endif
 
 #include <linux/sched/signal.h>
 
