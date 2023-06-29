@@ -1,3 +1,16 @@
+/*
+ * \brief  Dummy definitions of Linux Kernel functions
+ * \author Sebastian Sumpf
+ * \date   2023-06-29
+ */
+
+/*
+ * Copyright (C) 2023 Genode Labs GmbH
+ *
+ * This file is distributed under the terms of the GNU General Public License
+ * version 2.
+ */
+
 #include <lx_emul.h>
 
 #include <linux/interrupt.h>

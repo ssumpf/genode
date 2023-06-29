@@ -1,3 +1,16 @@
+/*
+ * \brief  Implementation of driver specific Linux functions
+ * \author Sebastian Sumpf
+ * \date   2023-06-29
+ */
+
+/*
+ * Copyright (C) 2023 Genode Labs GmbH
+ *
+ * This file is distributed under the terms of the GNU General Public License
+ * version 2.
+ */
+
 #include <lx_emul.h>
 
 #include <linux/cdev.h>
@@ -28,6 +41,7 @@ struct meta_data
 	struct device     *sysdev;
 	struct usb_device *udev;
 };
+
 
 void *lx_emul_usb_client_register_device(genode_usb_client_handle_t handle, char const *label)
 {
@@ -373,102 +387,3 @@ void usb_disable_device(struct usb_device *dev, int skip_ep0)
 	dev_dbg(&dev->dev, "%s nuking %s URBs\n", __func__,
 		skip_ep0 ? "non-ep0" : "all");
 }
-#if 1
-//struct device_type usb_device_type = {
-//	.name = "usb_device"
-//};
-
-#endif
-//const char *usbcore_name = "usbcore";
-
-/*******************
- ** device_driver **
- *******************/
-#if 0
-static LIST_HEAD(hid_drivers);
-
-
-struct hid_driver_entry
-{
-	struct device_driver *driver;
-	struct list_head      list;
-};
-
-
-static bool driver_match(struct device *dev, struct device_driver *dev_drv)
-{
-	/*
-	 *  Don't try if buses don't match, since drivers often use 'container_of'
-	 *  which might cast the device to non-matching type
-	 */
-	if (dev_drv->bus != dev->bus)
-		return false;
-
-	return dev_drv->bus->match ? dev_drv->bus->match(dev, dev_drv)
-	                          : false;
-}
-
-
-static int driver_probe(struct device *dev, struct device_driver *dev_drv)
-{
-	dev->driver = dev_drv;
-	if (dev_drv->bus->probe) return dev_drv->bus->probe(dev);
-	return 0;
-}
-
-
-int driver_register(struct device_driver *drv)
-{
-	struct hid_driver_entry *entry;
-	if (!drv)
-		return 1;
-
-	printk("%s:%d name: %s\n", __func__, __LINE__, drv->name);
-
-	entry = kmalloc(sizeof(*entry), GFP_KERNEL);
-	entry->driver = drv;
-
-	INIT_LIST_HEAD(&entry->list);
-	list_add_tail(&entry->list, &hid_drivers);
-
-	return 0;
-}
-
-static struct usb_driver * hid_driver;
-int usb_register_driver(struct usb_driver * driver, struct module *, const char *)
-{
-	printk("%s:%d: name: %s\n", __func__, __LINE__, driver->name);
-	hid_driver = driver;
-	return 0;
-}
-#endif
-
-/************
- ** device **
- ************/
-#if 0
-int device_add(struct device *dev)
-{
-	struct hid_driver_entry *entry;
-	int ret;
-	printk("%s:%d %s\n", __func__, __LINE__, dev_name(dev));
-	if (dev->driver) return 0;
-
-	/* foreach driver match and probe device */
-	list_for_each_entry(entry, &hid_drivers, list) {
-		if (driver_match(dev, entry->driver)) {
-			ret = driver_probe(dev, entry->driver);
-			if (!ret) return 0;
-		}
-	}
-
-	return 0;
-}
-
-
-void device_del(struct device *dev)
-{
-	if (dev->bus && dev->bus->remove)
-		dev->bus->remove(dev);
-}
-#endif

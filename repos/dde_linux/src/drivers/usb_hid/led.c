@@ -1,3 +1,16 @@
+/*
+ * \brief  Keyboard LED handling
+ * \author Sebastian Sumpf
+ * \date   2023-06-29
+ */
+
+/*
+ * Copyright (C) 2023 Genode Labs GmbH
+ *
+ * This file is distributed under the terms of the GNU General Public License
+ * version 2.
+ */
+
 #include <linux/hid.h>
 #include <linux/input.h>
 #include <linux/input/mt.h>
