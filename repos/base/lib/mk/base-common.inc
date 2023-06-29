@@ -27,7 +27,6 @@ SRC_CC += rm_session_client.cc
 SRC_CC += stack_allocator.cc
 SRC_CC += trace.cc
 SRC_CC += trace_buffer.cc
-SRC_CC += root_proxy.cc
 SRC_CC += env_session_id_space.cc
 SRC_CC += stack_protector.cc
 SRC_CC += xml_generator.cc
