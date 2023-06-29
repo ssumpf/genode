@@ -4,15 +4,6 @@
 
 DEFINE_STATIC_KEY_FALSE(force_irqthreads_key);
 
-#include <linux/random.h>
-
-u32 __get_random_u32_below(u32 ceil)
-{
-	lx_emul_trace_and_stop(__func__);
-	return 0;
-}
-
-
 #ifdef __arm__
 #include <asm/uaccess.h>
 
@@ -227,6 +218,14 @@ void input_ff_destroy(struct input_dev * dev)
 #include <linux/input/mt.h>
 
 void input_mt_destroy_slots(struct input_dev * dev)
+{
+	lx_emul_trace(__func__);
+}
+
+
+#include <linux/skbuff.h>
+
+void skb_init()
 {
 	lx_emul_trace(__func__);
 }
