@@ -4,17 +4,6 @@
 
 DEFINE_STATIC_KEY_FALSE(force_irqthreads_key);
 
-#include <linux/uaccess.h>
-
-#ifndef clear_user
-unsigned long __must_check clear_user(void __user *mem, unsigned long len)
-{
-	lx_emul_trace_and_stop(__func__);
-	return 0;
-}
-#endif
-
-
 #include <linux/random.h>
 
 u32 __get_random_u32_below(u32 ceil)
@@ -23,6 +12,21 @@ u32 __get_random_u32_below(u32 ceil)
 	return 0;
 }
 
+
+#ifdef __arm__
+#include <asm/uaccess.h>
+
+unsigned long arm_copy_to_user(void *to, const void *from, unsigned long n)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+asmlinkage void __div0(void);
+asmlinkage void __div0(void)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+#else
 
 #include <linux/context_tracking_irq.h>
 
@@ -33,11 +37,18 @@ noinstr void ct_irq_enter(void)
 
 
 #include <linux/context_tracking_irq.h>
-
 noinstr void ct_irq_exit(void)
 {
 	lx_emul_trace(__func__);
 }
+
+#include <linux/timekeeper_internal.h>
+void update_vsyscall(struct timekeeper * tk)
+{
+	lx_emul_trace(__func__);
+}
+
+#endif
 
 
 #include <net/net_namespace.h>
@@ -219,7 +230,6 @@ void input_mt_destroy_slots(struct input_dev * dev)
 {
 	lx_emul_trace(__func__);
 }
-
 
 
 extern void usb_enable_endpoint(struct usb_device * dev,struct usb_host_endpoint * ep,bool reset_ep);
