@@ -3,7 +3,10 @@
 #
 
 # kernel fundamentals
-LX_ENABLE += TTY SERIAL_EARLYCON SERIAL_OF_PLATFORM PRINTK HAS_IOMEM SMP
+LX_ENABLE += TTY MMU SERIAL_EARLYCON SERIAL_OF_PLATFORM PRINTK HAS_IOMEM SMP
+
+# do not generate thumb instructions on ARMv7 platforms
+LX_DISABLE += THUMB2_KERNEL ARM_VIRT_EXT DEBUG_PREEMPT
 
 # support disabling ticking during idle
 LX_ENABLE  += NO_HZ_IDLE
