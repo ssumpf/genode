@@ -14,8 +14,8 @@
 #include <base/id_space.h>
 #include <usb_session/connection.h>
 #include <base/heap.h>
+#include <genode_c_api/usb_client.h>
 #include <util/bit_allocator.h>
-#include "usb_client.h"
 
 using namespace Genode;
 
