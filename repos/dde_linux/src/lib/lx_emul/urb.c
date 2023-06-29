@@ -13,7 +13,7 @@
  */
 
 #include <linux/usb.h>
-#include <usb_client.h>
+#include <genode_c_api/usb_client.h>
 
 static DECLARE_WAIT_QUEUE_HEAD(lx_emul_urb_wait);
 
