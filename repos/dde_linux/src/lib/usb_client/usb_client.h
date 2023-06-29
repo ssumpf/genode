@@ -1,3 +1,16 @@
+/*
+ * \brief  C-API Genode USB-client backend
+ * \author Stefan Kalkowski
+ * \date   2023-06-29
+ */
+
+/*
+ * Copyright (C) 2023 Genode Labs GmbH
+ *
+ * This file is part of the Genode OS framework, which is distributed
+ * under the terms of the GNU Affero General Public License version 3.
+ */
+
 #ifndef __GENODE_C_API__USB_CLIENT_H_
 #define __GENODE_C_API__USB_CLIENT_H_
 

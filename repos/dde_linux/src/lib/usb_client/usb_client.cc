@@ -1,3 +1,15 @@
+/*
+ * \brief  Genode USB client provider C-API
+ * \author Stefan Kalkowski
+ * \date   2023-06-29
+ */
+
+/*
+ * Copyright (C) 2023 Genode Labs GmbH
+ *
+ * This file is part of the Genode OS framework, which is distributed
+ * under the terms of the GNU Affero General Public License version 3.
+ */
 
 #include <base/id_space.h>
 #include <usb_session/connection.h>
@@ -55,6 +67,7 @@ struct Usb_completion : Usb::Completion
 	}
 
 	void free() {
+		request->error = NO_DEVICE_ERROR;
 		if (request->free_callback) request->free_callback(request); }
 };
 
