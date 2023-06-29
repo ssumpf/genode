@@ -114,7 +114,7 @@ int usb_control_msg(struct usb_device *dev, unsigned int pipe,
 
 	init_completion(&comp);
 	packet.complete_callback = usb_control_msg_complete;
-	packet.free_callback     = NULL;
+	packet.free_callback     = usb_control_msg_complete;
 	packet.opaque_data       = &comp;
 
 	genode_usb_client_request_submit(handle, &packet);
