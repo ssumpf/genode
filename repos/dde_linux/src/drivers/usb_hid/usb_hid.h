@@ -11,7 +11,7 @@
  * version 2.
  */
 
-#include <usb_client.h>
+#include <genode_c_api/usb_client.h>
 
 #ifdef __cplusplus
 extern "C" {

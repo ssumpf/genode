@@ -12,13 +12,13 @@ SRC_C += dummies.c \
 
 SRC_C += lx_emul/shadow/drivers/input/evdev.c
 
-SRC_CC = main.cc \
-         usb_client/usb_client.cc \
+SRC_CC = main.cc
 
 SRC_CC += lx_emul/event.cc \
           lx_emul/random.cc
 
-SRC_CC += genode_c_api/event.cc
+SRC_CC += genode_c_api/event.cc \
+          genode_c_api/usb_client.cc
 
 vpath %.c  $(PRG_DIR)
 vpath %.c  $(PRG_DIR)/../..
@@ -28,4 +28,7 @@ vpath %.cc $(REP_DIR)/src/lib
 
 C_API = $(dir $(call select_from_repositories,src/lib/genode_c_api))
 
-vpath genode_c_api/event.cc $(C_API)
+vpath genode_c_api/event.cc      $(C_API)
+vpath genode_c_api/usb_client.cc $(C_API)
+
+# vim: set ft=make :
