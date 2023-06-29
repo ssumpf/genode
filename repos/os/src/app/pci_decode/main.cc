@@ -139,7 +139,7 @@ bus_t Main::parse_pci_function(Bdf             bdf,
 			}
 		});
 
-		cfg.for_each_bar([&] (uint64_t addr, size_t size,
+		cfg.for_each_bar([&] (uint64_t addr, uint64_t size,
 		                      unsigned bar, bool pf)
 		{
 			gen.node("io_mem", [&]
