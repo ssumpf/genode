@@ -1,5 +1,5 @@
 /*
- * \brief  urb functions
+ * \brief  urb/message functions using genode_c_api/usb_client.h
  * \author Stefan Kalkowski
  * \author Sebastian Sumpf
  * \date   2023-06-20
