@@ -7,10 +7,10 @@ SRC_C += dummies.c \
          generated_dummies.c \
          led.c \
          lx_emul.c \
-         lx_user.c \
-         lx_emul/urb.c
+         lx_user.c
 
-SRC_C += lx_emul/shadow/drivers/input/evdev.c
+SRC_C += lx_emul/shadow/drivers/input/evdev.c \
+         lx_emul/virt/shadow/drivers/usb/core/urb.c
 
 SRC_CC = main.cc
 
