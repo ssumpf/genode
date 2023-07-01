@@ -1,7 +1,7 @@
 /*
  * \brief  Dummy definitions of Linux Kernel functions
  * \author Automatically generated file - do no edit
- * \date   2023-06-29
+ * \date   2023-07-01
  */
 
 #include <lx_emul.h>
@@ -146,7 +146,23 @@ noinstr void ct_irq_enter(void)
 
 #include <linux/context_tracking_irq.h>
 
+void ct_irq_enter_irqson(void)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/context_tracking_irq.h>
+
 noinstr void ct_irq_exit(void)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/context_tracking_irq.h>
+
+void ct_irq_exit_irqson(void)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -205,25 +221,9 @@ asmlinkage __visible void dump_stack(void)
 }
 
 
-#include <linux/of_fdt.h>
-
-bool __init early_init_dt_scan(void * params)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 #include <linux/rcuwait.h>
 
 void finish_rcuwait(struct rcuwait * w)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/sched_clock.h>
-
-void __init generic_sched_clock_init(void)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -387,14 +387,6 @@ void irq_work_tick(void)
 }
 
 
-#include <linux/irqchip.h>
-
-void __init irqchip_init(void)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 #include <linux/slab.h>
 
 void * kmem_cache_alloc_lru(struct kmem_cache * cachep,struct list_lru * lru,gfp_t flags)
@@ -422,22 +414,6 @@ int kobject_uevent_env(struct kobject * kobj,enum kobject_action action,char * e
 #include <linux/delay.h>
 
 unsigned long lpj_fine;
-
-
-#include <linux/of_clk.h>
-
-void __init of_clk_init(const struct of_device_id * matches)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/of.h>
-
-void __init of_core_init(void)
-{
-	lx_emul_trace_and_stop(__func__);
-}
 
 
 #include <linux/of_device.h>
@@ -477,14 +453,6 @@ int of_property_read_string(const struct device_node * np,const char * propname,
 }
 
 
-#include <linux/sched_clock.h>
-
-void __init sched_clock_register(u64 (* read)(void),int bits,unsigned long rate)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 #include <linux/smp.h>
 
 void smp_call_function_many(const struct cpumask * mask,smp_call_func_t func,void * info,bool wait)
@@ -501,14 +469,6 @@ bool static_key_initialized;
 #include <linux/clockchips.h>
 
 void tick_broadcast(const struct cpumask * mask)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/clockchips.h>
-
-void tick_setup_hrtimer_broadcast(void)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -533,14 +493,6 @@ bool timerqueue_del(struct timerqueue_head * head,struct timerqueue_node * node)
 #include <linux/timerqueue.h>
 
 struct timerqueue_node * timerqueue_iterate_next(struct timerqueue_node * node)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/of_fdt.h>
-
-void __init unflatten_device_tree(void)
 {
 	lx_emul_trace_and_stop(__func__);
 }
