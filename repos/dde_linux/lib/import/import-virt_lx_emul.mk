@@ -42,3 +42,6 @@ endif
 ifeq ($(filter-out $(SPECS),arm_64),)
 	SRC_C += lx_emul/virt/spec/arm_64/dummies_arch.c
 endif
+ifeq ($(filter-out $(SPECS),arm),)
+	SRC_C += lx_emul/virt/spec/arm/dummies_arch.c
+endif
