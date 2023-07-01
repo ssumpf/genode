@@ -43,7 +43,7 @@
 
 int pud_none(pud_t pud);
 
-typedef u32 pteval_t;
+typedef unsigned pteval_t;
 
 typedef struct page *pgtable_t;
 
