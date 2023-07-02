@@ -24,9 +24,10 @@ SRC_BIN += nhlt-fuji5c.dat
 
 #
 # Original symbol is renamed to __real_* and references to original symbol
-# are replaced by __wrap_*. Used to shadow schedule_timeout, see timeout.c
+# are replaced by __wrap_*. Used to shadow 'usleep_range_state', see
+# timeout.c
 #
-LD_OPT += --wrap=usleep_range
+LD_OPT += --wrap=usleep_range_state
 
 vpath %.c  $(REP_DIR)/src/lib/pc
 vpath %.cc $(REP_DIR)/src/lib/pc
