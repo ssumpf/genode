@@ -149,7 +149,7 @@ bus_t Main::parse_pci_function(Bdf             bdf,
 				gen.attribute("size",    string(size));
 				if (pf) gen.attribute("prefetchable", true);
 			});
-		}, [&] (uint64_t addr, size_t size, unsigned bar) {
+		}, [&] (uint64_t addr, uint64_t size, unsigned bar) {
 			gen.node("io_port_range", [&]
 			{
 				gen.attribute("pci_bar", bar);
