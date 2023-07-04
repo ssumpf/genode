@@ -1,6 +1,6 @@
 /*
  * \brief  Genode USB client provider C-API
- * \author Stefan Kalkowski
+ * \author Sebastian Sumpf
  * \date   2023-06-29
  */
 
@@ -297,7 +297,6 @@ void genode_usb_client_request_finish(genode_usb_client_handle_t               h
 {
 	Usb_completion *completion = static_cast<Usb_completion *>(request->completion);
 	usb_client_apply(handle, [&] (Usb_client &usb) {
-		log("finish: ", handle, " comp: ", completion);
 		usb.release(completion); });
 }
 
