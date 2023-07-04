@@ -563,13 +563,13 @@ static int fb_client_hotplug(struct drm_client_dev *client)
 			modeset->fb = fb;
 		}
 		mutex_unlock(&client->modeset_mutex);
+
+		/* triggers disablement of encoders attached to disconnected ports */
+		result = drm_client_modeset_commit(client);
+
+		if (result)
+			printk("%s: error on modeset commit %d\n", __func__, result);
 	}
-
-	/* triggers disablement of encoders attached to disconnected ports */
-	result = drm_client_modeset_commit(client);
-
-	if (result)
-		printk("%s: error on modeset commit %d\n", __func__, result);
 
 	/* notify Genode side */
 	lx_emul_i915_hotplug_connector(client);
