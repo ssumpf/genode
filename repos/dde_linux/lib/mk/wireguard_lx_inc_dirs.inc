@@ -23,7 +23,7 @@ vpath %.c         $(GEN_PRG_DIR)
 
 INC_DIR += $(PRG_DIR)
 INC_DIR += $(GEN_PRG_DIR)
-
+$(warning WIRE: $(REP_DIR))
 LIBS += virt_lx_emul virt_linux_generated
 
 #
