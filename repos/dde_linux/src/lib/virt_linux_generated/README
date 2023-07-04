@@ -1,4 +1,4 @@
-These files were generated using
+This file was generated using
 
 ! MAKE = strace -f --trace=/open make
 
