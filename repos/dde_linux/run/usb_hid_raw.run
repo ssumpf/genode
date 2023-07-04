@@ -65,7 +65,7 @@ import_from_depot [depot_user]/src/[base_src] \
                   [depot_user]/src/usb_hid_drv \
                   [depot_user]/src/init
 
-build { server/event_dump  drivers/usb_hid }
+build { server/event_dump }
 
 install_config {
 <config>
@@ -178,7 +178,7 @@ puts $fd {
 </config>}
 close $fd
 
-build_boot_image { event_dump usb_hid_drv }
+build_boot_image { event_dump }
 
 append qemu_args " -device nec-usb-xhci,id=xhci"
 append qemu_args " -device usb-kbd,bus=xhci.0"
