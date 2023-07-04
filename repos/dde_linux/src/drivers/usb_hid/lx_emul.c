@@ -77,7 +77,7 @@ void *lx_emul_usb_client_register_device(genode_usb_client_handle_t handle, char
 		printk("error: could not allocate udev for %s\n", label);
 		goto udev;
 	}
-	printk("%s:%d NAME: %s\n", __func__, __LINE__, meta->udev->dev.bus->name);
+
 	/* usb_alloc_dev sets parent to bus->controller if first argument is NULL */
 	meta->hcd->self.controller = (struct device *)handle;
 
@@ -90,9 +90,7 @@ void *lx_emul_usb_client_register_device(genode_usb_client_handle_t handle, char
 
 	dev_set_name(&meta->udev->dev, "%s", label);
 
-	printk("%s:%d 1: %px 2: %px 3: %px &3: %px\n", __func__, __LINE__, meta->hcd, meta->sysdev, meta->udev, &meta->udev);
 	err = usb_new_device(meta->udev);
-	printk("%s:%d 1: %px 2: %px 3: %px\n", __func__, __LINE__, meta->hcd, meta->sysdev, meta->udev);
 
 	if (err) {
 		printk("error: usb_new_device failed %d\n", err);
@@ -117,20 +115,12 @@ void lx_emul_usb_client_unregister_device(genode_usb_client_handle_t handle, voi
 {
 	struct meta_data *meta = (struct meta_data *)data;
 
-	printk("%s:%d\n", __func__, __LINE__);
-	printk("%s:%d %s\n", __func__, __LINE__, meta->udev->dev.bus->name);
 	usb_disconnect(&meta->udev);
-	printk("%s:%d\n", __func__, __LINE__);
 	usb_put_dev(meta->udev);
-	printk("%s:%d\n", __func__, __LINE__);
 	kfree(meta->hcd);
-	printk("%s:%d\n", __func__, __LINE__);
 	kobject_put(&meta->sysdev->kobj);
-	printk("%s:%d\n", __func__, __LINE__);
 	kfree(meta->sysdev);
-	printk("%s:%d\n", __func__, __LINE__);
 	kfree(meta);
-	printk("%s:%d\n", __func__, __LINE__);
 }
 
 
@@ -219,10 +209,6 @@ int usb_set_configuration(struct usb_device *dev, int configuration)
 	struct usb_interface **new_interfaces = NULL;
 	int n, nintf;
 
-	genode_usb_client_handle_t handle =
-		(genode_usb_client_handle_t)dev->bus->controller;
-
-printk("%s:%d\n", __func__, __LINE__);
 	if (dev->authorized == 0 || configuration == -1)
 		configuration = 0;
 	else {
@@ -329,10 +315,8 @@ printk("%s:%d\n", __func__, __LINE__);
 
 	for (i = 0; i < nintf; ++i) {
 		struct usb_interface *intf = cp->interface[i];
-		printk("%s:%d ADD h: %lu i: %d\n", __func__, __LINE__, handle, intf->cur_altsetting->desc.bInterfaceNumber);
-		ret = device_add(&intf->dev);
-		printk("%s:%d ADD %d %s\n", __func__, __LINE__, ret, dev_name(&intf->dev));
 
+		ret = device_add(&intf->dev);
 		if (ret != 0) {
 			printk("error: device_add(%s) --> %d\n", dev_name(&intf->dev), ret);
 			continue;

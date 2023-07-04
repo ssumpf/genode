@@ -181,11 +181,9 @@ struct Device : Registry<Device>::Element
 	{
 		genode_usb_client_destroy(usb_handle,
 		                          genode_allocator_ptr(Lx_kit::env().heap));
-		static int d = 0;
-		error("destroy: ", ++d);
+
 		state_task_handler.destroy_task();
 		urb_task_handler.destroy_task();
-		error("destroy: ", d, " done");
 	}
 
 	/* non-copyable */
@@ -194,7 +192,6 @@ struct Device : Registry<Device>::Element
 
 	void register_device()
 	{
-		warning("register device");
 		registered = true;
 		lx_device_handle = lx_emul_usb_client_register_device(usb_handle, label.string());
 		if (!lx_device_handle) registered = false;
@@ -202,7 +199,6 @@ struct Device : Registry<Device>::Element
 
 	void unregister_device()
 	{
-		warning("unregister device");
 		lx_emul_usb_client_unregister_device(usb_handle, lx_device_handle);
 		registered = false;
 	}
@@ -218,7 +214,6 @@ struct Device : Registry<Device>::Element
 	static int state_task_entry(void *arg)
 	{
 		Device &device = *reinterpret_cast<Device *>(arg);
-		Genode::warning("State task");
 
 		while (device.state_task_handler.running) {
 			while (device.state_task_handler.signal_pending()) {
@@ -239,12 +234,9 @@ struct Device : Registry<Device>::Element
 		Device &device = *reinterpret_cast<Device *>(arg);
 
 		while (device.urb_task_handler.running) {
-			Genode::warning("URB task");
-			if (device.registered) {
-				warning("call completions");
+			if (device.registered)
 				genode_usb_client_execute_completions(device.usb_handle);
-			}
-			Genode::warning("URB task BLOCK");
+
 			device.urb_task_handler.block_and_schedule();
 		}
 		lx_user_destroy_usb_task(device.urb_task_handler.task);
@@ -307,10 +299,7 @@ struct Driver
 				devices.for_each([&] (Device & d) {
 					if (d.label == label) d.updated = found = true; });
 
-				if (!found) {
-					error("NEW device: ", label);
-					new (heap) Device(env, devices, label);
-				}
+				if (!found) new (heap) Device(env, devices, label);
 			});
 		} catch(...) {
 			error("Error parsing USB devices report");
@@ -319,7 +308,6 @@ struct Driver
 
 		devices.for_each([&] (Device & d) {
 			if (!d.updated && d.deinit()) {
-				error("destroy: ", &d);
 				destroy(heap, &d);
 			}
 		});
@@ -347,7 +335,7 @@ void Component::construct(Env & env)
 int lx_user_main_task(void *data)
 {
 	task_struct *task = *static_cast<task_struct **>(data);
-	error("Main task: ", task);
+
 	static Driver driver { Lx_kit::env().env, task };
 
 	for (;;) {
