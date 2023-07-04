@@ -53,7 +53,6 @@ static int packet_errno(int error)
 
 static void usb_control_msg_complete(struct genode_usb_client_request_packet *packet)
 {
-	printk("%s:%d\n", __func__, __LINE__);
 	complete((struct completion *)packet->opaque_data);
 };
 
@@ -75,7 +74,7 @@ int usb_control_msg(struct usb_device *dev, unsigned int pipe,
 	if (!dev->bus) return -ENODEV;
 
 	handle = (genode_usb_client_handle_t)dev->bus->controller;
-	printk("%s:%d handle: %lu\n", __func__, __LINE__, handle);
+
 	/*
 	 * If this function is called with a timeout of 0 to wait forever,
 	 * we wait in pieces of 10s each as 'schedule_timeout' might trigger
@@ -161,8 +160,6 @@ static void urb_submit_complete(struct genode_usb_client_request_packet *packet)
 
 	urb->status = packet->error ? packet_errno(packet->error) : 0;
 
-	printk("%s:%d: %d\n", __func__, __LINE__, usb_pipetype(urb->pipe));
-
 	if (packet->error == 0 &&
 	    packet->actual_length && urb->transfer_buffer &&
 	    urb->transfer_buffer_length >= packet->actual_length)
@@ -187,7 +184,6 @@ int usb_submit_urb(struct urb *urb, gfp_t mem_flags)
 	int ret = 0;
 	unsigned timeout_jiffies = msecs_to_jiffies(10000u);
 
-	printk("%s:%d type: %d\n", __func__, __LINE__, usb_pipetype(urb->pipe));
 	if (!urb->dev->bus)
 		return -ENODEV;
 
@@ -273,7 +269,7 @@ int usb_submit_urb(struct urb *urb, gfp_t mem_flags)
 	urb->hcpriv = (void *)handle;
 
 	genode_usb_client_request_submit(handle, packet);
-	printk("%s:%d submitted\n", __func__, __LINE__);
+
 	return ret;
 
 err_request:
