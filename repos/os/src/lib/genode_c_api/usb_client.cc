@@ -66,9 +66,11 @@ struct Usb_completion : Usb::Completion
 			request->complete_callback(request);
 	}
 
-	void free() {
+	void free()
+	{
 		request->error = NO_DEVICE_ERROR;
-		if (request->free_callback) request->free_callback(request); }
+		if (request->free_callback) request->free_callback(request);
+	}
 };
 
 
@@ -273,6 +275,16 @@ bool genode_usb_client_request(genode_usb_client_handle_t        handle,
 
 			genode_usb_request_transfer *transfer = (genode_usb_request_transfer *)req->req;
 			packet->transfer.ep = transfer->ep;
+			break;
+		}
+	case ALT_SETTING:
+		{
+			genode_usb_altsetting *alt_setting = (genode_usb_altsetting*)req->req;
+
+			packet->type = Usb::Packet_descriptor::ALT_SETTING;
+
+			packet->interface.number      = alt_setting->interface_number;
+			packet->interface.alt_setting = alt_setting->alt_setting;
 			break;
 		}
 	default:
