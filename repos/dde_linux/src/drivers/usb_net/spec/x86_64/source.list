@@ -58,6 +58,8 @@ lib/klist.c
 lib/kobject.c
 lib/kstrtox.c
 lib/radix-tree.c
+lib/rhashtable.c
+lib/rbtree.c
 lib/xarray.c
 lib/siphash.c
 lib/string.c
@@ -65,6 +67,7 @@ lib/string_helpers.c
 lib/vsprintf.c
 mm/util.c
 net/core/dev.c
+net/core/dev_addr_lists.c
 net/core/skbuff.c
-net/ethernet/eth.c
+net/core/xdp.c
 net/ethernet/eth.c

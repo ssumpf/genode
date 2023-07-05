@@ -185,7 +185,7 @@ void Component::construct(Env & env)
 int lx_user_main_task(void *)
 {
 	/* one device only */
-	static Device dev(Lx_kit::env().env, Device::Label(""));
+	static Device dev(Lx_kit::env().env, Device::Label("usb-nic"));
 
 	return 0;
 }
