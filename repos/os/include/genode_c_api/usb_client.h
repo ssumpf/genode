@@ -89,7 +89,22 @@ void genode_usb_client_claim_interface(genode_usb_client_handle_t handle,
 void genode_usb_client_release_interface(genode_usb_client_handle_t handle,
                                          unsigned interface_num);
 
-typedef struct genode_usb_request_urb genode_request_packet_t;
+
+enum Request_type { ALT_SETTING = NONE + 1 };
+
+struct genode_usb_altsetting
+{
+	unsigned char interface_number;
+	unsigned char alt_setting;
+};
+
+struct genode_usb_request_packet
+{
+	unsigned type;
+	void   * req;
+};
+
+typedef struct genode_usb_request_packet genode_request_packet_t;
 
 struct genode_usb_client_request_packet
 {
