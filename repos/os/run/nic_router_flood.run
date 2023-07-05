@@ -29,9 +29,12 @@ proc bad_dst_ip  { } { return "10.0.0.123" }
 
 create_boot_directory
 
-import_from_depot [depot_user]/pkg/[drivers_nic_pkg]
+import_from_depot [depot_user]/src/[base_src] \
+                  [depot_user]/pkg/[drivers_nic_pkg] \
+                  [depot_user]/src/init \
+                  [depot_user]/src/report_rom
 
-build { core init timer server/report_rom app/ping test/net_flood server/nic_router server/dynamic_rom }
+build { app/ping test/net_flood server/nic_router server/dynamic_rom }
 
 install_config {
 
