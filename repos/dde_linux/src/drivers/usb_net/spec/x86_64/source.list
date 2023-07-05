@@ -6,6 +6,7 @@ drivers/base/devres.c
 drivers/base/driver.c
 drivers/base/dd.c
 drivers/base/property.c
+drivers/net/mii.c
 drivers/net/usb/asix_common.c
 drivers/net/usb/asix_devices.c
 drivers/net/usb/asix.h

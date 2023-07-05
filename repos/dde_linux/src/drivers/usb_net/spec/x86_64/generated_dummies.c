@@ -287,6 +287,22 @@ int ethtool_check_ops(const struct ethtool_ops * ops)
 
 #include <linux/ethtool.h>
 
+void ethtool_convert_legacy_u32_to_link_mode(unsigned long * dst,u32 legacy_u32)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/ethtool.h>
+
+bool ethtool_convert_link_mode_to_legacy_u32(u32 * legacy_u32,const unsigned long * src)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/ethtool.h>
+
 u32 ethtool_op_get_link(struct net_device * dev)
 {
 	lx_emul_trace_and_stop(__func__);
@@ -336,14 +352,6 @@ unsigned int full_name_hash(const void * salt,const char * name,unsigned int len
 #include <linux/irqdesc.h>
 
 int generic_handle_domain_irq(struct irq_domain * domain,unsigned int hwirq)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/mii.h>
-
-int generic_mii_ioctl(struct mii_if_info * mii_if,struct mii_ioctl_data * mii_data,int cmd,unsigned int * duplex_chg_out)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -571,14 +579,6 @@ int kobject_uevent_env(struct kobject * kobj,enum kobject_action action,char * e
 }
 
 
-#include <linux/rcutree.h>
-
-void kvfree_call_rcu(struct rcu_head * head,rcu_callback_t func)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 extern void linkwatch_init_dev(struct net_device * dev);
 void linkwatch_init_dev(struct net_device * dev)
 {
@@ -639,54 +639,6 @@ void migrate_enable(void)
 }
 
 
-#include <linux/mii.h>
-
-unsigned int mii_check_media(struct mii_if_info * mii,unsigned int ok_to_print,unsigned int init_media)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/mii.h>
-
-void mii_ethtool_get_link_ksettings(struct mii_if_info * mii,struct ethtool_link_ksettings * cmd)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/mii.h>
-
-void mii_ethtool_gset(struct mii_if_info * mii,struct ethtool_cmd * ecmd)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/mii.h>
-
-int mii_ethtool_set_link_ksettings(struct mii_if_info * mii,const struct ethtool_link_ksettings * cmd)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/mii.h>
-
-int mii_link_ok(struct mii_if_info * mii)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/mii.h>
-
-int mii_nway_restart(struct mii_if_info * mii)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 #include <linux/netdevice.h>
 
 void napi_gro_flush(struct napi_struct * napi,bool flush_old)
@@ -736,22 +688,6 @@ int netdev_register_kobject(struct net_device * ndev)
 
 extern void netdev_unregister_kobject(struct net_device * ndev);
 void netdev_unregister_kobject(struct net_device * ndev)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/netdevice.h>
-
-void netif_carrier_off(struct net_device * dev)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/netdevice.h>
-
-void netif_carrier_on(struct net_device * dev)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -1159,13 +1095,6 @@ int usb_clear_halt(struct usb_device * dev,int pipe)
 }
 
 
-extern int usb_create_ep_devs(struct device * parent,struct usb_host_endpoint * endpoint,struct usb_device * udev);
-int usb_create_ep_devs(struct device * parent,struct usb_host_endpoint * endpoint,struct usb_device * udev)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 extern void usb_devio_cleanup(void);
 void usb_devio_cleanup(void)
 {
@@ -1293,13 +1222,6 @@ void usb_major_cleanup(void)
 }
 
 
-extern void usb_notify_add_device(struct usb_device * udev);
-void usb_notify_add_device(struct usb_device * udev)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 extern void usb_notify_remove_device(struct usb_device * udev);
 void usb_notify_remove_device(struct usb_device * udev)
 {
@@ -1378,3 +1300,4 @@ u32 xdp_master_redirect(struct xdp_buff * xdp)
 {
 	lx_emul_trace_and_stop(__func__);
 }
+

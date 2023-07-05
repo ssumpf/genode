@@ -185,3 +185,20 @@ void usb_create_sysfs_intf_files(struct usb_interface * intf)
 {
 	lx_emul_trace(__func__);
 }
+
+
+extern void usb_notify_add_device(struct usb_device * udev);
+void usb_notify_add_device(struct usb_device * udev)
+{
+	lx_emul_trace(__func__);
+}
+
+
+extern int usb_create_ep_devs(struct device * parent,struct usb_host_endpoint * endpoint,struct usb_device * udev);
+int usb_create_ep_devs(struct device * parent,struct usb_host_endpoint * endpoint,struct usb_device * udev)
+{
+	lx_emul_trace(__func__);
+	return 0;
+}
+
+
