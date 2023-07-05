@@ -421,14 +421,6 @@ void usb_major_cleanup(void)
 }
 
 
-#include <linux/usb.h>
-
-int usb_set_interface(struct usb_device * dev,int interface,int alternate)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 extern int usb_set_isoch_delay(struct usb_device * dev);
 int usb_set_isoch_delay(struct usb_device * dev)
 {

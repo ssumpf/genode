@@ -554,14 +554,6 @@ struct device_node * usb_of_get_device_node(struct usb_device * hub,int port1)
 }
 
 
-#include <linux/usb.h>
-
-int usb_set_interface(struct usb_device * dev,int interface,int alternate)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 extern int usb_set_isoch_delay(struct usb_device * dev);
 int usb_set_isoch_delay(struct usb_device * dev)
 {
