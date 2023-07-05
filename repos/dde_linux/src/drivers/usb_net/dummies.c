@@ -142,3 +142,46 @@ void register_syscore_ops(struct syscore_ops * ops)
 }
 
 
+#include <linux/kernel.h>
+
+bool parse_option_str(const char * str,const char * option)
+{
+	lx_emul_trace(__func__);
+	return false;
+}
+
+
+
+extern void usb_enable_endpoint(struct usb_device * dev,struct usb_host_endpoint * ep,bool reset_ep);
+void usb_enable_endpoint(struct usb_device * dev,struct usb_host_endpoint * ep,bool reset_ep)
+{
+	lx_emul_trace(__func__);
+}
+
+
+extern void software_node_notify(struct device * dev);
+void software_node_notify(struct device * dev)
+{
+	lx_emul_trace(__func__);
+}
+
+
+extern void software_node_notify_remove(struct device * dev);
+void software_node_notify_remove(struct device * dev)
+{
+	lx_emul_trace(__func__);
+}
+
+
+extern int usb_create_sysfs_dev_files(struct usb_device * udev);
+int usb_create_sysfs_dev_files(struct usb_device * udev)
+{
+	lx_emul_trace(__func__);
+	return 0;
+}
+
+extern void usb_create_sysfs_intf_files(struct usb_interface * intf);
+void usb_create_sysfs_intf_files(struct usb_interface * intf)
+{
+	lx_emul_trace(__func__);
+}
