@@ -111,6 +111,7 @@ struct Device
 			registered = false;
 			return;
 		}
+		error("REGSISTERED");
 
 	}
 

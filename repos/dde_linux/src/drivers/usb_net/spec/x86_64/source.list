@@ -69,6 +69,8 @@ lib/vsprintf.c
 mm/util.c
 net/core/dev.c
 net/core/dev_addr_lists.c
+net/core/link_watch.c
 net/core/skbuff.c
 net/core/xdp.c
 net/ethernet/eth.c
+net/ethtool/common.c
