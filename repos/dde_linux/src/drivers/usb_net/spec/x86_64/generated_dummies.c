@@ -155,14 +155,6 @@ void ack_bad_irq(unsigned int irq)
 }
 
 
-#include <linux/random.h>
-
-void add_device_randomness(const void * buf,size_t len)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 #include <linux/kobject.h>
 
 int add_uevent_var(struct kobj_uevent_env * env,const char * format,...)
@@ -234,14 +226,6 @@ void dev_deactivate_many(struct list_head * head)
 
 #include <net/sch_generic.h>
 
-void dev_init_scheduler(struct net_device * dev)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <net/sch_generic.h>
-
 void dev_shutdown(struct net_device * dev)
 {
 	lx_emul_trace_and_stop(__func__);
@@ -272,14 +256,6 @@ struct irq_chip dummy_irq_chip;
 #include <linux/printk.h>
 
 asmlinkage __visible void dump_stack(void)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/ethtool.h>
-
-int ethtool_check_ops(const struct ethtool_ops * ops)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -333,21 +309,6 @@ void finish_rcuwait(struct rcuwait * w)
 }
 
 
-#include <linux/gfp.h>
-
-void free_pages(unsigned long addr,unsigned int order)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/stringhash.h>
-
-unsigned int full_name_hash(const void * salt,const char * name,unsigned int len)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
 
 #include <linux/irqdesc.h>
 
@@ -368,14 +329,6 @@ int genphy_read_status(struct phy_device * phydev)
 #include <linux/phy.h>
 
 int genphy_resume(struct phy_device * phydev)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/gfp.h>
-
-unsigned long get_zeroed_page(gfp_t gfp_mask)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -579,13 +532,6 @@ int kobject_uevent_env(struct kobject * kobj,enum kobject_action action,char * e
 }
 
 
-extern void linkwatch_init_dev(struct net_device * dev);
-void linkwatch_init_dev(struct net_device * dev)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 #include <linux/netdevice.h>
 
 struct pernet_operations __net_initdata loopback_net_ops;
@@ -674,13 +620,6 @@ int net_selftest_get_count(void)
 #include <net/selftests.h>
 
 void net_selftest_get_strings(u8 * data)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-extern int netdev_register_kobject(struct net_device * ndev);
-int netdev_register_kobject(struct net_device * ndev)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -943,14 +882,6 @@ void refcount_warn_saturate(refcount_t * r,enum refcount_saturation_type t)
 
 #include <linux/rtnetlink.h>
 
-void rtmsg_ifinfo(int type,struct net_device * dev,unsigned int change,gfp_t flags)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/rtnetlink.h>
-
 struct sk_buff * rtmsg_ifinfo_build_skb(int type,struct net_device * dev,unsigned int change,u32 event,gfp_t flags,int * new_nsid,int new_ifindex)
 {
 	lx_emul_trace_and_stop(__func__);
@@ -967,31 +898,7 @@ void rtmsg_ifinfo_send(struct sk_buff * skb,struct net_device * dev,gfp_t flags)
 
 #include <linux/rtnetlink.h>
 
-int rtnl_is_locked(void)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/rtnetlink.h>
-
 void rtnl_lock(void)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/rtnetlink.h>
-
-int rtnl_lock_killable(void)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/rtnetlink.h>
-
-void rtnl_unlock(void)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -1118,13 +1025,6 @@ void usb_disable_endpoint(struct usb_device * dev,unsigned int epaddr,bool reset
 
 extern void usb_disable_interface(struct usb_device * dev,struct usb_interface * intf,bool reset_hardware);
 void usb_disable_interface(struct usb_device * dev,struct usb_interface * intf,bool reset_hardware)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-extern void usb_enable_interface(struct usb_device * dev,struct usb_interface * intf,bool reset_eps);
-void usb_enable_interface(struct usb_device * dev,struct usb_interface * intf,bool reset_eps)
 {
 	lx_emul_trace_and_stop(__func__);
 }

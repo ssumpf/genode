@@ -151,9 +151,60 @@ bool parse_option_str(const char * str,const char * option)
 }
 
 
+#include <linux/rtnetlink.h>
 
-extern void usb_enable_endpoint(struct usb_device * dev,struct usb_host_endpoint * ep,bool reset_ep);
-void usb_enable_endpoint(struct usb_device * dev,struct usb_host_endpoint * ep,bool reset_ep)
+int rtnl_lock_killable(void)
+{
+	lx_emul_trace(__func__);
+	return 0;
+}
+
+
+#include <linux/rtnetlink.h>
+
+int rtnl_is_locked(void)
+{
+	lx_emul_trace(__func__);
+	return 0;
+}
+
+
+#include <linux/stringhash.h>
+
+unsigned int full_name_hash(const void * salt,const char * name,unsigned int len)
+{
+	lx_emul_trace(__func__);
+	return 0;
+}
+
+
+#include <net/sch_generic.h>
+
+void dev_init_scheduler(struct net_device * dev)
+{
+	lx_emul_trace(__func__);
+}
+
+
+#include <linux/random.h>
+
+void add_device_randomness(const void * buf,size_t len)
+{
+	lx_emul_trace(__func__);
+}
+
+
+#include <linux/rtnetlink.h>
+
+void rtmsg_ifinfo(int type,struct net_device * dev,unsigned int change,gfp_t flags)
+{
+	printk("%s:%d MIGHT be NEEDED for link change\n", __func__, __LINE__);
+}
+
+
+#include <linux/rtnetlink.h>
+
+void rtnl_unlock(void)
 {
 	lx_emul_trace(__func__);
 }
@@ -196,6 +247,14 @@ void usb_notify_add_device(struct usb_device * udev)
 
 extern int usb_create_ep_devs(struct device * parent,struct usb_host_endpoint * endpoint,struct usb_device * udev);
 int usb_create_ep_devs(struct device * parent,struct usb_host_endpoint * endpoint,struct usb_device * udev)
+{
+	lx_emul_trace(__func__);
+	return 0;
+}
+
+
+extern int netdev_register_kobject(struct net_device * ndev);
+int netdev_register_kobject(struct net_device * ndev)
 {
 	lx_emul_trace(__func__);
 	return 0;
