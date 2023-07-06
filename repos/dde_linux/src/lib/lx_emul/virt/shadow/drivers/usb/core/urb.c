@@ -311,8 +311,9 @@ int usb_set_configuration(struct usb_device *dev, int configuration)
 
 	for (i = 0; i < nintf; ++i) {
 		struct usb_interface *intf = cp->interface[i];
-
+		printk("%s:%d ADD\n", __func__, __LINE__);
 		ret = device_add(&intf->dev);
+		printk("%s:%d ADD DONE\n", __func__, __LINE__);
 		if (ret != 0) {
 			printk("error: device_add(%s) --> %d\n", dev_name(&intf->dev), ret);
 			continue;
@@ -320,6 +321,31 @@ int usb_set_configuration(struct usb_device *dev, int configuration)
 	}
 
 	return 0;
+}
+
+
+void usb_enable_endpoint(struct usb_device *dev, struct usb_host_endpoint *ep, bool reset_ep)
+{
+	int epnum = usb_endpoint_num(&ep->desc);
+	int is_out = usb_endpoint_dir_out(&ep->desc);
+	int is_control = usb_endpoint_xfer_control(&ep->desc);
+	printk("%s:%d ADD EP: num %d out %d control: %d\n", __func__, __LINE__, epnum, is_out, is_control);
+	if (is_out || is_control)
+		dev->ep_out[epnum] = ep;
+	if (!is_out || is_control)
+		dev->ep_in[epnum] = ep;
+	ep->enabled = 1;
+}
+
+
+void usb_enable_interface(struct usb_device *dev,
+		struct usb_interface *intf, bool reset_eps)
+{
+	struct usb_host_interface *alt = intf->cur_altsetting;
+	int i;
+
+	for (i = 0; i < alt->desc.bNumEndpoints; ++i)
+		usb_enable_endpoint(dev, &alt->endpoint[i], reset_eps);
 }
 
 
@@ -381,6 +407,8 @@ int usb_set_interface(struct usb_device *udev, int ifnum, int alternate)
 	ret = packet.error ? packet_errno(packet.error) : 0;
 	if (!ret)
 		iface->cur_altsetting = &iface->altsetting[alternate];
+
+	usb_enable_interface(udev, iface, true);
 
 	genode_usb_client_request_finish(handle, &packet);
 	printk("%s:%d ret: %d\n", __func__, __LINE__, 0);
