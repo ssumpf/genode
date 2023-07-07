@@ -1,7 +1,7 @@
 /*
  * \brief  Dummy definitions of Linux Kernel functions
  * \author Automatically generated file - do no edit
- * \date   2023-07-05
+ * \date   2023-07-06
  */
 
 #include <lx_emul.h>
@@ -68,14 +68,6 @@ int __mdiobus_register(struct mii_bus * bus,struct module * owner)
 }
 
 
-#include <linux/netdevice.h>
-
-void __netdev_watchdog_up(struct net_device * dev)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 #include <linux/printk.h>
 
 int __printk_ratelimit(const char * func)
@@ -103,14 +95,6 @@ void __printk_safe_exit(void)
 #include <linux/sched/task.h>
 
 void __put_task_struct(struct task_struct * tsk)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <net/pkt_sched.h>
-
-void __qdisc_run(struct Qdisc * q)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -216,25 +200,17 @@ noinstr void ct_irq_exit(void)
 }
 
 
-#include <net/sch_generic.h>
-
-void dev_deactivate_many(struct list_head * head)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <net/sch_generic.h>
-
-void dev_shutdown(struct net_device * dev)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 #include <linux/phy.h>
 
 struct mii_bus * devm_mdiobus_alloc_size(struct device * dev,int sizeof_priv)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/netlink.h>
+
+void do_trace_netlink_extack(const char * msg)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -309,6 +285,13 @@ void finish_rcuwait(struct rcuwait * w)
 }
 
 
+#include <net/gen_stats.h>
+
+void gen_kill_estimator(struct net_rate_estimator __rcu ** rate_est)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
 
 #include <linux/irqdesc.h>
 
@@ -337,6 +320,14 @@ int genphy_resume(struct phy_device * phydev)
 #include <linux/gfp.h>
 
 bool gfp_pfmemalloc_allowed(gfp_t gfp_mask)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <net/gen_stats.h>
+
+void gnet_stats_basic_sync_init(struct gnet_stats_basic_sync * b)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -585,6 +576,11 @@ void migrate_enable(void)
 }
 
 
+#include <net/sch_generic.h>
+
+struct Qdisc_ops mq_qdisc_ops;
+
+
 #include <linux/netdevice.h>
 
 void napi_gro_flush(struct napi_struct * napi,bool flush_old)
@@ -627,6 +623,14 @@ void net_selftest_get_strings(u8 * data)
 
 extern void netdev_unregister_kobject(struct net_device * ndev);
 void netdev_unregister_kobject(struct net_device * ndev)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <net/netlink.h>
+
+int nla_put(struct sk_buff * skb,int attrtype,int attrlen,const void * data)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -915,6 +919,14 @@ void sg_init_table(struct scatterlist * sgl,unsigned int nents)
 #include <net/sock.h>
 
 void sk_error_report(struct sock * sk)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/netdevice.h>
+
+struct sk_buff * skb_mac_gso_segment(struct sk_buff * skb,netdev_features_t features)
 {
 	lx_emul_trace_and_stop(__func__);
 }
