@@ -17,54 +17,7 @@ using namespace Genode;
 
 extern task_struct *user_task_struct_ptr;
 
-struct Task_handler
-{
-	task_struct                 *task;
-	Signal_handler<Task_handler> handler;
-	bool                         handling_signal { false };
-	bool                         running         { true  };
-
-	/*
-	 * If the task is currently executing and the signal handler
-	 * is called again via 'block_and_schedule()', we need to
-	 * keep this information, so the task does not block at the
-	 * end when a new signal already occurred.
-	 *
-	 * Initialized as true for the initial run of the task.
-	 */
-	bool _signal_pending { true };
-
-	void handle_signal()
-	{
-		_signal_pending = true;
-		lx_emul_task_unblock(task);
-		handling_signal = true;
-		Lx_kit::env().scheduler.schedule();
-		handling_signal = false;
-	}
-
-	bool signal_pending()
-	{
-		bool ret = _signal_pending;
-		_signal_pending = false;
-		return ret;
-	}
-
-	void block_and_schedule()
-	{
-		lx_emul_task_schedule(true);
-	}
-
-	Task_handler(Entrypoint & ep, task_struct *task)
-	: task(task), handler(ep, *this, &Task_handler::handle_signal) { }
-
-	/* non-copyable */
-	Task_handler(const Task_handler&) = delete;
-	Task_handler & operator=(const Task_handler&) = delete;
-};
-
-
-struct Device
+struct Device : private Entrypoint::Io_progress_handler
 {
 	using Label = String<64>;
 
@@ -82,15 +35,15 @@ struct Device
 	task_struct *state_task { lx_user_new_usb_task(state_task_entry, this) };
 	task_struct *urb_task   { lx_user_new_usb_task(urb_task_entry, this)   };
 
-	Task_handler state_task_handler { env.ep(), state_task };
-	Task_handler urb_task_handler   { env.ep(), urb_task   };
+	Signal_handler<Device> task_state_handler { env.ep(), *this, &Device::handle_task_state };
+	Io_signal_handler<Device> urb_handler     { env.ep(), *this, &Device::handle_urb        };
 
 	genode_usb_client_handle_t usb_handle {
 		genode_usb_client_create(genode_env_ptr(env),
 		                         genode_allocator_ptr(Lx_kit::env().heap),
 		                         genode_range_allocator_ptr(alloc),
 		                         label.string(),
-		                         genode_signal_handler_ptr(state_task_handler.handler)) };
+		                         genode_signal_handler_ptr(task_state_handler)) };
 
 	Signal_handler<Device> nic_handler    { env.ep(), *this, &Device::handle_nic    };
 	Signal_handler<Device> config_handler { env.ep(), *this, &Device::handle_config };
@@ -104,7 +57,7 @@ struct Device
 		env(env), label(label)
 	{
 		genode_usb_client_sigh_ack_avail(usb_handle,
-		                                 genode_signal_handler_ptr(urb_task_handler.handler));
+		                                 genode_signal_handler_ptr(urb_handler));
 
 		genode_mac_address_reporter_init(env, Lx_kit::env().heap);
 
@@ -114,6 +67,8 @@ struct Device
 
 		config_rom.sigh(config_handler);
 		handle_config();
+
+		env.ep().register_io_progress_handler(*this);
 	}
 
 	/* non-copyable */
@@ -122,16 +77,12 @@ struct Device
 
 	void register_device()
 	{
-		error("REGISTER");
-
 		registered = true;
 		lx_device_handle = lx_emul_usb_client_register_device(usb_handle, label.string());
 		if (!lx_device_handle) {
 			registered = false;
 			return;
 		}
-		error("REGSISTERED");
-
 	}
 
 	void unregister_device()
@@ -142,10 +93,27 @@ struct Device
 #endif
 	}
 
+	void handle_io_progress() override
+	{
+		genode_uplink_notify_peers();
+	}
+
+	void handle_task_state()
+	{
+		lx_emul_task_unblock(state_task);
+		Lx_kit::env().scheduler.schedule();
+	}
+
+	void handle_urb()
+	{
+		lx_emul_task_unblock(urb_task);
+		Lx_kit::env().scheduler.schedule();
+	}
+
 	void handle_nic()
 	{
 		if (!user_task_struct_ptr)
-		return;
+			return;
 
 		lx_emul_task_unblock(user_task_struct_ptr);
 		Lx_kit::env().scheduler.schedule();
@@ -166,19 +134,14 @@ struct Device
 	{
 		Device &device = *reinterpret_cast<Device *>(arg);
 
-		while (device.state_task_handler.running) {
-			while (device.state_task_handler.signal_pending()) {
-				if (genode_usb_client_plugged(device.usb_handle) && !device.registered)
-					device.register_device();
+		while (true) {
+			if (genode_usb_client_plugged(device.usb_handle) && !device.registered)
+				device.register_device();
 
-				if (!genode_usb_client_plugged(device.usb_handle) && device.registered)
-					device.unregister_device();
-			}
-			device.state_task_handler.block_and_schedule();
+			if (!genode_usb_client_plugged(device.usb_handle) && device.registered)
+				device.unregister_device();
+			lx_emul_task_schedule(true);
 		}
-
-		while (true)
-			device.state_task_handler.block_and_schedule();
 
 		return 0;
 	}
@@ -187,16 +150,13 @@ struct Device
 	{
 		Device &device = *reinterpret_cast<Device *>(arg);
 
-		while (device.urb_task_handler.running) {
+		while (true) {
 			if (device.registered) {
 				genode_usb_client_execute_completions(device.usb_handle);
-				genode_uplink_notify_peers();
 			}
 
-			device.urb_task_handler.block_and_schedule();
+			lx_emul_task_schedule(true);
 		}
-		while (true)
-			device.state_task_handler.block_and_schedule();
 
 		return 0;
 	}
