@@ -6,6 +6,7 @@ DEFINE_STATIC_KEY_FALSE(bpf_stats_enabled_key);
 DEFINE_STATIC_KEY_FALSE(bpf_master_redirect_enabled_key);
 DEFINE_STATIC_KEY_FALSE(memalloc_socks_key);
 
+
 __wsum csum_partial(const void * buff,int len,__wsum sum)
 {
 	lx_emul_trace_and_stop(__func__);
@@ -40,7 +41,6 @@ void update_vsyscall(struct timekeeper * tk)
 
 void __init net_ns_init(void)
 {
-	printk("%s:%d NET_NS_INIT\n", __func__, __LINE__);
 	lx_emul_trace(__func__);
 }
 
@@ -259,5 +259,3 @@ int netdev_register_kobject(struct net_device * ndev)
 	lx_emul_trace(__func__);
 	return 0;
 }
-
-

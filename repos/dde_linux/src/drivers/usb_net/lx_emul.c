@@ -44,6 +44,7 @@ int register_pernet_device(struct pernet_operations *ops)
 	return register_pernet_subsys(ops);
 }
 
+
 #include <linux/rcutree.h>
 
 /*
@@ -68,6 +69,3 @@ void free_pages(unsigned long addr,unsigned int order)
 {
 	kfree((void *)addr);
 }
-
-
-
