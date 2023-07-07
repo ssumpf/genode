@@ -3,6 +3,9 @@
 #include <base/component.h>
 #include <base/env.h>
 
+#include <genode_c_api/uplink.h>
+#include <genode_c_api/mac_address_reporter.h>
+
 #include <lx_kit/env.h>
 #include <lx_emul/task.h>
 #include <lx_emul/init.h>
@@ -11,6 +14,8 @@
 #include <usb_net.h>
 
 using namespace Genode;
+
+extern task_struct *user_task_struct_ptr;
 
 struct Task_handler
 {
@@ -66,6 +71,8 @@ struct Device
 	Env   &env;
 	Label  label;
 
+	Attached_rom_dataspace config_rom { env, "config" };
+
 	/*
 	 * Dedicated allocator per device to notice dangling
 	 * allocations on device destruction.
@@ -85,6 +92,9 @@ struct Device
 		                         label.string(),
 		                         genode_signal_handler_ptr(state_task_handler.handler)) };
 
+	Signal_handler<Device> nic_handler    { env.ep(), *this, &Device::handle_nic    };
+	Signal_handler<Device> config_handler { env.ep(), *this, &Device::handle_config };
+
 	bool registered { false };
 
 	void *lx_device_handle { nullptr };
@@ -95,6 +105,15 @@ struct Device
 	{
 		genode_usb_client_sigh_ack_avail(usb_handle,
 		                                 genode_signal_handler_ptr(urb_task_handler.handler));
+
+		genode_mac_address_reporter_init(env, Lx_kit::env().heap);
+
+		genode_uplink_init(genode_env_ptr(env),
+		                   genode_allocator_ptr(Lx_kit::env().heap),
+		                   genode_signal_handler_ptr(nic_handler));
+
+		config_rom.sigh(config_handler);
+		handle_config();
 	}
 
 	/* non-copyable */
@@ -122,6 +141,22 @@ struct Device
 		registered = false;
 #endif
 	}
+
+	void handle_nic()
+	{
+		if (!user_task_struct_ptr)
+		return;
+
+		lx_emul_task_unblock(user_task_struct_ptr);
+		Lx_kit::env().scheduler.schedule();
+	}
+
+	void handle_config()
+	{
+		config_rom.update();
+		genode_mac_address_reporter_config(config_rom.xml());
+	}
+
 
 	/**********
 	 ** Task **
@@ -153,8 +188,10 @@ struct Device
 		Device &device = *reinterpret_cast<Device *>(arg);
 
 		while (device.urb_task_handler.running) {
-			if (device.registered)
+			if (device.registered) {
 				genode_usb_client_execute_completions(device.usb_handle);
+				genode_uplink_notify_peers();
+			}
 
 			device.urb_task_handler.block_and_schedule();
 		}
@@ -171,9 +208,6 @@ void Component::construct(Env & env)
 	Lx_kit::initialize(env);
 
 	env.exec_static_constructors();
-
-	//genode_event_init(genode_env_ptr(env),
-	 //                 genode_allocator_ptr(Lx_kit::env().heap));
 
 	lx_emul_start_kernel(nullptr);
 }
