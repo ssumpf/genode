@@ -325,14 +325,6 @@ bool gfp_pfmemalloc_allowed(gfp_t gfp_mask)
 }
 
 
-#include <net/gen_stats.h>
-
-void gnet_stats_basic_sync_init(struct gnet_stats_basic_sync * b)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 #include <linux/netdevice.h>
 
 struct packet_offload * gro_find_complete_by_type(__be16 type)
@@ -895,14 +887,6 @@ struct sk_buff * rtmsg_ifinfo_build_skb(int type,struct net_device * dev,unsigne
 #include <linux/rtnetlink.h>
 
 void rtmsg_ifinfo_send(struct sk_buff * skb,struct net_device * dev,gfp_t flags)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/rtnetlink.h>
-
-void rtnl_lock(void)
 {
 	lx_emul_trace_and_stop(__func__);
 }

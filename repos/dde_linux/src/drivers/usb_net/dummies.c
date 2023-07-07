@@ -162,6 +162,14 @@ int rtnl_lock_killable(void)
 
 #include <linux/rtnetlink.h>
 
+void rtnl_lock(void)
+{
+	lx_emul_trace(__func__);
+}
+
+
+#include <linux/rtnetlink.h>
+
 int rtnl_is_locked(void)
 {
 	lx_emul_trace(__func__);
@@ -188,15 +196,15 @@ void add_device_randomness(const void * buf,size_t len)
 
 #include <linux/rtnetlink.h>
 
-void rtmsg_ifinfo(int type,struct net_device * dev,unsigned int change,gfp_t flags)
+void rtnl_unlock(void)
 {
-	printk("%s:%d MIGHT be NEEDED for link change\n", __func__, __LINE__);
+	lx_emul_trace(__func__);
 }
 
 
-#include <linux/rtnetlink.h>
+#include <net/gen_stats.h>
 
-void rtnl_unlock(void)
+void gnet_stats_basic_sync_init(struct gnet_stats_basic_sync * b)
 {
 	lx_emul_trace(__func__);
 }
