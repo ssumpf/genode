@@ -178,14 +178,6 @@ unsigned int full_name_hash(const void * salt,const char * name,unsigned int len
 }
 
 
-#include <net/sch_generic.h>
-
-void dev_init_scheduler(struct net_device * dev)
-{
-	lx_emul_trace(__func__);
-}
-
-
 #include <linux/random.h>
 
 void add_device_randomness(const void * buf,size_t len)

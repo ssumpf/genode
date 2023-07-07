@@ -44,28 +44,6 @@ int register_pernet_device(struct pernet_operations *ops)
 	return register_pernet_subsys(ops);
 }
 
-
-#include <linux/netdevice.h>
-
-void netif_carrier_on(struct net_device *dev)
-{
-	dev->state &= ~(1 << __LINK_STATE_NOCARRIER);
-	printk("%s:%d TODO implement link state change\n", __func__, __LINE__);
-//	if (dev->session_component)
-//		reinterpret_cast<Linux_network_session_base*>(dev->session_component)->
-//			link_state(true);
-}
-
-
-void netif_carrier_off(struct net_device *dev)
-{
-	dev->state |= 1 << __LINK_STATE_NOCARRIER;
-	printk("%s:%d TODO implement link state change\n", __func__, __LINE__);
-//	if (dev->session_component)
-//		reinterpret_cast<Linux_network_session_base*>(dev->session_component)->
-//			link_state(false);
-}
-
 #include <linux/rcutree.h>
 
 /*
