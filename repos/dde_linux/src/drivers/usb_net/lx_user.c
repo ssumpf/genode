@@ -223,9 +223,17 @@ void lx_user_init(void)
 /*
  * Called whenever the link state changes
  */
+
+bool force_uplink_destroy = false;
+
 void rtmsg_ifinfo(int type, struct net_device * dev, unsigned int change, gfp_t flags)
 {
 	/* trigger handle_create_uplink / handle_destroy_uplink */
 	if (user_task_struct_ptr)
 		lx_emul_task_unblock(user_task_struct_ptr);
+
+	if (force_uplink_destroy) {
+		struct genode_uplink *uplink = dev_genode_uplink(dev);
+		genode_uplink_destroy(uplink);
+	}
 }

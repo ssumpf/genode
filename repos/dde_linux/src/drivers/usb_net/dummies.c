@@ -86,12 +86,29 @@ int __init usb_devio_init(void)
 }
 
 
+#include <linux/usb/hcd.h>
+
+void usb_hcd_synchronize_unlinks(struct usb_device * udev)
+{
+	lx_emul_trace(__func__);
+}
+
+
 #include <linux/usb.h>
 
 int usb_string(struct usb_device * dev,int index,char * buf,size_t size)
 {
 	lx_emul_trace(__func__);
 	return 0;
+}
+
+
+#include <linux/usb.h>
+
+struct urb * usb_get_from_anchor(struct usb_anchor * anchor)
+{
+	lx_emul_trace(__func__);
+	return NULL;
 }
 
 
@@ -194,6 +211,15 @@ int rtnl_is_locked(void)
 }
 
 
+#include <linux/rtnetlink.h>
+
+struct sk_buff * rtmsg_ifinfo_build_skb(int type,struct net_device * dev,unsigned int change,u32 event,gfp_t flags,int * new_nsid,int new_ifindex)
+{
+	lx_emul_trace(__func__);
+	return NULL;
+}
+
+
 #include <linux/stringhash.h>
 
 unsigned int full_name_hash(const void * salt,const char * name,unsigned int len)
@@ -227,6 +253,14 @@ void gnet_stats_basic_sync_init(struct gnet_stats_basic_sync * b)
 }
 
 
+#include <net/gen_stats.h>
+
+void gen_kill_estimator(struct net_rate_estimator __rcu ** rate_est)
+{
+	lx_emul_trace(__func__);
+}
+
+
 extern void software_node_notify(struct device * dev);
 void software_node_notify(struct device * dev)
 {
@@ -248,6 +282,21 @@ int usb_create_sysfs_dev_files(struct usb_device * udev)
 	return 0;
 }
 
+
+extern void usb_remove_sysfs_dev_files(struct usb_device * udev);
+void usb_remove_sysfs_dev_files(struct usb_device * udev)
+{
+	lx_emul_trace(__func__);
+}
+
+
+extern void usb_remove_sysfs_intf_files(struct usb_interface * intf);
+void usb_remove_sysfs_intf_files(struct usb_interface * intf)
+{
+	lx_emul_trace(__func__);
+}
+
+
 extern void usb_create_sysfs_intf_files(struct usb_interface * intf);
 void usb_create_sysfs_intf_files(struct usb_interface * intf)
 {
@@ -262,6 +311,13 @@ void usb_notify_add_device(struct usb_device * udev)
 }
 
 
+extern void usb_notify_remove_device(struct usb_device * udev);
+void usb_notify_remove_device(struct usb_device * udev)
+{
+	lx_emul_trace(__func__);
+}
+
+
 extern int usb_create_ep_devs(struct device * parent,struct usb_host_endpoint * endpoint,struct usb_device * udev);
 int usb_create_ep_devs(struct device * parent,struct usb_host_endpoint * endpoint,struct usb_device * udev)
 {
@@ -270,9 +326,30 @@ int usb_create_ep_devs(struct device * parent,struct usb_host_endpoint * endpoin
 }
 
 
+extern void usb_remove_ep_devs(struct usb_host_endpoint * endpoint);
+void usb_remove_ep_devs(struct usb_host_endpoint * endpoint)
+{
+	lx_emul_trace(__func__);
+}
+
+
+extern void usb_disable_interface(struct usb_device * dev,struct usb_interface * intf,bool reset_hardware);
+void usb_disable_interface(struct usb_device * dev,struct usb_interface * intf,bool reset_hardware)
+{
+	lx_emul_trace(__func__);
+}
+
+
 extern int netdev_register_kobject(struct net_device * ndev);
 int netdev_register_kobject(struct net_device * ndev)
 {
 	lx_emul_trace(__func__);
 	return 0;
+}
+
+
+extern void netdev_unregister_kobject(struct net_device * ndev);
+void netdev_unregister_kobject(struct net_device * ndev)
+{
+	lx_emul_trace(__func__);
 }
