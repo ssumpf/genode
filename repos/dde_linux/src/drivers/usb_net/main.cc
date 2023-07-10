@@ -16,6 +16,7 @@
 using namespace Genode;
 
 extern task_struct *user_task_struct_ptr;
+extern bool force_uplink_destroy;
 
 struct Device : private Entrypoint::Io_progress_handler
 {
@@ -87,8 +88,10 @@ struct Device : private Entrypoint::Io_progress_handler
 
 	void unregister_device()
 	{
+		force_uplink_destroy = true;
 		lx_emul_usb_client_unregister_device(usb_handle, lx_device_handle);
 		registered = false;
+		force_uplink_destroy = false;
 	}
 
 	void handle_io_progress() override

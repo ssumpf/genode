@@ -28,6 +28,11 @@ struct kmem_cache * kmem_cache_create_usercopy(const char * name,
 }
 
 
+#include <net/netfilter/nf_conntrack.h>
+
+struct net init_net;
+
+
 #include <net/net_namespace.h>
 
 int register_pernet_subsys(struct pernet_operations *ops)
