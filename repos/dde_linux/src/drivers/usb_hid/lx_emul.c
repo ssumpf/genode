@@ -17,7 +17,6 @@
 #include <linux/device.h>
 #include <linux/sysfs.h>
 #include <linux/usb.h>
-#include <linux/usb/hcd.h>
 
 #include <usb_hid.h>
 
@@ -34,48 +33,3 @@ struct usb_driver usbfs_driver = {
 const struct attribute_group *usb_device_groups[] = { };
 
 
-void usb_disable_device(struct usb_device *dev, int skip_ep0)
-{
-	int i;
-
-	/* getting rid of interfaces will disconnect
-	 * any drivers bound to them (a key side effect)
-	 */
-	if (dev->actconfig) {
-		/*
-		 * FIXME: In order to avoid self-deadlock involving the
-		 * bandwidth_mutex, we have to mark all the interfaces
-		 * before unregistering any of them.
-		 */
-		for (i = 0; i < dev->actconfig->desc.bNumInterfaces; i++)
-			dev->actconfig->interface[i]->unregistering = 1;
-
-		for (i = 0; i < dev->actconfig->desc.bNumInterfaces; i++) {
-			struct usb_interface	*interface;
-
-			/* remove this interface if it has been registered */
-			interface = dev->actconfig->interface[i];
-			if (!device_is_registered(&interface->dev))
-				continue;
-
-			dev_dbg(&dev->dev, "unregistering interface %s\n",
-				dev_name(&interface->dev));
-			device_del(&interface->dev);
-		}
-
-		/* Now that the interfaces are unbound, nobody should
-		 * try to access them.
-		 */
-		for (i = 0; i < dev->actconfig->desc.bNumInterfaces; i++) {
-			put_device(&dev->actconfig->interface[i]->dev);
-			dev->actconfig->interface[i] = NULL;
-		}
-
-		dev->actconfig = NULL;
-		if (dev->state == USB_STATE_CONFIGURED)
-			usb_set_device_state(dev, USB_STATE_ADDRESS);
-	}
-
-	dev_dbg(&dev->dev, "%s nuking %s URBs\n", __func__,
-		skip_ep0 ? "non-ep0" : "all");
-}

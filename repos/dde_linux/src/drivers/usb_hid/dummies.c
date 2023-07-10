@@ -261,13 +261,6 @@ void skb_init()
 }
 
 
-extern void usb_enable_endpoint(struct usb_device * dev,struct usb_host_endpoint * ep,bool reset_ep);
-void usb_enable_endpoint(struct usb_device * dev,struct usb_host_endpoint * ep,bool reset_ep)
-{
-	lx_emul_trace(__func__);
-}
-
-
 extern void software_node_notify(struct device * dev);
 void software_node_notify(struct device * dev)
 {
@@ -335,13 +328,6 @@ void usb_create_sysfs_intf_files(struct usb_interface * intf)
 
 extern void usb_remove_sysfs_intf_files(struct usb_interface * intf);
 void usb_remove_sysfs_intf_files(struct usb_interface * intf)
-{
-	lx_emul_trace(__func__);
-}
-
-
-extern void usb_enable_interface(struct usb_device * dev,struct usb_interface * intf,bool reset_eps);
-void usb_enable_interface(struct usb_device * dev,struct usb_interface * intf,bool reset_eps)
 {
 	lx_emul_trace(__func__);
 }
