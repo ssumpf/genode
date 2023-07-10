@@ -50,8 +50,6 @@ struct Pc::Main
 	 */
 	Signal_handler<Main> _signal_handler { _env.ep(), *this, &Main::_handle_signal };
 
-	unsigned _signal_handler_nesting_level = 0;
-
 	void _handle_signal()
 	{
 		if (user_task_struct_ptr)
