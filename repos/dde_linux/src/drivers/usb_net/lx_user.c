@@ -203,8 +203,7 @@ static int user_task_function(void *arg)
 }
 
 
-struct task_struct *user_task_struct_ptr;  /* used by 'Main' for lx_emul_task_unblock */
-
+struct task_struct *user_task_struct_ptr;  /* used by 'Device' for lx_emul_task_unblock */
 
 void lx_user_init(void)
 {
