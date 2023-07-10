@@ -15,6 +15,8 @@
 #include <linux/usb.h>
 #include <genode_c_api/usb_client.h>
 
+#define to_urb(d) container_of(d, struct urb, kref)
+
 extern struct bus_type    usb_bus_type;
 extern struct device_type usb_if_device_type;
 
@@ -431,7 +433,10 @@ struct urb *usb_alloc_urb(int iso_packets, gfp_t mem_flags)
 
 	if (!urb) return NULL;
 	memset(urb, 0, sizeof(*urb));
+	kref_init(&urb->kref);
+	INIT_LIST_HEAD(&urb->urb_list);
 	INIT_LIST_HEAD(&urb->anchor_list);
+
 	return urb;
 }
 
@@ -572,12 +577,26 @@ transfer:
 }
 
 
-void usb_free_urb(struct urb *urb)
+struct urb *usb_get_urb(struct urb *urb)
 {
-	if (!urb)
-		return;
+	if (urb)
+		kref_get(&urb->kref);
+	return urb;
+}
+
+
+static void urb_destroy(struct kref *kref)
+{
+	struct urb *urb = to_urb(kref);
 
 	kfree(urb);
-
 	wake_up(&lx_emul_urb_wait);
+}
+
+
+/* usb_put_urb is defined as usb_free_urb, therefore we need reference counting */
+void usb_free_urb(struct urb *urb)
+{
+	if (urb)
+		kref_put(&urb->kref, urb_destroy);
 }
