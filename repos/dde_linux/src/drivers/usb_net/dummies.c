@@ -30,6 +30,14 @@ void synchronize_rcu_expedited(void)
 }
 
 
+#include <linux/rcupdate.h>
+
+void synchronize_rcu(void)
+{
+	lx_emul_trace(__func__);
+}
+
+
 #include <linux/timekeeper_internal.h>
 void update_vsyscall(struct timekeeper * tk)
 {
@@ -98,6 +106,15 @@ char * usb_cache_string(struct usb_device * udev,int index)
 void usb_kill_urb(struct urb * urb)
 {
 	lx_emul_trace(__func__);
+}
+
+
+#include <linux/usb.h>
+
+int usb_unlink_urb(struct urb * urb)
+{
+	lx_emul_trace(__func__);
+	return 0;
 }
 
 

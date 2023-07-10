@@ -945,14 +945,6 @@ void sock_edemux(struct sk_buff * skb)
 bool static_key_initialized;
 
 
-#include <linux/rcupdate.h>
-
-void synchronize_rcu(void)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 #include <net/sock.h>
 
 int sysctl_tstamp_allow_data;
@@ -1057,14 +1049,6 @@ int usb_get_status(struct usb_device * dev,int recip,int type,int target,void * 
 }
 
 
-#include <linux/usb.h>
-
-struct urb * usb_get_urb(struct urb * urb)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 #include <linux/usb/hcd.h>
 
 int usb_hcd_alloc_bandwidth(struct usb_device * udev,struct usb_host_config * new_config,struct usb_host_interface * cur_alt,struct usb_host_interface * new_alt)
@@ -1156,14 +1140,6 @@ int usb_set_isoch_delay(struct usb_device * dev)
 #include <linux/usb/ch9.h>
 
 const char * usb_speed_string(enum usb_device_speed speed)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/usb.h>
-
-int usb_unlink_urb(struct urb * urb)
 {
 	lx_emul_trace_and_stop(__func__);
 }

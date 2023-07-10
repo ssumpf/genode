@@ -87,10 +87,8 @@ struct Device : private Entrypoint::Io_progress_handler
 
 	void unregister_device()
 	{
-#if 0
 		lx_emul_usb_client_unregister_device(usb_handle, lx_device_handle);
 		registered = false;
-#endif
 	}
 
 	void handle_io_progress() override
