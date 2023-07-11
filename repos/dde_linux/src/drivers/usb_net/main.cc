@@ -1,3 +1,15 @@
+/*
+ * \brief  C++ initialization, session, and client handling
+ * \author Sebastian Sumpf
+ * \date   2023-07-11
+ */
+
+/*
+ * Copyright (C) 2023 Genode Labs GmbH
+ *
+ * This file is distributed under the terms of the GNU General Public License
+ * version 2.
+ */
 
 #include <base/attached_rom_dataspace.h>
 #include <base/component.h>
