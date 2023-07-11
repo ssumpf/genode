@@ -8,6 +8,9 @@ DEFINE_STATIC_KEY_FALSE(memalloc_socks_key);
 
 unsigned long __FIXADDR_TOP = 0xfffff000;
 
+bool arm64_use_ng_mappings = false;
+
+
 #ifdef __i386__
 asmlinkage __wsum csum_partial(const void * buff,int len,__wsum sum)
 #else
@@ -272,6 +275,16 @@ void do_softirq_own_stack(void)
 {
 	lx_emul_trace(__func__);
 }
+
+
+#include <linux/of_net.h>
+#if defined(CONFIG_OF) && defined(CONFIG_NET)
+int of_get_mac_address(struct device_node * np,u8 * addr)
+{
+	lx_emul_trace(__func__);
+	return -1;
+}
+#endif
 
 
 extern void software_node_notify(struct device * dev);
