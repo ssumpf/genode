@@ -21,6 +21,48 @@ __wsum csum_partial(const void * buff,int len,__wsum sum)
 }
 
 
+#ifdef __arm__
+#include <asm/uaccess.h>
+
+unsigned long arm_copy_to_user(void *to, const void *from, unsigned long n)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+asmlinkage void __div0(void);
+asmlinkage void __div0(void)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/dma-map-ops.h>
+
+void arch_teardown_dma_ops(struct device * dev)
+{
+	lx_emul_trace(__func__);
+}
+
+
+extern void arm_heavy_mb(void);
+void arm_heavy_mb(void)
+{
+	// FIXME: on Cortex A9 we potentially need to flush L2-cache
+	lx_emul_trace(__func__);
+}
+
+#else
+
+#include <linux/timekeeper_internal.h>
+void update_vsyscall(struct timekeeper * tk)
+{
+	lx_emul_trace(__func__);
+}
+
+#endif
+
+
+
 #include <linux/filter.h>
 #include <linux/jump_label.h> /* for DEFINE_STATIC_KEY_FALSE */
 
@@ -41,13 +83,6 @@ void synchronize_rcu_expedited(void)
 #include <linux/rcupdate.h>
 
 void synchronize_rcu(void)
-{
-	lx_emul_trace(__func__);
-}
-
-
-#include <linux/timekeeper_internal.h>
-void update_vsyscall(struct timekeeper * tk)
 {
 	lx_emul_trace(__func__);
 }
