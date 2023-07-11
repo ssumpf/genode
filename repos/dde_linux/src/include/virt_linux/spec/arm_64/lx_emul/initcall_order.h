@@ -1,7 +1,7 @@
 /*
  * \brief  Array defining order of Linux Kernel initcalls
  * \author Automatically generated file - do no edit
- * \date   2023-06-28
+ * \date   2023-07-11
  */
 
 #pragma once
@@ -69,6 +69,7 @@ static const char * lx_emul_initcall_order[] = {
 	"__initcall_prng_mod_init4",
 	"__initcall_misc_init4",
 	"__initcall_register_cpu_capacity_sysctl4",
+	"__initcall_phy_init4",
 	"__initcall_usb_common_init4",
 	"__initcall_usb_init4",
 	"__initcall_input_init4",
@@ -129,7 +130,18 @@ static const char * lx_emul_initcall_order[] = {
 	"__initcall_cacheinfo_sysfs_init6",
 	"__initcall_wg_mod_init6",
 	"__initcall_blackhole_netdev_init6",
+	"__initcall_phylink_init6",
+	"__initcall_phy_module_init6",
+	"__initcall_fixed_mdio_bus_init6",
+	"__initcall_phy_module_init6",
 	"__initcall_virtio_net_driver_init6",
+	"__initcall_asix_driver_init6",
+	"__initcall_ax88179_178a_driver_init6",
+	"__initcall_cdc_driver_init6",
+	"__initcall_smsc95xx_driver_init6",
+	"__initcall_rndis_driver_init6",
+	"__initcall_usbnet_init6",
+	"__initcall_r8153_ecm_driver_init6",
 	"__initcall_net_failover_init6",
 	"__initcall_input_leds_init6",
 	"__initcall_evdev_init6",
