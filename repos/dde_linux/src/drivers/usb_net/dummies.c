@@ -6,8 +6,13 @@ DEFINE_STATIC_KEY_FALSE(bpf_stats_enabled_key);
 DEFINE_STATIC_KEY_FALSE(bpf_master_redirect_enabled_key);
 DEFINE_STATIC_KEY_FALSE(memalloc_socks_key);
 
+unsigned long __FIXADDR_TOP = 0xfffff000;
 
+#ifdef __i386__
+asmlinkage __wsum csum_partial(const void * buff,int len,__wsum sum)
+#else
 __wsum csum_partial(const void * buff,int len,__wsum sum)
+#endif
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -256,6 +261,14 @@ void gnet_stats_basic_sync_init(struct gnet_stats_basic_sync * b)
 #include <net/gen_stats.h>
 
 void gen_kill_estimator(struct net_rate_estimator __rcu ** rate_est)
+{
+	lx_emul_trace(__func__);
+}
+
+
+#include <asm-generic/softirq_stack.h>
+
+void do_softirq_own_stack(void)
 {
 	lx_emul_trace(__func__);
 }
