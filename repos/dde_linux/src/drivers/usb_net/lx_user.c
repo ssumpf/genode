@@ -1,6 +1,6 @@
 /*
  * \brief  Post kernel activity
- * \author Sebastian Sumpf
+ * \author Christian Helmuth
  * \date   2023-06-29
  */
 

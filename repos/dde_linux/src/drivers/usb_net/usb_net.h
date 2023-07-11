@@ -1,3 +1,16 @@
+/*
+ * \brief  C/C++ interface for this driver
+ * \author Sebastian Sumpf
+ * \date   2023-07-11
+ */
+
+/*
+ * Copyright (C) 2023 Genode Labs GmbH
+ *
+ * This file is distributed under the terms of the GNU General Public License
+ * version 2.
+ */
+
 #include <lx_emul/usb_client.h>
 
 #ifdef __cplusplus
