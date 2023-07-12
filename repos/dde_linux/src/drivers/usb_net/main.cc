@@ -30,7 +30,7 @@ using namespace Genode;
 extern task_struct *user_task_struct_ptr;
 extern bool force_uplink_destroy;
 
-struct Device : private Entrypoint::Io_progress_handler
+struct Device
 {
 	using Label = String<64>;
 
@@ -49,7 +49,7 @@ struct Device : private Entrypoint::Io_progress_handler
 	task_struct *urb_task   { lx_user_new_usb_task(urb_task_entry, this)   };
 
 	Signal_handler<Device> task_state_handler { env.ep(), *this, &Device::handle_task_state };
-	Io_signal_handler<Device> urb_handler     { env.ep(), *this, &Device::handle_urb        };
+	Signal_handler<Device> urb_handler        { env.ep(), *this, &Device::handle_urb        };
 
 	genode_usb_client_handle_t usb_handle {
 		genode_usb_client_create(genode_env_ptr(env),
@@ -80,8 +80,6 @@ struct Device : private Entrypoint::Io_progress_handler
 
 		config_rom.sigh(config_handler);
 		handle_config();
-
-		env.ep().register_io_progress_handler(*this);
 	}
 
 	/* non-copyable */
@@ -106,21 +104,17 @@ struct Device : private Entrypoint::Io_progress_handler
 		force_uplink_destroy = false;
 	}
 
-	void handle_io_progress() override
-	{
-		genode_uplink_notify_peers();
-	}
-
 	void handle_task_state()
 	{
 		lx_emul_task_unblock(state_task);
-		Lx_kit::env().scheduler.schedule();
+		Lx_kit::env().scheduler.execute();
 	}
 
 	void handle_urb()
 	{
 		lx_emul_task_unblock(urb_task);
-		Lx_kit::env().scheduler.schedule();
+		Lx_kit::env().scheduler.execute();
+		genode_uplink_notify_peers();
 	}
 
 	void handle_nic()
@@ -129,7 +123,7 @@ struct Device : private Entrypoint::Io_progress_handler
 			return;
 
 		lx_emul_task_unblock(user_task_struct_ptr);
-		Lx_kit::env().scheduler.schedule();
+		Lx_kit::env().scheduler.execute();
 	}
 
 	void handle_config()
@@ -176,9 +170,25 @@ struct Device : private Entrypoint::Io_progress_handler
 };
 
 
+struct Main
+{
+	Env &env;
+
+	Signal_handler<Main> signal_handler { env.ep(), *this, &Main::handle_signal };
+
+	Main(Env &env) : env(env) { }
+
+	void handle_signal()
+	{
+		Lx_kit::env().scheduler.execute();
+	}
+};
+
+
 void Component::construct(Env & env)
 {
-	Lx_kit::initialize(env);
+	static Main main { env };
+	Lx_kit::initialize(env, main.signal_handler);
 
 	env.exec_static_constructors();
 
