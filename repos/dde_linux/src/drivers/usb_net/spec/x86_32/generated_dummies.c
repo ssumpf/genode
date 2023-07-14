@@ -176,14 +176,6 @@ void bpf_warn_invalid_xdp_action(struct net_device * dev,struct bpf_prog * prog,
 u8 const byte_rev_table[256] = {};
 
 
-#include <linux/usb/cdc.h>
-
-int cdc_parse_cdc_header(struct usb_cdc_parsed_header * hdr,struct usb_interface * intf,u8 * buffer,int buflen)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 #include <linux/context_tracking_irq.h>
 
 noinstr void ct_irq_enter(void)
@@ -632,22 +624,6 @@ void net_selftest_get_strings(u8 * data)
 #include <net/netlink.h>
 
 int nla_put(struct sk_buff * skb,int attrtype,int attrlen,const void * data)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/gfp.h>
-
-void * page_frag_alloc_align(struct page_frag_cache * nc,unsigned int fragsz,gfp_t gfp_mask,unsigned int align_mask)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/gfp.h>
-
-void page_frag_free(void * addr)
 {
 	lx_emul_trace_and_stop(__func__);
 }

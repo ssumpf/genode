@@ -169,14 +169,6 @@ void bpf_warn_invalid_xdp_action(struct net_device * dev,struct bpf_prog * prog,
 }
 
 
-#include <linux/usb/cdc.h>
-
-int cdc_parse_cdc_header(struct usb_cdc_parsed_header * hdr,struct usb_interface * intf,u8 * buffer,int buflen)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 #include <linux/context_tracking_irq.h>
 
 noinstr void ct_irq_enter(void)
@@ -707,22 +699,6 @@ const char * of_prop_next_string(struct property * prop,const char * cur)
 #include <linux/of.h>
 
 int of_property_read_string(const struct device_node * np,const char * propname,const char ** out_string)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/gfp.h>
-
-void * page_frag_alloc_align(struct page_frag_cache * nc,unsigned int fragsz,gfp_t gfp_mask,unsigned int align_mask)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/gfp.h>
-
-void page_frag_free(void * addr)
 {
 	lx_emul_trace_and_stop(__func__);
 }

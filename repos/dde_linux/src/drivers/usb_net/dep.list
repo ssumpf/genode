@@ -662,6 +662,7 @@ include/linux/net.h
 include/linux/netlink.h
 include/linux/netpoll.h
 include/linux/nfs_fs_i.h
+include/linux/nls.h
 include/linux/nmi.h
 include/linux/node.h
 include/linux/nodemask.h

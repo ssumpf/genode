@@ -74,7 +74,8 @@ static rx_handler_result_t handle_rx(struct sk_buff **pskb)
 	struct net_device *dev = skb->dev;
 	struct genode_uplink_tx_packet_context ctx = { .skb = skb };
 
-	{
+	/* if uplink still exists */
+	if (dev->ifalias) {
 		bool progress = genode_uplink_tx_packet(dev_genode_uplink(dev),
 		                                        uplink_tx_packet_content,
 		                                        &ctx);
@@ -133,6 +134,7 @@ static void handle_destroy_uplink(struct net_device *dev)
 	if (netif_carrier_ok(dev))
 		return;
 
+	printk("destroy uplink for net device %s\n", &dev->name[0]);
 	genode_uplink_destroy(uplink);
 
 	dev->ifalias = NULL;
@@ -234,6 +236,7 @@ void rtmsg_ifinfo(int type, struct net_device * dev, unsigned int change, gfp_t 
 
 	if (force_uplink_destroy) {
 		struct genode_uplink *uplink = dev_genode_uplink(dev);
+		printk("force destroy uplink for net device %s\n", &dev->name[0]);
 		genode_uplink_destroy(uplink);
 	}
 }

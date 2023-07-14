@@ -152,15 +152,6 @@ void usb_hcd_synchronize_unlinks(struct usb_device * udev)
 
 #include <linux/usb.h>
 
-int usb_string(struct usb_device * dev,int index,char * buf,size_t size)
-{
-	lx_emul_trace(__func__);
-	return 0;
-}
-
-
-#include <linux/usb.h>
-
 struct urb * usb_get_from_anchor(struct usb_anchor * anchor)
 {
 	lx_emul_trace(__func__);
