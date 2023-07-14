@@ -171,6 +171,103 @@ int usb_get_descriptor(struct usb_device *dev, unsigned char type,
 }
 
 
+void usb_enable_endpoint(struct usb_device *dev, struct usb_host_endpoint *ep, bool reset_ep)
+{
+	int epnum = usb_endpoint_num(&ep->desc);
+	int is_out = usb_endpoint_dir_out(&ep->desc);
+	int is_control = usb_endpoint_xfer_control(&ep->desc);
+
+	if (is_out || is_control)
+		dev->ep_out[epnum] = ep;
+	if (!is_out || is_control)
+		dev->ep_in[epnum] = ep;
+	ep->enabled = 1;
+}
+
+
+void usb_enable_interface(struct usb_device *dev,
+		struct usb_interface *intf, bool reset_eps)
+{
+	struct usb_host_interface *alt = intf->cur_altsetting;
+	int i;
+
+	for (i = 0; i < alt->desc.bNumEndpoints; ++i) {
+		usb_enable_endpoint(dev, &alt->endpoint[i], reset_eps);
+	}
+}
+
+
+int usb_set_interface(struct usb_device *udev, int ifnum, int alternate)
+{
+	int      ret;
+	struct   urb *urb;
+	struct   completion comp;
+	unsigned timeout_jiffies = msecs_to_jiffies(10000u);
+
+	struct genode_usb_client_request_packet packet;
+	struct genode_usb_altsetting            alt_setting;
+
+	genode_usb_client_handle_t handle;
+
+	struct usb_interface *iface;
+
+	if (!udev->bus) return -ENODEV;
+
+	if (!udev->config)
+		return -ENODEV;
+
+	if (ifnum >= USB_MAXINTERFACES || ifnum < 0)
+		return -EINVAL;
+
+	iface = udev->config->interface[ifnum];
+
+	handle = (genode_usb_client_handle_t)udev->bus->controller;
+
+	/* dummy alloc urb for wait_for_free_urb below */
+	urb = (struct urb *)usb_alloc_urb(0, GFP_KERNEL);
+	if (!urb) return -ENOMEM;
+
+	packet.request.type          = ALT_SETTING;
+	alt_setting.interface_number = ifnum;
+	alt_setting.alt_setting      = alternate;
+	packet.request.req           = &alt_setting;
+	packet.buffer.size           = 0;
+
+	for (;;) {
+
+		if (genode_usb_client_request(handle, &packet)) break;
+
+		timeout_jiffies = wait_for_free_urb(timeout_jiffies);
+		if (!timeout_jiffies) {
+			ret = -ETIMEDOUT;
+			goto err_request;
+		}
+	}
+
+	init_completion(&comp);
+	packet.complete_callback = sync_complete;
+	packet.free_callback     = sync_complete;
+	packet.opaque_data       = &comp;
+
+	genode_usb_client_request_submit(handle, &packet);
+	wait_for_completion(&comp);
+
+	ret = packet.error ? packet_errno(packet.error) : 0;
+	if (!ret)
+		iface->cur_altsetting = &iface->altsetting[alternate];
+
+	usb_enable_interface(udev, iface, true);
+
+	genode_usb_client_request_finish(handle, &packet);
+
+err_request:
+	kfree(urb);
+
+	return ret;
+}
+
+
+
 static struct usb_interface_assoc_descriptor *find_iad(struct usb_device *dev,
                                                        struct usb_host_config *config,
                                                        u8 inum)
@@ -314,6 +411,7 @@ int usb_set_configuration(struct usb_device *dev, int configuration)
 
 	for (i = 0; i < nintf; ++i) {
 		struct usb_interface *intf = cp->interface[i];
+		usb_enable_interface(dev, intf, true);
 
 		ret = device_add(&intf->dev);
 		if (ret != 0) {
@@ -370,101 +468,6 @@ void usb_disable_device(struct usb_device *dev, int skip_ep0)
 
 	dev_dbg(&dev->dev, "%s nuking %s URBs\n", __func__,
 		skip_ep0 ? "non-ep0" : "all");
-}
-
-
-void usb_enable_endpoint(struct usb_device *dev, struct usb_host_endpoint *ep, bool reset_ep)
-{
-	int epnum = usb_endpoint_num(&ep->desc);
-	int is_out = usb_endpoint_dir_out(&ep->desc);
-	int is_control = usb_endpoint_xfer_control(&ep->desc);
-
-	if (is_out || is_control)
-		dev->ep_out[epnum] = ep;
-	if (!is_out || is_control)
-		dev->ep_in[epnum] = ep;
-	ep->enabled = 1;
-}
-
-
-void usb_enable_interface(struct usb_device *dev,
-		struct usb_interface *intf, bool reset_eps)
-{
-	struct usb_host_interface *alt = intf->cur_altsetting;
-	int i;
-
-	for (i = 0; i < alt->desc.bNumEndpoints; ++i)
-		usb_enable_endpoint(dev, &alt->endpoint[i], reset_eps);
-}
-
-
-int usb_set_interface(struct usb_device *udev, int ifnum, int alternate)
-{
-	int      ret;
-	struct   urb *urb;
-	struct   completion comp;
-	unsigned timeout_jiffies = msecs_to_jiffies(10000u);
-
-	struct genode_usb_client_request_packet packet;
-	struct genode_usb_altsetting            alt_setting;
-
-	genode_usb_client_handle_t handle;
-
-	struct usb_interface *iface;
-
-	if (!udev->bus) return -ENODEV;
-
-	if (!udev->config)
-		return -ENODEV;
-
-	if (ifnum >= USB_MAXINTERFACES || ifnum < 0)
-		return -EINVAL;
-
-	iface = udev->config->interface[ifnum];
-
-	handle = (genode_usb_client_handle_t)udev->bus->controller;
-
-	/* dummy alloc urb for wait_for_free_urb below */
-	urb = (struct urb *)usb_alloc_urb(0, GFP_KERNEL);
-	if (!urb) return -ENOMEM;
-
-	packet.request.type          = ALT_SETTING;
-	alt_setting.interface_number = ifnum;
-	alt_setting.alt_setting      = alternate;
-	packet.request.req           = &alt_setting;
-	packet.buffer.size           = 0;
-
-	for (;;) {
-
-		if (genode_usb_client_request(handle, &packet)) break;
-
-		timeout_jiffies = wait_for_free_urb(timeout_jiffies);
-		if (!timeout_jiffies) {
-			ret = -ETIMEDOUT;
-			goto err_request;
-		}
-	}
-
-	init_completion(&comp);
-	packet.complete_callback = sync_complete;
-	packet.free_callback     = sync_complete;
-	packet.opaque_data       = &comp;
-
-	genode_usb_client_request_submit(handle, &packet);
-	wait_for_completion(&comp);
-
-	ret = packet.error ? packet_errno(packet.error) : 0;
-	if (!ret)
-		iface->cur_altsetting = &iface->altsetting[alternate];
-
-	usb_enable_interface(udev, iface, true);
-
-	genode_usb_client_request_finish(handle, &packet);
-
-err_request:
-	kfree(urb);
-
-	return ret;
 }
 
 
