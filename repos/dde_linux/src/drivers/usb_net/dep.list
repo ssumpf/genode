@@ -921,6 +921,8 @@ include/linux/usb/cdc.h
 include/linux/usb/ch9.h
 include/linux/usbdevice_fs.h
 include/linux/usb.h
+include/linux/usb/cdc_ncm.h
+include/linux/usb/cdc-wdm.h
 include/linux/usb/hcd.h
 include/linux/usb/of.h
 include/linux/usb/onboard_hub.h
@@ -949,6 +951,7 @@ include/linux/workqueue_api.h
 include/linux/workqueue.h
 include/linux/writeback.h
 include/linux/ww_mutex.h
+include/linux/wwan.h
 include/linux/xarray.h
 include/net/act_api.h
 include/net/addrconf.h
@@ -1240,6 +1243,7 @@ include/uapi/linux/vmcore.h
 include/uapi/linux/wait.h
 include/uapi/linux/wireless.h
 include/uapi/linux/xfrm.h
+include/uapi/linux/usb/cdc-wdm.h
 include/uapi/video/edid.h
 include/vdso/bits.h
 include/vdso/clocksource.h
