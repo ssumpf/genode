@@ -109,11 +109,12 @@ install_config {
 #
 # Define USB host controller config
 #
-set config {<config bios_handoff="yes">}
+set config {<config bios_handoff="no">}
 append_if [have_board rpi] config {
 	<policy label_prefix="usb_net_drv" vendor_id="0x0424" product_id="0xec00"/> }
-append_if [have_spec x86] config {
-	<policy label_prefix="usb_net_drv" vendor_id="0x0b95" product_id="0x1790"/> }
+append_if [expr ![have_board  rpi]]  config {
+	<policy label_prefix="usb_net_drv" vendor_id="0x0bda" product_id="0x8156"/>
+}
 append config {</config>}
 set fd [open [run_dir]/genode/usb_host_drv.config w]
 puts $fd $config
