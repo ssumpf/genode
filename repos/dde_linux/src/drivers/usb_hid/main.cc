@@ -51,7 +51,7 @@ struct Task_handler
 		_signal_pending = true;
 		lx_emul_task_unblock(task);
 		handling_signal = true;
-		Lx_kit::env().scheduler.schedule();
+		Lx_kit::env().scheduler.execute();
 		handling_signal = false;
 	}
 
@@ -315,9 +315,25 @@ struct Driver
 };
 
 
+struct Main
+{
+	Env &env;
+
+	Signal_handler<Main> signal_handler { env.ep(), *this, &Main::handle_signal };
+
+	Main(Env &env) : env(env) { }
+
+	void handle_signal()
+	{
+		Lx_kit::env().scheduler.execute();
+	}
+};
+
+
 void Component::construct(Env & env)
 {
-	Lx_kit::initialize(env);
+	static Main main { env };
+	Lx_kit::initialize(env, main.signal_handler);
 
 	env.exec_static_constructors();
 
