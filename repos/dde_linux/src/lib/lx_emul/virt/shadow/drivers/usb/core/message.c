@@ -147,7 +147,7 @@ void usb_enable_endpoint(struct usb_device *dev, struct usb_host_endpoint *ep, b
 
 
 void usb_enable_interface(struct usb_device *dev,
-		struct usb_interface *intf, bool reset_eps)
+                          struct usb_interface *intf, bool reset_eps)
 {
 	struct usb_host_interface *alt = intf->cur_altsetting;
 	int i;
@@ -180,7 +180,7 @@ int usb_set_interface(struct usb_device *udev, int ifnum, int alternate)
 	if (ifnum >= USB_MAXINTERFACES || ifnum < 0)
 		return -EINVAL;
 
-	iface = udev->config->interface[ifnum];
+	iface = udev->actconfig->interface[ifnum];
 
 	handle = (genode_usb_client_handle_t)udev->bus->controller;
 
@@ -214,12 +214,20 @@ int usb_set_interface(struct usb_device *udev, int ifnum, int alternate)
 	wait_for_completion(&comp);
 
 	ret = packet.error ? packet_errno(packet.error) : 0;
-	if (!ret)
+	genode_usb_client_request_finish(handle, &packet);
+
+	/* reset via alt setting 0 */
+	if (!iface) {
+		printk("%s:%d: Error: interface is null: infum: %d alt setting: %d\n",
+		       __func__, __LINE__, ifnum, alternate);
+		return 0;
+	}
+
+	if (!ret) {
 		iface->cur_altsetting = &iface->altsetting[alternate];
+	}
 
 	usb_enable_interface(udev, iface, true);
-
-	genode_usb_client_request_finish(handle, &packet);
 
 err_request:
 	kfree(urb);
