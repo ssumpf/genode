@@ -163,7 +163,7 @@ append_if $use_wifi_driver  packages " [depot_user]/src/platform_drv            
 
 import_from_depot $packages
 
-build { app/netperf }
+build { app/netperf drivers/usb_net }
 
 #
 # Generate config
@@ -440,17 +440,19 @@ install_config $config
 #
 if { $use_usb_driver } {
 	set fd [open [run_dir]/genode/usb_host_drv.config w]
-	append usb_config {<config bios_handoff="yes">}
+	append usb_config {<config bios_handoff="no">}
 	append_if [have_board rpi] usb_config {
 		<policy label_prefix="nic_drv" vendor_id="0x0424" product_id="0xec00"/> }
 	append_if [have_spec x86] usb_config {
-		<policy label_prefix="nic_drv" vendor_id="0x0b95" product_id="0x1790"/> }
+		<policy label_prefix="nic_drv" vendor_id="0x0bda" product_id="0x8156"/>
+		<policy label_prefix="nic_drv" vendor_id="0x0b95" product_id="0x1790"/>
+	}
 	append usb_config {</config>}
 	puts $fd $usb_config
 	close $fd
 }
 
-set boot_modules { netserver }
+set boot_modules { netserver usb_net_drv }
 build_boot_image $boot_modules
 
 #
