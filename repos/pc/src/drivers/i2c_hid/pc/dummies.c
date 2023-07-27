@@ -233,3 +233,16 @@ int iommu_device_use_default_domain(struct device * dev)
 	lx_emul_trace(__func__);
 	return 0;
 }
+
+#include <linux/ratelimit_types.h>
+
+int ___ratelimit(struct ratelimit_state * rs, const char * func)
+{
+	/*
+	 * from lib/ratelimit.c:
+	 * " 0 means callbacks will be suppressed.
+	 *   1 means go ahead and do it. "
+	 */
+	lx_emul_trace(__func__);
+	return 1;
+}
