@@ -403,6 +403,7 @@ bool Thread::_restart()
 {
 	assert(_state == ACTIVE || _state == AWAITS_RESTART);
 	if (_state != AWAITS_RESTART) { return false; }
+	_exception_state = NO_EXCEPTION;
 	_become_active();
 	return true;
 }
@@ -883,6 +884,7 @@ void Thread::_call()
 void Thread::_mmu_exception()
 {
 	_become_inactive(AWAITS_RESTART);
+	_exception_state = MMU_FAULT;
 	Cpu::mmu_fault(*regs, _fault);
 	_fault.ip = regs->ip;
 
@@ -897,6 +899,25 @@ void Thread::_mmu_exception()
 
 	if (_pager && _pager->can_submit(1)) {
 		_pager->submit(1);
+	}
+}
+
+
+void Thread::_exception()
+{
+	_become_inactive(AWAITS_RESTART);
+	_exception_state = EXCEPTION;
+
+	if (_type != USER) {
+		Genode::raw(*this, " raised an exception, which should never happen");
+		_die();
+	}
+
+	if (_pager && _pager->can_submit(1)) {
+		_pager->submit(1);
+	} else {
+		Genode::raw(*this, " could not send signal to pager on exception");
+		_die();
 	}
 }
 
