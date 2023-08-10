@@ -161,10 +161,7 @@ Vm::Vm(Genode::Env & env, Heap & heap, Config & config)
 
 	Genode::log("Start virtual machine ...");
 
-	Cpu & cpu = boot_cpu();
-	cpu.initialize_boot(_ram.base() + KERNEL_OFFSET,
-	                    _ram.base() + _dtb_offset());
-	cpu.run();
+	boot_cpu();
 };
 
 

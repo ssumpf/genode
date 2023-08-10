@@ -79,11 +79,9 @@ void Mmio_device::write(Address_range & access, Cpu & cpu, Register value)
 void Mmio_device::add(Mmio_register & reg) { _registers.add(reg); }
 
 
-void Vmm::Mmio_bus::handle_memory_access(Vmm::Cpu & cpu)
+void Vmm::Mmio_bus::handle_memory_access(State &state, Vmm::Cpu &cpu)
 {
 	using namespace Genode;
-
-	Cpu::State & state = cpu.state();
 
 	struct Iss : Cpu::Esr
 	{

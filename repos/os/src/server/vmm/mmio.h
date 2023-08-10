@@ -15,6 +15,7 @@
 #define _SRC__SERVER__VMM__MMIO_H_
 
 #include <address_space.h>
+#include <state.h>
 
 namespace Vmm {
 	class Cpu;
@@ -98,7 +99,7 @@ class Vmm::Mmio_device : public Vmm::Address_range
 
 struct Vmm::Mmio_bus : Vmm::Address_space
 {
-	void handle_memory_access(Cpu & cpu);
+	void handle_memory_access(State &state, Cpu &cpu);
 };
 
 #endif /* _SRC__SERVER__VMM__MMIO_H_ */

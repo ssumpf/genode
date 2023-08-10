@@ -15,6 +15,7 @@
 #define _SRC__SERVER__VMM__GIC_H_
 
 #include <mmio.h>
+#include <state.h>
 
 #include <base/env.h>
 #include <drivers/defs/arm_v7.h>
@@ -134,9 +135,10 @@ class Vmm::Gic : public Vmm::Mmio_device
 		{
 			public:
 
-				Irq & irq(unsigned num);
-				void handle_irq();
-				bool pending_irq();
+				Irq &       irq(unsigned num);
+				void        handle_irq(State &state);
+				bool        pending_irq(State &state);
+				static void setup_state(State &state);
 
 				Gicd_banked(Cpu_base & cpu, Gic & gic, Mmio_bus & bus);
 

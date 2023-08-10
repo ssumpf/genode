@@ -40,8 +40,11 @@ class Vmm::Cpu : public Vmm::Cpu_base
 			DATA_ABORT,
 			IRQ,
 			FIQ,
-			TRAP
+			TRAP,
+			STARTUP = 0xfe,
 		};
+
+		void setup_state(State & state) override;
 
 	private:
 

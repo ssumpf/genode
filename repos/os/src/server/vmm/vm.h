@@ -96,6 +96,14 @@ class Vmm::Vm
 			for (Cpu_entry * ce = _cpu_list.first(); ce; ce = ce->next())
 				func(ce->cpu);
 		}
+
+		addr_t dtb_addr() {
+			return _ram.base() + _dtb_offset();
+		}
+
+		addr_t kernel_addr() {
+			return _ram.base() + KERNEL_OFFSET;
+		}
 };
 
 #endif /* _SRC__SERVER__VMM__VM_H_ */
