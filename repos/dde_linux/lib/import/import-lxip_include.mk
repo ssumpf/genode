@@ -1,5 +1,5 @@
 LXIP_CONTRIB_DIR := $(call select_from_ports,dde_linux)/src/lib/lxip
-SRC_DIR          := $(REP_DIR)/src/lib/lxip
+SRC_DIR          := $(REP_DIR)/src/lib/legacy_lxip
 
 # architecture-dependent includes
 ifeq ($(filter-out $(SPECS),x86),)
