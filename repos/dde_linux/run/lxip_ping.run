@@ -1,7 +1,7 @@
 
 set build_components {
 	core init timer
-	test/lxip_lib
+	test/legacy_lxip_lib
 	server/nic_router
 	app/ping
 }
@@ -64,6 +64,7 @@ append config {
 	</start>
 
 	<start name="test-lxip_lib" caps="200">
+		<binary name="test-legacy_lxip_lib"/>
 		<resource name="RAM" quantum="32M"/>
 		<provides> <service name="File_system"/> </provides>
 		<route>
@@ -78,9 +79,11 @@ append config {
 install_config $config
 
 append boot_modules {
-	core init timer test-lxip_lib
-	ld.lib.so lxip.lib.so
+	core init timer
+	ld.lib.so
 	nic_router ping
+	legacy_lxip.lib.so
+	test-legacy_lxip_lib
 }
 
 build_boot_image $boot_modules
