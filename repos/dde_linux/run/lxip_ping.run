@@ -2,6 +2,7 @@
 set build_components {
 	core init timer
 	test/legacy_lxip_lib
+	test/lxip_lib
 	server/nic_router
 	app/ping
 }
@@ -64,9 +65,10 @@ append config {
 	</start>
 
 	<start name="test-lxip_lib" caps="200">
-		<binary name="test-legacy_lxip_lib"/>
+		<binary name="test-lxip_lib"/>
 		<resource name="RAM" quantum="32M"/>
 		<provides> <service name="File_system"/> </provides>
+		<config ld_verbose="yes"/>
 		<route>
 			<service name="Nic"> <child name="nic_router"/> </service>
 			<any-service> <parent/> <any-child/> </any-service>
@@ -84,6 +86,8 @@ append boot_modules {
 	nic_router ping
 	legacy_lxip.lib.so
 	test-legacy_lxip_lib
+	lxip.lib.so
+	test-lxip_lib
 }
 
 build_boot_image $boot_modules
