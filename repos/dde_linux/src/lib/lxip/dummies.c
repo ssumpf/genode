@@ -1,7 +1,25 @@
 #include <lx_emul.h>
 
-#include <asm/processor.h>
 
+/* lx_kit's 'kernel_init' in start.c */
+
+extern int __init devices_init(void);
+int __init devices_init(void)
+{
+	lx_emul_trace(__func__);
+	return 0;
+}
+
+
+extern int __init buses_init(void);
+int __init buses_init(void)
+{
+	lx_emul_trace(__func__);
+	return 0;
+}
+
+
+#include <asm/processor.h>
 
 struct static_key_false init_on_alloc;
 
@@ -123,6 +141,26 @@ void bpf_jit_compile(struct bpf_prog *prog)
 u64 bpf_get_raw_cpu_id(u64 r1, u64 r2, u64 r3, u64 r4, u64 r5)
 {
 	lx_emul_trace_and_stop(__func__);
+	return 0;
+}
+
+
+#ifndef __arm__
+
+#include <linux/timekeeper_internal.h>
+void update_vsyscall(struct timekeeper * tk)
+{
+	lx_emul_trace(__func__);
+}
+
+#endif
+
+
+#include <linux/kobject.h>
+
+int kobject_uevent(struct kobject * kobj,enum kobject_action action)
+{
+	lx_emul_trace(__func__);
 	return 0;
 }
 

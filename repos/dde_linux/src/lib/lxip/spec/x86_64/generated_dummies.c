@@ -421,13 +421,6 @@ int br_ioctl_call(struct net * net,struct net_bridge * br,unsigned int cmd,struc
 }
 
 
-extern int __init buses_init(void);
-int __init buses_init(void)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 #include <linux/security.h>
 
 int cap_settime(const struct timespec64 * ts,const struct timezone * tz)
@@ -550,13 +543,6 @@ int dev_printk_emit(int level,const struct device * dev,const char * fmt,...)
 #include <linux/device.h>
 
 int device_rename(struct device * dev,const char * new_name)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-extern int __init devices_init(void);
-int __init devices_init(void)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -1044,14 +1030,6 @@ void * kmem_cache_alloc_lru(struct kmem_cache * cachep,struct list_lru * lru,gfp
 
 #include <linux/slab.h>
 
-struct kmem_cache * kmem_cache_create_usercopy(const char * name,unsigned int size,unsigned int align,slab_flags_t flags,unsigned int useroffset,unsigned int usersize,void (* ctor)(void *))
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/slab.h>
-
 void kmem_cache_destroy(struct kmem_cache * s)
 {
 	lx_emul_trace_and_stop(__func__);
@@ -1077,14 +1055,6 @@ void kmem_dump_obj(void * object)
 #include <linux/slab.h>
 
 bool kmem_valid_obj(void * object)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/kobject.h>
-
-int kobject_uevent(struct kobject * kobj,enum kobject_action action)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -1469,14 +1439,6 @@ bool sock_is_registered(int family)
 
 #include <linux/net.h>
 
-int sock_register(const struct net_proto_family * ops)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/net.h>
-
 void sock_release(struct socket * sock)
 {
 	lx_emul_trace_and_stop(__func__);
@@ -1555,14 +1517,6 @@ struct proto tcpv6_prot;
 
 extern void update_group_capacity(struct sched_domain * sd,int cpu);
 void update_group_capacity(struct sched_domain * sd,int cpu)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/timekeeper_internal.h>
-
-void update_vsyscall(struct timekeeper * tk)
 {
 	lx_emul_trace_and_stop(__func__);
 }
