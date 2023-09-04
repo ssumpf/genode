@@ -19,14 +19,21 @@ struct Main
 	}
 };
 
+extern "C" void wait_for_continue(void);
 
 void Lxip::construct(Env &env)
 {
 	static Main main { env };
 
+	log("WAIT");
+	wait_for_continue();
+
+	log("Lx_kit::initialize");
 	Lx_kit::initialize(env, main.signal_handler);
 
+	log("exec_static_constructors");
 	env.exec_static_constructors();
 
+	log("lx_emul_start_kernel");
 	lx_emul_start_kernel(nullptr);
 }
