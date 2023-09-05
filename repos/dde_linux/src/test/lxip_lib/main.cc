@@ -8,6 +8,7 @@ struct Main
 {
 	Main(Env &env)
 	{
+		Genode::log("CONTRUCT LXIP");
 		Lxip::construct(env);
 	}
 };
