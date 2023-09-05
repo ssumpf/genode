@@ -1015,14 +1015,6 @@ int kobject_uevent_env(struct kobject * kobj,enum kobject_action action,char * e
 }
 
 
-#include <linux/rcutree.h>
-
-void kvfree_call_rcu(struct rcu_head * head,rcu_callback_t func)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 #include <linux/llist.h>
 
 bool llist_add_batch(struct llist_node * new_first,struct llist_node * new_last,struct llist_head * head)
@@ -1104,14 +1096,6 @@ void netdev_unregister_kobject(struct net_device * ndev)
 #include <linux/pipe_fs_i.h>
 
 const struct pipe_buf_operations nosteal_pipe_buf_ops;
-
-
-#include <linux/mm.h>
-
-unsigned long nr_free_buffer_pages(void)
-{
-	lx_emul_trace_and_stop(__func__);
-}
 
 
 #include <linux/highuid.h>
@@ -1253,14 +1237,6 @@ void refcount_warn_saturate(refcount_t * r,enum refcount_saturation_type t)
 }
 
 
-#include <linux/syscore_ops.h>
-
-void register_syscore_ops(struct syscore_ops * ops)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 #include <linux/sched/signal.h>
 
 int send_sig(int sig,struct task_struct * p,int priv)
@@ -1317,14 +1293,6 @@ int smp_call_function_single(int cpu,smp_call_func_t func,void * info,int wait)
 #include <linux/smp.h>
 
 int smp_call_function_single_async(int cpu,struct __call_single_data * csd)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/net.h>
-
-int sock_create_kern(struct net * net,int family,int type,int protocol,struct socket ** res)
 {
 	lx_emul_trace_and_stop(__func__);
 }
