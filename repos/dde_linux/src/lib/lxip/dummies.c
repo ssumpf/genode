@@ -72,6 +72,12 @@ u16 get_random_u16(void)
 }
 
 
+void add_device_randomness(const void * buf,size_t len)
+{
+	lx_emul_trace(__func__);
+}
+
+
 #include <linux/device.h>
 
 void *__devres_alloc_node(dr_release_t release, size_t size, gfp_t gfp,
@@ -165,6 +171,15 @@ int kobject_uevent(struct kobject * kobj,enum kobject_action action)
 }
 
 
+#include <linux/ethtool.h>
+
+int ethtool_check_ops(const struct ethtool_ops * ops)
+{
+	lx_emul_trace(__func__);
+	return 0;
+}
+
+
 u64 bpf_user_rnd_u32(u64 r1, u64 r2, u64 r3, u64 r4, u64 r5)
 {
 	lx_emul_trace_and_stop(__func__);
@@ -225,3 +240,18 @@ int arch_asym_cpu_priority(int cpu)
 	return 0;
 }
 
+
+extern int __init netdev_kobject_init(void);
+int __init netdev_kobject_init(void)
+{
+	lx_emul_trace(__func__);
+	return 0;
+}
+
+
+extern int netdev_register_kobject(struct net_device * ndev);
+int netdev_register_kobject(struct net_device * ndev)
+{
+	lx_emul_trace(__func__);
+	return 0;
+}

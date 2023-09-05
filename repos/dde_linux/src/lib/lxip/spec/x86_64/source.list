@@ -28,6 +28,7 @@ kernel/time/timer.c
 kernel/time/timer_list.c
 kernel/workqueue.c
 lib/bitmap.c
+lib/ctype.c
 lib/find_bit.c
 lib/hexdump.c
 lib/nlattr.c
@@ -39,6 +40,7 @@ lib/kstrtox.c
 lib/radix-tree.c
 lib/rbtree.c
 lib/rhashtable.c
+lib/percpu_counter.c
 lib/siphash.c
 lib/string.c
 lib/string_helpers.c

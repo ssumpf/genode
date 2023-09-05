@@ -144,22 +144,6 @@ void __mmdrop(struct mm_struct * mm)
 }
 
 
-#include <linux/percpu_counter.h>
-
-int __percpu_counter_init(struct percpu_counter * fbc,s64 amount,gfp_t gfp,struct lock_class_key * key)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/percpu_counter.h>
-
-s64 __percpu_counter_sum(struct percpu_counter * fbc)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 #include <linux/printk.h>
 
 void __printk_safe_enter(void)
@@ -296,11 +280,6 @@ unsigned long _copy_to_user(void __user * to,const void * from,unsigned long n)
 }
 
 
-#include <linux/ctype.h>
-
-const unsigned char _ctype[] = {};
-
-
 #include <linux/printk.h>
 
 int _printk_deferred(const char * fmt,...)
@@ -324,22 +303,6 @@ int access_process_vm(struct task_struct * tsk,unsigned long addr,void * buf,int
 
 extern void ack_bad_irq(unsigned int irq);
 void ack_bad_irq(unsigned int irq)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/random.h>
-
-void add_device_randomness(const void * buf,size_t len)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/memblock.h>
-
-void * __init alloc_large_system_hash(const char * tablename,unsigned long bucketsize,unsigned long numentries,int scale,int flags,unsigned int * _hash_shift,unsigned int * _hash_mask,unsigned long low_limit,unsigned long high_limit)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -589,14 +552,6 @@ void enter_lazy_tlb(struct mm_struct * mm,struct task_struct * tsk)
 
 #include <linux/ethtool.h>
 
-int ethtool_check_ops(const struct ethtool_ops * ops)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/ethtool.h>
-
 int ethtool_get_phc_vclocks(struct net_device * dev,int ** vclock_index)
 {
 	lx_emul_trace_and_stop(__func__);
@@ -678,14 +633,6 @@ void free_pages(unsigned long addr,unsigned int order)
 #include <linux/sched/user.h>
 
 void free_uid(struct user_struct * up)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/stringhash.h>
-
-unsigned int full_name_hash(const void * salt,const char * name,unsigned int len)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -1140,22 +1087,8 @@ void * mtree_load(struct maple_tree * mt,unsigned long index)
 }
 
 
-extern int __init netdev_kobject_init(void);
-int __init netdev_kobject_init(void)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 extern int netdev_queue_update_kobjects(struct net_device * dev,int old_num,int new_num);
 int netdev_queue_update_kobjects(struct net_device * dev,int old_num,int new_num)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-extern int netdev_register_kobject(struct net_device * ndev);
-int netdev_register_kobject(struct net_device * ndev)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -1205,22 +1138,6 @@ void page_frag_free(void * addr)
 #include <linux/panic.h>
 
 void panic(const char * fmt,...)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/percpu_counter.h>
-
-void percpu_counter_add_batch(struct percpu_counter * fbc,s64 amount,s32 batch)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/percpu_counter.h>
-
-void percpu_counter_sync(struct percpu_counter * fbc)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -1408,14 +1325,6 @@ int smp_call_function_single_async(int cpu,struct __call_single_data * csd)
 #include <linux/net.h>
 
 int sock_create_kern(struct net * net,int family,int type,int protocol,struct socket ** res)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/net.h>
-
-int sock_create_lite(int family,int type,int protocol,struct socket ** res)
 {
 	lx_emul_trace_and_stop(__func__);
 }
