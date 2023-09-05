@@ -22,6 +22,7 @@
 
 extern "C" void lx_emul_initcalls()
 {
+	Genode::log("INITCALLS");
 	Lx_kit::env().initcalls.execute_in_order();
 }
 
@@ -36,7 +37,7 @@ extern "C" void lx_emul_register_initcall(int (*initcall)(void),
 	 */
 	if (Genode::strcmp(name, "__initcall_clk_disable_unused7s") == 0)
 		return;
-
+Genode::log("register initcall: ", name);
 	for (unsigned i = 0; i < (sizeof(lx_emul_initcall_order) / sizeof(char*));
 	     i++) {
 		if (Genode::strcmp(name, lx_emul_initcall_order[i]) == 0) {
