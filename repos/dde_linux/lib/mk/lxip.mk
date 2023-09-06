@@ -19,6 +19,8 @@ SRC_C += dummies.c \
          lx_user.c \
          net_driver.c \
 
+SRC_CC += genode_c_api/nic_client.cc
+
 #
 # Don't create jump slots for everything compiled in here since there are
 # function calls from inline assembly (i.e., __sw_hweight64) with unaligned sp
