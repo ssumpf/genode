@@ -1,6 +1,15 @@
 #include <linux/netdevice.h>
 #include <linux/etherdevice.h>
 
+#include <genode_c_api/nic_client.h>
+
+
+static struct genode_nic_client *dev_nic_client(struct net_device *dev)
+{
+	return (struct genode_nic_client *)dev->ifalias;
+}
+
+
 static int net_open(struct net_device *dev)
 {
 	printk("%s:%d\n", __func__, __LINE__);
@@ -23,6 +32,7 @@ static int __init virtio_net_driver_init(void)
 {
 	struct net_device *dev;
 	int err = -ENODEV;
+	struct genode_mac_address mac;
 	printk("MISC init\n");
 
 	dev = alloc_etherdev(0);
@@ -32,21 +42,32 @@ static int __init virtio_net_driver_init(void)
 
 	dev->netdev_ops = &net_ops;
 
-	/* set MAC */
-	//net_mac(dev->dev_addr, ETH_ALEN);
+	dev->ifalias = (struct dev_ifalias *)genode_nic_client_create("");
 
-	if ((err = register_netdev(dev))) {
-		panic("driver: Could not register back-end %d\n", err);
+	if (!dev->ifalias) {
+		printk("Failed to create nic client\n");
 		goto out_free;
 	}
 
+	/* set MAC */
+	mac = genode_nic_client_mac_address(dev_nic_client(dev));
+	dev_addr_set(dev, mac.addr);
+
+	if ((err = register_netdev(dev))) {
+		printk("Could not register net device driver %d\n", err);
+		goto out_nic;
+	}
+
+	printk("%s:%d INIT done %pM\n", __func__, __LINE__, dev->dev_addr);
+
 	return 0;
 
+out_nic:
+	genode_nic_client_destroy(dev_nic_client(dev));
 out_free:
 	free_netdev(dev);
 out:
 	return err;
-	return 0;
 }
 
 
