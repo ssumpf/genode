@@ -180,6 +180,15 @@ int ethtool_check_ops(const struct ethtool_ops * ops)
 }
 
 
+#include <linux/device/driver.h>
+
+void wait_for_device_probe(void)
+{
+	lx_emul_trace(__func__);
+}
+
+
+
 u64 bpf_user_rnd_u32(u64 r1, u64 r2, u64 r3, u64 r4, u64 r5)
 {
 	lx_emul_trace_and_stop(__func__);
