@@ -622,14 +622,6 @@ void fput(struct file * file)
 }
 
 
-#include <linux/gfp.h>
-
-void free_pages(unsigned long addr,unsigned int order)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 #include <linux/sched/user.h>
 
 void free_uid(struct user_struct * up)
@@ -713,14 +705,6 @@ struct mm_struct * get_task_mm(struct task_struct * task)
 #include <linux/netdevice.h>
 
 int get_user_ifreq(struct ifreq * ifr,void __user ** ifrdata,void __user * arg)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/gfp.h>
-
-unsigned long get_zeroed_page(gfp_t gfp_mask)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -1436,14 +1420,6 @@ bool vmalloc_dump_obj(void * object)
 #include <linux/vmalloc.h>
 
 void * vmalloc_huge(unsigned long size,gfp_t gfp_mask)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/device/driver.h>
-
-void wait_for_device_probe(void)
 {
 	lx_emul_trace_and_stop(__func__);
 }

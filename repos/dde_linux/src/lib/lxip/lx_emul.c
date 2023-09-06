@@ -87,6 +87,20 @@ void kvfree_call_rcu(struct rcu_head * head, rcu_callback_t func)
 }
 
 
+#include <linux/gfp.h>
+
+unsigned long get_zeroed_page(gfp_t gfp_mask)
+{
+	return (unsigned long)kzalloc(PAGE_SIZE, GFP_KERNEL);
+}
+
+
+void free_pages(unsigned long addr,unsigned int order)
+{
+	kfree((void *)addr);
+}
+
+
 /* mm/page_alloc. */
 
 /**

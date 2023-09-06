@@ -17,6 +17,7 @@ SRC_C += dummies.c \
          generated_dummies.c \
          lx_emul.c \
          lx_user.c \
+         net_driver.c \
 
 #
 # Don't create jump slots for everything compiled in here since there are
