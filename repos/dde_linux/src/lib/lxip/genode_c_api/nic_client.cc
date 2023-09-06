@@ -168,6 +168,8 @@ struct genode_nic_client : private Noncopyable, private Interface
 			}
 			return overall_progress;
 		}
+
+		Nic::Mac_address mac_address() { return _connection.mac_address(); }
 };
 
 
@@ -188,9 +190,20 @@ void genode_nic_client_notify_peers()
 }
 
 
-bool genode_nic_client_tx_packet(struct genode_nic_client *nic_client_ptr,
+genode_mac_address genode_nic_client_mac_address(genode_nic_client *nic_client_ptr)
+{
+	Nic::Mac_address mac = nic_client_ptr->mac_address();
+
+	struct genode_mac_address genode_mac;
+	Genode::memcpy(genode_mac.addr, &mac.addr, sizeof(genode_mac_address));
+
+	return genode_mac;
+}
+
+
+bool genode_nic_client_tx_packet(genode_nic_client *nic_client_ptr,
                                  genode_nic_client_tx_packet_content_t tx_packet_content_cb,
-                                 struct genode_nic_client_tx_packet_context *ctx_ptr)
+                                 genode_nic_client_tx_packet_context *ctx_ptr)
 {
 	return nic_client_ptr->tx_one_packet([&] (char *dst, size_t len) {
 		return tx_packet_content_cb(ctx_ptr, dst, len); });
@@ -219,7 +232,7 @@ struct genode_nic_client *genode_nic_client_create(char const *label)
 }
 
 
-void genode_nic_client_destroy(struct genode_nic_client *nic_client_ptr)
+void genode_nic_client_destroy(genode_nic_client *nic_client_ptr)
 {
 	destroy(*_alloc_ptr, nic_client_ptr);
 }
