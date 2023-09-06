@@ -27,6 +27,12 @@ extern "C" void lx_emul_initcalls()
 }
 
 
+extern "C" void lx_emul_initcall(char const *name)
+{
+	Lx_kit::env().initcalls.execute(name);
+}
+
+
 extern "C" void lx_emul_register_initcall(int (*initcall)(void),
                                           const char * name)
 {
@@ -41,7 +47,7 @@ Genode::log("register initcall: ", name);
 	for (unsigned i = 0; i < (sizeof(lx_emul_initcall_order) / sizeof(char*));
 	     i++) {
 		if (Genode::strcmp(name, lx_emul_initcall_order[i]) == 0) {
-			Lx_kit::env().initcalls.add(initcall, i);
+			Lx_kit::env().initcalls.add(initcall, i, name);
 			return;
 		}
 	}

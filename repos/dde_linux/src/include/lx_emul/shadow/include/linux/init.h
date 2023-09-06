@@ -32,4 +32,9 @@
 	static void __initcall_##fn##id() { \
 			lx_emul_register_initcall(fn, __func__); };
 
+#undef __setup
+
+#define __setup(str, fn) \
+	int __setup_##fn(char * string) { return fn(string); }
+
 #endif /* _LX_EMUL__SHADOW__LINUX__INIT_H_ */
