@@ -440,21 +440,6 @@ size_t csum_and_copy_to_iter(const void * addr,size_t bytes,void * _csstate,stru
 }
 
 
-#include <net/ip6_checksum.h>
-
-__sum16 csum_ipv6_magic(const struct in6_addr * saddr,const struct in6_addr * daddr,__u32 len,__u8 proto,__wsum sum)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-extern __wsum csum_partial_copy_nocheck(const void * src,void * dst,int len);
-__wsum csum_partial_copy_nocheck(const void * src,void * dst,int len)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 #include <linux/context_tracking_irq.h>
 
 noinstr void ct_irq_enter(void)
@@ -794,11 +779,6 @@ struct pid_namespace init_pid_ns;
 struct user_namespace init_user_ns;
 
 
-#include <linux/utsname.h>
-
-struct uts_namespace init_uts_ns;
-
-
 #include <linux/sched.h>
 
 void __sched io_schedule(void)
@@ -866,14 +846,6 @@ int irq_can_set_affinity(unsigned int irq)
 #include <linux/interrupt.h>
 
 int irq_set_affinity(unsigned int irq,const struct cpumask * cpumask)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/irq_work.h>
-
-void irq_work_tick(void)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -1345,14 +1317,6 @@ void switch_mm_irqs_off(struct mm_struct * prev,struct mm_struct * next,struct t
 #include <linux/mm.h>
 
 void sync_mm_rss(struct mm_struct * mm)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/rcupdate.h>
-
-void synchronize_rcu(void)
 {
 	lx_emul_trace_and_stop(__func__);
 }

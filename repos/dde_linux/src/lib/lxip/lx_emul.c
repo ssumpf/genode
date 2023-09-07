@@ -5,6 +5,10 @@
 
 pteval_t __default_kernel_pte_mask __read_mostly = ~0;
 
+/* shadowed */
+#include <linux/utsname.h>
+
+struct new_utsname init_uts_ns;
 
 #include <linux/slab.h>
 

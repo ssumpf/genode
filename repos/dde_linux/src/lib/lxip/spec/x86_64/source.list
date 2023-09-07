@@ -1,4 +1,6 @@
+arch/x86/lib/csum-copy_64.S
 arch/x86/lib/csum-partial_64.c
+arch/x86/lib/csum-wrappers_64.c
 arch/x86/lib/hweight.S
 drivers/base/class.c
 drivers/net/loopback.c
