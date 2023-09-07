@@ -108,6 +108,14 @@ void synchronize_rcu_expedited(void)
 }
 
 
+#include <linux/rcupdate.h>
+
+void synchronize_rcu(void)
+{
+	lx_emul_trace(__func__);
+}
+
+
 #include <linux/kernel.h>
 
 char *get_options(const char *str, int nints, int *ints)
@@ -187,6 +195,13 @@ void wait_for_device_probe(void)
 	lx_emul_trace(__func__);
 }
 
+
+#include <linux/irq_work.h>
+
+void irq_work_tick(void)
+{
+	lx_emul_trace(__func__);
+}
 
 
 u64 bpf_user_rnd_u32(u64 r1, u64 r2, u64 r3, u64 r4, u64 r5)

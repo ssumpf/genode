@@ -7,7 +7,7 @@ ifeq ($(filter-out $(SPECS),x86_64),)
 endif
 
 TARGET_LIB_DIR := $(LXIP_DIR)
-INC_DIR        += $(LXIP_DIR)/include $(LXIP_DIR)
+INC_DIR        += $(LXIP_DIR)/shadow $(LXIP_DIR)/include $(LXIP_DIR)
 
 SRC_CC += lx_emul/random.cc
 

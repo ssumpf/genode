@@ -1,10 +1,11 @@
 #include <lx_kit/env.h>
 #include <lx_emul/init.h>
+#include <lx_emul/task.h>
 
 #include <genode_c_api/nic_client.h>
 
 #include <lxip.h>
-
+#include "net_driver.h"
 
 
 using namespace Genode;
@@ -28,6 +29,8 @@ struct Main
 
 	void handle_nic_client()
 	{
+		lx_emul_task_unblock(lx_nic_client_rx_task());
+		Lx_kit::env().scheduler.execute();
 	}
 
 	void init()
