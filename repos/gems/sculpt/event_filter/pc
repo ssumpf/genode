@@ -15,6 +15,7 @@
 							<horizontal button="BTN_MIDDLE" speed_percent="-10"/>
 						</button-scroll>
 					</accelerate>
+					<input name="touchpad"/>
 					<input name="usb"/>
 				</merge>
 			</remap>
@@ -37,4 +38,5 @@
 	</output>
 	<policy label="ps2" input="ps2"/>
 	<policy label="usb" input="usb"/>
+	<policy label="touchpad" input="touchpad"/>
 </config>

@@ -2156,6 +2156,7 @@ void Sculpt::Main::_generate_event_filter_config(Xml_generator &xml)
 
 					gen_input("usb");
 					gen_input("touch");
+					gen_input("touchpad");
 					gen_input("sdl");
 				});
 			});
@@ -2199,6 +2200,7 @@ void Sculpt::Main::_generate_event_filter_config(Xml_generator &xml)
 	gen_policy("ps2");
 	gen_policy("usb");
 	gen_policy("touch");
+	gen_policy("touchpad");
 	gen_policy("sdl");
 }
 
