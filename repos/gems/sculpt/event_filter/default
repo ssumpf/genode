@@ -5,11 +5,13 @@
 			<input name="ps2"/>
 			<input name="usb"/>
 			<input name="touch"/>
+			<input name="touchpad"/>
 			<input name="sdl"/>
 		</merge>
 	</output>
 	<policy label="ps2"   input="ps2"/>
 	<policy label="usb"   input="usb"/>
 	<policy label="touch" input="touch"/>
+	<policy label="touchpad" input="touchpad"/>
 	<policy label="sdl"   input="sdl"/>
 </config>
