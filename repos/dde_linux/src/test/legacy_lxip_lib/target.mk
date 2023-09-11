@@ -1,4 +1,4 @@
-TARGET = test-lxip_lib
+TARGET = test-legacy_lxip_lib
 
 SRC_CC = main.cc
 
