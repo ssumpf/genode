@@ -26,7 +26,6 @@ struct task_struct *lx_user_new_usb_task(int (*func)(void*), void *args)
 {
 	int pid = kernel_thread(func, args, CLONE_FS | CLONE_FILES);
 	return find_task_by_pid_ns(pid, NULL);
-	return NULL;
 }
 
 
