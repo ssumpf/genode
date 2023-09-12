@@ -1,5 +1,6 @@
 #include <lx_emul.h>
 
+unsigned long __FIXADDR_TOP = 0xfffff000;
 
 #include <asm/pgtable.h>
 

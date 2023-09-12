@@ -136,10 +136,14 @@ char *file_path(struct file *, char *, int)
 
 #include <asm/page.h>
 
+#ifndef __i386__
+
 void copy_page(void *to, void *from)
 {
 	lx_emul_trace_and_stop(__func__);
 }
+
+#endif
 
 
 #include <linux/filter.h>
