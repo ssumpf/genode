@@ -58,9 +58,10 @@ struct Monitor::Main : Sandbox::State_handler
 
 	struct Local_cpu_session : Connection<Cpu_connection>, Inferior_cpu
 	{
-		Local_cpu_session(Env &env, Session::Label const &label, Priority priority, Allocator &alloc)
+		Local_cpu_session(Env &env, Session::Label const &label,
+		                  Affinity affinity, Priority priority, Allocator &alloc)
 		:
-			Connection<Cpu_connection>(env, label, priority.value),
+			Connection<Cpu_connection>(env, label, priority.value, affinity),
 			Inferior_cpu(env.ep(), _connection.cap(), label, alloc)
 		{ }
 	};
@@ -243,7 +244,8 @@ struct Monitor::Main : Sandbox::State_handler
 	Local_cpu_session &_create_session(Cpu_service &, Session_request const &request)
 	{
 		Local_cpu_session &session = *new (_heap)
-			Local_cpu_session(_env, request.label, _priority_from_args(request.args), _heap);
+			Local_cpu_session(_env, request.label, request.affinity,
+			                  _priority_from_args(request.args), _heap);
 
 		session.init_native_cpu(_kernel);
 
