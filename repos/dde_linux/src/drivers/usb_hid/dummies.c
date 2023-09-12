@@ -72,6 +72,14 @@ void update_vsyscall(struct timekeeper * tk)
 #endif
 
 
+unsigned long __must_check __arch_copy_to_user(void __user *to, const void *from, unsigned long n);
+unsigned long __must_check __arch_copy_to_user(void __user *to, const void *from, unsigned long n)
+
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
 #include <net/net_namespace.h>
 
 void net_ns_init(void)
