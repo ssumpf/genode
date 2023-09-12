@@ -319,7 +319,7 @@ int lx_wdm_write(void *args)
 		length = wdm_driver->fops->write(&wdm_file, wdm_data->buffer,
 		                                 *wdm_data->data_avail, NULL);
 		if (length < 0) {
-			printk("WDM write error: %ld", length);
+			printk("WDM write error: %ld", (long)length);
 		}
 
 		lx_wdm_schedule_read(wdm_data->handle);
