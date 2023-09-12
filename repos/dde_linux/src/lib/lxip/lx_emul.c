@@ -2,9 +2,23 @@
 
 unsigned long __FIXADDR_TOP = 0xfffff000;
 
+#include <linux/mm.h>
+
+int mmap_rnd_bits;
+
+#include <linux/percpu.h>
+
+DEFINE_PER_CPU(unsigned long, cpu_scale);
+
+
 #include <asm/pgtable.h>
 
+pgd_t reserved_pg_dir[PTRS_PER_PGD];
+
+bool arm64_use_ng_mappings = false;
+
 pteval_t __default_kernel_pte_mask __read_mostly = ~0;
+
 
 /* shadowed */
 #include <linux/utsname.h>
