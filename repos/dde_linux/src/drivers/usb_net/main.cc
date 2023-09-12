@@ -94,7 +94,7 @@ struct Device
 	void register_device()
 	{
 		registered = true;
-		lx_device_handle = lx_emul_usb_client_register_device(usb_handle, label.string());
+		lx_device_handle = lx_emul_usb_client_register_device(usb_handle, "usb_nic");
 		if (!lx_device_handle) {
 			registered = false;
 			return;
