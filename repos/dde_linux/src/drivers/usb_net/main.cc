@@ -36,10 +36,7 @@ extern unsigned char mac_address[6];
 
 struct Device
 {
-	using Label = String<64>;
-
 	Env   &env;
-	Label  label;
 
 	Attached_rom_dataspace config_rom { env, "config" };
 	unsigned long usb_config { 0 };
@@ -60,7 +57,7 @@ struct Device
 		genode_usb_client_create(genode_env_ptr(env),
 		                         genode_allocator_ptr(Lx_kit::env().heap),
 		                         genode_range_allocator_ptr(alloc),
-		                         label.string(),
+		                         "",
 		                         genode_signal_handler_ptr(task_state_handler)) };
 
 	Signal_handler<Device> nic_handler    { env.ep(), *this, &Device::handle_nic    };
@@ -70,9 +67,9 @@ struct Device
 
 	void *lx_device_handle { nullptr };
 
-	Device(Env &env, Label label)
+	Device(Env &env)
 	:
-		env(env), label(label)
+		env(env)
 	{
 		genode_usb_client_sigh_ack_avail(usb_handle,
 		                                 genode_signal_handler_ptr(urb_handler));
@@ -231,7 +228,7 @@ void Component::construct(Env & env)
 int lx_user_main_task(void *)
 {
 	/* one device only */
-	static Device dev(Lx_kit::env().env, Device::Label(""));
+	static Device dev(Lx_kit::env().env);
 
 	return 0;
 }
