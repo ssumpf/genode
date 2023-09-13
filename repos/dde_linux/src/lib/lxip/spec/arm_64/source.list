@@ -1,3 +1,4 @@
+arch/arm64/lib/csum.c
 arch/arm64/lib/memchr.S
 arch/arm64/lib/memcmp.S
 arch/arm64/lib/strchr.S
@@ -22,6 +23,7 @@ kernel/time/hrtimer.c
 kernel/time/jiffies.c
 kernel/time/ntp.c
 kernel/time/tick-broadcast.c
+kernel/time/tick-broadcast-hrtimer.c
 kernel/time/tick-common.c
 kernel/time/tick-oneshot.c
 kernel/time/tick-sched.c
@@ -33,15 +35,17 @@ kernel/time/timer.c
 kernel/time/timer_list.c
 kernel/workqueue.c
 lib/bitmap.c
+lib/checksum.c
 lib/ctype.c
 lib/find_bit.c
 lib/hexdump.c
-lib/nlattr.c
+lib/hweight.c
 lib/idr.c
 lib/kasprintf.c
 lib/kobject.c
 lib/klist.c
 lib/kstrtox.c
+lib/nlattr.c
 lib/radix-tree.c
 lib/rbtree.c
 lib/rhashtable.c
