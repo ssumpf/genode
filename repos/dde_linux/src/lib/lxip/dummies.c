@@ -19,6 +19,7 @@ int __init buses_init(void)
 }
 
 
+#include <linux/jump_label.h>
 #include <asm/processor.h>
 
 struct static_key_false init_on_alloc;
@@ -29,6 +30,7 @@ DEFINE_STATIC_KEY_FALSE(force_irqthreads_key);
 DEFINE_STATIC_KEY_FALSE(bpf_stats_enabled_key);
 
 
+#include <linux/cpumask.h>
 #include <linux/percpu-defs.h>
 
 DEFINE_PER_CPU_READ_MOSTLY(cpumask_var_t, cpu_sibling_map);
@@ -169,6 +171,26 @@ u64 bpf_get_raw_cpu_id(u64 r1, u64 r2, u64 r3, u64 r4, u64 r5)
 void update_vsyscall(struct timekeeper * tk)
 {
 	lx_emul_trace(__func__);
+}
+
+#else
+
+#include <asm/uaccess.h>
+
+unsigned long arm_copy_to_user(void *to, const void *from, unsigned long n)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+unsigned long arm_copy_from_user(void *to, const void *from, unsigned long n)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+asmlinkage void __div0(void);
+asmlinkage void __div0(void)
+{
+	lx_emul_trace_and_stop(__func__);
 }
 
 #endif

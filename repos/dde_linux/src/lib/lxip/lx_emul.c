@@ -13,7 +13,9 @@ DEFINE_PER_CPU(unsigned long, cpu_scale);
 
 #include <asm/pgtable.h>
 
+#ifndef __arm__
 pgd_t reserved_pg_dir[PTRS_PER_PGD];
+#endif
 
 bool arm64_use_ng_mappings = false;
 
