@@ -362,7 +362,6 @@ namespace Nova {
 		return syscall_2(NOVA_MISC, 2, sm_auth_acpi, sleep_state_a, sleep_state_b);
 	}
 
-
 	ALWAYS_INLINE
 	inline uint8_t sm_ctrl(mword_t sm, Sem_op op, unsigned long long timeout = 0)
 	{

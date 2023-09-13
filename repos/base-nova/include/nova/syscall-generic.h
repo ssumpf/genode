@@ -284,6 +284,8 @@ namespace Nova {
 		EC_RESCHEDULE = 3U,
 		EC_MIGRATE = 4U,
 		EC_TIME = 5U,
+		EC_GET_VCPU_STATE = 6U,
+		EC_SET_VCPU_STATE = 7U,
 	};
 
 	enum Sc_op {
@@ -665,6 +667,7 @@ namespace Nova {
 #endif
 				} gdtr, idtr;
 				unsigned long long tsc_val, tsc_off, tsc_aux;
+				unsigned long long exit_reason;
 				uint8_t fpu[512];
 			} __attribute__((packed));
 			mword_t mr[(4096 - 4 * sizeof(mword_t)) / sizeof(mword_t)];
