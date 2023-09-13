@@ -1,7 +1,7 @@
 /*
  * \brief  Dummy definitions of Linux Kernel functions
  * \author Automatically generated file - do no edit
- * \date   2023-09-12
+ * \date   2023-09-13
  */
 
 #include <lx_emul.h>
@@ -230,22 +230,6 @@ void __sock_tx_timestamp(__u16 tsflags,__u8 * tx_flags)
 }
 
 
-#include <linux/bitops.h>
-
-unsigned int __sw_hweight32(unsigned int w)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/bitops.h>
-
-unsigned long __sw_hweight64(__u64 w)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 #include <linux/sched.h>
 
 pid_t __task_pid_nr_ns(struct task_struct * task,enum pid_type type,struct pid_namespace * ns)
@@ -467,30 +451,6 @@ size_t csum_and_copy_to_iter(const void * addr,size_t bytes,void * _csstate,stru
 }
 
 
-#include <net/ip6_checksum.h>
-
-__sum16 csum_ipv6_magic(const struct in6_addr * saddr,const struct in6_addr * daddr,__u32 len,__u8 proto,__wsum csum)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <asm-generic/checksum.h>
-
-__wsum csum_partial(const void * buff,int len,__wsum wsum)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <asm-generic/checksum.h>
-
-__wsum csum_tcpudp_nofold(__be32 saddr,__be32 daddr,__u32 len,__u8 proto,__wsum sum)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 #include <linux/context_tracking_irq.h>
 
 noinstr void ct_irq_enter(void)
@@ -501,7 +461,23 @@ noinstr void ct_irq_enter(void)
 
 #include <linux/context_tracking_irq.h>
 
+void ct_irq_enter_irqson(void)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/context_tracking_irq.h>
+
 noinstr void ct_irq_exit(void)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/context_tracking_irq.h>
+
+void ct_irq_exit_irqson(void)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -854,14 +830,6 @@ ssize_t iov_iter_get_pages2(struct iov_iter * i,struct page ** pages,size_t maxs
 #include <linux/uio.h>
 
 void iov_iter_revert(struct iov_iter * i,size_t unroll)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <asm-generic/checksum.h>
-
-__sum16 ip_compute_csum(const void * buff,int len)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -1450,14 +1418,6 @@ struct pid_namespace * task_active_pid_ns(struct task_struct * tsk)
 #include <linux/clockchips.h>
 
 void tick_broadcast(const struct cpumask * mask)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/clockchips.h>
-
-void tick_setup_hrtimer_broadcast(void)
 {
 	lx_emul_trace_and_stop(__func__);
 }
