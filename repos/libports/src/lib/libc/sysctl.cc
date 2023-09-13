@@ -84,6 +84,10 @@ extern "C" int __sysctl(const int *name, u_int namelen,
 	/* builtins */
 	{
 		switch(index_a) {
+		case CTL_KERN: switch(index_b) {
+			case KERN_ARND:
+				return getentropy(oldp, *oldlenp);
+		}
 		case CTL_HW: switch(index_b) {
 
 			case HW_REALMEM:
