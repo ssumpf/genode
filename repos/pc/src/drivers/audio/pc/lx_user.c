@@ -1251,20 +1251,20 @@ static void mixer_tigerlake_default(struct mixer *mixer)
 	/* auto mute */
 	mixer_control_set(&mixer->controls[9], 0, 0);
 	/* master volume */
-	mixer_control_set(&mixer->controls[18], 0, 75);
+	mixer_control_set(&mixer->controls[18], 0, 87);
 	/* master switch */
 	mixer_control_set(&mixer->controls[19], 0, 1);
 
-	/* headset mic volume */
-	mixer_control_set(&mixer->controls[5], 0, 31);
-	mixer_control_set(&mixer->controls[5], 1, 31);
-	/* dmic volume */
-	mixer_control_set(&mixer->controls[32], 0, 50);
-	mixer_control_set(&mixer->controls[32], 1, 50);
-	/* capture volume */
+	/* internal dmic capture volume */
+	mixer_control_set(&mixer->controls[29], 0, 50);
+	mixer_control_set(&mixer->controls[29], 1, 50);
+	/* internal dmic capture switch */
+	mixer_control_set(&mixer->controls[30], 0, 1);
+	mixer_control_set(&mixer->controls[30], 1, 1);
+	/* external capture volume */
 	mixer_control_set(&mixer->controls[12], 0, 63);
 	mixer_control_set(&mixer->controls[12], 1, 63);
-	/* capture switch */
+	/* external capture switch */
 	mixer_control_set(&mixer->controls[13], 0, 1);
 	mixer_control_set(&mixer->controls[13], 1, 1);
 }
