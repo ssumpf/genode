@@ -5,6 +5,8 @@
 #include <genode_c_api/nic_client.h>
 
 #include <lxip.h>
+
+#include "lx_user.h"
 #include "net_driver.h"
 
 
@@ -17,7 +19,7 @@ struct Main
 	Signal_handler<Main> schedule_handler   { env.ep(), *this,
 		&Main::handle_schedule };
 
-	Signal_handler<Main> nic_client_handler { env.ep(), *this,
+	Io_signal_handler<Main> nic_client_handler { env.ep(), *this,
 		&Main::handle_nic_client };
 
 	Main(Env &env) : env(env) { }
@@ -30,7 +32,7 @@ struct Main
 	void handle_nic_client()
 	{
 		lx_emul_task_unblock(lx_nic_client_rx_task());
-		Lx_kit::env().scheduler.execute();
+		Lx_kit::env().scheduler.schedule();
 	}
 
 	void init()
@@ -40,6 +42,9 @@ struct Main
 		                       genode_signal_handler_ptr(nic_client_handler));
 	}
 };
+
+
+
 
 extern "C" void wait_for_continue(void);
 
@@ -60,4 +65,7 @@ void Lxip::construct(Env &env)
 
 	log("lx_emul_start_kernel");
 	lx_emul_start_kernel(nullptr);
+
+	/* wait to finish initialization before returning to callee */
+	lx_emul_execute_kernel_until(lx_user_startup_complete, nullptr);
 }
