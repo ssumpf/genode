@@ -1,0 +1,104 @@
+#include <base/fixed_stdint.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+enum Errno {
+	GENODE_ENONE = 0,
+	GENODE_E2BIG,
+	GENODE_EACCES,
+	GENODE_EADDRINUSE,
+	GENODE_EADDRNOTAVAIL,
+	GENODE_EAFNOSUPPORT,
+	GENODE_EAGAIN,
+	GENODE_EALREADY,
+	GENODE_EBADF,
+	GENODE_EBADFD,
+	GENODE_EBADMSG,
+	GENODE_EBADRQC,
+	GENODE_EBUSY,
+	GENODE_ECONNABORTED,
+	GENODE_ECONNREFUSED,
+	GENODE_EDESTADDRREQ,
+	GENODE_EDOM,
+	GENODE_EEXIST,
+	GENODE_EFAULT,
+	GENODE_EFBIG,
+	GENODE_EHOSTUNREACH,
+	GENODE_EINPROGRESS,
+	GENODE_EINTR,
+	GENODE_EINVAL,
+	GENODE_EIO,
+	GENODE_EISCONN,
+	GENODE_ELOOP,
+	GENODE_EMLINK,
+	GENODE_EMSGSIZE,
+	GENODE_ENAMETOOLONG,
+	GENODE_ENETDOWN,
+	GENODE_ENETUNREACH,
+	GENODE_ENFILE,
+	GENODE_ENOBUFS,
+	GENODE_ENODATA,
+	GENODE_ENODEV,
+	GENODE_ENOENT,
+	GENODE_ENOIOCTLCMD,
+	GENODE_ENOLINK,
+	GENODE_ENOMEM,
+	GENODE_ENOMSG,
+	GENODE_ENOPROTOOPT,
+	GENODE_ENOSPC,
+	GENODE_ENOSYS,
+	GENODE_ENOTCONN,
+	GENODE_ENOTSUPP,
+	GENODE_ENOTTY,
+	GENODE_ENXIO,
+	GENODE_EOPNOTSUPP,
+	GENODE_EOVERFLOW,
+	GENODE_EPERM,
+	GENODE_EPFNOSUPPORT,
+	GENODE_EPIPE,
+	GENODE_EPROTO,
+	GENODE_EPROTONOSUPPORT,
+	GENODE_EPROTOTYPE,
+	GENODE_ERANGE,
+	GENODE_EREMCHG,
+	GENODE_ESOCKTNOSUPPORT,
+	GENODE_ESPIPE,
+	GENODE_ESRCH,
+	GENODE_ESTALE,
+	GENODE_ETIMEDOUT,
+	GENODE_ETOOMANYREFS,
+	GENODE_EUSERS,
+	GENODE_EXDEV,
+	GENODE_MAX_ERRNO,
+};
+
+struct genode_socket_handle;
+
+struct genode_in_addr
+{
+	genode_uint32_t s_addr; /* be */
+};
+
+struct genode_sockaddr
+{
+	genode_uint16_t family;
+	union {
+		/* AF_INET (or IPv4) */
+		struct {
+			genode_uint16_t       sin_port; /* be */
+			struct genode_in_addr sin_addr; /* be */
+		} in;
+	};
+};
+
+struct genode_socket_handle *
+genode_socket(int domain, int type, int protocol, enum Errno *);
+
+enum Errno genode_socket_bind(struct genode_socket_handle *,
+                              struct genode_sockaddr const *);
+
+#ifdef __cplusplus
+} /* extern "C" */
+#endif
