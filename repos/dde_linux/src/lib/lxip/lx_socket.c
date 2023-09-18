@@ -126,3 +126,9 @@ enum Errno lx_socket_bind(struct socket *sock, struct genode_sockaddr const *add
 	struct sockaddr sock_addr = _sockaddr(addr);
 	return _genode_errno(sock->ops->bind(sock, &sock_addr, _sockaddr_len(addr)));
 }
+
+
+enum Errno lx_socket_listen(struct socket *sock, int length)
+{
+	return _genode_errno(sock->ops->listen(sock, length));
+}

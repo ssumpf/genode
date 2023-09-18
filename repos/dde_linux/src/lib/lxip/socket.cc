@@ -93,6 +93,24 @@ struct Lx_bind : Lx_call
 };
 
 
+struct Lx_listen : Lx_call
+{
+	int length;
+
+	Lx_listen(genode_socket_handle &handle, int length)
+	: Lx_call(handle), length(length)
+	{
+		schedule();
+	}
+
+	void execute() override
+	{
+		err = lx_socket_listen(handle.sock, length);
+		finished = true;
+	}
+};
+
+
 void *lx_socket_dispatch_queue(void)
 {
 	static Socket_queue queue;
@@ -135,4 +153,12 @@ enum Errno genode_socket_bind(struct genode_socket_handle  *handle,
 {
 	Lx_bind bind { *handle, *addr };
 	return bind.err;
+}
+
+
+enum Errno genode_socket_listen(struct genode_socket_handle *handle,
+                                int backlog)
+{
+	Lx_listen listen { *handle, backlog };
+	return listen.err;
 }
