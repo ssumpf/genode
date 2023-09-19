@@ -39,6 +39,7 @@ lib/kasprintf.c
 lib/kobject.c
 lib/klist.c
 lib/kstrtox.c
+lib/once.c
 lib/radix-tree.c
 lib/rbtree.c
 lib/rhashtable.c
@@ -48,6 +49,7 @@ lib/string.c
 lib/string_helpers.c
 lib/timerqueue.c
 lib/vsprintf.c
+lib/win_minmax.c
 lib/xarray.c
 mm/util.c
 net/core/datagram.c

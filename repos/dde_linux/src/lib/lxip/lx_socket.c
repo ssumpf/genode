@@ -94,9 +94,25 @@ static struct sockaddr _sockaddr(struct genode_sockaddr const *addr)
 			.sin_addr.s_addr = addr->in.sin_addr.s_addr
 		};
 		memcpy(&sock_addr, &in_addr, sizeof(in_addr));
-	}
+	} else
+		printk("%s:%d error: family %d not implented\n", __func__, __LINE__,
+		       addr->family);
 
 	return sock_addr;
+}
+
+
+static void _genode_sockaddr(struct genode_sockaddr *addr,
+                             struct sockaddr const  *linux_addr,
+                             int length)
+{
+	if (length == sizeof(struct sockaddr_in)) {
+		struct sockaddr_in const * in = (struct sockaddr_in const *)linux_addr;
+		addr->family             = in->sin_family;
+		addr->in.sin_port        = in->sin_port;;
+		addr->in.sin_addr.s_addr = in->sin_addr.s_addr;
+	} else
+		printk("%s:%d: unknown sockaddr length %d\n", __func__, __LINE__, length);
 }
 
 
@@ -107,6 +123,10 @@ static int _sockaddr_len(struct genode_sockaddr const *addr)
 
 	return 0;
 }
+
+
+struct socket *lx_sock_alloc(void) { return sock_alloc(); }
+void lx_sock_release(struct socket* sock) { sock_release(sock); };
 
 
 enum Errno lx_socket_create(int domain, int type, int protocol,
@@ -131,4 +151,31 @@ enum Errno lx_socket_bind(struct socket *sock, struct genode_sockaddr const *add
 enum Errno lx_socket_listen(struct socket *sock, int length)
 {
 	return _genode_errno(sock->ops->listen(sock, length));
+}
+
+
+enum Errno lx_socket_accept(struct socket *sock, struct socket *new_sock,
+                            struct genode_sockaddr *addr, enum Flags flags)
+{
+	int linux_flags = flags & GENODE_O_NONBLOCK ? O_NONBLOCK : 0;
+	struct sockaddr linux_addr;
+
+	int err = sock->ops->accept(sock, new_sock, linux_flags, true);
+
+	if (err == 0) {
+		err = sock->ops->getname(new_sock, &linux_addr, 0);
+		if (err > 0) _genode_sockaddr(addr, &linux_addr, err);
+	}
+
+	return err < 0 ? _genode_errno(err) : GENODE_ENONE;
+}
+
+
+enum Errno lx_socket_connect(struct socket *sock, struct genode_sockaddr const *addr,
+                             enum Flags flags)
+{
+	int linux_flags = flags & GENODE_O_NONBLOCK ? O_NONBLOCK : 0;
+	struct sockaddr sock_addr = _sockaddr(addr);
+	return _genode_errno(sock->ops->connect(sock, &sock_addr, _sockaddr_len(addr),
+	                     linux_flags));
 }

@@ -52,8 +52,8 @@ void Lxip::construct(Env &env)
 {
 	static Main main { env };
 
-	log("WAIT");
-	wait_for_continue();
+	//log("WAIT");
+	//wait_for_continue();
 
 	log("Lx_kit::initialize");
 	Lx_kit::initialize(env, main.schedule_handler);

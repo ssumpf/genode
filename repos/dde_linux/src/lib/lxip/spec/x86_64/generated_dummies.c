@@ -56,38 +56,6 @@ void __bpf_prog_free(struct bpf_prog * fp)
 struct cpumask __cpu_active_mask;
 
 
-#include <linux/once.h>
-
-void __do_once_done(bool * done,struct static_key_true * once_key,unsigned long * flags,struct module * mod)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/once.h>
-
-void __do_once_sleepable_done(bool * done,struct static_key_true * once_key,struct module * mod)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/once.h>
-
-bool __do_once_sleepable_start(bool * done)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/once.h>
-
-bool __do_once_start(bool * done,unsigned long * flags)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 #include <linux/mm.h>
 
 void __folio_put(struct folio * folio)
@@ -1003,14 +971,6 @@ void migrate_enable(void)
 }
 
 
-#include <linux/win_minmax.h>
-
-u32 minmax_running_min(struct minmax * m,u32 win,u32 t,u32 meas)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 #include <linux/mman.h>
 
 void mm_compute_batch(int overcommit_policy)
@@ -1265,14 +1225,6 @@ struct socket * sock_from_file(struct file * file)
 #include <linux/net.h>
 
 bool sock_is_registered(int family)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/net.h>
-
-void sock_release(struct socket * sock)
 {
 	lx_emul_trace_and_stop(__func__);
 }
