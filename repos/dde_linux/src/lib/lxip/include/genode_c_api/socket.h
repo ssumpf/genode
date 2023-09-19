@@ -74,6 +74,14 @@ enum Errno {
 	GENODE_MAX_ERRNO = 66,
 };
 
+
+enum Flags
+{
+	GENODE_NONE = 0,
+	GENODE_O_NONBLOCK = 1,
+};
+
+
 struct genode_socket_handle;
 
 struct genode_in_addr
@@ -102,6 +110,14 @@ enum Errno genode_socket_bind(struct genode_socket_handle *,
 enum Errno genode_socket_listen(struct genode_socket_handle *,
                                 int backlog);
 
+struct genode_socket_handle *
+genode_socket_accept(struct genode_socket_handle *,
+                     struct genode_sockaddr *,
+                     enum Flags, enum Errno *);
+
+
+enum Errno genode_socket_connect(struct genode_socket_handle *,
+                                 struct genode_sockaddr *, enum Flags);
 #ifdef __cplusplus
 } /* extern "C" */
 #endif

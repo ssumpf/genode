@@ -27,6 +27,21 @@ pteval_t __default_kernel_pte_mask __read_mostly = ~0;
 
 struct new_utsname init_uts_ns;
 
+
+#include <linux/random.h>
+
+u8 get_random_u8(void)
+{
+	return get_random_u32() & 0xff;
+}
+
+
+u16 get_random_u16(void)
+{
+	return get_random_u32() & 0xffff;
+}
+
+
 #include <linux/slab.h>
 
 struct kmem_cache * kmem_cache_create_usercopy(const char * name,
@@ -181,6 +196,12 @@ struct socket *sock_alloc(void)
 
 
 	return sock;
+}
+
+
+void sock_release(struct socket *sock)
+{
+	kfree(sock);
 }
 
 

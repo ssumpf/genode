@@ -58,22 +58,6 @@ long strnlen_user(const char __user * str,long count)
 }
 
 
-#include <linux/random.h>
-
-u8 get_random_u8(void)
-{
-	lx_emul_trace_and_stop(__func__);
-	return 0;
-}
-
-
-u16 get_random_u16(void)
-{
-	lx_emul_trace_and_stop(__func__);
-	return 0;
-}
-
-
 void add_device_randomness(const void * buf,size_t len)
 {
 	lx_emul_trace(__func__);

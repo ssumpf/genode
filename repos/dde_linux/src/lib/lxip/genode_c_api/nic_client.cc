@@ -157,6 +157,7 @@ struct genode_nic_client : private Noncopyable, private Interface
 					break;
 
 				case GENODE_NIC_CLIENT_RX_RETRY:
+					Genode::warning("RETRY");
 					break;
 				}
 
