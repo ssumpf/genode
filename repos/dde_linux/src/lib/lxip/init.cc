@@ -3,8 +3,7 @@
 #include <lx_emul/task.h>
 
 #include <genode_c_api/nic_client.h>
-
-#include <lxip.h>
+#include <genode_c_api/socket.h>
 
 #include "lx_user.h"
 #include "net_driver.h"
@@ -44,12 +43,12 @@ struct Main
 };
 
 
-
-
 extern "C" void wait_for_continue(void);
 
-void Lxip::construct(Env &env)
+
+void genode_socket_init(struct genode_env *_env)
 {
+	Env &env = *static_cast<Env *>(_env);
 	static Main main { env };
 
 	//log("WAIT");

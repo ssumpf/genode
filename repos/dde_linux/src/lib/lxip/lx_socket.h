@@ -1,8 +1,10 @@
+
+#include <genode_c_api/socket.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#include <genode_c_api/socket.h>
 
 struct socket *lx_sock_alloc(void);
 void           lx_sock_release(struct socket* sock);

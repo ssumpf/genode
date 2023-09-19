@@ -1,4 +1,5 @@
 #include <base/fixed_stdint.h>
+#include <genode_c_api/base.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -114,6 +115,9 @@ struct genode_sockaddr
 		} in;
 	};
 };
+
+
+void genode_socket_init(struct genode_env *env);
 
 void genode_socket_wait_for_progress(void);
 
