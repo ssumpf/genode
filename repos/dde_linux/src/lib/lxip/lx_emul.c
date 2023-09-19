@@ -42,6 +42,40 @@ u16 get_random_u16(void)
 }
 
 
+#include <linux/uaccess.h>
+
+#ifndef INLINE_COPY_TO_USER
+unsigned long _copy_from_user(void * to,const void __user * from,unsigned long n)
+{
+	memcpy(to, from, n);
+	return 0;
+}
+#else
+unsigned long __must_check __arch_copy_from_user(void *to, const void __user *from, unsigned long n);
+unsigned long __must_check __arch_copy_from_user(void *to, const void __user *from, unsigned long n)
+{
+	memcpy(to, from, n);
+	return 0;
+}
+#endif
+
+
+#ifndef INLINE_COPY_FROM_USER
+unsigned long _copy_to_user(void __user * to,const void * from,unsigned long n)
+{
+	memcpy(to, from, n);
+	return 0;
+}
+#else
+unsigned long __must_check __arch_copy_to_user(void __user *to, const void *from, unsigned long n);
+unsigned long __must_check __arch_copy_to_user(void __user *to, const void *from, unsigned long n)
+{
+	memcpy(to, from, n);
+	return 0;
+}
+#endif
+
+
 #include <linux/slab.h>
 
 struct kmem_cache * kmem_cache_create_usercopy(const char * name,

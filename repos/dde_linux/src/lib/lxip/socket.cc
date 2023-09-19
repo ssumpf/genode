@@ -23,6 +23,13 @@ struct genode_socket_handle
 };
 
 
+void genode_socket_wait_for_progress()
+{
+	Lx_kit::env().env.ep().wait_and_dispatch_one_io_signal();
+	Lx_kit::env().scheduler.execute();
+}
+
+
 struct Lx_call : private Socket_queue::Element
 {
 	friend class Fifo<Lx_call>;
@@ -47,8 +54,7 @@ struct Lx_call : private Socket_queue::Element
 
 		while (!finished) {
 			warning("EP returned unfinished");
-			Lx_kit::env().env.ep().wait_and_dispatch_one_io_signal();
-			Lx_kit::env().scheduler.execute();
+			genode_socket_wait_for_progress();
 		}
 		warning("EP finished");
 	}
@@ -115,13 +121,11 @@ struct Lx_listen : Lx_call
 struct Lx_accept : Lx_call
 {
 	genode_socket_handle &client;
-	Flags flags;
 	genode_sockaddr addr { };
 
 	Lx_accept(genode_socket_handle &handle,
-	          genode_socket_handle &client,
-	          Flags flags)
-	: Lx_call(handle), client(client), flags(flags)
+	          genode_socket_handle &client)
+	: Lx_call(handle), client(client)
 	{
 		schedule();
 	}
@@ -135,31 +139,73 @@ struct Lx_accept : Lx_call
 			return;
 		}
 
-		err = lx_socket_accept(handle.sock, client.sock, &addr, flags);
+		err = lx_socket_accept(handle.sock, client.sock, &addr);
 		finished = true;
 	}
 };
 
 
-
 struct Lx_connect : Lx_call
 {
 	genode_sockaddr &addr;
-	Flags flags;
 
 	Lx_connect(genode_socket_handle &handle,
-	           genode_sockaddr &addr, enum Flags flags)
-	: Lx_call(handle), addr(addr), flags(flags)
+	           genode_sockaddr &addr)
+	: Lx_call(handle), addr(addr)
 	{
 		schedule();
 	}
 
+	void execute() override
+	{
+		err = lx_socket_connect(handle.sock, &addr);
+		finished = true;
+	}
+};
+
+
+struct Lx_poll : Lx_call
+{
+	unsigned result = 0;
+
+	Lx_poll(genode_socket_handle &handle)
+	: Lx_call(handle)
+	{
+		schedule();
+	}
 
 	void execute() override
 	{
-		err = lx_socket_connect(handle.sock, &addr,flags);
+		result = lx_socket_poll(handle.sock);
 		finished = true;
 	}
+};
+
+
+struct Lx_getsockopt : Lx_call
+{
+	enum Sock_level level;
+	enum Sock_opt   opt;
+	void           *optval;
+	unsigned       *optlen;
+
+	Lx_getsockopt(genode_socket_handle &handle,
+	              enum Sock_level level,
+	              enum Sock_opt opt,
+	              void *optval, unsigned *optlen)
+	: Lx_call(handle), level(level), opt(opt), optval(optval), optlen(optlen)
+	{
+		schedule();
+	}
+
+	void execute() override
+	{
+		err = lx_socket_getsockopt(handle.sock, level, opt, optval, optlen);
+		finished = true;
+	}
+
+	Lx_getsockopt(const Lx_getsockopt&) = delete;
+	Lx_getsockopt operator=(const Lx_getsockopt&) = delete;
 };
 
 
@@ -241,16 +287,15 @@ enum Errno genode_socket_listen(struct genode_socket_handle *handle,
 genode_socket_handle *
 genode_socket_accept(struct genode_socket_handle *handle,
                      struct genode_sockaddr *addr,
-                     enum Flags flags, enum Errno *errno)
+                     enum Errno *errno)
 {
-
 	genode_socket_handle *client = _create_handle();
 	if (!handle) {
 		*errno = GENODE_ENOMEM;
 		return nullptr;
 	}
 
-	Lx_accept accept { *handle, *client, flags };
+	Lx_accept accept { *handle, *client };
 	*errno = accept.err;
 
 	if (*errno) {
@@ -266,9 +311,42 @@ genode_socket_accept(struct genode_socket_handle *handle,
 
 
 enum Errno genode_socket_connect(struct genode_socket_handle *handle,
-                                 struct genode_sockaddr *addr,
-                                 enum Flags flags)
+                                 struct genode_sockaddr *addr)
 {
-	Lx_connect connect  { *handle, *addr, flags };
+	Lx_connect connect  { *handle, *addr };
 	return connect.err;
+}
+
+
+unsigned genode_socket_pollin_set(void)
+{
+	return lx_socket_pollin_set();
+}
+
+
+unsigned genode_socket_pollout_set(void)
+{
+	return lx_socket_pollout_set();
+}
+
+
+unsigned genode_socket_pollex_set(void)
+{
+	return lx_socket_pollex_set();
+}
+
+
+unsigned genode_socket_poll(struct genode_socket_handle *handle)
+{
+	Lx_poll poll { *handle };
+	return poll.result;
+}
+
+
+enum Errno genode_socket_getsockopt(struct genode_socket_handle *handle,
+                                    enum Sock_level level, enum Sock_opt opt,
+                                    void *optval, unsigned *optlen)
+{
+	Lx_getsockopt sock_opt { *handle, level, opt, optval, optlen };
+	return sock_opt.err;
 }

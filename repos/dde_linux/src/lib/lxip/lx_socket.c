@@ -83,6 +83,33 @@ static enum Errno _genode_errno(int errno)
 }
 
 
+/* index must match with socket.h Genode 'Sock_opt' */
+static int sock_opts[] = {
+	0,
+	SO_DEBUG,
+	SO_ACCEPTCONN,
+	SO_DONTROUTE,
+	SO_LINGER,
+	SO_OOBINLINE,
+	SO_REUSEPORT,
+	SO_SNDBUF,
+	SO_RCVBUF,
+	SO_SNDLOWAT,
+	SO_RCVLOWAT,
+	SO_SNDTIMEO_NEW,
+	SO_RCVTIMEO_NEW,
+	SO_ERROR,
+	SO_TYPE,
+	SO_BINDTODEVICE,
+};
+
+
+static int _linux_sockopt(enum Sock_opt sockopt)
+{
+	return sock_opts[sockopt];
+}
+
+
 static struct sockaddr _sockaddr(struct genode_sockaddr const *addr)
 {
 	struct sockaddr sock_addr = { };
@@ -155,12 +182,11 @@ enum Errno lx_socket_listen(struct socket *sock, int length)
 
 
 enum Errno lx_socket_accept(struct socket *sock, struct socket *new_sock,
-                            struct genode_sockaddr *addr, enum Flags flags)
+                            struct genode_sockaddr *addr)
 {
-	int linux_flags = flags & GENODE_O_NONBLOCK ? O_NONBLOCK : 0;
 	struct sockaddr linux_addr;
 
-	int err = sock->ops->accept(sock, new_sock, linux_flags, true);
+	int err = sock->ops->accept(sock, new_sock, O_NONBLOCK, true);
 
 	if (err == 0) {
 		err = sock->ops->getname(new_sock, &linux_addr, 0);
@@ -171,11 +197,66 @@ enum Errno lx_socket_accept(struct socket *sock, struct socket *new_sock,
 }
 
 
-enum Errno lx_socket_connect(struct socket *sock, struct genode_sockaddr const *addr,
-                             enum Flags flags)
+enum Errno lx_socket_connect(struct socket *sock, struct genode_sockaddr const *addr)
 {
-	int linux_flags = flags & GENODE_O_NONBLOCK ? O_NONBLOCK : 0;
 	struct sockaddr sock_addr = _sockaddr(addr);
 	return _genode_errno(sock->ops->connect(sock, &sock_addr, _sockaddr_len(addr),
-	                     linux_flags));
+	                     O_NONBLOCK));
+}
+
+
+unsigned lx_socket_pollin_set(void)
+{
+	return (POLLRDNORM | POLLRDBAND | POLLIN | POLLHUP | POLLERR);
+}
+
+
+unsigned lx_socket_pollout_set(void)
+{
+	return (POLLWRBAND | POLLWRNORM | POLLOUT | POLLERR);
+}
+
+
+unsigned lx_socket_pollex_set(void)
+{
+	return POLLPRI;
+}
+
+
+unsigned lx_socket_poll(struct socket *sock)
+{
+	struct file file = { };
+	return sock->ops->poll(&file, sock, NULL);
+}
+
+
+enum Errno lx_socket_getsockopt(struct socket *sock, enum Sock_level level,
+                                enum Sock_opt opt, void *optval, unsigned *optlen)
+{
+	int name = _linux_sockopt(opt);
+	enum Errno errno;
+	int err;
+
+	if (level != GENODE_SOL_SOCKET) return GENODE_ENOPROTOOPT;
+
+	if (opt == GENODE_SO_ERROR && *optlen < sizeof(enum Sock_opt))
+		return GENODE_EFAULT;
+
+	if (level == GENODE_SOL_SOCKET)
+		err = sock_getsockopt(sock, SOL_SOCKET, name, optval, optlen);
+/* we might need this later
+	else {
+		err = sock->ops->getsockopt(sock, SOL_SOCKET, name, optval, optlen);
+	}
+*/
+
+	if (err) return _genode_errno(err);
+
+	if (opt == GENODE_SO_ERROR) {
+		err   = *((int *)optval);
+		errno = _genode_errno(err);
+		memcpy(optval, &errno, sizeof(enum Sock_opt));
+	}
+
+	return GENODE_ENONE;
 }

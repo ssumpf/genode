@@ -289,20 +289,3 @@ int netdev_register_kobject(struct net_device * ndev)
 	lx_emul_trace(__func__);
 	return 0;
 }
-
-
-unsigned long __must_check __arch_copy_to_user(void __user *to, const void *from, unsigned long n);
-unsigned long __must_check __arch_copy_to_user(void __user *to, const void *from, unsigned long n)
-
-{
-	lx_emul_trace_and_stop(__func__);
-	return 0;
-}
-
-
-unsigned long __must_check __arch_copy_from_user(void *to, const void __user *from, unsigned long n);
-unsigned long __must_check __arch_copy_from_user(void *to, const void __user *from, unsigned long n)
-{
-	lx_emul_trace_and_stop(__func__);
-	return 0;
-}

@@ -74,13 +74,27 @@ enum Errno {
 	GENODE_MAX_ERRNO = 66,
 };
 
-
-enum Flags
-{
-	GENODE_NONE = 0,
-	GENODE_O_NONBLOCK = 1,
+enum Sock_opt {
+	GENODE_SO_DEBUG = 1,
+	GENODE_SO_ACCEPTCONN = 2,
+	GENODE_SO_DONTROUTE = 3,
+	GENODE_SO_LINGER = 4,
+	GENODE_SO_OOBINLINE = 5,
+	GENODE_SO_REUSEPORT = 6,
+	GENODE_SO_SNDBUF = 7,
+	GENODE_SO_RCVBUF = 8,
+	GENODE_SO_SNDLOWAT = 9,
+	GENODE_SO_RCVLOWAT = 10,
+	GENODE_SO_SNDTIMEO = 11,
+	GENODE_SO_RCVTIMEO = 12,
+	GENODE_SO_ERROR = 13,
+	GENODE_SO_TYPE = 14,
+	GENODE_SO_BINDTODEVICE = 15,
 };
 
+enum Sock_level {
+	GENODE_SOL_SOCKET = 1,
+};
 
 struct genode_socket_handle;
 
@@ -101,6 +115,8 @@ struct genode_sockaddr
 	};
 };
 
+void genode_socket_wait_for_progress(void);
+
 struct genode_socket_handle *
 genode_socket(int domain, int type, int protocol, enum Errno *);
 
@@ -109,15 +125,28 @@ enum Errno genode_socket_bind(struct genode_socket_handle *,
 
 enum Errno genode_socket_listen(struct genode_socket_handle *,
                                 int backlog);
-
+/* non-blocking call */
 struct genode_socket_handle *
 genode_socket_accept(struct genode_socket_handle *,
                      struct genode_sockaddr *,
-                     enum Flags, enum Errno *);
+                     enum Errno *);
 
-
+/* non-blocking call */
 enum Errno genode_socket_connect(struct genode_socket_handle *,
-                                 struct genode_sockaddr *, enum Flags);
+                                 struct genode_sockaddr *);
+
+/* poll */
+unsigned genode_socket_pollin_set(void);
+unsigned genode_socket_pollout_set(void);
+unsigned genode_socket_pollex_set(void);
+
+unsigned genode_socket_poll(struct genode_socket_handle *);
+
+enum Errno genode_socket_getsockopt(struct genode_socket_handle *,
+                                    enum Sock_level, enum Sock_opt,
+                                    void *optval, unsigned *optlen);
+
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif
