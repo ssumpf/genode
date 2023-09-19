@@ -224,25 +224,9 @@ size_t _copy_from_iter_nocache(void * addr,size_t bytes,struct iov_iter * i)
 }
 
 
-#include <linux/uaccess.h>
-
-unsigned long _copy_from_user(void * to,const void __user * from,unsigned long n)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 #include <linux/uio.h>
 
 size_t _copy_to_iter(const void * addr,size_t bytes,struct iov_iter * i)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/uaccess.h>
-
-unsigned long _copy_to_user(void __user * to,const void * from,unsigned long n)
 {
 	lx_emul_trace_and_stop(__func__);
 }
