@@ -85,19 +85,24 @@ class Main
 
 		void _handle_exception()
 		{
-			_vm.on_vmm_entry();
-			try {
-				switch (_vm.state().cpu_exception) {
-				case Cpu_state::DATA_ABORT:      _handle_data_abort(); break;
-				case Cpu_state::SUPERVISOR_CALL: _handle_smc();        break;
-				default:
-					error("unknown exception ", _vm.state().cpu_exception);
-					throw Vm::Exception_handling_failed();
+			_vm.with_state([this](Vcpu_state &state) {
+				_vm.state_container.construct(static_cast<Genode::Vm_state>(state));
+				_vm.on_vmm_entry();
+				try {
+					switch (_vm.state().cpu_exception) {
+					case Cpu_state::DATA_ABORT:      _handle_data_abort(); break;
+					case Cpu_state::SUPERVISOR_CALL: _handle_smc();        break;
+					case 0xfe:                       _vm.start();          break;
+					default:
+						error("unknown exception ", _vm.state().cpu_exception);
+						throw Vm::Exception_handling_failed();
+					}
 				}
-				_vm.run();
-			}
-			catch (Vm::Exception_handling_failed) { _vm.dump(); }
-			_vm.on_vmm_exit();
+				catch (Vm::Exception_handling_failed) { _vm.dump(); }
+				_vm.on_vmm_exit();
+				_vm.state_container.destruct();
+				return true;
+			});
 		};
 
 	public:
@@ -107,8 +112,6 @@ class Main
 			log("Start virtual machine ...");
 			_m4if.set_region0(Trustzone::SECURE_RAM_BASE,
 			                  Trustzone::SECURE_RAM_SIZE);
-			_vm.start();
-			_vm.run();
 		}
 };
 
