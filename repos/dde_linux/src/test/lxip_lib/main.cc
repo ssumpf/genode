@@ -1,6 +1,5 @@
 #include <base/component.h>
-
-#include <lxip.h>
+#include <genode_c_api/socket.h>
 
 using namespace Genode;
 
@@ -9,7 +8,7 @@ struct Main
 	Main(Env &env)
 	{
 		Genode::log("CONTRUCT LXIP");
-		Lxip::construct(env);
+		genode_socket_init(genode_env_ptr(env));
 	}
 };
 
