@@ -185,8 +185,12 @@ enum Errno lx_socket_accept(struct socket *sock, struct socket *new_sock,
                             struct genode_sockaddr *addr)
 {
 	struct sockaddr linux_addr;
+	int err;
 
-	int err = sock->ops->accept(sock, new_sock, O_NONBLOCK, true);
+	new_sock->type = sock->type;
+	new_sock->ops  = sock->ops;
+
+	err = sock->ops->accept(sock, new_sock, O_NONBLOCK, true);
 
 	if (err == 0) {
 		err = sock->ops->getname(new_sock, &linux_addr, 0);
@@ -257,6 +261,103 @@ enum Errno lx_socket_getsockopt(struct socket *sock, enum Sock_level level,
 		errno = _genode_errno(err);
 		memcpy(optval, &errno, sizeof(enum Sock_opt));
 	}
+
+	return GENODE_ENONE;
+}
+
+
+static struct msghdr *_create_msghdr(struct genode_msghdr *msg, bool write)
+{
+	struct msghdr *msghdr;
+	struct sockaddr_storage *storage = NULL;
+	unsigned long total = 0;
+
+	msghdr = (struct msghdr *)kzalloc(sizeof(*msghdr), GFP_KERNEL);
+	if (!msghdr) goto msghdr;
+
+	/* sockaddr */
+	if (msg->msg_name) {
+		struct sockaddr sock_addr = _sockaddr(msg->msg_name);
+
+		storage = (struct sockaddr_storage *)kmalloc(sizeof(*storage), GFP_KERNEL);
+		if (!storage) goto sock_addr;
+		memcpy(storage, &sock_addr, _sockaddr_len(msg->msg_name));
+
+		msghdr->msg_name    = storage;
+		msghdr->msg_namelen = _sockaddr_len(msg->msg_name);
+	}
+
+	/* iovec iterator */
+	msghdr->msg_iter.iter_type   = ITER_IOVEC;
+	msghdr->msg_iter.data_source = write;
+	msghdr->msg_iter.nr_segs     = msg->msg_iovlen;
+	msghdr->msg_iter.iov         = (struct iovec *)msg->msg_iov;
+
+	for (unsigned i = 0; i < msg->msg_iovlen; i++)
+		total += msg->msg_iov[i].iov_size;
+
+	msghdr->msg_iter.count = total;
+
+	/* non-blocking */
+	msghdr->msg_flags = MSG_DONTWAIT;
+
+	return msghdr;
+
+sock_addr:
+	kfree(msghdr);
+msghdr:
+
+	return NULL;
+
+}
+
+
+static void _destroy_msghdr(struct msghdr *msg)
+{
+	if (msg->msg_name) kfree(msg->msg_name);
+	kfree(msg);
+}
+
+
+enum Errno lx_socket_sendmsg(struct socket *sock, struct genode_msghdr *msg,
+                             unsigned long *bytes_send)
+{
+	struct msghdr *m = _create_msghdr(msg, false);
+	ssize_t ret;
+
+	if (!m) return GENODE_ENOMEM;
+
+	ret = sock->ops->sendmsg(sock, m, m->msg_iter.count);
+
+	_destroy_msghdr(m);
+
+	if (ret < 0)
+		return _genode_errno((int)ret);
+
+	*bytes_send = (unsigned long)ret;
+
+	return GENODE_ENONE;
+}
+
+
+enum Errno lx_socket_recvmsg(struct socket *sock, struct genode_msghdr *msg,
+                             unsigned long *bytes_recv)
+{
+	struct msghdr *m = _create_msghdr(msg, true);
+	ssize_t ret;
+
+	if (!m) return GENODE_ENOMEM;
+
+	printk("%s:%d recvmsg %px\n", __func__, __LINE__, sock->ops);
+
+	ret = sock->ops->recvmsg(sock, m, m->msg_iter.count, MSG_DONTWAIT);
+
+	_destroy_msghdr(m);
+
+	if (ret < 0)
+		return _genode_errno((int)ret);
+
+	*bytes_recv = (unsigned long)ret;
 
 	return GENODE_ENONE;
 }

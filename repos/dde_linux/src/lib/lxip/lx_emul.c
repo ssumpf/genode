@@ -50,6 +50,15 @@ unsigned long _copy_from_user(void * to,const void __user * from,unsigned long n
 	memcpy(to, from, n);
 	return 0;
 }
+
+
+unsigned long raw_copy_from_user(void *to, const void * from, unsigned long n)
+{
+	memcpy(to, from, n);
+	return 0;
+}
+
+
 #else
 unsigned long __must_check __arch_copy_from_user(void *to, const void __user *from, unsigned long n);
 unsigned long __must_check __arch_copy_from_user(void *to, const void __user *from, unsigned long n)
@@ -66,6 +75,15 @@ unsigned long _copy_to_user(void __user * to,const void * from,unsigned long n)
 	memcpy(to, from, n);
 	return 0;
 }
+
+
+unsigned long raw_copy_to_user(void *to, const void *from, unsigned long n)
+{
+	memcpy(to, from, n);
+	return 0;
+}
+
+
 #else
 unsigned long __must_check __arch_copy_to_user(void __user *to, const void *from, unsigned long n);
 unsigned long __must_check __arch_copy_to_user(void __user *to, const void *from, unsigned long n)
@@ -162,12 +180,6 @@ void kvfree_call_rcu(struct rcu_head * head, rcu_callback_t func)
 unsigned long get_zeroed_page(gfp_t gfp_mask)
 {
 	return (unsigned long)kzalloc(PAGE_SIZE, GFP_KERNEL);
-}
-
-
-void free_pages(unsigned long addr,unsigned int order)
-{
-	kfree((void *)addr);
 }
 
 
