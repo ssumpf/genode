@@ -637,6 +637,17 @@ void Nova_vcpu::with_state(Call_with_state &cw)
 }
 
 
+template <typename... ARGS>
+static void nova_reply(Thread &myself, Nova::Utcb &utcb, ARGS &&... args)
+{
+	Receive_window &rcv_window = myself.native_thread().server_rcv_window;
+
+	/* reset receive window to values expected by RPC server code */
+	rcv_window.prepare_rcv_window(utcb);
+
+	Nova::reply(myself.stack_top(), args...);
+}
+
 void Nova_vcpu::_exit_entry(addr_t badge)
 {
 	Thread     &myself = *Thread::myself();
@@ -651,9 +662,9 @@ void Nova_vcpu::_exit_entry(addr_t badge)
 
 			vcpu._last_resume = vcpu._resume;
 			if (vcpu._resume) {
-				Nova::reply(myself.stack_top());
+				nova_reply(myself, utcb);
 			} else {
-				Nova::reply(myself.stack_top(), vcpu._sm_sel());
+				nova_reply(myself, utcb, vcpu._sm_sel());
 			}
 		});
 
@@ -662,7 +673,7 @@ void Nova_vcpu::_exit_entry(addr_t badge)
 		/* somebody called us directly ? ... ignore/deny */
 		utcb.items = 0;
 		utcb.mtd   = 0;
-		Nova::reply(myself.stack_top());
+		nova_reply(myself, utcb);
 	}
 }
 
