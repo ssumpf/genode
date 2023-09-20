@@ -35,6 +35,7 @@ lib/find_bit.c
 lib/hexdump.c
 lib/nlattr.c
 lib/idr.c
+lib/iov_iter.c
 lib/kasprintf.c
 lib/kobject.c
 lib/klist.c

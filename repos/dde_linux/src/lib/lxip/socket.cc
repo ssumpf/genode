@@ -140,6 +140,9 @@ struct Lx_accept : Lx_call
 		}
 
 		err = lx_socket_accept(handle.sock, client.sock, &addr);
+		if (err)
+			lx_sock_release(client.sock);
+
 		finished = true;
 	}
 };
@@ -206,6 +209,46 @@ struct Lx_getsockopt : Lx_call
 
 	Lx_getsockopt(const Lx_getsockopt&) = delete;
 	Lx_getsockopt operator=(const Lx_getsockopt&) = delete;
+};
+
+
+struct Lx_sendmsg : Lx_call
+{
+	genode_msghdr &msg;
+	unsigned long bytes { 0 };
+
+	Lx_sendmsg(genode_socket_handle &handle,
+	           genode_msghdr &msg)
+	: Lx_call(handle), msg(msg)
+	{
+		schedule();
+	}
+
+	void execute() override
+	{
+		err = lx_socket_sendmsg(handle.sock, &msg, &bytes);
+		finished = true;
+	}
+};
+
+
+struct Lx_recvmsg : Lx_call
+{
+	genode_msghdr &msg;
+	unsigned long bytes { 0 };
+
+	Lx_recvmsg(genode_socket_handle &handle,
+	           genode_msghdr &msg)
+	: Lx_call(handle), msg(msg)
+	{
+		schedule();
+	}
+
+	void execute() override
+	{
+		err = lx_socket_recvmsg(handle.sock, &msg, &bytes);
+		finished = true;
+	}
 };
 
 
@@ -350,3 +393,24 @@ enum Errno genode_socket_getsockopt(struct genode_socket_handle *handle,
 	Lx_getsockopt sock_opt { *handle, level, opt, optval, optlen };
 	return sock_opt.err;
 }
+
+
+enum Errno genode_socket_sendmsg(struct genode_socket_handle *handle,
+                                 struct genode_msghdr *msg,
+                                 unsigned long *bytes_send)
+{
+	Lx_sendmsg send { *handle, *msg };
+	*bytes_send = send.bytes;
+	return send.err;
+}
+
+
+enum Errno genode_socket_recvmsg(struct genode_socket_handle *handle,
+                                 struct genode_msghdr *msg,
+                                 unsigned long *bytes_recv)
+{
+	Lx_recvmsg recv { *handle, *msg };
+	*bytes_recv = recv.bytes;
+	return recv.err;
+}
+

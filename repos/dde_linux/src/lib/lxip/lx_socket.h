@@ -24,6 +24,11 @@ unsigned lx_socket_poll(struct socket *sock);
 enum Errno lx_socket_getsockopt(struct socket *sock, enum Sock_level level,
                                 enum Sock_opt opt, void *optval, unsigned *optlen);
 
+enum Errno lx_socket_sendmsg(struct socket *sock, struct genode_msghdr *msg,
+                             unsigned long *bytes_send);
+enum Errno lx_socket_recvmsg(struct socket *sock, struct genode_msghdr *msg,
+                             unsigned long *bytes_recv);
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif

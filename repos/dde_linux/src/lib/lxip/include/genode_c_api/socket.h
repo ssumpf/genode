@@ -151,6 +151,30 @@ enum Errno genode_socket_getsockopt(struct genode_socket_handle *,
                                     void *optval, unsigned *optlen);
 
 
+struct genode_iovec
+{
+	void         *iov_base;
+	unsigned long iov_size;
+};
+
+
+struct genode_msghdr
+{
+	struct genode_sockaddr *msg_name;   /* can be NULL for TCP    */
+	struct genode_iovec    *msg_iov;    /* array of iovecs        */
+	unsigned long           msg_iovlen; /* nr elements in msg_iov */
+};
+
+/* non-blocking call */
+enum Errno genode_socket_sendmsg(struct genode_socket_handle *,
+                                 struct genode_msghdr *,
+                                 unsigned long *bytes_send);
+/* non-blocking call
+ * XXX: we might need MSG_PEEK support
+ */
+enum Errno genode_socket_recvmsg(struct genode_socket_handle *,
+                                 struct genode_msghdr *,
+                                 unsigned long *bytes_recv);
 #ifdef __cplusplus
 } /* extern "C" */
 #endif

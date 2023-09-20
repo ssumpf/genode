@@ -11,4 +11,3 @@ enum {
 	/* sockaddr_in */
 	INADDR_ANY = 0ul,
 };
-

@@ -1,7 +1,7 @@
 /*
  * \brief  Dummy definitions of Linux Kernel functions
  * \author Automatically generated file - do no edit
- * \date   2023-09-01
+ * \date   2023-09-20
  */
 
 #include <lx_emul.h>
@@ -22,14 +22,6 @@ dev_t ROOT_DEV;
 #include <linux/ratelimit_types.h>
 
 int ___ratelimit(struct ratelimit_state * rs,const char * func)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/gfp.h>
-
-struct page * __alloc_pages(gfp_t gfp,unsigned int order,int preferred_nid,nodemask_t * nodemask)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -64,14 +56,6 @@ void __folio_put(struct folio * folio)
 }
 
 
-#include <linux/gfp.h>
-
-unsigned long __get_free_pages(gfp_t gfp_mask,unsigned int order)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 #include <linux/sched.h>
 
 char * __get_task_comm(char * buf,size_t buf_size,struct task_struct * tsk)
@@ -80,17 +64,16 @@ char * __get_task_comm(char * buf,size_t buf_size,struct task_struct * tsk)
 }
 
 
-#include <net/inet6_hashtables.h>
+#include <net/ipv6.h>
 
-struct sock * __inet6_lookup_established(struct net * net,struct inet_hashinfo * hashinfo,const struct in6_addr * saddr,const __be16 sport,const struct in6_addr * daddr,const u16 hnum,const int dif,const int sdif)
+int __ipv6_addr_type(const struct in6_addr * addr)
 {
 	lx_emul_trace_and_stop(__func__);
 }
 
 
-#include <net/ipv6.h>
-
-int __ipv6_addr_type(const struct in6_addr * addr)
+extern void __memcpy_flushcache(void * _dst,const void * _src,size_t size);
+void __memcpy_flushcache(void * _dst,const void * _src,size_t size)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -203,30 +186,6 @@ void * __vmalloc(unsigned long size,gfp_t gfp_mask)
 #include <linux/vmalloc.h>
 
 void * __vmalloc_node_range(unsigned long size,unsigned long align,unsigned long start,unsigned long end,gfp_t gfp_mask,pgprot_t prot,unsigned long vm_flags,int node,const void * caller)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/uio.h>
-
-size_t _copy_from_iter(void * addr,size_t bytes,struct iov_iter * i)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/uio.h>
-
-size_t _copy_from_iter_nocache(void * addr,size_t bytes,struct iov_iter * i)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/uio.h>
-
-size_t _copy_to_iter(const void * addr,size_t bytes,struct iov_iter * i)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -360,9 +319,15 @@ long copy_from_kernel_nofault(void * dst,const void * src,size_t size)
 }
 
 
-#include <linux/uio.h>
+extern unsigned long __must_check copy_mc_to_kernel(void * dst,const void * src,unsigned len);
+unsigned long __must_check copy_mc_to_kernel(void * dst,const void * src,unsigned len)
+{
+	lx_emul_trace_and_stop(__func__);
+}
 
-size_t copy_page_from_iter(struct page * page,size_t offset,size_t bytes,struct iov_iter * i)
+
+extern unsigned long __must_check copy_mc_to_user(void * dst,const void * src,unsigned len);
+unsigned long __must_check copy_mc_to_user(void * dst,const void * src,unsigned len)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -371,22 +336,6 @@ size_t copy_page_from_iter(struct page * page,size_t offset,size_t bytes,struct 
 #include <linux/arch_topology.h>
 
 const struct cpumask * cpu_clustergroup_mask(int cpu)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/uio.h>
-
-size_t csum_and_copy_from_iter(void * addr,size_t bytes,__wsum * csum,struct iov_iter * i)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/uio.h>
-
-size_t csum_and_copy_to_iter(const void * addr,size_t bytes,void * _csstate,struct iov_iter * i)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -406,6 +355,11 @@ noinstr void ct_irq_exit(void)
 {
 	lx_emul_trace_and_stop(__func__);
 }
+
+
+#include <linux/splice.h>
+
+const struct pipe_buf_operations default_pipe_buf_ops;
 
 
 #include <linux/device.h>
@@ -498,6 +452,22 @@ int ethtool_get_phc_vclocks(struct net_device * dev,int ** vclock_index)
 #include <linux/ethtool.h>
 
 int ethtool_op_get_ts_info(struct net_device * dev,struct ethtool_ts_info * info)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/pagemap.h>
+
+size_t fault_in_readable(const char __user * uaddr,size_t size)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/pagemap.h>
+
+size_t fault_in_safe_writeable(const char __user * uaddr,size_t size)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -647,6 +617,14 @@ int get_user_ifreq(struct ifreq * ifr,void __user ** ifrdata,void __user * arg)
 }
 
 
+#include <linux/mm.h>
+
+int get_user_pages_fast(unsigned long start,int nr_pages,unsigned int gup_flags,struct page ** pages)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
 #include <linux/gfp.h>
 
 bool gfp_pfmemalloc_allowed(gfp_t gfp_mask)
@@ -658,62 +636,6 @@ bool gfp_pfmemalloc_allowed(gfp_t gfp_mask)
 #include <linux/uuid.h>
 
 const u8 guid_index[16] = {};
-
-
-#include <linux/uio.h>
-
-size_t hash_and_copy_to_iter(const void * addr,size_t bytes,void * hashp,struct iov_iter * i)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/icmpv6.h>
-
-void icmp6_send(struct sk_buff * skb,u8 type,u8 code,__u32 info,const struct in6_addr * force_saddr,const struct inet6_skb_parm * parm)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/uio.h>
-
-int import_single_range(int rw,void __user * buf,size_t len,struct iovec * iov,struct iov_iter * i)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <net/protocol.h>
-
-int inet6_add_offload(const struct net_offload * prot,unsigned char protocol)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <net/inet_hashtables.h>
-
-u32 inet6_ehashfn(const struct net * net,const struct in6_addr * laddr,const u16 lport,const struct in6_addr * faddr,const __be16 fport)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <net/inet6_hashtables.h>
-
-struct sock * inet6_lookup(struct net * net,struct inet_hashinfo * hashinfo,struct sk_buff * skb,int doff,const struct in6_addr * saddr,const __be16 sport,const struct in6_addr * daddr,const __be16 dport,const int dif)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <net/inet6_hashtables.h>
-
-struct sock * inet6_lookup_listener(struct net * net,struct inet_hashinfo * hashinfo,struct sk_buff * skb,int doff,const struct in6_addr * saddr,const __be16 sport,const struct in6_addr * daddr,const unsigned short hnum,const int dif,const int sdif)
-{
-	lx_emul_trace_and_stop(__func__);
-}
 
 
 #include <net/protocol.h>
@@ -758,30 +680,6 @@ int io_schedule_prepare(void)
 #include <linux/sched.h>
 
 long __sched io_schedule_timeout(long timeout)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/uio.h>
-
-ssize_t iov_iter_get_pages2(struct iov_iter * i,struct page ** pages,size_t maxsize,unsigned maxpages,size_t * start)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/uio.h>
-
-void iov_iter_revert(struct iov_iter * i,size_t unroll)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <net/ipv6.h>
-
-int ipv6_skip_exthdr(const struct sk_buff * skb,int start,u8 * nexthdrp,__be16 * frag_offp)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -1001,6 +899,11 @@ const struct pipe_buf_operations nosteal_pipe_buf_ops;
 #include <linux/highuid.h>
 
 int overflowuid;
+
+
+#include <linux/splice.h>
+
+const struct pipe_buf_operations page_cache_pipe_buf_ops;
 
 
 #include <linux/gfp.h>
@@ -1269,11 +1172,6 @@ struct pid_namespace * task_active_pid_ns(struct task_struct * tsk)
 {
 	lx_emul_trace_and_stop(__func__);
 }
-
-
-#include <net/transp_v6.h>
-
-struct proto tcpv6_prot;
 
 
 extern void update_group_capacity(struct sched_domain * sd,int cpu);

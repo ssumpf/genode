@@ -50,6 +50,25 @@ long strncpy_from_user(char * dst,const char __user * src,long count)
 }
 
 
+unsigned long clear_user(void *mem, unsigned long len)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+int __copy_from_user_inatomic_nocache(void *dst, const void __user *src,
+                                      unsigned size)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+int __copy_from_user_flushcache(void *dst, const void __user *src, unsigned size)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
 #include <asm/uaccess.h>
 
 long strnlen_user(const char __user * str,long count)
