@@ -79,3 +79,11 @@ void Vm::proceed(Cpu & cpu)
 
 	monitor_mode_enter_normal_world(_state, (void*) cpu.stack_start());
 }
+
+
+void Vm::_sync_to_vmm()
+{}
+
+
+void Vm::_sync_from_vmm()
+{}
