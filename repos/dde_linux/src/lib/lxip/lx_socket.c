@@ -155,6 +155,24 @@ static int _sockaddr_len(struct genode_sockaddr const *addr)
 struct socket *lx_sock_alloc(void) { return sock_alloc(); }
 void lx_sock_release(struct socket* sock) { sock_release(sock); };
 
+extern int __setup_ip_auto_config_setup(char *);
+
+void lx_socket_address(struct genode_socket_config *config)
+{
+	if (config->dhcp) {
+		__setup_ip_auto_config_setup("dhcp");
+	}
+	else {
+		char address_config[128];
+		snprintf(address_config, sizeof(address_config),
+		         "%s::%s:%s:::off:%s",
+		         config->ip_addr, config->gateway, config->netmask,
+		         config->nameserver);
+		__setup_ip_auto_config_setup(address_config);
+	}
+	lx_emul_initcall("__initcall_ip_auto_config7");
+};
+
 
 enum Errno lx_socket_create(int domain, int type, int protocol,
                             struct socket **res)

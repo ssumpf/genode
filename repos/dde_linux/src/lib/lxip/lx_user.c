@@ -42,15 +42,7 @@ int __initcall_ip_auto_config7(void);
 
 void lx_user_init(void)
 {
-	printk("%s:%d\n", __func__, __LINE__);
 	_socket_dispatch_root = lx_user_new_task(lx_socket_dispatch,
 	                                         lx_socket_dispatch_queue());
-
-	printk("Configuring as DHCP client ...\n");
-	__setup_ip_auto_config_setup("dhcp");
-	printk("Starting DHCP client ...\n");
-	lx_emul_initcall("__initcall_ip_auto_config7");
-	printk("%s:%d DHCP done\n", __func__, __LINE__);
-
 	_startup_finished = 1;
 }

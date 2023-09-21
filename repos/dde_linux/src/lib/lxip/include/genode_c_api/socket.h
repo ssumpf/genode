@@ -116,8 +116,20 @@ struct genode_sockaddr
 	};
 };
 
+struct genode_socket_config
+{
+	/* IPv4 */
+	bool dhcp;
+	char const *ip_addr;
+	char const *netmask;
+	char const *gateway;
+	char const *nameserver;
+};
+
+void genode_socket_address(struct genode_socket_config *config);
 
 void genode_socket_init(struct genode_env *env);
+
 
 void genode_socket_wait_for_progress(void);
 
