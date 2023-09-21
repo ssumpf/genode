@@ -29,6 +29,9 @@ enum Errno lx_socket_sendmsg(struct socket *sock, struct genode_msghdr *msg,
 enum Errno lx_socket_recvmsg(struct socket *sock, struct genode_msghdr *msg,
                              unsigned long *bytes_recv);
 
+enum Errno lx_socket_shutdown(struct socket *sock, int how);
+enum Errno lx_socket_release(struct socket *sock);
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif

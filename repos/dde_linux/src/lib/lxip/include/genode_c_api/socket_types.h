@@ -10,4 +10,9 @@ enum {
 	IPPROTO_UDP = 17,
 	/* sockaddr_in */
 	INADDR_ANY = 0ul,
+
+	/* shutdown */
+	SHUT_RD = 0,
+	SHUT_WR = 1,
+	SHUT_RDWR = 2,
 };

@@ -233,6 +233,14 @@ void irq_work_tick(void)
 }
 
 
+#include <linux/pid.h>
+
+void put_pid(struct pid * pid)
+{
+	lx_emul_trace(__func__);
+}
+
+
 u64 bpf_user_rnd_u32(u64 r1, u64 r2, u64 r3, u64 r4, u64 r5)
 {
 	lx_emul_trace_and_stop(__func__);

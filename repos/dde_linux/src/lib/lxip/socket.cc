@@ -252,6 +252,40 @@ struct Lx_recvmsg : Lx_call
 };
 
 
+struct Lx_shutdown : Lx_call
+{
+	int how;
+
+	Lx_shutdown(genode_socket_handle &handle,
+	            int how)
+	: Lx_call(handle), how(how)
+	{
+		schedule();
+	}
+
+	void execute() override
+	{
+		err = lx_socket_shutdown(handle.sock, how);
+		finished = true;
+	}
+};
+
+
+struct Lx_release : Lx_call
+{
+	Lx_release(genode_socket_handle &handle) : Lx_call(handle)
+	{
+		schedule();
+	}
+
+	void execute() override
+	{
+		err = lx_socket_release(handle.sock);
+		finished = true;
+	}
+};
+
+
 void *lx_socket_dispatch_queue(void)
 {
 	static Socket_queue queue;
@@ -414,3 +448,19 @@ enum Errno genode_socket_recvmsg(struct genode_socket_handle *handle,
 	return recv.err;
 }
 
+
+enum Errno genode_socket_shutdown(struct genode_socket_handle *handle,
+                                  int how)
+{
+	Lx_shutdown shutdown { *handle, how };
+	return shutdown.err;
+}
+
+
+enum Errno genode_socket_release(struct genode_socket_handle *handle)
+{
+	Lx_release release { *handle };
+	handle->sock = nullptr;
+	_destroy_handle(handle);
+	return release.err;
+}

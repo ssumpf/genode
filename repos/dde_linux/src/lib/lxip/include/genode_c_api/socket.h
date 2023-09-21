@@ -175,6 +175,12 @@ enum Errno genode_socket_sendmsg(struct genode_socket_handle *,
 enum Errno genode_socket_recvmsg(struct genode_socket_handle *,
                                  struct genode_msghdr *,
                                  unsigned long *bytes_recv);
+
+enum Errno genode_socket_shutdown(struct genode_socket_handle *,
+                                  int how);
+
+enum Errno genode_socket_release(struct genode_socket_handle *);
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif

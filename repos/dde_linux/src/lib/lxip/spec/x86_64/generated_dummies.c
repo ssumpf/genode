@@ -986,14 +986,6 @@ void put_device(struct device * dev)
 }
 
 
-#include <linux/pid.h>
-
-void put_pid(struct pid * pid)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 #include <linux/netdevice.h>
 
 int put_user_ifreq(struct ifreq * ifr,void __user * arg)

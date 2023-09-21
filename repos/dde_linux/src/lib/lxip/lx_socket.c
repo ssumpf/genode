@@ -348,8 +348,6 @@ enum Errno lx_socket_recvmsg(struct socket *sock, struct genode_msghdr *msg,
 
 	if (!m) return GENODE_ENOMEM;
 
-	printk("%s:%d recvmsg %px\n", __func__, __LINE__, sock->ops);
-
 	ret = sock->ops->recvmsg(sock, m, m->msg_iter.count, MSG_DONTWAIT);
 
 	_destroy_msghdr(m);
@@ -360,4 +358,16 @@ enum Errno lx_socket_recvmsg(struct socket *sock, struct genode_msghdr *msg,
 	*bytes_recv = (unsigned long)ret;
 
 	return GENODE_ENONE;
+}
+
+
+enum Errno lx_socket_shutdown(struct socket *sock, int how)
+{
+	return _genode_errno(sock->ops->shutdown(sock, how));
+}
+
+
+enum Errno lx_socket_release(struct socket *sock)
+{
+	return _genode_errno(sock->ops->release(sock));
 }
