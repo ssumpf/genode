@@ -55,16 +55,19 @@ struct Test_client
 	Attached_rom_dataspace config { env, "config"};
 
 	uint16_t const port
-		{ config.xml().attribute_value("port", (uint16_t)80) };
+		{ config.xml().attribute_value("server_port", (uint16_t)80) };
 
 	Net::Ipv4_address ip_addr
-		{ config.xml().attribute_value("ip", Net::Ipv4_address()) };
+		{ config.xml().attribute_value("server_ip", Net::Ipv4_address()) };
 
 	unsigned long counter { 0 };
 
 	Test_client(Env &env) : env(env)
 	{
 		genode_socket_init(genode_env_ptr(env));
+
+		genode_socket_config address_config = { .dhcp = true };
+		genode_socket_address(&address_config);
 	}
 
 	void run()

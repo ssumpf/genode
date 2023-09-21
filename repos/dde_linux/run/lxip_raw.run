@@ -41,7 +41,7 @@ append config {
 			<default-policy domain="default"/>
 			<domain name="default" interface="10.0.2.1/24">
 
-				<dhcp-server ip_first="10.0.2.2" ip_last="10.0.2.3"/>
+				<dhcp-server ip_first="10.0.2.2" ip_last="10.0.2.2"/>
 
 			</domain>
 
@@ -50,7 +50,7 @@ append config {
 
 	<start name="test-lxip_server" caps="200">
 		<resource name="RAM" quantum="40M"/>
-		<config ld_verbose="yes"/>
+		<config ld_verbose="yes" ip_addr="10.0.2.3" netmask="255.255.255.0" gateway="10.0.2.1" nameserver="8.8.8.8"/>
 		<route>
 			<service name="Nic"> <child name="nic_router"/> </service>
 			<any-service> <parent/> <any-child/> </any-service>
@@ -59,7 +59,7 @@ append config {
 
 	<start name="test-lxip_client" caps="200">
 		<resource name="RAM" quantum="40M"/>
-		<config ld_verbose="yes" ip="10.0.2.2" port="80"/>
+		<config ld_verbose="yes" server_ip="10.0.2.3" server_port="80"/>
 		<route>
 			<service name="Nic"> <child name="nic_router"/> </service>
 			<any-service> <parent/> <any-child/> </any-service>
