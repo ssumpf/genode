@@ -48,9 +48,22 @@ struct Test_server
 {
 	Env &env;
 
-	Attached_rom_dataspace config { env, "config" };
-	uint16_t const port { config.xml().attribute_value("port", (uint16_t)80) };
 	unsigned counter { 0 };
+
+	Attached_rom_dataspace config { env, "config" };
+
+	uint16_t const port { config.xml().attribute_value("port", (uint16_t)80) };
+
+	using Ipv4_string = String<16>;
+
+	Ipv4_string const ip {
+		config.xml().attribute_value("ip_addr", Ipv4_string("0.0.0.0")) };
+	Ipv4_string const netmask {
+		config.xml().attribute_value("netmask", Ipv4_string("0.0.0.0")) };
+	Ipv4_string const gateway {
+		config.xml().attribute_value("gateway", Ipv4_string("0.0.0.0")) };
+	Ipv4_string const nameserver {
+		config.xml().attribute_value("nameserver", Ipv4_string("0.0.0.0")) };
 
 	String<128> http_header
 		{ "HTTP/1.0 200 OK\r\nContent-type: text/html\r\n\r\n" }; /* HTTP response header */ 
@@ -61,6 +74,16 @@ struct Test_server
 	Test_server(Env &env) : env(env)
 	{
 		genode_socket_init(genode_env_ptr(env));
+
+		genode_socket_config address_config = {
+			.dhcp       = false,
+			.ip_addr    = ip.string(),
+			.netmask    = netmask.string(),
+			.gateway    = gateway.string(),
+			.nameserver = nameserver.string(),
+		};
+
+		genode_socket_address(&address_config);
 	}
 
 	void run()
