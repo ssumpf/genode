@@ -96,6 +96,9 @@ struct Test_client
 		/* html */
 		ASSERT("receive HTML...", receive(handle, buf, 150) == 129);
 		ASSERT("check HTML...", !strcmp(buf + 121, "</html>", 7));
+
+		ASSERT("shutdown...", genode_socket_shutdown(handle, SHUT_RDWR) == GENODE_ENONE);
+		ASSERT("release socket ...", genode_socket_release(handle) == GENODE_ENONE);
 	}
 
 	/* connect blocking version */
