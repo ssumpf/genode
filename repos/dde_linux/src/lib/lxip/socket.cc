@@ -63,6 +63,28 @@ struct Lx_call : private Socket_queue::Element
 };
 
 
+struct Lx_address : Lx_call
+{
+	genode_socket_config *config;
+
+	Lx_address(genode_socket_handle &handle,
+	           genode_socket_config *config)
+	: Lx_call(handle), config(config)
+	{
+		schedule();
+	}
+
+	void execute() override
+	{
+		lx_socket_address(config);
+		finished = true;
+	}
+
+	Lx_address(const Lx_address&) = delete;
+	Lx_address operator=(const Lx_address&) = delete;
+};
+
+
 struct Lx_socket : Lx_call
 {
 	int domain, type, protocol;
@@ -324,6 +346,21 @@ static void _destroy_handle(genode_socket_handle *handle)
 	if (handle->sock) lx_sock_release(handle->sock);
 
 	destroy(Lx_kit::env().heap, handle);
+}
+
+
+/*
+ * Genode socket C-API
+ */
+
+void genode_socket_address(struct genode_socket_config *config)
+{
+	genode_socket_handle handle = {
+		.task  = lx_socket_dispatch_root(),
+		.queue = static_cast<Socket_queue *>(lx_socket_dispatch_queue()),
+	};
+
+	Lx_address addr { handle, config };
 }
 
 
