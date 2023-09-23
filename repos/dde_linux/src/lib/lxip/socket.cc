@@ -38,6 +38,7 @@ struct Lx_call : private Socket_queue::Element
 
 	enum Errno err { GENODE_ENONE };
 	bool finished  { false };
+	bool may_block { false };
 
 	Lx_call(genode_socket_handle &handle)
 	: handle(handle) { }
@@ -53,7 +54,8 @@ struct Lx_call : private Socket_queue::Element
 		Lx_kit::env().scheduler.execute();
 
 		while (!finished) {
-			warning("EP returned unfinished");
+			if (may_block == false)
+				warning("socket interface call blocked (this should not happen)");
 			genode_socket_wait_for_progress();
 		}
 		warning("EP finished");
@@ -71,6 +73,9 @@ struct Lx_address : Lx_call
 	           genode_socket_config *config)
 	: Lx_call(handle), config(config)
 	{
+		/* we allow this call to block */
+		may_block = true;
+
 		schedule();
 	}
 

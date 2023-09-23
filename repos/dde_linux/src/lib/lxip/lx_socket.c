@@ -136,7 +136,7 @@ static void _genode_sockaddr(struct genode_sockaddr *addr,
 	if (length == sizeof(struct sockaddr_in)) {
 		struct sockaddr_in const * in = (struct sockaddr_in const *)linux_addr;
 		addr->family             = in->sin_family;
-		addr->in.sin_port        = in->sin_port;;
+		addr->in.sin_port        = in->sin_port;
 		addr->in.sin_addr.s_addr = in->sin_addr.s_addr;
 	} else
 		printk("%s:%d: unknown sockaddr length %d\n", __func__, __LINE__, length);
@@ -367,6 +367,11 @@ enum Errno lx_socket_recvmsg(struct socket *sock, struct genode_msghdr *msg,
 	if (!m) return GENODE_ENOMEM;
 
 	ret = sock->ops->recvmsg(sock, m, m->msg_iter.count, MSG_DONTWAIT);
+
+	/* convert to genode_sockaddr */
+	if (ret && msg->msg_name) {
+		_genode_sockaddr(msg->msg_name, m->msg_name, _sockaddr_len(msg->msg_name));
+	}
 
 	_destroy_msghdr(m);
 
