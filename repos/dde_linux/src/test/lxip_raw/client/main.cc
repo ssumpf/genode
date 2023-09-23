@@ -20,6 +20,12 @@
 #include <genode_c_api/socket_types.h>
 #include <genode_c_api/socket.h>
 
+#include <data.h>
+
+
+namespace Test {
+	struct Client;
+}
 
 using namespace Genode;
 
@@ -29,24 +35,10 @@ using namespace Genode;
 	throw -1;\
 	} else { log("[", ++counter, "] ", string, " [ok]"); } }
 
-
-struct Msg_header
-{
-	genode_iovec  iovec;
-	genode_msghdr msg { };
-
-	Msg_header(void const *data, unsigned long size)
-	: iovec { const_cast<void *>(data), size }
-	{
-		msg.msg_iov    = &iovec;
-		msg.msg_iovlen = 1;
-	}
-
-	genode_msghdr *header() { return &msg; }
-};
+extern "C" void wait_for_continue(void);
 
 
-struct Test_client
+struct Test::Client
 {
 	Env &env;
 
@@ -62,46 +54,15 @@ struct Test_client
 
 	unsigned long counter { 0 };
 
-	Test_client(Env &env) : env(env)
+	Data data { };
+	char *recv_buf[Data::SIZE];
+
+	Client(Env &env) : env(env)
 	{
 		genode_socket_init(genode_env_ptr(env));
 
 		genode_socket_config address_config = { .dhcp = true };
 		genode_socket_address(&address_config);
-	}
-
-	void run()
-	{
-		enum Errno err;
-		genode_socket_handle *handle = nullptr;
-		ASSERT("create new socket...",
-		       (handle = genode_socket(AF_INET, SOCK_STREAM, 0, &err)) != nullptr);
-
-		genode_sockaddr addr;
-		addr.family             = AF_INET;
-		addr.in.sin_port        = host_to_big_endian(port);
-		addr.in.sin_addr.s_addr = ip_addr.to_uint32_big_endian();
-		ASSERT("connect...", connect(handle, &addr) == true);
-
-		/* send request */
-
-		String<64> request { "GET / HTTP/1.0\r\nHost: localhost:80\r\n\r\n" };
-		Msg_header msg { request.string(), request.length() };
-		unsigned long bytes_send;
-		ASSERT("send GET request...",
-		       genode_socket_sendmsg(handle, msg.header(), &bytes_send) == GENODE_ENONE
-		       && bytes_send == request.length());
-
-		char buf[150];
-		/* http header */
-		ASSERT("receive HTTP header...", receive(handle, buf, 150) == 45);
-		ASSERT("check HTTP header...", !strcmp("HTTP/1.0 200 OK", buf, 15));
-		/* html */
-		ASSERT("receive HTML...", receive(handle, buf, 150) == 129);
-		ASSERT("check HTML...", !strcmp(buf + 121, "</html>", 7));
-
-		ASSERT("shutdown...", genode_socket_shutdown(handle, SHUT_RDWR) == GENODE_ENONE);
-		ASSERT("release socket ...", genode_socket_release(handle) == GENODE_ENONE);
 	}
 
 	/* connect blocking version */
@@ -134,6 +95,7 @@ struct Test_client
 		return true;
 	}
 
+
 	unsigned long  receive(genode_socket_handle *handle, char *buf, unsigned long length)
 	{
 		Msg_header msg_recv { buf, length };
@@ -147,15 +109,76 @@ struct Test_client
 		}
 		return bytes;
 	}
+
+	void run_tcp()
+	{
+		enum Errno err;
+		genode_socket_handle *handle = nullptr;
+		ASSERT("create new socket (TCP)...",
+		       (handle = genode_socket(AF_INET, SOCK_STREAM, 0, &err)) != nullptr);
+
+		genode_sockaddr addr;
+		addr.family             = AF_INET;
+		addr.in.sin_port        = host_to_big_endian(port);
+		addr.in.sin_addr.s_addr = ip_addr.to_uint32_big_endian();
+		ASSERT("connect...", connect(handle, &addr) == true);
+
+		/* send request */
+		String<64> request { "GET / HTTP/1.0\r\nHost: localhost:80\r\n\r\n" };
+		Msg_header msg { request.string(), request.length() };
+		unsigned long bytes_send;
+		ASSERT("send GET request...",
+		       genode_socket_sendmsg(handle, msg.header(), &bytes_send) == GENODE_ENONE
+		       && bytes_send == request.length());
+
+		char buf[150];
+		Http http {};
+
+		/* http header */
+		ASSERT("receive HTTP header...", receive(handle, buf, 150) == http.header.length());
+		ASSERT("check HTTP header...", !strcmp(http.header.string(), buf,http.header.length()));
+
+		/* html */
+		ASSERT("receive HTML...", receive(handle, buf, 150) == http.html.length());
+		ASSERT("check HTML...", !strcmp(http.html.string(), buf, http.html.length() == 0));
+
+		ASSERT("shutdown...", genode_socket_shutdown(handle, SHUT_RDWR) == GENODE_ENONE);
+		ASSERT("release socket ...", genode_socket_release(handle) == GENODE_ENONE);
+	}
+
+	void run_udp()
+	{
+		enum Errno err;
+		genode_socket_handle *handle = nullptr;
+		ASSERT("create new socket (UDP)...",
+		       (handle = genode_socket(AF_INET, SOCK_DGRAM, 0, &err)) != nullptr);
+
+		genode_sockaddr addr;
+		addr.family             = AF_INET;
+		addr.in.sin_port        = host_to_big_endian<genode_uint16_t>(port);
+		addr.in.sin_addr.s_addr = ip_addr.to_uint32_big_endian();
+
+		log("WAIT");
+
+		for (unsigned i = 0; i < data.size(); i += MAX_UDP_LOAD) {
+			Msg_header msg { addr, data.buffer() + i, MAX_UDP_LOAD};
+			unsigned long bytes_send = 0;
+			warning("send");
+			ASSERT("send bytes...",
+			       genode_socket_sendmsg(handle, msg.header(), &bytes_send) == GENODE_ENONE
+			       && bytes_send == MAX_UDP_LOAD);
+		}
+	}
 };
 
 
 void Component::construct(Genode::Env &env)
 {
-	Test_client client { env };
+	static Test::Client client { env };
 
 	try {
-		client.run();
+		//client.run_tcp();
+		client.run_udp();
 		log("Success");
 	} catch (...) {
 		log("Failure");
