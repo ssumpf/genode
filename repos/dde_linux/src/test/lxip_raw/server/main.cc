@@ -13,10 +13,18 @@
 
 #include <base/attached_rom_dataspace.h>
 #include <base/component.h>
+#include <net/ipv4.h>
 #include <util/endian.h>
 
 #include <genode_c_api/socket_types.h>
 #include <genode_c_api/socket.h>
+
+#include <data.h>
+
+namespace Test {
+	using namespace Net;
+	struct Server;
+};
 
 using namespace Genode;
 
@@ -28,23 +36,7 @@ using namespace Genode;
 	} else { log("[", ++counter, "] ", string, " [ok]"); } }
 
 
-struct Msg_header
-{
-	genode_iovec  iovec;
-	genode_msghdr msg { };
-
-	Msg_header(void const *data, unsigned long size)
-	: iovec { const_cast<void *>(data), size }
-	{
-		msg.msg_iov    = &iovec;
-		msg.msg_iovlen = 1;
-	}
-
-	genode_msghdr *header() { return &msg; }
-};
-
-
-struct Test_server
+struct Test::Server
 {
 	Env &env;
 
@@ -65,13 +57,16 @@ struct Test_server
 	Ipv4_string const nameserver {
 		config.xml().attribute_value("nameserver", Ipv4_string("0.0.0.0")) };
 
-	String<128> http_header
-		{ "HTTP/1.0 200 OK\r\nContent-type: text/html\r\n\r\n" }; /* HTTP response header */ 
+	Ipv4_address const ip_addr {
+		config.xml().attribute_value("ip_addr", Ipv4_address()) };
 
-	String<150> http_html
-		{"<html><head><title>Congrats!</title></head><body><h1>Welcome to our HTTP server!</h1><p>This is a small test page.</body></html>"}; /* HTML page */
+	Http http { };
+	Data data { };
 
-	Test_server(Env &env) : env(env)
+	enum { SIZE = Data::SIZE };
+	char buf[SIZE];
+
+	Server(Env &env) : env(env)
 	{
 		genode_socket_init(genode_env_ptr(env));
 
@@ -86,40 +81,8 @@ struct Test_server
 		genode_socket_address(&address_config);
 	}
 
-	void run()
-	{
-		enum Errno err;
-		genode_socket_handle *handle = nullptr;
-		ASSERT("create new socket ...",
-		       (handle = genode_socket(AF_INET, SOCK_STREAM, 0, &err)) != nullptr);
-
-		genode_sockaddr addr;
-		addr.family             = AF_INET;
-		addr.in.sin_port        = host_to_big_endian(port);
-		addr.in.sin_addr.s_addr = INADDR_ANY;
-		ASSERT("bind socket ...", genode_socket_bind(handle, &addr) == GENODE_ENONE);
-
-		ASSERT("listen ...", genode_socket_listen(handle, 5) == GENODE_ENONE);
-
-		genode_socket_handle *client = nullptr;
-
-		err = GENODE_EAGAIN;
-		for (unsigned i = 0; i < 100 && err == GENODE_EAGAIN; i++) {
-			client = genode_socket_accept(handle, &addr, &err);
-
-		if (err == GENODE_EAGAIN)
-			genode_socket_wait_for_progress();
-		}
-
-		ASSERT("accept ...", err == GENODE_ENONE && client != nullptr);
-		serve(client);
-	}
-
 	void serve(genode_socket_handle *handle)
 	{
-		constexpr unsigned long SIZE = 1024;
-		char buf[SIZE];
-
 		Constructible<Msg_header> msg;
 		msg.construct(buf, SIZE);
 
@@ -143,27 +106,105 @@ struct Test_server
 		ASSERT("message is GET command...", !strcmp(buf, "GET /", 5));
 
 		/* send http header */
-		msg.construct(http_header.string(), http_header.length());
+		msg.construct(http.header.string(), http.header.length());
 		ASSERT("send HTTP header...",
 		       genode_socket_sendmsg(handle, msg->header(), &bytes) == GENODE_ENONE
-		       && bytes == http_header.length());
+		       && bytes == http.header.length());
 		msg.destruct();
 
 		/* Send http header */
-		msg.construct(http_html.string(), http_html.length());
+		msg.construct(http.html.string(), http.html.length());
 		ASSERT("send HTML...",
 		       genode_socket_sendmsg(handle, msg->header(), &bytes) == GENODE_ENONE
-		       && bytes == http_html.length());
+		       && bytes == http.html.length());
+	}
+
+	void run_tcp()
+	{
+		enum Errno err;
+		genode_socket_handle *handle = nullptr;
+		ASSERT("create new socket (TCP) ...",
+		       (handle = genode_socket(AF_INET, SOCK_STREAM, 0, &err)) != nullptr);
+
+		genode_sockaddr addr;
+		addr.family             = AF_INET;
+		addr.in.sin_port        = host_to_big_endian(port);
+		addr.in.sin_addr.s_addr = INADDR_ANY;
+		ASSERT("bind socket ...", genode_socket_bind(handle, &addr) == GENODE_ENONE);
+
+		ASSERT("listen ...", genode_socket_listen(handle, 5) == GENODE_ENONE);
+
+		genode_socket_handle *client = nullptr;
+
+		err = GENODE_EAGAIN;
+		for (unsigned i = 0; i < 100 && err == GENODE_EAGAIN; i++) {
+			client = genode_socket_accept(handle, &addr, &err);
+
+		if (err == GENODE_EAGAIN)
+			genode_socket_wait_for_progress();
+		}
+
+		ASSERT("accept ...", err == GENODE_ENONE && client != nullptr);
+		serve(client);
+
+		ASSERT("release socket ...", genode_socket_release(handle) == GENODE_ENONE);
+	}
+
+	void run_udp()
+	{
+		enum Errno err;
+		genode_socket_handle *handle = nullptr;
+		ASSERT("create new socket (UDP) ...",
+		       (handle = genode_socket(AF_INET, SOCK_DGRAM, 0, &err)) != nullptr);
+
+		genode_sockaddr addr;
+		addr.family             = AF_INET;
+		addr.in.sin_port        = host_to_big_endian<genode_uint16_t>(port);
+		addr.in.sin_addr.s_addr = ip_addr.to_uint32_big_endian();
+		ASSERT("bind socket ...", genode_socket_bind(handle, &addr) == GENODE_ENONE);
+		err = genode_socket_bind(handle, &addr);
+
+		unsigned long bytes_recv = 0;
+		bool once = true;
+		while (bytes_recv < SIZE) {
+			unsigned long bytes = 0;
+			genode_sockaddr recv_addr = { .family = AF_INET };
+			Msg_header msg { recv_addr, buf + bytes_recv, SIZE - bytes_recv };
+
+
+			err = genode_socket_recvmsg(handle, msg.header(), &bytes);
+
+			bytes_recv += bytes;
+
+			if (err == GENODE_EAGAIN) {
+				genode_socket_wait_for_progress();
+			} else if (err == GENODE_ENONE) {
+
+				if (once) {
+					Ipv4_address sender_ip =
+						Ipv4_address::from_uint32_big_endian(recv_addr.in.sin_addr.s_addr);
+
+					char expected[] = { 10, 0, 2, 2 };
+					Ipv4_address expected_ip { expected };
+
+					ASSERT("check expected sender IP address...", expected_ip == sender_ip);
+					once = false;
+				}
+			} else break;
+		}
+		ASSERT("receive bytes...", err == GENODE_ENONE);
+		ASSERT("check bytes...", strcmp(data.buffer(), buf, SIZE) == 0);
 	}
 };
 
 
 void Component::construct(Genode::Env &env)
 {
-	Test_server server { env };
+	static Test::Server server { env };
 
 	try {
-		server.run();
+		//server.run_tcp();
+		server.run_udp();
 		log("Success");
 	} catch (...) {
 		log("Failure");
