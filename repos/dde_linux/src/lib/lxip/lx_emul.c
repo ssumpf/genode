@@ -183,6 +183,25 @@ unsigned long get_zeroed_page(gfp_t gfp_mask)
 }
 
 
+#include <linux/gfp.h>
+
+void * page_frag_alloc_align(struct page_frag_cache * nc, unsigned int fragsz,
+                             gfp_t gfp_mask, unsigned int align_mask)
+{
+	if (align_mask != ~0U) {
+		printk("page_frag_alloc_align: unsupported align_mask=%x\n", align_mask);
+		lx_emul_trace_and_stop(__func__);
+	}
+	return lx_emul_mem_alloc_aligned(fragsz, ARCH_KMALLOC_MINALIGN);
+}
+
+
+void page_frag_free(void * addr)
+{
+	lx_emul_mem_free(addr);
+}
+
+
 /* mm/page_alloc. */
 
 /**
