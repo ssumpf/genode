@@ -86,7 +86,7 @@ class Main
 		void _handle_exception()
 		{
 			_vm.with_state([this](Vcpu_state &state) {
-				_vm.state_container.construct(static_cast<Genode::Vm_state>(state));
+				_vm.state_container.construct(state);
 				_vm.on_vmm_entry();
 				try {
 					switch (_vm.state().cpu_exception) {
