@@ -52,7 +52,7 @@ append config {
 			<service name="Nic"/>
 			<service name="Uplink"/>
 		</provides>
-		<config verbose_domain_state="yes">
+		<config verbose_domain_state="yes" verbose_packets="yes">
 
 			<default-policy domain="default"/>
 			<domain name="default" interface="10.0.2.1/24">
