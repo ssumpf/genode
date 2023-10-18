@@ -77,7 +77,7 @@ all: message $(TARGET)
 
 ifneq ($(INSTALL_DIR),)
 ifneq ($(DEBUG_DIR),)
-all: message $(INSTALL_DIR)/$(TARGET) $(DEBUG_DIR)/$(TARGET)
+all: message $(INSTALL_DIR)/$(TARGET) $(DEBUG_DIR)/$(TARGET) $(DEBUG_DIR)/$(TARGET).debug
 endif
 endif
 
@@ -219,8 +219,12 @@ $(TARGET): $(LINK_ITEMS) $(wildcard $(LD_SCRIPTS)) $(LIB_SO_DEPS)
 
 STRIP_TARGET_CMD ?= $(STRIP) -o $@ $<
 
-$(TARGET).stripped: $(TARGET)
+$(TARGET).debug: $(TARGET)
+	$(VERBOSE)$(OBJCOPY) --only-keep-debug $< $@
+
+$(TARGET).stripped: $(TARGET) $(TARGET).debug
 	$(VERBOSE)$(STRIP_TARGET_CMD)
+	$(VERBOSE)$(OBJCOPY) --add-gnu-debuglink=$(TARGET).debug $@
 
 $(INSTALL_DIR)/$(TARGET): $(TARGET).stripped
 	$(VERBOSE)ln -sf $(CURDIR)/$< $@
@@ -230,7 +234,9 @@ ifeq ($(COVERAGE),yes)
 endif
 
 ifneq ($(DEBUG_DIR),)
-$(DEBUG_DIR)/$(TARGET): $(TARGET)
+$(DEBUG_DIR)/$(TARGET): $(TARGET).stripped
+	$(VERBOSE)ln -sf $(CURDIR)/$< $@
+$(DEBUG_DIR)/$(TARGET).debug: $(TARGET).debug
 	$(VERBOSE)ln -sf $(CURDIR)/$< $@
 endif
 
@@ -238,6 +244,7 @@ else
 $(TARGET):
 $(INSTALL_DIR)/$(TARGET): $(TARGET)
 $(DEBUG_DIR)/$(TARGET): $(TARGET)
+$(DEBUG_DIR)/$(TARGET).debug: $(TARGET)
 endif
 
 
