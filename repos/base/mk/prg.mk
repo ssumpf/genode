@@ -250,7 +250,7 @@ endif
 
 clean_prg_objects:
 	$(MSG_CLEAN)$(PRG_REL_DIR)
-	$(VERBOSE)$(RM) -f $(OBJECTS) $(OBJECTS:.o=.d) $(TARGET) $(TARGET).stripped $(BINDER_SRC)
+	$(VERBOSE)$(RM) -f $(OBJECTS) $(OBJECTS:.o=.d) $(TARGET) $(TARGET).stripped $(TARGET).debug $(BINDER_SRC)
 	$(VERBOSE)$(RM) -f *.d *.i *.ii *.s *.ali *.lib.so
 
 clean: clean_prg_objects
