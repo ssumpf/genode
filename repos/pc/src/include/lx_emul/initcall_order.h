@@ -1,7 +1,7 @@
 /*
  * \brief  Array defining order of Linux Kernel initcalls
  * \author Automatically generated file - do no edit
- * \date   2023-10-11
+ * \date   2023-11-02
  */
 
 #pragma once
@@ -281,6 +281,7 @@ static const char * lx_emul_initcall_order[] = {
 	"__initcall_esrt_sysfs_init6",
 	"__initcall_hid_init6",
 	"__initcall_hid_generic_init6",
+	"__initcall_mt_driver_init6",
 	"__initcall_i2c_hid_acpi_driver_init6",
 	"__initcall_wmi_bmof_driver_init6",
 	"__initcall_snd_ctl_led_init6",
