@@ -383,12 +383,14 @@ enum Errno lx_socket_sendmsg(struct socket *sock, struct genode_msghdr *msg,
 
 
 enum Errno lx_socket_recvmsg(struct socket *sock, struct genode_msghdr *msg,
-                             unsigned long *bytes_recv)
+                             unsigned long *bytes_recv, bool peek)
 {
 	struct msghdr *m = _create_msghdr(msg, true);
 	ssize_t ret;
+	int flags = MSG_DONTWAIT;
 
-	if (!m) return GENODE_ENOMEM;
+	if (peek) flags |= MSG_PEEK;
+	if (!m)   return GENODE_ENOMEM;
 
 	ret = sock->ops->recvmsg(sock, m, m->msg_iter.count, MSG_DONTWAIT);
 
