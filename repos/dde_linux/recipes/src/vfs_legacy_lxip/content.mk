@@ -1,4 +1,4 @@
-LIB_MK := $(addprefix lib/mk/,lxip.mk lxip_include.mk vfs_lxip.mk) \
+LIB_MK := $(addprefix lib/mk/,legacy_lxip.mk lxip_include.mk vfs_legacy_lxip.mk) \
           $(foreach SPEC,x86_32 x86_64,lib/mk/spec/$(SPEC)/lx_kit_setjmp.mk)
 
 PORT_DIR := $(call port_dir,$(REP_DIR)/ports/dde_linux)
@@ -10,7 +10,7 @@ MIRROR_FROM_REP_DIR := $(LIB_MK) \
                        $(foreach SPEC, \
                                  arm arm_64 arm_v6 arm_v7 x86 x86_32 x86_64, \
                                  src/include/spec/$(SPEC)) \
-                       $(shell cd $(REP_DIR); find src/lib/lxip -type f) \
+                       $(shell cd $(REP_DIR); find src/lib/legacy_lxip -type f) \
                        $(shell cd $(REP_DIR); find src/lib/vfs -type f)
 
 MIRROR_FROM_PORT_DIR := $(shell cd $(PORT_DIR); find src/lib/lxip -type f)
