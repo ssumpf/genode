@@ -3,7 +3,7 @@ SHARED_LIB = yes
 VFS_DIR  = $(REP_DIR)/src/lib/vfs/legacy_lxip
 LXIP_DIR = $(REP_DIR)/src/lib/legacy_lxip
 
-LIBS    += lxip lxip_include
+LIBS    += legacy_lxip lxip_include
 INC_DIR += $(VFS_DIR)
 LD_OPT  += --version-script=$(VFS_DIR)/symbol.map
 SRC_CC   = vfs.cc
