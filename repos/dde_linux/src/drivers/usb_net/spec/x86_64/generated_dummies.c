@@ -9,12 +9,6 @@
 
 #include <linux/gfp.h>
 
-struct page * __alloc_pages(gfp_t gfp,unsigned int order,int preferred_nid,nodemask_t * nodemask)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 #include <linux/cpumask.h>
 
 struct cpumask __cpu_active_mask;
