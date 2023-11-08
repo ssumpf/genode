@@ -50,8 +50,8 @@ struct Test::Client
 	uint16_t const port
 		{ config.xml().attribute_value("server_port", (uint16_t)80) };
 
-	Net::Ipv4_address ip_addr
-		{ config.xml().attribute_value("server_ip", Net::Ipv4_address()) };
+	Ipv4_address ip_addr
+		{ config.xml().attribute_value("server_ip", Ipv4_address()) };
 
 	unsigned long counter { 0 };
 
@@ -157,7 +157,7 @@ struct Test::Client
 		ASSERT("check HTML...", !strcmp(http.html.string(), buf, http.html.length() == 0));
 
 		ASSERT("shutdown...", genode_socket_shutdown(handle, SHUT_RDWR) == GENODE_ENONE);
-		ASSERT("release socket ...", genode_socket_release(handle) == GENODE_ENONE);
+		ASSERT("release socket...", genode_socket_release(handle) == GENODE_ENONE);
 	}
 
 	void run_udp()
@@ -172,12 +172,9 @@ struct Test::Client
 		addr.in.sin_port        = host_to_big_endian<genode_uint16_t>(port);
 		addr.in.sin_addr.s_addr = ip_addr.to_uint32_big_endian();
 
-		log("WAIT");
-
 		for (unsigned i = 0; i < data.size(); i += MAX_UDP_LOAD) {
 			Msg_header msg { addr, data.buffer() + i, MAX_UDP_LOAD};
 			unsigned long bytes_send = 0;
-			warning("send");
 			ASSERT("send bytes...",
 			       genode_socket_sendmsg(handle, msg.header(), &bytes_send) == GENODE_ENONE
 			       && bytes_send == MAX_UDP_LOAD);

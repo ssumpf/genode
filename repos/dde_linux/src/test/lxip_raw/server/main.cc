@@ -97,7 +97,7 @@ struct Test::Server
 			else break;
 		}
 
-		ASSERT("recvmsg ...", (bytes == 39 && err == GENODE_ENONE));
+		ASSERT("recvmsg...", (bytes == 39 && err == GENODE_ENONE));
 
 		msg.destruct();
 
@@ -124,17 +124,17 @@ struct Test::Server
 		enum Errno err;
 		genode_socket_handle *handle = nullptr;
 		genode_socket_handle *handle_reuse = nullptr;
-		ASSERT("create new socket (TCP) ...",
+		ASSERT("create new socket (TCP)...",
 		       (handle = genode_socket(AF_INET, SOCK_STREAM, 0, &err)) != nullptr);
 
-		ASSERT("create new socket (TCP re-use port) ...",
+		ASSERT("create new socket (TCP re-use port)...",
 		       (handle_reuse = genode_socket(AF_INET, SOCK_STREAM, 0, &err)) != nullptr);
 
 		int opt = 1;
-		ASSERT("setsockopt REUSEPORT handle ...",
+		ASSERT("setsockopt REUSEPORT handle...",
 		       genode_socket_setsockopt(handle, GENODE_SOL_SOCKET, GENODE_SO_REUSEPORT,
 		                               &opt, sizeof(opt)) == GENODE_ENONE);
-		ASSERT("setsockopt REUSEPORT handle re-use ...",
+		ASSERT("setsockopt REUSEPORT handle re-use...",
 		       genode_socket_setsockopt(handle_reuse, GENODE_SOL_SOCKET, GENODE_SO_REUSEPORT,
 		                               &opt, sizeof(opt)) == GENODE_ENONE);
 
@@ -142,10 +142,10 @@ struct Test::Server
 		addr.family             = AF_INET;
 		addr.in.sin_port        = host_to_big_endian(port);
 		addr.in.sin_addr.s_addr = INADDR_ANY;
-		ASSERT("bind socket ...", genode_socket_bind(handle, &addr) == GENODE_ENONE);
-		ASSERT("bind socket re-use ...", genode_socket_bind(handle_reuse, &addr) == GENODE_ENONE);
+		ASSERT("bind socket...", genode_socket_bind(handle, &addr) == GENODE_ENONE);
+		ASSERT("bind socket re-use...", genode_socket_bind(handle_reuse, &addr) == GENODE_ENONE);
 
-		ASSERT("listen ...", genode_socket_listen(handle, 5) == GENODE_ENONE);
+		ASSERT("listen...", genode_socket_listen(handle, 5) == GENODE_ENONE);
 
 		genode_socket_handle *client = nullptr;
 
@@ -157,25 +157,25 @@ struct Test::Server
 				genode_socket_wait_for_progress();
 		}
 
-		ASSERT("accept ...", err == GENODE_ENONE && client != nullptr);
+		ASSERT("accept...", err == GENODE_ENONE && client != nullptr);
 
 		serve(client);
 
-		ASSERT("release socket ...", genode_socket_release(handle) == GENODE_ENONE);
+		ASSERT("release socket...", genode_socket_release(handle) == GENODE_ENONE);
 	}
 
 	void run_udp()
 	{
 		enum Errno err;
 		genode_socket_handle *handle = nullptr;
-		ASSERT("create new socket (UDP) ...",
+		ASSERT("create new socket (UDP)...",
 		       (handle = genode_socket(AF_INET, SOCK_DGRAM, 0, &err)) != nullptr);
 
 		genode_sockaddr addr;
 		addr.family             = AF_INET;
 		addr.in.sin_port        = host_to_big_endian<genode_uint16_t>(port);
 		addr.in.sin_addr.s_addr = ip_addr.to_uint32_big_endian();
-		ASSERT("bind socket ...", genode_socket_bind(handle, &addr) == GENODE_ENONE);
+		ASSERT("bind socket...", genode_socket_bind(handle, &addr) == GENODE_ENONE);
 		err = genode_socket_bind(handle, &addr);
 
 		unsigned long bytes_recv = 0;
