@@ -31,7 +31,7 @@ enum Errno lx_socket_setsockopt(struct socket *sock, enum Sock_level level,
 enum Errno lx_socket_sendmsg(struct socket *sock, struct genode_msghdr *msg,
                              unsigned long *bytes_send);
 enum Errno lx_socket_recvmsg(struct socket *sock, struct genode_msghdr *msg,
-                             unsigned long *bytes_recv);
+                             unsigned long *bytes_recv, bool peek);
 
 enum Errno lx_socket_shutdown(struct socket *sock, int how);
 enum Errno lx_socket_release(struct socket *sock);

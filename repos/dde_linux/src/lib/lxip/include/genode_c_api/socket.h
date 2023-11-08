@@ -161,6 +161,7 @@ unsigned genode_socket_poll(struct genode_socket_handle *);
 enum Errno genode_socket_getsockopt(struct genode_socket_handle *,
                                     enum Sock_level, enum Sock_opt,
                                     void *optval, unsigned *optlen);
+
 enum Errno genode_socket_setsockopt(struct genode_socket_handle *,
                                     enum Sock_level, enum Sock_opt,
                                     void const *optval,
@@ -184,12 +185,11 @@ struct genode_msghdr
 enum Errno genode_socket_sendmsg(struct genode_socket_handle *,
                                  struct genode_msghdr *,
                                  unsigned long *bytes_send);
-/* non-blocking call
- * XXX: we might need MSG_PEEK support
- */
+/* non-blocking call */
 enum Errno genode_socket_recvmsg(struct genode_socket_handle *,
                                  struct genode_msghdr *,
-                                 unsigned long *bytes_recv);
+                                 unsigned long *bytes_recv,
+                                 bool msg_peek);
 
 enum Errno genode_socket_shutdown(struct genode_socket_handle *,
                                   int how);

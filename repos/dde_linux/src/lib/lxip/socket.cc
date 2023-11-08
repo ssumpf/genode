@@ -290,17 +290,18 @@ struct Lx_recvmsg : Lx_call
 {
 	genode_msghdr &msg;
 	unsigned long bytes { 0 };
+	bool peek;
 
 	Lx_recvmsg(genode_socket_handle &handle,
-	           genode_msghdr &msg)
-	: Lx_call(handle), msg(msg)
+	           genode_msghdr &msg, bool peek)
+	: Lx_call(handle), msg(msg), peek(peek)
 	{
 		schedule();
 	}
 
 	void execute() override
 	{
-		err = lx_socket_recvmsg(handle.sock, &msg, &bytes);
+		err = lx_socket_recvmsg(handle.sock, &msg, &bytes, peek);
 		finished = true;
 	}
 };
@@ -520,9 +521,10 @@ enum Errno genode_socket_sendmsg(struct genode_socket_handle *handle,
 
 enum Errno genode_socket_recvmsg(struct genode_socket_handle *handle,
                                  struct genode_msghdr *msg,
-                                 unsigned long *bytes_recv)
+                                 unsigned long *bytes_recv,
+                                 bool peek)
 {
-	Lx_recvmsg recv { *handle, *msg };
+	Lx_recvmsg recv { *handle, *msg, peek };
 	*bytes_recv = recv.bytes;
 	return recv.err;
 }
