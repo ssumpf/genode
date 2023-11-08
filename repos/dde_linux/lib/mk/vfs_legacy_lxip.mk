@@ -1,14 +1,14 @@
 SHARED_LIB = yes
 
-VFS_DIR  = $(REP_DIR)/src/lib/vfs/lxip
-LXIP_DIR = $(REP_DIR)/src/lib/lxip
+VFS_DIR  = $(REP_DIR)/src/lib/vfs/legacy_lxip
+LXIP_DIR = $(REP_DIR)/src/lib/legacy_lxip
 
 LIBS    += lxip lxip_include
 INC_DIR += $(VFS_DIR)
 LD_OPT  += --version-script=$(VFS_DIR)/symbol.map
 SRC_CC   = vfs.cc
 
-vpath %.cc $(REP_DIR)/src/lib/vfs/lxip
+vpath %.cc $(REP_DIR)/src/lib/vfs/legacy_lxip
 
 SETUP_SUFFIX =
 CC_OPT += -DSETUP_SUFFIX=$(SETUP_SUFFIX)
