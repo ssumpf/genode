@@ -91,7 +91,7 @@ struct Test::Server
 		unsigned long bytes = 0;
 		Errno err;
 		while (true) {
-			err = genode_socket_recvmsg(handle, msg->header(), &bytes);
+			err = genode_socket_recvmsg(handle, msg->header(), &bytes, false);
 			if (err == GENODE_EAGAIN)
 				genode_socket_wait_for_progress();
 			else break;
@@ -185,7 +185,7 @@ struct Test::Server
 			Msg_header msg { recv_addr, buf + bytes_recv, SIZE - bytes_recv };
 
 
-			err = genode_socket_recvmsg(handle, msg.header(), &bytes);
+			err = genode_socket_recvmsg(handle, msg.header(), &bytes, false);
 
 			bytes_recv += bytes;
 
