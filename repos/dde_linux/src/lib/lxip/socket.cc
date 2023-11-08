@@ -239,6 +239,33 @@ struct Lx_getsockopt : Lx_call
 };
 
 
+struct Lx_setsockopt : Lx_call
+{
+	enum Sock_level level;
+	enum Sock_opt   opt;
+	void const     *optval;
+	unsigned        optlen;
+
+	Lx_setsockopt(genode_socket_handle &handle,
+	              enum Sock_level level,
+	              enum Sock_opt opt,
+	              void const *optval, unsigned optlen)
+	: Lx_call(handle), level(level), opt(opt), optval(optval), optlen(optlen)
+	{
+		schedule();
+	}
+
+	void execute() override
+	{
+		err = lx_socket_setsockopt(handle.sock, level, opt, optval, optlen);
+		finished = true;
+	}
+
+	Lx_setsockopt(const Lx_setsockopt&) = delete;
+	Lx_setsockopt operator=(const Lx_setsockopt&) = delete;
+};
+
+
 struct Lx_sendmsg : Lx_call
 {
 	genode_msghdr &msg;
@@ -467,6 +494,16 @@ enum Errno genode_socket_getsockopt(struct genode_socket_handle *handle,
                                     void *optval, unsigned *optlen)
 {
 	Lx_getsockopt sock_opt { *handle, level, opt, optval, optlen };
+	return sock_opt.err;
+}
+
+
+enum Errno genode_socket_setsockopt(struct genode_socket_handle *handle,
+                                    enum Sock_level level, enum Sock_opt opt,
+                                    void const *optval,
+                                    unsigned optlen)
+{
+	Lx_setsockopt sock_opt { *handle, level, opt, optval, optlen };
 	return sock_opt.err;
 }
 

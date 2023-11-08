@@ -161,7 +161,10 @@ unsigned genode_socket_poll(struct genode_socket_handle *);
 enum Errno genode_socket_getsockopt(struct genode_socket_handle *,
                                     enum Sock_level, enum Sock_opt,
                                     void *optval, unsigned *optlen);
-
+enum Errno genode_socket_setsockopt(struct genode_socket_handle *,
+                                    enum Sock_level, enum Sock_opt,
+                                    void const *optval,
+                                    unsigned optlen);
 
 struct genode_iovec
 {
