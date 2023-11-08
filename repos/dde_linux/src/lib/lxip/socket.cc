@@ -266,6 +266,25 @@ struct Lx_setsockopt : Lx_call
 };
 
 
+struct Lx_getname : Lx_call
+{
+	genode_sockaddr &addr;
+	bool peer;
+
+	Lx_getname(genode_socket_handle &handle, genode_sockaddr &addr, bool peer)
+	: Lx_call(handle), addr(addr), peer(peer)
+	{
+		schedule();
+	}
+
+	void execute() override
+	{
+		err = lx_socket_getname(handle.sock, &addr, peer);
+		finished = true;
+	}
+};
+
+
 struct Lx_sendmsg : Lx_call
 {
 	genode_msghdr &msg;
@@ -506,6 +525,22 @@ enum Errno genode_socket_setsockopt(struct genode_socket_handle *handle,
 {
 	Lx_setsockopt sock_opt { *handle, level, opt, optval, optlen };
 	return sock_opt.err;
+}
+
+
+enum Errno genode_socket_getsockname(struct genode_socket_handle *handle,
+                                     struct genode_sockaddr *addr)
+{
+	Lx_getname name { *handle, *addr, false };
+	return name.err;
+}
+
+
+enum Errno genode_socket_getpeername(struct genode_socket_handle *handle,
+                                     struct genode_sockaddr *addr)
+{
+	Lx_getname name { *handle, *addr, true };
+	return name.err;
 }
 
 
