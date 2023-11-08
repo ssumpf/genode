@@ -102,7 +102,7 @@ struct Test::Client
 		unsigned long bytes = 0;
 		Errno err;
 		while (true) {
-			err = genode_socket_recvmsg(handle, msg_recv.header(), &bytes);
+			err = genode_socket_recvmsg(handle, msg_recv.header(), &bytes, false);
 			if (err == GENODE_EAGAIN)
 				genode_socket_wait_for_progress();
 			else break;
