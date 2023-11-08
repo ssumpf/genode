@@ -28,6 +28,7 @@ enum Errno lx_socket_getsockopt(struct socket *sock, enum Sock_level level,
 enum Errno lx_socket_setsockopt(struct socket *sock, enum Sock_level level,
                                 enum Sock_opt opt, void const *optval, unsigned optlen);
 
+enum Errno lx_socket_getname(struct socket *sock, struct genode_sockaddr *addr, bool peer);
 enum Errno lx_socket_sendmsg(struct socket *sock, struct genode_msghdr *msg,
                              unsigned long *bytes_send);
 enum Errno lx_socket_recvmsg(struct socket *sock, struct genode_msghdr *msg,

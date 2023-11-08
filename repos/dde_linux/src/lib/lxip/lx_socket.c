@@ -122,7 +122,7 @@ static struct sockaddr _sockaddr(struct genode_sockaddr const *addr)
 		};
 		memcpy(&sock_addr, &in_addr, sizeof(in_addr));
 	} else
-		printk("%s:%d error: family %d not implented\n", __func__, __LINE__,
+		printk("%s:%d error: family %d not implemented\n", __func__, __LINE__,
 		       addr->family);
 
 	return sock_addr;
@@ -303,6 +303,20 @@ enum Errno lx_socket_setsockopt(struct socket *sock, enum Sock_level level,
 	*/
 
 	if (err) return _genode_errno(err);
+
+	return GENODE_ENONE;
+}
+
+
+enum Errno lx_socket_getname(struct socket *sock, struct genode_sockaddr *addr, bool peer)
+{
+	struct sockaddr linux_addr;
+
+	int err = sock->ops->getname(sock, &linux_addr, peer ? 1 : 0);
+
+	if (err < 0) return _genode_errno(err);
+
+	_genode_sockaddr(addr, &linux_addr, err);
 
 	return GENODE_ENONE;
 }

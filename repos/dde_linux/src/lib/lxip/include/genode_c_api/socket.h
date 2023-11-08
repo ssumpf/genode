@@ -167,6 +167,12 @@ enum Errno genode_socket_setsockopt(struct genode_socket_handle *,
                                     void const *optval,
                                     unsigned optlen);
 
+enum Errno genode_socket_getsockname(struct genode_socket_handle *,
+                                     struct genode_sockaddr *);
+
+enum Errno genode_socket_getpeername(struct genode_socket_handle *,
+                                     struct genode_sockaddr *);
+
 struct genode_iovec
 {
 	void         *iov_base;
