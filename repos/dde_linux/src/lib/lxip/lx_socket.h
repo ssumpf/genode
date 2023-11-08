@@ -25,6 +25,8 @@ unsigned lx_socket_poll(struct socket *sock);
 
 enum Errno lx_socket_getsockopt(struct socket *sock, enum Sock_level level,
                                 enum Sock_opt opt, void *optval, unsigned *optlen);
+enum Errno lx_socket_setsockopt(struct socket *sock, enum Sock_level level,
+                                enum Sock_opt opt, void const *optval, unsigned optlen);
 
 enum Errno lx_socket_sendmsg(struct socket *sock, struct genode_msghdr *msg,
                              unsigned long *bytes_send);

@@ -284,6 +284,30 @@ enum Errno lx_socket_getsockopt(struct socket *sock, enum Sock_level level,
 }
 
 
+enum Errno lx_socket_setsockopt(struct socket *sock, enum Sock_level level,
+                                enum Sock_opt opt, void const *optval, unsigned optlen)
+{
+	int name = _linux_sockopt(opt);
+	int err;
+
+	if (level != GENODE_SOL_SOCKET) return GENODE_ENOPROTOOPT;
+
+	if (level == GENODE_SOL_SOCKET) {
+		sockptr_t val = { .user = optval, .is_kernel = 0 };
+		err = sock_setsockopt(sock, SOL_SOCKET, name, val, optlen);
+	}
+	/* we might need this later
+	else {
+		err = sock->ops->getsockopt(sock, SOL_SOCKET, name, optval, optlen);
+	}
+	*/
+
+	if (err) return _genode_errno(err);
+
+	return GENODE_ENONE;
+}
+
+
 static struct msghdr *_create_msghdr(struct genode_msghdr *msg, bool write)
 {
 	struct msghdr *msghdr;
