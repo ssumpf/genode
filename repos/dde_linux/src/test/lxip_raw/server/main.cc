@@ -153,11 +153,12 @@ struct Test::Server
 		for (unsigned i = 0; i < 100 && err == GENODE_EAGAIN; i++) {
 			client = genode_socket_accept(handle, &addr, &err);
 
-		if (err == GENODE_EAGAIN)
-			genode_socket_wait_for_progress();
+			if (err == GENODE_EAGAIN)
+				genode_socket_wait_for_progress();
 		}
 
 		ASSERT("accept ...", err == GENODE_ENONE && client != nullptr);
+
 		serve(client);
 
 		ASSERT("release socket ...", genode_socket_release(handle) == GENODE_ENONE);
