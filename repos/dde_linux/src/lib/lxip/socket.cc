@@ -30,6 +30,10 @@ void genode_socket_wait_for_progress()
 }
 
 
+/*
+ * Wakeup Linux task and call C-code
+ */
+
 struct Lx_call : private Socket_queue::Element
 {
 	friend class Fifo<Lx_call>;
@@ -360,6 +364,11 @@ struct Lx_release : Lx_call
 };
 
 
+/*
+ * Dispatch socket calls in Linux task
+ */
+
+
 void *lx_socket_dispatch_queue(void)
 {
 	static Socket_queue queue;
@@ -380,6 +389,10 @@ int lx_socket_dispatch(void *arg)
 	}
 }
 
+
+/*
+ * Socket C-API
+ */
 
 static genode_socket_handle * _create_handle()
 {
