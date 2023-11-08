@@ -25,6 +25,7 @@
 
 namespace Test {
 	struct Client;
+	using namespace Net;
 }
 
 using namespace Genode;
@@ -122,6 +123,19 @@ struct Test::Client
 		addr.in.sin_port        = host_to_big_endian(port);
 		addr.in.sin_addr.s_addr = ip_addr.to_uint32_big_endian();
 		ASSERT("connect...", connect(handle, &addr) == true);
+
+		genode_sockaddr name;
+		ASSERT("getsockname... ", genode_socket_getsockname(handle, &name) == GENODE_ENONE);
+
+		char expected_name[] = { 10, 0, 2, 2 };
+		ASSERT("check expected sockname IP...",
+			Ipv4_address::from_uint32_big_endian(name.in.sin_addr.s_addr) == Ipv4_address(expected_name));
+
+		ASSERT("getpeername... ", genode_socket_getpeername(handle, &name) == GENODE_ENONE);
+
+		char expected_peer[] = { 10, 0, 2, 3 };
+		ASSERT("check expected peername IP...",
+			Ipv4_address::from_uint32_big_endian(name.in.sin_addr.s_addr) == Ipv4_address(expected_peer));
 
 		/* send request */
 		String<64> request { "GET / HTTP/1.0\r\nHost: localhost:80\r\n\r\n" };
