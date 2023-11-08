@@ -177,7 +177,7 @@ void Component::construct(Genode::Env &env)
 	static Test::Client client { env };
 
 	try {
-		//client.run_tcp();
+		client.run_tcp();
 		client.run_udp();
 		log("Success");
 	} catch (...) {

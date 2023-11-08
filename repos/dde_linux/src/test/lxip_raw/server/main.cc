@@ -123,14 +123,27 @@ struct Test::Server
 	{
 		enum Errno err;
 		genode_socket_handle *handle = nullptr;
+		genode_socket_handle *handle_reuse = nullptr;
 		ASSERT("create new socket (TCP) ...",
 		       (handle = genode_socket(AF_INET, SOCK_STREAM, 0, &err)) != nullptr);
+
+		ASSERT("create new socket (TCP re-use port) ...",
+		       (handle_reuse = genode_socket(AF_INET, SOCK_STREAM, 0, &err)) != nullptr);
+
+		int opt = 1;
+		ASSERT("setsockopt REUSEPORT handle ...",
+		       genode_socket_setsockopt(handle, GENODE_SOL_SOCKET, GENODE_SO_REUSEPORT,
+		                               &opt, sizeof(opt)) == GENODE_ENONE);
+		ASSERT("setsockopt REUSEPORT handle re-use ...",
+		       genode_socket_setsockopt(handle_reuse, GENODE_SOL_SOCKET, GENODE_SO_REUSEPORT,
+		                               &opt, sizeof(opt)) == GENODE_ENONE);
 
 		genode_sockaddr addr;
 		addr.family             = AF_INET;
 		addr.in.sin_port        = host_to_big_endian(port);
 		addr.in.sin_addr.s_addr = INADDR_ANY;
 		ASSERT("bind socket ...", genode_socket_bind(handle, &addr) == GENODE_ENONE);
+		ASSERT("bind socket re-use ...", genode_socket_bind(handle_reuse, &addr) == GENODE_ENONE);
 
 		ASSERT("listen ...", genode_socket_listen(handle, 5) == GENODE_ENONE);
 
@@ -203,7 +216,7 @@ void Component::construct(Genode::Env &env)
 	static Test::Server server { env };
 
 	try {
-		//server.run_tcp();
+		server.run_tcp();
 		server.run_udp();
 		log("Success");
 	} catch (...) {
