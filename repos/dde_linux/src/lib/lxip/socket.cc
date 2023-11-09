@@ -94,6 +94,24 @@ struct Lx_address : Lx_call
 };
 
 
+struct Lx_mtu : Lx_call
+{
+	unsigned mtu;
+
+	Lx_mtu(genode_socket_handle &handle, unsigned mtu)
+	: Lx_call(handle), mtu(mtu)
+	{
+		schedule();
+	}
+
+	void execute() override
+	{
+		lx_socket_mtu(mtu);
+		finished = true;
+	}
+};
+
+
 struct Lx_socket : Lx_call
 {
 	int domain, type, protocol;
@@ -426,6 +444,17 @@ void genode_socket_address(struct genode_socket_config *config)
 	};
 
 	Lx_address addr { handle, config };
+}
+
+
+void genode_socket_mtu(unsigned mtu)
+{
+	genode_socket_handle handle = {
+		.task  = lx_socket_dispatch_root(),
+		.queue = static_cast<Socket_queue *>(lx_socket_dispatch_queue()),
+	};
+
+	Lx_mtu addr { handle, mtu };
 }
 
 
