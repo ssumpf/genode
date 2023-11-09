@@ -10,6 +10,7 @@ struct socket *lx_sock_alloc(void);
 void           lx_sock_release(struct socket* sock);
 
 void lx_socket_address(struct genode_socket_config *config);
+void lx_socket_mtu(unsigned mtu);
 
 enum Errno lx_socket_create(int domain, int type, int protocol, struct socket **res);
 enum Errno lx_socket_bind(struct socket *sock, struct genode_sockaddr const *addr);

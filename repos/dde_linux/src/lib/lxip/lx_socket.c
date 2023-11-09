@@ -101,6 +101,7 @@ static int sock_opts[] = {
 	SO_ERROR,
 	SO_TYPE,
 	SO_BINDTODEVICE,
+	SO_BROADCAST,
 };
 
 
@@ -172,6 +173,22 @@ void lx_socket_address(struct genode_socket_config *config)
 	}
 	lx_emul_initcall("__initcall_ip_auto_config7");
 };
+
+
+void lx_socket_mtu(unsigned mtu)
+{
+	/* zero mtu means reset to default */
+	unsigned new_mtu = mtu ? mtu : ETH_DATA_LEN;
+
+	struct net        *net;
+	struct net_device *dev;
+
+	for_each_net(net) {
+		for_each_netdev(net, dev) {
+			dev_set_mtu(dev, new_mtu);
+		}
+	}
+}
 
 
 enum Errno lx_socket_create(int domain, int type, int protocol,

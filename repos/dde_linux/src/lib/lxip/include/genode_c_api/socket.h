@@ -76,6 +76,7 @@ enum Errno {
 };
 
 enum Sock_opt {
+	/* found in lxip and lwip */
 	GENODE_SO_DEBUG = 1,
 	GENODE_SO_ACCEPTCONN = 2,
 	GENODE_SO_DONTROUTE = 3,
@@ -91,6 +92,7 @@ enum Sock_opt {
 	GENODE_SO_ERROR = 13,
 	GENODE_SO_TYPE = 14,
 	GENODE_SO_BINDTODEVICE = 15,
+	GENODE_SO_BROADCAST = 16,
 };
 
 enum Sock_level {
@@ -116,6 +118,8 @@ struct genode_sockaddr
 	};
 };
 
+void genode_socket_init(struct genode_env *env);
+
 struct genode_socket_config
 {
 	/* IPv4 */
@@ -128,8 +132,7 @@ struct genode_socket_config
 
 void genode_socket_address(struct genode_socket_config *config);
 
-void genode_socket_init(struct genode_env *env);
-
+void genode_socket_mtu(unsigned mtu);
 
 void genode_socket_wait_for_progress(void);
 
