@@ -32,7 +32,6 @@
 #include <genode_c_api/socket_types.h>
 #include <genode_c_api/socket.h>
 
-
 namespace {
 
 using size_t = Genode::size_t;
@@ -454,7 +453,7 @@ class Vfs::Lxip_data_file final : public Vfs::Lxip_file
 		           file_size /* ignored */) override
 		{
 			unsigned long bytes_sent = 0;
-			Msg_header    msg_send { src.start, src.num_bytes };
+			Msg_header    msg_send { _parent.remote_addr(), src.start, src.num_bytes };
 
 			_write_err = genode_socket_sendmsg(&_sock, msg_send.header(), &bytes_sent);
 
@@ -469,7 +468,7 @@ class Vfs::Lxip_data_file final : public Vfs::Lxip_file
 			Msg_header    msg_recv { dst.start, dst.num_bytes };
 
 			Errno err = genode_socket_recvmsg(&_sock, msg_recv.header(), &bytes, false);
-
+			Genode::log("write: err: ", (unsigned)err, " bytes: ", bytes);
 			if (err == GENODE_EAGAIN)
 				throw Would_block();
 
@@ -696,6 +695,11 @@ class Vfs::Lxip_connect_file final : public Vfs::Lxip_file
 				break;
 			}
 
+			genode_sockaddr &remote_addr   = _parent.remote_addr();
+			remote_addr.in.sin_port        = host_to_big_endian<genode_uint16_t>(uint16_t(port));
+			remote_addr.in.sin_addr.s_addr = get_addr(handle.content_buffer);
+			remote_addr.family             = AF_INET;
+
 			_parent.connect(true);
 
 			return src.num_bytes;
@@ -825,6 +829,11 @@ class Vfs::Lxip_remote_file final : public Vfs::Lxip_file
 
 			long const port = get_port(handle.content_buffer);
 			if (port == -1) return -1;
+
+			genode_sockaddr &remote_addr   = _parent.remote_addr();
+			remote_addr.in.sin_port        = host_to_big_endian<genode_uint16_t>(uint16_t(port));
+			remote_addr.in.sin_addr.s_addr = get_addr(handle.content_buffer);
+			remote_addr.family             = AF_INET;
 
 			return src.num_bytes;
 		}
@@ -1475,7 +1484,8 @@ extern "C" unsigned int ic_netmask;
 extern "C" unsigned int ic_gateway;
 extern "C" unsigned int ic_nameservers[1];
 
-extern bool ic_link_state;
+//XXX: handle in lxip
+bool ic_link_state = true;
 
 
 /*******************************
