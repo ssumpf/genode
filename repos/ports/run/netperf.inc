@@ -153,7 +153,7 @@ set packages "
 set use_nic_drv [expr !$use_usb_driver && !$use_wifi_driver]
 append_if $use_nic_drv      packages " [depot_user]/pkg/[drivers_nic_pkg]         "
 append_if [expr !$use_lxip] packages " [depot_user]/src/vfs_lwip                  "
-append_if $use_lxip         packages " [depot_user]/src/vfs_lxip                  "
+append_if $use_lxip         packages " [depot_user]/src/vfs_lxip"
 append_if $use_nic_bridge   packages " [depot_user]/src/nic_bridge                "
 append_if $use_usb_driver   packages " [depot_user]/pkg/test_usb_host_drv-[board] "
 append_if $use_usb_driver   packages " [depot_user]/src/usb_net_drv               "
@@ -166,7 +166,7 @@ append_if $use_wifi_driver  packages " [depot_user]/src/platform_drv            
 
 import_from_depot $packages
 
-build { app/netperf }
+build { app/netperf drivers/usb_net lib/lxip lib/vfs_lxip }
 
 #
 # Generate config
@@ -343,7 +343,7 @@ append config {
 			<service name="Nic"/>
 			<service name="Uplink"/>
 		</provides>
-		<config verbose_domain_state="yes"> }
+		<config verbose_domain_state="yes" verbose_packets="yes" verbose_packet_drop="yes"> }
 
 if {$use_nic_bridge} { append config {
 
