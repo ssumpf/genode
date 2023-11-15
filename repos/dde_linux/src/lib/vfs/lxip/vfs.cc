@@ -1901,11 +1901,26 @@ class Vfs::Lxip_file_system : public Vfs::File_system,
 
 struct Lxip_factory : Vfs::File_system_factory
 {
+
+	/* wakup user task */
+	static void socket_progress(void *data)
+	{
+		Genode::warning("progress");
+
+		Vfs::Env *env = static_cast<Vfs::Env *>(data);
+		env->user().wakeup_vfs_user();
+	}
+
+	struct genode_socket_io_progress io_progress { };
+
 	Vfs::File_system *create(Vfs::Env &env, Genode::Xml_node config) override
 	{
 		_vfs_user_ptr = &env.user();
 
-		genode_socket_init(genode_env_ptr(env.env()));
+		io_progress.data = &env;
+		io_progress.callback = socket_progress;
+
+		genode_socket_init(genode_env_ptr(env.env()), &io_progress);
 
 		return new (env.alloc()) Vfs::Lxip_file_system(env, config);
 	}
