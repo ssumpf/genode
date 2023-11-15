@@ -396,7 +396,7 @@ append config {
 	<start name="netserver_genode" caps="320" priority="-1">
 	<binary name="netserver"/>
 		<resource name="RAM" quantum="64M"/>
-		<config>
+		<config ld_verbose="yes">
 			<arg value="netserver"/>
 			<arg value="-D"/>
 			<arg value="-4"/>
@@ -461,6 +461,8 @@ build_boot_image $boot_modules
 
 set ip_match_string "nic_router\\\] \\\[uplink\\\] dynamic IP config: interface (\[0-9]{1,3}.\[0-9]{1,3}.\[0-9]{1,3}.\[0-9]{1,3}).*\n"
 set force_ports "-P [server_data_port],[server_data_port]"
+
+run_genode_until forever
 
 if {[have_spec linux]} {
 	run_genode_until {.*family AF_INET.*\n} 60
