@@ -462,6 +462,8 @@ build_boot_image [build_artifacts]
 set ip_match_string "nic_router\\\] \\\[uplink\\\] dynamic IP config: interface (\[0-9]{1,3}.\[0-9]{1,3}.\[0-9]{1,3}.\[0-9]{1,3}).*\n"
 set force_ports "-P [server_data_port],[server_data_port]"
 
+run_genode_until forever
+
 if {[have_spec linux]} {
 	run_genode_until {.*family AF_INET.*\n} 60
 } else {
