@@ -48,14 +48,6 @@ void __bpf_prog_free(struct bpf_prog * fp)
 struct cpumask __cpu_active_mask;
 
 
-#include <linux/mm.h>
-
-void __folio_put(struct folio * folio)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 #include <linux/sched.h>
 
 char * __get_task_comm(char * buf,size_t buf_size,struct task_struct * tsk)

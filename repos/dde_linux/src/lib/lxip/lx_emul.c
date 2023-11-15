@@ -6,6 +6,16 @@ unsigned long __FIXADDR_TOP = 0xfffff000;
 
 int mmap_rnd_bits;
 
+
+#include <linux/mm.h>
+
+void __folio_put(struct folio * folio)
+{
+	__free_pages(&folio->page, 0);
+	kfree(folio);
+}
+
+
 #include <linux/percpu.h>
 
 DEFINE_PER_CPU(unsigned long, cpu_scale);
@@ -79,6 +89,7 @@ unsigned long _copy_to_user(void __user * to,const void * from,unsigned long n)
 
 unsigned long raw_copy_to_user(void *to, const void *from, unsigned long n)
 {
+	printk("%s:%d to %px from %px n: %lu\n", __func__, __LINE__, to, from, n);
 	memcpy(to, from, n);
 	return 0;
 }
