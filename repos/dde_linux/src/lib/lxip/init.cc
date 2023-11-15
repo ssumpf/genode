@@ -14,6 +14,7 @@ using namespace Genode;
 struct Main
 {
 	Env &env;
+	genode_socket_io_progress *io_progress;
 
 	Signal_handler<Main> schedule_handler   { env.ep(), *this,
 		&Main::handle_schedule };
@@ -21,7 +22,9 @@ struct Main
 	Io_signal_handler<Main> nic_client_handler { env.ep(), *this,
 		&Main::handle_nic_client };
 
-	Main(Env &env) : env(env) { }
+	Main(Env &env, genode_socket_io_progress *io_progress)
+	: env(env), io_progress(io_progress)
+	{ }
 
 	void handle_schedule()
 	{
@@ -30,8 +33,13 @@ struct Main
 
 	void handle_nic_client()
 	{
+
+		warning("handle nic");
 		lx_emul_task_unblock(lx_nic_client_rx_task());
 		Lx_kit::env().scheduler.schedule();
+
+		if (io_progress && io_progress->callback)
+			io_progress->callback(io_progress->data);
 	}
 
 	void init()
@@ -40,19 +48,23 @@ struct Main
 		                       genode_allocator_ptr(Lx_kit::env().heap),
 		                       genode_signal_handler_ptr(nic_client_handler));
 	}
+
+	Main(const Main&) = delete;
+	Main operator=(const Main&) = delete;
 };
 
 
 extern "C" void wait_for_continue(void);
 
 
-void genode_socket_init(struct genode_env *_env)
+void genode_socket_init(struct genode_env *_env,
+                        struct genode_socket_io_progress *io_progress)
 {
 	Env &env = *static_cast<Env *>(_env);
-	static Main main { env };
+	static Main main { env, io_progress };
 
-	//log("WAIT");
-	//wait_for_continue();
+	log("WAIT");
+	wait_for_continue();
 
 	log("Lx_kit::initialize");
 	Lx_kit::initialize(env, main.schedule_handler);
