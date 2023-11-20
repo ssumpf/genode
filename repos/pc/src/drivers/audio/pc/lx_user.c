@@ -52,8 +52,8 @@ struct sound_routing tigerlake = {
 	.mic_internal = "pcmC0D6c",
 	.mute_headset = 1,
 	.mute_speaker = 3,
-	.mute_mic_internal = 33,
-	.mute_mic_headset  = 6,
+	.mute_mic_internal = 30,
+	.mute_mic_headset  = 13,
 	.defaults = mixer_tigerlake_default,
 };
 
