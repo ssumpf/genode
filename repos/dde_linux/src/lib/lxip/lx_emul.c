@@ -203,13 +203,19 @@ void * page_frag_alloc_align(struct page_frag_cache * nc, unsigned int fragsz,
 		printk("page_frag_alloc_align: unsupported align_mask=%x\n", align_mask);
 		lx_emul_trace_and_stop(__func__);
 	}
-	return lx_emul_mem_alloc_aligned(fragsz, ARCH_KMALLOC_MINALIGN);
+
+	if (fragsz > PAGE_SIZE) {
+		printk("page_frag_alloc_align: unsupported fragsz=%u\n", fragsz);
+		lx_emul_trace_and_stop(__func__);
+	}
+
+	return alloc_pages_exact(PAGE_SIZE, GFP_KERNEL);
 }
 
 
 void page_frag_free(void * addr)
 {
-	lx_emul_mem_free(addr);
+	free_pages_exact(addr, PAGE_SIZE);
 }
 
 
