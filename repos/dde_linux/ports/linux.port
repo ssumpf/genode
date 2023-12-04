@@ -22,6 +22,7 @@ PATCH_FILES := \
                lxip_checksum_32.patch \
                lxip_ip_config.patch \
                r8169_disable_irq_coalescing.patch \
+               sof_bus_get_response.patch \
                sof_ipc_timeout.patch \
                usb_net_cdc_ncm.patch \
                usb_net_pinephone.patch \
