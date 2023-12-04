@@ -1,0 +1,14 @@
+This patch increases the bus response timeout which can trigger under very heavy
+load.
+
+--- src/linux/sound/hda/hdac_controller.c
++++ src/linux/sound/hda/hdac_controller.c
+@@ -330,7 +330,7 @@ static int snd_hdac_bus_get_response_rirb(struct hdac_bus *bus,
+ 	bool warned = false;
+ 
+ 	init_wait_entry(&wait, 0);
+-	timeout = jiffies + msecs_to_jiffies(1000);
++	timeout = jiffies + msecs_to_jiffies(5000);
+ 
+ 	for (loopcounter = 0;; loopcounter++) {
+ 		spin_lock_irq(&bus->reg_lock);
