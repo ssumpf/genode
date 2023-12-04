@@ -115,17 +115,20 @@ static struct sockaddr _sockaddr(struct genode_sockaddr const *addr)
 {
 	struct sockaddr sock_addr = { };
 
-	if (addr->family == AF_INET) {
+	if (addr->family == AF_UNSPEC) {
+		sock_addr.sa_family = AF_UNSPEC;
+	}
+	else if (addr->family == AF_INET) {
 		struct sockaddr_in in_addr = {
 			.sin_family      = AF_INET,
 			.sin_port        = addr->in.sin_port,
 			.sin_addr.s_addr = addr->in.sin_addr.s_addr
 		};
 		memcpy(&sock_addr, &in_addr, sizeof(in_addr));
-	} else
+	} else {
 		printk("%s:%d error: family %d not implemented\n", __func__, __LINE__,
 		       addr->family);
-
+	}
 	return sock_addr;
 }
 
