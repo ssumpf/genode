@@ -81,6 +81,47 @@ static struct page * lx_alloc_pages(unsigned const nr_pages)
 
 
 /*
+ * This is needed to support compound/folio pages that are allocated useing
+ * __GFP_COMP
+ */
+static void prep_compound_head(struct page *page, unsigned int order)
+{
+	set_compound_page_dtor(page, COMPOUND_PAGE_DTOR);
+	set_compound_order(page, order);
+}
+
+
+static void prep_compound_tail(struct page *head, int tail_idx)
+{
+	struct page *p = head + tail_idx;
+
+	p->mapping = TAIL_MAPPING;
+	set_compound_head(p, head);
+	set_page_private(p, 0);
+}
+
+
+static void prep_compound_page(struct page *page, unsigned int order)
+{
+	int i;
+	int nr_pages = 1 << order;
+
+	__SetPageHead(page);
+	for (i = 1; i < nr_pages; i++)
+		prep_compound_tail(page, i);
+
+	prep_compound_head(page, order);
+}
+
+
+static void prep_new_page(struct page *page, unsigned int order, gfp_t gfp_flags)
+{
+	if (order && (gfp_flags & __GFP_COMP))
+		prep_compound_page(page, order);
+}
+
+
+/*
  * In earlier kernel versions, '__alloc_pages' was an inline function.
  */
 #if LINUX_VERSION_CODE < KERNEL_VERSION(5,13,0)
@@ -91,7 +132,11 @@ struct page * __alloc_pages(gfp_t gfp, unsigned int order, int preferred_nid,
                             nodemask_t * nodemask)
 #endif
 {
-	return lx_alloc_pages(1u << order);
+	struct page *page  = lx_alloc_pages(1u << order);
+
+	prep_new_page(page, order, gfp);
+
+	return page;
 }
 
 
