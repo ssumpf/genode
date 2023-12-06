@@ -11,7 +11,7 @@ int mmap_rnd_bits;
 
 void __folio_put(struct folio * folio)
 {
-	__free_pages(&folio->page, 0);
+	__free_pages(&folio->page, folio_order(folio));
 	kfree(folio);
 }
 
