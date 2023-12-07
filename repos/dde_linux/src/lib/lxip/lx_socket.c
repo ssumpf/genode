@@ -8,7 +8,9 @@ extern struct net init_net;
 
 static enum Errno _genode_errno(int errno)
 {
-	switch (-errno) {
+	if (errno < 0) errno *= -1;
+
+	switch (errno) {
 	case 0:               return GENODE_ENONE;
 	case E2BIG:           return GENODE_E2BIG;
 	case EACCES:          return GENODE_EACCES;
@@ -76,8 +78,8 @@ static enum Errno _genode_errno(int errno)
 	case EUSERS:          return GENODE_EUSERS;
 	case EXDEV:           return GENODE_EXDEV;
 	default:
-		printk("%s:%d unsupported errno %d\n",
-		       __func__, __LINE__, errno);
+		printk("%s:%d unsupported errno %d refused: %d\n",
+		       __func__, __LINE__, errno, ECONNREFUSED);
 	}
 	return GENODE_EINVAL;
 }
