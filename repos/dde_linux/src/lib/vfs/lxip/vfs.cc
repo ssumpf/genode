@@ -462,7 +462,6 @@ class Vfs::Lxip_data_file final : public Vfs::Lxip_file
 			Msg_header    msg_recv { dst.start, dst.num_bytes };
 
 			Errno err = genode_socket_recvmsg(&_sock, msg_recv.header(), &bytes, false);
-			Genode::log("write: err: ", (unsigned)err, " bytes: ", bytes);
 			if (err == GENODE_EAGAIN)
 				throw Would_block();
 
@@ -1899,8 +1898,6 @@ struct Lxip_factory : Vfs::File_system_factory
 	/* wakup user task */
 	static void socket_progress(void *data)
 	{
-		Genode::warning("progress");
-
 		Vfs::Env *env = static_cast<Vfs::Env *>(data);
 		env->user().wakeup_vfs_user();
 		poll_all();
