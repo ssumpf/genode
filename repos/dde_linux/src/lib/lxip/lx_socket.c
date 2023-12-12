@@ -78,8 +78,8 @@ static enum Errno _genode_errno(int errno)
 	case EUSERS:          return GENODE_EUSERS;
 	case EXDEV:           return GENODE_EXDEV;
 	default:
-		printk("%s:%d unsupported errno %d refused: %d\n",
-		       __func__, __LINE__, errno, ECONNREFUSED);
+		printk("%s:%d unsupported errno %d\n",
+		       __func__, __LINE__, errno);
 	}
 	return GENODE_EINVAL;
 }

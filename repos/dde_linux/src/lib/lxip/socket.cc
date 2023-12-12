@@ -62,7 +62,6 @@ struct Lx_call : private Socket_queue::Element
 				warning("socket interface call blocked (this should not happen)");
 			genode_socket_wait_for_progress();
 		}
-		warning("EP finished");
 	}
 
 	virtual void execute() = 0;
