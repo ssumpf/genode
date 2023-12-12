@@ -343,7 +343,7 @@ append config {
 			<service name="Nic"/>
 			<service name="Uplink"/>
 		</provides>
-		<config verbose_domain_state="yes" verbose_packets="yes" verbose_packet_drop="yes"> }
+		<config verbose_domain_state="yes" verbose_packets="no" verbose_packet_drop="yes"> }
 
 if {$use_nic_bridge} { append config {
 
@@ -461,8 +461,6 @@ build_boot_image [build_artifacts]
 
 set ip_match_string "nic_router\\\] \\\[uplink\\\] dynamic IP config: interface (\[0-9]{1,3}.\[0-9]{1,3}.\[0-9]{1,3}.\[0-9]{1,3}).*\n"
 set force_ports "-P [server_data_port],[server_data_port]"
-
-run_genode_until forever
 
 if {[have_spec linux]} {
 	run_genode_until {.*family AF_INET.*\n} 60
