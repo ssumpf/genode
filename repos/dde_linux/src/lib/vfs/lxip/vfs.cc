@@ -365,15 +365,10 @@ struct Vfs::Lxip_vfs_dir_handle final : Vfs::Lxip_vfs_handle
 };
 
 
-static Vfs::Env::User                  *_vfs_user_ptr;
 static Vfs::Lxip_vfs_file_handle::Fifo *_read_ready_waiters_ptr;
 
-#if 0
 static void poll_all()
 {
-	if (_vfs_user_ptr)
-		_vfs_user_ptr->wakeup_vfs_user();
-
 	_read_ready_waiters_ptr->for_each(
 			[&] (Vfs::Lxip_vfs_file_handle::Fifo_element &elem) {
 		Vfs::Lxip_vfs_file_handle &handle = elem.object();
@@ -387,7 +382,6 @@ static void poll_all()
 		}
 	});
 }
-#endif
 
 /*****************************
  ** Lxip vfs specific nodes **
@@ -654,8 +648,8 @@ class Vfs::Lxip_connect_file final : public Vfs::Lxip_file
 		}
 
 		long write(Lxip_vfs_file_handle &handle,
-		                    Const_byte_range_ptr const &src,
-		                    file_size /* ignored */) override
+		           Const_byte_range_ptr const &src,
+		           file_size /* ignored */) override
 		{
 			if (!handle.write_content_line(src)) return -1;
 
@@ -1909,14 +1903,13 @@ struct Lxip_factory : Vfs::File_system_factory
 
 		Vfs::Env *env = static_cast<Vfs::Env *>(data);
 		env->user().wakeup_vfs_user();
+		poll_all();
 	}
 
 	struct genode_socket_io_progress io_progress { };
 
 	Vfs::File_system *create(Vfs::Env &env, Genode::Xml_node config) override
 	{
-		_vfs_user_ptr = &env.user();
-
 		io_progress.data = &env;
 		io_progress.callback = socket_progress;
 
