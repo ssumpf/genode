@@ -19,14 +19,6 @@ unsigned long KSTK_ESP(struct task_struct * task)
 dev_t ROOT_DEV;
 
 
-#include <linux/ratelimit_types.h>
-
-int ___ratelimit(struct ratelimit_state * rs,const char * func)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 #include <linux/filter.h>
 
 noinline u64 __bpf_call_base(u64 r1,u64 r2,u64 r3,u64 r4,u64 r5)
