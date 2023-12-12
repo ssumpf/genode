@@ -89,7 +89,6 @@ unsigned long _copy_to_user(void __user * to,const void * from,unsigned long n)
 
 unsigned long raw_copy_to_user(void *to, const void *from, unsigned long n)
 {
-	printk("%s:%d to %px from %px n: %lu\n", __func__, __LINE__, to, from, n);
 	memcpy(to, from, n);
 	return 0;
 }

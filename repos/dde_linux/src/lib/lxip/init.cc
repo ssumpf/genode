@@ -34,7 +34,6 @@ struct Main
 	void handle_nic_client()
 	{
 
-		warning("handle nic");
 		lx_emul_task_unblock(lx_nic_client_rx_task());
 		Lx_kit::env().scheduler.schedule();
 
@@ -54,27 +53,16 @@ struct Main
 };
 
 
-extern "C" void wait_for_continue(void);
-
-
 void genode_socket_init(struct genode_env *_env,
                         struct genode_socket_io_progress *io_progress)
 {
 	Env &env = *static_cast<Env *>(_env);
 	static Main main { env, io_progress };
 
-	log("WAIT");
-	wait_for_continue();
-
-	log("Lx_kit::initialize");
 	Lx_kit::initialize(env, main.schedule_handler);
-
-	log("exec_static_constructors");
 	env.exec_static_constructors();
-
 	main.init();
 
-	log("lx_emul_start_kernel");
 	lx_emul_start_kernel(nullptr);
 
 	/* wait to finish initialization before returning to callee */
