@@ -14,8 +14,6 @@
 		<rom label="vfs.lib.so"/>
 		<rom label="vfs_lxip.lib.so"/>
 		<rom label="lxip.lib.so"/>
-		<rom label="vfs_legacy_lxip.lib.so"/>
-		<rom label="legacy_lxip.lib.so"/>
 		<rom label="nic_router"/>
 		<rom label="vfs"/>
 		<rom label="test-netty_tcp"/>
@@ -46,7 +44,7 @@
 				<service name="Nic"/>
 				<service name="Uplink"/>
 			</provides>
-			<config verbose_packets="yes">
+			<config>
 				<domain name="default" interface="10.0.1.1/24"/>
 				<default-policy domain="default"/>
 			</config>
