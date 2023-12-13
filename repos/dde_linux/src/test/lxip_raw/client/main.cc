@@ -60,7 +60,7 @@ struct Test::Client
 
 	Client(Env &env) : env(env)
 	{
-		genode_socket_init(genode_env_ptr(env));
+		genode_socket_init(genode_env_ptr(env), nullptr);
 
 		genode_socket_config address_config = { .dhcp = true };
 		genode_socket_address(&address_config);

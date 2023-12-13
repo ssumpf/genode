@@ -68,7 +68,7 @@ struct Test::Server
 
 	Server(Env &env) : env(env)
 	{
-		genode_socket_init(genode_env_ptr(env));
+		genode_socket_init(genode_env_ptr(env), nullptr);
 
 		genode_socket_config address_config = {
 			.dhcp       = false,
