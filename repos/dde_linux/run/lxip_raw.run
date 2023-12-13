@@ -1,6 +1,7 @@
 
 set build_components {
-	core init timer
+	lib/ld core init
+	timer
 	test/lxip_raw
 	server/nic_router
 }
@@ -36,7 +37,7 @@ append config {
 			<service name="Nic"/>
 			<service name="Uplink"/>
 		</provides>
-		<config verbose_domain_state="yes" verbose_packets="yes" verbose_packet_drop="yes">
+		<config verbose_domain_state="yes" verbose_packets="no" verbose_packet_drop="yes">
 
 			<default-policy domain="default"/>
 			<domain name="default" interface="10.0.2.1/24">
@@ -50,7 +51,6 @@ append config {
 				</tcp>
 
 			</domain>
-
 		</config>
 	</start>
 
@@ -77,16 +77,7 @@ append config {
 
 install_config $config
 
-append boot_modules {
-	core init timer
-	ld.lib.so
-	nic_router
-	lxip.lib.so
-	test-lxip_server
-	test-lxip_client
-	}
-
-build_boot_image $boot_modules
+build_boot_image [build_artifacts]
 
 append qemu_args " -nographic "
 
