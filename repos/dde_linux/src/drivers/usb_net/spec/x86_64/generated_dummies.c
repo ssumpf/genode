@@ -22,14 +22,6 @@ int __devm_mdiobus_register(struct device * dev,struct mii_bus * bus,struct modu
 }
 
 
-#include <linux/mm.h>
-
-void __folio_put(struct folio * folio)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 #include <net/ipv6.h>
 
 int __ipv6_addr_type(const struct in6_addr * addr)
