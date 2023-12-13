@@ -6,16 +6,6 @@ unsigned long __FIXADDR_TOP = 0xfffff000;
 
 int mmap_rnd_bits;
 
-
-#include <linux/mm.h>
-
-void __folio_put(struct folio * folio)
-{
-	__free_pages(&folio->page, folio_order(folio));
-	kfree(folio);
-}
-
-
 #include <linux/percpu.h>
 
 DEFINE_PER_CPU(unsigned long, cpu_scale);
@@ -149,7 +139,8 @@ void *alloc_large_system_hash(const char *tablename,
 
 	nlog2 <<= (1 << nlog2) < elements ? 1 : 0;
 
-	table = kmalloc(elements * bucketsize, GFP_KERNEL);
+	table = lx_emul_mem_alloc_aligned(elements * bucketsize, PAGE_SIZE);
+
 	if (!table) {
 		printk("%s:%d error failed to allocate system hash\n", __func__, __LINE__);
 		return NULL;
