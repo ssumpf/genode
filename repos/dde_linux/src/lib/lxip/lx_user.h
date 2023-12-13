@@ -4,7 +4,10 @@ extern "C" {
 
 struct task_struct;
 
-int lx_user_startup_complete(void *);
+/* set kernel parameters for Genode */
+void lx_user_configure_ip_stack(void);
+
+int  lx_user_startup_complete(void *);
 
 void  *lx_socket_dispatch_queue(void);
 int    lx_socket_dispatch(void *arg);

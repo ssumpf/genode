@@ -63,6 +63,9 @@ void genode_socket_init(struct genode_env *_env,
 	env.exec_static_constructors();
 	main.init();
 
+	/* must be called before initcalls */
+	lx_user_configure_ip_stack();
+
 	lx_emul_start_kernel(nullptr);
 
 	/* wait to finish initialization before returning to callee */

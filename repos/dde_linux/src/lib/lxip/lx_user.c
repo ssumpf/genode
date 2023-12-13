@@ -36,6 +36,15 @@ struct task_struct *lx_socket_dispatch_root(void)
 }
 
 
+int __setup_set_thash_entries(char *str);
+int __setup_set_uhash_entries(char *str);
+
+void lx_user_configure_ip_stack(void)
+{
+	__setup_set_thash_entries((char *)"2048");
+	__setup_set_uhash_entries((char *)"2048");
+}
+
 
 int __setup_ip_auto_config_setup(char *);
 int __initcall_ip_auto_config7(void);
