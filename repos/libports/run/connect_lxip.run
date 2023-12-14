@@ -1,0 +1,124 @@
+create_boot_directory
+
+install_config {
+	<config verbose="yes">
+		<parent-provides>
+			<service name="ROM"/>
+			<service name="IRQ"/>
+			<service name="IO_MEM"/>
+			<service name="IO_PORT"/>
+			<service name="PD"/>
+			<service name="RM"/>
+			<service name="CPU"/>
+			<service name="LOG"/>
+		</parent-provides>
+		<default-route>
+			<any-service> <parent/> <any-child/> </any-service>
+		</default-route>
+		<default caps="150"/>
+
+		<start name="timer" caps="100">
+			<resource name="RAM" quantum="2M"/>
+			<provides><service name="Timer"/></provides>
+		</start>
+
+
+		<start name="nic_router">
+			<resource name="RAM" quantum="10M"/>
+			<provides>
+				<service name="Nic"/>
+				<service name="Uplink"/>
+			</provides>
+			<config verbose_packets="yes" verbose_domain_state="yes">
+				<domain name="uplink"  interface="10.0.2.1/24"/>
+				<domain name="default" interface="10.0.1.1/24">
+					<ip dst="10.0.2.0/24" domain="uplink"/>
+				</domain>
+				<policy label_prefix="black_hole" domain="uplink"/>
+				<default-policy domain="default"/>
+			</config>
+		</start>
+
+		<start name="black_hole">
+			<resource name="RAM" quantum="2M"/>
+			<config>
+				<uplink_client/>
+			</config>
+		</start>
+
+		<start name="socket_fs_server" caps="200">
+			<binary name="vfs"/>
+			<resource name="RAM" quantum="36M"/>
+			<provides> <service name="File_system"/> </provides>
+			<config>
+				<vfs> <lxip ip_addr="10.0.1.2" netmask="255.255.255.0" gateway="10.0.1.1"/> </vfs>
+				<policy label_prefix="server" root="/" writeable="yes"/>
+			</config>
+		</start>
+
+		<start name="socket_fs_client" caps="200">
+			<binary name="vfs"/>
+			<resource name="RAM" quantum="36M"/>
+			<provides> <service name="File_system"/> </provides>
+			<config ld_verbose="yes">
+				<vfs> <lxip ip_addr="10.0.1.3" netmask="255.255.255.0" gateway="10.0.1.1"/>	</vfs>
+				<policy label_prefix="test-libc_connect" root="/" writeable="yes"/>
+			</config>
+		</start>
+
+		<start name="server">
+			<binary name="test-netty_tcp"/>
+			<resource name="RAM" quantum="4M"/>
+			<config port="80" read_write="yes" nonblock="false">
+				<vfs>
+					<dir name="dev"> <log/> </dir>
+					<dir name="socket"> <fs/> </dir>
+					<dir name="tmp"> <ram/> </dir>
+				</vfs>
+				<libc stdout="/dev/log" stderr="/dev/log" socket="/socket"/>
+			</config>
+			<route>
+				<service name="File_system"> <child name="socket_fs_server"/> </service>
+				<any-service> <parent/> <any-child/> </any-service>
+			</route>
+		</start>
+
+		<start name="test-libc_connect">
+			<resource name="RAM" quantum="4M"/>
+			<config>
+				<vfs>
+					<dir name="dev"> <log/> </dir>
+					<dir name="socket"> <fs/> </dir>
+				</vfs>
+				<libc stdout="/dev/log" stderr="/dev/log" socket="/socket"/>
+			</config>
+			<route>
+				<service name="File_system"> <child name="socket_fs_client"/> </service>
+				<any-service> <parent/> <any-child/> </any-service>
+			</route>
+		</start>
+
+	</config>
+}
+
+build            {
+	core init timer
+	server/black_hole
+	server/vfs
+	server/nic_router
+	test/libc_connect
+	test/netty/tcp
+	lib/vfs_lxip
+	lib/vfs_legacy_lxip
+	lib/ld lib/libc lib/libm lib/posix lib/vfs
+}
+
+build_boot_image [build_artifacts]
+
+append qemu_args " -nographic "
+append_qemu_nic_args
+
+## Uncomment to dump network traffic to file
+# append qemu_args " -object filter-dump,id=net0,netdev=net0,file=[run_dir].pcap"
+
+run_genode_until forever
