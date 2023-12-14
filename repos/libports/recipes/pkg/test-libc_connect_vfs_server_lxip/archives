@@ -7,3 +7,4 @@ _/src/test-libc_no_accept
 _/src/test-netty
 _/src/vfs
 _/src/vfs_lxip
+_/src/vfs_legacy_lxip
