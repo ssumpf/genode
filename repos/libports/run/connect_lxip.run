@@ -29,9 +29,20 @@ install_config {
 				<service name="Nic"/>
 				<service name="Uplink"/>
 			</provides>
-			<config verbose_packets="yes">
-				<domain name="default" interface="10.0.1.1/24"/>
+			<config verbose_packets="yes" verbose_domain_state="yes">
+				<domain name="uplink"  interface="10.0.2.1/24"/>
+				<domain name="default" interface="10.0.1.1/24">
+					<ip dst="10.0.2.0/24" domain="uplink"/>
+				</domain>
+				<policy label_prefix="black_hole" domain="uplink"/>
 				<default-policy domain="default"/>
+			</config>
+		</start>
+
+		<start name="black_hole">
+			<resource name="RAM" quantum="2M"/>
+			<config>
+				<uplink_client/>
 			</config>
 		</start>
 
@@ -55,16 +66,6 @@ install_config {
 			</config>
 		</start>
 
-		<start name="socket_fs_no_accept" caps="200">
-			<binary name="vfs"/>
-			<resource name="RAM" quantum="36M"/>
-			<provides> <service name="File_system"/> </provides>
-			<config ld_verbose="yes">
-				<vfs> <lxip ip_addr="10.0.1.4" netmask="255.255.255.0" gateway="10.0.1.1"/>	</vfs>
-				<policy label_prefix="no_accept_server" root="/" writeable="yes"/>
-			</config>
-		</start>
-
 		<start name="server">
 			<binary name="test-netty_tcp"/>
 			<resource name="RAM" quantum="4M"/>
@@ -78,24 +79,6 @@ install_config {
 			</config>
 			<route>
 				<service name="File_system"> <child name="socket_fs_server"/> </service>
-				<any-service> <parent/> <any-child/> </any-service>
-			</route>
-		</start>
-
-		<start name="no_accept_server" caps="200">
-			<binary name="test-libc_no_accept"/>
-			<resource name="RAM" quantum="36M"/>
-			<config>
-				<vfs>
-					<dir name="dev"> <log/> </dir>
-					<dir name="socket">
-						<fs/>
-					</dir>
-				</vfs>
-				<libc stdout="/dev/log" stderr="/dev/log" socket="/socket"/>
-			</config>
-			<route>
-				<service name="File_system"> <child name="socket_fs_no_accept"/> </service>
 				<any-service> <parent/> <any-child/> </any-service>
 			</route>
 		</start>
@@ -120,6 +103,7 @@ install_config {
 
 build            {
 	core init timer
+	server/black_hole
 	server/vfs
 	server/nic_router
 	test/libc_connect
