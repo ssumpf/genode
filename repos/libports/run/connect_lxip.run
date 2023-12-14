@@ -123,28 +123,15 @@ build            {
 	server/vfs
 	server/nic_router
 	test/libc_connect
+	test/libc_no_accept
 	test/netty/tcp
 	lib/vfs_lxip
 	lib/vfs_legacy_lxip
+	lib/ld lib/libc lib/libm lib/posix lib/vfs
 }
 
-build_boot_image {
-core timer init
-ld.lib.so
-libc.lib.so
-libm.lib.so
-posix.lib.so
-vfs.lib.so
-vfs_lxip.lib.so
-lxip.lib.so
-vfs_legacy_lxip.lib.so
-legacy_lxip.lib.so
-nic_router
-vfs
-test-netty_tcp
-test-libc_connect
-test-libc_no_accept
-}
+build_boot_image [build_artifacts]
+
 append qemu_args " -nographic "
 append_qemu_nic_args
 
