@@ -107,7 +107,6 @@ build            {
 	server/vfs
 	server/nic_router
 	test/libc_connect
-	test/libc_no_accept
 	test/netty/tcp
 	lib/vfs_lxip
 	lib/vfs_legacy_lxip
