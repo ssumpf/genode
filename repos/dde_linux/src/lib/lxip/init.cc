@@ -5,6 +5,7 @@
 #include <genode_c_api/nic_client.h>
 #include <genode_c_api/socket.h>
 
+#include "init.h"
 #include "lx_user.h"
 #include "net_driver.h"
 
@@ -41,6 +42,12 @@ struct Main
 			io_progress->callback(io_progress->data);
 	}
 
+	void kernel_initialized()
+	{
+		if (!io_progress || !io_progress->initialized_callback) return;
+		io_progress->initialized_callback(io_progress->initialized_data);
+	}
+
 	void init()
 	{
 		genode_nic_client_init(genode_env_ptr(env),
@@ -53,15 +60,38 @@ struct Main
 };
 
 
-void genode_socket_init(struct genode_env *_env,
-                        struct genode_socket_io_progress *io_progress)
+static Main &_main(Env *env = nullptr, genode_socket_io_progress *io_progress = nullptr)
 {
-	Env &env = *static_cast<Env *>(_env);
-	static Main main { env, io_progress };
+	static Main main { *env, io_progress };
+	return main;
+}
 
-	Lx_kit::initialize(env, main.schedule_handler);
-	env.exec_static_constructors();
-	main.init();
+
+/* detect if static constructors have been called */
+static bool _constructors_called = false;
+static bool _initialized         = false;
+
+bool lx_emul_socket_constructors_called()
+{
+	return _constructors_called;
+}
+
+
+bool lx_emul_socket_initialized()
+{
+	return _initialized;
+}
+
+
+static void __attribute__((constructor)) static_constructor()
+{
+	_constructors_called = true;
+}
+
+
+void lx_emul_socket_start_kernel()
+{
+	_main().init();
 
 	/* must be called before initcalls */
 	lx_user_configure_ip_stack();
@@ -70,4 +100,25 @@ void genode_socket_init(struct genode_env *_env,
 
 	/* wait to finish initialization before returning to callee */
 	lx_emul_execute_kernel_until(lx_user_startup_complete, nullptr);
+
+	_initialized = true;
+	_main().kernel_initialized();
+}
+
+
+void genode_socket_init(struct genode_env *_env,
+                        bool exec_static_constructors,
+                        struct genode_socket_io_progress *io_progress)
+{
+	Env *env = static_cast<Env *>(_env);
+
+	Main &main = _main(env, io_progress);
+
+	Lx_kit::initialize(*env, main.schedule_handler);
+
+	if (!exec_static_constructors) return;
+
+	env->exec_static_constructors();
+
+	lx_emul_socket_start_kernel();
 }

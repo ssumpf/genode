@@ -4,6 +4,7 @@
 #include <lx_kit/env.h>
 #include <lx_emul/task.h>
 
+#include "init.h"
 #include "lx_socket.h"
 #include "lx_user.h"
 
@@ -407,12 +408,31 @@ int lx_socket_dispatch(void *arg)
 }
 
 
+/* check if ctors are called and kernel is up */
+class Fatal : Exception { };
+
+static void _check_initialized()
+{
+	if (lx_emul_socket_initialized()) return;
+
+	if (!lx_emul_socket_constructors_called()) {
+		error("lxip stack called with pending constructors "
+		      " (fix by calling "
+		      "Genode::Env::exec_static_constructors())");
+		throw Fatal();
+	}
+
+	lx_emul_socket_start_kernel();
+}
+
+
 /*
  * Socket C-API
  */
-
 static genode_socket_handle * _create_handle()
 {
+	_check_initialized();
+
 	genode_socket_handle *handle = new (Lx_kit::env().heap) genode_socket_handle();
 
 	handle->task  = lx_socket_dispatch_root();

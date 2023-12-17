@@ -123,10 +123,13 @@ struct genode_socket_io_progress
 {
 	void  *data;
 	void (*callback)(void *);
+	void *initialized_data;
+	void (*initialized_callback)(void *);
 };
 
 
 void genode_socket_init(struct genode_env *env,
+                        bool exec_static_constructors,
                         struct genode_socket_io_progress *);
 
 
