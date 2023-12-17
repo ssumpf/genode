@@ -16,6 +16,7 @@
  */
 
 /* Genode includes */
+#include <base/signal.h>
 #include <base/log.h>
 #include <net/ipv4.h>
 #include <util/string.h>
@@ -719,6 +720,7 @@ class Vfs::Lxip_connect_file final : public Vfs::Lxip_file
 			case GENODE_ECONNREFUSED:
 				return Format::snprintf(dst.start, dst.num_bytes, "connection refused");
 			default:
+			Genode::error("unknown genode err: ", (unsigned)socket_err);
 				return Format::snprintf(dst.start, dst.num_bytes, "unknown error");
 			}
 		}
@@ -1559,7 +1561,7 @@ class Vfs::Lxip_file_system : public Vfs::File_system,
 			Directory(""),
 			_ep(env.env().ep()), _alloc(env.alloc())
 		{
-			apply_config(config);
+			initial_config_valid = parse_config(config);
 		}
 
 		~Lxip_file_system() { }
@@ -1571,31 +1573,32 @@ class Vfs::Lxip_file_system : public Vfs::File_system,
 		 ** File_system interface **
 		 ***************************/
 
-		void apply_config(Genode::Xml_node const &config) override
-		{
-			typedef String<16> Addr;
+		unsigned mtu { 0 };
+		genode_socket_config address_config     = { .dhcp = true };
+		bool                 initial_config_valid { false };
+		typedef String<16> Addr;
+		Addr ip_addr { };
+		Addr netmask { };
+		Addr gateway { };
+		Addr nameserver { };
 
-			unsigned const mtu = config.attribute_value("mtu", 0U);
-			if (mtu) {
-				log("Setting MTU to ", mtu);
-				genode_socket_mtu(mtu);
-			} else {
-				genode_socket_mtu(0);
-			}
+		bool parse_config(Genode::Xml_node const &config)
+		{
+
+			mtu = config.attribute_value("mtu", 0U);
 
 			if (config.attribute_value("dhcp", false)) {
 				log("Using DHCP for interface configuration.");
-				genode_socket_config address_config = { .dhcp = true };
-				genode_socket_address(&address_config);
-				return;
+				address_config.dhcp = true;
+				return true;
 			}
 
 			try {
 
-				Addr ip_addr    = config.attribute_value("ip_addr", Addr());
-				Addr netmask    = config.attribute_value("netmask", Addr());
-				Addr gateway    = config.attribute_value("gateway", Addr());
-				Addr nameserver = config.attribute_value("nameserver", Addr());
+				ip_addr    = config.attribute_value("ip_addr", Addr());
+				netmask    = config.attribute_value("netmask", Addr());
+				gateway    = config.attribute_value("gateway", Addr());
+				nameserver = config.attribute_value("nameserver", Addr());
 
 				if (ip_addr == "") {
 					warning("Missing \"ip_addr\" attribute. Ignoring network interface config.");
@@ -1607,7 +1610,7 @@ class Vfs::Lxip_file_system : public Vfs::File_system,
 
 				log("static network interface: ip_addr=",ip_addr," netmask=",netmask);
 
-				genode_socket_config address_config = {
+				address_config = {
 					.dhcp       = false,
 					.ip_addr    = ip_addr.string(),
 					.netmask    = netmask.string(),
@@ -1615,9 +1618,30 @@ class Vfs::Lxip_file_system : public Vfs::File_system,
 					.nameserver = nameserver.string(),
 				};
 
-				genode_socket_address(&address_config);
-			} catch (...) { }
-		 }
+			} catch (...) { return false; }
+
+			return true;
+		}
+
+		void apply_config()
+		{
+			if (mtu) {
+				log("Setting MTU to ", mtu);
+				genode_socket_mtu(mtu);
+			} else {
+				genode_socket_mtu(0);
+			}
+
+			genode_socket_address(&address_config);
+		}
+
+		void apply_config(Genode::Xml_node const &config) override
+		{
+			if(!parse_config(config))
+				return;
+
+			apply_config();
+		}
 
 
 		/*************************
@@ -1894,6 +1918,7 @@ class Vfs::Lxip_file_system : public Vfs::File_system,
 
 struct Lxip_factory : Vfs::File_system_factory
 {
+	genode_socket_io_progress     io_progress { };
 
 	/* wakup user task */
 	static void socket_progress(void *data)
@@ -1903,16 +1928,26 @@ struct Lxip_factory : Vfs::File_system_factory
 		poll_all();
 	}
 
-	struct genode_socket_io_progress io_progress { };
+	static void socket_ready(void *data)
+	{
+		Vfs::Lxip_file_system *fs = static_cast<Vfs::Lxip_file_system *>(data);
+		if (fs->initial_config_valid)
+			fs->apply_config();
+	}
 
 	Vfs::File_system *create(Vfs::Env &env, Genode::Xml_node config) override
 	{
+		Vfs::Lxip_file_system *fs = new (env.alloc())
+		                            Vfs::Lxip_file_system(env, config);
+
 		io_progress.data = &env;
 		io_progress.callback = socket_progress;
+		io_progress.initialized_callback = socket_ready;
+		io_progress.initialized_data = fs;
 
-		genode_socket_init(genode_env_ptr(env.env()), &io_progress);
+		genode_socket_init(genode_env_ptr(env.env()), false, &io_progress);
 
-		return new (env.alloc()) Vfs::Lxip_file_system(env, config);
+		return fs;
 	}
 };
 
