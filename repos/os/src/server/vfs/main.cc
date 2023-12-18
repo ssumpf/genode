@@ -1000,7 +1000,4 @@ void Component::construct(Genode::Env &env)
 	static Genode::Sliced_heap sliced_heap { env.ram(), env.rm() };
 
 	static Vfs_server::Root root { env, sliced_heap };
-
-	/* a loaded VFS plugin can add static constructurs */
-	env.exec_static_constructors();
 }
