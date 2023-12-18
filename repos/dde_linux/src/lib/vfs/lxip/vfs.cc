@@ -1955,10 +1955,20 @@ struct Lxip_factory : Vfs::File_system_factory
 		Genode::Shared_object shared { env.env(), env.alloc(), nullptr,
 		                               Genode::Shared_object::BIND_LAZY,
 		                               Genode::Shared_object::DONT_KEEP };
+
+		Genode::addr_t addr = 0;
 		try {
-			shared.lookup("_ZN9Component9constructERN6Genode3EnvE");
-			exec_static_constructors = true;
+			addr = shared.lookup<Genode::addr_t>("_ZN9Component9constructERN6Genode3EnvE");
+
+			/* check if addr is in binrary */
+			Genode::Address_info info { addr };
+			Genode::String<64>   name { info.path };
+
+			if (name == "binary") exec_static_constructors = true;
 		} catch (...) { };
+
+		Genode::warning("call ctors: ", exec_static_constructors, " addr: ", Genode::Hex(addr),
+		                " path: ", Genode::Address_info(addr).path);
 
 		genode_socket_init(genode_env_ptr(env.env()), exec_static_constructors, &io_progress);
 
