@@ -16,6 +16,7 @@
  */
 
 /* Genode includes */
+#include <base/shared_object.h>
 #include <base/signal.h>
 #include <base/log.h>
 #include <net/ipv4.h>
@@ -1945,7 +1946,21 @@ struct Lxip_factory : Vfs::File_system_factory
 		io_progress.initialized_callback = socket_ready;
 		io_progress.initialized_data = fs;
 
-		genode_socket_init(genode_env_ptr(env.env()), false, &io_progress);
+		bool exec_static_constructors = false;
+
+		/*
+		 * Lookup 'Component::construct' in binary, if present assume we are in a
+		 * Genode component that does not call 'exec_static_constructors
+		 */
+		Genode::Shared_object shared { env.env(), env.alloc(), nullptr,
+		                               Genode::Shared_object::BIND_LAZY,
+		                               Genode::Shared_object::DONT_KEEP };
+		try {
+			shared.lookup("_ZN9Component9constructERN6Genode3EnvE");
+			exec_static_constructors = true;
+		} catch (...) { };
+
+		genode_socket_init(genode_env_ptr(env.env()), exec_static_constructors, &io_progress);
 
 		return fs;
 	}
