@@ -63,6 +63,7 @@ Io_mem_session_component::_prepare_io_mem(const char      *args,
 	 * drivers - i2c_hid and acpica.
 	 */
 	bool skip_iomem_check = (req_base == 0xfd6d0000ull && req_size == 4096) ||
+	                        (req_base == 0xfd6a0000ull && req_size == 4096) ||
 	                        (req_base == 0xfd6e0000ull && req_size == 4096);
 
 	/* allocate region */
