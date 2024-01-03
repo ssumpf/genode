@@ -43,7 +43,7 @@ namespace Input {
 
 	struct Axis
 	{
-		enum class Id : unsigned { X = 1, Y, Z, RZ, LT, RT } id;
+		enum class Id : unsigned { LX = 1, LY, LT, RX, RY, RT } id;
 
 		float value;
 	};
