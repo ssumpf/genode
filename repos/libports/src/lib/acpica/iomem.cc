@@ -343,6 +343,7 @@ class Acpica::Io_mem
 
 					Genode::addr_t virt = reinterpret_cast<Genode::addr_t>(io2._virt);
 
+					Acpica::env().rm().detach(virt);
 					Acpica::env().rm().attach_at(io_ds, virt, io2._size, off_phys);
 				});
 
