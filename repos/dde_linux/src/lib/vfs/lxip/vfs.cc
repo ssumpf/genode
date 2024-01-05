@@ -56,6 +56,11 @@ struct Msg_header
 		msg.msg_name = &name;
 	}
 
+	void name(genode_sockaddr &name)
+	{
+		msg.msg_name =&name;
+	}
+
 	genode_msghdr *header() { return &msg; }
 };
 
@@ -449,7 +454,11 @@ class Vfs::Lxip_data_file final : public Vfs::Lxip_file
 		           file_size /* ignored */) override
 		{
 			unsigned long bytes_sent = 0;
-			Msg_header    msg_send { _parent.remote_addr(), src.start, src.num_bytes };
+			Msg_header    msg_send { src.start, src.num_bytes };
+
+			/* destination address is only required for UDP */
+			if (_parent.parent().type() == Lxip::Protocol_dir::TYPE_DGRAM)
+				msg_send.name(_parent.remote_addr());
 
 			_write_err = genode_socket_sendmsg(&_sock, msg_send.header(), &bytes_sent);
 
@@ -786,7 +795,7 @@ class Vfs::Lxip_remote_file final : public Vfs::Lxip_file
 		          Byte_range_ptr const &dst,
 		          file_size /* ignored */) override
 		{
-			genode_sockaddr addr;
+			genode_sockaddr addr { .family = AF_INET };
 
 			switch (_parent.parent().type()) {
 			case Lxip::Protocol_dir::TYPE_DGRAM:
@@ -809,7 +818,12 @@ class Vfs::Lxip_remote_file final : public Vfs::Lxip_file
 				}
 				break;
 			}
-
+/*
+			genode_sockaddr &remote_addr   = _parent.remote_addr();
+			remote_addr.in.sin_port        = addr.in.sin_port;
+			remote_addr.in.sin_addr.s_addr = addr.in.sin_addr.s_addr;
+			remote_addr.family             = AF_INET;
+*/
 			unsigned char const *a = (unsigned char *)&addr.in.sin_addr.s_addr;
 			unsigned char const *p = (unsigned char *)&addr.in.sin_port;
 			return Format::snprintf(dst.start, dst.num_bytes,
