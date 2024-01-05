@@ -1,7 +1,7 @@
 /*
  * \brief  Dummy definitions of Linux Kernel functions
  * \author Automatically generated file - do no edit
- * \date   2023-06-28
+ * \date   2024-01-05
  */
 
 #include <lx_emul.h>
@@ -18,6 +18,70 @@ int ___ratelimit(struct ratelimit_state * rs,const char * func)
 #include <linux/cpumask.h>
 
 struct cpumask __cpu_active_mask;
+
+
+#include <linux/kfifo.h>
+
+int __kfifo_alloc(struct __kfifo * fifo,unsigned int size,size_t esize,gfp_t gfp_mask)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/kfifo.h>
+
+void __kfifo_free(struct __kfifo * fifo)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/kfifo.h>
+
+unsigned int __kfifo_in(struct __kfifo * fifo,const void * buf,unsigned int len)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/kfifo.h>
+
+unsigned int __kfifo_in_r(struct __kfifo * fifo,const void * buf,unsigned int len,size_t recsize)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/kfifo.h>
+
+unsigned int __kfifo_max_r(unsigned int len,size_t recsize)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/kfifo.h>
+
+unsigned int __kfifo_out(struct __kfifo * fifo,void * buf,unsigned int len)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/kfifo.h>
+
+unsigned int __kfifo_out_r(struct __kfifo * fifo,void * buf,unsigned int len,size_t recsize)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/kfifo.h>
+
+void __kfifo_skip_r(struct __kfifo * fifo,size_t recsize)
+{
+	lx_emul_trace_and_stop(__func__);
+}
 
 
 #include <linux/printk.h>
@@ -110,6 +174,22 @@ void async_synchronize_full(void)
 #include <linux/leds.h>
 
 int devm_led_classdev_register_ext(struct device * parent,struct led_classdev * led_cdev,struct led_init_data * init_data)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/leds.h>
+
+int devm_led_trigger_register(struct device * dev,struct led_trigger * trig)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/power_supply.h>
+
+struct power_supply * __must_check devm_power_supply_register(struct device * parent,const struct power_supply_desc * desc,const struct power_supply_config * cfg)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -215,8 +295,9 @@ int input_ff_event(struct input_dev * dev,unsigned int type,unsigned int code,in
 }
 
 
-extern void input_mt_release_slots(struct input_dev * dev);
-void input_mt_release_slots(struct input_dev * dev)
+#include <linux/math.h>
+
+unsigned long int_sqrt(unsigned long x)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -302,9 +383,41 @@ int kobject_uevent_env(struct kobject * kobj,enum kobject_action action,char * e
 }
 
 
+#include <linux/leds.h>
+
+void led_trigger_event(struct led_trigger * trig,enum led_brightness brightness)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
 #include <linux/moduleparam.h>
 
 int param_set_copystring(const char * val,const struct kernel_param * kp)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/power_supply.h>
+
+void power_supply_changed(struct power_supply * psy)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/power_supply.h>
+
+void * power_supply_get_drvdata(struct power_supply * psy)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/power_supply.h>
+
+int power_supply_powers(struct power_supply * psy,struct device * dev)
 {
 	lx_emul_trace_and_stop(__func__);
 }

@@ -343,6 +343,8 @@ drivers/base/physical_location.h
 drivers/base/power/power.h
 drivers/base/trace.h
 drivers/hid/hid-ids.h
+drivers/hid/wacom.h
+drivers/hid/wacom_wac.h
 drivers/hid/usbhid/usbhid.h
 drivers/input/input-compat.h
 drivers/input/input-core-private.h
@@ -640,6 +642,7 @@ include/linux/kernel_stat.h
 include/linux/kernfs.h
 include/linux/kern_levels.h
 include/linux/key.h
+include/linux/kfifo.h
 include/linux/kgdb.h
 include/linux/klist.h
 include/linux/kmemleak.h
@@ -956,6 +959,7 @@ include/linux/usb/ch9.h
 include/linux/usbdevice_fs.h
 include/linux/usb.h
 include/linux/usb/hcd.h
+include/linux/usb/input.h
 include/linux/usb/of.h
 include/linux/usb/onboard_hub.h
 include/linux/usb/otg.h
