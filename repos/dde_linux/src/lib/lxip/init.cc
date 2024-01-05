@@ -30,13 +30,16 @@ struct Main
 	void handle_schedule()
 	{
 		Lx_kit::env().scheduler.execute();
+
+		if (io_progress && io_progress->callback)
+			io_progress->callback(io_progress->data);
 	}
 
 	void handle_nic_client()
 	{
 
 		lx_emul_task_unblock(lx_nic_client_rx_task());
-		Lx_kit::env().scheduler.schedule();
+		Lx_kit::env().scheduler.execute();
 
 		if (io_progress && io_progress->callback)
 			io_progress->callback(io_progress->data);
