@@ -158,7 +158,6 @@ static int __init virtio_net_driver_init(void)
 	int err = -ENODEV;
 	struct genode_mac_address mac;
 	pid_t pid;
-	printk("MISC init\n");
 
 	dev = alloc_etherdev(0);
 
@@ -183,7 +182,6 @@ static int __init virtio_net_driver_init(void)
 		goto out_nic;
 	}
 
-	printk("%s:%d INIT done %pM\n", __func__, __LINE__, dev->dev_addr);
 	/* create RX task */
 	pid = kernel_thread(rx_task_function, dev, CLONE_FS | CLONE_FILES);
 
