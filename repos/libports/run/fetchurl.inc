@@ -29,8 +29,8 @@ proc socket_fs_plugin { } {
 	set result "<[ip_stack]"
 
 	if {[have_board linux]} {
-		append result { ip_addr="10.0.2.55" netmask="255.255.255.0"}
-		append result { gateway="10.0.2.1" nameserver="1.1.1.1"}
+		append result { ip_addr="10.0.3.55" netmask="255.255.255.0"}
+		append result { gateway="10.0.3.1" nameserver="1.1.1.1"}
 	} else {
 		append result { dhcp="yes"}
 	}
@@ -147,7 +147,7 @@ install_config {
 </config>
 }
 
-#build            { }
+build            { lib/vfs_lxip }
 build_boot_image [build_artifacts]
 
 append qemu_args " -nographic "
