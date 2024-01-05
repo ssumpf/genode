@@ -154,6 +154,7 @@ static int _sockaddr_len(struct genode_sockaddr const *addr)
 	if (addr->family == AF_INET)
 		return sizeof(struct sockaddr_in);
 
+	printk("error: _sockaddr_len unknown family: %u\n", addr->family);
 	return 0;
 }
 
@@ -401,7 +402,7 @@ enum Errno lx_socket_sendmsg(struct socket *sock, struct genode_msghdr *msg,
                              unsigned long *bytes_send)
 {
 	struct msghdr *m = _create_msghdr(msg, false);
-	ssize_t ret;
+	int ret;
 
 	if (!m) return GENODE_ENOMEM;
 
@@ -410,7 +411,7 @@ enum Errno lx_socket_sendmsg(struct socket *sock, struct genode_msghdr *msg,
 	_destroy_msghdr(m);
 
 	if (ret < 0)
-		return _genode_errno((int)ret);
+		return _genode_errno(ret);
 
 	*bytes_send = (unsigned long)ret;
 
@@ -422,13 +423,13 @@ enum Errno lx_socket_recvmsg(struct socket *sock, struct genode_msghdr *msg,
                              unsigned long *bytes_recv, bool peek)
 {
 	struct msghdr *m = _create_msghdr(msg, true);
-	ssize_t ret;
+	int ret;
 	int flags = MSG_DONTWAIT;
 
 	if (peek) flags |= MSG_PEEK;
 	if (!m)   return GENODE_ENOMEM;
 
-	ret = sock->ops->recvmsg(sock, m, m->msg_iter.count, MSG_DONTWAIT);
+	ret = sock->ops->recvmsg(sock, m, m->msg_iter.count, flags);
 
 	/* convert to genode_sockaddr */
 	if (ret && msg->msg_name) {
@@ -438,7 +439,7 @@ enum Errno lx_socket_recvmsg(struct socket *sock, struct genode_msghdr *msg,
 	_destroy_msghdr(m);
 
 	if (ret < 0)
-		return _genode_errno((int)ret);
+		return _genode_errno(ret);
 
 	*bytes_recv = (unsigned long)ret;
 
