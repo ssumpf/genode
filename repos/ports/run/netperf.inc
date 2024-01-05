@@ -166,7 +166,7 @@ append_if $use_wifi_driver  packages " [depot_user]/src/platform_drv            
 
 import_from_depot $packages
 
-build { app/netperf drivers/usb_net lib/lxip lib/vfs_lxip }
+build { app/netperf drivers/usb_net lib/ld lib/lxip lib/vfs_lxip }
 
 #
 # Generate config
@@ -399,7 +399,7 @@ append config {
 	<start name="netserver_genode" caps="320" priority="-1">
 	<binary name="netserver"/>
 		<resource name="RAM" quantum="14M"/>
-		<config>
+		<config ld_verbose="yes">
 			<arg value="netserver"/>
 			<arg value="-D"/>
 			<arg value="-4"/>

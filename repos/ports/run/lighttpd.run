@@ -4,14 +4,15 @@
 # \date   2012-08-16
 #
 
-proc ip_stack { } { return lwip }
+proc ip_stack { } { return lxip }
 
 proc socket_fs_plugin { } {
 	set result "<[ip_stack]"
 
 	if {[have_spec linux]} {
-		append result { ip_addr="10.0.2.55" netmask="255.255.255.0"}
-		append result { gateway="10.0.2.1" nameserver="1.1.1.1"}
+		#append result { ip_addr="10.0.2.16" netmask="255.255.255.0"}
+		#append result { gateway="10.0.2.1" nameserver="1.1.1.1"}
+		append result { dhcp="yes" }
 	} else {
 		append result { dhcp="yes"}
 	}
