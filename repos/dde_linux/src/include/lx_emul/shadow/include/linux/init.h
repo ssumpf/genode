@@ -28,9 +28,9 @@
 #undef __define_initcall
 
 #define __define_initcall(fn, id) \
-	static void __initcall_##fn##id(void)__attribute__((constructor)); \
-	static void __initcall_##fn##id() { \
-			lx_emul_register_initcall(fn, __func__); };
+	static void __initcall_##fn##id(void) { \
+		lx_emul_register_initcall(fn, __func__); } \
+	void * __initptr_##fn##id = __initcall_##fn##id;
 
 #undef __setup
 

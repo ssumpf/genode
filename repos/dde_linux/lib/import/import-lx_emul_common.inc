@@ -211,3 +211,57 @@ GLOBAL_DEPS += $(wildcard $(addsuffix /linux/*.h,$(SHADOW_INC_DIR))) \
 GLOBAL_DEPS += $(wildcard $(addsuffix /linux/*.h,$(SPEC_SHADOW_INC_DIR))) \
                $(wildcard $(addsuffix /asm/*.h,$(SPEC_SHADOW_INC_DIR)))
 
+
+#
+# Generate code to call initcall pointers
+#
+
+define print_file_header
+echo "/*"                                                          > $(2);
+echo " * \\brief  Call register-initcall pointers"                >> $(2);
+echo " * \\author Automatically generated file - do no edit"      >> $(2);
+echo " * \\date   $(1)"                                           >> $(2);
+echo " */"                                                        >> $(2);
+echo ""                                                           >> $(2);
+echo ""                                                           >> $(2);
+endef
+
+define print_declaration
+echo "extern void * $(1);" >> $(2);
+endef
+
+define print_function_start
+echo ""                                      >> $(1)
+echo "void lx_emul_register_initcalls(void)" >> $(1);
+echo "{"                                     >> $(1);
+echo "	typedef void (*func)(void);"         >> $(1);
+endef
+
+define print_call
+echo "	((func)$(1))();" >> $(2);
+endef
+
+define print_function_end
+echo "}" >> $(1);
+endef
+
+WAIT_FOR_OBJECTS = $(filter-out initcall_table.o,$(OBJECTS))
+
+INITCALLS = $(shell $(NM) -U $(WAIT_FOR_OBJECTS) |\
+              grep "__initptr" |\
+              awk '{print $$3}')
+
+SRC_O += initcall_table.o
+
+FORCE:
+initcall_table.c: $(WAIT_FOR_OBJECTS) FORCE
+	$(MSG_CONFIG)$@
+	@$(call print_file_header,$(shell date +"%F"),$@)
+	@$(foreach sym,$(INITCALLS),$(call print_declaration,$(sym),$@))
+	@$(call print_function_start,$@)
+	@$(foreach sym,$(INITCALLS),$(call print_call,$(sym),$@))
+	@$(call print_function_end,$@)
+
+initcall_table.o: initcall_table.c
+	$(MSG_COMP)$@
+	$(VERBOSE)$(CC) $(CC_DEF) $(CC_C_OPT) $(INCLUDES) -c $< -o $@
