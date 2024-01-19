@@ -270,6 +270,7 @@ drivers/base/base.h
 drivers/base/physical_location.h
 drivers/base/power/power.h
 drivers/base/trace.h
+drivers/net/usb/smsc95xx.h
 drivers/usb/core/hub.h
 drivers/usb/core/otg_productlist.h
 drivers/usb/core/usb.h
@@ -918,11 +919,11 @@ include/linux/umh.h
 include/linux/unaligned/packed_struct.h
 include/linux/uprobes.h
 include/linux/usb/cdc.h
+include/linux/usb/cdc_ncm.h
+include/linux/usb/cdc-wdm.h
 include/linux/usb/ch9.h
 include/linux/usbdevice_fs.h
 include/linux/usb.h
-include/linux/usb/cdc_ncm.h
-include/linux/usb/cdc-wdm.h
 include/linux/usb/hcd.h
 include/linux/usb/of.h
 include/linux/usb/onboard_hub.h
@@ -950,8 +951,8 @@ include/linux/wireless.h
 include/linux/workqueue_api.h
 include/linux/workqueue.h
 include/linux/writeback.h
-include/linux/ww_mutex.h
 include/linux/wwan.h
+include/linux/ww_mutex.h
 include/linux/xarray.h
 include/net/act_api.h
 include/net/addrconf.h
@@ -1233,6 +1234,7 @@ include/uapi/linux/uio.h
 include/uapi/linux/unistd.h
 include/uapi/linux/usb/audio.h
 include/uapi/linux/usb/cdc.h
+include/uapi/linux/usb/cdc-wdm.h
 include/uapi/linux/usb/ch11.h
 include/uapi/linux/usb/ch9.h
 include/uapi/linux/usb/charger.h
@@ -1243,7 +1245,6 @@ include/uapi/linux/vmcore.h
 include/uapi/linux/wait.h
 include/uapi/linux/wireless.h
 include/uapi/linux/xfrm.h
-include/uapi/linux/usb/cdc-wdm.h
 include/uapi/video/edid.h
 include/vdso/bits.h
 include/vdso/clocksource.h
