@@ -6,7 +6,7 @@
  */
 
 /*
- * Copyright (C) 2015-2023 Genode Labs GmbH
+ * Copyright (C) 2015-2024 Genode Labs GmbH
  *
  * This file is part of the Genode OS framework, which is distributed
  * under the terms of the GNU Affero General Public License version 3.
@@ -103,21 +103,31 @@ static Vmid_allocator &alloc()
 
 Genode::addr_t Vm_session_component::_alloc_vcpu_data(Genode::addr_t ds_addr)
 {
-	void * vcpu_data_ptr = cma()
-	                       .alloc_aligned(sizeof(Board::Vcpu_data), 12)
-                               .convert<void *>(
-	                                        [&](void *ptr) { return ptr; },
-	                                        [&](Range_allocator::Alloc_error) -> void * {
-	                                                /* XXX handle individual error conditions */
-	                                                error("failed to allocate kernel object");
-	                                                throw Insufficient_ram_quota();
-	                                            }
-	);
+	/* XXX these allocations currently leak memory on VM Session destruction */
+	Vcpu_data * vcpu_data = (Vcpu_data *) cma()
+	                        .try_alloc(sizeof(Board::Vcpu_data))
+                                .convert<void *>(
+					[&](void *ptr) { return ptr; },
+					[&](Range_allocator::Alloc_error) -> void * {
+						/* XXX handle individual error conditions */
+						error("failed to allocate kernel object");
+						throw Insufficient_ram_quota();
+					});
 
-	Genode::Vcpu_data* vcpu_data = (Genode::Vcpu_data *) vcpu_data_ptr;
-	vcpu_data->vcpu_state = (Genode::Vcpu_state *) ds_addr;
-	vcpu_data->vmcb_phys_addr = (addr_t)cma().phys_addr(vcpu_data->vmcb);
-	return (Genode::addr_t) vcpu_data_ptr;
+	vcpu_data->virt_area = cma()
+					.alloc_aligned(Vcpu_data::size(), 12)
+					.convert<void *>(
+						[&](void *ptr) { return ptr; },
+						[&](Range_allocator::Alloc_error) -> void * {
+							/* XXX handle individual error conditions */
+							error("failed to allocate kernel object");
+							throw Insufficient_ram_quota();
+					});
+
+	vcpu_data->vcpu_state    = (Vcpu_state *) ds_addr;
+	vcpu_data->phys_addr     = (addr_t)cma().phys_addr(vcpu_data->virt_area);
+
+	return (Genode::addr_t) vcpu_data;
 }
 
 
