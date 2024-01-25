@@ -8,7 +8,7 @@ MIRROR_FROM_REP_DIR := $(LIB_MK) \
                        include/lxip src/include/legacy src/lib/legacy/lx_kit \
                        src/lib/lx_kit/spec \
                        $(foreach SPEC, \
-                                 arm arm_64 arm_v6 arm_v8 x86 x86_32 x86_64, \
+                                 arm arm_64 arm_v6 arm_v7 x86 x86_32 x86_64, \
                                  src/include/spec/$(SPEC)) \
                        $(shell cd $(REP_DIR); find src/lib/lxip -type f) \
                        $(shell cd $(REP_DIR); find src/lib/vfs -type f)
