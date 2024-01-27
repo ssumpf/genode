@@ -35,6 +35,12 @@ array set symbols {}
 set sorted_symbols_keys {}
 
 
+proc readelf {} {
+	global genode_tools_dir
+	return "$genode_tools_dir/genode-x86-readelf"
+}
+
+
 proc nm {} {
 	global genode_tools_dir
 	global arch
@@ -59,14 +65,16 @@ proc scan_image {img base} {
 	global sorted_symbols_keys
 
 	if {$arch == ""} {
-		set file_output [exec file -L $img]
-		if {[regexp {aarch64} $file_output]} {
+		set readelf_output [exec [readelf] -h $img]
+		if {[regexp {AArch64} $readelf_output]} {
 			set arch "aarch64"
-		} elseif {[regexp {ARM} $file_output]} {
+		} elseif {[regexp {ARM} $readelf_output]} {
 			set arch "arm"
-		} elseif {[regexp {RISC-V} $file_output]} {
+		} elseif {[regexp {RISC-V} $readelf_output]} {
 			set arch "riscv"
-		} elseif {[regexp {x86} $file_output]} {
+		} elseif {[regexp {80386} $readelf_output]} {
+			set arch "x86"
+		} elseif {[regexp {X86-64} $readelf_output]} {
 			set arch "x86"
 		} else {
 			puts "Error: could not obtain architecture from image file"
