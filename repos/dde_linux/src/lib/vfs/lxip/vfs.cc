@@ -44,19 +44,19 @@ struct Msg_header
 	Msg_header(void const *data, unsigned long size)
 	: iovec { const_cast<void *>(data), size }
 	{
-		msg.msg_iov    = &iovec;
-		msg.msg_iovlen = 1;
+		msg.iov    = &iovec;
+		msg.iovlen = 1;
 	}
 
 	Msg_header(genode_sockaddr &name, void const *data, unsigned long size)
 	: Msg_header(data, size)
 	{
-		msg.msg_name = &name;
+		msg.name = &name;
 	}
 
 	void name(genode_sockaddr &name)
 	{
-		msg.msg_name =&name;
+		msg.name =&name;
 	}
 
 	genode_msghdr *header() { return &msg; }
@@ -567,9 +567,9 @@ class Vfs::Lxip_bind_file final : public Vfs::Lxip_file
 
 			/* port is free, try to bind it */
 			genode_sockaddr addr;
-			addr.family             = AF_INET;
-			addr.in.sin_port        = host_to_big_endian<genode_uint16_t>(uint16_t(port));
-			addr.in.sin_addr.s_addr = get_addr(handle.content_buffer);
+			addr.family  = AF_INET;
+			addr.in.port = host_to_big_endian<genode_uint16_t>(uint16_t(port));
+			addr.in.addr = get_addr(handle.content_buffer);
 
 			_write_err = genode_socket_bind(&_sock, &addr);
 			if (_write_err != GENODE_ENONE) return -1;
@@ -681,9 +681,9 @@ class Vfs::Lxip_connect_file final : public Vfs::Lxip_file
 			if (port == -1) return -1;
 
 			genode_sockaddr addr;
-			addr.family             = family == 0 ? AF_UNSPEC : AF_INET;
-			addr.in.sin_port        = host_to_big_endian<genode_uint16_t>(uint16_t(port));
-			addr.in.sin_addr.s_addr = get_addr(handle.content_buffer);
+			addr.family  = family == 0 ? AF_UNSPEC : AF_INET;
+			addr.in.port = host_to_big_endian<genode_uint16_t>(uint16_t(port));
+			addr.in.addr = get_addr(handle.content_buffer);
 
 			_write_err = genode_socket_connect(&_sock, &addr);
 
@@ -713,10 +713,10 @@ class Vfs::Lxip_connect_file final : public Vfs::Lxip_file
 				break;
 			}
 
-			genode_sockaddr &remote_addr   = _parent.remote_addr();
-			remote_addr.in.sin_port        = host_to_big_endian<genode_uint16_t>(uint16_t(port));
-			remote_addr.in.sin_addr.s_addr = get_addr(handle.content_buffer);
-			remote_addr.family             = AF_INET;
+			genode_sockaddr &remote_addr = _parent.remote_addr();
+			remote_addr.in.port          = host_to_big_endian<genode_uint16_t>(uint16_t(port));
+			remote_addr.in.addr          = get_addr(handle.content_buffer);
+			remote_addr.family           = AF_INET;
 
 			_parent.connect(true);
 
@@ -771,8 +771,8 @@ class Vfs::Lxip_local_file final : public Vfs::Lxip_file
 			genode_sockaddr addr;
 			if (genode_socket_getsockname(&_sock, &addr) != GENODE_ENONE) return -1;
 
-			unsigned char const *a = (unsigned char *)&addr.in.sin_addr.s_addr;
-			unsigned char const *p = (unsigned char *)&addr.in.sin_port;
+			unsigned char const *a = (unsigned char *)&addr.in.addr;
+			unsigned char const *p = (unsigned char *)&addr.in.port;
 			return Format::snprintf(dst.start, dst.num_bytes,
 			                        "%d.%d.%d.%d:%u\n",
 			                        a[0], a[1], a[2], a[3], (p[0]<<8)|(p[1]<<0));
@@ -832,8 +832,8 @@ class Vfs::Lxip_remote_file final : public Vfs::Lxip_file
 				break;
 			}
 
-			unsigned char const *a = (unsigned char *)&addr.in.sin_addr.s_addr;
-			unsigned char const *p = (unsigned char *)&addr.in.sin_port;
+			unsigned char const *a = (unsigned char *)&addr.in.addr;
+			unsigned char const *p = (unsigned char *)&addr.in.port;
 			return Format::snprintf(dst.start, dst.num_bytes,
 			                        "%d.%d.%d.%d:%u\n",
 			                        a[0], a[1], a[2], a[3], (p[0]<<8)|(p[1]<<0));
@@ -848,10 +848,10 @@ class Vfs::Lxip_remote_file final : public Vfs::Lxip_file
 			long const port = get_port(handle.content_buffer);
 			if (port == -1) return -1;
 
-			genode_sockaddr &remote_addr   = _parent.remote_addr();
-			remote_addr.in.sin_port        = host_to_big_endian<genode_uint16_t>(uint16_t(port));
-			remote_addr.in.sin_addr.s_addr = get_addr(handle.content_buffer);
-			remote_addr.family             = AF_INET;
+			genode_sockaddr &remote_addr = _parent.remote_addr();
+			remote_addr.in.port          = host_to_big_endian<genode_uint16_t>(uint16_t(port));
+			remote_addr.in.addr          = get_addr(handle.content_buffer);
+			remote_addr.family           = AF_INET;
 
 			return src.num_bytes;
 		}
@@ -1603,15 +1603,15 @@ class Vfs::Lxip_file_system : public Vfs::File_system,
 			unsigned const mtu = config.attribute_value("mtu", 0U);
 			if (mtu) {
 				log("Setting MTU to ", mtu);
-				genode_socket_mtu(mtu);
+				genode_socket_configure_mtu(mtu);
 			} else {
-				genode_socket_mtu(0);
+				genode_socket_configure_mtu(0);
 			}
 
 			if (config.attribute_value("dhcp", false)) {
 				log("Using DHCP for interface configuration.");
 				genode_socket_config address_config = { .dhcp = true };
-				genode_socket_address(&address_config);
+				genode_socket_config_address(&address_config);
 				return;
 			}
 
@@ -1640,7 +1640,7 @@ class Vfs::Lxip_file_system : public Vfs::File_system,
 					.nameserver = nameserver.string(),
 				};
 
-				genode_socket_address(&address_config);
+				genode_socket_config_address(&address_config);
 			} catch (...) { }
 		 }
 
