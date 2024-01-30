@@ -174,8 +174,9 @@ static int _sockaddr_len(struct genode_sockaddr const *addr)
 }
 
 
-struct socket *lx_sock_alloc(void) { return sock_alloc(); }
-void lx_sock_release(struct socket* sock) { sock_release(sock); };
+struct socket *lx_sock_alloc(void)                  { return sock_alloc(); }
+void           lx_sock_release(struct socket* sock) { sock_release(sock);  }
+
 
 extern int __setup_ip_auto_config_setup(char *);
 
@@ -304,11 +305,11 @@ enum Errno lx_socket_getsockopt(struct socket *sock, enum Sock_level level,
 
 	if (level == GENODE_SOL_SOCKET)
 		err = sock_getsockopt(sock, SOL_SOCKET, name, optval, optlen);
-/* we might need this later
+	/* we might need this later
 	else {
 		err = sock->ops->getsockopt(sock, SOL_SOCKET, name, optval, optlen);
 	}
-*/
+	*/
 
 	if (err) return _genode_errno(err);
 
