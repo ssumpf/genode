@@ -6,7 +6,7 @@
  * The functions here can only be called from native Genode EPs, the socket
  * calls will switch from the EP to DDE Linux task and call Linux kernel C-code.
  *
- * All calls except 'genode_socket_address' are non-blocking.
+ * All calls except 'genode_socket_config_address' are non-blocking.
  */
 
 /*
@@ -453,7 +453,7 @@ static void _destroy_handle(genode_socket_handle *handle)
  * Genode socket C-API
  */
 
-void genode_socket_address(struct genode_socket_config *config)
+void genode_socket_config_address(struct genode_socket_config *config)
 {
 	genode_socket_handle handle = {
 		.task  = lx_socket_dispatch_root(),
@@ -464,7 +464,7 @@ void genode_socket_address(struct genode_socket_config *config)
 }
 
 
-void genode_socket_mtu(unsigned mtu)
+void genode_socket_configure_mtu(unsigned mtu)
 {
 	genode_socket_handle handle = {
 		.task  = lx_socket_dispatch_root(),

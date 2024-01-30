@@ -138,8 +138,8 @@ static struct sockaddr _sockaddr(struct genode_sockaddr const *addr)
 	else if (addr->family == AF_INET) {
 		struct sockaddr_in in_addr = {
 			.sin_family      = AF_INET,
-			.sin_port        = addr->in.sin_port,
-			.sin_addr.s_addr = addr->in.sin_addr.s_addr
+			.sin_port        = addr->in.port,
+			.sin_addr.s_addr = addr->in.addr
 		};
 		memcpy(&sock_addr, &in_addr, sizeof(in_addr));
 	} else {
@@ -157,8 +157,8 @@ static void _genode_sockaddr(struct genode_sockaddr *addr,
 	if (length == sizeof(struct sockaddr_in)) {
 		struct sockaddr_in const * in = (struct sockaddr_in const *)linux_addr;
 		addr->family             = in->sin_family;
-		addr->in.sin_port        = in->sin_port;
-		addr->in.sin_addr.s_addr = in->sin_addr.s_addr;
+		addr->in.port            = in->sin_port;
+		addr->in.addr            = in->sin_addr.s_addr;
 	} else
 		printk("%s:%d: unknown sockaddr length %d\n", __func__, __LINE__, length);
 }
@@ -371,25 +371,25 @@ static struct msghdr *_create_msghdr(struct genode_msghdr *msg, bool write)
 	if (!msghdr) goto msghdr;
 
 	/* sockaddr */
-	if (msg->msg_name) {
-		struct sockaddr sock_addr = _sockaddr(msg->msg_name);
+	if (msg->name) {
+		struct sockaddr sock_addr = _sockaddr(msg->name);
 
 		storage = (struct sockaddr_storage *)kmalloc(sizeof(*storage), GFP_KERNEL);
 		if (!storage) goto sock_addr;
-		memcpy(storage, &sock_addr, _sockaddr_len(msg->msg_name));
+		memcpy(storage, &sock_addr, _sockaddr_len(msg->name));
 
 		msghdr->msg_name    = storage;
-		msghdr->msg_namelen = _sockaddr_len(msg->msg_name);
+		msghdr->msg_namelen = _sockaddr_len(msg->name);
 	}
 
 	/* iovec iterator */
 	msghdr->msg_iter.iter_type   = ITER_IOVEC;
 	msghdr->msg_iter.data_source = write;
-	msghdr->msg_iter.nr_segs     = msg->msg_iovlen;
-	msghdr->msg_iter.iov         = (struct iovec *)msg->msg_iov;
+	msghdr->msg_iter.nr_segs     = msg->iovlen;
+	msghdr->msg_iter.iov         = (struct iovec *)msg->iov;
 
-	for (unsigned i = 0; i < msg->msg_iovlen; i++)
-		total += msg->msg_iov[i].iov_size;
+	for (unsigned i = 0; i < msg->iovlen; i++)
+		total += msg->iov[i].size;
 
 	msghdr->msg_iter.count = total;
 
@@ -448,8 +448,8 @@ enum Errno lx_socket_recvmsg(struct socket *sock, struct genode_msghdr *msg,
 	ret = sock->ops->recvmsg(sock, m, m->msg_iter.count, flags);
 
 	/* convert to genode_sockaddr */
-	if (ret && msg->msg_name) {
-		_genode_sockaddr(msg->msg_name, m->msg_name, _sockaddr_len(msg->msg_name));
+	if (ret && msg->name) {
+		_genode_sockaddr(msg->name, m->msg_name, _sockaddr_len(msg->name));
 	}
 
 	_destroy_msghdr(m);

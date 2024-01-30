@@ -114,19 +114,14 @@ enum Sock_level {
 
 struct genode_socket_handle;
 
-struct genode_in_addr
-{
-	genode_uint32_t s_addr; /* be */
-};
-
 struct genode_sockaddr
 {
 	genode_uint16_t family;
 	union {
 		/* AF_INET (or IPv4) */
 		struct {
-			genode_uint16_t       sin_port; /* be */
-			struct genode_in_addr sin_addr; /* be */
+			genode_uint16_t port; /* be */
+			genode_uint32_t addr; /* be */
 		} in;
 	};
 };
@@ -162,12 +157,12 @@ struct genode_socket_config
 /**
  * Configure/obtain IP address (blocking)
  */
-void genode_socket_address(struct genode_socket_config *config);
+void genode_socket_config_address(struct genode_socket_config *config);
 
 /**
  * Configure MTU size (default should be 1500)
  */
-void genode_socket_mtu(unsigned mtu);
+void genode_socket_configure_mtu(unsigned mtu);
 
 
 /**
@@ -223,17 +218,18 @@ enum Errno genode_socket_getpeername(struct genode_socket_handle *,
  */
 struct genode_iovec
 {
-	void         *iov_base;
-	unsigned long iov_size;
+	void         *base;
+	unsigned long size;
 };
 
 
 struct genode_msghdr
 {
-	struct genode_sockaddr *msg_name;   /* can be NULL for TCP    */
-	struct genode_iovec    *msg_iov;    /* array of iovecs        */
-	unsigned long           msg_iovlen; /* nr elements in msg_iov */
+	struct genode_sockaddr *name;   /* can be NULL for TCP    */
+	struct genode_iovec    *iov;    /* array of iovecs        */
+	unsigned long           iovlen; /* nr elements in msg_iov */
 };
+
 
 enum Errno genode_socket_sendmsg(struct genode_socket_handle *,
                                  struct genode_msghdr *,

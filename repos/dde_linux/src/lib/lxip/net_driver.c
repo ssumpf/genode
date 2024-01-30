@@ -70,7 +70,6 @@ static int driver_net_xmit(struct sk_buff *skb, struct net_device *dev)
 	/* transmit to nic-session */
 	if (!progress) {
 		/* tx queue is  full, could not enqueue packet */
-		pr_debug("TX packet dropped\n");
 		return NETDEV_TX_BUSY;
 	}
 
