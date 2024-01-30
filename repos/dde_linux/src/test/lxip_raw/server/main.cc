@@ -78,7 +78,7 @@ struct Test::Server
 			.nameserver = nameserver.string(),
 		};
 
-		genode_socket_address(&address_config);
+		genode_socket_config_address(&address_config);
 	}
 
 	void serve(genode_socket_handle *handle)
@@ -139,9 +139,9 @@ struct Test::Server
 		                               &opt, sizeof(opt)) == GENODE_ENONE);
 
 		genode_sockaddr addr;
-		addr.family             = AF_INET;
-		addr.in.sin_port        = host_to_big_endian(port);
-		addr.in.sin_addr.s_addr = INADDR_ANY;
+		addr.family  = AF_INET;
+		addr.in.port = host_to_big_endian(port);
+		addr.in.addr = INADDR_ANY;
 		ASSERT("bind socket...", genode_socket_bind(handle, &addr) == GENODE_ENONE);
 		ASSERT("bind socket re-use...", genode_socket_bind(handle_reuse, &addr) == GENODE_ENONE);
 
@@ -172,9 +172,9 @@ struct Test::Server
 		       (handle = genode_socket(AF_INET, SOCK_DGRAM, 0, &err)) != nullptr);
 
 		genode_sockaddr addr;
-		addr.family             = AF_INET;
-		addr.in.sin_port        = host_to_big_endian<genode_uint16_t>(port);
-		addr.in.sin_addr.s_addr = ip_addr.to_uint32_big_endian();
+		addr.family  = AF_INET;
+		addr.in.port = host_to_big_endian<genode_uint16_t>(port);
+		addr.in.addr = ip_addr.to_uint32_big_endian();
 		ASSERT("bind socket...", genode_socket_bind(handle, &addr) == GENODE_ENONE);
 		err = genode_socket_bind(handle, &addr);
 
@@ -196,7 +196,7 @@ struct Test::Server
 
 				if (once) {
 					Ipv4_address sender_ip =
-						Ipv4_address::from_uint32_big_endian(recv_addr.in.sin_addr.s_addr);
+						Ipv4_address::from_uint32_big_endian(recv_addr.in.addr);
 
 					char expected[] = { 10, 0, 2, 2 };
 					Ipv4_address expected_ip { expected };

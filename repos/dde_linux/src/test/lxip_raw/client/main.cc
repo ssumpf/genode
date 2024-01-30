@@ -63,7 +63,7 @@ struct Test::Client
 		genode_socket_init(genode_env_ptr(env), nullptr);
 
 		genode_socket_config address_config = { .dhcp = true };
-		genode_socket_address(&address_config);
+		genode_socket_config_address(&address_config);
 	}
 
 	/* connect blocking version */
@@ -119,9 +119,9 @@ struct Test::Client
 		       (handle = genode_socket(AF_INET, SOCK_STREAM, 0, &err)) != nullptr);
 
 		genode_sockaddr addr;
-		addr.family             = AF_INET;
-		addr.in.sin_port        = host_to_big_endian(port);
-		addr.in.sin_addr.s_addr = ip_addr.to_uint32_big_endian();
+		addr.family  = AF_INET;
+		addr.in.port = host_to_big_endian(port);
+		addr.in.addr = ip_addr.to_uint32_big_endian();
 		ASSERT("connect...", connect(handle, &addr) == true);
 
 		genode_sockaddr name;
@@ -129,13 +129,13 @@ struct Test::Client
 
 		char expected_name[] = { 10, 0, 2, 2 };
 		ASSERT("check expected sockname IP...",
-			Ipv4_address::from_uint32_big_endian(name.in.sin_addr.s_addr) == Ipv4_address(expected_name));
+			Ipv4_address::from_uint32_big_endian(name.in.addr) == Ipv4_address(expected_name));
 
 		ASSERT("getpeername... ", genode_socket_getpeername(handle, &name) == GENODE_ENONE);
 
 		char expected_peer[] = { 10, 0, 2, 3 };
 		ASSERT("check expected peername IP...",
-			Ipv4_address::from_uint32_big_endian(name.in.sin_addr.s_addr) == Ipv4_address(expected_peer));
+			Ipv4_address::from_uint32_big_endian(name.in.addr) == Ipv4_address(expected_peer));
 
 		/* send request */
 		String<64> request { "GET / HTTP/1.0\r\nHost: localhost:80\r\n\r\n" };
@@ -168,9 +168,9 @@ struct Test::Client
 		       (handle = genode_socket(AF_INET, SOCK_DGRAM, 0, &err)) != nullptr);
 
 		genode_sockaddr addr;
-		addr.family             = AF_INET;
-		addr.in.sin_port        = host_to_big_endian<genode_uint16_t>(port);
-		addr.in.sin_addr.s_addr = ip_addr.to_uint32_big_endian();
+		addr.family  = AF_INET;
+		addr.in.port = host_to_big_endian<genode_uint16_t>(port);
+		addr.in.addr = ip_addr.to_uint32_big_endian();
 
 		for (unsigned i = 0; i < data.size(); i += MAX_UDP_LOAD) {
 			Msg_header msg { addr, data.buffer() + i, MAX_UDP_LOAD};

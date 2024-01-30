@@ -27,14 +27,14 @@ namespace Test {
 		Msg_header(void const *data, unsigned long size)
 		: iovec { const_cast<void *>(data), size }
 		{
-			msg.msg_iov    = &iovec;
-			msg.msg_iovlen = 1;
+			msg.iov    = &iovec;
+			msg.iovlen = 1;
 		}
 
 		Msg_header(genode_sockaddr &name, void const *data, unsigned long size)
 		: Msg_header(data, size)
 		{
-			msg.msg_name = &name;
+			msg.name = &name;
 		}
 
 		genode_msghdr *header() { return &msg; }
