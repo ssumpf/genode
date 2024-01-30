@@ -68,9 +68,6 @@ struct genode_nic_client : private Noncopyable, private Interface
 			_connection.rx_channel()->sigh_packet_avail   (sigh);
 			_connection.tx_channel()->sigh_ack_avail      (sigh);
 			_connection.tx_channel()->sigh_ready_to_submit(sigh);
-
-			///* trigger signal handling once after construction */
-			//Signal_transmitter(sigh).submit();
 		}
 
 		void notify_peer()

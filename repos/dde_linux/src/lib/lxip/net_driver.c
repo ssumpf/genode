@@ -92,9 +92,6 @@ static const struct net_device_ops net_ops =
 {
 	.ndo_open       = net_open,
 	.ndo_start_xmit = driver_net_xmit,
-/*
-	.ndo_change_mtu = driver_change_mtu,
-*/
 };
 
 
