@@ -163,33 +163,38 @@ struct Dmar_struct_header : Generic
 
 
 /* Intel VT-d IO Spec - 8.3.1. */
-struct Device_scope : Genode::Mmio<0xe>
+struct Device_scope : Genode::Mmio<0x6>
 {
-	enum { MAX_PATHS = 4 };
-
 	Device_scope(Byte_range_ptr const &range) : Mmio(range) { }
 
 	struct Type   : Register<0x0, 8> { enum { PCI_END_POINT = 0x1 }; };
 	struct Length : Register<0x1, 8> { };
 	struct Bus    : Register<0x5, 8> { };
 
-	struct Path   : Register_array<0x6, 8, MAX_PATHS, 16> {
-		struct Dev  : Bitfield<0,8> { };
-		struct Func : Bitfield<8,8> { };
+	struct Path : Genode::Mmio<0x2>
+	{
+		Path(Byte_range_ptr const &range) : Mmio(range) { }
+
+		struct Dev  : Register<0, 8> { };
+		struct Func : Register<1, 8> { };
+
+		uint8_t dev()  const { return read<Dev >(); }
+		uint8_t func() const { return read<Func>(); }
 	};
 
-	unsigned count() const {
-		unsigned const length = read<Length>();
-		if (length < 6)
-			return 0;
+	void for_each_path(auto const &fn) const
+	{
+		auto const length = read<Length>();
 
-		unsigned paths = (read<Length>() - 6) / 2;
-		if (paths > MAX_PATHS) {
-			Genode::error("Device_scope: more paths (", paths, ") than"
-			              " supported (", (int)MAX_PATHS,")");
-			return MAX_PATHS;
+		unsigned offset = Device_scope::SIZE;
+
+		while (offset < length) {
+			Path const path(Mmio::range_at(offset));
+
+			fn(path);
+
+			offset += Path::SIZE;
 		}
-		return paths;
 	}
 };
 
@@ -1651,20 +1656,16 @@ void Acpi::generate_report(Genode::Env &env, Genode::Allocator &alloc,
 		/* lambda definition for scope evaluation in rmrr */
 		auto func_scope = [&] (Device_scope const &scope)
 		{
-			if (!scope.count())
-				return;
-
 			xml.node("scope", [&] () {
 				xml.attribute("bus_start", scope.read<Device_scope::Bus>());
 				xml.attribute("type", scope.read<Device_scope::Type>());
-				for (unsigned j = 0 ; j < scope.count(); j++) {
+
+				scope.for_each_path([&](auto const &path) {
 					xml.node("path", [&] () {
-						attribute_hex(xml, "dev",
-						              scope.read<Device_scope::Path::Dev>(j));
-						attribute_hex(xml, "func",
-						              scope.read<Device_scope::Path::Func>(j));
+						attribute_hex(xml, "dev" , path.dev());
+						attribute_hex(xml, "func", path.func());
 					});
-				}
+				});
 			});
 		};
 
