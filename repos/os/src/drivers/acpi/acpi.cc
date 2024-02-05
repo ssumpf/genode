@@ -311,15 +311,11 @@ struct Ivrs : Genode::Mmio<0x28>
 	}
 };
 
-/* Fixed ACPI description table (FADT) */
-struct Fadt : Genode::Mmio<0x88>
+
+struct Fadt_reset : Genode::Mmio<0x88>
 {
-	size_t const size;
+	Fadt_reset(Byte_range_ptr const &range) : Mmio(range) { }
 
-	Fadt(Byte_range_ptr const &range) : Mmio(range), size(range.num_bytes) { }
-
-	struct Dsdt           : Register<0x28, 32> { };
-	struct Sci_int        : Register<0x2e, 16> { };
 	struct Features       : Register<0x70, 32> {
 		/* Table 5-35 Fixed ACPI Description Table Fixed Feature Flags */
 		struct Reset : Bitfield<10, 1> { };
@@ -333,25 +329,31 @@ struct Fadt : Genode::Mmio<0x88>
 	struct Reset_reg      : Register<0x78, 64> { };
 	struct Reset_value    : Register<0x80,  8> { };
 
-	bool dsdt_valid() {
-		 return size >= Dsdt::OFFSET + Dsdt::ACCESS_WIDTH / 8; }
+	uint16_t io_port_reset() const { return read<Reset_reg>() & 0xffffu; }
+	uint8_t  reset_value()   const { return read<Fadt_reset::Reset_value>(); }
+};
 
-	bool sci_int_valid() {
-		 return size >= Sci_int::OFFSET + Sci_int::ACCESS_WIDTH / 8; }
 
-	bool io_reset_supported()
+/* Fixed ACPI description table (FADT) */
+struct Fadt : Genode::Mmio<0x30>
+{
+	Fadt(Byte_range_ptr const &range) : Mmio(range) { }
+
+	struct Dsdt    : Register<0x28, 32> { };
+	struct Sci_int : Register<0x2e, 16> { };
+
+	void detect_io_reset(auto const &range, auto const &fn) const
 	{
-		if (size < Reset_value::OFFSET + Reset_value::ACCESS_WIDTH / 8)
-			return false;
+		if (range.num_bytes < Fadt_reset::SIZE)
+			return;
 
-		if (!read<Features::Reset>())
-			return false;
+		Fadt_reset const reset(range);
 
-		if (read<Reset_type::Address_space>() == Reset_type::Address_space::SYSTEM_IO)
-			return true;
+		if (!read<Fadt_reset::Features::Reset>())
+			return;
 
-		warning("unsupported reset mode ", read<Reset_type::Address_space>());
-		return false;
+		if (read<Fadt_reset::Reset_type::Address_space>() == Fadt_reset::Reset_type::Address_space::SYSTEM_IO)
+			fn(reset);
 	}
 };
 
@@ -1435,23 +1437,21 @@ class Acpi_table
 						ivrs.parse(_heap);
 					}
 
-					if (table.is_facp()) {
-						Fadt fadt({(char *)table->signature, table->size});
+					if (table.is_facp() && (Fadt::SIZE <= table->size)) {
+						Byte_range_ptr const range((char *)table->signature,
+						                           table->size);
 
-						if (fadt.dsdt_valid())
-							dsdt = fadt.read<Fadt::Dsdt>();
+						Fadt fadt(range);
 
-						if (fadt.io_reset_supported()) {
-							uint16_t const reset_io_port = fadt.read<Fadt::Reset_reg>() & 0xffffu;
-							uint8_t  const reset_value   = fadt.read<Fadt::Reset_value>();
+						dsdt = fadt.read<Fadt::Dsdt>();
 
-							_reset_info.construct(Reset_info { .io_port = reset_io_port,
-							                                   .value   = reset_value });
-						}
-						if (fadt.sci_int_valid()) {
-							_sci_int = fadt.read<Fadt::Sci_int>();
-							_sci_int_valid = true;
-						}
+						_sci_int = fadt.read<Fadt::Sci_int>();
+						_sci_int_valid = true;
+
+						fadt.detect_io_reset(range, [&](auto const &reset) {
+							_reset_info.construct(Reset_info { .io_port = reset.io_port_reset(),
+							                                   .value   = reset.reset_value() });
+						});
 					}
 
 					if (table.is_searched()) {
