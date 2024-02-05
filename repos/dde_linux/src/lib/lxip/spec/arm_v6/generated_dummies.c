@@ -1,7 +1,7 @@
 /*
  * \brief  Dummy definitions of Linux Kernel functions
  * \author Automatically generated file - do no edit
- * \date   2024-01-24
+ * \date   2024-02-05
  */
 
 #include <lx_emul.h>
@@ -433,30 +433,6 @@ int device_rename(struct device * dev,const char * new_name)
 #include <linux/device.h>
 
 int devm_add_action(struct device * dev,void (* action)(void *),void * data)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/math64.h>
-
-u64 div64_u64(u64 dividend,u64 divisor)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/math64.h>
-
-u64 div64_u64_rem(u64 dividend,u64 divisor,u64 * remainder)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/math64.h>
-
-s64 div_s64_rem(s64 dividend,s32 divisor,s32 * remainder)
 {
 	lx_emul_trace_and_stop(__func__);
 }
