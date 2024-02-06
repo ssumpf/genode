@@ -145,6 +145,8 @@ struct Ahci::Hba : private Platform::Device::Mmio<0x28>
 
 	/**
 	 * Ports implemented
+	 *
+	 * Each bit set here corresponds to a port that can be accessed by software
 	 */
 	struct Pi : Register<0xc, 32> { };
 
@@ -491,11 +493,6 @@ struct Ahci::Port_base_tpl : Mmio<SIZE>
 	          Base::Delayer &delayer)
 	: Base(hba.range_at(offset() + (index * size()))),
 	  index(index), plat(plat), hba(hba), delayer(delayer) { }
-
-	bool implemented() const
-	{
-		return hba.port_implemented(index);
-	}
 
 	bool ata() const { return Base::template read<Sig>() == ATA_SIG; }
 
