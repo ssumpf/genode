@@ -157,6 +157,7 @@ struct evdev_xy
 struct evdev_touchpad
 {
 	typeof(jiffies) touch_time;
+	bool            btn_left_pressed; /* state of (physical) BTN_LEFT */
 };
 
 
@@ -417,21 +418,17 @@ static void submit_touchtool(struct evdev *evdev, struct genode_event_submit *su
 }
 
 
-static void touchpad_tap_to_click(struct evdev *evdev, struct genode_event_submit *submit)
+static void touchpad_tap_to_click(struct evdev_key *key, struct evdev_touchpad *tp,
+                                  struct genode_event_submit *submit)
 {
 	enum { TAP_TIME = 130 /* max touch duration in ms */ };
-
-	struct evdev_key * const key = &evdev->key;
-
-	struct evdev_touchpad * const tp = &evdev->touchpad;
 
 	if (!key->pending || key->code != BTN_TOUCH)
 		return;
 
-	if (key->press) {
+	if (key->press && !tp->btn_left_pressed) {
 		tp->touch_time = key->jiffies;
 	} else {
-		/* TODO do not emit click if motion beyond some threshold was detected */
 		if (time_before(key->jiffies, tp->touch_time + msecs_to_jiffies(TAP_TIME))) {
 			submit->press(submit, lx_emul_event_keycode(BTN_LEFT));
 			submit->release(submit, lx_emul_event_keycode(BTN_LEFT));
@@ -445,7 +442,9 @@ static void touchpad_tap_to_click(struct evdev *evdev, struct genode_event_submi
 
 static void submit_touchpad(struct evdev *evdev, struct genode_event_submit *submit)
 {
+	struct evdev_key * const key = &evdev->key;
 	struct evdev_mt * const mt = &evdev->mt;
+	struct evdev_touchpad * const tp = &evdev->touchpad;
 
 	if (evdev->motion != MOTION_TOUCHPAD)
 		return;
@@ -480,7 +479,11 @@ static void submit_touchpad(struct evdev *evdev, struct genode_event_submit *sub
 		mt->pending = false;
 	}
 
-	touchpad_tap_to_click(evdev, submit);
+	/* monitor (physical) button state clashing with tap-to-click */
+	if (key->pending && key->code == BTN_LEFT)
+		tp->btn_left_pressed = key->press;
+
+	touchpad_tap_to_click(key, tp, submit);
 }
 
 
