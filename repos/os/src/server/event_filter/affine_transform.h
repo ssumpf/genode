@@ -12,7 +12,7 @@
  * y = A*x + b
  *
  * Both operations can be combined by using an augmented matrix that includes
- * the translation vector. A seuqence of transformations can be combined into a
+ * the translation vector. A sequence of transformations can be combined into a
  * single transformation matrix by multiplication of respective matrices.
  */
 
