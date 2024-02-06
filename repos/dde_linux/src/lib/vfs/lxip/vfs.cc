@@ -1919,23 +1919,131 @@ class Vfs::Lxip_file_system : public Vfs::File_system,
 
 struct Lxip_factory : Vfs::File_system_factory
 {
-
-	/* wakup user task */
-	static void socket_progress(void *data)
+	struct Callback_data
 	{
-		Vfs::Env *env = static_cast<Vfs::Env *>(data);
-		env->user().wakeup_vfs_user();
-		poll_all();
+		Lxip_factory *factory { nullptr };
+		Vfs::Env     *env     { nullptr };
+	};
+
+	Callback_data _callback_data { };
+
+
+	/*
+	 * Handle random numbers
+	 */
+
+	genode_socket_callback _random_callback { &_callback_data, random };
+	Vfs::Vfs_handle       *_random_handle   { nullptr };
+	genode_uint64_t        _random_current  { 0 };
+	bool                   _random_queued   { false };
+
+	bool open_random_handle(Vfs::Env &env, Genode::Xml_node const &config)
+	{
+		using Result = Vfs::Directory_service::Open_result;
+
+		Vfs::Absolute_path path = config.attribute_value("random_path",
+			Genode::String<Vfs::Absolute_path::capacity()>()).string();
+
+		if (path == "/") {
+			Genode::error("Missing \"random_path\" attribute for random number generator. "
+			              "Aborting.");
+			return false;
+		}
+
+		Result result = env.root_dir().open(path.string(),
+		                                    Vfs::Directory_service::OPEN_MODE_RDONLY,
+		                                    &_random_handle, env.alloc());
+
+		if (result != Result::OPEN_OK) {
+			Genode::error("Could not open \"random_path\" (returned ",
+			              (unsigned)result, "). Aborting\n",
+			              "\tMake sure target of \"random_path\" is configured before "
+			              "lxip in <vfs> and that the path is absolute.");
+			return false;
+		}
+
+		return true;
 	}
 
-	struct genode_socket_io_progress io_progress { };
+	void update_random()
+	{
+		using Result = Vfs::File_io_service::Read_result;
+
+		/* update only if value has been read since last call */
+		if (_random_current) return;
+
+		Genode::Byte_range_ptr dst { (char*)&_random_current, sizeof(_random_current) };
+		if (_random_queued == false)
+			if (_random_handle->fs().queue_read(_random_handle, dst.num_bytes) == false)
+				return;
+
+		Genode::size_t bytes = 0;
+		Result result = _random_handle->fs().complete_read(_random_handle, dst, bytes);
+		if (result == Result::READ_QUEUED) {
+			_random_queued = true;
+			return;
+		}
+
+		if (result != Result::READ_OK) {
+			Genode::warning(__func__, ": complete read returned: ", (unsigned)result);
+			_random_current = 0;
+		}
+
+		_random_queued = false;
+	}
+
+	static genode_uint64_t random(void *data)
+	{
+		Lxip_factory *factory = static_cast<Callback_data *>(data)->factory;
+
+		genode_uint64_t random   = factory->_random_current;
+		factory->_random_current = 0;
+		return random;
+	}
+
+
+	/*
+	 * Signal I/O progress to upper layers
+	 */
+
+	genode_socket_callback _io_progress { &_callback_data, socket_progress };
+
+	/* wakup user task */
+	static genode_uint64_t socket_progress(void *data)
+	{
+		Callback_data *cb      = static_cast<Callback_data *>(data);
+		Lxip_factory  *factory = cb->factory;
+		Vfs::Env      *env     = cb->env;
+
+		/*
+		 * update random because we cannot update it in callback which might not be
+		 * from EP
+		 */
+		factory->update_random();
+
+		env->user().wakeup_vfs_user();
+		poll_all();
+
+		return 0;
+	}
+
+	genode_socket_callbacks _callbacks { &_io_progress, &_random_callback };
+
+	/*
+	 * Factory interface
+	 */
 
 	Vfs::File_system *create(Vfs::Env &env, Genode::Xml_node config) override
 	{
-		io_progress.data = &env;
-		io_progress.callback = socket_progress;
+		_callback_data.factory = this;
+		_callback_data.env     = &env;
 
-		genode_socket_init(genode_env_ptr(env.env()), &io_progress);
+		if (open_random_handle(env, config) == false)
+			return nullptr;
+
+		update_random();
+
+		genode_socket_init(genode_env_ptr(env.env()), &_callbacks);
 
 		return new (env.alloc()) Vfs::Lxip_file_system(env, config);
 	}

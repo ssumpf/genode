@@ -1,7 +1,6 @@
 base
 format
 genode_c_api
-jitterentropy
 nic_session
 os
 so
