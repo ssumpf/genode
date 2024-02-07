@@ -8,7 +8,7 @@
 # done | nc -u 10.0.2.55 7
 #
 
-proc ipstack         { } { return lxip }
+proc ipstack         { } { return "lxip random_path=\"/random\"" }
 proc protocol        { } { return udp }
 proc use_dynamic_rom { } { return false }
 

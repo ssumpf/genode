@@ -82,8 +82,9 @@
 								<libc stdout="/log" stderr="/log" socket="/socket"/>
 								<vfs>
 									<log/>
+									<inline name="random">0123456789012345678901234567890123456789</inline>
 									<dir name="socket">
-										<lxip ip_addr="192.168.1.1" netmask="255.255.255.0"/>
+										<lxip random_path="/random" ip_addr="192.168.1.1" netmask="255.255.255.0"/>
 									</dir>
 								</vfs>
 							</config>
@@ -98,8 +99,9 @@
 								<libc stdout="/log" stderr="/log" socket="/socket"/>
 								<vfs>
 									<log/>
+									<inline name="random">0123456789012345678901234567890123456789</inline>
 									<dir name="socket">
-										<lxip ip_addr="192.168.1.2" netmask="255.255.255.0"/>
+										<lxip random_path="/random" ip_addr="192.168.1.2" netmask="255.255.255.0"/>
 									</dir>
 								</vfs>
 							</config>
@@ -131,7 +133,8 @@
 							<provides> <service name="File_system"/> </provides>
 							<config>
 								<vfs>
-									<dir name="socket"> <lxip ip_addr="192.168.1.1" netmask="255.255.255.0"/> </dir>
+									<inline name="random">0123456789012345678901234567890123456789</inline>
+									<dir name="socket"> <lxip random_path="/random" ip_addr="192.168.1.1" netmask="255.255.255.0"/> </dir>
 								</vfs>
 								<default-policy writeable="yes" root="/"/>
 							</config>
@@ -143,7 +146,8 @@
 							<provides> <service name="File_system"/> </provides>
 							<config>
 								<vfs>
-									<dir name="socket"> <lxip ip_addr="192.168.1.2" netmask="255.255.255.0"/> </dir>
+									<inline name="random">0123456789012345678901234567890123456789</inline>
+									<dir name="socket"> <lxip random_path="/random" ip_addr="192.168.1.2" netmask="255.255.255.0"/> </dir>
 								</vfs>
 								<default-policy writeable="yes" root="/"/>
 							</config>

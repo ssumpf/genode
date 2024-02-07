@@ -90,14 +90,16 @@ install_config {
 			<rom name="socket_fs.config"><inline description="static">
 			<config>
 				<vfs>
-					<lxip ip_addr="10.0.2.55" netmask="255.255.255.0" gateway="10.0.2.1" nameserver="8.8.8.8"/>
+					<inline name="random">0123456789012345678901234567890123456789</inline>
+					<lxip random_path="/random" ip_addr="10.0.2.55" netmask="255.255.255.0" gateway="10.0.2.1" nameserver="8.8.8.8"/>
 				</vfs>
 			</config>
 			</inline>
 			<sleep milliseconds="2500"/> <inline description="dynamic">
 			<config>
 				<vfs>
-					<lxip mtu="1000" dhcp="yes"/>
+					<inline name="random">0123456789012345678901234567890123456789</inline>
+					<lxip random_path="/random" mtu="1000" dhcp="yes"/>
 				</vfs>
 			</config>
 			</inline>

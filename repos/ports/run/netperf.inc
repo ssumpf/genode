@@ -135,7 +135,7 @@ set netperf_tests "TCP_STREAM TCP_MAERTS"
 
 proc socket_fs_plugin {} {
 	global use_lxip
-	if { $use_lxip } { return lxip }
+	if { $use_lxip } { return "lxip random_path=\"/dev/random\"" }
 	return lwip
 }
 
@@ -408,6 +408,7 @@ append config {
 			<vfs>
 				<dir name="dev">
 					<log/> <inline name="rtc">2018-01-01 00:01</inline>
+					<inline name="random">0123456789012345678901234567890123456789</inline>
 				</dir>
 				<dir name="socket">
 					<} [socket_fs_plugin] { dhcp="yes"/>

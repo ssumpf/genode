@@ -112,6 +112,7 @@ append_if [use_dynamic_rom] config {
 			<rom name="socket_fs.config"> <inline description="MTU default">
 			<config ld_verbose="yes">
 				<vfs>
+					<inline name="random">0123456789012345678901234567890123456789</inline>
 					<dir name="socket">
 						<} [ipstack] { ip_addr="10.0.3.55" netmask="255.255.255.0" gateway="10.0.3.1" nameserver="8.8.8.8"/>
 					</dir>
@@ -122,6 +123,7 @@ append_if [use_dynamic_rom] config {
 			<sleep milliseconds="3000"/> <inline description="MTU 400">
 			<config ld_verbose="yes">
 				<vfs>
+					<inline name="random">0123456789012345678901234567890123456789</inline>
 					<dir name="socket">
 						<} [ipstack] { mtu="400" ip_addr="10.0.3.55" netmask="255.255.255.0" gateway="10.0.3.1" nameserver="8.8.8.8"/>
 					</dir>
@@ -156,6 +158,7 @@ if {[use_dynamic_rom]} { append config {
 		</route>
 		<config ld_verbose="yes">
 			<vfs>
+				<inline name="random">0123456789012345678901234567890123456789</inline>
 				<dir name="socket">
 					<!-- <} [ipstack] { ip_addr="10.0.3.55" netmask="255.255.255.0" gateway="10.0.3.1" nameserver="8.8.8.8"/> -->
 					<} [ipstack] { dhcp="yes"/>
