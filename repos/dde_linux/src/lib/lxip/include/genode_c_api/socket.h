@@ -126,19 +126,30 @@ struct genode_sockaddr
 	};
 };
 
-/*
- * I/O progress callback can be registered via genode_socket_init and is
- * executed when possible progress (e.g., packet received) has been made
- */
-struct genode_socket_io_progress
+struct genode_socket_callback
 {
-	void  *data;
-	void (*callback)(void *);
+	void             *data;
+	genode_uint64_t (*func)(void *);
+};
+
+struct genode_socket_callbacks
+{
+	/*
+	 * I/O progress callback can be registered and is executed when possible
+	 * progress (e.g., packet received) has been made
+	 */
+	struct genode_socket_callback *io;
+
+	/*
+	 * The seeds for random number generation have to be provided by the interface
+	 * user, the function should return a different seed for each call
+	 */
+	struct genode_socket_callback *random;
 };
 
 
 void genode_socket_init(struct genode_env *env,
-                        struct genode_socket_io_progress *);
+                        struct genode_socket_callbacks *);
 
 
 /**

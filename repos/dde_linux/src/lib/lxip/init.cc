@@ -27,7 +27,7 @@ using namespace Genode;
 struct Main
 {
 	Env &env;
-	genode_socket_io_progress *io_progress;
+	genode_socket_callback *io_progress;
 
 	Signal_handler<Main> schedule_handler   { env.ep(), *this,
 		&Main::handle_schedule };
@@ -35,7 +35,7 @@ struct Main
 	Io_signal_handler<Main> nic_client_handler { env.ep(), *this,
 		&Main::handle_nic_client };
 
-	Main(Env &env, genode_socket_io_progress *io_progress)
+	Main(Env &env, genode_socket_callback *io_progress)
 	: env(env), io_progress(io_progress)
 	{ }
 
@@ -43,8 +43,8 @@ struct Main
 	{
 		Lx_kit::env().scheduler.execute();
 
-		if (io_progress && io_progress->callback)
-			io_progress->callback(io_progress->data);
+		if (io_progress && io_progress->func)
+			io_progress->func(io_progress->data);
 	}
 
 	void handle_nic_client()
@@ -53,8 +53,8 @@ struct Main
 		lx_emul_task_unblock(lx_nic_client_rx_task());
 		Lx_kit::env().scheduler.execute();
 
-		if (io_progress && io_progress->callback)
-			io_progress->callback(io_progress->data);
+		if (io_progress && io_progress->func)
+			io_progress->func(io_progress->data);
 	}
 
 	void init()
@@ -69,11 +69,19 @@ struct Main
 };
 
 
+struct genode_socket_callback *_random_callback = nullptr;
+
+extern "C"
 void genode_socket_init(struct genode_env *_env,
-                        struct genode_socket_io_progress *io_progress)
+                        struct genode_socket_callbacks *callbacks)
 {
 	Env &env = *static_cast<Env *>(_env);
-	static Main main { env, io_progress };
+	static Main main { env, callbacks ? callbacks->io : nullptr };
+
+	if (callbacks && callbacks->random && callbacks->random->func)
+		_random_callback = callbacks->random;
+	else
+		warning("No random callback provided, randomness quality is poor");
 
 	Lx_kit::initialize(env, main.schedule_handler);
 
@@ -86,4 +94,13 @@ void genode_socket_init(struct genode_env *_env,
 
 	/* wait to finish initialization before returning to callee */
 	lx_emul_execute_kernel_until(lx_user_startup_complete, nullptr);
+}
+
+
+extern "C"
+genode_uint64_t lx_emul_random_external_seed()
+{
+	if (!_random_callback) return 0;
+
+	return _random_callback->func(_random_callback->data);
 }

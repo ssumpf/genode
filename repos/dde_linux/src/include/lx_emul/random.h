@@ -46,6 +46,11 @@ void lx_emul_random_gen_bytes(void          *dst,
 genode_uint32_t lx_emul_random_gen_u32(void);
 genode_uint64_t lx_emul_random_gen_u64(void);
 
+/**
+ * Return a seed used to seed the randomness functions
+ */
+genode_uint64_t lx_emul_random_external_seed(void);
+
 #ifdef __cplusplus
 }
 #endif

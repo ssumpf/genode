@@ -1,5 +1,5 @@
 LXIP_DIR       := $(REP_DIR)/src/lib/lxip
-LIBS           := jitterentropy virt_lx_emul virt_linux_generated
+LIBS           := virt_lx_emul virt_linux_generated
 SHARED_LIB     := yes
 
 TARGET_LIB_DIR := $(LXIP_DIR)
@@ -26,7 +26,7 @@ SRC_CC += genode_c_api/nic_client.cc
 #
 LD_OPT += -Bsymbolic-functions
 
-vpath %.cc $(REP_DIR)/src/lib
+vpath %.cc $(LXIP_DIR)
 vpath %.c  $(LXIP_DIR)/spec/$(SPEC_ARCH)
 vpath %    $(LXIP_DIR)
 
