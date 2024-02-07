@@ -1,0 +1,28 @@
+This VFS plugins provides access to the Linux based IP stack and can be used
+with together with our libc or VFS server.
+
+The plugin is loaded and configured within the <vfs> node:
+
+!
+! <vfs>
+!   <dir name="dev">
+!     <jitterentropy name="random"/>
+!   </dir>
+!   <dir name="socket>
+!     <lxip random_path="/dev/random" dhcp="yes"/>
+!  </dir>
+! </vfs>
+
+Configuration attributes:
+
+:'dhcp': Bool, use DHCP to obtain IP address, gateway, and nameserver
+
+: 'ip_addr'
+  'netmask'
+  'gateway'
+  'nameserver': IPv4 addresses can be used for static address configuration
+
+: 'mtu': Number, set the maximum transfer unit (default 1500)
+
+: 'random_path': This is mandatory and should point to a target that generates
+                 random data (vfs_jitterentropy in the example above.
