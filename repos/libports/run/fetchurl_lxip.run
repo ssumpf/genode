@@ -1,2 +1,2 @@
-proc ip_stack { } { return "lxip random_path=\"/dev/random\"" }
+proc ip_stack { } { return lxip }
 source ${genode_dir}/repos/libports/run/fetchurl.inc

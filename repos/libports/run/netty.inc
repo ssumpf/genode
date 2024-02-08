@@ -6,6 +6,12 @@
 # proc protocol { }         test protocol (tcp or udp)
 # proc use_dynamic_rom { }  dynamically change IP-stack config at runtime
 
+set ipstack_arg { }
+
+if {[ipstack] == "lxip"} {
+	append ipstack_arg { random_path="/random" }
+}
+
 set build_components { }
 
 if {[protocol] == "tcp"} {
@@ -114,7 +120,7 @@ append_if [use_dynamic_rom] config {
 				<vfs>
 					<inline name="random">0123456789012345678901234567890123456789</inline>
 					<dir name="socket">
-						<} [ipstack] { ip_addr="10.0.3.55" netmask="255.255.255.0" gateway="10.0.3.1" nameserver="8.8.8.8"/>
+						<} [ipstack] $ipstack_arg { ip_addr="10.0.3.55" netmask="255.255.255.0" gateway="10.0.3.1" nameserver="8.8.8.8"/>
 					</dir>
 				</vfs>
 				<default-policy root="/socket" writeable="yes" />
@@ -125,7 +131,7 @@ append_if [use_dynamic_rom] config {
 				<vfs>
 					<inline name="random">0123456789012345678901234567890123456789</inline>
 					<dir name="socket">
-						<} [ipstack] { mtu="400" ip_addr="10.0.3.55" netmask="255.255.255.0" gateway="10.0.3.1" nameserver="8.8.8.8"/>
+						<} [ipstack] $ipstack_arg { mtu="400" ip_addr="10.0.3.55" netmask="255.255.255.0" gateway="10.0.3.1" nameserver="8.8.8.8"/>
 					</dir>
 				</vfs>
 				<default-policy root="/socket" writeable="yes" />
@@ -160,8 +166,8 @@ if {[use_dynamic_rom]} { append config {
 			<vfs>
 				<inline name="random">0123456789012345678901234567890123456789</inline>
 				<dir name="socket">
-					<!-- <} [ipstack] { ip_addr="10.0.3.55" netmask="255.255.255.0" gateway="10.0.3.1" nameserver="8.8.8.8"/> -->
-					<} [ipstack] { dhcp="yes"/>
+					<!-- <} [ipstack] $ipstack_arg { ip_addr="10.0.3.55" netmask="255.255.255.0" gateway="10.0.3.1" nameserver="8.8.8.8"/> -->
+					<} [ipstack] $ipstack_arg { dhcp="yes"/>
 				</dir>
 				<!-- change default policy to "/audit" for more verbosity -->
 				<dir name="audit">

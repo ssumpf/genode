@@ -35,6 +35,10 @@ proc socket_fs_plugin { } {
 		append result { dhcp="yes"}
 	}
 
+	if {[ip_stack] == "lxip"} {
+		append result { random_path="/dev/random"}
+	}
+
 	append result {/>}
 	return $result
 }

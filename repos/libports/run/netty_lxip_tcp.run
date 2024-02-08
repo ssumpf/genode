@@ -5,7 +5,7 @@
 #   dd if=/dev/urandom bs=736 count=10 | xxd -plain | tr -d '\n' | nc 10.0.2.55 80
 #
 
-proc ipstack         { } { return "lxip random_path=\"/random\"" }
+proc ipstack         { } { return lxip }
 proc protocol        { } { return tcp }
 proc use_dynamic_rom { } { return false }
 
