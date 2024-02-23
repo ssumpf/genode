@@ -26,7 +26,7 @@ set abi_path [lindex $argv 1]
 # Genode.
 #
 set lib_content [split [exec nm --format posix --dynamic $lib_path 2> /dev/null | sort] "\n"]
-set abi_content [split [exec cat $abi_path 2> /dev/null] "\n"]
+set abi_content [split [catch {exec cat $abi_path 2> /dev/null}] "\n"]
 
 set abi_name [lindex [file split $abi_path] end]
 set num_errors 0
