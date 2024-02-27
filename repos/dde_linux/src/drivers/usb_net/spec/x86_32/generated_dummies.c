@@ -773,14 +773,6 @@ struct sk_buff * tcp_get_timestamping_opt_stats(const struct sock * sk,const str
 }
 
 
-#include <linux/usb.h>
-
-int usb_clear_halt(struct usb_device * dev,int pipe)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 extern void usb_devio_cleanup(void);
 void usb_devio_cleanup(void)
 {

@@ -493,3 +493,19 @@ int usb_string(struct usb_device *dev, int index, char *buf, size_t size)
 	kfree(tbuf);
 	return err;
 }
+
+
+#include <linux/usb.h>
+
+
+/*
+ * This is only called in usbnet.c. Because packets are allocated using GFP_ATOMIC
+ * while holding a lock, we cannot block in 'usb_submit_urb' and return EPIPE in
+ * case we would block. As a result clear halt will be called after EPIPE. Omitt
+ * it for now
+ */
+int usb_clear_halt(struct usb_device * dev,int pipe)
+{
+	lx_emul_trace(__func__);
+	return 0;
+}

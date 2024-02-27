@@ -86,9 +86,9 @@ static void urb_submit_complete(struct genode_usb_client_request_packet *packet)
 int usb_submit_urb(struct urb *urb, gfp_t mem_flags)
 {
 	genode_usb_client_handle_t handle;
-	struct genode_usb_client_request_packet *packet;
-	struct genode_usb_request_transfer *transfer;
-	struct genode_usb_request_control  *control;
+	struct genode_usb_client_request_packet *packet   = 0;
+	struct genode_usb_request_transfer      *transfer = 0;
+	struct genode_usb_request_control       *control  = 0;
 	int ret = 0;
 	unsigned timeout_jiffies = msecs_to_jiffies(10000u);
 
@@ -166,6 +166,15 @@ int usb_submit_urb(struct urb *urb, gfp_t mem_flags)
 	for (;;) {
 
 		if (genode_usb_client_request(handle, packet)) break;
+
+		/*
+		 * Abort for ATOMIC allocation requests which might hold a lock so we
+		 * cannot block and schedule below
+		 */
+		if (mem_flags & __GFP_ATOMIC) {
+			ret = -EPIPE;
+			goto err_request;
+		}
 
 		timeout_jiffies = wait_for_free_urb(timeout_jiffies);
 		if (!timeout_jiffies) {

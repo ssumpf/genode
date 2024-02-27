@@ -848,14 +848,6 @@ void tick_broadcast(const struct cpumask * mask)
 }
 
 
-#include <linux/usb.h>
-
-int usb_clear_halt(struct usb_device * dev,int pipe)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 extern void usb_devio_cleanup(void);
 void usb_devio_cleanup(void)
 {
