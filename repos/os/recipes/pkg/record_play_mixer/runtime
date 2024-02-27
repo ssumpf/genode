@@ -1,0 +1,12 @@
+<runtime ram="2M" caps="100" binary="record_play_mixer">
+
+	<provides> <record/> <play/> </provides>
+
+	<config/>
+
+	<content>
+		<rom label="ld.lib.so"/>
+		<rom label="record_play_mixer"/>
+	</content>
+
+</runtime>
