@@ -1,0 +1,18 @@
+<runtime ram="2M" caps="100" binary="record_play_mixer">
+
+	<provides> <record/> <play/> </provides>
+
+	<config jitter_ms="10">
+		<mix name="left">  <play label_suffix="left"/>  </mix>
+		<mix name="right"> <play label_suffix="right"/> </mix>
+
+		<policy label_suffix="left"   record="left"  period_ms="12" jitter_ms="5" volume="1.0"/>
+		<policy label_suffix="right"  record="right" period_ms="12" jitter_ms="5" volume="1.0"/>
+	</cn
+
+	<content>
+		<rom label="ld.lib.so"/>
+		<rom label="record_play_mixer"/>
+	</content>
+
+</runtime>
