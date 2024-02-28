@@ -78,7 +78,6 @@ generated_files = $(GEN_TARGET)/src/compiler/glsl/float64_glsl.h \
                   $(GEN_TARGET)/src/compiler/spirv/vtn_generator_ids.h \
                   $(GEN_TARGET)/src/gallium/auxiliary/indices/u_indices_gen.c \
                   $(GEN_TARGET)/src/git_sha1.h \
-                  $(GEN_TARGET)/src/mapi/glapi/gen/api_exec.c \
                   $(GEN_TARGET)/src/mapi/glapi/gen/enums.c \
                   $(GEN_TARGET)/src/mapi/glapi/gen/glapi_mapi_tmp.h \
                   $(GEN_TARGET)/src/mapi/glapi/gen/marshal_generated0.c \
@@ -92,8 +91,6 @@ generated_files = $(GEN_TARGET)/src/compiler/glsl/float64_glsl.h \
                   $(GEN_TARGET)/src/mapi/shared-glapi/glapi_mapi_tmp.h \
                   $(GEN_TARGET)/src/mesa/format_fallback.c \
                   $(GEN_TARGET)/src/mesa/format_info.h \
-                  $(GEN_TARGET)/src/mesa/format_pack.c \
-                  $(GEN_TARGET)/src/mesa/format_unpack.c \
                   $(GEN_TARGET)/src/mesa/get_hash.h \
                   $(GEN_TARGET)/src/mesa/main/dispatch.h \
                   $(GEN_TARGET)/src/mesa/main/marshal_generated.h \
@@ -108,6 +105,9 @@ generated_files = $(GEN_TARGET)/src/compiler/glsl/float64_glsl.h \
                   $(GEN_TARGET)/src/intel/genxml/gen11_pack.h \
                   $(GEN_TARGET)/src/intel/genxml/gen12_pack.h \
                   $(GEN_TARGET)/src/intel/genxml/gen125_pack.h \
+                  $(GEN_TARGET)/src/intel/genxml/gen125_rt_pack.h \
+                  $(GEN_TARGET)/src/intel/genxml/gen20_pack.h \
+                  $(GEN_TARGET)/src/intel/genxml/gen20_rt_pack.h \
                   $(GEN_TARGET)/src/intel/genxml/genX_bits.h \
                   $(GEN_TARGET)/src/intel/genxml/genX_xml.h \
                   $(GEN_TARGET)/src/intel/isl/isl_format_layout.c \
@@ -132,6 +132,10 @@ CMD = ${CMD($(notdir $@))}
 #
 # Generated creation rules
 #
+#
+
+GL_ES_API = $(SRC)/src/mapi/glapi/gen/gl_and_es_API.xml
+
 $(GEN_TARGET)/src/compiler/glsl/float64_glsl.h:
 	$(MSG_DIR)
 	$(VERBOSE)$(PYTHON) $(SRC)/src/util/xxd.py \
@@ -168,7 +172,7 @@ $(GEN_TARGET)/src/mapi/shared-glapi/glapi_mapi_tmp.h \
 $(GEN_TARGET)/src/mapi/glapi/gen/glapi_mapi_tmp.h:
 	$(MSG_DIR)
 	$(VERBOSE)$(PYTHON) $(SRC)/src/mapi/mapi_abi.py --printer ${CMD($@)} \
-		$(SRC)/src/mapi/glapi/gen/gl_and_es_API.xml > $@
+		$(GL_ES_API) > $@
 
 CMD(ir_expression_operation.h)          = enum
 CMD(ir_expression_operation_constant.h) = constant
@@ -194,20 +198,15 @@ $(GEN_TARGET)/src/compiler/spirv/spirv_info.c:
 CMD(dispatch.h)           = gl_table.py -m remap_table
 CMD(marshal_generated.h)  = gl_marshal_h.py
 CMD(remap_helper.h)       = remap_helper.py
-CMD(api_exec.c)           = gl_genexec.py
-CMD(marshal_generated0.c) = gl_marshal.py -i 0 -n 8
-CMD(marshal_generated1.c) = gl_marshal.py -i 1 -n 8
-CMD(marshal_generated2.c) = gl_marshal.py -i 2 -n 8
-CMD(marshal_generated3.c) = gl_marshal.py -i 3 -n 8
-CMD(marshal_generated4.c) = gl_marshal.py -i 4 -n 8
-CMD(marshal_generated5.c) = gl_marshal.py -i 5 -n 8
-CMD(marshal_generated6.c) = gl_marshal.py -i 6 -n 8
-CMD(marshal_generated7.c) = gl_marshal.py -i 7 -n 8
+CMD(marshal_generated0.c) = gl_marshal.py $(GL_ES_API) 0 8
+CMD(marshal_generated1.c) = gl_marshal.py $(GL_ES_API) 1 8
+CMD(marshal_generated2.c) = gl_marshal.py $(GL_ES_API) 2 8
+CMD(marshal_generated3.c) = gl_marshal.py $(GL_ES_API) 3 8
+CMD(marshal_generated4.c) = gl_marshal.py $(GL_ES_API) 4 8
+CMD(marshal_generated5.c) = gl_marshal.py $(GL_ES_API) 5 8
+CMD(marshal_generated6.c) = gl_marshal.py $(GL_ES_API) 6 8
+CMD(marshal_generated7.c) = gl_marshal.py $(GL_ES_API) 7 8
 
-$(GEN_TARGET)/src/mesa/main/dispatch.h \
-$(GEN_TARGET)/src/mesa/main/marshal_generated.h \
-$(GEN_TARGET)/src/mesa/main/remap_helper.h \
-$(GEN_TARGET)/src/mapi/glapi/gen/api_exec.c \
 $(GEN_TARGET)/src/mapi/glapi/gen/marshal_generated0.c \
 $(GEN_TARGET)/src/mapi/glapi/gen/marshal_generated1.c \
 $(GEN_TARGET)/src/mapi/glapi/gen/marshal_generated2.c \
@@ -217,13 +216,19 @@ $(GEN_TARGET)/src/mapi/glapi/gen/marshal_generated5.c \
 $(GEN_TARGET)/src/mapi/glapi/gen/marshal_generated6.c \
 $(GEN_TARGET)/src/mapi/glapi/gen/marshal_generated7.c:
 	$(MSG_DIR)
+	$(VERBOSE)$(PYTHON) $(SRC)/src/mapi/glapi/gen/$(CMD) > $@
+
+$(GEN_TARGET)/src/mesa/main/dispatch.h \
+$(GEN_TARGET)/src/mesa/main/marshal_generated.h \
+$(GEN_TARGET)/src/mesa/main/remap_helper.h:
+	$(MSG_DIR)
 	$(VERBOSE)$(PYTHON) $(SRC)/src/mapi/glapi/gen/$(CMD) \
-	-f $(SRC)/src/mapi/glapi/gen/gl_and_es_API.xml > $@
+	-f $(GL_ES_API) > $@
 
 $(GEN_TARGET)/src/mesa/get_hash.h:
 	$(MSG_DIR)
 	$(VERBOSE)$(PYTHON) $(SRC)/src/mesa/main/get_hash_generator.py \
-	-f $(SRC)/src/mapi/glapi/gen/gl_and_es_API.xml > $@
+	-f $(GL_ES_API) > $@
 
 $(GEN_TARGET)/src/mapi/glapi/gen/enums.c:
 	$(MSG_DIR)
@@ -233,19 +238,15 @@ $(GEN_TARGET)/src/mapi/glapi/gen/enums.c:
 $(GEN_TARGET)/src/gallium/auxiliary/indices/u_indices_gen.c:
 	$(MSG_DIR)
 	$(VERBOSE)$(PYTHON) \
-		$(SRC)/src/gallium/auxiliary/indices/u_indices_gen.py > $@
+		$(SRC)/src/gallium/auxiliary/indices/u_indices_gen.py $@
 
 $(GEN_TARGET)/src/git_sha1.h:
 	$(MSG_DIR)
 	$(VERBOSE)$(PYTHON) $(SRC)/bin/git_sha1_gen.py --output $@
 
 CMD(format_info.h)   = format_info.py
-CMD(format_pack.c)   = format_pack.py
-CMD(format_unpack.c) = format_unpack.py
 
-$(GEN_TARGET)/src/mesa/format_info.h \
-$(GEN_TARGET)/src/mesa/format_pack.c \
-$(GEN_TARGET)/src/mesa/format_unpack.c:
+$(GEN_TARGET)/src/mesa/format_info.h:
 	$(MSG_DIR)
 	$(VERBOSE)$(PYTHON) $(SRC)/src/mesa/main/$(CMD) $(SRC)/src/mesa/main/formats.csv \
 	> $@
@@ -281,25 +282,40 @@ $(GEN_TARGET)/src/mesa/program/program_parse.tab.c:
 	$(VERBOSE)bison  -Wno-deprecated -o $@ \
 		--defines=$(@D)/program_parse.tab.h $(SRC)/src/mesa/program/program_parse.y
 
+
+PACK_OPT = --engines=render,blitter,video
+
 $(GEN_TARGET)/src/intel/genxml/gen8_pack.h:
 	$(MSG_DIR)
-	$(VERBOSE)$(PYTHON) $(SRC)/src/intel/genxml/gen_pack_header.py $(SRC)/src/intel/genxml/gen8.xml >$@
+	$(VERBOSE)$(PYTHON) $(SRC)/src/intel/genxml/gen_pack_header.py $(SRC)/src/intel/genxml/gen8.xml $(PACK_OPT) >$@
 
 $(GEN_TARGET)/src/intel/genxml/gen9_pack.h:
 	$(MSG_DIR)
-	$(VERBOSE)$(PYTHON) $(SRC)/src/intel/genxml/gen_pack_header.py $(SRC)/src/intel/genxml/gen9.xml >$@
+	$(VERBOSE)$(PYTHON) $(SRC)/src/intel/genxml/gen_pack_header.py $(SRC)/src/intel/genxml/gen9.xml $(PACK_OPT) >$@
 
 $(GEN_TARGET)/src/intel/genxml/gen11_pack.h:
 	$(MSG_DIR)
-	$(VERBOSE)$(PYTHON) $(SRC)/src/intel/genxml/gen_pack_header.py $(SRC)/src/intel/genxml/gen11.xml >$@
+	$(VERBOSE)$(PYTHON) $(SRC)/src/intel/genxml/gen_pack_header.py $(SRC)/src/intel/genxml/gen11.xml $(PACK_OPT) >$@
 
 $(GEN_TARGET)/src/intel/genxml/gen12_pack.h:
 	$(MSG_DIR)
-	$(VERBOSE)$(PYTHON) $(SRC)/src/intel/genxml/gen_pack_header.py $(SRC)/src/intel/genxml/gen12.xml >$@
+	$(VERBOSE)$(PYTHON) $(SRC)/src/intel/genxml/gen_pack_header.py $(SRC)/src/intel/genxml/gen12.xml $(PACK_OPT) >$@
 
 $(GEN_TARGET)/src/intel/genxml/gen125_pack.h:
 	$(MSG_DIR)
-	$(VERBOSE)$(PYTHON) $(SRC)/src/intel/genxml/gen_pack_header.py $(SRC)/src/intel/genxml/gen125.xml >$@
+	$(VERBOSE)$(PYTHON) $(SRC)/src/intel/genxml/gen_pack_header.py $(SRC)/src/intel/genxml/gen125.xml $(PACK_OPT) >$@
+
+$(GEN_TARGET)/src/intel/genxml/gen125_rt_pack.h:
+	$(MSG_DIR)
+	$(VERBOSE)$(PYTHON) $(SRC)/src/intel/genxml/gen_pack_header.py $(SRC)/src/intel/genxml/gen125_rt.xml $(PACK_OPT) >$@
+
+$(GEN_TARGET)/src/intel/genxml/gen20_pack.h:
+	$(MSG_DIR)
+	$(VERBOSE)$(PYTHON) $(SRC)/src/intel/genxml/gen_pack_header.py $(SRC)/src/intel/genxml/gen20.xml $(PACK_OPT) >$@
+
+$(GEN_TARGET)/src/intel/genxml/gen20_rt_pack.h:
+	$(MSG_DIR)
+	$(VERBOSE)$(PYTHON) $(SRC)/src/intel/genxml/gen_pack_header.py $(SRC)/src/intel/genxml/gen20_rt.xml $(PACK_OPT) >$@
 
 $(GEN_TARGET)/src/intel/genxml/genX_bits.h:
 	$(MSG_DIR)
@@ -309,7 +325,12 @@ $(GEN_TARGET)/src/intel/genxml/genX_bits.h:
 	                    $(SRC)/src/intel/genxml/gen11.xml \
 	                    $(SRC)/src/intel/genxml/gen12.xml \
 	                    $(SRC)/src/intel/genxml/gen125.xml \
-	                    -o $@
+	                    $(SRC)/src/intel/genxml/gen125_rt.xml \
+	                    $(SRC)/src/intel/genxml/gen20.xml \
+	                    $(SRC)/src/intel/genxml/gen20_rt.xml \
+	                    -o $@ \
+	                    --include-symbols 'MI_BATCH_BUFFER_START::Batch Buffer Start Address,MI_REPORT_PERF_COUNT::Memory Address,MI_STORE_DATA_IMM::Address,MI_STORE_DATA_IMM::Immediate Data,MI_STORE_REGISTER_MEM::Memory Address,3DSTATE_DEPTH_BUFFER::Surface Base Address,3DSTATE_DEPTH_BUFFER::Surface Pitch,3DSTATE_STENCIL_BUFFER::Surface Base Address,3DSTATE_STENCIL_BUFFER::Surface Pitch,3DSTATE_HIER_DEPTH_BUFFER::Surface Base Address,3DSTATE_HIER_DEPTH_BUFFER::Surface Pitch,3DSTATE_CLEAR_PARAMS,3DSTATE_SO_BUFFER::Surface Base Address,3DSTATE_SO_BUFFER::Stream Offset,3DSTATE_CPSIZE_CONTROL_BUFFER::Surface Base Address,3DSTATE_CPSIZE_CONTROL_BUFFER::Surface Pitch,RENDER_SURFACE_STATE::Surface Base Address,RENDER_SURFACE_STATE::Surface Pitch,RENDER_SURFACE_STATE::Auxiliary Surface Base Address,RENDER_SURFACE_STATE::Auxiliary Surface Pitch,RENDER_SURFACE_STATE::Clear Value Address,RENDER_SURFACE_STATE::Red Clear Color,RENDER_SURFACE_STATE::Green Clear Color,RENDER_SURFACE_STATE::Blue Clear Color,RENDER_SURFACE_STATE::Alpha Clear Color,RENDER_SURFACE_STATE::Width,RENDER_SURFACE_STATE::Height,RENDER_SURFACE_STATE::Depth,RENDER_SURFACE_STATE::Surface Type,RENDER_SURFACE_STATE::Render Target View Extent,CLEAR_COLOR,VERTEX_BUFFER_STATE::Buffer Starting Address,CPS_STATE,RT_DISPATCH_GLOBALS::Hit Group Table,RT_DISPATCH_GLOBALS::Miss Group Table,RT_DISPATCH_GLOBALS::Callable Group Table,RT_DISPATCH_GLOBALS::Launch Width,RT_DISPATCH_GLOBALS::Launch Height,RT_DISPATCH_GLOBALS::Launch Depth'
+
 
 $(GEN_TARGET)/src/intel/genxml/genX_xml.h:
 	$(MSG_DIR)
@@ -319,6 +340,7 @@ $(GEN_TARGET)/src/intel/genxml/genX_xml.h:
 	                    $(SRC)/src/intel/genxml/gen11.xml \
 	                    $(SRC)/src/intel/genxml/gen12.xml \
 	                    $(SRC)/src/intel/genxml/gen125.xml \
+	                    $(SRC)/src/intel/genxml/gen20.xml \
 	                    > $@
 
 $(GEN_TARGET)/src/intel/isl/isl_format_layout.c:
@@ -331,21 +353,31 @@ $(GEN_TARGET)/src/intel/perf/gen_perf_metrics.h:
 	$(VERBOSE)$(PYTHON) $(SRC)/src/intel/perf/gen_perf.py \
 	                    --code generated/src/intel/perf/gen_perf_metrics.c \
 	                    --header generated/src/intel/perf/gen_perf_metrics.h \
-	                    $(SRC)/src/intel/perf/oa-bdw.xml \
-	                    $(SRC)/src/intel/perf/oa-bxt.xml \
-	                    $(SRC)/src/intel/perf/oa-cflgt2.xml \
-	                    $(SRC)/src/intel/perf/oa-cflgt3.xml \
-	                    $(SRC)/src/intel/perf/oa-chv.xml \
-	                    $(SRC)/src/intel/perf/oa-glk.xml \
 	                    $(SRC)/src/intel/perf/oa-hsw.xml \
-	                    $(SRC)/src/intel/perf/oa-icl.xml \
-	                    $(SRC)/src/intel/perf/oa-kblgt2.xml \
-	                    $(SRC)/src/intel/perf/oa-kblgt3.xml \
-	                    $(SRC)/src/intel/perf/oa-lkf.xml \
+	                    $(SRC)/src/intel/perf/oa-bdw.xml \
+	                    $(SRC)/src/intel/perf/oa-chv.xml \
 	                    $(SRC)/src/intel/perf/oa-sklgt2.xml \
 	                    $(SRC)/src/intel/perf/oa-sklgt3.xml \
 	                    $(SRC)/src/intel/perf/oa-sklgt4.xml \
-	                    $(SRC)/src/intel/perf/oa-tgl.xml
+	                    $(SRC)/src/intel/perf/oa-kblgt2.xml \
+	                    $(SRC)/src/intel/perf/oa-kblgt3.xml \
+	                    $(SRC)/src/intel/perf/oa-cflgt2.xml \
+	                    $(SRC)/src/intel/perf/oa-cflgt3.xml \
+	                    $(SRC)/src/intel/perf/oa-bxt.xml \
+	                    $(SRC)/src/intel/perf/oa-glk.xml \
+	                    $(SRC)/src/intel/perf/oa-icl.xml \
+	                    $(SRC)/src/intel/perf/oa-ehl.xml \
+	                    $(SRC)/src/intel/perf/oa-tglgt1.xml \
+	                    $(SRC)/src/intel/perf/oa-tglgt2.xml \
+	                    $(SRC)/src/intel/perf/oa-rkl.xml \
+	                    $(SRC)/src/intel/perf/oa-dg1.xml \
+	                    $(SRC)/src/intel/perf/oa-adl.xml \
+	                    $(SRC)/src/intel/perf/oa-acmgt1.xml \
+	                    $(SRC)/src/intel/perf/oa-acmgt2.xml \
+	                    $(SRC)/src/intel/perf/oa-acmgt3.xml \
+	                    $(SRC)/src/intel/perf/oa-mtlgt2.xml \
+	                    $(SRC)/src/intel/perf/oa-mtlgt3.xml
+
 
 $(GEN_TARGET)/src/gallium/drivers/lima/lima_nir_algebraic.c:
 	$(MSG_DIR)
