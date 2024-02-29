@@ -1,8 +1,10 @@
-LIBS = libc libdrm \
+LIBS = libc libdrm stdcxx \
        iris_gen80 iris_gen90 iris_gen110 iris_gen120 iris_gen125 iris_gen200\
        isl_gen80  isl_gen90  isl_gen110  isl_gen120  isl_gen125  isl_gen200
 
 LIBS += expat zlib
+
+CC_CXX_OPT_STD = -std=c++17
 
 include $(REP_DIR)/lib/mk/mesa-common.inc
 
@@ -13,13 +15,20 @@ CC_OPT   += -DGALLIUM_IRIS
 CC_C_OPT += -Dioctl=genode_ioctl
 CC_C_OPT += -DUSE_SSE41 -msse4
 
+CC_OPT += -Wno-unused-function
+
 INC_DIR += $(MESA_GEN_DIR)/src/compiler \
            $(MESA_GEN_DIR)/src/compiler/nir \
-           $(MESA_GEN_DIR)/src/intel
+           $(MESA_GEN_DIR)/src/intel \
+           $(MESA_GEN_DIR)/src/intel/dev
 
-INC_DIR += $(MESA_SRC_DIR)/src/compiler/nir \
+INC_DIR += $(MESA_SRC_DIR)/src/compiler \
+           $(MESA_SRC_DIR)/src/compiler/nir \
            $(MESA_SRC_DIR)/src/gallium/auxiliary \
            $(MESA_SRC_DIR)/src/intel \
+           $(MESA_SRC_DIR)/src/intel/common \
+           $(MESA_SRC_DIR)/src/intel/dev \
+           $(MESA_SRC_DIR)/src/intel/ds \
            $(MESA_SRC_DIR)/src/mapi \
            $(MESA_SRC_DIR)/src/mesa/main \
            $(MESA_SRC_DIR)/src/mesa
@@ -167,7 +176,6 @@ SRC_C += gallium/drivers/iris/iris_batch.c \
          intel/isl/isl.c \
          intel/isl/isl_aux_info.c \
          intel/isl/isl_drm.c \
-         intel/isl/isl_emit_cpb.c \
          intel/isl/isl_format.c \
          intel/isl/isl_gfx12.c \
          intel/isl/isl_gfx4.c \
@@ -187,10 +195,11 @@ SRC_C += gallium/drivers/iris/iris_batch.c \
 #
 # generated
 #
-SRC_C += intel/isl/isl_format_layout.c \
-         intel/perf/gen_perf_metrics.c \
+SRC_C += intel/dev/intel_wa.c \
+         intel/ds/intel_tracepoints.c \
+         intel/isl/isl_format_layout.c \
+         intel/perf/intel_perf_metrics.c \
 
 vpath %.c   $(MESA_GEN_DIR)/src
-
 vpath %.c   $(MESA_SRC_DIR)/src
 vpath %.cpp $(MESA_SRC_DIR)/src

@@ -78,7 +78,22 @@ generated_files = $(GEN_TARGET)/src/compiler/builtin_types.h \
                   $(GEN_TARGET)/src/compiler/spirv/vtn_gather_types.c \
                   $(GEN_TARGET)/src/compiler/spirv/vtn_generator_ids.h \
                   $(GEN_TARGET)/src/gallium/auxiliary/indices/u_indices_gen.c \
+                  $(GEN_TARGET)/src/gallium/drivers/lima/lima_nir_algebraic.c \
                   $(GEN_TARGET)/src/git_sha1.h \
+                  $(GEN_TARGET)/src/intel/dev/intel_wa.c \
+                  $(GEN_TARGET)/src/intel/ds/intel_tracepoints.c \
+                  $(GEN_TARGET)/src/intel/genxml/gen8_pack.h \
+                  $(GEN_TARGET)/src/intel/genxml/gen9_pack.h \
+                  $(GEN_TARGET)/src/intel/genxml/gen11_pack.h \
+                  $(GEN_TARGET)/src/intel/genxml/gen12_pack.h \
+                  $(GEN_TARGET)/src/intel/genxml/gen125_pack.h \
+                  $(GEN_TARGET)/src/intel/genxml/gen125_rt_pack.h \
+                  $(GEN_TARGET)/src/intel/genxml/gen20_pack.h \
+                  $(GEN_TARGET)/src/intel/genxml/gen20_rt_pack.h \
+                  $(GEN_TARGET)/src/intel/genxml/genX_bits.h \
+                  $(GEN_TARGET)/src/intel/genxml/genX_xml.h \
+                  $(GEN_TARGET)/src/intel/isl/isl_format_layout.c \
+                  $(GEN_TARGET)/src/intel/perf/intel_perf_metrics.h \
                   $(GEN_TARGET)/src/mapi/glapi/gen/enums.c \
                   $(GEN_TARGET)/src/mapi/glapi/gen/glapi_mapi_tmp.h \
                   $(GEN_TARGET)/src/mapi/glapi/gen/marshal_generated0.c \
@@ -101,19 +116,6 @@ generated_files = $(GEN_TARGET)/src/compiler/builtin_types.h \
                   $(GEN_TARGET)/src/util/format_srgb.c \
                   $(GEN_TARGET)/src/util/format/u_format_pack.h \
                   $(GEN_TARGET)/src/util/format/u_format_table.c \
-                  $(GEN_TARGET)/src/intel/genxml/gen8_pack.h \
-                  $(GEN_TARGET)/src/intel/genxml/gen9_pack.h \
-                  $(GEN_TARGET)/src/intel/genxml/gen11_pack.h \
-                  $(GEN_TARGET)/src/intel/genxml/gen12_pack.h \
-                  $(GEN_TARGET)/src/intel/genxml/gen125_pack.h \
-                  $(GEN_TARGET)/src/intel/genxml/gen125_rt_pack.h \
-                  $(GEN_TARGET)/src/intel/genxml/gen20_pack.h \
-                  $(GEN_TARGET)/src/intel/genxml/gen20_rt_pack.h \
-                  $(GEN_TARGET)/src/intel/genxml/genX_bits.h \
-                  $(GEN_TARGET)/src/intel/genxml/genX_xml.h \
-                  $(GEN_TARGET)/src/intel/isl/isl_format_layout.c \
-                  $(GEN_TARGET)/src/intel/perf/gen_perf_metrics.h \
-                  $(GEN_TARGET)/src/gallium/drivers/lima/lima_nir_algebraic.c
 
 #
 # Print message and create directory
@@ -354,11 +356,11 @@ $(GEN_TARGET)/src/intel/isl/isl_format_layout.c:
 	$(VERBOSE)$(PYTHON) $(SRC)/src/intel/isl/gen_format_layout.py \
 	                    --csv $(call _src,$(@D))/isl_format_layout.csv --out $@
 
-$(GEN_TARGET)/src/intel/perf/gen_perf_metrics.h:
+$(GEN_TARGET)/src/intel/perf/intel_perf_metrics.h:
 	$(MSG_DIR)
 	$(VERBOSE)$(PYTHON) $(SRC)/src/intel/perf/gen_perf.py \
-	                    --code generated/src/intel/perf/gen_perf_metrics.c \
-	                    --header generated/src/intel/perf/gen_perf_metrics.h \
+	                    --code generated/src/intel/perf/intel_perf_metrics.c \
+	                    --header generated/src/intel/perf/intel_perf_metrics.h \
 	                    $(SRC)/src/intel/perf/oa-hsw.xml \
 	                    $(SRC)/src/intel/perf/oa-bdw.xml \
 	                    $(SRC)/src/intel/perf/oa-chv.xml \
@@ -384,6 +386,21 @@ $(GEN_TARGET)/src/intel/perf/gen_perf_metrics.h:
 	                    $(SRC)/src/intel/perf/oa-mtlgt2.xml \
 	                    $(SRC)/src/intel/perf/oa-mtlgt3.xml
 
+
+$(GEN_TARGET)/src/intel/dev/intel_wa.c:
+	$(MSG_DIR)
+	$(VERBOSE)$(PYTHON) $(SRC)/src/intel/dev/gen_wa_helpers.py \
+	                    $(SRC)/src/intel/dev/mesa_defs.json \
+	                    $(GEN_TARGET)/src/intel/dev/intel_wa.h \
+	                    $@
+
+$(GEN_TARGET)/src/intel/ds/intel_tracepoints.c:
+	$(MSG_DIR)
+	$(VERBOSE) $(PYTHON) $(SRC)/src/intel/ds/intel_tracepoints.py \
+	                     -p $(SRC)/src/util/perf/ \
+	                     --utrace-hdr $(GEN_TARGET)/src/intel/ds/intel_tracepoints.h \
+	                     --perfetto-hdr $(GEN_TARGET)/src/intel/ds/intel_tracepoints_perfetto.h \
+	                     --utrace-src $@
 
 $(GEN_TARGET)/src/gallium/drivers/lima/lima_nir_algebraic.c:
 	$(MSG_DIR)
