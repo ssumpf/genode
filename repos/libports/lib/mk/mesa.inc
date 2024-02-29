@@ -9,9 +9,12 @@ INC_DIR += $(MESA_GEN_DIR)/src/compiler \
            $(MESA_GEN_DIR)/src/compiler/glsl \
            $(MESA_GEN_DIR)/src/compiler/nir \
            $(MESA_GEN_DIR)/src/compiler/spirv \
+           $(MESA_GEN_DIR)/src/gallium/auxiliary \
            $(MESA_GEN_DIR)/src/mapi \
+           $(MESA_GEN_DIR)/src/mapi/glapi/gen \
            $(MESA_GEN_DIR)/src/mesa \
            $(MESA_GEN_DIR)/src/mesa/main \
+           $(MESA_GEN_DIR)/src/util \
            $(MESA_GEN_DIR)/src/util/format \
            $(MESA_SRC_DIR)/src \
            $(MESA_SRC_DIR)/src/compiler \
@@ -1428,7 +1431,7 @@ SRC_C += src/compiler/glsl/gl_nir_link_atomics.c \
 # generated
 #
 SRC_CC += src/compiler/glsl/glsl_parser.cpp \
-          src/compiler/glsl/glsl_lexer.cpp
+          src/compiler/glsl/glsl_lexer.cpp \
 
 
 SRC_C += src/compiler/glsl/glcpp/glcpp-lex.c \
@@ -1440,6 +1443,7 @@ SRC_C += src/compiler/glsl/glcpp/glcpp-lex.c \
          src/compiler/spirv/spirv_info.c \
          src/compiler/spirv/vtn_gather_types.c \
          src/gallium/auxiliary/indices/u_indices_gen.c \
+         src/gallium/auxiliary/tr_util.c \
          src/mapi/glapi/gen/enums.c \
          src/mapi/glapi/gen/marshal_generated0.c \
          src/mapi/glapi/gen/marshal_generated1.c \

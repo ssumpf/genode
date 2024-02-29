@@ -78,6 +78,7 @@ generated_files = $(GEN_TARGET)/src/compiler/builtin_types.h \
                   $(GEN_TARGET)/src/compiler/spirv/vtn_gather_types.c \
                   $(GEN_TARGET)/src/compiler/spirv/vtn_generator_ids.h \
                   $(GEN_TARGET)/src/gallium/auxiliary/indices/u_indices_gen.c \
+                  $(GEN_TARGET)/src/gallium/auxiliary/tr_util.c \
                   $(GEN_TARGET)/src/gallium/drivers/lima/lima_nir_algebraic.c \
                   $(GEN_TARGET)/src/git_sha1.h \
                   $(GEN_TARGET)/src/intel/dev/intel_wa.c \
@@ -94,6 +95,11 @@ generated_files = $(GEN_TARGET)/src/compiler/builtin_types.h \
                   $(GEN_TARGET)/src/intel/genxml/genX_xml.h \
                   $(GEN_TARGET)/src/intel/isl/isl_format_layout.c \
                   $(GEN_TARGET)/src/intel/perf/intel_perf_metrics.h \
+                  $(GEN_TARGET)/src/mapi/glapi/gen/api_beginend_init.h \
+                  $(GEN_TARGET)/src/mapi/glapi/gen/api_exec_decl.h \
+                  $(GEN_TARGET)/src/mapi/glapi/gen/api_hw_select_init.h \
+                  $(GEN_TARGET)/src/mapi/glapi/gen/api_save.h \
+                  $(GEN_TARGET)/src/mapi/glapi/gen/api_save_init.h \
                   $(GEN_TARGET)/src/mapi/glapi/gen/enums.c \
                   $(GEN_TARGET)/src/mapi/glapi/gen/glapi_mapi_tmp.h \
                   $(GEN_TARGET)/src/mapi/glapi/gen/marshal_generated0.c \
@@ -113,6 +119,7 @@ generated_files = $(GEN_TARGET)/src/compiler/builtin_types.h \
                   $(GEN_TARGET)/src/mesa/main/remap_helper.h \
                   $(GEN_TARGET)/src/mesa/program/lex.yy.c \
                   $(GEN_TARGET)/src/mesa/program/program_parse.tab.c \
+                  $(GEN_TARGET)/src/util/driconf_static.h \
                   $(GEN_TARGET)/src/util/format_srgb.c \
                   $(GEN_TARGET)/src/util/format/u_format_pack.h \
                   $(GEN_TARGET)/src/util/format/u_format_table.c \
@@ -238,6 +245,21 @@ $(GEN_TARGET)/src/mesa/get_hash.h:
 	$(VERBOSE)$(PYTHON) $(SRC)/src/mesa/main/get_hash_generator.py \
 	-f $(GL_ES_API) > $@
 
+CMD(api_exec_decl.h)      = api_exec_decl_h.py
+CMD(api_hw_select_init.h) = api_hw_select_init_h.py
+CMD(api_save.h)           = api_save_h.py
+CMD(api_save_init.h)      = api_save_init_h.py
+CMD(api_beginend_init.h)  = api_beginend_init_h.py
+
+$(GEN_TARGET)/src/mapi/glapi/gen/api_beginend_init.h \
+$(GEN_TARGET)/src/mapi/glapi/gen/api_exec_decl.h \
+$(GEN_TARGET)/src/mapi/glapi/gen/api_hw_select_init.h \
+$(GEN_TARGET)/src/mapi/glapi/gen/api_save.h \
+$(GEN_TARGET)/src/mapi/glapi/gen/api_save_init.h:
+	$(MSG_DIR)
+	$(VERBOSE)$(PYTHON) $(SRC)/src/mapi/glapi/gen/$(CMD) \
+	                    -f $(SRC)/src/mapi/glapi/gen/gl_and_es_API.xml > $@
+
 $(GEN_TARGET)/src/mapi/glapi/gen/enums.c:
 	$(MSG_DIR)
 	$(VERBOSE)$(PYTHON) $(SRC)/src/mapi/glapi/gen/gl_enums.py \
@@ -247,6 +269,14 @@ $(GEN_TARGET)/src/gallium/auxiliary/indices/u_indices_gen.c:
 	$(MSG_DIR)
 	$(VERBOSE)$(PYTHON) \
 		$(SRC)/src/gallium/auxiliary/indices/u_indices_gen.py $@
+
+$(GEN_TARGET)/src/gallium/auxiliary/tr_util.c:
+	$(MSG_DIR)
+	$(VERBOSE)$(PYTHON) $(SRC)/src/gallium/auxiliary/driver_trace/enums2names.py \
+	                    $(SRC)/src/gallium/include/pipe/p_defines.h \
+	                    $(SRC)/src/gallium/include/pipe/p_video_enums.h \
+	                    $(SRC)/src/util/blend.h \
+	                    -C $@ -H $(GEN_TARGET)/src/gallium/auxiliary/tr_util.h -I tr_util.h
 
 $(GEN_TARGET)/src/git_sha1.h:
 	$(MSG_DIR)
@@ -274,6 +304,11 @@ $(GEN_TARGET)/src/util/format/u_format_table.c:
 $(GEN_TARGET)/src/util/format_srgb.c:
 	$(MSG_DIR)
 	$(VERBOSE)$(PYTHON) $(SRC)/src/util/format_srgb.py > $@
+
+$(GEN_TARGET)/src/util/driconf_static.h:
+	$(MSG_DIR)
+	$(VERBOSE)$(PYTHON) $(SRC)/src/util/driconf_static.py \
+	                    $(SRC)/src/util/00-mesa-defaults.conf $@
 
 $(GEN_TARGET)/src/compiler/glsl/glsl_parser.cpp:
 	$(MSG_DIR)

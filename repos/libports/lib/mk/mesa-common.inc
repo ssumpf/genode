@@ -55,6 +55,9 @@ CC_OPT += -DENABLE_ST_OMX_BELLAGIO=0  \
           -DHAVE_FUNC_ATTRIBUTE_WEAK  \
           -DHAVE_GETRANDOM  \
           -DHAVE_MKOSTEMP  \
+          -DHAVE_OPENGL=1 \
+          -DHAVE_OPENGL_ES_1=1 \
+          -DHAVE_OPENGL_ES_2=1 \
           -DHAVE_PIPE_LOADER_DRI \
           -DHAVE_POSIX_MEMALIGN  \
           -DHAVE_PTHREAD  \
