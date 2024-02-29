@@ -56,7 +56,8 @@ GEN_TARGET = generated
 #
 # Generate files
 #
-generated_files = $(GEN_TARGET)/src/compiler/glsl/float64_glsl.h \
+generated_files = $(GEN_TARGET)/src/compiler/builtin_types.h \
+                  $(GEN_TARGET)/src/compiler/glsl/float64_glsl.h \
                   $(GEN_TARGET)/src/compiler/glsl/glcpp/glcpp-lex.c \
                   $(GEN_TARGET)/src/compiler/glsl/glcpp/glcpp-parse.c \
                   $(GEN_TARGET)/src/compiler/glsl/glsl_lexer.cpp \
@@ -194,6 +195,11 @@ $(GEN_TARGET)/src/compiler/spirv/vtn_gather_types.c \
 $(GEN_TARGET)/src/compiler/spirv/spirv_info.c:
 	$(MSG_DIR)
 	$(VERBOSE)$(PYTHON) $(SRC)/src/compiler/spirv/$(CMD) $@
+
+$(GEN_TARGET)/src/compiler/builtin_types.h:
+	$(MSG_DIR)
+	$(VERBOSE)$(PYTHON) $(SRC)/src/compiler/builtin_types_h.py $@
+
 
 CMD(dispatch.h)           = gl_table.py -m remap_table
 CMD(marshal_generated.h)  = gl_marshal_h.py

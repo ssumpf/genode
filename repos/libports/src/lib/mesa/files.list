@@ -60,6 +60,9 @@ mesa-24.0.1/include/vulkan/vulkan_xcb.h
 mesa-24.0.1/include/vulkan/vulkan_xlib.h
 mesa-24.0.1/include/vulkan/vulkan_xlib_xrandr.h
 mesa-24.0.1/src/c11/threads.h
+mesa-24.0.1/src/c11/time.h
+mesa-24.0.1/src/compiler/builtin_types.py
+mesa-24.0.1/src/compiler/builtin_types_h.py
 mesa-24.0.1/src/compiler/glsl/ast.h
 mesa-24.0.1/src/compiler/glsl/ast_array_index.cpp
 mesa-24.0.1/src/compiler/glsl/ast_expr.cpp
@@ -182,6 +185,7 @@ mesa-24.0.1/src/compiler/glsl/standalone_scaffolding.h
 mesa-24.0.1/src/compiler/glsl/string_to_uint_map.cpp
 mesa-24.0.1/src/compiler/glsl/string_to_uint_map.h
 mesa-24.0.1/src/compiler/glsl/test_optpass.h
+mesa-24.0.1/src/compiler/glsl_types.h
 mesa-24.0.1/src/compiler/nir/nir.c
 mesa-24.0.1/src/compiler/nir/nir.h
 mesa-24.0.1/src/compiler/nir/nir_algebraic.py
@@ -1881,6 +1885,7 @@ mesa-24.0.1/src/util/anon_file.h
 mesa-24.0.1/src/util/bigmath.h
 mesa-24.0.1/src/util/bitscan.h
 mesa-24.0.1/src/util/bitset.h
+mesa-24.0.1/src/util/blend.h
 mesa-24.0.1/src/util/blob.c
 mesa-24.0.1/src/util/blob.h
 mesa-24.0.1/src/util/build_id.c
@@ -1890,6 +1895,9 @@ mesa-24.0.1/src/util/compiler.h
 mesa-24.0.1/src/util/crc32.c
 mesa-24.0.1/src/util/crc32.h
 mesa-24.0.1/src/util/dag.h
+mesa-24.0.1/src/util/detect.h
+mesa-24.0.1/src/util/detect_arch.h
+mesa-24.0.1/src/util/detect_cc.h
 mesa-24.0.1/src/util/detect_os.h
 mesa-24.0.1/src/util/disk_cache.c
 mesa-24.0.1/src/util/disk_cache.h
@@ -1925,6 +1933,7 @@ mesa-24.0.1/src/util/format/u_format_yuv.c
 mesa-24.0.1/src/util/format/u_format_yuv.h
 mesa-24.0.1/src/util/format/u_format_zs.c
 mesa-24.0.1/src/util/format/u_format_zs.h
+mesa-24.0.1/src/util/format/u_formats.h
 mesa-24.0.1/src/util/format_r11g11b10f.h
 mesa-24.0.1/src/util/format_rgb9e5.h
 mesa-24.0.1/src/util/format_srgb.h
@@ -1945,6 +1954,7 @@ mesa-24.0.1/src/util/os_file.h
 mesa-24.0.1/src/util/os_memory.h
 mesa-24.0.1/src/util/os_memory_aligned.h
 mesa-24.0.1/src/util/os_memory_debug.h
+mesa-24.0.1/src/util/os_memory_fd.h
 mesa-24.0.1/src/util/os_memory_stdc.h
 mesa-24.0.1/src/util/os_misc.c
 mesa-24.0.1/src/util/os_misc.h
@@ -1998,6 +2008,7 @@ mesa-24.0.1/src/util/u_memory.h
 mesa-24.0.1/src/util/u_memset.h
 mesa-24.0.1/src/util/u_mm.c
 mesa-24.0.1/src/util/u_mm.h
+mesa-24.0.1/src/util/u_pack_color.h
 mesa-24.0.1/src/util/u_printf.c
 mesa-24.0.1/src/util/u_printf.h
 mesa-24.0.1/src/util/u_process.c

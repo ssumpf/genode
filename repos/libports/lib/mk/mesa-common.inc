@@ -7,7 +7,8 @@ INC_DIR += $(LIB_DIR)/include \
            $(MESA_PORT_DIR)/include \
            $(MESA_SRC_DIR)/src/gallium/include \
            $(MESA_SRC_DIR)/src \
-           $(MESA_GEN_DIR)/src
+           $(MESA_GEN_DIR)/src \
+           $(MESA_GEN_DIR)/src/compiler
 
 CC_OPT += -D__GENODE__ -DGALLIUM_SOFTPIPE
 
@@ -61,10 +62,11 @@ CC_OPT += -DENABLE_ST_OMX_BELLAGIO=0  \
           -DHAVE_RANDOM_R  \
           -DHAVE_STRTOF  \
           -DHAVE_STRTOK_R  \
+          -DHAVE_STRUCT_TIMESPEC \
           -DHAVE_TIMESPEC_GET  \
           -DHAVE_ZLIB  \
           -DPACKAGE_BUGREPORT='"https://gitlab.freedesktop.org/mesa/mesa/-/issues"' \
-          -DPACKAGE_VERSION='"21.0.0"' \
+          -DPACKAGE_VERSION='"24.0.1"' \
           -D__STDC_CONSTANT_MACROS  \
           -D__STDC_FORMAT_MACROS  \
           -D__STDC_LIMIT_MACROS \
