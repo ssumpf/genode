@@ -287,6 +287,9 @@ class Mixer::Play_session : public Session_object<Play::Session, Play_session>,
 
 			auto anything_scheduled = [&]
 			{
+				if (_stopped())
+					return false;
+
 				for (unsigned i = 0; i < Shared_buffer::NUM_SLOTS; i++)
 					if (_slots[i].num_samples)
 						return true;
@@ -342,6 +345,34 @@ class Mixer::Play_session : public Session_object<Play::Session, Play_session>,
 			return result;
 		}
 
+		template <typename T1, typename T2>
+		static constexpr T1 max(T1 v1, T2 v2) { return v1 > v2 ? v1 : v2; }
+
+		template <typename T1, typename T2>
+		static constexpr T1 min(T1 v1, T2 v2) { return v1 < v2 ? v1 : v2; }
+
+		template <typename T>
+		static constexpr T delta(T x, T y) { return max(x, y) - min(x, y); }
+
+		bool stale_session(Clock const &now, unsigned const limit)
+		{
+			if (_stopped())
+				return false;
+
+			bool stale = false;
+			for (unsigned i = 0; i < Shared_buffer::NUM_SLOTS; i++) {
+
+				Play::Session::Shared_buffer::Slot const &src = _buffer.slots[i];
+				if (src.committed_seq.value() != _latest_seq.value())
+					continue;
+
+				Clock const clock { src.time_window.start };
+				stale = delta(now.us(), clock.us()) >= limit;
+				break;
+			}
+
+			return stale;
+		}
 
 		/****************************
 		 ** Play session interface **
