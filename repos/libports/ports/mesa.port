@@ -57,6 +57,11 @@ GEN_TARGET = generated
 # Generate files
 #
 generated_files = $(GEN_TARGET)/src/compiler/builtin_types.h \
+                  $(GEN_TARGET)/src/compiler/glsl/astc_glsl.h \
+                  $(GEN_TARGET)/src/compiler/glsl/bc1_glsl.h \
+                  $(GEN_TARGET)/src/compiler/glsl/bc4_glsl.h \
+                  $(GEN_TARGET)/src/compiler/glsl/cross_platform_settings_piece_all.h \
+                  $(GEN_TARGET)/src/compiler/glsl/etc2_rgba_stitch_glsl.h \
                   $(GEN_TARGET)/src/compiler/glsl/float64_glsl.h \
                   $(GEN_TARGET)/src/compiler/glsl/glcpp/glcpp-lex.c \
                   $(GEN_TARGET)/src/compiler/glsl/glcpp/glcpp-parse.c \
@@ -79,6 +84,7 @@ generated_files = $(GEN_TARGET)/src/compiler/builtin_types.h \
                   $(GEN_TARGET)/src/compiler/spirv/vtn_generator_ids.h \
                   $(GEN_TARGET)/src/gallium/auxiliary/indices/u_indices_gen.c \
                   $(GEN_TARGET)/src/gallium/auxiliary/tr_util.c \
+                  $(GEN_TARGET)/src/gallium/auxiliary/u_tracepoints.h \
                   $(GEN_TARGET)/src/gallium/drivers/lima/lima_nir_algebraic.c \
                   $(GEN_TARGET)/src/git_sha1.h \
                   $(GEN_TARGET)/src/intel/dev/intel_wa.c \
@@ -143,13 +149,25 @@ CMD = ${CMD($(notdir $@))}
 # Generated creation rules
 #
 #
-
 GL_ES_API = $(SRC)/src/mapi/glapi/gen/gl_and_es_API.xml
 
+CMD(astc_glsl.h)            = astc_decoder.glsl     $@ -n astc_source
+CMD(float64_glsl.h)         = float64.glsl          $@ -n float64_source
+CMD(bc1_glsl.h)             = bc1.glsl              $@ -n bc1_source
+CMD(bc4_glsl.h)             = bc4.glsl              $@ -n bc4_source
+CMD(etc2_rgba_stitch_glsl.h) = etc2_rgba_stitch.glsl $@ -n etc2_rgba_stitch_source
+CMD(cross_platform_settings_piece_all.h) = CrossPlatformSettings_piece_all.glsl \
+                                           $@ -n cross_platform_settings_piece_all_header
+
+$(GEN_TARGET)/src/compiler/glsl/astc_glsl.h \
+$(GEN_TARGET)/src/compiler/glsl/bc1_glsl.h \
+$(GEN_TARGET)/src/compiler/glsl/bc4_glsl.h \
+$(GEN_TARGET)/src/compiler/glsl/cross_platform_settings_piece_all.h \
+$(GEN_TARGET)/src/compiler/glsl/etc2_rgba_stitch_glsl.h \
 $(GEN_TARGET)/src/compiler/glsl/float64_glsl.h:
 	$(MSG_DIR)
 	$(VERBOSE)$(PYTHON) $(SRC)/src/util/xxd.py \
-	                    $(SRC)/src/compiler/glsl/float64.glsl $@ -n float64_source
+	                    $(SRC)/src/compiler/glsl/$(CMD)
 
 CMD(nir_opcodes.h)              = nir_opcodes_h.py
 CMD(nir_opcodes.c)              = nir_opcodes_c.py
@@ -277,6 +295,12 @@ $(GEN_TARGET)/src/gallium/auxiliary/tr_util.c:
 	                    $(SRC)/src/gallium/include/pipe/p_video_enums.h \
 	                    $(SRC)/src/util/blend.h \
 	                    -C $@ -H $(GEN_TARGET)/src/gallium/auxiliary/tr_util.h -I tr_util.h
+
+$(GEN_TARGET)/src/gallium/auxiliary/u_tracepoints.h:
+	$(MSG_DIR)
+	$(VERBOSE)$(PYTHON) $(SRC)/src/gallium/auxiliary/util/u_tracepoints.py \
+	                    -p $(SRC)/src/util/perf/ \
+	                    -H $(GEN_TARGET)/src/gallium/auxiliary/u_tracepoints.h
 
 $(GEN_TARGET)/src/git_sha1.h:
 	$(MSG_DIR)
