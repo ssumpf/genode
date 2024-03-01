@@ -523,9 +523,6 @@ struct Stereo_output : Noncopyable
 					clear();
 				}
 			);
-
-			if (orig_depleted != depleted && depleted)
-				log("recording depleted");
 		}
 	};
 
