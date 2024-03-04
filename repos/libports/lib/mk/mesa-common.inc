@@ -45,6 +45,7 @@ CC_OPT += -DENABLE_ST_OMX_BELLAGIO=0  \
           -DHAVE_DLADDR  \
           -DHAVE_DLFCN_H  \
           -DHAVE_DL_ITERATE_PHDR  \
+          -DHAVE_DRI \
           -DHAVE_DRI2 \
           -DHAVE_EXECINFO_H  \
           -DHAVE_FLOCK  \

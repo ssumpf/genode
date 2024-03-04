@@ -15,6 +15,7 @@
  * Mesa
  */
 #include <egl_dri2.h>
+#include <util/xmlconfig.h>
 
 /*
  * Libc
@@ -166,6 +167,12 @@ EGLBoolean dri2_initialize_genode(_EGLDisplay *disp)
 		printf("Error: could not open EGL back end driver ('mesa_gpu_drv.lib.so')\n");
 		return EGL_FALSE;
 	}
+
+	/*
+	 * xmlconfig.c expects a valid 'execname' variable (see file). Since
+	 * the fallback 'getprogname' returns NULL, inject something
+	 */
+	driInjectExecName("mesa_app");
 
 	typedef EGLBoolean (*genode_backend)(_EGLDisplay *);
 

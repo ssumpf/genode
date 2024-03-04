@@ -8,6 +8,7 @@ INC_DIR += $(MESA_GEN_DIR)/src/mapi \
            $(MESA_SRC_DIR)/src/mapi/shared-glapi
 
 SRC_C = mapi/entry.c \
+        mapi/shared-glapi/glapi.c \
         mapi/shared-glapi/stub.c \
         mapi/shared-glapi/table.c \
         mapi/u_current.c \

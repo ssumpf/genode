@@ -1,3 +1,4 @@
+mesa-24.0.1/src/egl/main/eglconfigdebug.c
 mesa-24.0.1/src/util/u_call_once.c
 mesa-24.0.1/src/c11/impl/threads_posix.c
 mesa-24.0.1/bin/git_sha1_gen.py
@@ -1543,6 +1544,7 @@ mesa-24.0.1/src/mapi/glapi/glapi.h
 mesa-24.0.1/src/mapi/glapi/registry/gl.xml
 mesa-24.0.1/src/mapi/mapi_abi.py
 mesa-24.0.1/src/mapi/mapi_tmp.h
+mesa-24.0.1/src/mapi/shared-glapi/glapi.c
 mesa-24.0.1/src/mapi/shared-glapi/stub.c
 mesa-24.0.1/src/mapi/shared-glapi/stub.h
 mesa-24.0.1/src/mapi/shared-glapi/table.c
@@ -1785,6 +1787,7 @@ mesa-24.0.1/src/mesa/main/varray.h
 mesa-24.0.1/src/mesa/main/vdpau.c
 mesa-24.0.1/src/mesa/main/version.c
 mesa-24.0.1/src/mesa/main/version.h
+mesa-24.0.1/src/mesa/main/viewport.c
 mesa-24.0.1/src/mesa/main/viewport.h
 mesa-24.0.1/src/mesa/math/m_eval.c
 mesa-24.0.1/src/mesa/math/m_eval.h

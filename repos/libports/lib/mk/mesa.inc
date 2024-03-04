@@ -592,6 +592,7 @@ SRC_C += c11/impl/threads_posix.c \
          mesa/main/varray.c \
          mesa/main/vdpau.c \
          mesa/main/version.c \
+         mesa/main/viewport.c \
          mesa/math/m_eval.c \
          mesa/math/m_matrix.c \
          mesa/program/arbprogparse.c \
@@ -739,6 +740,7 @@ SRC_C += compiler/builtin_types.c \
          compiler/spirv/vtn_gather_types.c \
          gallium/auxiliary/indices/u_indices_gen.c \
          gallium/auxiliary/tr_util.c \
+         mapi/glapi/gen/api_exec_init.c \
          mapi/glapi/gen/enums.c \
          mapi/glapi/gen/marshal_generated0.c \
          mapi/glapi/gen/marshal_generated1.c \

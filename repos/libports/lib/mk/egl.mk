@@ -13,6 +13,7 @@ INC_DIR += $(MESA_SRC_DIR)/src/egl/main \
 SRC_C = main/eglapi.c \
         main/eglarray.c \
         main/eglconfig.c \
+        main/eglconfigdebug.c \
         main/eglcontext.c \
         main/eglcurrent.c \
         main/egldevice.c \
