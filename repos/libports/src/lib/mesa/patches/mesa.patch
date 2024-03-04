@@ -78,19 +78,19 @@ index 678bb75..9c16c60 100644
  static struct {
     simple_mtx_t mutex;
 diff --git a/src/lib/mesa/src/loader/loader.c b/src/lib/mesa/src/loader/loader.c
-index 19c456c..5277529 100644
+index 19c456c..bf90afe 100644
 --- a/src/lib/mesa/src/loader/loader.c
 +++ b/src/lib/mesa/src/loader/loader.c
-@@ -804,8 +804,7 @@ loader_open_driver_lib(const char *driver_name,
-                p, driver_name, lib_suffix);
+@@ -800,8 +800,7 @@ loader_open_driver_lib(const char *driver_name,
+          next = end;
+ 
+       len = next - p;
+-      snprintf(path, sizeof(path), "%.*s/tls/%s%s.so", len,
+-               p, driver_name, lib_suffix);
++      snprintf(path, sizeof(path), "%.*s/mesa_gpu_drv.lib.so", len, p);
        driver = dlopen(path, RTLD_NOW | RTLD_GLOBAL);
        if (driver == NULL) {
--         snprintf(path, sizeof(path), "%.*s/%s%s.so", len,
--                  p, driver_name, lib_suffix);
-+         snprintf(path, sizeof(path), "%.*s/mesa_gpu_drv.lib.so", len, p);
-          driver = dlopen(path, RTLD_NOW | RTLD_GLOBAL);
-          if (driver == NULL) {
-             dl_error = dlerror();
+          snprintf(path, sizeof(path), "%.*s/%s%s.so", len,
 diff --git a/src/lib/mesa/src/util/u_thread.c b/src/lib/mesa/src/util/u_thread.c
 index c508733..b186182 100644
 --- a/src/lib/mesa/src/util/u_thread.c
