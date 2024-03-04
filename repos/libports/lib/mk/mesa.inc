@@ -102,7 +102,8 @@ SRC_CC += compiler/glsl/ast_array_index.cpp \
           mesa/main/texcompress_astc.cpp \
           mesa/main/uniform_query.cpp \
           mesa/state_tracker/st_atom_array.cpp \
-          mesa/state_tracker/st_glsl_to_nir.cpp
+          mesa/state_tracker/st_glsl_to_nir.cpp \
+          util/u_qsort.cpp
 
 SRC_C += c11/impl/threads_posix.c \
          compiler/glsl/gl_nir_link_atomics.c \
@@ -475,6 +476,7 @@ SRC_C += c11/impl/threads_posix.c \
          gallium/winsys/sw/wrapper/wrapper_sw_winsys.c \
          loader/loader.c \
          loader/loader_dri_helper.c \
+         mapi/entry.c \
          mesa/main/accum.c \
          mesa/main/api_arrayelt.c \
          mesa/main/arbprogram.c \
@@ -719,6 +721,7 @@ SRC_C += c11/impl/threads_posix.c \
          util/u_queue.c \
          util/u_thread.c \
          util/u_vector.c \
+         util/u_worklist.c \
          util/vma.c \
          util/xmlconfig.c
 
@@ -756,8 +759,6 @@ SRC_C += compiler/builtin_types.c \
          mesa/program/program_parse.tab.c \
          util/format/u_format_table.c \
          util/format_srgb.c
-
-
 
 
 CC_OPT += -DMAPI_ABI_HEADER=\"glapi/gen/glapi_mapi_tmp.h\" \
