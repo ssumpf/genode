@@ -13,6 +13,13 @@ INC_DIR += $(LIB_DIR)/include \
 CC_OPT += -D__GENODE__ -DGALLIUM_SOFTPIPE
 
 #
+# Otherwise TLS init function calls will be created, for example, for
+# 'glapi_tls_Context' in >C++11 code. This requires support in the dynamic
+# linker which we don't have.
+#
+CC_CXX_OPT += -fno-extern-tls-init
+
+#
 # C++20 warnings disable on update
 #
 CC_CXX_OPT += -Wno-deprecated-enum-enum-conversion
@@ -38,6 +45,7 @@ CC_OPT += -DENABLE_ST_OMX_BELLAGIO=0  \
           -DHAVE_DLADDR  \
           -DHAVE_DLFCN_H  \
           -DHAVE_DL_ITERATE_PHDR  \
+          -DHAVE_DRI2 \
           -DHAVE_EXECINFO_H  \
           -DHAVE_FLOCK  \
           -DHAVE_FUNC_ATTRIBUTE_ALIAS  \

@@ -102,6 +102,7 @@ SRC_C += gallium/drivers/iris/iris_batch.c \
          gallium/drivers/iris/iris_resolve.c \
          gallium/drivers/iris/iris_resource.c \
          gallium/drivers/iris/iris_screen.c \
+         gallium/drivers/iris/iris_utrace.c \
          intel/blorp/blorp.c \
          intel/blorp/blorp_blit.c \
          intel/blorp/blorp_clear.c \

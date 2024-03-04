@@ -13,6 +13,9 @@ DIR(mesa)     := src/lib/mesa
 TAR_OPT(mesa) := --strip-components=1 --files-from $(REP_DIR)/src/lib/mesa/files.list
 HASH_INPUT    += $(REP_DIR)/src/lib/mesa/files.list
 
+PATCHES       := src/lib/mesa/patches/intel_gen.patch \
+                 src/lib/mesa/patches/mesa.patch \
+
 #PATCHES       := src/lib/mesa/patches/bitset_redefined.patch \
 #                 src/lib/mesa/patches/etnaviv.patch \
 #                 src/lib/mesa/patches/iris.patch \
@@ -20,13 +23,12 @@ HASH_INPUT    += $(REP_DIR)/src/lib/mesa/files.list
 #                 src/lib/mesa/patches/iris_bufmgr_unmap.patch \
 #                 src/lib/mesa/patches/iris_disable_compute.patch \
 #                 src/lib/mesa/patches/lseek.patch \
-#                 src/lib/mesa/patches/mesa.patch \
 #                 src/lib/mesa/patches/os_mmap.patch \
 #                 src/lib/mesa/patches/softpipe_cache.patch \
 #                 src/lib/mesa/patches/lima.patch \
 #                 src/lib/mesa/patches/sync_wait.patch
-#
-#PATCH_OPT     := -p1
+
+PATCH_OPT     := -p1
 
 #
 # Generated Mesa sources
@@ -56,7 +58,8 @@ GEN_TARGET = generated
 #
 # Generate files
 #
-generated_files = $(GEN_TARGET)/src/compiler/builtin_types.h \
+generated_files = $(GEN_TARGET)/src/compiler/builtin_types.c \
+                  $(GEN_TARGET)/src/compiler/builtin_types.h \
                   $(GEN_TARGET)/src/compiler/glsl/astc_glsl.h \
                   $(GEN_TARGET)/src/compiler/glsl/bc1_glsl.h \
                   $(GEN_TARGET)/src/compiler/glsl/bc4_glsl.h \
@@ -116,6 +119,7 @@ generated_files = $(GEN_TARGET)/src/compiler/builtin_types.h \
                   $(GEN_TARGET)/src/mapi/glapi/gen/marshal_generated5.c \
                   $(GEN_TARGET)/src/mapi/glapi/gen/marshal_generated6.c \
                   $(GEN_TARGET)/src/mapi/glapi/gen/marshal_generated7.c \
+                  $(GEN_TARGET)/src/mapi/glapi/gen/unmarshal_table.c \
                   $(GEN_TARGET)/src/mapi/shared-glapi/glapi_mapi_tmp.h \
                   $(GEN_TARGET)/src/mesa/format_fallback.c \
                   $(GEN_TARGET)/src/mesa/format_info.h \
@@ -227,6 +231,9 @@ $(GEN_TARGET)/src/compiler/builtin_types.h:
 	$(MSG_DIR)
 	$(VERBOSE)$(PYTHON) $(SRC)/src/compiler/builtin_types_h.py $@
 
+$(GEN_TARGET)/src/compiler/builtin_types.c:
+	$(MSG_DIR)
+	$(VERBOSE)$(PYTHON) $(SRC)/src/compiler/builtin_types_c.py $@
 
 CMD(dispatch.h)           = gl_table.py -m remap_table
 CMD(marshal_generated.h)  = gl_marshal_h.py
@@ -250,6 +257,11 @@ $(GEN_TARGET)/src/mapi/glapi/gen/marshal_generated6.c \
 $(GEN_TARGET)/src/mapi/glapi/gen/marshal_generated7.c:
 	$(MSG_DIR)
 	$(VERBOSE)$(PYTHON) $(SRC)/src/mapi/glapi/gen/$(CMD) > $@
+
+$(GEN_TARGET)/src/mapi/glapi/gen/unmarshal_table.c:
+	$(MSG_DIR)
+	$(VERBOSE)$(PYTHON) $(SRC)/src/mapi/glapi/gen/gl_unmarshal_table.py \
+	                    $(GL_ES_API) > $@
 
 $(GEN_TARGET)/src/mesa/main/dispatch.h \
 $(GEN_TARGET)/src/mesa/main/marshal_generated.h \

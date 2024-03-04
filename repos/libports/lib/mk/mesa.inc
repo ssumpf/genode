@@ -104,7 +104,8 @@ SRC_CC += compiler/glsl/ast_array_index.cpp \
           mesa/state_tracker/st_atom_array.cpp \
           mesa/state_tracker/st_glsl_to_nir.cpp
 
-SRC_C += compiler/glsl/gl_nir_link_atomics.c \
+SRC_C += c11/impl/threads_posix.c \
+         compiler/glsl/gl_nir_link_atomics.c \
          compiler/glsl/gl_nir_link_uniform_blocks.c \
          compiler/glsl/gl_nir_link_uniform_initializers.c \
          compiler/glsl/gl_nir_link_uniforms.c \
@@ -122,6 +123,7 @@ SRC_C += compiler/glsl/gl_nir_link_atomics.c \
          compiler/glsl/gl_nir_lower_xfb_varying.c \
          compiler/glsl/gl_nir_opt_dead_builtin_varyings.c \
          compiler/glsl/glcpp/pp.c \
+         compiler/glsl_types.c \
          compiler/nir/nir.c \
          compiler/nir/nir_builder.c \
          compiler/nir/nir_builtin_builder.c \
@@ -679,6 +681,7 @@ SRC_C += compiler/glsl/gl_nir_link_atomics.c \
          util/format/u_format.c \
          util/format/u_format_bptc.c \
          util/format/u_format_etc.c \
+         util/format/u_format_fxt1.c \
          util/format/u_format_latc.c \
          util/format/u_format_other.c \
          util/format/u_format_rgtc.c \
@@ -695,20 +698,25 @@ SRC_C += compiler/glsl/gl_nir_link_atomics.c \
          util/rand_xor.c \
          util/register_allocate.c \
          util/rgtc.c \
+         util/rwlock.c \
          util/set.c \
          util/sha1/sha1.c \
+         util/simple_mtx.c \
          util/slab.c \
          util/softfloat.c \
          util/string_buffer.c \
          util/strtod.c \
+         util/u_call_once.c \
          util/u_cpu_detect.c \
          util/u_debug.c \
+         util/u_dynarray.c \
          util/u_idalloc.c \
          util/u_math.c \
          util/u_mm.c \
          util/u_printf.c \
          util/u_process.c \
          util/u_queue.c \
+         util/u_thread.c \
          util/u_vector.c \
          util/vma.c \
          util/xmlconfig.c
@@ -720,8 +728,8 @@ SRC_C += compiler/glsl/gl_nir_link_atomics.c \
 SRC_CC += compiler/glsl/glsl_parser.cpp \
           compiler/glsl/glsl_lexer.cpp \
 
-
-SRC_C += compiler/glsl/glcpp/glcpp-lex.c \
+SRC_C += compiler/builtin_types.c \
+         compiler/glsl/glcpp/glcpp-lex.c \
          compiler/glsl/glcpp/glcpp-parse.c \
          compiler/nir/nir_constant_expressions.c \
          compiler/nir/nir_intrinsics.c \
@@ -740,6 +748,7 @@ SRC_C += compiler/glsl/glcpp/glcpp-lex.c \
          mapi/glapi/gen/marshal_generated5.c \
          mapi/glapi/gen/marshal_generated6.c \
          mapi/glapi/gen/marshal_generated7.c \
+         mapi/glapi/gen/unmarshal_table.c \
          mesa/format_fallback.c \
          mesa/program/lex.yy.c \
          mesa/program/program_parse.tab.c \

@@ -5,7 +5,10 @@ include $(REP_DIR)/lib/mk/mesa-common.inc
 
 INC_DIR += $(MESA_SRC_DIR)/src/egl/main \
            $(MESA_SRC_DIR)/src/egl/drivers/dri2 \
-           $(MESA_SRC_DIR)/src/loader
+           $(MESA_SRC_DIR)/src/gallium/auxiliary \
+           $(MESA_SRC_DIR)/src/gallium/frontends/dri \
+           $(MESA_SRC_DIR)/src/loader \
+           $(MESA_SRC_DIR)/src/mesa
 
 SRC_C = main/eglapi.c \
         main/eglarray.c \
@@ -20,7 +23,6 @@ SRC_C = main/eglapi.c \
         main/eglsurface.c \
         main/eglsync.c \
         drivers/dri2/egl_dri2.c \
-        drivers/dri2/platform_device.c \
         platform.c
 
 SRC_CC = genode_interface.cc
