@@ -81,7 +81,8 @@ struct mixer
 /* device events */
 enum Sound_event {
 	EVENT_INVALID = 0,
-	EVENT_PCM,
+	EVENT_PCM_PLAYBACK,
+	EVENT_PCM_CAPTURE,
 	EVENT_PLAYBACK_STOP, //TODO
 	EVENT_JACK_PLUGGED,
 	EVENT_JACK_UNPLUGGED,
@@ -301,14 +302,25 @@ int fasync_helper(int fd, struct file *filp, int on, struct fasync_struct **fapp
 }
 
 
-/* called at end of IRQ handler for pcm irqs */
+/* called at end of IRQ handler for pcm irqs
+ *
+ * call chain
+ * hda_dsp_interrupt_thread (hda.c) -> hda_dsp_check_stream (hda-stream.c) ->
+ * snd_sof_pcm_period_elapsed (pcm.c) -> schedule_work -> snd_pcm_period_elapsed
+ * (pcm_lib.c) -> snd_pcm_period_elapsed_under_stream_lock -> snd_kill_fasync
+ * (misc.c) -> schedule_work -> snd_fasync_work_fn -> kill_fasync
+ *
+ * sig - contains the stream direction (patched into contrib code)
+ */
 void kill_fasync(struct fasync_struct **fp,int sig,int band)
 {
 	struct sound_card *card;
 
 	if (fp[0] && fp[0]->fa_file) {
 		card = (struct sound_card *)fp[0]->fa_file;
-		sound_events_add(card, EVENT_PCM);
+
+		if (sig == SNDRV_PCM_STREAM_CAPTURE)
+			sound_events_add(card, EVENT_PCM_CAPTURE);
 
 		if (genode_mixer_update())
 			sound_events_add(card, EVENT_MIXER);
@@ -388,7 +400,7 @@ static void sound_param_configure(struct sound_handle *handle)
 
 	sound_param_set_interval(params, SNDRV_PCM_HW_PARAM_RATE,        48000);
 	sound_param_set_interval(params, SNDRV_PCM_HW_PARAM_CHANNELS,    2);
-	sound_param_set_interval(params, SNDRV_PCM_HW_PARAM_PERIOD_SIZE, genode_audio_period());
+	sound_param_set_interval(params, SNDRV_PCM_HW_PARAM_PERIOD_SIZE, genode_audio_samples_per_period());
 
 
 	err = sound_ioctl(handle, SNDRV_PCM_IOCTL_HW_PARAMS, params);
@@ -890,8 +902,9 @@ bool sound_pcm_play_watermark(struct sound_handle *handle)
 
 	frames = status.appl_ptr - status.hw_ptr;
 	/* keep two periods on card */
-	return frames >= 2 * genode_audio_period() &&
-	       status.avail >=  2 * genode_audio_period() ? false : true;
+	return frames >= 2 * genode_audio_samples_per_period() &&
+	       status.avail >=  2 * genode_audio_samples_per_period()
+	       ? false : true;
 }
 
 
@@ -918,7 +931,7 @@ bool sound_pcm_capture_watermark(struct sound_handle *handle)
 	if (status.state == SNDRV_PCM_STATE_DRAINING) return false;
 	if (status.state == SNDRV_PCM_STATE_PREPARED) return true;
 
-	return status.avail >= genode_audio_period();
+	return status.avail >= genode_audio_samples_per_period();
 }
 
 
@@ -936,12 +949,13 @@ static void sound_play(struct sound_handle *handle)
 {
 	int err;
 	void *buffer;
+
 	while (sound_pcm_play_watermark(handle)) {
 
-		struct genode_packet packet = genode_play_packet();
+		struct genode_audio_packet packet = genode_audio_record();
 		struct snd_xferi xfer = { 0 };
 
-		if (packet.size < genode_audio_period() * 4) {
+		if (packet.samples < genode_audio_samples_per_period()) {
 			buffer = silence_data();
 		}
 		else {
@@ -949,7 +963,8 @@ static void sound_play(struct sound_handle *handle)
 		}
 
 		xfer.buf    = buffer;
-		xfer.frames = genode_audio_period();
+		xfer.frames = genode_audio_samples_per_period();
+
 		err = sound_ioctl(handle, SNDRV_PCM_IOCTL_WRITEI_FRAMES, &xfer);
 		if (err) {
 			printk("%s:%d err=%d\n", __func__, __LINE__, err);
@@ -973,17 +988,17 @@ static void *capture_data(void)
 static void sound_capture(struct sound_handle *handle)
 {
 	int err;
-	struct genode_packet packet  = {
+	struct genode_audio_packet packet  = {
 		.data = capture_data(),
-		.size = genode_audio_period() * 2,
+		.samples = genode_audio_samples_per_period(),
 	};
 
 	while (sound_pcm_capture_watermark(handle)) {
 		struct snd_xferi xfer = { 0 };
 
-		memset(packet.data, 0, packet.size * sizeof(short));
+		memset(packet.data, 0, packet.samples * 2 * sizeof(short));
 		xfer.buf    = packet.data;
-		xfer.frames = genode_audio_period();
+		xfer.frames = packet.samples;
 
 		err = sound_ioctl(handle, SNDRV_PCM_IOCTL_READI_FRAMES, &xfer);
 		if (err) {
@@ -991,7 +1006,7 @@ static void sound_capture(struct sound_handle *handle)
 			dump_pcm_state(handle, __func__);
 			return;
 		}
-		genode_record_packet(packet);
+		genode_audio_play(packet);
 	}
 }
 
@@ -1145,7 +1160,8 @@ static void sound_dispatch(struct sound_card *card, struct snd_card *c)
 			}
 		}
 
-		if (_event(events, EVENT_PCM)) {
+		/* sync on capture */
+		if (_event(events, EVENT_PCM_CAPTURE)) {
 			sound_capture(card->capture);
 			sound_play(card->playback);
 		}
@@ -1200,13 +1216,19 @@ static int sound_card_task(void *data)
 	}
 
 	/* open devices */
-	sound_card.playback = sound_device_setup(card, sound_card.routing->playback, &sound_card);
+	sound_card.playback = sound_device_setup(card,
+	                                         sound_card.routing->playback,
+	                                         &sound_card);
 	if (!sound_card.playback) sleep_forever();
 
-	sound_card.mic_internal = sound_device_setup(card, sound_card.routing->mic_internal, &sound_card);
+	sound_card.mic_internal = sound_device_setup(card,
+	                                             sound_card.routing->mic_internal,
+	                                             &sound_card);
 	if (!sound_card.mic_internal) sleep_forever();
 
-	sound_card.mic_headset = sound_device_setup(card, sound_card.routing->mic_headset, &sound_card);
+	sound_card.mic_headset = sound_device_setup(card,
+	                                            sound_card.routing->mic_headset,
+	                                            &sound_card);
 	if (!sound_card.mic_headset) sleep_forever();
 
 	/* mixer defaults */
@@ -1216,7 +1238,7 @@ static int sound_card_task(void *data)
 		sound_events_add(&sound_card, EVENT_MIXER);
 
 	/* start event loop */
-	sound_events_add(&sound_card, EVENT_PCM);
+	sound_events_add(&sound_card, EVENT_PCM_CAPTURE);
 	sound_dispatch(&sound_card, card);
 
 	err = sound_device_close(sound_card.playback);

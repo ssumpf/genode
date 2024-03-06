@@ -6,5 +6,7 @@ genode_c_api
 jitterentropy
 pc_linux
 platform_session
+play_session
+record_session
 report_session
 timer_session
