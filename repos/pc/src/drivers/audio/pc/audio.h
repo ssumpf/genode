@@ -17,10 +17,10 @@
 extern "C" {
 #endif
 
-struct genode_packet
+struct genode_audio_packet
 {
 	short        *data;
-	unsigned long size;
+	unsigned long samples;
 };
 
 enum Jack_mode {
@@ -83,10 +83,10 @@ struct genode_devices
 void genode_audio_init(struct genode_env *env_ptr,
                        struct genode_allocator *alloc_ptr);
 
-struct genode_packet genode_play_packet(void);
-void genode_record_packet(struct genode_packet packet);
+struct genode_audio_packet genode_audio_record(void);
+void   genode_audio_play(struct genode_audio_packet packet);
 
-unsigned long genode_audio_period(void);
+unsigned long genode_audio_samples_per_period(void);
 
 void genode_mixer_report_controls(struct genode_mixer_controls *controls);
 void genode_mixer_update_controls(struct genode_mixer_controls *controls);

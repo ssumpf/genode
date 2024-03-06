@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright (C) 2022 Genode Labs GmbH
+ * Copyright (C) 2022-2024 Genode Labs GmbH
  *
  * This file is distributed under the terms of the GNU General Public License
  * version 2.
@@ -13,6 +13,8 @@
 
 #include <audio_in_session/rpc_object.h>
 #include <audio_out_session/rpc_object.h>
+#include <record_session/connection.h>
+#include <play_session/connection.h>
 #include <base/attached_rom_dataspace.h>
 #include <base/session_label.h>
 #include <base/component.h>
@@ -30,8 +32,8 @@ namespace Audio_out {
 	class  Out;
 	class  Root;
 	struct Root_policy;
-	enum   Channel_number { LEFT, RIGHT, MAX_CHANNELS, INVALID = MAX_CHANNELS };
-	static Session_component *channel_acquired[MAX_CHANNELS];
+	enum   Channel_number { LEFT, RIGHT, CHANNELS, INVALID = CHANNELS };
+	static Session_component *channel_acquired[CHANNELS];
 }
 
 
@@ -94,6 +96,7 @@ class Audio_out::Out
 
 		void _handle_data_avail() { }
 
+		int16_t _data[4096];
 
 	public:
 
@@ -126,9 +129,9 @@ class Audio_out::Out
 
 		Signal_context_capability data_avail() { return _data_avail_dispatcher; }
 
-		genode_packet play_packet()
+		genode_audio_packet record_packet()
 		{
-			genode_packet packet = { nullptr, 0 };
+			genode_audio_packet packet = { nullptr, 0 };
 
 			unsigned lpos = left()->pos();
 			unsigned rpos = right()->pos();
@@ -136,17 +139,16 @@ class Audio_out::Out
 			Packet *p_left  = left()->get(lpos);
 			Packet *p_right = right()->get(rpos);
 
-			if (p_left->valid() && p_right->valid()) {
-				/* convert float to S16LE */
-				static short data[Audio_out::PERIOD * Audio_out::MAX_CHANNELS];
+			packet.samples = genode_audio_samples_per_period();
 
-				for (unsigned i = 0; i < Audio_out::PERIOD * Audio_out::MAX_CHANNELS; i += 2) {
-					data[i] = int16_t(p_left->content()[i / 2] * 32767);
-					data[i + 1] = int16_t(p_right->content()[i / 2] * 32767);
+			if (p_left->valid() && p_right->valid()) {
+				/* convert float to S16LE interleaved */
+				for (unsigned i = 0; i < packet.samples; i++) {
+					_data[i * CHANNELS]     = int16_t(p_left->content()[i] * 32767);
+					_data[i * CHANNELS + 1] = int16_t(p_right->content()[i] * 32767);
 				}
 
-				packet.data  = data;
-				packet.size  = sizeof(data);
+				packet.data    = _data;
 
 				p_left->invalidate();
 				p_right->invalidate();
@@ -271,7 +273,7 @@ namespace Audio_in {
 	class Root;
 	struct Root_policy;
 	static Session_component *channel_acquired;
-	enum Channel_number { LEFT, MAX_CHANNELS, INVALID = MAX_CHANNELS };
+	enum Channel_number { LEFT, CHANNELS, INVALID = CHANNELS };
 
 }
 
@@ -323,7 +325,7 @@ class Audio_in::In
 			return false;
 		}
 
-		void record_packet(genode_packet &packet)
+		void play_packet(genode_audio_packet &packet)
 		{
 			if (!_active()) return;
 			/*
@@ -333,15 +335,16 @@ class Audio_in::In
 
 			Packet *p = stream()->alloc();
 
-			float const scale = 32768.0f * 2;
+			float const scale = 1.0f/(32768 * 2);
 
 			float * const content = p->content();
 			short * const data    = packet.data;
-			memset(content, 0, packet.size);
+			memset(content, 0, p->size());
 
-			for (unsigned long i = 0; i < packet.size; i += 2) {
-				float sample = data[i] + data[i+1];
-				content[i/2] = sample / scale;
+			/* convert from 2 channels s16le interleaved to one channel float */
+			for (unsigned long i = 0; i < packet.samples; i++) {
+				float sample = data[i * 2] + data[i * 2 + 1];
+				content[i]   = sample * scale;
 			}
 
 			stream()->submit(p);
@@ -423,6 +426,117 @@ class Audio_in::Root : public Audio_in::Root_component
 };
 
 
+struct Stereo_output : Noncopyable
+{
+	static constexpr unsigned SAMPLES_PER_PERIOD = Audio_in::PERIOD;
+	static constexpr unsigned CHANNELS = 2;
+
+	Env &_env;
+
+	Record::Connection _left  { _env, "left"  };
+	Record::Connection _right { _env, "right" };
+
+	struct Recording : private Noncopyable
+	{
+		bool depleted = false;
+
+		/* 16 bit per sample, interleaved left and right */
+		int16_t data[SAMPLES_PER_PERIOD*CHANNELS] { };
+
+		void clear() { for (auto &e : data) e = 0; }
+
+		void from_record_sessions(Record::Connection &left, Record::Connection &right)
+		{
+			using Samples_ptr = Record::Connection::Samples_ptr;
+
+			Record::Num_samples const num_samples { SAMPLES_PER_PERIOD };
+
+			auto clamped = [&] (float v)
+			{
+				return (v >  1.0) ?  1.0
+				     : (v < -1.0) ? -1.0
+				     :  v;
+			};
+
+			auto float_to_s16 = [&] (float v) { return int16_t(clamped(v)*32767); };
+
+			left.record(num_samples,
+				[&] (Record::Time_window const tw, Samples_ptr const &samples) {
+					depleted = false;
+
+					for (unsigned i = 0; i < SAMPLES_PER_PERIOD; i++)
+						data[i*CHANNELS] = float_to_s16(samples.start[i]);
+
+					right.record_at(tw, num_samples,
+						[&] (Samples_ptr const &samples) {
+							for (unsigned i = 0; i < SAMPLES_PER_PERIOD; i++)
+								data[i*CHANNELS + 1] = float_to_s16(samples.start[i]);
+						});
+				},
+				[&] {
+					depleted = true;
+					clear();
+				}
+			);
+		}
+	};
+
+	Recording _recording { };
+
+	genode_audio_packet record_packet()
+	{
+		_recording.from_record_sessions(_left, _right);
+		return _recording.depleted ?
+		       genode_audio_packet { nullptr, 0 } :
+		       genode_audio_packet { _recording.data, sizeof(_recording.data) };
+	}
+
+	Stereo_output(Env &env) : _env(env) { }
+};
+
+
+struct Stereo_input : Noncopyable
+{
+	static constexpr unsigned SAMPLES_PER_PERIOD = Audio_in::PERIOD;
+	static constexpr unsigned CHANNELS = 2;
+
+	Env &_env;
+
+	Play::Connection _left  { _env, "mic_left"  };
+	Play::Connection _right { _env, "mic_right" };
+
+	struct Frame { float left, right; };
+
+	void _for_each_frame(genode_audio_packet &packet, auto const &fn) const
+	{
+		float const scale = 1.0f/32768;
+
+		/* convert two channel s16le interleaved to two channel float */
+		for (unsigned i = 0; i < packet.samples; i++)
+			fn(Frame { .left  = scale*float(packet.data[i*CHANNELS]),
+			           .right = scale*float(packet.data[i*CHANNELS + 1]) });
+	}
+
+	Play::Time_window _time_window { };
+
+	void play_packet(genode_audio_packet &packet)
+	{
+		Play::Duration const duration_us { 10666 }; /* hint for first period (48KHz) */
+		_time_window = _left.schedule_and_enqueue(_time_window, duration_us,
+			[&] (auto &submit) {
+				_for_each_frame(packet, [&] (Frame const frame) {
+					submit(frame.left); }); });
+
+		_right.enqueue(_time_window,
+			[&] (auto &submit) {
+				_for_each_frame(packet, [&] (Frame const frame) {
+					submit(frame.right); }); });
+	}
+
+	Stereo_input(Env &env) : _env(env) { }
+};
+
+
 struct Audio
 {
 	Env       &env;
@@ -433,17 +547,22 @@ struct Audio
 	Reporter devices { env, "devices" };
 
 	Attached_rom_dataspace config { env, "config" };
-	Signal_handler<Audio> config_handler { env.ep(), *this,
+	Signal_handler<Audio>  config_handler { env.ep(), *this,
 		&Audio::config_update };
+
+	bool const record_play = config.xml().attribute_value("record_play", false);
 
 	bool mixer_update { false };
 	Jack_mode jack_mode = Jack_mode::DEFAULT;
 
-	Audio_out::Out  out { env };
-	Audio_out::Root out_root { env, alloc, out.data_avail() };
+	Constructible<Audio_out::Out>  out      { };
+	Constructible<Audio_out::Root> out_root { };
 
-	Audio_in::In   in { };
-	Audio_in::Root in_root { env, alloc };
+	Constructible<Audio_in::In>   in      { };
+	Constructible<Audio_in::Root> in_root { };
+
+	Constructible<Stereo_output> stereo_output { };
+	Constructible<Stereo_input>  stereo_input  { };
 
 	Audio(Env &env, Allocator &alloc)
 	: env(env), alloc(alloc)
@@ -451,8 +570,21 @@ struct Audio
 		config.sigh(config_handler);
 		config_update();
 
-		env.parent().announce(env.ep().manage(out_root));
-		env.parent().announce(env.ep().manage(in_root));
+		if (record_play) {
+			stereo_output.construct(env);
+			stereo_input.construct(env);
+			return;
+		}
+
+		/* Audio_out/Audio_in mode */
+
+		out.construct(env);
+		out_root.construct(env, alloc, out->data_avail());
+		env.parent().announce(env.ep().manage(*out_root));
+
+		in.construct();
+		in_root.construct(env, alloc);
+		env.parent().announce(env.ep().manage(*in_root));
 	}
 
 	void config_update()
@@ -469,6 +601,19 @@ struct Audio
 		mixer_update = config.xml().has_sub_node("control");
 		jack_mode = Jack_mode(config.xml().attribute_value("jack_mode", (unsigned) Jack_mode::DEFAULT));
 		devices.enabled(config.xml().attribute_value("report_devices", false));
+	}
+
+	struct genode_audio_packet record_packet()
+	{
+		if (record_play) return stereo_output->record_packet();
+
+		return _audio_out_active() ? out->record_packet() : genode_audio_packet { nullptr, 0 };
+	}
+
+	void play_packet(struct genode_audio_packet &packet)
+	{
+		if (record_play) stereo_input->play_packet(packet);
+		else in->play_packet(packet);
 	}
 };
 
@@ -495,22 +640,21 @@ extern "C" void genode_audio_init(struct genode_env *env_ptr,
 }
 
 
-extern "C" unsigned long genode_audio_period(void)
+extern "C" unsigned long genode_audio_samples_per_period(void)
 {
 	return Audio_out::PERIOD;
 }
 
 
-extern "C" struct genode_packet genode_play_packet(void)
+extern "C" struct genode_audio_packet genode_audio_record(void)
 {
-	
-	return _audio_out_active() ? _audio().out.play_packet() : genode_packet { nullptr, 0 };
+	return _audio().record_packet();
 }
 
 
-extern "C" void genode_record_packet(genode_packet packet)
+extern "C" void genode_audio_play(genode_audio_packet packet)
 {
-	_audio().in.record_packet(packet);
+	_audio().play_packet(packet);
 }
 
 
