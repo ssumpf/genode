@@ -197,9 +197,10 @@ struct Monitor::Main : Sandbox::State_handler,
 			}
 		}
 
-		Gdb_stub(Env &env, Inferiors &inferiors)
+		Gdb_stub(Env &env, Inferiors &inferiors,
+		         Gdb::State::Max_response max_response_size)
 		:
-			_env(env), _state(inferiors, _memory_accessor)
+			_env(env), _state(inferiors, _memory_accessor, max_response_size)
 		{
 			_terminal.read_avail_sigh(_terminal_read_avail_handler);
 			_handle_terminal_read_avail();
@@ -342,7 +343,10 @@ struct Monitor::Main : Sandbox::State_handler,
 		if (_reporter.constructed())
 			_reporter->enabled(reporter_enabled);
 
-		_gdb_stub.conditional(config.has_sub_node("monitor"), _env, _inferiors);
+		_gdb_stub.conditional(config.has_sub_node("monitor"), _env, _inferiors,
+			Gdb::State::Max_response(
+				config.sub_node("monitor").attribute_value("max_response_size",
+				                                           Number_of_bytes(2048))));
 
 		_apply_monitor_config_to_inferiors();
 
