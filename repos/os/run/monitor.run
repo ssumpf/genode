@@ -60,7 +60,7 @@ install_config {
 			<default caps="100"/>
 			<affinity-space width="2" height="1"/>
 
-			<monitor max_response_size="8K">
+			<monitor max_response="8K">
 				<policy label="test-monitor" stop="no" wx="yes" />
 			</monitor>
 
