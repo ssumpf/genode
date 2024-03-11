@@ -271,10 +271,11 @@ struct Monitor::Gdb::State : Noncopyable
 	}
 
 	State(Inferiors &inferiors, Memory_accessor &memory_accessor,
-	      Max_response max_response_size)
+	      Xml_node const &config)
 	:
 		inferiors(inferiors), _memory_accessor(memory_accessor),
-		max_response_size(max_response_size)
+		max_response_size(config.sub_node("monitor").attribute_value("max_response_size",
+		                                                             Number_of_bytes(2048)))
 	{ }
 };
 
