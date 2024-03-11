@@ -155,7 +155,7 @@ struct Monitor::Gdb::State : Noncopyable
 
 	struct Max_response { size_t num_bytes; };
 
-	Max_response max_response_size;
+	Max_response max_response;
 
 	void flush(Inferior_pd &pd)
 	{
@@ -274,8 +274,8 @@ struct Monitor::Gdb::State : Noncopyable
 	      Xml_node const &config)
 	:
 		inferiors(inferiors), _memory_accessor(memory_accessor),
-		max_response_size(config.sub_node("monitor").attribute_value("max_response_size",
-		                                                             Number_of_bytes(2048)))
+		max_response(config.sub_node("monitor").attribute_value("max_response",
+		                                                        Number_of_bytes(2048)))
 	{ }
 };
 
@@ -351,11 +351,11 @@ struct qXfer : Command_with_separator
 		size_t offset, len;
 
 		static Window from_args(Const_byte_range_ptr const &args,
-		                        State::Max_response max_response_size)
+		                        State::Max_response max_response)
 		{
 			return { .offset = comma_separated_hex_value(args, 0, 0UL),
 			         .len    = min(comma_separated_hex_value(args, 1, 0UL),
-			                       max_response_size.num_bytes) };
+			                       max_response.num_bytes) };
 		}
 	};
 
@@ -375,14 +375,14 @@ struct qXfer : Command_with_separator
 
 		with_skipped_prefix(args, "features:read:target.xml:", [&] (Const_byte_range_ptr const &args) {
 			Raw_data_ptr const total_bytes { _binary_gdb_target_xml_start, _binary_gdb_target_xml_end };
-			_send_window(out, total_bytes, Window::from_args(args, state.max_response_size));
+			_send_window(out, total_bytes, Window::from_args(args, state.max_response));
 			handled = true;
 		});
 
 		with_skipped_prefix(args, "threads:read::", [&] (Const_byte_range_ptr const &args) {
 			State::Thread_list const thread_list(state.inferiors);
 			thread_list.with_bytes([&] (Const_byte_range_ptr const &bytes) {
-				_send_window(out, bytes, Window::from_args(args, state.max_response_size)); });
+				_send_window(out, bytes, Window::from_args(args, state.max_response)); });
 			handled = true;
 		});
 
@@ -390,7 +390,7 @@ struct qXfer : Command_with_separator
 			if (state.current_defined()) {
 				State::Memory_map const memory_map(state._current->pd);
 				memory_map.with_bytes([&] (Const_byte_range_ptr const &bytes) {
-					_send_window(out, bytes, Window::from_args(args, state.max_response_size)); });
+					_send_window(out, bytes, Window::from_args(args, state.max_response)); });
 			} else
 				gdb_response(out, [&] (Output &out) {
 					print(out, "l"); });
@@ -648,7 +648,7 @@ struct m : Command_without_separator
 
 		/* GDB's 'm' command encodes memory as hex, two characters per byte. */
 		size_t const len  = min(comma_separated_hex_value(args, 1, 0UL),
-		                        state.max_response_size.num_bytes / 2);
+		                        state.max_response.num_bytes / 2);
 
 		gdb_response(out, [&] (Output &out) {
 
