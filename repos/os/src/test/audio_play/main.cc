@@ -51,7 +51,7 @@ struct Audio_play::Main
 
 	unsigned _pos = 0;
 
-	unsigned const _period_ms = 5,
+	unsigned const _period_ms = 10,
 	               _sample_rate_hz = 44100,
 	               _frames_per_period = (_period_ms*_sample_rate_hz)/1000;
 
@@ -88,6 +88,7 @@ struct Audio_play::Main
 
 	Main(Env &env) : _env(env)
 	{
+		Genode::log("AUDIO PLAY started");
 		_timer.sigh(_timer_handler);
 		_timer.trigger_periodic(_period_ms*1000);
 	}
