@@ -239,7 +239,7 @@ install_config {
 		<service name="VM"/>
 	</parent-provides>
 
-	<affinity-space width="2" height="1"/>
+	<affinity-space width="4" height="1"/>
 
 	<default-route>
 		<any-service> <parent/> <any-child/> </any-service>
