@@ -10,7 +10,7 @@
 		[init] in range [3...1]: a0
 		[init] in range [3...1]: a1*
 		[init] soonest(5) -> 0*
-		[init] Test succeed.
+		[init] Test succeeded.
 	</succeed>
 
 	<content>

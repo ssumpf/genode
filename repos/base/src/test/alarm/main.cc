@@ -238,5 +238,5 @@ void Component::construct(Genode::Env &env)
 			destroy(heap, &alarm); }));
 	}
 
-	log("Test succeed.");
+	log("Test succeeded.");
 }
