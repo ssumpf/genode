@@ -312,9 +312,9 @@ class Usb::Urb_handler
 
 			auto discard_tag_and_apply_fn = [&] (Urb &urb) {
 				urb._tag.destruct();
-				fn(static_cast<URB&>(urb));
 				Packet_descriptor const p { urb._payload.offset,
 				                            urb._payload.bytes };
+				fn(static_cast<URB&>(urb));
 				_tx.source()->release_packet(p);
 			};
 

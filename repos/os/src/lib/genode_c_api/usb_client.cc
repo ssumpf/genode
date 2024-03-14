@@ -113,7 +113,8 @@ class Interface : public List_model<::Interface>::Element
 		~Interface()
 		{
 			if (_iface.constructed())
-				_iface->dissolve_all_urbs<Urb>([] (Urb&) {});
+				_iface->dissolve_all_urbs<Urb>([&] (Urb &urb) {
+					destroy(_slab, &urb); });
 		}
 
 		uint8_t number()      const { return _number; };
@@ -278,8 +279,11 @@ class Device : public List_model<Device>::Element
 			_device.sigh(_sigh_cap);
 		}
 
-		~Device() {
-			_device.dissolve_all_urbs<Urb>([] (Urb&) {}); }
+		~Device()
+		{
+			_device.dissolve_all_urbs<Urb>([&] (Urb &urb) {
+				destroy(_slab, &urb); });
+		}
 
 		Usb::Device &session() { return _device; }
 
