@@ -50,7 +50,6 @@ struct Main
 		env(env)
 	{
 		Lx_kit::initialize(env, signal_handler);
-		env.exec_static_constructors();
 
 		Genode_c_api::initialize_usb_client(env, Lx_kit::env().heap,
 		                                    signal_handler);
