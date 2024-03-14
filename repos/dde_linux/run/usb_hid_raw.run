@@ -219,7 +219,6 @@ grep_output {^\[init }
 # filter out KVM switch messages during the nightly test
 unify_output {(?n).*0557:2213.*} ""
 
-unify_output {(?n)^\[init -\> usb_hid_drv\] usb usb-[0-9]-[0-9]: input irq status -19 received} ""
 unify_output {(?n) on usb-usbbus.*$} ""
 unify_output {(?n) at usb-usbbus.*\)} ")"
 unify_output {(?n)hid-generic.*input:} "hid-generic: input:"
