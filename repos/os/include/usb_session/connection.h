@@ -99,16 +99,16 @@ class Usb::Connection : public Genode::Connection<Session>, public Usb::Client
 
 		Device_capability acquire_device(Device_name const &name) override
 		{
-			upgrade_ram(Device_session::TX_BUFFER_SIZE);
-			return retry_with_upgrade(Ram_quota{6*1024}, Cap_quota{6}, [&] () {
+			Ram_quota ram_quota(Device_session::TX_BUFFER_SIZE + 4096);
+			return retry_with_upgrade(ram_quota, Cap_quota{6}, [&] () {
 				return Client::acquire_device(name); });
 		}
 
 		Device_capability acquire_device()
 		{
 			return _wait_for_device([&] () {
-				upgrade_ram(Device_session::TX_BUFFER_SIZE);
-				return retry_with_upgrade(Ram_quota{6*1024}, Cap_quota{6}, [&] () {
+				Ram_quota ram_quota(Device_session::TX_BUFFER_SIZE + 4096);
+				return retry_with_upgrade(ram_quota, Cap_quota{6}, [&] () {
 					return Client::acquire_single_device(); });
 			});
 		}

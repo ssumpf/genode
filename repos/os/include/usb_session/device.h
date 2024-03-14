@@ -711,8 +711,8 @@ Usb::Interface::~Interface() {
 Usb::Interface_capability
 Usb::Device::_interface_cap(uint8_t num, size_t buf_size)
 {
-	_session.upgrade_ram(buf_size);
-	return _session.retry_with_upgrade(Ram_quota{6*1024}, Cap_quota{6}, [&] () {
+	return _session.retry_with_upgrade(Ram_quota{buf_size + 4096},
+	                                   Cap_quota{6}, [&] () {
 		return call<Device_session::Rpc_acquire_interface>(num, buf_size); });
 }
 

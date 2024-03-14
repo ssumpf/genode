@@ -211,6 +211,14 @@ class Interface : public List_model<::Interface>::Element
 				if (endp.address == index) fn(endp);
 			});
 		}
+
+		void delete_all_urbs(genode_usb_client_complete_t complete)
+		{
+			_iface->dissolve_all_urbs<Urb>([&] (Urb &urb) {
+				complete(urb._driver_data.data, NO_DEVICE);
+				destroy(_slab, &urb);
+			});
+		}
 };
 
 
@@ -253,11 +261,26 @@ class Device : public List_model<Device>::Element
 		List_model<::Interface>         _ifaces {};
 		Tslab<Urb, 4096>                _slab;
 
+		enum State { AVAIL, REMOVED } _state { AVAIL };
+
 		/**
 		 * Noncopyable
 		 */
 		Device(Device const &);
 		Device &operator = (Device const &);
+
+		friend class Session;
+
+		void _delete_all_urbs(genode_usb_client_complete_t complete)
+		{
+			_device.dissolve_all_urbs<Urb>([&] (Urb &urb) {
+				complete(urb._driver_data.data, NO_DEVICE);
+				destroy(_slab, &urb);
+			});
+
+			_ifaces.for_each([&] (::Interface &iface) {
+				iface.delete_all_urbs(complete); });
+		}
 
 	public:
 
@@ -349,6 +372,11 @@ class Device : public List_model<Device>::Element
 		            genode_usb_client_consume_in_isoc_t  in_isoc,
 		            genode_usb_client_complete_t         complete)
 		{
+			if (_state == REMOVED) {
+				_delete_all_urbs(complete);
+				return;
+			}
+
 			_device.update_urbs<Urb>(
 
 				/* produce out content */
@@ -437,6 +465,7 @@ struct Session
 				/* destroy */
 				[&] (Device &dev)
 				{
+					dev._state = Device::REMOVED;
 					if (dev.driver_data()) del(dev.handle(), dev.driver_data());
 					dev.update(_alloc, Xml_node("<empty/>"));
 					destroy(_alloc, &dev);

@@ -105,15 +105,6 @@ static void * register_device(genode_usb_client_dev_handle_t handle,
 }
 
 
-static void unregister_device(genode_usb_client_dev_handle_t handle, void *data)
-{
-	struct usb_device *udev = (struct usb_device *)data;
-	udev->filelist.prev = NULL;
-	usb_disconnect(&udev);
-	usb_put_dev(udev);
-}
-
-
 static void urb_out(void * data, genode_buffer_t buf)
 {
 	struct urb *urb = (struct urb *) data;
@@ -161,6 +152,17 @@ static void urb_complete(void * data, genode_usb_client_ret_val_t result)
 
 	atomic_dec(&urb->use_count);
 	usb_put_urb(urb);
+}
+
+
+static void unregister_device(genode_usb_client_dev_handle_t handle, void *data)
+{
+	struct usb_device *udev = (struct usb_device *)data;
+	genode_usb_client_device_update(urb_out, urb_in, isoc_urb_out,
+	                                isoc_urb_in, urb_complete);
+	udev->filelist.prev = NULL;
+	usb_disconnect(&udev);
+	usb_put_dev(udev);
 }
 
 
