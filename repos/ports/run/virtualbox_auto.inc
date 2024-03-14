@@ -47,6 +47,10 @@ if {$use_usb} {
 	                  [depot_user]/src/usb_hid_drv
 }
 
+if {!$use_usb} {
+	import_from_depot [depot_user]/src/black_hole
+}
+
 if {$use_rumpfs} {
 	import_from_depot [depot_user]/src/rump
 }
@@ -342,7 +346,7 @@ append_if [expr $use_usb] config {
 		<config>
 			<report devices="yes"/>
 			<policy label_prefix="usb_hid_drv"><device class="0x3"/></policy>
-			<policy label_prefix="vbox1"/>
+			<policy label_prefix="vbox1">
 				<device vendor_id="0x13fe" product_id="0x5200"/> <!-- platinum stick -->
 				<device vendor_id="0x148f" product_id="0x2573"/> <!-- ralink wifi -->
 				<device vendor_id="0x1f75" product_id="0x0917"/> <!-- intenso stick -->
@@ -376,6 +380,15 @@ append_if [expr $use_usb] config {
 			<any-service><parent/><any-child/></any-service>
 		</route>
 	</start>}
+
+append_if [expr !$use_usb] config {
+	<start name="usb_drv" caps="200">
+		<binary name="black_hole"/>
+		<resource name="RAM" quantum="1M"/>
+		<provides> <service name="Usb"/> </provides>
+		<config> <usb/> </config>
+	</start>
+}
 
 append_if [expr $use_serial] config {
 	<start name="log_terminal" priority="-1">
