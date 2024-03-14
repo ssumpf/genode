@@ -13,8 +13,6 @@ if { [have_include "power_on/qemu"] || ![have_spec nova] || ![have_spec x86_64]}
 	exit 0
 }
 
-build { app/usb_report_filter }
-
 create_boot_directory
 import_from_depot [depot_user]/src/[base_src] \
                   [depot_user]/src/acpi_drv \
