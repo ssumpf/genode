@@ -36,8 +36,6 @@ struct Main
 
 	static constexpr char const *_runtime_config_path { "/config/managed/runtime" };
 
-	Readonly_file _runtime_config { _root_dir, _runtime_config_path };
-
 	Watch_handler<Main> _runtime_config_watch_handler {
 		_env.ep(), _root_dir, _runtime_config_path,
 		*this, &Main::_handle_runtime_config_update };
@@ -142,20 +140,22 @@ struct Main
 
 	void _handle_runtime_config_update()
 	{
-		size_t buf_size = _root_dir.file_size(_runtime_config_path);
-		char *buf = (char *)_heap.alloc(buf_size);
+		try {
+			File_content const runtime_config {
+				_heap, _root_dir, _runtime_config_path,
+				File_content::Limit(512*1024)
+			};
 
-		Byte_range_ptr range(buf, buf_size);
-
-		with_xml_file_content(_runtime_config, range, [&] (Xml_node const config) {
-			config.with_sub_node("monitor", [&] (Xml_node const &monitor) {
-				_process_monitor_config(config, monitor);
-			}, [&] () {
-				Genode::error("<monitor> XML node not found");
+			runtime_config.xml([&] (Xml_node const config) {
+				config.with_sub_node("monitor", [&] (Xml_node const &monitor) {
+					_process_monitor_config(config, monitor);
+				}, [&] () {
+					Genode::error("<monitor> XML node not found");
+				});
 			});
-		});
-
-		destroy(_heap, buf);
+		} catch (File_content::Truncated_during_read) {
+			Genode::error("Could not read ", _runtime_config_path);
+		}
 	}
 
 
