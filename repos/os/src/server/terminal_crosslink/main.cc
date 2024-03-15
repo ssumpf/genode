@@ -28,8 +28,9 @@ namespace Terminal_crosslink {
 
 struct Terminal_crosslink::Main
 {
-	Env  &_env;
-	Heap  _heap { _env.ram(), _env.rm() };
+	Env &_env;
+
+	Sliced_heap _heap { _env.ram(), _env.rm() };
 
 	Attached_rom_dataspace _config { _env, "config" };
 
