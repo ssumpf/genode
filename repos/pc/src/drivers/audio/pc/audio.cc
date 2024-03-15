@@ -428,7 +428,7 @@ class Audio_in::Root : public Audio_in::Root_component
 
 struct Stereo_output : Noncopyable
 {
-	static constexpr unsigned SAMPLES_PER_PERIOD = Audio_in::PERIOD;
+	static constexpr unsigned SAMPLES_PER_PERIOD = 2*Audio_in::PERIOD;
 	static constexpr unsigned CHANNELS = 2;
 
 	Env &_env;
@@ -497,7 +497,7 @@ struct Stereo_output : Noncopyable
 
 struct Stereo_input : Noncopyable
 {
-	static constexpr unsigned SAMPLES_PER_PERIOD = Audio_in::PERIOD;
+	static constexpr unsigned SAMPLES_PER_PERIOD = 2*Audio_in::PERIOD;
 	static constexpr unsigned CHANNELS = 2;
 
 	Env &_env;
@@ -642,7 +642,7 @@ extern "C" void genode_audio_init(struct genode_env *env_ptr,
 
 extern "C" unsigned long genode_audio_samples_per_period(void)
 {
-	return Audio_out::PERIOD;
+	return 2*Audio_out::PERIOD;
 }
 
 
