@@ -18,8 +18,8 @@
 		<rtc/>
 		<rom label="usb_devices"/>
 		<usb/>
-		<audio_out/>
-		<audio_in/>
+		<record/>
+		<play/>
 	</requires>
 
 	<config verbose="yes">
@@ -39,8 +39,8 @@
 			<service name="File_system"/>
 			<service name="Usb"/>
 			<service name="Nic"/>
-			<service name="Audio_out"/>
-			<service name="Audio_in"/>
+			<service name="Record"/>
+			<service name="Play"/>
 		</parent-provides>
 
 		<default-route> <any-service> <parent/> <any-child/> </any-service> </default-route>
@@ -49,12 +49,13 @@
 
 		<start name="vbox" caps="7000">
 			<binary name="virtualbox6" />
-			<resource name="RAM" quantum="8G"/>
+			<resource name="RAM" quantum="9500M"/>
 			<exit propagate="yes"/>
 			<config vbox_file="machine.vbox6" xhci="yes" vm_name="linux" capslock="rom" ld_verbose="yes">
 				<vfs>
 					<dir name="dev">
-						<log/> <rtc/> <null/> <gpu/> <zero/> <oss name="dsp"/>
+						<log/> <rtc/> <null/> <gpu/> <zero/>
+						<oss_next min_ifrag_size="8192" min_ofrag_size="8192" name="dsp"/>
 					</dir>
 					<dir name="pipe"> <pipe/> </dir>
 					<dir name="shared"> <fs label="shared" writeable="yes"/> </dir>
@@ -115,7 +116,7 @@
 		<rom label="stdcxx.lib.so"/>
 		<rom label="vfs.lib.so"/>
 		<rom label="vfs_gpu.lib.so"/>
-		<rom label="vfs_oss.lib.so"/>
+		<rom label="vfs_oss_next.lib.so"/>
 		<rom label="vfs_pipe.lib.so"/>
 		<rom label="virtualbox6-shaderlib.lib.so"/>
 		<rom label="virtualbox6-sharedclipboard.lib.so"/>
