@@ -201,7 +201,7 @@ append config {
 
 	<start name="webcam" priority="-1" caps="800">
 		<binary name="init"/>
-		<resource name="RAM" quantum="64MB"/>
+		<resource name="RAM" quantum="64M"/>
 		<route>
 			<service name="ROM" label="config"> <parent label="usb_webcam.config"/> </service>
 			<service name="Timer"> <child name="timer"/> </service>
