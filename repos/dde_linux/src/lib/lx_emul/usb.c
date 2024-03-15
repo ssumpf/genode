@@ -51,16 +51,21 @@ static struct usb_driver usb_drv = {
 
 static genode_usb_request_ret_t handle_return_code(int err)
 {
+	/*
+	 * USB error codes are documented in kernel sources
+	 *
+	 * Documentation/driver-api/usb/error-codes.rst
+	 */
 	switch (err) {
 	case 0:          return OK;
 	case -ENOENT:    return NO_DEVICE;
 	case -ENODEV:    return NO_DEVICE;
 	case -ESHUTDOWN: return NO_DEVICE;
 	case -EILSEQ:    return NO_DEVICE; /* xHCI ret val when HID vanishs */
+	case -EPROTO:    return NO_DEVICE;
 	case -ETIMEDOUT: return TIMEOUT;
 	case -ENOSPC:    return HALT;
 	case -EPIPE:     return HALT;
-	case -EPROTO:    return INVALID;
 	case -ENOMEM:    return INVALID;
 	case -EINVAL:    return INVALID;
 	default:         return INVALID;
