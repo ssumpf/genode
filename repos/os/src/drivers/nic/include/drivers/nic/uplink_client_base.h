@@ -228,6 +228,9 @@ class Genode::Uplink_client_base : Noncopyable
 
 		void _rx_done()
 		{
+			if (!_conn.constructed())
+				return;
+
 			_conn->tx()->wakeup();
 		}
 
