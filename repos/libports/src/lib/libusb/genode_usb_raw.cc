@@ -28,6 +28,7 @@
 
 using namespace Genode;
 
+bool libusb_genode_backend_signaling = false;
 static int vfs_libusb_fd { -1 };
 
 
@@ -109,7 +110,10 @@ Usb_device::Interface::Interface(Usb_device &device, uint8_t idx)
 :
 	Usb::Interface(device._device, Usb::Interface::Index{idx, 0}, (1UL << 20)),
 	Registry<Usb_device::Interface>::Element(device._interfaces, *this),
-	_device(device) { }
+	_device(device)
+{
+	sigh(device._handler_cap);
+}
 
 
 static inline addr_t isoc_packet_offset(uint32_t idx,
@@ -248,12 +252,6 @@ void libusb_genode_backend_init(Env &env, Allocator &alloc,
                                 Signal_context_capability handler)
 {
 	Usb_device::singleton().construct(env, alloc, handler);
-}
-
-
-bool libusb_genode_backend_ready()
-{
-	return true;
 }
 
 
@@ -542,6 +540,7 @@ static void genode_clear_transfer_priv(struct usbi_transfer * itransfer) { }
 static int genode_handle_events(struct libusb_context *, struct pollfd *,
                                 POLL_NFDS_TYPE, int)
 {
+	libusb_genode_backend_signaling = false;
 	device().handle_events();
 	device()._interfaces.for_each([&] (Usb_device::Interface &iface) {
 		iface.handle_events(); });

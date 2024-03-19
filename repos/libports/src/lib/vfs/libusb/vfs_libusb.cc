@@ -25,7 +25,7 @@ using namespace Genode;
  * These functions are implemented in the Genode backend of libusb.
  */
 extern void libusb_genode_backend_init(Env&, Allocator&, Signal_context_capability);
-extern bool libusb_genode_backend_ready();
+extern bool libusb_genode_backend_signaling;
 
 class Libusb_file_system : public Vfs::Single_file_system
 {
@@ -43,7 +43,11 @@ class Libusb_file_system : public Vfs::Single_file_system
 				Io_signal_handler<Libusb_vfs_handle> _handler {
 					_env.ep(), *this, &Libusb_vfs_handle::_handle };
 
-				void _handle() { _vfs_user.wakeup_vfs_user(); }
+				void _handle()
+				{
+					libusb_genode_backend_signaling = true;
+					_vfs_user.wakeup_vfs_user();
+				}
 
 			public:
 
@@ -62,7 +66,7 @@ class Libusb_file_system : public Vfs::Single_file_system
 				}
 
 				bool read_ready() const override {
-					return libusb_genode_backend_ready(); }
+					return libusb_genode_backend_signaling; }
 
 				Read_result read(Byte_range_ptr const &, size_t &) override {
 					return READ_ERR_IO; }
