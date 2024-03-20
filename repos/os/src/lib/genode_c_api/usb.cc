@@ -228,7 +228,7 @@ class Packet_handler
 {
 	protected:
 
-		enum State { INITIALIZED, CONNECTED, DISCONNECTED };
+		enum State { CONNECTED, DISCONNECTED };
 
 		using Packet_descriptor = typename SESSION::Packet_descriptor;
 		using Tx = typename SESSION::Tx;
@@ -236,7 +236,7 @@ class Packet_handler
 
 		Env                             &_env;
 		Dma_allocator                   &_alloc;
-		State                            _state { INITIALIZED };
+		State                            _state { CONNECTED };
 		size_t                           _buf_size;
 		genode_shared_dataspace         &_ds;
 		Packet_stream_tx::Rpc_object<Tx> _tx;
@@ -358,6 +358,8 @@ class Packet_handler
 
 		Capability<SESSION> session_cap() { return _cap; }
 		Capability<Tx> tx_cap() { return _tx.cap(); }
+
+		bool connected() const { return _state == CONNECTED; }
 
 		virtual void disconnect() { _state = DISCONNECTED; }
 
@@ -1224,7 +1226,10 @@ void Session_component::update_policy()
 		_devices.for_each([&] (genode_usb_device const & device) {
 			if (device.label() != dc._device_label)
 				return;
-			if (!_matches(device)) dc.disconnect();
+			if (!_matches(device)) {
+				dc.disconnect();
+				_release_fn(device.bus, device.dev);
+			}
 		});
 	});
 	update_devices_rom();
@@ -1250,7 +1255,7 @@ bool Session_component::acquired(genode_usb_device const &dev)
 
 	bool ret = false;
 	_device_sessions.for_each([&] (Device_component & dc) {
-		if (dc._device_label == dev.label()) ret = true; });
+		if (dc._device_label == dev.label()) ret = dc.connected(); });
 	return ret;
 }
 
