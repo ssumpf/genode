@@ -192,11 +192,7 @@ class Interface : public List_model<::Interface>::Element
 			_alt_setting(n.attribute_value<uint8_t>("alt_setting", 0xff)),
 			_active(n.attribute_value("active", false)) {}
 
-		~Interface()
-		{
-			if (_iface.constructed())
-				_iface->dissolve_all_urbs<Urb>([] (Urb&) {});
-		}
+		void destroy_all_urbs();
 
 		uint8_t number()      const { return _number; };
 		uint8_t alt_setting() const { return _alt_setting; };
@@ -309,8 +305,7 @@ class Device : public List_model<Device>::Element
 			_device.sigh(_sigh_cap);
 		}
 
-		~Device() {
-			_device.dissolve_all_urbs<Urb>([] (Urb&) {}); }
+		~Device();
 
 		Usb::Device &session() { return _device; }
 
@@ -357,6 +352,8 @@ class Device : public List_model<Device>::Element
 
 				/* destroy */
 				[&] (::Interface &iface) {
+					/* first clean up urbs before isoc-caches get destroyed */
+					iface.destroy_all_urbs();
 					iface.update(alloc, Xml_node("<empty/>"));
 					destroy(alloc, &iface); },
 
@@ -768,6 +765,21 @@ void ::Interface::update_urbs()
 }
 
 
+void ::Interface::destroy_all_urbs()
+{
+	if (_iface.constructed())
+		_iface->dissolve_all_urbs<Urb>([] (Urb &urb)
+		{
+			if (!urb.isoc() && !urb.canceled()) {
+				complete_packet(urb._packet, Usb::Tagged_packet::NO_DEVICE);
+				if (_usb_session().constructed())
+					destroy(_usb_session()->_alloc, &urb);
+			} else
+				urb.destroy();
+		});
+}
+
+
 void Device::update_urbs()
 {
 	_device.update_urbs<Urb>(
@@ -784,6 +796,17 @@ void Device::update_urbs()
 
 	_ifaces.for_each([&] (::Interface &iface) {
 		iface.update_urbs(); });
+}
+
+
+Device::~Device()
+{
+	_device.dissolve_all_urbs<Urb>([] (Urb &urb)
+	{
+		complete_packet(urb._packet, Usb::Tagged_packet::NO_DEVICE);
+		if (_usb_session().constructed())
+			destroy(_usb_session()->_alloc, &urb);
+	});
 }
 
 
