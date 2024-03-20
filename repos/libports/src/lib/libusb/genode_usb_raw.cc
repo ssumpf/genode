@@ -16,6 +16,7 @@
 #include <base/registry.h>
 #include <base/allocator_avl.h>
 #include <base/signal.h>
+#include <base/tslab.h>
 #include <usb_session/device.h>
 
 #include <fcntl.h>
@@ -65,14 +66,15 @@ struct Usb_device
 
 	using Urb = Urb_tpl<Usb::Device::Urb>;
 
-	Env                      &_env;
-	Allocator                &_alloc;
-	Signal_context_capability _handler_cap;
-	Usb::Connection           _session { _env };
-	Usb::Device               _device  { _session, _alloc, _env.rm() };
-	libusb_speed              _speed { LIBUSB_SPEED_UNKNOWN };
-	unsigned                  _open { 0 };
-	Registry<Interface>       _interfaces {};
+	Env                        &_env;
+	Allocator                  &_alloc;
+	Tslab<Interface::Urb, 4096> _iface_slab { _alloc };
+	Signal_context_capability   _handler_cap;
+	Usb::Connection             _session { _env };
+	Usb::Device                 _device  { _session, _alloc, _env.rm() };
+	libusb_speed                _speed { LIBUSB_SPEED_UNKNOWN };
+	unsigned                    _open { 0 };
+	Registry<Interface>         _interfaces {};
 
 
 	void _wait_for_urb(Urb &urb);
@@ -175,7 +177,7 @@ void Usb_device::Interface::handle_events()
 			                                    : nullptr;
 			usbi_signal_transfer_completion(urb.itransfer);
 			if (ctx) usbi_signal_event(ctx);
-			destroy(_device._alloc, &urb);
+			destroy(_device._iface_slab, &urb);
 		});
 }
 
@@ -515,7 +517,7 @@ static int genode_submit_transfer(struct usbi_transfer * itransfer)
 			if (found || transfer->endpoint != ep.address())
 				return;
 			found = true;
-			new (device()._alloc)
+			new (device()._iface_slab)
 				Usb_device::Interface::Urb(transfer->buffer, transfer->length,
 				                           itransfer, iface, ep, type,
 				                           transfer->length,
