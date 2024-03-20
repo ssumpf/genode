@@ -138,18 +138,18 @@ struct genode_usb_endpoint : Reg_list<genode_usb_endpoint>::Element
 
 struct genode_usb_interface : Reg_list<genode_usb_interface>::Element
 {
-	String_item                     const name;
+	String_item                     const info;
 	genode_usb_interface_descriptor const desc;
 	bool                                  active;
 	Reg_list<genode_usb_endpoint>   endpoints {};
 
 	genode_usb_interface(Reg_list<genode_usb_interface> &registry,
-	                     String_item              const &name,
+	                     String_item              const &info,
 	                     genode_usb_interface_descriptor desc,
 	                     bool                            active)
 	:
 		Reg_list<genode_usb_interface>::Element(registry, *this),
-		name(name), desc(desc), active(active) {}
+		info(info), desc(desc), active(active) {}
 };
 
 
@@ -667,7 +667,7 @@ class Root : Sliced_heap, public Root_component<Session_component>
 		void device_add_endpoint(struct genode_usb_interface   *iface,
 		                         genode_usb_endpoint_descriptor desc);
 		void device_add_interface(struct genode_usb_configuration *cfg,
-		                          genode_usb_dev_string_item_t     name_string,
+		                          genode_usb_dev_string_item_t     info_string,
 		                          genode_usb_interface_descriptor  desc,
 		                          genode_usb_dev_add_endp_t        callback,
 		                          void                            *opaque_data,
@@ -731,11 +731,11 @@ void genode_usb_device::generate(Xml_generator & xml, bool acquired) const
 		xml.node("interface", [&] {
 			xml.attribute("active",      iface.active);
 			xml.attribute("number",      Value(Hex(iface.desc.number)));
+			if (*iface.info.string()) xml.attribute("info", iface.info);
 			xml.attribute("alt_setting", Value(Hex(iface.desc.alt_settings)));
 			xml.attribute("class",       Value(Hex(iface.desc.iclass)));
 			xml.attribute("subclass",    Value(Hex(iface.desc.isubclass)));
 			xml.attribute("protocol",    Value(Hex(iface.desc.iprotocol)));
-			if (*iface.name.string()) xml.attribute("name", iface.name);
 			iface.endpoints.for_each(per_endp);
 		});
 	};
@@ -1521,16 +1521,16 @@ void ::Root::device_add_endpoint(struct genode_usb_interface   *iface,
 
 
 void ::Root::device_add_interface(struct genode_usb_configuration *cfg,
-                                  genode_usb_dev_string_item_t     name_string,
+                                  genode_usb_dev_string_item_t     info_string,
                                   genode_usb_interface_descriptor  desc,
                                   genode_usb_dev_add_endp_t        callback,
                                   void                            *opaque_data,
                                   bool                             active)
 {
-	String_item name { string_item(name_string, opaque_data) };
+	String_item info { string_item(info_string, opaque_data) };
 
 	genode_usb_interface *iface = new (_heap)
-		genode_usb_interface(cfg->interfaces, name, desc, active);
+		genode_usb_interface(cfg->interfaces, info, desc, active);
 	for (unsigned i = desc.num_endpoints; i > 0; i--)
 		callback(iface, i-1, opaque_data);
 }
@@ -1689,14 +1689,14 @@ void genode_usb_device_add_endpoint(struct genode_usb_interface   *iface,
 
 extern "C"
 void genode_usb_device_add_interface(struct genode_usb_configuration *cfg,
-                                     genode_usb_dev_string_item_t     name_string,
+                                     genode_usb_dev_string_item_t     info_string,
                                      genode_usb_interface_descriptor  desc,
                                      genode_usb_dev_add_endp_t        callback,
                                      void                            *opaque_data,
                                      bool                             active)
 {
 	if (_usb_root)
-		_usb_root->device_add_interface(cfg, name_string, desc, callback,
+		_usb_root->device_add_interface(cfg, info_string, desc, callback,
 		                                opaque_data, active);
 }
 

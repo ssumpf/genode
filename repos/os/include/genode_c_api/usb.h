@@ -65,7 +65,7 @@ genode_usb_device_add_endpoint(struct genode_usb_interface          *iface,
 
 void
 genode_usb_device_add_interface(struct genode_usb_configuration       *cfg,
-                                genode_usb_dev_string_item_t           name_string,
+                                genode_usb_dev_string_item_t           info_string,
                                 struct genode_usb_interface_descriptor desc,
                                 genode_usb_dev_add_endp_t              callback,
                                 void                                  *opaque_data,
