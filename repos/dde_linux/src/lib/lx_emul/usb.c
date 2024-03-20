@@ -522,6 +522,16 @@ static void add_endpoint_callback(struct genode_usb_interface * iface,
 }
 
 
+static void interface_string(genode_buffer_t string, void * data)
+{
+	struct usb_host_interface *uiface = (struct usb_host_interface*) data;
+	if (uiface->string)
+		strlcpy(string.addr, uiface->string, string.size);
+	else
+		*(char *)string.addr = 0;
+}
+
+
 static void add_interface_callback(struct genode_usb_configuration * cfg,
                                    unsigned idx, void * data)
 {
@@ -533,7 +543,8 @@ static void add_interface_callback(struct genode_usb_configuration * cfg,
 			(struct genode_usb_interface_descriptor*)
 				&iface->altsetting[i].desc;
 		bool set = &iface->altsetting[i] == iface->cur_altsetting;
-		genode_usb_device_add_interface(cfg, *desc, add_endpoint_callback,
+		genode_usb_device_add_interface(cfg, interface_string, *desc,
+		                                add_endpoint_callback,
 		                                &iface->altsetting[i], set);
 	}
 }
@@ -548,6 +559,26 @@ static void add_configuration_callback(struct genode_usb_device * dev,
 	genode_usb_device_add_configuration(dev, *desc, add_interface_callback,
 	                                    &udev->config[idx],
 	                                    &udev->config[idx] == udev->actconfig);
+}
+
+
+static void manufacturer_string(genode_buffer_t string, void * data)
+{
+	struct usb_device *udev = (struct usb_device*) data;
+	if (udev->manufacturer)
+		strlcpy(string.addr, udev->manufacturer, string.size);
+	else
+		*(char *)string.addr = 0;
+}
+
+
+static void product_string(genode_buffer_t string, void * data)
+{
+	struct usb_device *udev = (struct usb_device*) data;
+	if (udev->product)
+		strlcpy(string.addr, udev->product, string.size);
+	else
+		*(char *)string.addr = 0;
 }
 
 
@@ -581,6 +612,7 @@ static int raw_notify(struct notifier_block *nb, unsigned long action,
 			default: speed = GENODE_USB_SPEED_FULL;
 			}
 			genode_usb_announce_device(udev->bus->busnum, udev->devnum, speed,
+			                           manufacturer_string, product_string,
 			                           *desc, add_configuration_callback, udev);
 			break;
 		}

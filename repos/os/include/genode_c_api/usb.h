@@ -53,12 +53,19 @@ typedef void (*genode_usb_dev_add_iface_t)
 typedef void (*genode_usb_dev_add_endp_t)
 	(struct genode_usb_interface *cfg, unsigned idx, void *opaque_data);
 
+/**
+ * Callback to request string item of a device
+ */
+typedef void (*genode_usb_dev_string_item_t)
+	(genode_buffer_t string, void *opaque_data);
+
 void
 genode_usb_device_add_endpoint(struct genode_usb_interface          *iface,
                                struct genode_usb_endpoint_descriptor desc);
 
 void
 genode_usb_device_add_interface(struct genode_usb_configuration       *cfg,
+                                genode_usb_dev_string_item_t           name_string,
                                 struct genode_usb_interface_descriptor desc,
                                 genode_usb_dev_add_endp_t              callback,
                                 void                                  *opaque_data,
@@ -74,6 +81,8 @@ genode_usb_device_add_configuration(struct genode_usb_device           *dev,
 void genode_usb_announce_device(genode_usb_bus_num_t                bus,
                                 genode_usb_dev_num_t                dev,
                                 genode_usb_speed_t                  speed,
+                                genode_usb_dev_string_item_t        manufacturer_string,
+                                genode_usb_dev_string_item_t        product_string,
                                 struct genode_usb_device_descriptor desc,
                                 genode_usb_dev_add_config_t         callback,
                                 void                               *opaque_data);

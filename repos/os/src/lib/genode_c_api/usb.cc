@@ -31,6 +31,28 @@ using namespace Genode;
 using namespace Usb;
 
 
+using String_item = String<64>;
+
+static String_item string_item(genode_usb_dev_string_item_t func, void *opaque_data)
+{
+	char buf[String_item::capacity()] { };
+
+	func({ buf, sizeof(buf) }, opaque_data);
+
+	char *first = buf;
+	char *last  = buf + sizeof(buf) - 1;
+
+	/* skip leading whitespace */
+	while (*first == ' ') ++first;
+
+	/* trim trailing whitespace */
+	while (last >= first && (*last == 0 || *last == ' '))
+		--last;
+
+	return { Cstring(first, last + 1 - first) };
+}
+
+
 /**
  * The API of the Registry class is favored in contrast to the ancient List,
  * but due to different potentially blocking user-level-scheduled threads,
@@ -116,16 +138,18 @@ struct genode_usb_endpoint : Reg_list<genode_usb_endpoint>::Element
 
 struct genode_usb_interface : Reg_list<genode_usb_interface>::Element
 {
+	String_item                     const name;
 	genode_usb_interface_descriptor const desc;
 	bool                                  active;
 	Reg_list<genode_usb_endpoint>   endpoints {};
 
 	genode_usb_interface(Reg_list<genode_usb_interface> &registry,
+	                     String_item              const &name,
 	                     genode_usb_interface_descriptor desc,
 	                     bool                            active)
 	:
 		Reg_list<genode_usb_interface>::Element(registry, *this),
-		desc(desc), active(active) {}
+		name(name), desc(desc), active(active) {}
 };
 
 
@@ -149,6 +173,8 @@ struct genode_usb_device : Reg_list<genode_usb_device>::Element
 	genode_usb_bus_num_t               const bus;
 	genode_usb_dev_num_t               const dev;
 	genode_usb_speed_t                 const speed;
+	String_item                        const manufacturer;
+	String_item                        const product;
 	genode_usb_device_descriptor       const desc;
 	Reg_list<genode_usb_configuration> configs {};
 
@@ -156,10 +182,13 @@ struct genode_usb_device : Reg_list<genode_usb_device>::Element
 	                  genode_usb_bus_num_t         bus,
 	                  genode_usb_dev_num_t         dev,
 	                  genode_usb_speed_t           speed,
+	                  String_item           const &manufacturer,
+	                  String_item           const &product,
 	                  genode_usb_device_descriptor desc)
 	:
 		Reg_list<genode_usb_device>::Element(registry, *this),
-		bus(bus), dev(dev), speed(speed), desc(desc) {}
+		bus(bus), dev(dev), speed(speed),
+		manufacturer(manufacturer), product(product), desc(desc) {}
 
 	using Label = String<64>;
 
@@ -638,6 +667,7 @@ class Root : Sliced_heap, public Root_component<Session_component>
 		void device_add_endpoint(struct genode_usb_interface   *iface,
 		                         genode_usb_endpoint_descriptor desc);
 		void device_add_interface(struct genode_usb_configuration *cfg,
+		                          genode_usb_dev_string_item_t     name_string,
 		                          genode_usb_interface_descriptor  desc,
 		                          genode_usb_dev_add_endp_t        callback,
 		                          void                            *opaque_data,
@@ -650,6 +680,8 @@ class Root : Sliced_heap, public Root_component<Session_component>
 		void announce_device(genode_usb_bus_num_t         bus,
 		                     genode_usb_dev_num_t         dev,
 		                     genode_usb_speed_t           speed,
+		                     genode_usb_dev_string_item_t manufacturer_string,
+		                     genode_usb_dev_string_item_t product_string,
 		                     genode_usb_device_descriptor desc,
 		                     genode_usb_dev_add_config_t  callback,
 		                     void                        *opaque_data);
@@ -703,6 +735,7 @@ void genode_usb_device::generate(Xml_generator & xml, bool acquired) const
 			xml.attribute("class",       Value(Hex(iface.desc.iclass)));
 			xml.attribute("subclass",    Value(Hex(iface.desc.isubclass)));
 			xml.attribute("protocol",    Value(Hex(iface.desc.iprotocol)));
+			if (*iface.name.string()) xml.attribute("name", iface.name);
 			iface.endpoints.for_each(per_endp);
 		});
 	};
@@ -718,11 +751,13 @@ void genode_usb_device::generate(Xml_generator & xml, bool acquired) const
 
 	xml.node("device", [&] {
 		xml.attribute("name",       label());
-		xml.attribute("speed",      speed_to_string());
+		xml.attribute("class",      Value(Hex(desc.dclass)));
+		if (*manufacturer.string()) xml.attribute("manufacturer", manufacturer);
+		if (*product.string())      xml.attribute("product", product);
 		xml.attribute("vendor_id",  Value(Hex(desc.vendor_id)));
 		xml.attribute("product_id", Value(Hex(desc.product_id)));
-		xml.attribute("class",      Value(Hex(desc.dclass)));
-		if (acquired) xml.attribute("acquired", true);
+		xml.attribute("speed",      speed_to_string());
+		if (acquired)               xml.attribute("acquired", true);
 		configs.for_each(per_config);
 	});
 }
@@ -1486,13 +1521,16 @@ void ::Root::device_add_endpoint(struct genode_usb_interface   *iface,
 
 
 void ::Root::device_add_interface(struct genode_usb_configuration *cfg,
+                                  genode_usb_dev_string_item_t     name_string,
                                   genode_usb_interface_descriptor  desc,
                                   genode_usb_dev_add_endp_t        callback,
                                   void                            *opaque_data,
                                   bool                             active)
 {
+	String_item name { string_item(name_string, opaque_data) };
+
 	genode_usb_interface *iface = new (_heap)
-		genode_usb_interface(cfg->interfaces, desc, active);
+		genode_usb_interface(cfg->interfaces, name, desc, active);
 	for (unsigned i = desc.num_endpoints; i > 0; i--)
 		callback(iface, i-1, opaque_data);
 }
@@ -1514,12 +1552,17 @@ void ::Root::device_add_configuration(struct genode_usb_device    *dev,
 void ::Root::announce_device(genode_usb_bus_num_t         bus,
                              genode_usb_dev_num_t         dev,
                              genode_usb_speed_t           speed,
+                             genode_usb_dev_string_item_t manufacturer_string,
+                             genode_usb_dev_string_item_t product_string,
                              genode_usb_device_descriptor desc,
                              genode_usb_dev_add_config_t  callback,
                              void                        *opaque_data)
 {
+	String_item manufacturer { string_item(manufacturer_string, opaque_data) };
+	String_item product      { string_item(product_string, opaque_data) };
+
 	genode_usb_device *device = new (_heap)
-		genode_usb_device(_devices, bus, dev, speed, desc);
+		genode_usb_device(_devices, bus, dev, speed, manufacturer, product, desc);
 	for (unsigned i = desc.num_configs; i > 0; i--)
 		callback(device, i-1, opaque_data);
 	_announce_service();
@@ -1646,13 +1689,14 @@ void genode_usb_device_add_endpoint(struct genode_usb_interface   *iface,
 
 extern "C"
 void genode_usb_device_add_interface(struct genode_usb_configuration *cfg,
+                                     genode_usb_dev_string_item_t     name_string,
                                      genode_usb_interface_descriptor  desc,
                                      genode_usb_dev_add_endp_t        callback,
                                      void                            *opaque_data,
                                      bool                             active)
 {
 	if (_usb_root)
-		_usb_root->device_add_interface(cfg, desc, callback,
+		_usb_root->device_add_interface(cfg, name_string, desc, callback,
 		                                opaque_data, active);
 }
 
@@ -1675,13 +1719,16 @@ extern "C"
 void genode_usb_announce_device(genode_usb_bus_num_t         bus,
                                 genode_usb_dev_num_t         dev,
                                 genode_usb_speed_t           speed,
+                                genode_usb_dev_string_item_t manufacturer_string,
+                                genode_usb_dev_string_item_t product_string,
                                 genode_usb_device_descriptor desc,
                                 genode_usb_dev_add_config_t  callback,
                                 void                        *opaque_data)
 {
 	if (_usb_root)
-		_usb_root->announce_device(bus, dev, speed, desc,
-		                           callback, opaque_data);
+		_usb_root->announce_device(bus, dev, speed,
+		                           manufacturer_string, product_string,
+		                           desc, callback, opaque_data);
 }
 
 
