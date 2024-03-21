@@ -143,7 +143,7 @@ handle_control_request(genode_usb_request_handle_t handle,
 
 	/* check for set alternate interface request */
 	if (ctrl_request == USB_REQ_SET_INTERFACE &&
-	    ctrl_request_type == (USB_DIR_IN|USB_TYPE_STANDARD|USB_RECIP_INTERFACE)) {
+	    (ctrl_request_type & 0x7f) == (USB_TYPE_STANDARD|USB_RECIP_INTERFACE)) {
 		struct usb_interface *iface = usb_ifnum_to_if(udev, ctrl_index);
 		struct usb_host_interface *alt =
 			iface ? usb_altnum_to_altsetting(iface, ctrl_value) : NULL;
