@@ -121,6 +121,8 @@ class Interface : public List_model<::Interface>::Element
 		uint8_t alt_setting() const { return _alt_setting; };
 		bool    active()      const { return _active; }
 
+		void active(bool active) { _active = active; }
+
 		Allocator &slab() { return _slab; }
 
 		bool matches(Xml_node const &n) const
@@ -231,8 +233,8 @@ class Device : public List_model<Device>::Element
 
 		struct Urb : Usb::Device::Urb
 		{
-			using Request_type =
-				Usb::Device::Packet_descriptor::Request_type::access_t;
+			using Descriptor   = Usb::Device::Packet_descriptor;
+			using Request_type = Descriptor::Request_type;
 
 			struct Driver_data { void * const data; } _driver_data;
 
@@ -245,9 +247,14 @@ class Device : public List_model<Device>::Element
 			    void    *opaque_data)
 			:
 				Usb::Device::Urb(device._device, request,
-				                 (Request_type)request_type,
+				                 (Request_type::access_t)request_type,
 				                 value, index, size),
 				_driver_data{opaque_data} {}
+
+			bool set_interface() const;
+
+			uint16_t index() const { return _index; }
+			uint16_t value() const { return _value; }
 		};
 
 	private:
@@ -340,6 +347,8 @@ class Device : public List_model<Device>::Element
 		static bool type_matches(Xml_node const &node) {
 			return node.has_type("device"); }
 
+		void set_interface(uint16_t index, uint16_t value);
+
 		void update(Allocator &alloc, Xml_node const &node)
 		{
 			Xml_node active_config = node;
@@ -402,11 +411,16 @@ class Device : public List_model<Device>::Element
 					case Retval::INVALID:   ret = INVALID;   break;
 					case Retval::HALT:      ret = HALT;      break;
 					case Retval::TIMEOUT:   ret = TIMEOUT;   break;
-					case Retval::OK:        ret = OK;        break;
+					case Retval::OK:
+						ret = OK;
+						if (urb.set_interface())
+							set_interface(urb.index(), urb.value());
+						break;
 					default:
 						error("unhandled packet should not happen!");
 						ret = INVALID;
 					};
+
 					complete(urb._driver_data.data, ret);
 					destroy(_slab, &urb);
 				});
@@ -499,6 +513,24 @@ Usb::Interface &::Interface::_session()
 	}
 	return *_iface;
 };
+
+
+bool Device::Urb::set_interface() const
+{
+	return (_request == Descriptor::SET_INTERFACE) &&
+	       (Request_type::R::get(_request_type) == Descriptor::IFACE) &&
+	       (Request_type::T::get(_request_type) == Descriptor::STANDARD);
+}
+
+
+void Device::set_interface(uint16_t index, uint16_t value)
+{
+	_ifaces.for_each([&] (::Interface &iface) {
+		if (iface.number() != index)
+			return;
+		iface.active(iface.alt_setting() == value);
+	});
+}
 
 
 static ::Session * _usb_session = nullptr;

@@ -468,7 +468,7 @@ class Usb::Device
 
 				using Type = Packet_descriptor::Request_type;
 
-			private:
+			protected:
 
 				using Base = Urb_handler<Device_session>::Urb;
 
