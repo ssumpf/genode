@@ -16,7 +16,7 @@ OBJECTS = $(addsuffix .o,$(basename $(SRC)))
 # the object file(s) resulting from the generated code must be linked.
 # Hence, 'OBJECTS' is expanded after the dependency definition.
 #
-ifneq ($(OBJ_POSTPROC_SRC),./)
+ifneq ($(OBJ_POSTPROC_SRC),)
 $(OBJ_POSTPROC_SRC) : $(OBJECTS)
 OBJECTS += $(addsuffix .o,$(basename $(OBJ_POSTPROC_SRC)))
 endif
