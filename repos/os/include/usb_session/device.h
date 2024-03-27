@@ -14,10 +14,10 @@
 #ifndef _INCLUDE__USB_SESSION__DEVICE_H_
 #define _INCLUDE__USB_SESSION__DEVICE_H_
 
-#include <base/allocator_avl.h>
 #include <base/exception.h>
 #include <base/rpc.h>
 #include <base/rpc.h>
+#include <os/packet_allocator.h>
 #include <packet_stream_tx/client.h>
 #include <usb_session/types.h>
 #include <usb_session/connection.h>
@@ -228,7 +228,9 @@ class Usb::Urb_handler
 
 	protected:
 
-		Allocator_avl                _alloc;
+		enum { URB_ALLOC_GRANULARITY = 512 };
+
+		Packet_allocator             _alloc;
 		Packet_stream_tx::Client<Tx> _tx;
 		Id_space<Urb>                _tags    { };
 		Fifo<Fifo_element<Urb>>      _pending { };
@@ -250,7 +252,9 @@ class Usb::Urb_handler
 
 		Urb_handler(Capability<typename SESSION::Tx> cap,
 		            Region_map &rm, Allocator &md_alloc)
-		: _alloc(&md_alloc), _tx(cap, rm, _alloc) {}
+		:
+			_alloc(&md_alloc, URB_ALLOC_GRANULARITY),
+			_tx(cap, rm, _alloc) {}
 
 		/**
 		 * Handle the submission and completion of URBs
