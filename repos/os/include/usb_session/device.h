@@ -658,7 +658,7 @@ Usb::Urb_handler<SESSION>::_try_submit_pending_urb(Tx::Source &tx,
 }
 
 
-Usb::Endpoint::Endpoint(Interface &iface, Direction d, Type t)
+inline Usb::Endpoint::Endpoint(Interface &iface, Direction d, Type t)
 {
 	bool found = false;
 
@@ -675,7 +675,7 @@ Usb::Endpoint::Endpoint(Interface &iface, Direction d, Type t)
 };
 
 
-Usb::Interface::Interface(Device &device, Index idx, size_t buffer_size)
+inline Usb::Interface::Interface(Device &device, Index idx, size_t buffer_size)
 :
 	Interface_capability(device._interface_cap(idx.number, buffer_size)),
 	_device(device), _idx(idx),
@@ -696,19 +696,19 @@ Usb::Interface::Interface(Device &device, Index idx, size_t buffer_size)
 }
 
 
-Usb::Interface::Interface(Device &device, Type type, size_t buffer_size)
+inline Usb::Interface::Interface(Device &device, Type type, size_t buffer_size)
 : Interface(device, device._interface_index(type), buffer_size) { }
 
 
-Usb::Interface::Interface(Device &device, size_t buffer_size)
+inline Usb::Interface::Interface(Device &device, size_t buffer_size)
 : Interface(device, Index { 0, 0 }, buffer_size) { }
 
 
-Usb::Interface::~Interface() {
+inline Usb::Interface::~Interface() {
 	_device.call<Device_session::Rpc_release_interface>(*this); }
 
 
-Usb::Interface_capability
+inline Usb::Interface_capability
 Usb::Device::_interface_cap(uint8_t num, size_t buf_size)
 {
 	return _session.retry_with_upgrade(Ram_quota{buf_size + 4096},
@@ -717,7 +717,7 @@ Usb::Device::_interface_cap(uint8_t num, size_t buf_size)
 }
 
 
-Usb::Device::Name Usb::Device::_first_device_name()
+inline Usb::Device::Name Usb::Device::_first_device_name()
 {
 	Name ret;
 	_session.with_xml([&] (Xml_node & xml) {
@@ -743,7 +743,7 @@ void Usb::Device::_for_each_iface(FN const & fn)
 }
 
 
-Usb::Interface::Index
+inline Usb::Interface::Index
 Usb::Device::_interface_index(Interface::Type t)
 {
 	static constexpr uint16_t INVALID = 256;
@@ -767,10 +767,10 @@ Usb::Device::_interface_index(Interface::Type t)
 }
 
 
-Usb::Device::Device(Connection &session,
-                    Allocator  &md_alloc,
-                    Region_map &rm,
-                    Name        name)
+inline Usb::Device::Device(Connection &session,
+                           Allocator  &md_alloc,
+                           Region_map &rm,
+                           Name        name)
 :
 	Device_capability(session.acquire_device(name)),
 	_session(session),
@@ -780,9 +780,9 @@ Usb::Device::Device(Connection &session,
 	_urb_handler(call<Rpc_tx_cap>(), rm, md_alloc) {}
 
 
-Usb::Device::Device(Connection &session,
-                    Allocator  &md_alloc,
-                    Region_map &rm)
+inline Usb::Device::Device(Connection &session,
+                           Allocator  &md_alloc,
+                           Region_map &rm)
 :
 	Device_capability(session.acquire_device()),
 	_session(session),
