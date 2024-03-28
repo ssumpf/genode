@@ -65,7 +65,7 @@ struct Sculpt::Storage_devices : Noncopyable
 
 	Progress update_nvme(Env &env, Allocator &alloc, Xml_node const &node)
 	{
-		_discovered.nvme |= (!node.has_type("empty"));
+		_discovered.nvme |= !node.has_type("empty");
 
 		auto const model = node.attribute_value("model", Nvme_device::Model());
 
@@ -92,7 +92,7 @@ struct Sculpt::Storage_devices : Noncopyable
 
 	Progress update_mmc(Env &env, Allocator &alloc, Xml_node const &node)
 	{
-		_discovered.mmc |= (!node.has_type("empty"));
+		_discovered.mmc |= !node.has_type("empty");
 
 		bool progress = false;
 		mmc_devices.update_from_xml(node,
@@ -122,7 +122,7 @@ struct Sculpt::Storage_devices : Noncopyable
 	 */
 	Progress update_usb(Env &env, Allocator &alloc, Xml_node const &node)
 	{
-		_discovered.usb |= (!node.has_type("empty"));
+		_discovered.usb |= !node.has_type("empty");
 
 		bool progress = false;
 		usb_storage_devices.update_from_xml(node,
