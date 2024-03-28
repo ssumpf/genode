@@ -126,11 +126,11 @@ struct Sculpt::Storage_device
 					if (partition.attribute_value("number", Partition::Number()) == "0")
 						whole_device_partition.construct(Partition::Args::from_xml(partition)); });
 			}
-		});
 
-		/* finish initial discovery phase */
-		if (state == UNKNOWN)
-			state = RELEASED;
+			/* finish initial discovery phase */
+			if (state == UNKNOWN)
+				state = RELEASED;
+		});
 	}
 
 	Storage_device(Env &env, Allocator &alloc, Driver const &driver,
