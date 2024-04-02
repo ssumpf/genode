@@ -57,7 +57,17 @@ struct Sculpt::Board_info
 	/**
 	 * Features that can be toggled at runtime
 	 */
-	struct Options { bool display, usb_net, nic, wifi; } options;
+	struct Options
+	{
+		bool display, usb_net, nic, wifi;
+
+		bool operator != (Options const &other) const
+		{
+			return display != other.display || usb_net != other.usb_net
+			    || nic     != other.nic     || wifi    != other.wifi;
+		}
+
+	} options;
 
 	bool usb_avail()  const { return detected.usb  || soc.usb; }
 	bool wifi_avail() const { return detected.wifi || soc.wifi; }

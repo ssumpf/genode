@@ -116,11 +116,13 @@ class Sculpt::Drivers::Instance : Noncopyable,
 			_handle_devices();
 		}
 
-		void update_options(Board_info::Options options)
+		void update_options(Board_info::Options const options)
 		{
-			_board_info.options = options;
-			_handle_devices();
-			_usb_driver.update(_children, _board_info);
+			if (options != _board_info.options) {
+				_board_info.options = options;
+				_handle_devices();
+				_usb_driver.update(_children, _board_info);
+			}
 		}
 
 		void gen_start_nodes(Xml_generator &xml) const

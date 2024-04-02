@@ -37,7 +37,7 @@ struct Sculpt::Network : Noncopyable
 
 	struct Action : Interface
 	{
-		virtual void update_network_dialog() = 0;
+		virtual void network_config_changed() = 0;
 	};
 
 	struct Info : Interface
@@ -108,7 +108,7 @@ struct Sculpt::Network : Noncopyable
 	{
 		if (_wlan_config.try_generate_manually_managed()) {
 			_wlan_config_policy = Wlan_config_policy::MANUAL;
-			_action.update_network_dialog();
+			_action.network_config_changed();
 			return;
 		}
 
@@ -128,7 +128,7 @@ struct Sculpt::Network : Noncopyable
 			_nic_target.managed_type = type;
 			_generate_nic_router_config();
 			_runtime_config_generator.generate_runtime_config();
-			_action.update_network_dialog();
+			_action.network_config_changed();
 		}
 	}
 

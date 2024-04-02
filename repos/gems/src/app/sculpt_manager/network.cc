@@ -63,7 +63,7 @@ void Sculpt::Network::handle_key_press(Codepoint code)
 	if (_wifi_connection.state == Wifi_connection::CONNECTING)
 		wifi_connect(_wifi_connection.bssid);
 
-	_action.update_network_dialog();
+	_action.network_config_changed();
 }
 
 
@@ -187,14 +187,14 @@ void Sculpt::Network::_handle_wlan_accesspoints(Xml_node const &accesspoints)
 		}
 	);
 
-	_action.update_network_dialog();
+	_action.network_config_changed();
 }
 
 
 void Sculpt::Network::_handle_wlan_state(Xml_node const &state)
 {
 	_wifi_connection = Wifi_connection::from_xml(state);
-	_action.update_network_dialog();
+	_action.network_config_changed();
 }
 
 
@@ -204,7 +204,7 @@ void Sculpt::Network::_handle_nic_router_state(Xml_node const &state)
 	_nic_state = Nic_state::from_xml(state);
 
 	if (_nic_state.ipv4 != old_nic_state.ipv4)
-		_action.update_network_dialog();
+		_action.network_config_changed();
 
 	/* if the nic state becomes ready, consider spawning the update subsystem */
 	if (old_nic_state.ready() != _nic_state.ready())
@@ -231,10 +231,10 @@ void Sculpt::Network::_update_nic_target_from_config(Xml_node const &config)
 			if (uplink.attribute_value("domain", String<16>()) != "uplink")
 				return;
 
-			if (uplink.attribute_value("label_prefix", String<16>()) == "nic_drv -> ")
+			if (uplink.attribute_value("label_prefix", String<16>()) == "nic -> ")
 				result = Nic_target::WIRED;
 
-			if (uplink.attribute_value("label_prefix", String<16>()) == "wifi_drv -> ")
+			if (uplink.attribute_value("label_prefix", String<16>()) == "wifi -> ")
 				result = Nic_target::WIFI;
 
 			if (uplink.attribute_value("label_prefix", String<16>()) == "usb_net -> ")
@@ -254,7 +254,7 @@ void Sculpt::Network::_handle_nic_router_config(Xml_node const &config)
 	_update_nic_target_from_config(config);
 	_generate_nic_router_config();
 	_runtime_config_generator.generate_runtime_config();
-	_action.update_network_dialog();
+	_action.network_config_changed();
 }
 
 

@@ -224,7 +224,7 @@ struct Sculpt::Main : Input_event_handler,
 	void handle_device_plug_unplug() override
 	{
 		_handle_storage_devices();
-		update_network_dialog();
+		network_config_changed();
 		generate_runtime_config();
 	}
 
@@ -344,10 +344,6 @@ struct Sculpt::Main : Input_event_handler,
 	void nic_target(Nic_target::Type const type) override
 	{
 		_network.nic_target(type);
-		_driver_options.usb_net = (type == Nic_target::MODEM);
-		_driver_options.wifi    = (type == Nic_target::WIFI);
-		_driver_options.nic     = (type == Nic_target::WIRED);
-		_drivers.update_options(_driver_options);
 		generate_runtime_config();
 	}
 
@@ -367,8 +363,14 @@ struct Sculpt::Main : Input_event_handler,
 	/**
 	 * Network::Action interface
 	 */
-	void update_network_dialog() override
+	void network_config_changed() override
 	{
+		Nic_target::Type const type = _network._nic_target.type();
+		_driver_options.usb_net = (type == Nic_target::MODEM);
+		_driver_options.wifi    = (type == Nic_target::WIFI);
+		_driver_options.nic     = (type == Nic_target::WIRED);
+		_drivers.update_options(_driver_options);
+
 		_network_dialog.refresh();
 		_system_dialog.refresh();
 	}
@@ -887,12 +889,12 @@ struct Sculpt::Main : Input_event_handler,
 	 */
 	void restart_deployed_component(Start_name const &name) override
 	{
-		if (name == "nic_drv") {
+		if (name == "nic") {
 
 			_network.restart_nic_drv_on_next_runtime_cfg();
 			generate_runtime_config();
 
-		} else if (name == "wifi_drv") {
+		} else if (name == "wifi") {
 
 			_network.restart_wifi_drv_on_next_runtime_cfg();
 			generate_runtime_config();

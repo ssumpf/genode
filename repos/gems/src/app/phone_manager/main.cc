@@ -212,7 +212,7 @@ struct Sculpt::Main : Input_event_handler,
 	void handle_device_plug_unplug() override
 	{
 		_handle_storage_devices();
-		update_network_dialog();
+		network_config_changed();
 		generate_runtime_config();
 	}
 
@@ -356,7 +356,7 @@ struct Sculpt::Main : Input_event_handler,
 	/**
 	 * Network::Action interface
 	 */
-	void update_network_dialog() override
+	void network_config_changed() override
 	{
 		_generate_dialog();
 	}
