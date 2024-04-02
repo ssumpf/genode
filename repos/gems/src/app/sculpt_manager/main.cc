@@ -553,6 +553,7 @@ struct Sculpt::Main : Input_event_handler,
 	{
 		_system_dialog.sanitize_user_selection();
 		_popup_dialog.sanitize_user_selection();
+		_popup_dialog.refresh();
 	}
 
 	Rom_handler<Main> _image_index_rom {
@@ -766,7 +767,8 @@ struct Sculpt::Main : Input_event_handler,
 	 ****************************/
 
 	Keyboard_focus _keyboard_focus { _env, _network.dialog, _network.wpa_passphrase,
-	                                 *this, _system_dialog, _system_visible };
+	                                 *this, _system_dialog, _system_visible,
+	                                 _popup_dialog, _popup };
 
 	struct Keyboard_focus_guard
 	{
@@ -818,14 +820,18 @@ struct Sculpt::Main : Input_event_handler,
 		ev.handle_press([&] (Input::Keycode, Codepoint code) {
 			if (_keyboard_focus.target == Keyboard_focus::WPA_PASSPHRASE)
 				_network.handle_key_press(code);
+			if (_keyboard_focus.target == Keyboard_focus::POPUP)
+				_popup_dialog.handle_key(code, *this);
 			else if (_system_visible && _system_dialog.keyboard_needed())
 				_system_dialog.handle_key(code, *this);
 
 			need_generate_dialog = true;
 		});
 
-		if (need_generate_dialog)
+		if (need_generate_dialog) {
 			_generate_dialog();
+			_popup_dialog.refresh();
+		}
 	}
 
 	/*
@@ -1990,7 +1996,7 @@ void Sculpt::Main::_handle_runtime_state(Xml_node const &state)
 					_deploy.update_installation();
 
 				/* update depot-user selection after adding new depot URL */
-				if (_system_visible)
+				if (_system_visible || (_popup.state == Popup::VISIBLE))
 					trigger_depot_query();
 			}
 		}

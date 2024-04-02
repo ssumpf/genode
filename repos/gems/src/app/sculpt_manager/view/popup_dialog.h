@@ -67,6 +67,12 @@ struct Sculpt::Popup_dialog : Dialog::Top_level_dialog
 		_add.propagate(at, _action);
 	}
 
+	void handle_key(Codepoint c, Action &action)
+	{
+		if (_tabs.add_selected())
+			_add.handle_key(c, action);
+	}
+
 	Popup_dialog(Action &action,
 	             Build_info         const &build_info,
 	             Sculpt_version     const &sculpt_version,
@@ -88,6 +94,9 @@ struct Sculpt::Popup_dialog : Dialog::Top_level_dialog
 	{ }
 
 	bool watches_depot() const { return _tabs.add_selected(); }
+
+	bool keyboard_needed() const { return _tabs.add_selected()
+	                                   && _add.keyboard_needed(); }
 
 	void sanitize_user_selection() { _add.sanitize_user_selection(); }
 };
