@@ -8,7 +8,7 @@
 
 		<policy label_suffix="left"   record="left"  period_ms="12" jitter_ms="5" volume="1.0"/>
 		<policy label_suffix="right"  record="right" period_ms="12" jitter_ms="5" volume="1.0"/>
-	</cn
+	</config>
 
 	<content>
 		<rom label="ld.lib.so"/>
