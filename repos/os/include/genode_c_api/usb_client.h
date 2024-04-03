@@ -142,7 +142,8 @@ namespace Genode_c_api {
 	 */
 	void initialize_usb_client(Env                       &env,
 	                           Allocator                 &alloc,
-	                           Signal_context_capability  handler);
+	                           Signal_context_capability  io_handler,
+	                           Signal_context_capability  rom_handler);
 }
 
 #endif /* __cplusplus */

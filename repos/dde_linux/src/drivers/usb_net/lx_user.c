@@ -171,8 +171,6 @@ static int network_loop(void *arg)
 
 		struct net_device *dev;
 
-		lx_emul_usb_client_device_update();
-
 		for_each_netdev(&init_net, dev) {
 			struct genode_mac_address dev_addr;
 
@@ -213,6 +211,8 @@ static struct task_struct *net_task;
 void lx_user_init(void)
 {
 	pid_t pid;
+
+	lx_emul_usb_client_init();
 
 	pid = kernel_thread(network_loop, NULL, CLONE_FS | CLONE_FILES);
 	net_task = find_task_by_pid_ns(pid, NULL);

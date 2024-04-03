@@ -447,11 +447,12 @@ struct Session
 	List_model<Device>        _model {};
 	Id_space<Device>          _space {};
 
-	Session(Env &env, Allocator &alloc, Signal_context_capability cap)
+	Session(Env &env, Allocator &alloc, Signal_context_capability io_cap,
+	        Signal_context_capability rom_cap)
 	:
-		_env(env), _alloc(alloc), _handler_cap(cap)
+		_env(env), _alloc(alloc), _handler_cap(io_cap)
 	{
-		_usb.sigh(cap);
+		_usb.sigh(rom_cap);
 	}
 
 	~Session() {
@@ -538,9 +539,10 @@ static ::Session * _usb_session = nullptr;
 
 void Genode_c_api::initialize_usb_client(Env                      &env,
                                          Allocator                &alloc,
-                                         Signal_context_capability handler)
+                                         Signal_context_capability io_handler,
+                                         Signal_context_capability rom_handler)
 {
-	static ::Session session(env, alloc, handler);
+	static ::Session session(env, alloc, io_handler, rom_handler);
 	_usb_session = &session;
 };
 

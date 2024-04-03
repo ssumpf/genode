@@ -32,7 +32,6 @@ using namespace Genode;
 extern bool use_mac_address;
 extern unsigned char mac_address[6];
 
-
 struct Main
 {
 	Env &env;
@@ -41,8 +40,12 @@ struct Main
 
 	unsigned long usb_config { 0 };
 
-	Signal_handler<Main> signal_handler { env.ep(), *this, &Main::handle_signal };
-	Signal_handler<Main> config_handler { env.ep(), *this, &Main::handle_config };
+	Signal_handler<Main> signal_handler  { env.ep(), *this,
+	                                       &Main::handle_signal  };
+	Signal_handler<Main> usb_rom_handler { env.ep(), *this,
+	                                       &Main::handle_usb_rom };
+	Signal_handler<Main> config_handler  { env.ep(), *this,
+	                                       &Main::handle_config  };
 
 	Main(Env &env)
 	:
@@ -51,7 +54,7 @@ struct Main
 		Lx_kit::initialize(env, signal_handler);
 
 		Genode_c_api::initialize_usb_client(env, Lx_kit::env().heap,
-		                                    signal_handler);
+		                                    signal_handler, usb_rom_handler);
 
 		genode_mac_address_reporter_init(env, Lx_kit::env().heap);
 
@@ -70,6 +73,12 @@ struct Main
 		lx_user_handle_io();
 		Lx_kit::env().scheduler.execute();
 		genode_uplink_notify_peers();
+	}
+
+	void handle_usb_rom()
+	{
+		lx_emul_usb_client_rom_update();
+		Lx_kit::env().scheduler.execute();
 	}
 
 	void handle_config()

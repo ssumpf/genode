@@ -42,8 +42,12 @@ struct Main
 	               numlock  { env, "numlock"  },
 	               scrlock  { env, "scrlock"  };
 
-	Signal_handler<Main> signal_handler { env.ep(), *this, &Main::handle_signal };
-	Signal_handler<Main> config_handler { env.ep(), *this, &Main::handle_config };
+	Signal_handler<Main> signal_handler  { env.ep(), *this,
+	                                       &Main::handle_signal  };
+	Signal_handler<Main> usb_rom_handler { env.ep(), *this,
+	                                       &Main::handle_usb_rom };
+	Signal_handler<Main> config_handler  { env.ep(), *this,
+	                                       &Main::handle_config  };
 
 	Main(Env &env)
 	:
@@ -52,7 +56,7 @@ struct Main
 		Lx_kit::initialize(env, signal_handler);
 
 		Genode_c_api::initialize_usb_client(env, Lx_kit::env().heap,
-		                                    signal_handler);
+		                                    signal_handler, usb_rom_handler);
 
 		genode_event_init(genode_env_ptr(env),
 		                  genode_allocator_ptr(Lx_kit::env().heap));
@@ -69,6 +73,12 @@ struct Main
 		Lx_kit::env().scheduler.execute();
 	}
 
+	void handle_usb_rom()
+	{
+		lx_emul_usb_client_rom_update();
+		Lx_kit::env().scheduler.execute();
+	}
+
 	void handle_config()
 	{
 		config_rom.update();
@@ -76,25 +86,11 @@ struct Main
 		capslock.update(config, config_handler);
 		numlock .update(config, config_handler);
 		scrlock .update(config, config_handler);
-		handle_signal();
+		lx_emul_input_leds_update(capslock.enabled(), numlock.enabled(),
+		                          scrlock.enabled());
+		Lx_kit::env().scheduler.execute();
 	}
 };
 
 
-static Constructible<Main> &singleton()
-{
-	static Constructible<Main> main {};
-	return main;
-}
-
-
-void Component::construct(Env & env) { singleton().construct(env); }
-
-
-void lx_emul_led_state_update()
-{
-	if (singleton().constructed())
-		lx_emul_input_leds_update(singleton()->capslock.enabled(),
-		                          singleton()->numlock.enabled(),
-		                          singleton()->scrlock.enabled());
-}
+void Component::construct(Env & env) { static Main main(env); }

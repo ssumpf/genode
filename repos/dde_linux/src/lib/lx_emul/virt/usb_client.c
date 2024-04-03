@@ -179,14 +179,38 @@ static int usb_loop(void *arg)
 
 static struct task_struct * usb_task = NULL;
 
-void lx_emul_usb_client_device_update()
-{
-	if (!usb_task) {
-		pid_t pid = kernel_thread(usb_loop, NULL, CLONE_FS | CLONE_FILES);
-		usb_task = find_task_by_pid_ns(pid, NULL);
-	}
 
-	genode_usb_client_update(register_device, unregister_device);
+static int usb_rom_loop(void *arg)
+{
+	for (;;) {
+
+		genode_usb_client_update(register_device, unregister_device);
+
+		/* block until lx_emul_task_unblock */
+		lx_emul_task_schedule(true);
+	}
+	return 0;
+}
+
+
+static struct task_struct *usb_rom_task = NULL;
+
+
+void lx_emul_usb_client_init(void)
+{
+	pid_t pid;
+
+	pid = kernel_thread(usb_rom_loop, NULL, CLONE_FS | CLONE_FILES);
+	usb_rom_task = find_task_by_pid_ns(pid, NULL);
+
+	pid = kernel_thread(usb_loop, NULL, CLONE_FS | CLONE_FILES);
+	usb_task = find_task_by_pid_ns(pid, NULL);
+}
+
+
+void lx_emul_usb_client_rom_update(void)
+{
+	if (usb_rom_task) lx_emul_task_unblock(usb_rom_task);
 }
 
 
