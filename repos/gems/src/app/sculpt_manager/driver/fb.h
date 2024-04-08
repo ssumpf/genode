@@ -112,7 +112,7 @@ struct Sculpt::Fb_driver : private Noncopyable
 		bool const use_intel   =  board_info.detected.intel_gfx
 		                      && !board_info.options.suppress.intel_gpu;
 		bool const use_boot_fb = !use_intel   && board_info.detected.boot_fb;
-		bool const use_vesa    = !use_boot_fb && board_info.detected.vga;
+		bool const use_vesa    = !use_boot_fb && !use_intel && board_info.detected.vga;
 
 		_intel_gpu.conditional(use_intel,
 		                       registry, "intel_gpu", Priority::MULTIMEDIA,
