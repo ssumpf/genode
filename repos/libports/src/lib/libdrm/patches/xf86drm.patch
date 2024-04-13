@@ -1,10 +1,18 @@
 diff --git a/src/lib/libdrm/xf86drm.c b/src/lib/libdrm/xf86drm.c
-index edfeb34..958f73e 100644
+index 2e76f0e..4ad468b 100644
 --- a/src/lib/libdrm/xf86drm.c
 +++ b/src/lib/libdrm/xf86drm.c
-@@ -4060,6 +4060,10 @@ drm_device_has_rdev(drmDevicePtr device, dev_t find_rdev)
+@@ -4562,6 +4562,7 @@ drm_device_has_rdev(drmDevicePtr device, dev_t find_rdev)
   */
  #define MAX_DRM_NODES 256
+ 
++
+ /**
+  * Get information about a device from its dev_t identifier
+  *
+@@ -4704,6 +4705,10 @@ drm_public int drmGetNodeTypeFromDevId(dev_t devid)
+     return node_type;
+ }
  
 +#ifdef __GENODE__
 +int genode_drmGetPciDevice(int fd, uint32_t flags, drmDevicePtr device);
@@ -13,12 +21,11 @@ index edfeb34..958f73e 100644
  /**
   * Get information about the opened drm device
   *
-@@ -4124,6 +4128,28 @@ drm_public int drmGetDevice2(int fd, uint32_t flags, drmDevicePtr *device)
+@@ -4724,6 +4729,30 @@ drm_public int drmGetDevice2(int fd, uint32_t flags, drmDevicePtr *device)
+     if (fd == -1)
+         return -EINVAL;
  
-     *device = d;
- 
-+    return 0;
-+#elif defined(__GENODE__)
++#ifdef __GENODE__
 +    /* PCI only */
 +    int           node_type = DRM_NODE_PRIMARY;
 +    char const *  node      = "genode";
@@ -39,6 +46,9 @@ index edfeb34..958f73e 100644
 +
 +    *device = dev;
 +
-     return 0;
- #else
-     drmDevicePtr local_devices[MAX_DRM_NODES];
++    return 0;
++#endif
++
+     if (fstat(fd, &sbuf))
+         return -errno;
+ 
