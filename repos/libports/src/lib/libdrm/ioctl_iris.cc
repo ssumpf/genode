@@ -31,7 +31,7 @@ extern "C" {
 #include <errno.h>
 #include <drm.h>
 #include <i915_drm.h>
-
+#include <xf86drm.h>
 #define DRM_NUMBER(req) ((req) & 0xff)
 }
 
@@ -39,6 +39,7 @@ namespace Libc {
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <stdlib.h>
 #include <unistd.h>
 }
 
@@ -882,6 +883,10 @@ class Drm::Call
 				if (verbose_ioctl)
 					Genode::warning("I915_PARAM_MMAP_GTT_VERSION ", *value);
 				return 0;
+			/* validates user pointer and size */
+			case I915_PARAM_HAS_USERPTR_PROBE:
+				*value = 0;
+				return 0;
 			default:
 				Genode::error("Unhandled device param:", Genode::Hex(param));
 				return -1;
@@ -1311,8 +1316,32 @@ class Drm::Call
 			 } catch (Genode::Id_space<Buffer>::Unknown_id) {
 				return -1;
 			}
-
 			p->fd = prime_fd;
+			return 0;
+		}
+
+
+		/*
+		 * This is used to distinguish between the "i915" and the "xe" kernel
+		 * drivers. Genode's driver is "i915" for now.
+		 */
+		int _generic_version(void *arg)
+		{
+			auto *version = reinterpret_cast<drm_version_t *>(arg);
+
+			char const *driver = "i915";
+
+			version->name_len = 5;
+			if (version->name)
+					Genode::copy_cstring(version->name, driver, 5);
+
+			/*
+			 * dummy alloc remaining member, since they are de-allocated using 'free'
+			 * in xf86drm.c
+			 */
+			if (!version->date) version->date = (char *)Libc::malloc(1);
+			if (!version->desc) version->desc = (char *)Libc::malloc(1);
+
 			return 0;
 		}
 
@@ -1324,13 +1353,14 @@ class Drm::Call
 			}
 
 			switch (cmd) {
-			case DRM_NUMBER(DRM_IOCTL_GEM_CLOSE): return _generic_gem_close(arg);
-			case DRM_NUMBER(DRM_IOCTL_GEM_FLINK): return _generic_gem_flink(arg);
-			case DRM_NUMBER(DRM_IOCTL_SYNCOBJ_CREATE): return _generic_syncobj_create(arg);
-			case DRM_NUMBER(DRM_IOCTL_SYNCOBJ_WAIT): return _generic_syncobj_wait(arg);
+			case DRM_NUMBER(DRM_IOCTL_GEM_CLOSE):       return _generic_gem_close(arg);
+			case DRM_NUMBER(DRM_IOCTL_GEM_FLINK):       return _generic_gem_flink(arg);
+			case DRM_NUMBER(DRM_IOCTL_GEM_OPEN):        return _generic_gem_open(arg);
+			case DRM_NUMBER(DRM_IOCTL_GET_CAP):         return _generic_get_cap(arg);
+			case DRM_NUMBER(DRM_IOCTL_SYNCOBJ_CREATE):  return _generic_syncobj_create(arg);
 			case DRM_NUMBER(DRM_IOCTL_SYNCOBJ_DESTROY): return _generic_syncobj_destroy(arg);
-			case DRM_NUMBER(DRM_IOCTL_GEM_OPEN): return _generic_gem_open(arg);
-			case DRM_NUMBER(DRM_IOCTL_GET_CAP): return _generic_get_cap(arg);
+			case DRM_NUMBER(DRM_IOCTL_SYNCOBJ_WAIT):    return _generic_syncobj_wait(arg);
+			case DRM_NUMBER(DRM_IOCTL_VERSION):         return _generic_version(arg);
 			case DRM_NUMBER(DRM_IOCTL_PRIME_FD_TO_HANDLE):
 				return _generic_prime_fd_to_handle(arg);
 			case DRM_NUMBER(DRM_IOCTL_PRIME_HANDLE_TO_FD):
@@ -1425,6 +1455,18 @@ class Drm::Call
 			return device ? _device_ioctl(device_number(request), arg)
 			              : _generic_ioctl(command_number(request), arg);
 		}
+
+		/*
+		 * Mesa 24+ way to retrieve device information (incomplete, expand as
+		 * needed). Before it was done via '_device_getparam'
+		 */
+		int drm_pci_device(drmDevicePtr device)
+		{
+			device->deviceinfo.pci->device_id   = _gpu_info.chip_id;
+			device->deviceinfo.pci->revision_id = _gpu_info.revision.value;
+
+			return 0;
+		}
 };
 
 
@@ -1492,4 +1534,18 @@ extern "C" int genode_ioctl(int /* fd */, unsigned long request, void *arg)
 	int const ret = _call->ioctl(request, arg);
 	if (verbose_ioctl) { Genode::log("returned ", ret, " from ", __builtin_return_address(0)); }
 	return ret;
+}
+
+
+extern "C"  int genode_drmGetPciDevice(int fd, uint32_t flags, drmDevicePtr device)
+{
+	if (_call.constructed() == false) { errno = EIO; return -1; }
+
+	/* TODO create constant */
+	if (fd != 43) {
+		Genode::error(__func__, " fd is not Genode Iris (43)");
+		return -ENODEV;
+	}
+
+	return _call->drm_pci_device(device);
 }
