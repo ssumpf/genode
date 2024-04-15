@@ -24,7 +24,7 @@
 		<rom label="zlib.lib.so"/>
 	</content>
 
-	<config>
+	<config ld_verbose="yes">
 		<libc stdout="/dev/log" stderr="/dev/log" rtc="/dev/rtc" />
 		<vfs>
 			<dir name="dev">
