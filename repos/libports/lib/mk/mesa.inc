@@ -1,5 +1,5 @@
 SHARED_LIB := yes
-LIBS       += libc stdcxx zlib expat glapi softpipe mesa_api libdrm
+LIBS       += libc stdcxx zlib expat glapi softpipe mesa_api libdrm format
 
 include $(REP_DIR)/lib/mk/mesa-common.inc
 

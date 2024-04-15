@@ -2,6 +2,8 @@ LIBS = libc libdrm
 
 include $(REP_DIR)/lib/mk/mesa-common.inc
 
+CC_OPT += -DHAVE_LIBDRM
+
 INC_DIR += $(MESA_SRC_DIR)/src/compiler/nir \
            $(MESA_SRC_DIR)/src/gallium/auxiliary \
            $(MESA_SRC_DIR)/src/gallium/drivers \

@@ -10,7 +10,7 @@ include $(REP_DIR)/lib/mk/mesa-common.inc
 
 CC_CXX_WARN_STRICT =
 
-CC_OPT   += -DGALLIUM_IRIS
+CC_OPT   += -DGALLIUM_IRIS -DHAVE_LIBDRM
 # We rename 'ioctl' calls to 'genode_ioctl' calls (drm lib)
 CC_C_OPT += -Dioctl=genode_ioctl
 CC_C_OPT += -DUSE_SSE41 -msse4
@@ -25,13 +25,15 @@ INC_DIR += $(MESA_GEN_DIR)/src/compiler \
 INC_DIR += $(MESA_SRC_DIR)/src/compiler \
            $(MESA_SRC_DIR)/src/compiler/nir \
            $(MESA_SRC_DIR)/src/gallium/auxiliary \
+           $(MESA_SRC_DIR)/src/gallium/drivers \
+           $(MESA_SRC_DIR)/src/gallium/drivers/iris \
            $(MESA_SRC_DIR)/src/intel \
            $(MESA_SRC_DIR)/src/intel/common \
            $(MESA_SRC_DIR)/src/intel/dev \
            $(MESA_SRC_DIR)/src/intel/ds \
            $(MESA_SRC_DIR)/src/mapi \
+           $(MESA_SRC_DIR)/src/mesa \
            $(MESA_SRC_DIR)/src/mesa/main \
-           $(MESA_SRC_DIR)/src/mesa
 
 SRC_CC += intel/compiler/brw_cfg.cpp \
           intel/compiler/brw_dead_control_flow.cpp \
@@ -81,7 +83,10 @@ SRC_CC += intel/compiler/brw_cfg.cpp \
           intel/compiler/brw_vec4_vs_visitor.cpp \
           intel/compiler/gfx6_gs_visitor.cpp \
 
-SRC_C += gallium/drivers/iris/iris_batch.c \
+SRC_C += gallium/drivers/iris/i915/iris_batch.c \
+         gallium/drivers/iris/i915/iris_bufmgr.c \
+         gallium/drivers/iris/i915/iris_kmd_backend.c \
+         gallium/drivers/iris/iris_batch.c \
          gallium/drivers/iris/iris_binder.c \
          gallium/drivers/iris/iris_blit.c \
          gallium/drivers/iris/iris_border_color.c \
@@ -93,6 +98,7 @@ SRC_C += gallium/drivers/iris/iris_batch.c \
          gallium/drivers/iris/iris_fence.c \
          gallium/drivers/iris/iris_fine_fence.c \
          gallium/drivers/iris/iris_formats.c \
+         gallium/drivers/iris/iris_kmd_backend.c \
          gallium/drivers/iris/iris_monitor.c \
          gallium/drivers/iris/iris_perf.c \
          gallium/drivers/iris/iris_performance_query.c \
