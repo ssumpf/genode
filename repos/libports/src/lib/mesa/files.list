@@ -890,8 +890,11 @@ mesa-24.0.1/src/gallium/drivers/etnaviv/hw/state_3d.xml.h
 mesa-24.0.1/src/gallium/drivers/etnaviv/hw/state_blt.xml.h
 mesa-24.0.1/src/gallium/drivers/etnaviv/hw/texdesc_3d.xml.h
 mesa-24.0.1/src/gallium/drivers/iris/driinfo_iris.h
+mesa-24.0.1/src/gallium/drivers/iris/i915/iris_batch.c
 mesa-24.0.1/src/gallium/drivers/iris/i915/iris_batch.h
+mesa-24.0.1/src/gallium/drivers/iris/i915/iris_bufmgr.c
 mesa-24.0.1/src/gallium/drivers/iris/i915/iris_bufmgr.h
+mesa-24.0.1/src/gallium/drivers/iris/i915/iris_kmd_backend.c
 mesa-24.0.1/src/gallium/drivers/iris/iris_batch.c
 mesa-24.0.1/src/gallium/drivers/iris/iris_batch.h
 mesa-24.0.1/src/gallium/drivers/iris/iris_binder.c
@@ -914,6 +917,7 @@ mesa-24.0.1/src/gallium/drivers/iris/iris_fine_fence.h
 mesa-24.0.1/src/gallium/drivers/iris/iris_formats.c
 mesa-24.0.1/src/gallium/drivers/iris/iris_genx_macros.h
 mesa-24.0.1/src/gallium/drivers/iris/iris_genx_protos.h
+mesa-24.0.1/src/gallium/drivers/iris/iris_kmd_backend.c
 mesa-24.0.1/src/gallium/drivers/iris/iris_kmd_backend.h
 mesa-24.0.1/src/gallium/drivers/iris/iris_measure.h
 mesa-24.0.1/src/gallium/drivers/iris/iris_monitor.c

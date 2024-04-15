@@ -1,0 +1,42 @@
+* call drm_unmap_ppgtt when a vm area from cache is cleared, so libdrm can unmap
+  at GPU driver
+* use drm_lseek instead of libc version in order to retrieve bo object size
+diff --git a/src/lib/mesa/src/gallium/drivers/iris/iris_bufmgr.c b/src/lib/mesa/src/gallium/drivers/iris/iris_bufmgr.c
+index 088f34f..e840273 100644
+--- a/src/lib/mesa/src/gallium/drivers/iris/iris_bufmgr.c
++++ b/src/lib/mesa/src/gallium/drivers/iris/iris_bufmgr.c
+@@ -112,6 +112,8 @@
+ 
+ #define FILE_DEBUG_FLAG DEBUG_BUFMGR
+ 
++ void drm_unmap_ppgtt(__u32 handle);
++
+ /**
+  * For debugging purposes, this returns a time in seconds.
+  */
+@@ -1048,6 +1050,7 @@ alloc_bo_from_cache(struct iris_bufmgr *bufmgr,
+             continue;
+          }
+ 
++         drm_unmap_ppgtt(cur->gem_handle);
+          vma_free(bufmgr, cur->address, cur->size);
+          cur->address = 0ull;
+       }
+@@ -1887,6 +1890,8 @@ iris_gem_set_tiling(struct iris_bo *bo, const struct isl_surf *surf)
+    return ret;
+ }
+ 
++extern int drm_lseek(int fd, off_t offset, int whence);
++
+ struct iris_bo *
+ iris_bo_import_dmabuf(struct iris_bufmgr *bufmgr, int prime_fd,
+                       const uint64_t modifier)
+@@ -1923,7 +1928,7 @@ iris_bo_import_dmabuf(struct iris_bufmgr *bufmgr, int prime_fd,
+     * later, we can lseek on the prime fd to get the size.  Older
+     * kernels will just fail, in which case we fall back to the
+     * provided (estimated or guess size). */
+-   ret = lseek(prime_fd, 0, SEEK_END);
++   ret = drm_lseek(prime_fd, 0, SEEK_END);
+    if (ret != -1)
+       bo->size = ret;
+ 
