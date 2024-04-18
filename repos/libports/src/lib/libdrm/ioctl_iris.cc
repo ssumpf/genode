@@ -969,6 +969,8 @@ class Drm::Call
 			switch (p->param) {
 			case I915_CONTEXT_PARAM_SSEU:
 				return 0;
+			case I915_CONTEXT_PARAM_GTT_SIZE:
+				return _gpu_info.ggtt_size;
 			default:
 				Genode::error(__func__, " ctx=", p->ctx_id, " param=", p->param, " size=", p->size, " value=", Genode::Hex(p->value));
 				return -1;
