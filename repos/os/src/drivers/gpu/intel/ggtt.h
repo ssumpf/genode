@@ -311,6 +311,8 @@ class Igd::Ggtt
 				    Hex(ggtt[i + 6]), " ", Hex(ggtt[i + 7]));
 			}
 		}
+
+		size_t size() const { return _size; }
 };
 
 #endif /* _GLOBAL_GTT_H_ */

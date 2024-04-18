@@ -38,6 +38,7 @@ struct Gpu::Info_intel
 	Chip_id    chip_id;
 	Features   features;
 	size_t     aperture_size;
+	size_t     ggtt_size;
 	Context_id ctx_id;
 
 	Sequence_number last_completed;
@@ -86,14 +87,16 @@ struct Gpu::Info_intel
 
 	struct Topology topology { };
 
-	Info_intel(Chip_id chip_id, Features features, size_t aperture_size,
+	Info_intel(Chip_id chip_id, Features features,
+	           size_t aperture_size, size_t ggtt_size,
 	           Context_id ctx_id, Sequence_number last,
 	           Revision rev, Slice_mask s_mask, Subslice_mask ss_mask,
 	           Eu_total eu, Subslices subslice, Clock_frequency clock_frequency,
 	           Topology topology)
 	:
 		chip_id(chip_id), features(features),
-		aperture_size(aperture_size), ctx_id(ctx_id),
+		aperture_size(aperture_size), ggtt_size(ggtt_size),
+		ctx_id(ctx_id),
 		last_completed(last),
 		revision(rev),
 		slice_mask(s_mask),

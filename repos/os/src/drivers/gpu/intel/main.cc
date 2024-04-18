@@ -645,6 +645,7 @@ struct Igd::Device
 
 			_info = Gpu::Info_intel(_device.id(), _device.features(),
 			                        DUMMY_MESA_APERTURE_SIZE,
+			                        _device._ggtt->size(),
 			                        _id, Gpu::Sequence_number { .value = 0 },
 			                        _device._revision,
 			                        _device._slice_mask,
@@ -2553,6 +2554,8 @@ struct Main : Irq_ack_handler, Gpu_reset_handler
 					});
 				});
 			});
+
+			Genode::error("GHCM: ", gmch_ctl);
 
 			if (!device_id) {
 				Genode::warning("No supported Intel GPU configured");
