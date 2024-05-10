@@ -27,6 +27,8 @@
 
 #include <vfs_gpu.h>
 
+#include <os/backtrace.h>
+
 extern "C" {
 #include <errno.h>
 #include <drm.h>
@@ -42,6 +44,31 @@ namespace Libc {
 #include <stdlib.h>
 #include <unistd.h>
 }
+
+/*
+ * This is currently not in upstream libdrm (2.4.120) but in internal Mesa
+ * 'i195_drm.h'
+ */
+#ifndef I915_PARAM_PXP_STATUS
+/*
+ * Query the status of PXP support in i915.
+ *
+ * The query can fail in the following scenarios with the listed error codes:
+ *     -ENODEV = PXP support is not available on the GPU device or in the
+ *               kernel due to missing component drivers or kernel configs.
+ *
+ * If the IOCTL is successful, the returned parameter will be set to one of
+ * the following values:
+ *     1 = PXP feature is supported and is ready for use.
+ *     2 = PXP feature is supported but should be ready soon (pending
+ *         initialization of non-i915 system dependencies).
+ *
+ * NOTE: When param is supported (positive return values), user space should
+ *       still refer to the GEM PXP context-creation UAPI header specs to be
+ *       aware of possible failure due to system state machine at the time.
+ */
+#define I915_PARAM_PXP_STATUS 58
+#endif
 
 using Genode::addr_t;
 using Genode::Attached_dataspace;
@@ -320,6 +347,7 @@ struct Drm::Buffer
 
 	Drm::Buffer_id id() const
 	{
+		/* skip first id (0) */
 		return Drm::Buffer_id { _elem.id().value };
 	}
 };
@@ -761,7 +789,7 @@ class Drm::Call
 				p->handle = b.id().value;
 				successful = true;
 
-				if (verbose_ioctl) {
+				if (true) {
 					Genode::error(__func__, ": ", "handle: ", b.id().value,
 					              " size: ", size);
 				}
@@ -887,8 +915,17 @@ class Drm::Call
 			case I915_PARAM_HAS_USERPTR_PROBE:
 				*value = 0;
 				return 0;
+			/*
+			 * Protected Xe Path (PXP) hardware/ME feature (encrypted video memory, TEE,
+			 * ...)
+			 */
+			case I915_PARAM_PXP_STATUS:
+				*value = 0;
+				errno = ENODEV;
+				return -1;
 			default:
 				Genode::error("Unhandled device param:", Genode::Hex(param));
+				Genode::backtrace();
 				return -1;
 				break;
 			}
@@ -956,8 +993,21 @@ class Drm::Call
 				return 0;
 			case I915_CONTEXT_PARAM_RECOVERABLE:
 				return 0;
+			/*
+			 * The id of the associated virtual memory address space (ppGTT) of
+			 * this context. Can be retrieved and passed to another context
+			 * (on the same fd) for both to use the same ppGTT and so share
+			 * address layouts, and avoid reloading the page tables on context
+			 * switches between themselves.
+			 *
+			 * This is currently not supported.
+			 */
+			case I915_CONTEXT_PARAM_VM:
+				return 0;
+
 			default:
 				Genode::error(__func__, " unknown param=", p->param);
+				Genode::backtrace();
 				return -1;
 			};
 		}
@@ -971,6 +1021,9 @@ class Drm::Call
 				return 0;
 			case I915_CONTEXT_PARAM_GTT_SIZE:
 				return _gpu_info.ggtt_size;
+			/* global VM used for sharing BOs between contexts -> not supported so far */
+			case I915_CONTEXT_PARAM_VM:
+				return 0;
 			default:
 				Genode::error(__func__, " ctx=", p->ctx_id, " param=", p->param, " size=", p->size, " value=", Genode::Hex(p->value));
 				return -1;
@@ -1013,7 +1066,7 @@ class Drm::Call
 			unsigned const bb_id = (p->flags & I915_EXEC_BATCH_FIRST) ? 0 : p->buffer_count - 1;
 
 			uint64_t const ctx_id = p->rsvd1;
-			if (verbose_ioctl) {
+			if (1) {
 				Genode::log(__func__,
 				            " buffers_ptr: ",        Genode::Hex(p->buffers_ptr),
 				            " buffer_count: ",       p->buffer_count,
@@ -1045,14 +1098,17 @@ class Drm::Call
 						 * no one tries to wait for ...
 						 * - fence.flags & I915_EXEC_FENCE_SIGNAL
 						 */
-						if (fence.flags & I915_EXEC_FENCE_WAIT)
+						if (fence.flags & I915_EXEC_FENCE_WAIT) {
+							Genode::warning("unsupported: ", Genode::Hex(fence.flags));
 							unsupported = true;
+						}
 					});
 				}
 
 				if (unsupported) {
 					Genode::error("fence wait not supported");
-					return -1;
+					Genode::backtrace();
+					//return -1;
 				}
 			}
 
@@ -1266,6 +1322,8 @@ class Drm::Call
 			Genode::error("generic ioctl DRM_IOCTL_GEM_OPEN not supported ",
 			              p->handle, " name=", Genode::Hex(p->name));
 
+			Genode::backtrace();
+
 			return -1;
 		}
 
@@ -1383,6 +1441,9 @@ class Drm::Call
 			drm_syncobj_create reserve_id_0 { };
 			if (_generic_syncobj_create(&reserve_id_0))
 				Genode::warning("syncobject 0 not reserved");
+
+			/* make handle id 0 unavailable in buffer space */
+			_alloc_buffer(0x1000, [](Buffer &) { });
 		}
 
 		~Call()
