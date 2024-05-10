@@ -13,7 +13,8 @@ DIR(mesa)     := src/lib/mesa
 TAR_OPT(mesa) := --strip-components=1 --files-from $(REP_DIR)/src/lib/mesa/files.list
 HASH_INPUT    += $(REP_DIR)/src/lib/mesa/files.list
 
-PATCHES       := src/lib/mesa/patches/intel_gen.patch \
+PATCHES       := src/lib/mesa/patches/dri2.patch \
+                 src/lib/mesa/patches/intel_gen.patch \
                  src/lib/mesa/patches/iris_bufmgr.patch \
                  src/lib/mesa/patches/loader_fds.patch \
                  src/lib/mesa/patches/mesa.patch \

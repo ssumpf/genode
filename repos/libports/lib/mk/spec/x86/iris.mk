@@ -20,7 +20,8 @@ CC_OPT += -Wno-unused-function
 INC_DIR += $(MESA_GEN_DIR)/src/compiler \
            $(MESA_GEN_DIR)/src/compiler/nir \
            $(MESA_GEN_DIR)/src/intel \
-           $(MESA_GEN_DIR)/src/intel/dev
+           $(MESA_GEN_DIR)/src/intel/dev \
+           $(MESA_GEN_DIR)/src/intel/ds \
 
 INC_DIR += $(MESA_SRC_DIR)/src/compiler \
            $(MESA_SRC_DIR)/src/compiler/nir \
@@ -82,6 +83,7 @@ SRC_CC += intel/compiler/brw_cfg.cpp \
           intel/compiler/brw_vec4_visitor.cpp \
           intel/compiler/brw_vec4_vs_visitor.cpp \
           intel/compiler/gfx6_gs_visitor.cpp \
+          intel/ds/intel_driver_ds.cc
 
 SRC_C += gallium/drivers/iris/i915/iris_batch.c \
          gallium/drivers/iris/i915/iris_bufmgr.c \
@@ -99,6 +101,7 @@ SRC_C += gallium/drivers/iris/i915/iris_batch.c \
          gallium/drivers/iris/iris_fine_fence.c \
          gallium/drivers/iris/iris_formats.c \
          gallium/drivers/iris/iris_kmd_backend.c \
+         gallium/drivers/iris/iris_measure.c \
          gallium/drivers/iris/iris_monitor.c \
          gallium/drivers/iris/iris_perf.c \
          gallium/drivers/iris/iris_performance_query.c \
@@ -209,4 +212,5 @@ SRC_C += intel/dev/intel_wa.c \
 
 vpath %.c   $(MESA_GEN_DIR)/src
 vpath %.c   $(MESA_SRC_DIR)/src
+vpath %.cc  $(MESA_SRC_DIR)/src
 vpath %.cpp $(MESA_SRC_DIR)/src

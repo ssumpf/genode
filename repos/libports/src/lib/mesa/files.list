@@ -83,6 +83,7 @@ mesa-24.0.1/include/vulkan/vulkan_xcb.h
 mesa-24.0.1/include/vulkan/vulkan_xlib.h
 mesa-24.0.1/include/vulkan/vulkan_xlib_xrandr.h
 mesa-24.0.1/src/c11/impl/threads_posix.c
+mesa-24.0.1/src/c11/impl/time.c
 mesa-24.0.1/src/c11/threads.h
 mesa-24.0.1/src/c11/time.h
 mesa-24.0.1/src/compiler/builtin_types.py
@@ -628,6 +629,7 @@ mesa-24.0.1/src/gallium/auxiliary/pipebuffer/pb_buffer.h
 mesa-24.0.1/src/gallium/auxiliary/pipebuffer/pb_buffer_fenced.h
 mesa-24.0.1/src/gallium/auxiliary/pipebuffer/pb_bufmgr.h
 mesa-24.0.1/src/gallium/auxiliary/pipebuffer/pb_cache.h
+mesa-24.0.1/src/gallium/auxiliary/pipebuffer/pb_slab.c
 mesa-24.0.1/src/gallium/auxiliary/pipebuffer/pb_slab.h
 mesa-24.0.1/src/gallium/auxiliary/pipebuffer/pb_validate.h
 mesa-24.0.1/src/gallium/auxiliary/postprocess/filters.h
@@ -919,6 +921,7 @@ mesa-24.0.1/src/gallium/drivers/iris/iris_genx_macros.h
 mesa-24.0.1/src/gallium/drivers/iris/iris_genx_protos.h
 mesa-24.0.1/src/gallium/drivers/iris/iris_kmd_backend.c
 mesa-24.0.1/src/gallium/drivers/iris/iris_kmd_backend.h
+mesa-24.0.1/src/gallium/drivers/iris/iris_measure.c
 mesa-24.0.1/src/gallium/drivers/iris/iris_measure.h
 mesa-24.0.1/src/gallium/drivers/iris/iris_monitor.c
 mesa-24.0.1/src/gallium/drivers/iris/iris_monitor.h
@@ -1290,7 +1293,9 @@ mesa-24.0.1/src/intel/dev/intel_kmd.h
 mesa-24.0.1/src/intel/dev/mesa_defs.json
 mesa-24.0.1/src/intel/dev/xe/intel_device_info.c
 mesa-24.0.1/src/intel/dev/xe/intel_device_info.h
+mesa-24.0.1/src/intel/ds/intel_driver_ds.cc
 mesa-24.0.1/src/intel/ds/intel_driver_ds.h
+mesa-24.0.1/src/intel/ds/intel_pps_priv.h
 mesa-24.0.1/src/intel/ds/intel_tracepoints.py
 mesa-24.0.1/src/intel/genxml/gen11.xml
 mesa-24.0.1/src/intel/genxml/gen12.xml
@@ -2036,6 +2041,8 @@ mesa-24.0.1/src/util/os_time.h
 mesa-24.0.1/src/util/perf/cpu_trace.h
 mesa-24.0.1/src/util/perf/u_gpuvis.h
 mesa-24.0.1/src/util/perf/u_perfetto.h
+mesa-24.0.1/src/util/perf/u_trace.c
+mesa-24.0.1/src/util/perf/u_trace.h
 mesa-24.0.1/src/util/perf/u_trace.h
 mesa-24.0.1/src/util/perf/u_trace.py
 mesa-24.0.1/src/util/perf/u_trace_priv.h
@@ -2043,6 +2050,7 @@ mesa-24.0.1/src/util/ralloc.c
 mesa-24.0.1/src/util/ralloc.h
 mesa-24.0.1/src/util/rand_xor.c
 mesa-24.0.1/src/util/rand_xor.h
+mesa-24.0.1/src/util/rb_tree.c
 mesa-24.0.1/src/util/rb_tree.h
 mesa-24.0.1/src/util/register_allocate.c
 mesa-24.0.1/src/util/register_allocate.h

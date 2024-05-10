@@ -106,6 +106,7 @@ SRC_CC += compiler/glsl/ast_array_index.cpp \
           util/u_qsort.cpp
 
 SRC_C += c11/impl/threads_posix.c \
+         c11/impl/time.c \
          compiler/glsl/gl_nir_link_atomics.c \
          compiler/glsl/gl_nir_link_uniform_blocks.c \
          compiler/glsl/gl_nir_link_uniform_initializers.c \
@@ -386,6 +387,7 @@ SRC_C += c11/impl/threads_posix.c \
          gallium/auxiliary/pipe-loader/pipe_loader.c \
          gallium/auxiliary/pipe-loader/pipe_loader_drm.c \
          gallium/auxiliary/pipe-loader/pipe_loader_sw.c \
+         gallium/auxiliary/pipebuffer/pb_slab.c \
          gallium/auxiliary/postprocess/pp_celshade.c \
          gallium/auxiliary/postprocess/pp_colors.c \
          gallium/auxiliary/postprocess/pp_init.c \
@@ -697,8 +699,10 @@ SRC_C += c11/impl/threads_posix.c \
          util/os_file.c \
          util/os_misc.c \
          util/os_time.c \
+         util/perf/u_trace.c \
          util/ralloc.c \
          util/rand_xor.c \
+         util/rb_tree.c \
          util/register_allocate.c \
          util/rgtc.c \
          util/rwlock.c \
