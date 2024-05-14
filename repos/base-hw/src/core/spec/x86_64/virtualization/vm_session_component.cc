@@ -106,23 +106,23 @@ Genode::addr_t Vm_session_component::_alloc_vcpu_data(Genode::addr_t ds_addr)
 	/* XXX these allocations currently leak memory on VM Session destruction */
 	Vcpu_data * vcpu_data = (Vcpu_data *) cma()
 	                        .try_alloc(sizeof(Board::Vcpu_data))
-                                .convert<void *>(
-					[&](void *ptr) { return ptr; },
-					[&](Range_allocator::Alloc_error) -> void * {
-						/* XXX handle individual error conditions */
-						error("failed to allocate kernel object");
-						throw Insufficient_ram_quota();
-					});
+	                        .convert<void *>(
+	                                [&](void *ptr) { return ptr; },
+	                                [&](Range_allocator::Alloc_error) -> void * {
+	                                        /* XXX handle individual error conditions */
+	                                        error("failed to allocate kernel object");
+	                                        throw Insufficient_ram_quota();
+	                                });
 
 	vcpu_data->virt_area = cma()
-					.alloc_aligned(Vcpu_data::size(), 12)
-					.convert<void *>(
-						[&](void *ptr) { return ptr; },
-						[&](Range_allocator::Alloc_error) -> void * {
-							/* XXX handle individual error conditions */
-							error("failed to allocate kernel object");
-							throw Insufficient_ram_quota();
-					});
+	                       .alloc_aligned(Vcpu_data::size(), 12)
+	                       .convert<void *>(
+	                                [&](void *ptr) { return ptr; },
+	                                [&](Range_allocator::Alloc_error) -> void * {
+	                                        /* XXX handle individual error conditions */
+	                                        error("failed to allocate kernel object");
+	                                        throw Insufficient_ram_quota();
+	                                });
 
 	vcpu_data->vcpu_state    = (Vcpu_state *) ds_addr;
 	vcpu_data->phys_addr     = (addr_t)cma().phys_addr(vcpu_data->virt_area);
