@@ -103,7 +103,16 @@ static Vmid_allocator &alloc()
 
 Genode::addr_t Vm_session_component::_alloc_vcpu_data(Genode::addr_t ds_addr)
 {
-	/* XXX these allocations currently leak memory on VM Session destruction */
+	/*
+	 * XXX these allocations currently leak memory on VM Session
+	 * destruction. This cannot be easily fixed because the
+	 * Core Mem Allocator does not implement free().
+	 *
+	 * Normally we would use constrained_md_ram_alloc to make the allocation,
+	 * but to get the physical address of the pages in virt_area, we need
+	 * to use the Core Mem Allocator.
+	 */
+
 	Vcpu_data * vcpu_data = (Vcpu_data *) cma()
 	                        .try_alloc(sizeof(Board::Vcpu_data))
 	                        .convert<void *>(
@@ -124,8 +133,8 @@ Genode::addr_t Vm_session_component::_alloc_vcpu_data(Genode::addr_t ds_addr)
 	                                        throw Insufficient_ram_quota();
 	                                });
 
-	vcpu_data->vcpu_state    = (Vcpu_state *) ds_addr;
-	vcpu_data->phys_addr     = (addr_t)cma().phys_addr(vcpu_data->virt_area);
+	vcpu_data->vcpu_state = (Vcpu_state *) ds_addr;
+	vcpu_data->phys_addr  = (addr_t)cma().phys_addr(vcpu_data->virt_area);
 
 	return (Genode::addr_t) vcpu_data;
 }
