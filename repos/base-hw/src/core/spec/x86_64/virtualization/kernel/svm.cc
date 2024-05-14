@@ -315,24 +315,24 @@ uint64_t Vmcb::get_exitcode()
 {
 	enum Svm_exitcodes : uint64_t
 	{
-		VMEXIT_INVALID = -1ULL,
-		VMEXIT_INTR    =  0x60,
-		VMEXIT_NPF     = 0x400,
+		SVM_EXIT_INVALID = -1ULL,
+		SVM_VMEXIT_INTR  =  0x60,
+		SVM_VMEXIT_NPF   = 0x400,
 	};
 
 	uint64_t exitcode = read<Vmcb::Exitcode>();
 	switch (exitcode) {
-		case VMEXIT_INVALID:
-			error("Vm::exception: invalid SVM state!");
+		case SVM_EXIT_INVALID:
+			error("VM: invalid SVM state!");
 			break;
 		case 0x40 ... 0x5f:
-			error("Vm::exception: unhandled SVM exception ",
+			error("VM: unhandled SVM exception ",
 			              Hex(exitcode));
 			break;
-		case VMEXIT_INTR:
+		case SVM_VMEXIT_INTR:
 			exitcode = EXIT_PAUSED;
 			break;
-		case VMEXIT_NPF:
+		case SVM_VMEXIT_NPF:
 			exitcode = EXIT_NPF;
 			break;
 		default:
@@ -380,14 +380,15 @@ void Vmcb::switch_world(addr_t vmcb_phys_addr, Core::Cpu::Context &regs)
 	               that occured ... */
 	    "nop;"
 	    "cli;"        /* ... otherwise, just disable interrupts again */
-	    "pushq $256;" /* make the stack point to trapno, the right place
+	    "pushq %[trap_vmexit];" /* make the stack point to trapno, the right place
 	                     to jump to _kernel_entry. We push 256 because
 	                     this is outside of the valid range for interrupts
 	                   */
 	    "jmp _kernel_entry;" /* jump to _kernel_entry to save the
 	                            GPRs without breaking any */
 	    :
-	    : [regs] "r"(&regs.r8), [fpu_context] "r"(regs.fpu_context()),
-	      [guest_state] "r"(vmcb_phys_addr)
+	    : [regs]        "r"(&regs.r8), [fpu_context] "r"(regs.fpu_context()),
+	      [guest_state] "r"(vmcb_phys_addr),
+	      [trap_vmexit] "i"(TRAP_VMEXIT)
 	    : "rax", "memory");
 }
