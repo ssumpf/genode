@@ -38,18 +38,18 @@ struct Virt_interface
 
 	virtual void initialize(Kernel::Cpu        &cpu,
 	                        addr_t              page_table_phys_addr,
-				Core::Cpu::Context &regs)      = 0;
-	virtual void write_vcpu_state(Vcpu_state &state)       = 0;
-	virtual void read_vcpu_state(Vcpu_state &state)        = 0;
-	virtual void switch_world(Core::Cpu::Context &regs)    = 0;
-	virtual Virt_type virt_type()                          = 0;
-	virtual Genode::uint64_t handle_vm_exit(addr_t trapno) = 0;
+				Core::Cpu::Context &regs)   = 0;
+	virtual void write_vcpu_state(Vcpu_state &state)    = 0;
+	virtual void read_vcpu_state(Vcpu_state &state)     = 0;
+	virtual void switch_world(Core::Cpu::Context &regs) = 0;
+	virtual Virt_type virt_type()                       = 0;
+	virtual Genode::uint64_t handle_vm_exit()           = 0;
 
 	Virt_interface(Genode::Vcpu_data &vcpu_data) : vcpu_data(vcpu_data)
 	{ }
 
 	virtual ~Virt_interface() = default;
 };
-} // namespace Board
+} /* namespace Board */
 
 #endif /* _INCLUDE__SPEC__PC__VIRT_INTERFACE_H_ */

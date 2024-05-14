@@ -116,8 +116,7 @@ void Vm::exception(Cpu & cpu)
 			return;
 	}
 
-	_vcpu_context.exitcode = _vcpu_context.virt.handle_vm_exit(
-			_vcpu_context.regs->trapno);
+	_vcpu_context.exitcode = _vcpu_context.virt.handle_vm_exit();
 
 	if (_vcpu_context.exitcode != EXIT_PAUSED) {
 			_pause_vcpu();

@@ -431,7 +431,7 @@ void Vmcb::read_vcpu_state(Vcpu_state &state)
 }
 
 
-uint64_t Vmcb::handle_vm_exit(addr_t)
+uint64_t Vmcb::handle_vm_exit()
 {
 	enum Svm_exitcodes : uint64_t
 	{
