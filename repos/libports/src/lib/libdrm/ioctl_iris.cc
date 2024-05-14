@@ -27,8 +27,6 @@
 
 #include <vfs_gpu.h>
 
-#include <os/backtrace.h>
-
 extern "C" {
 #include <errno.h>
 #include <drm.h>
@@ -489,7 +487,7 @@ struct Drm::Context
 
 		_gpu.unmap_gpu(buffer.vram.id,
 		               buffer.vram.offset,
-		               buffer.gpu_vaddr);
+		               Utils::limit_to_48bit(buffer.gpu_vaddr));
 		buffer.gpu_vaddr_valid = false;
 	}
 
@@ -789,7 +787,7 @@ class Drm::Call
 				p->handle = b.id().value;
 				successful = true;
 
-				if (true) {
+				if (verbose_ioctl) {
 					Genode::error(__func__, ": ", "handle: ", b.id().value,
 					              " size: ", size);
 				}
@@ -925,7 +923,6 @@ class Drm::Call
 				return -1;
 			default:
 				Genode::error("Unhandled device param:", Genode::Hex(param));
-				Genode::backtrace();
 				return -1;
 				break;
 			}
@@ -1007,7 +1004,6 @@ class Drm::Call
 
 			default:
 				Genode::error(__func__, " unknown param=", p->param);
-				Genode::backtrace();
 				return -1;
 			};
 		}
@@ -1019,11 +1015,16 @@ class Drm::Call
 			switch (p->param) {
 			case I915_CONTEXT_PARAM_SSEU:
 				return 0;
+
+			/* addressable VM area (PPGTT 48Bit - one page) for GEN8+ */
 			case I915_CONTEXT_PARAM_GTT_SIZE:
-				return _gpu_info.ggtt_size;
+				p->value = (1ull << 48) - 0x1000;
+				return 0;
+
 			/* global VM used for sharing BOs between contexts -> not supported so far */
 			case I915_CONTEXT_PARAM_VM:
 				return 0;
+
 			default:
 				Genode::error(__func__, " ctx=", p->ctx_id, " param=", p->param, " size=", p->size, " value=", Genode::Hex(p->value));
 				return -1;
@@ -1066,7 +1067,7 @@ class Drm::Call
 			unsigned const bb_id = (p->flags & I915_EXEC_BATCH_FIRST) ? 0 : p->buffer_count - 1;
 
 			uint64_t const ctx_id = p->rsvd1;
-			if (1) {
+			if (verbose_ioctl) {
 				Genode::log(__func__,
 				            " buffers_ptr: ",        Genode::Hex(p->buffers_ptr),
 				            " buffer_count: ",       p->buffer_count,
@@ -1085,31 +1086,9 @@ class Drm::Call
 				return -1;
 			}
 
-			if (p->flags & I915_EXEC_FENCE_ARRAY) {
-				bool unsupported = false;
-
-				for (unsigned i = 0; i < p->num_cliprects; i++) {
-					auto &fence = reinterpret_cast<drm_i915_gem_exec_fence *>(p->cliprects_ptr)[i];
-
-					Sync_obj::Id const id { .value = fence.handle };
-					_sync_objects.apply<Sync_obj>(id, [&](Sync_obj &) {
-						/**
-						 * skipping signal fences should be save as long as
-						 * no one tries to wait for ...
-						 * - fence.flags & I915_EXEC_FENCE_SIGNAL
-						 */
-						if (fence.flags & I915_EXEC_FENCE_WAIT) {
-							Genode::warning("unsupported: ", Genode::Hex(fence.flags));
-							unsupported = true;
-						}
-					});
-				}
-
-				if (unsupported) {
-					Genode::error("fence wait not supported");
-					Genode::backtrace();
-					//return -1;
-				}
+			if (verbose_ioctl && p->flags & I915_EXEC_FENCE_ARRAY) {
+				Genode::warning("unsupported: Fence array with Sync-objects with "
+				                "FENCE_WAIT/SIGNAL");
 			}
 
 			auto const obj =
@@ -1118,7 +1097,6 @@ class Drm::Call
 			return _context_space.apply<Drm::Context>(Drm::Context::id(ctx_id),
 			                                          [&] (Drm::Context &context) {
 				return context.exec_buffer(obj, p->buffer_count, bb_id, p->batch_len); });
-
 		}
 
 		int _device_gem_busy(void *arg)
@@ -1293,13 +1271,14 @@ class Drm::Call
 			}
 
 			if (ok) {
-				errno = 62 /* ETIME */;
-				return -1;
+				return 0;
 			} else
 				Genode::error("unknown sync object handle ", handles[0]);
 
+			errno = EINVAL;
 			return -1;
 		}
+
 		int _generic_syncobj_destroy(void *arg)
 		{
 			auto * const p = reinterpret_cast<drm_syncobj_destroy *>(arg);
@@ -1321,8 +1300,6 @@ class Drm::Call
 
 			Genode::error("generic ioctl DRM_IOCTL_GEM_OPEN not supported ",
 			              p->handle, " name=", Genode::Hex(p->name));
-
-			Genode::backtrace();
 
 			return -1;
 		}
