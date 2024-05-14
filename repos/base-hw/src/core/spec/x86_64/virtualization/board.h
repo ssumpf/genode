@@ -31,9 +31,7 @@ namespace Board {
 	using Vm_page_table = Hw::Page_table;
 	using Vm_page_table_array =
 		Vm_page_table::Allocator::Array<Kernel::DEFAULT_TRANSLATION_TABLE_MAX>;
-
 	struct Vcpu_context;
-
 	using Vcpu_data = Genode::Vcpu_data;
 	using Vcpu_state = Genode::Vcpu_state;
 
