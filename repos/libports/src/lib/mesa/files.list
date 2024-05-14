@@ -2043,7 +2043,6 @@ mesa-24.0.1/src/util/perf/u_gpuvis.h
 mesa-24.0.1/src/util/perf/u_perfetto.h
 mesa-24.0.1/src/util/perf/u_trace.c
 mesa-24.0.1/src/util/perf/u_trace.h
-mesa-24.0.1/src/util/perf/u_trace.h
 mesa-24.0.1/src/util/perf/u_trace.py
 mesa-24.0.1/src/util/perf/u_trace_priv.h
 mesa-24.0.1/src/util/ralloc.c

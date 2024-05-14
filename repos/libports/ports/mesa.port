@@ -23,17 +23,6 @@ PATCHES       := src/lib/mesa/patches/dri2.patch \
                  src/lib/mesa/patches/softpipe_cache.patch \
                  src/lib/mesa/patches/sync_wait.patch
 
-#PATCHES       := src/lib/mesa/patches/bitset_redefined.patch \
-#                 src/lib/mesa/patches/etnaviv.patch \
-#                 src/lib/mesa/patches/iris.patch \
-#                 src/lib/mesa/patches/iris_bufmgr_fd.patch \
-#                 src/lib/mesa/patches/iris_bufmgr_unmap.patch \
-#                 src/lib/mesa/patches/iris_disable_compute.patch \
-#                 src/lib/mesa/patches/lseek.patch \
-#                 src/lib/mesa/patches/os_mmap.patch \
-#                 src/lib/mesa/patches/lima.patch \
-#                 src/lib/mesa/patches/sync_wait.patch
-
 PATCH_OPT     := -p1
 
 #
