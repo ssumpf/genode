@@ -2351,7 +2351,8 @@ class Gpu::Session_component : public Genode::Session_object<Gpu::Session>
 					[&] (Vram_local::Mapping &mapping) {
 
 						if (mapping.ppgtt_va != va.value) {
-							Genode::error("VRAM: not mapped at ", Hex(va.value), " offset: ", Hex(offset));
+							Genode::error("VRAM: not mapped at ", Hex(va.value), " offset: ", Hex(offset), 
+							              " ppgtt_va: ", Hex(mapping.ppgtt_va));
 							return;
 						}
 						_vgpu.rcs_unmap_ppgtt(va.value, mapping.ppgtt_va_size);
