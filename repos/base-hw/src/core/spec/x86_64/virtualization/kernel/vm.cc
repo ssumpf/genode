@@ -98,7 +98,7 @@ void Vm::exception(Cpu & cpu)
 			 * exited due to a host interrupt. The exit reason is
 			 * set to EXIT_PAUSED so that if the VMM queries the
 			 * vCPU state while the vCPU is stopped, it is clear
-			 * that it does not need to handle a 'real' vCPU exit.
+			 * that it does not need to handle a synchronous vCPU exit.
 			 *
 			 * VMX jumps directly to __kernel_entry when exiting
 			 * guest mode and skips the interrupt vectors, therefore
@@ -137,7 +137,7 @@ void Vm::exception(Cpu & cpu)
 			 * We set the artificial startup exit code, stop the
 			 * vCPU thread and ask the VMM to handle it.
 			 */
-			_vcpu_context.exit_reason  = EXIT_STARTUP;
+			_vcpu_context.exit_reason = EXIT_STARTUP;
 			pause = true;
 			break;
 		default:
