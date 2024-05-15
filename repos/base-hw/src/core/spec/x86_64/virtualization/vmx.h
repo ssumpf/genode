@@ -392,8 +392,8 @@ Board::Vmcs
 	void save_host_msrs();
 	void             prepare_vmcs();
 	void             setup_vmx_info();
-	static void      enforce_intercepts(uint32_t desired_primary,
-	                                    uint32_t desired_secondary);
+	static void      enforce_execution_controls(uint32_t desired_primary,
+	                                            uint32_t desired_secondary);
 	void _load_pointer();
 	void construct_host_vmcs();
 };

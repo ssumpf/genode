@@ -360,8 +360,8 @@ void Vmcs::initialize(Kernel::Cpu &cpu, Genode::addr_t page_table_phys,
 /*
  * Enforce VMX intercepts
  */
-void Vmcs::enforce_intercepts(Genode::uint32_t desired_primary,
-                              Genode::uint32_t desired_secondary)
+void Vmcs::enforce_execution_controls(Genode::uint32_t desired_primary,
+                                      Genode::uint32_t desired_secondary)
 {
 	/*
 	 * Processor-Based VM-Execution Controls
@@ -456,7 +456,7 @@ void Vmcs::prepare_vmcs()
 	write(E_VM_ENTRY_CONTROLS, vm_entry_set);
 
 
-	enforce_intercepts(0U, 0U);
+	enforce_execution_controls(0U, 0U);
 
 	write(E_VM_EXIT_MSR_STORE_ADDRESS, msr_phys_addr(&guest_msr_store_area));
 	write(E_VM_EXIT_MSR_STORE_COUNT, Board::Msr_store_area::get_count());
@@ -723,8 +723,8 @@ void Vmcs::read_vcpu_state(Genode::Vcpu_state &state)
 	}
 
 	if (state.ctrl_primary.charged() || state.ctrl_secondary.charged()) {
-		enforce_intercepts(state.ctrl_primary.value(),
-			                state.ctrl_secondary.value());
+		enforce_execution_controls(state.ctrl_primary.value(),
+		                           state.ctrl_secondary.value());
 	}
 
 	if (state.inj_info.charged() || state.inj_error.charged()) {
@@ -757,7 +757,7 @@ void Vmcs::read_vcpu_state(Genode::Vcpu_state &state)
 		}
 
 		if (set_controls)
-			enforce_intercepts(pri_controls, sec_controls);
+			enforce_execution_controls(pri_controls, sec_controls);
 
 		write(E_VM_ENTRY_INTERRUPT_INFO_FIELD,
 			/* Filter out special signaling bits */
