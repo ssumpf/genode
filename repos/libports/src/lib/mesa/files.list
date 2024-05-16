@@ -1,9 +1,3 @@
-mesa-24.0.1/src/gallium/drivers/lima/lima_disk_cache.h
-mesa-24.0.1/src/gallium/drivers/lima/lima_disk_cache.c
-mesa-24.0.1/src/gallium/drivers/lima/lima_blit.h
-mesa-24.0.1/src/gallium/drivers/lima/lima_blit.c
-mesa-24.0.1/src/gallium/drivers/lima/ir/lima_nir_lower_txp.c
-mesa-24.0.1/src/gallium/drivers/lima/ir/lima_nir_split_loads.c
 mesa-24.0.1/bin/git_sha1_gen.py
 mesa-24.0.1/docs/license.rst
 mesa-24.0.1/include/EGL/egl.h
@@ -965,8 +959,10 @@ mesa-24.0.1/src/gallium/drivers/lima/ir/lima_ir.h
 mesa-24.0.1/src/gallium/drivers/lima/ir/lima_nir_algebraic.py
 mesa-24.0.1/src/gallium/drivers/lima/ir/lima_nir_duplicate_consts.c
 mesa-24.0.1/src/gallium/drivers/lima/ir/lima_nir_duplicate_intrinsic.c
+mesa-24.0.1/src/gallium/drivers/lima/ir/lima_nir_lower_txp.c
 mesa-24.0.1/src/gallium/drivers/lima/ir/lima_nir_lower_uniform_to_scalar.c
 mesa-24.0.1/src/gallium/drivers/lima/ir/lima_nir_split_load_input.c
+mesa-24.0.1/src/gallium/drivers/lima/ir/lima_nir_split_loads.c
 mesa-24.0.1/src/gallium/drivers/lima/ir/pp/codegen.c
 mesa-24.0.1/src/gallium/drivers/lima/ir/pp/codegen.h
 mesa-24.0.1/src/gallium/drivers/lima/ir/pp/disasm.c
@@ -979,10 +975,14 @@ mesa-24.0.1/src/gallium/drivers/lima/ir/pp/node_to_instr.c
 mesa-24.0.1/src/gallium/drivers/lima/ir/pp/ppir.h
 mesa-24.0.1/src/gallium/drivers/lima/ir/pp/regalloc.c
 mesa-24.0.1/src/gallium/drivers/lima/ir/pp/scheduler.c
+mesa-24.0.1/src/gallium/drivers/lima/lima_blit.c
+mesa-24.0.1/src/gallium/drivers/lima/lima_blit.h
 mesa-24.0.1/src/gallium/drivers/lima/lima_bo.c
 mesa-24.0.1/src/gallium/drivers/lima/lima_bo.h
 mesa-24.0.1/src/gallium/drivers/lima/lima_context.c
 mesa-24.0.1/src/gallium/drivers/lima/lima_context.h
+mesa-24.0.1/src/gallium/drivers/lima/lima_disk_cache.c
+mesa-24.0.1/src/gallium/drivers/lima/lima_disk_cache.h
 mesa-24.0.1/src/gallium/drivers/lima/lima_draw.c
 mesa-24.0.1/src/gallium/drivers/lima/lima_fence.c
 mesa-24.0.1/src/gallium/drivers/lima/lima_fence.h
