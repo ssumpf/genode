@@ -22,7 +22,7 @@
 #include <base/env.h>
 #include <util/register.h>
 #include <util/xml_generator.h>
-#include <clflush.h>
+#include <cpu/clflush.h>
 
 namespace Intel {
 	using namespace Genode;

@@ -18,7 +18,7 @@
 #include <base/log.h>
 #include <page_table/page_flags.h>
 #include <util/misc_math.h>
-#include <clflush.h>
+#include <cpu/clflush.h>
 
 #define assert(expression)
 
