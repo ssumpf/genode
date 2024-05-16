@@ -57,7 +57,7 @@ SRC_C = src/etnaviv/drm/etnaviv_bo.c \
         src/gallium/drivers/etnaviv/etnaviv_tiling.c \
         src/gallium/drivers/etnaviv/etnaviv_transfer.c \
         src/gallium/drivers/etnaviv/etnaviv_uniforms.c \
-        src/gallium/drivers/etnaviv/etnaviv_zsa.c
+        src/gallium/drivers/etnaviv/etnaviv_zsa.c \
         src/gallium/winsys/etnaviv/drm/etnaviv_drm_winsys.c \
 
 vpath %.c $(MESA_SRC_DIR)/src

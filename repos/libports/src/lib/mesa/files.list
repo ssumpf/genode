@@ -1,3 +1,9 @@
+mesa-24.0.1/src/gallium/drivers/lima/lima_disk_cache.h
+mesa-24.0.1/src/gallium/drivers/lima/lima_disk_cache.c
+mesa-24.0.1/src/gallium/drivers/lima/lima_blit.h
+mesa-24.0.1/src/gallium/drivers/lima/lima_blit.c
+mesa-24.0.1/src/gallium/drivers/lima/ir/lima_nir_lower_txp.c
+mesa-24.0.1/src/gallium/drivers/lima/ir/lima_nir_split_loads.c
 mesa-24.0.1/bin/git_sha1_gen.py
 mesa-24.0.1/docs/license.rst
 mesa-24.0.1/include/EGL/egl.h
@@ -2093,6 +2099,7 @@ mesa-24.0.1/src/util/u_drm.h
 mesa-24.0.1/src/util/u_dynarray.c
 mesa-24.0.1/src/util/u_dynarray.h
 mesa-24.0.1/src/util/u_endian.h
+mesa-24.0.1/src/util/u_hash_table.c
 mesa-24.0.1/src/util/u_hash_table.h
 mesa-24.0.1/src/util/u_idalloc.c
 mesa-24.0.1/src/util/u_idalloc.h

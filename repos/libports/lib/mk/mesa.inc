@@ -717,6 +717,7 @@ SRC_C += c11/impl/threads_posix.c \
          util/u_cpu_detect.c \
          util/u_debug.c \
          util/u_dynarray.c \
+         util/u_hash_table.c \
          util/u_idalloc.c \
          util/u_math.c \
          util/u_mm.c \

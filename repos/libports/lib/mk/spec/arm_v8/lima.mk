@@ -28,7 +28,9 @@ SRC_C = gallium/drivers/lima/ir/gp/codegen.c \
         gallium/drivers/lima/ir/lima_nir_duplicate_consts.c \
         gallium/drivers/lima/ir/lima_nir_duplicate_intrinsic.c \
         gallium/drivers/lima/ir/lima_nir_lower_uniform_to_scalar.c \
+        gallium/drivers/lima/ir/lima_nir_lower_txp.c \
         gallium/drivers/lima/ir/lima_nir_split_load_input.c \
+        gallium/drivers/lima/ir/lima_nir_split_loads.c \
         gallium/drivers/lima/ir/pp/codegen.c \
         gallium/drivers/lima/ir/pp/disasm.c \
         gallium/drivers/lima/ir/pp/instr.c \
@@ -39,8 +41,10 @@ SRC_C = gallium/drivers/lima/ir/gp/codegen.c \
         gallium/drivers/lima/ir/pp/node_to_instr.c \
         gallium/drivers/lima/ir/pp/regalloc.c \
         gallium/drivers/lima/ir/pp/scheduler.c \
+        gallium/drivers/lima/lima_blit.c \
         gallium/drivers/lima/lima_bo.c \
         gallium/drivers/lima/lima_context.c \
+        gallium/drivers/lima/lima_disk_cache.c \
         gallium/drivers/lima/lima_draw.c \
         gallium/drivers/lima/lima_fence.c \
         gallium/drivers/lima/lima_format.c \

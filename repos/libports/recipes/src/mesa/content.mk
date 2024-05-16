@@ -11,10 +11,8 @@ MIRROR_FROM_REP_DIR := \
                        lib/mk/mesa_api.mk \
                        lib/mk/mesa-common.inc \
                        lib/mk/softpipe.mk \
-                       lib/mk/spec/arm_v8/etnaviv.mk \
                        lib/mk/spec/arm_v8/lima.mk \
                        lib/mk/spec/arm_v8/mesa.mk \
-                       lib/mk/spec/arm_v8/mesa_gpu-etnaviv.mk \
                        lib/mk/spec/arm_v8/mesa_gpu-lima.mk \
                        lib/mk/spec/x86/mesa_gpu-iris.mk \
                        lib/mk/spec/x86/iris.mk \
