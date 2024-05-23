@@ -98,8 +98,7 @@ proc _boot_script { } {
 	set file_path [run_dir]/boot.cfg
 	set fd [open $file_path w]
 	puts $fd "#!ipxe
-#kernel bzImage console=$uart,115200 console=tty0 root=/dev/ram ip=dhcp debug init=/bin/sh initrd=rootfs.cpio.gz
-kernel bzImage console=$uart,115200 root=/dev/ram ip=dhcp debug rdinit=/linuxrc initrd=rootfs.cpio.gz
+kernel bzImage console=$uart,115200 console=tty0 root=/dev/ram ip=dhcp debug rdinit=/linuxrc initrd=rootfs.cpio.gz
 initrd rootfs.cpio.gz
 boot
 "
