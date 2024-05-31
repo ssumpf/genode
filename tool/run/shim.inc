@@ -48,6 +48,8 @@ proc setup_shim_and_sign_grub2 { nickname target_dir } {
 		puts ""
 		puts " sudo efikeygen --self-sign --common-name 'CN=YOUR COMPANY' --nickname '$nickname'"
 		puts ""
+		puts " Hint: newer efikeygen version may require --kernel"
+		puts ""
 		puts " The public and private keys are stored in the /etc/pki/pesign/ directory."
 		puts " For more detailed information please consider documentation of efikeygen."
 		puts ""
