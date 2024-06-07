@@ -14,6 +14,7 @@
 
 	<content>
 		<rom label="ld.lib.so"/>
+		<rom label="pc_audio_drv"/>
 		<rom label="sof-hda-generic-2ch.tplg"/>
 		<rom label="sof-tgl.ri"/>
 	</content>
