@@ -17,6 +17,7 @@ PATCH_FILES := audio_jack.patch \
                usb_host_devio_sg.patch \
                lxip_checksum_32.patch \
                lxip_ip_config.patch \
+               sof_irq_direction.patch \
                sof_ipc_timeout.patch \
                sof_bus_get_response.patch \
                usb_net_pinephone.patch \
@@ -25,11 +26,12 @@ PATCH_FILES := audio_jack.patch \
                workqueue_deadlock.patch
 PATCHES += $(addprefix patches/,$(PATCH_FILES))
 
-PATCH_OPT(patches/audio_jack.patch)         := -p1 -d${DIR(linux)}
-PATCH_OPT(patches/i915_irq.patch)           := -p1 -d${DIR(linux)}
-PATCH_OPT(patches/lxip_checksum_32.patch)   := -p1 -d${DIR(linux)}
-PATCH_OPT(patches/lxip_ip_config.patch)     := -p1 -d${DIR(linux)}
+PATCH_OPT(patches/audio_jack.patch)           := -p1 -d${DIR(linux)}
+PATCH_OPT(patches/i915_irq.patch)             := -p1 -d${DIR(linux)}
+PATCH_OPT(patches/lxip_checksum_32.patch)     := -p1 -d${DIR(linux)}
+PATCH_OPT(patches/lxip_ip_config.patch)       := -p1 -d${DIR(linux)}
 PATCH_OPT(patches/sof_ipc_timeout.patch)    := -p1 -d${DIR(linux)}
+PATCH_OPT(patches/sof_irq_direction.patch)    := -p1 -d${DIR(linux)}
 PATCH_OPT(patches/sof_bus_get_response.patch) := -p1 -d${DIR(linux)}
 PATCH_OPT(patches/usb_net_pinephone.patch)  := -p1 -d${DIR(linux)}
 PATCH_OPT(patches/usb_net_cdc_ncm.patch)    := -p1 -d${DIR(linux)}
