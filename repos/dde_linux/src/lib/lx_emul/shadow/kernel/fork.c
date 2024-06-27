@@ -30,7 +30,12 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wframe-larger-than="
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6,3,0)
+pid_t kernel_thread(int (* fn)(void *),void * arg, const char *name,
+                    unsigned long flags)
+#else
 pid_t kernel_thread(int (* fn)(void *),void * arg,unsigned long flags)
+#endif
 {
 	static int pid_counter = FIRST_PID;
 
@@ -78,6 +83,11 @@ pid_t kernel_thread(int (* fn)(void *),void * arg,unsigned long flags)
 	.cred            = cred,
 	.signal          = signal,
 	};
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6,3,0)
+	if (name)
+		strscpy_pad(task->comm, name, sizeof(task->comm));
+#endif
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5,17,0)
 	if (!set_kthread_struct(task)) {
