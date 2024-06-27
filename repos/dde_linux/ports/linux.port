@@ -1,0 +1,23 @@
+LICENSE   := GPLv2
+VERSION   := 6.6.35
+DOWNLOADS := linux.archive
+
+URL(linux) := https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-$(VERSION).tar.xz
+SHA(linux) := fce3ee728712ed063aa8c14a8756c8ff8c7a46ba3827f61d2b04a73c7cf5dd9e
+DIR(linux) := src/linux
+
+#
+# Patches
+#
+PATCH_FILES := i915_irq.patch \
+               iwlwifi_enable_irq_before_pnvm.patch \
+               iwlwifi_limit_rx_bufs.patch \
+               usb_host_devio_sg.patch \
+               lxip_checksum_32.patch \
+               lxip_ip_config.patch \
+               usb_net_cdc_ncm.patch \
+               usb_net_pinephone.patch \
+               usb_net_smsc95xx.patch \
+               workqueue_deadlock.patch
+
+PATCHES += $(addprefix patches/,$(PATCH_FILES))
