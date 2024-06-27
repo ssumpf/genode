@@ -62,6 +62,9 @@ void * kmalloc_order(size_t size, gfp_t flags, unsigned int order)
 }
 
 
+size_t kmalloc_size_roundup(size_t size) { return size; }
+
+
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(6,1,0) || defined(CONFIG_NUMA)
 void * __kmalloc_node(size_t size, gfp_t flags, int node)
 {
@@ -74,5 +77,20 @@ void * __kmalloc_node(size_t size, gfp_t flags, int node)
 void * kmalloc_large(size_t size,gfp_t flags)
 {
 	return __kmalloc(size, flags);
+}
+#endif
+
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6,0,0)
+void *kmalloc_trace(struct kmem_cache *s, gfp_t gfpflags, size_t size)
+{
+	return __kmalloc(size, gfpflags);
+}
+
+
+void *kmalloc_node_trace(struct kmem_cache *s, gfp_t gfpflags,
+                         int node, size_t size)
+{
+	return __kmalloc(size, gfpflags);
 }
 #endif

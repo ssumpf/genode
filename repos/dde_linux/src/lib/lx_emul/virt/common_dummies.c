@@ -134,6 +134,15 @@ void ignore_signals(struct task_struct * t)
 }
 
 
+#include <linux/random.h>
+
+int __cold execute_with_initialized_rng(struct notifier_block * nb)
+{
+	lx_emul_trace(__func__);
+	return 0;
+}
+
+
 #ifdef CONFIG_TREE_SRCU
 #include <linux/srcu.h>
 
