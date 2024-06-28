@@ -26,6 +26,18 @@ int mmap_rnd_bits;
 
 DEFINE_PER_CPU(unsigned long, cpu_scale);
 
+/* mm/debug.c */
+const struct trace_print_flags pagetype_names[] = {
+	{0, NULL}
+};
+
+#include <../mm/slab.h>
+
+void * kmem_cache_alloc_lru(struct kmem_cache * cachep,struct list_lru * lru,gfp_t flags)
+{
+	return kmalloc(cachep->size, flags);
+}
+
 
 #include <asm/pgtable.h>
 
