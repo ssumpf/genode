@@ -1,7 +1,7 @@
 /*
  * \brief  Dummy definitions of Linux Kernel functions
  * \author Automatically generated file - do no edit
- * \date   2024-02-22
+ * \date   2024-07-01
  */
 
 #include <lx_emul.h>
@@ -21,6 +21,11 @@ const char * __clk_get_name(const struct clk * clk)
 {
 	lx_emul_trace_and_stop(__func__);
 }
+
+
+#include <linux/cpumask.h>
+
+struct cpumask __cpu_active_mask;
 
 
 #include <linux/irqdomain.h>
@@ -172,6 +177,14 @@ asmlinkage __visible void dump_stack(void)
 }
 
 
+#include <linux/printk.h>
+
+asmlinkage __visible void dump_stack_lvl(const char * log_lvl)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
 #include <linux/rcuwait.h>
 
 void finish_rcuwait(struct rcuwait * w)
@@ -285,7 +298,7 @@ void irq_work_tick(void)
 
 #include <linux/slab.h>
 
-void * kmem_cache_alloc_lru(struct kmem_cache * cachep,struct list_lru * lru,gfp_t flags)
+void * kmem_cache_alloc_lru(struct kmem_cache * s,struct list_lru * lru,gfp_t gfpflags)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -317,6 +330,11 @@ void led_trigger_event(struct led_trigger * trig,enum led_brightness brightness)
 
 #include <linux/delay.h>
 
+unsigned long loops_per_jiffy;
+
+
+#include <linux/delay.h>
+
 unsigned long lpj_fine;
 
 
@@ -330,7 +348,7 @@ bool of_device_is_available(const struct device_node * device)
 
 #include <linux/of_device.h>
 
-void of_device_uevent(struct device * dev,struct kobj_uevent_env * env)
+void of_device_uevent(const struct device * dev,struct kobj_uevent_env * env)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -484,6 +502,13 @@ struct device_node * usb_of_get_interface_node(struct usb_device * udev,u8 confi
 #include <linux/usb/ch9.h>
 
 const char * usb_speed_string(enum usb_device_speed speed)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+extern int usb_update_wireless_status_attr(struct usb_interface * intf);
+int usb_update_wireless_status_attr(struct usb_interface * intf)
 {
 	lx_emul_trace_and_stop(__func__);
 }

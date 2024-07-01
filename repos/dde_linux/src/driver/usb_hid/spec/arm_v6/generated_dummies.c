@@ -1,7 +1,7 @@
 /*
  * \brief  Dummy definitions of Linux Kernel functions
  * \author Automatically generated file - do no edit
- * \date   2024-02-22
+ * \date   2024-07-01
  */
 
 #include <lx_emul.h>
@@ -113,6 +113,22 @@ void async_synchronize_full(void)
 }
 
 
+#include <linux/cpumask.h>
+
+unsigned int cpumask_any_and_distribute(const struct cpumask * src1p,const struct cpumask * src2p)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/sched/topology.h>
+
+bool cpus_share_cache(int this_cpu,int that_cpu)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
 #include <linux/context_tracking_irq.h>
 
 noinstr void ct_irq_enter(void)
@@ -123,23 +139,7 @@ noinstr void ct_irq_enter(void)
 
 #include <linux/context_tracking_irq.h>
 
-void ct_irq_enter_irqson(void)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/context_tracking_irq.h>
-
 noinstr void ct_irq_exit(void)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/context_tracking_irq.h>
-
-void ct_irq_exit_irqson(void)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -209,6 +209,14 @@ void do_softirq_own_stack(void)
 #include <linux/printk.h>
 
 asmlinkage __visible void dump_stack(void)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/printk.h>
+
+asmlinkage __visible void dump_stack_lvl(const char * log_lvl)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -383,7 +391,7 @@ void irq_work_tick(void)
 
 #include <linux/slab.h>
 
-void * kmem_cache_alloc_lru(struct kmem_cache * cachep,struct list_lru * lru,gfp_t flags)
+void * kmem_cache_alloc_lru(struct kmem_cache * s,struct list_lru * lru,gfp_t gfpflags)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -415,6 +423,11 @@ void led_trigger_event(struct led_trigger * trig,enum led_brightness brightness)
 
 #include <linux/delay.h>
 
+unsigned long loops_per_jiffy;
+
+
+#include <linux/delay.h>
+
 unsigned long lpj_fine;
 
 
@@ -428,7 +441,7 @@ bool of_device_is_available(const struct device_node * device)
 
 #include <linux/of_device.h>
 
-void of_device_uevent(struct device * dev,struct kobj_uevent_env * env)
+void of_device_uevent(const struct device * dev,struct kobj_uevent_env * env)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -487,6 +500,39 @@ int power_supply_powers(struct power_supply * psy,struct device * dev)
 }
 
 
+extern void raw_spin_rq_lock_nested(struct rq * rq,int subclass);
+void raw_spin_rq_lock_nested(struct rq * rq,int subclass)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+extern void raw_spin_rq_unlock(struct rq * rq);
+void raw_spin_rq_unlock(struct rq * rq)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+extern void set_rq_offline(struct rq * rq);
+void set_rq_offline(struct rq * rq)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+extern void set_rq_online(struct rq * rq);
+void set_rq_online(struct rq * rq)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/smp.h>
+
+unsigned int setup_max_cpus;
+
+
 #include <linux/scatterlist.h>
 
 struct scatterlist * sg_next(struct scatterlist * sg)
@@ -535,6 +581,13 @@ bool timerqueue_del(struct timerqueue_head * head,struct timerqueue_node * node)
 #include <linux/timerqueue.h>
 
 struct timerqueue_node * timerqueue_iterate_next(struct timerqueue_node * node)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+extern void update_group_capacity(struct sched_domain * sd,int cpu);
+void update_group_capacity(struct sched_domain * sd,int cpu)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -603,6 +656,13 @@ struct device_node * usb_of_get_interface_node(struct usb_device * udev,u8 confi
 #include <linux/usb/ch9.h>
 
 const char * usb_speed_string(enum usb_device_speed speed)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+extern int usb_update_wireless_status_attr(struct usb_interface * intf);
+int usb_update_wireless_status_attr(struct usb_interface * intf)
 {
 	lx_emul_trace_and_stop(__func__);
 }
