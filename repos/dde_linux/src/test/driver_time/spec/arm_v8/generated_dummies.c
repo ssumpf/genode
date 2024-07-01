@@ -1,7 +1,7 @@
 /*
  * \brief  Dummy definitions of Linux Kernel functions
  * \author Automatically generated file - do no edit
- * \date   2023-03-27
+ * \date   2024-07-01
  */
 
 #include <lx_emul.h>
@@ -65,9 +65,32 @@ void __put_task_struct(struct task_struct * tsk)
 }
 
 
+extern noinline unsigned int _parse_integer(const char * s,unsigned int base,unsigned long long * p);
+noinline unsigned int _parse_integer(const char * s,unsigned int base,unsigned long long * p)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
 #include <linux/printk.h>
 
 int _printk_deferred(const char * fmt,...)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/cpumask.h>
+
+unsigned int cpumask_any_and_distribute(const struct cpumask * src1p,const struct cpumask * src2p)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/sched/topology.h>
+
+bool cpus_share_cache(int this_cpu,int that_cpu)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -83,23 +106,7 @@ noinstr void ct_irq_enter(void)
 
 #include <linux/context_tracking_irq.h>
 
-void ct_irq_enter_irqson(void)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/context_tracking_irq.h>
-
 noinstr void ct_irq_exit(void)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/context_tracking_irq.h>
-
-void ct_irq_exit_irqson(void)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -280,7 +287,7 @@ void irq_work_tick(void)
 
 #include <linux/slab.h>
 
-void * kmem_cache_alloc_lru(struct kmem_cache * cachep,struct list_lru * lru,gfp_t flags)
+void * kmem_cache_alloc_lru(struct kmem_cache * s,struct list_lru * lru,gfp_t gfpflags)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -302,12 +309,17 @@ noinline int kstrtoll(const char * s,unsigned int base,long long * res)
 }
 
 
-#include <linux/kernel.h>
+#include <linux/sprintf.h>
 
 char * kvasprintf(gfp_t gfp,const char * fmt,va_list ap)
 {
 	lx_emul_trace_and_stop(__func__);
 }
+
+
+#include <linux/delay.h>
+
+unsigned long loops_per_jiffy;
 
 
 #include <linux/delay.h>
@@ -344,6 +356,34 @@ int of_property_read_string(const struct device_node * np,const char * propname,
 }
 
 
+extern void raw_spin_rq_lock_nested(struct rq * rq,int subclass);
+void raw_spin_rq_lock_nested(struct rq * rq,int subclass)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+extern void raw_spin_rq_unlock(struct rq * rq);
+void raw_spin_rq_unlock(struct rq * rq)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+extern void set_rq_offline(struct rq * rq);
+void set_rq_offline(struct rq * rq)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+extern void set_rq_online(struct rq * rq);
+void set_rq_online(struct rq * rq)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
 #include <linux/siphash.h>
 
 u64 siphash_1u64(const u64 first,const siphash_key_t * key)
@@ -373,9 +413,24 @@ int string_escape_mem(const char * src,size_t isz,char * dst,size_t osz,unsigned
 }
 
 
+#include <linux/string.h>
+
+ssize_t strscpy_pad(char * dest,const char * src,size_t count)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
 #include <linux/clockchips.h>
 
 void tick_broadcast(const struct cpumask * mask)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+extern void update_group_capacity(struct sched_domain * sd,int cpu);
+void update_group_capacity(struct sched_domain * sd,int cpu)
 {
 	lx_emul_trace_and_stop(__func__);
 }
