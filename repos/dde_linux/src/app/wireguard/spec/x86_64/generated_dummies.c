@@ -1,7 +1,7 @@
 /*
  * \brief  Dummy definitions of Linux Kernel functions
  * \author Automatically generated file - do no edit
- * \date   2024-07-16
+ * \date   2024-07-30
  */
 
 #include <lx_emul.h>
@@ -44,7 +44,7 @@ void __put_task_struct(struct task_struct * tsk)
 }
 
 
-#include <linux/netdevice.h>
+#include <net/gso.h>
 
 struct sk_buff * __skb_gso_segment(struct sk_buff * skb,netdev_features_t features,bool tx_path)
 {
@@ -112,6 +112,22 @@ void ack_bad_irq(unsigned int irq)
 #include <linux/arch_topology.h>
 
 const struct cpumask * cpu_clustergroup_mask(int cpu)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/cpumask.h>
+
+unsigned int cpumask_any_and_distribute(const struct cpumask * src1p,const struct cpumask * src2p)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/sched/topology.h>
+
+bool cpus_share_cache(int this_cpu,int that_cpu)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -337,12 +353,9 @@ noinline int kstrtoll(const char * s,unsigned int base,long long * res)
 }
 
 
-#include <linux/kernel.h>
+#include <linux/delay.h>
 
-char * kvasprintf(gfp_t gfp,const char * fmt,va_list ap)
-{
-	lx_emul_trace_and_stop(__func__);
-}
+unsigned long loops_per_jiffy;
 
 
 #include <linux/preempt.h>
@@ -377,9 +390,47 @@ void page_frag_free(void * addr)
 }
 
 
+#include <linux/panic.h>
+
+void panic(const char * fmt,...)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
 #include <linux/percpu_counter.h>
 
 void percpu_counter_add_batch(struct percpu_counter * fbc,s64 amount,s32 batch)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+extern void raw_spin_rq_lock_nested(struct rq * rq,int subclass);
+void raw_spin_rq_lock_nested(struct rq * rq,int subclass)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+extern void raw_spin_rq_unlock(struct rq * rq);
+void raw_spin_rq_unlock(struct rq * rq)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/rcuref.h>
+
+bool rcuref_get_slowpath(rcuref_t * ref)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/rcuref.h>
+
+bool rcuref_put_slowpath(rcuref_t * ref)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -391,6 +442,25 @@ void rtnl_link_unregister(struct rtnl_link_ops * ops)
 {
 	lx_emul_trace_and_stop(__func__);
 }
+
+
+extern void set_rq_offline(struct rq * rq);
+void set_rq_offline(struct rq * rq)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+extern void set_rq_online(struct rq * rq);
+void set_rq_online(struct rq * rq)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/smp.h>
+
+unsigned int setup_max_cpus;
 
 
 #include <net/sock.h>
@@ -486,6 +556,13 @@ void unregister_pernet_device(struct pernet_operations * ops)
 }
 
 
+extern void update_group_capacity(struct sched_domain * sd,int cpu);
+void update_group_capacity(struct sched_domain * sd,int cpu)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
 #include <linux/uuid.h>
 
 const u8 uuid_index[16] = {};
@@ -498,10 +575,3 @@ void wake_q_add_safe(struct wake_q_head * head,struct task_struct * task)
 	lx_emul_trace_and_stop(__func__);
 }
 
-
-#include <linux/panic.h>
-
-void panic(const char *fmt, ...)
-{
-	lx_emul_trace_and_stop(__func__);
-}
