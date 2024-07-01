@@ -34,10 +34,12 @@ lib/find_bit.c
 lib/hexdump.c
 lib/hweight.c
 lib/idr.c
+lib/kasprintf.c
 lib/radix-tree.c
 lib/rbtree.c
 lib/refcount.c
 lib/string.c
+lib/string_helpers.c
 lib/timerqueue.c
 lib/vsprintf.c
 lib/xarray.c
