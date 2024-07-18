@@ -61,8 +61,9 @@ struct Libc::Signal : Noncopyable
 
 		pid_t const _local_pid;
 
-		void  * _signal_stack   { };
-		jmp_buf _signal_context { };
+		void  * _signal_stack_default     { };
+		void  * _signal_stack_alternative { };
+		jmp_buf _signal_context           { };
 
 		struct Signal_arguments
 		{
@@ -83,14 +84,20 @@ struct Libc::Signal : Noncopyable
 
 		void _execute_on_signal_stack(Pending &pending)
 		{
-			if (!_signal_stack) {
+			void * signal_stack = _signal_stack_alternative ?
+			                      _signal_stack_alternative :
+			                      _signal_stack_default;
+
+			if (!signal_stack) {
 				auto myself = Thread::myself();
 				if (myself)
-					_signal_stack = { myself->alloc_secondary_stack("signal", 16 * 1024) };
+					_signal_stack_default = { myself->alloc_secondary_stack("signal", 16 * 1024) };
+
+				signal_stack = _signal_stack_default;
 			}
 
-			if (!_signal_stack) {
-				error("signal stack allocation failed");
+			if (!signal_stack) {
+				error(__func__, " signal stack allocation failed");
 				return;
 			}
 
@@ -100,7 +107,7 @@ struct Libc::Signal : Noncopyable
 				Signal_arguments arg(*this, pending);
 
 				/* _setjmp() returned directly -> switch to signal stack */
-				call_func(_signal_stack, (void *)_signal_entry, (void *)&arg);
+				call_func(signal_stack, (void *)_signal_entry, (void *)&arg);
 
 				/* never reached */
 			}
@@ -119,6 +126,9 @@ struct Libc::Signal : Noncopyable
 			_charged_signals[n].construct(_pending_signals, n);
 			_count++;
 		}
+
+		void use_alternative_stack(void *ptr) {
+			_signal_stack_alternative = ptr; }
 
 		void execute_signal_handlers()
 		{
