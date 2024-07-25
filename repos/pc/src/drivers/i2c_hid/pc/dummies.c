@@ -219,3 +219,8 @@ int iommu_device_use_default_domain(struct device * dev)
 	lx_emul_trace(__func__);
 	return 0;
 }
+
+
+#include <asm/smp.h>
+
+struct smp_ops smp_ops = { };

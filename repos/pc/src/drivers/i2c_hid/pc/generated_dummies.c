@@ -1,7 +1,7 @@
 /*
  * \brief  Dummy definitions of Linux Kernel functions
  * \author Automatically generated file - do no edit
- * \date   2023-06-16
+ * \date   2024-07-25
  */
 
 #include <lx_emul.h>
@@ -71,6 +71,14 @@ void __printk_safe_exit(void)
 #include <linux/sched/task.h>
 
 void __put_task_struct(struct task_struct * tsk)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/mm.h>
+
+void __show_mem(unsigned int filter,nodemask_t * nodemask,int max_zone_idx)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -163,9 +171,24 @@ struct file * anon_inode_getfile(const char * name,const struct file_operations 
 }
 
 
+extern void arch_trigger_cpumask_backtrace(const cpumask_t * mask,bool exclude_self);
+void arch_trigger_cpumask_backtrace(const cpumask_t * mask,bool exclude_self)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
 #include <linux/bsearch.h>
 
 void * bsearch(const void * key,const void * base,size_t num,size_t size,cmp_func_t cmp)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/kernel.h>
+
+void bust_spinlocks(int yes)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -211,6 +234,30 @@ void clkdev_drop(struct clk_lookup * cl)
 }
 
 
+#include <linux/console.h>
+
+void console_flush_on_panic(enum con_flush_mode mode)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/console.h>
+
+void console_unblank(void)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/printk.h>
+
+void console_verbose(void)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
 #include <linux/arch_topology.h>
 
 const struct cpumask * cpu_clustergroup_mask(int cpu)
@@ -222,6 +269,14 @@ const struct cpumask * cpu_clustergroup_mask(int cpu)
 #include <linux/printk.h>
 
 asmlinkage __visible void dump_stack(void)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/reboot.h>
+
+void emergency_restart(void)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -262,6 +317,14 @@ void fput(struct file * file)
 #include <linux/file.h>
 
 int get_unused_fd_flags(unsigned flags)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/gfp.h>
+
+bool gfp_pfmemalloc_allowed(gfp_t gfp_mask)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -346,9 +409,9 @@ void kill_anon_super(struct super_block * sb)
 }
 
 
-#include <linux/slab.h>
+#include <linux/kmsg_dump.h>
 
-void * kmem_cache_alloc_lru(struct kmem_cache * cachep,struct list_lru * lru,gfp_t flags)
+void kmsg_dump(enum kmsg_dump_reason reason)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -394,6 +457,11 @@ int of_clk_hw_register(struct device_node * node,struct clk_hw * hw)
 }
 
 
+#include <linux/reboot.h>
+
+enum reboot_mode panic_reboot_mode;
+
+
 #include <linux/sysctl.h>
 
 int proc_dointvec_minmax(struct ctl_table * table,int write,void * buffer,size_t * lenp,loff_t * ppos)
@@ -424,6 +492,11 @@ void rational_best_approximation(unsigned long given_numerator,unsigned long giv
 {
 	lx_emul_trace_and_stop(__func__);
 }
+
+
+#include <linux/reboot.h>
+
+enum reboot_mode reboot_mode;
 
 
 #include <linux/proc_fs.h>
@@ -498,6 +571,14 @@ int seq_release(struct inode * inode,struct file * file)
 }
 
 
+#include <linux/sched/debug.h>
+
+void show_state_filter(unsigned int state_filter)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
 #include <linux/smp.h>
 
 void smp_call_function_many(const struct cpumask * mask,smp_call_func_t func,void * info,bool wait)
@@ -517,6 +598,11 @@ int smp_call_function_single(int cpu,smp_call_func_t func,void * info,int wait)
 #include <linux/jump_label.h>
 
 bool static_key_initialized;
+
+
+#include <linux/printk.h>
+
+int suppress_printk;
 
 
 #include <linux/rcupdate.h>
