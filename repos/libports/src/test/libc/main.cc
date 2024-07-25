@@ -309,6 +309,7 @@ static void test_sigalt()
 	printf("%s         stack=%p\n", __func__, &sa);
 
 	sa.sa_handler = test_signal_handler;
+	sa.sa_flags   = SA_ONSTACK;
 	sigfillset(&sa.sa_mask);
 
 	if (sigaction(SIGUSR2, &sa, &sa_old) != 0) {

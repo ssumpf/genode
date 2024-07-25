@@ -84,7 +84,9 @@ struct Libc::Signal : Noncopyable
 
 		void _execute_on_signal_stack(Pending &pending)
 		{
-			void * signal_stack = _signal_stack_alternative ?
+			bool const onstack = signal_action[pending.n].sa_flags & SA_ONSTACK;
+
+			void * signal_stack = (_signal_stack_alternative && onstack) ?
 			                      _signal_stack_alternative :
 			                      _signal_stack_default;
 
