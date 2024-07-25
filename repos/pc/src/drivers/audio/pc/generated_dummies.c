@@ -1,7 +1,7 @@
 /*
  * \brief  Dummy definitions of Linux Kernel functions
  * \author Automatically generated file - do no edit
- * \date   2023-11-03
+ * \date   2024-07-25
  */
 
 #include <lx_emul.h>
@@ -103,14 +103,6 @@ void __show_mem(unsigned int filter,nodemask_t * nodemask,int max_zone_idx)
 #include <linux/srcu.h>
 
 void __srcu_read_unlock(struct srcu_struct * ssp,int idx)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/vmalloc.h>
-
-void * __vmalloc_node_range(unsigned long size,unsigned long align,unsigned long start,unsigned long end,gfp_t gfp_mask,pgprot_t prot,unsigned long vm_flags,int node,const void * caller)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -376,6 +368,14 @@ void fput(struct file * file)
 #include <linux/file.h>
 
 int get_unused_fd_flags(unsigned flags)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/gfp.h>
+
+bool gfp_pfmemalloc_allowed(gfp_t gfp_mask)
 {
 	lx_emul_trace_and_stop(__func__);
 }

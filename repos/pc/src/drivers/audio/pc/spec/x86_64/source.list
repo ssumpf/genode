@@ -22,6 +22,7 @@ drivers/gpio/gpiolib-devres.c
 drivers/gpio/gpiolib.c
 drivers/input/input.c
 drivers/pci/pci-driver.c
+kernel/async.c
 kernel/irq/chip.c
 kernel/irq/devres.c
 kernel/irq/handle.c
@@ -29,7 +30,6 @@ kernel/irq/irqdesc.c
 kernel/irq/irqdomain.c
 kernel/irq/manage.c
 kernel/irq/resend.c
-kernel/async.c
 kernel/kthread.c
 kernel/locking/mutex.c
 kernel/locking/osq_lock.c
@@ -70,6 +70,7 @@ lib/klist.c
 lib/kobject.c
 lib/kstrtox.c
 lib/math/gcd.c
+lib/math/reciprocal_div.c
 lib/radix-tree.c
 lib/rbtree.c
 lib/scatterlist.c
@@ -79,6 +80,9 @@ lib/string_helpers.c
 lib/timerqueue.c
 lib/vsprintf.c
 lib/xarray.c
+mm/memblock.c
+mm/slab_common.c
+mm/slub.c
 mm/util.c
 sound/ac97_bus.c
 sound/core/compress_offload.c
@@ -138,9 +142,9 @@ sound/soc/intel/boards/hda_dsp_common.c
 sound/soc/intel/boards/skl_hda_dsp_common.c
 sound/soc/intel/boards/skl_hda_dsp_generic.c
 sound/soc/intel/common/soc-acpi-intel-hda-match.c
+sound/soc/intel/common/soc-acpi-intel-sdw-mockup-match.c
 sound/soc/intel/common/soc-acpi-intel-skl-match.c
 sound/soc/intel/common/soc-acpi-intel-tgl-match.c
-sound/soc/intel/common/soc-acpi-intel-sdw-mockup-match.c
 sound/soc/soc-ac97.c
 sound/soc/soc-acpi.c
 sound/soc/soc-card.c
@@ -178,18 +182,18 @@ sound/soc/sof/intel/pci-tgl.c
 sound/soc/sof/intel/tgl.c
 sound/soc/sof/iomem-utils.c
 sound/soc/sof/ipc.c
-sound/soc/sof/ipc3.c
 sound/soc/sof/ipc3-control.c
 sound/soc/sof/ipc3-dtrace.c
 sound/soc/sof/ipc3-loader.c
 sound/soc/sof/ipc3-pcm.c
 sound/soc/sof/ipc3-topology.c
-sound/soc/sof/ipc4.c
+sound/soc/sof/ipc3.c
 sound/soc/sof/ipc4-control.c
 sound/soc/sof/ipc4-loader.c
 sound/soc/sof/ipc4-mtrace.c
 sound/soc/sof/ipc4-pcm.c
 sound/soc/sof/ipc4-topology.c
+sound/soc/sof/ipc4.c
 sound/soc/sof/loader.c
 sound/soc/sof/ops.c
 sound/soc/sof/pcm.c

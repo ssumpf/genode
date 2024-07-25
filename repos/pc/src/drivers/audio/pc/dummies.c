@@ -318,15 +318,6 @@ const struct dma_map_ops *dma_ops = NULL;
 const guid_t guid_null;
 
 
-#include <../mm/slab.h>
-
-void * kmem_cache_alloc_lru(struct kmem_cache * cachep, struct list_lru * lru,
-                            gfp_t flags)
-{
-	return kmalloc(cachep->size, flags);
-}
-
-
 #include <linux/auxiliary_bus.h>
 
 int auxiliary_device_init(struct auxiliary_device * auxdev)
