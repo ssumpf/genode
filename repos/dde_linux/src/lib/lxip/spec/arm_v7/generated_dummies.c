@@ -703,54 +703,6 @@ int kernel_sock_shutdown(struct socket * sock,enum sock_shutdown_cmd how)
 }
 
 
-#include <linux/slab.h>
-
-void kfree_sensitive(const void * p)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/slab.h>
-
-int kmem_cache_alloc_bulk(struct kmem_cache * s,gfp_t flags,size_t nr,void ** p)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/slab.h>
-
-void * kmem_cache_alloc_lru(struct kmem_cache * cachep,struct list_lru * lru,gfp_t flags)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/slab.h>
-
-void kmem_cache_free_bulk(struct kmem_cache * s,size_t nr,void ** p)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/slab.h>
-
-void kmem_dump_obj(void * object)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/slab.h>
-
-bool kmem_valid_obj(void * object)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 #include <linux/kobject.h>
 
 int kobject_uevent_env(struct kobject * kobj,enum kobject_action action,char * envp_ext[])
@@ -1092,3 +1044,12 @@ void zap_page_range(struct vm_area_struct * vma,unsigned long start,unsigned lon
 	lx_emul_trace_and_stop(__func__);
 }
 
+
+#include <linux/mmzone.h>
+
+struct page *mem_map;
+
+
+#include <linux/vmstat.h>
+
+atomic_long_t vm_node_stat[NR_VM_NODE_STAT_ITEMS] = {};
