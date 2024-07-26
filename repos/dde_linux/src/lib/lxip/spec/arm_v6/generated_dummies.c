@@ -1,7 +1,7 @@
 /*
  * \brief  Dummy definitions of Linux Kernel functions
  * \author Automatically generated file - do no edit
- * \date   2024-07-17
+ * \date   2024-07-26
  */
 
 #include <lx_emul.h>
@@ -518,6 +518,14 @@ void finish_rcuwait(struct rcuwait * w)
 }
 
 
+#include <linux/mmzone.h>
+
+struct pglist_data * first_online_pgdat(void)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
 extern void flush_dcache_page(struct page * page);
 void flush_dcache_page(struct page * page)
 {
@@ -600,6 +608,14 @@ int fwnode_property_read_u8_array(const struct fwnode_handle * fwnode,const char
 #include <linux/device.h>
 
 struct device * get_device(struct device * dev)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/kernel.h>
+
+int get_option(char ** str,int * pint)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -843,6 +859,18 @@ bool llist_add_batch(struct llist_node * new_first,struct llist_node * new_last,
 unsigned long lpj_fine;
 
 
+#include <linux/mmzone.h>
+
+struct page *mem_map;
+
+
+extern void __init memblock_free_pages(struct page * page,unsigned long pfn,unsigned int order);
+void __init memblock_free_pages(struct page * page,unsigned long pfn,unsigned int order)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
 #include <linux/string.h>
 
 ssize_t memory_read_from_buffer(void * to,size_t count,loff_t * ppos,const void * from,size_t available)
@@ -900,6 +928,14 @@ int netdev_queue_update_kobjects(struct net_device * dev,int old_num,int new_num
 
 extern void netdev_unregister_kobject(struct net_device * ndev);
 void netdev_unregister_kobject(struct net_device * ndev)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/mmzone.h>
+
+struct pglist_data * next_online_pgdat(struct pglist_data * pgdat)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -1062,6 +1098,14 @@ bool refcount_dec_if_one(refcount_t * r)
 #include <linux/refcount.h>
 
 void refcount_warn_saturate(refcount_t * r,enum refcount_saturation_type t)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/mm.h>
+
+void __meminit reserve_bootmem_region(phys_addr_t start,phys_addr_t end)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -1279,13 +1323,3 @@ void zap_page_range(struct vm_area_struct * vma,unsigned long start,unsigned lon
 	lx_emul_trace_and_stop(__func__);
 }
 
-
-
-#include <linux/mmzone.h>
-
-struct page *mem_map;
-
-
-#include <linux/vmstat.h>
-
-atomic_long_t vm_node_stat[NR_VM_NODE_STAT_ITEMS] = {};

@@ -1,7 +1,7 @@
 /*
  * \brief  Dummy definitions of Linux Kernel functions
  * \author Automatically generated file - do no edit
- * \date   2024-07-17
+ * \date   2024-07-26
  */
 
 #include <lx_emul.h>
@@ -169,6 +169,14 @@ void __sock_tx_timestamp(__u16 tsflags,__u8 * tx_flags)
 #include <linux/sched.h>
 
 pid_t __task_pid_nr_ns(struct task_struct * task,enum pid_type type,struct pid_namespace * ns)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/vmalloc.h>
+
+void * __vmalloc(unsigned long size,gfp_t gfp_mask)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -504,6 +512,14 @@ void finish_rcuwait(struct rcuwait * w)
 }
 
 
+#include <linux/mmzone.h>
+
+struct pglist_data * first_online_pgdat(void)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
 extern void flush_dcache_page(struct page * page);
 void flush_dcache_page(struct page * page)
 {
@@ -586,6 +602,14 @@ int fwnode_property_read_u8_array(const struct fwnode_handle * fwnode,const char
 #include <linux/device.h>
 
 struct device * get_device(struct device * dev)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/kernel.h>
+
+int get_option(char ** str,int * pint)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -891,6 +915,14 @@ void netdev_unregister_kobject(struct net_device * ndev)
 }
 
 
+#include <linux/mmzone.h>
+
+struct pglist_data * next_online_pgdat(struct pglist_data * pgdat)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
 #include <linux/pipe_fs_i.h>
 
 const struct pipe_buf_operations nosteal_pipe_buf_ops;
@@ -1048,6 +1080,14 @@ bool refcount_dec_if_one(refcount_t * r)
 #include <linux/refcount.h>
 
 void refcount_warn_saturate(refcount_t * r,enum refcount_saturation_type t)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/mm.h>
+
+void __meminit reserve_bootmem_region(phys_addr_t start,phys_addr_t end)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -1273,12 +1313,3 @@ void zap_page_range(struct vm_area_struct * vma,unsigned long start,unsigned lon
 	lx_emul_trace_and_stop(__func__);
 }
 
-
-#include <linux/mmzone.h>
-
-struct page *mem_map;
-
-
-#include <linux/vmstat.h>
-
-atomic_long_t vm_node_stat[NR_VM_NODE_STAT_ITEMS] = {};
