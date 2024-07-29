@@ -39,8 +39,6 @@ struct Main
 
 		lx_emul_module_params();
 
-		env.exec_static_constructors();
-
 		genode_audio_init(genode_env_ptr(env),
 		                  genode_allocator_ptr(heap));
 

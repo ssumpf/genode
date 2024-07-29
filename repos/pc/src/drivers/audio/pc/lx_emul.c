@@ -110,7 +110,7 @@ void lx_emul_module_params(void)
 {
 	//XXX: make configurable
 	char **hda_model = module_param_hda_model();
-	*hda_model = kstrdup("dell-headset-multi", GFP_KERNEL);
+	*hda_model = "dell-headset-multi";
 }
 
 
