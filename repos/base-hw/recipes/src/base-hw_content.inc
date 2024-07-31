@@ -107,7 +107,7 @@ SRC_INCLUDE_HW += $(notdir $(wildcard $(BASE_HW_DIR)/src/include/hw/*.h)) \
                   uart
 
 SRC_BOOTSTRAP += hw env.cc init.cc lock.cc log.cc thread.cc \
-                 platform.cc platform.h \
+                 platform.cc platform.h platform_cpu_memory_area.cc \
                  $(addprefix spec/,${call selected_content,SRC_BOOTSTRAP_SPECS}) \
                  $(addprefix board/,$(BOARD))
 
