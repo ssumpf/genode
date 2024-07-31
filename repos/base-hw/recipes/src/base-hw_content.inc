@@ -138,7 +138,7 @@ LIB_MK_FILES := base-common.inc base-hw-common.mk \
                 core-hw.inc core-hw-$(BOARD).inc core-hw-$(BOARD).mk \
                 core-hw-cortex_a9.inc core-hw-cortex_a15.inc \
                 startup.inc startup-hw.mk \
-                timeout-hw.mk cxx.mk ld-hw.mk syscall-hw.mk
+                timeout-hw.mk cxx.mk ld-hw.mk syscall-hw.mk consts-hw.inc
 
 LIB_MK_DIRS := lib/mk $(addprefix lib/mk/spec/,${call selected_content,LIB_MK_SPECS})
 
