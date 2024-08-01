@@ -1,0 +1,7 @@
+<launcher pkg="mixer" priority="0">
+	<affinity xpos="0" width="1"/>
+	<config>
+		<default out_volume="100" volume="100"/>
+	</config>
+	<!-- intentionally no <route> node, use preset -->
+</launcher>

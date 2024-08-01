@@ -1,0 +1,9 @@
+<launcher name="test-webcam" pkg="test-capture" priority="-1">
+	<config period_ms="20" width="640" height="480">
+		<view xpos="100" ypos="100"/> <!--view xpos="800" ypos="600"/-->
+	</config>
+	<route>
+		<service name="Capture"> <child name="usb_webcam"/> </service>
+		<service name="Gui">     <child name="wm"/> </service>
+	</route>
+</launcher>
