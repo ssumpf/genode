@@ -1,0 +1,51 @@
+<launcher pkg="vm_block_capture" priority="-2">
+	<affinity xpos="1" ypos="0" width="2" height="2"/>
+	<config vbox_file="machine.vbox6" xhci="yes" vm_name="windows" capslock="rom" ld_verbose="yes">
+		<vfs>
+			<dir name="dev">
+				<log/> <rtc/> <null/> <gpu/> <zero/>
+				<legacy_oss name="dsp"/>
+				<block name="block0" label="block0" block_buffer_count="128"/>
+			</dir>
+			<dir name="pipe"> <pipe/> </dir>
+			<dir name="shared"> <fs label="shared" writeable="yes"/> </dir>
+			<rom name="VBoxSharedClipboard.so"/>
+			<rom name="VBoxSharedFolders.so"/>
+			<fs label="vm" writeable="yes"/>
+		</vfs>
+		<libc stdout="/dev/log" stderr="/dev/log" rtc="/dev/rtc" pipe="/pipe">
+			<pthread placement="single-cpu"/>
+		</libc>
+		<monitor label="DP-1"/>
+		<webcam vertical_flip="true" fps="30" screen_size="false" width="640" height="480"/>
+		<arg value="virtualbox"/>
+		<env key="VBOX_USER_HOME" value="/"/>
+		<env key="VBOX_LOG_DEST"          value="file=/dev/log"/>
+		<env key="VBOX_LOG"               value=""/>
+		<env key="VBOX_LOG_FLAGS"         value="thread"/>
+		<env key="VBOX_RELEASE_LOG_DEST"  value="file=/dev/log"/>
+		<env key="VBOX_RELEASE_LOG"       value=""/>
+		<env key="VBOX_RELEASE_LOG_FLAGS" value="thread"/>
+	</config>
+	<route>
+		<service name="File_system" label_prefix="vm ->">     <child name="vm_windows_fs"/> </service>
+		<service name="File_system" label_prefix="shared ->"> <child name="shared_fs"/> </service>
+		<service name="Block" label="block0">                 <child name="storage_nvme" label="7"/> </service>
+		<service name="Report" label_last="shape">            <child name="wm"/> </service>
+		<service name="Report" label="clipboard">             <child name="wm"/> </service>
+		<service name="ROM" label="clipboard">                <child name="wm"/> </service>
+		<service name="ROM" label="mesa_gpu.lib.so">          <child name="mesa_gpu-intel"/> </service>
+		<service name="ROM" label="capslock">                 <parent label="capslock"/> </service>
+		<service name="ROM" label="platform_info">            <parent label="platform_info"/> </service>
+		<service name="Gui">                                  <child name="wm"/> </service>
+		<service name="Nic">                                  <child name="nic_router"/> </service>
+		<service name="Rtc">                                  <child name="system_clock"/> </service>
+		<service name="Audio_out">                            <child name="audio_mixer"/> </service>
+		<service name="Audio_in">                             <child name="sof_audio"/> </service>
+		<service name="Usb">                                  <child name="usb"/> </service>
+		<service name="Capture">                              <child name="usb_webcam"/> </service>
+		<service name="Gpu">                                  <child name="intel_gpu"/> </service>
+		<service name="VM">                                   <parent/> </service>
+		<service name="RM">                                   <parent/> </service>
+	</route>
+</launcher>

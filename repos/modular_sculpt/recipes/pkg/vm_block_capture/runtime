@@ -1,0 +1,79 @@
+<runtime ram="9G" caps="8000" binary="virtualbox6">
+
+	<requires>
+		<file_system label="vm"/>
+		<file_system label="shared"/>
+		<block label="block0"/>
+		<vm/>
+		<timer/>
+		<gpu/>
+		<capture/>
+		<gui/>
+		<nic/>
+		<rom label="mesa_gpu.lib.so"/>
+		<rom label="capslock"/>
+		<rom label="platform_info"/>
+		<report label="shape"/>
+		<report label="clipboard"/>
+		<rom    label="clipboard"/>
+		<rm/>
+		<rtc/>
+		<usb/>
+		<audio_out/>
+		<audio_in/>
+	</requires>
+
+	<config vbox_file="machine.vbox6" xhci="yes" vm_name="linux" capslock="rom" ld_verbose="yes">
+		<vfs>
+			<dir name="dev">
+				<log/> <rtc/> <null/> <gpu/> <zero/>
+				<legacy_oss name="dsp"/>
+				<block name="block0" label="block0" block_buffer_count="128"/>
+			</dir>
+			<dir name="pipe"> <pipe/> </dir>
+			<dir name="shared"> <fs label="shared -> /" writeable="yes"/> </dir>
+			<rom name="VBoxSharedClipboard.so"/>
+			<rom name="VBoxSharedFolders.so"/>
+			<fs label="vm -> /" writeable="yes"/>
+		</vfs>
+		<libc stdout="/dev/log" stderr="/dev/log" rtc="/dev/rtc" pipe="/pipe">
+			<pthread placement="single-cpu"/>
+		</libc>
+		<monitor label="VBOX-1"/>
+		<webcam vertical_flip="true" fps="30" screen_size="false" width="640" height="480"/>
+		<arg value="virtualbox"/>
+		<env key="VBOX_USER_HOME" value="/"/>
+		<env key="VBOX_LOG_DEST"          value="file=/dev/log"/>
+		<env key="VBOX_LOG"               value=""/>
+		<env key="VBOX_LOG_FLAGS"         value="thread"/>
+		<env key="VBOX_RELEASE_LOG_DEST"  value="file=/dev/log"/>
+		<env key="VBOX_RELEASE_LOG"       value=""/>
+		<env key="VBOX_RELEASE_LOG_FLAGS" value="thread"/>
+	</config>
+
+	<content>
+		<rom label="egl.lib.so"/>
+		<rom label="expat.lib.so"/>
+		<rom label="glapi.lib.so"/>
+		<rom label="jpeg.lib.so"/>
+		<rom label="ld.lib.so"/>
+		<rom label="libc.lib.so"/>
+		<rom label="libdrm.lib.so"/>
+		<rom label="libiconv.lib.so"/>
+		<rom label="libm.lib.so"/>
+		<rom label="libyuv.lib.so"/>
+		<rom label="mesa.lib.so"/>
+		<rom label="qemu-usb.lib.so"/>
+		<rom label="stdcxx.lib.so"/>
+		<rom label="vfs.lib.so"/>
+		<rom label="vfs_gpu.lib.so"/>
+		<rom label="vfs_legacy_oss.lib.so"/>
+		<rom label="vfs_pipe.lib.so"/>
+		<rom label="virtualbox6"/>
+		<rom label="virtualbox6-shaderlib.lib.so"/>
+		<rom label="virtualbox6-sharedclipboard.lib.so" as="VBoxSharedClipboard.so"/>
+		<rom label="virtualbox6-sharedfolders.lib.so" as="VBoxSharedFolders.so"/>
+		<rom label="zlib.lib.so"/>
+	</content>
+
+</runtime>

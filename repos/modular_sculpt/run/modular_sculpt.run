@@ -1,0 +1,10 @@
+set ::env(LOG) core
+
+proc bender_intel_hwp_mode_option { } {
+	puts "\033\[01;31mEnforcing bender_intel_hwp_mode_option=balanced!\033\[0m"
+	return "balanced"
+}
+
+source ${genode_dir}/repos/gems/run/sculpt.run
+
+run_genode_until forever
