@@ -138,6 +138,7 @@ int lx_emul_init_task_function(void * dtb)
 	kmem_cache_init();
 	wait_bit_init();
 	radix_tree_init();
+	maple_tree_init();
 	workqueue_init_early();
 
 	skb_init();
