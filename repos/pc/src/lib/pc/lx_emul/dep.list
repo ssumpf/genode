@@ -39,6 +39,7 @@ arch/x86/include/asm/fpu/api.h
 arch/x86/include/asm/fpu/types.h
 arch/x86/include/asm/fsgsbase.h
 arch/x86/include/asm/ftrace.h
+arch/x86/include/asm/gsseg.h
 arch/x86/include/asm/hardirq.h
 arch/x86/include/asm/hw_breakpoint.h
 arch/x86/include/asm/hw_irq.h
@@ -224,6 +225,7 @@ include/crypto/aria.h
 include/crypto/utils.h
 include/kunit/assert.h
 include/kunit/resource.h
+include/kunit/test-bug.h
 include/kunit/test.h
 include/kunit/try-catch.h
 include/linux/acpi.h
