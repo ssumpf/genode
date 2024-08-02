@@ -44,6 +44,7 @@ drivers/usb/host/xhci-ring.c
 drivers/usb/host/xhci-trace.c
 drivers/usb/host/xhci.c
 fs/nls/nls_base.c
+kernel/async.c
 kernel/irq/chip.c
 kernel/irq/devres.c
 kernel/irq/handle.c
@@ -109,4 +110,3 @@ mm/mempool.c
 mm/slab_common.c
 mm/slub.c
 mm/util.c
-kernel/async.c
