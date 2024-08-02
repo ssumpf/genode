@@ -834,6 +834,7 @@ include/trace/events/error_report.h
 include/trace/events/irq.h
 include/trace/events/kmem.h
 include/trace/events/lock.h
+include/trace/events/maple_tree.h
 include/trace/events/mmflags.h
 include/trace/events/power.h
 include/trace/events/sched.h
