@@ -138,7 +138,11 @@ int lx_emul_init_task_function(void * dtb)
 	kmem_cache_init();
 	wait_bit_init();
 	radix_tree_init();
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6,2,0)
 	maple_tree_init();
+#endif
+
 	workqueue_init_early();
 
 	skb_init();
