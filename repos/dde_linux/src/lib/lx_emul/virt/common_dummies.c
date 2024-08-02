@@ -151,3 +151,7 @@ void synchronize_srcu(struct srcu_struct * ssp)
 	lx_emul_trace_and_stop(__func__);
 }
 #endif
+
+
+extern void __init maple_tree_init(void);
+void __init maple_tree_init(void) { }
