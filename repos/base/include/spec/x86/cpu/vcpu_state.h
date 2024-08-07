@@ -195,9 +195,6 @@ class Genode::Vcpu_state
 		Register<uint32_t> tpr { };
 		Register<uint32_t> tpr_threshold { };
 
-		Register<uint64_t> xcr0 { };
-		Register<uint64_t> xss  { };
-
 		unsigned exit_reason { };
 
 		class Fpu : Noncopyable
