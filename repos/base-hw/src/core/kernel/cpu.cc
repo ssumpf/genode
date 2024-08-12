@@ -198,6 +198,7 @@ Cpu::Cpu(unsigned                     const  id,
 	Cpu * cpu = cpu_pool._cpus.first();
 	while (cpu && cpu->next() && (cpu->next()->id() < _id))
 		cpu = cpu->next();
+	cpu = (cpu && cpu->id() < _id) ? cpu : nullptr;
 	cpu_pool._cpus.insert(this, cpu);
 }
 
