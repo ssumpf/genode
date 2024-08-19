@@ -481,13 +481,11 @@ void lx_user_init(void)
 }
 
 
-void lx_emul_i915_report(void * lx_data, void * genode_data)
+void lx_emul_i915_report(void * genode_data)
 {
-	struct drm_client_dev *client = lx_data;
-
 	struct drm_connector_list_iter conn_iter;
 
-	struct drm_device const *dev       = client->dev;
+	struct drm_device const *dev       = dev_client->dev;
 	struct drm_connector    *connector = NULL;
 
 	drm_connector_list_iter_begin(dev, &conn_iter);
@@ -542,7 +540,11 @@ void lx_emul_i915_iterate_modes(void * lx_data, void * genode_data)
 		}
 
 		if (!skip) {
-			bool const max_mode = conf_max_mode.max_width && conf_max_mode.max_height;
+			bool const max_mode = conf_max_mode.max_width &&
+			                      conf_max_mode.max_height;
+			bool const inuse = connector->state && connector->state->crtc &&
+			                   connector->state->crtc->state &&
+			                   drm_mode_equal(&connector->state->crtc->state->mode, mode);
 
 			struct genode_mode conf_mode = {
 				.width     = mode->hdisplay,
@@ -551,6 +553,7 @@ void lx_emul_i915_iterate_modes(void * lx_data, void * genode_data)
 				.dpi_v     = dpi_v,
 				.preferred = mode->type & (DRM_MODE_TYPE_PREFERRED |
 				                           DRM_MODE_TYPE_DEFAULT),
+				.inuse     = inuse,
 				.hz        = drm_mode_vrefresh(mode),
 				.id        = mode_id,
 				.enabled   = !max_mode ||
@@ -624,7 +627,7 @@ static int fb_client_hotplug(struct drm_client_dev *client)
 	}
 
 	/* notify Genode side */
-	lx_emul_i915_hotplug_connector(client);
+	lx_emul_i915_hotplug_connector();
 
 	if (fb)
 		drm_framebuffer_put(fb);

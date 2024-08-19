@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright (C) 2022 Genode Labs GmbH
+ * Copyright (C) 2022-2024 Genode Labs GmbH
  *
  * This file is distributed under the terms of the GNU General Public License
  * version 2.
@@ -60,9 +60,10 @@ struct Framebuffer::Driver
 	Signal_handler<Driver>  system_handler    { env.ep(), *this,
 	                                            &Driver::system_update };
 
-	bool                    update_in_progress { false };
-	bool                    new_config_rom     { false };
-	bool                    disable_all        { false };
+	bool                    update_in_progress  { false };
+	bool                    new_config_rom      { false };
+	bool                    disable_all         { false };
+	bool                    disable_report_once { false };
 
 	class Fb
 	{
@@ -110,7 +111,7 @@ struct Framebuffer::Driver
 
 	void config_update();
 	void system_update();
-	void generate_report(void *);
+	void generate_report();
 	void lookup_config(char const *, struct genode_mode &mode);
 
 	void handle_timer()
@@ -161,16 +162,14 @@ struct Framebuffer::Driver
 		timer.trigger_periodic(20*1000);
 	}
 
-	void report_updated()
+	bool apply_config_on_hotplug() const
 	{
 		bool apply_config = true;
 
 		if (config.valid())
 			apply_config = config.xml().attribute_value("apply_on_hotplug", apply_config);
 
-		/* trigger re-read config on connector change */
-		if (apply_config)
-			Genode::Signal_transmitter(config_handler).submit();
+		return apply_config;
 	}
 
 	template <typename T>
@@ -281,10 +280,16 @@ static Framebuffer::Driver & driver(Genode::Env & env)
 }
 
 
-void Framebuffer::Driver::generate_report(void *lx_data)
+void Framebuffer::Driver::generate_report()
 {
 	if (!config.valid())
 		return;
+
+	if (apply_config_on_hotplug() && !disable_report_once) {
+		disable_report_once = true;
+		Genode::Signal_transmitter(config_handler).submit();
+		return;
+	}
 
 	/* check for report configuration option */
 	config.xml().with_optional_sub_node("report", [&](auto const &node) {
@@ -304,11 +309,11 @@ void Framebuffer::Driver::generate_report(void *lx_data)
 				xml.attribute("force_height", height);
 			});
 
-			lx_emul_i915_report(lx_data, &xml);
+			lx_emul_i915_report(&xml);
 		});
-
-		driver(Lx_kit::env().env).report_updated();
 	});
+
+	disable_report_once = false;
 }
 
 
@@ -395,10 +400,10 @@ extern "C" void lx_emul_framebuffer_ready(void * base, unsigned long,
 }
 
 
-extern "C" void lx_emul_i915_hotplug_connector(void *data)
+extern "C" void lx_emul_i915_hotplug_connector()
 {
 	Genode::Env &env = Lx_kit::env().env;
-	driver(env).generate_report(data);
+	driver(env).generate_report();
 }
 
 
@@ -442,6 +447,8 @@ void lx_emul_i915_report_modes(void * genode_xml, struct genode_mode *mode)
 			xml.attribute("unavailable", true);
 		if (mode->preferred)
 			xml.attribute("preferred", true);
+		if (mode->inuse)
+			xml.attribute("used", true);
 	});
 }
 
@@ -469,6 +476,9 @@ int lx_emul_i915_config_done_and_block(void)
 		state.disable_all = false;
 		Lx_kit::env().env.parent().exit(0);
 	}
+
+	if (!new_config)
+		driver(Lx_kit::env().env).generate_report();
 
 	/* true if linux task should block, otherwise continue due to new config */
 	return !new_config;
