@@ -27,13 +27,12 @@ struct genode_mode {
 	unsigned brightness;
 	unsigned enabled;
 	unsigned preferred;
-	unsigned inuse;
 	unsigned id;
 	char name[32];
 };
 
-void lx_emul_i915_report(void * genode_xml);
-void lx_emul_i915_hotplug_connector(void);
+void lx_emul_i915_report(void * lx_data, void * genode_xml);
+void lx_emul_i915_hotplug_connector(void * lx_data);
 void lx_emul_i915_report_connector(void * lx_data, void * genode_xml,
                                    char const *name, char connected,
                                    unsigned brightness);
