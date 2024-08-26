@@ -6,33 +6,9 @@
 # QT6_PORT_LIBS:        Qt6 libraries used from port (for example libQt6Core)
 #
 
-QT_TOOLS_DIR = /usr/local/genode/tool/23.05/qt6
-QMAKE        = qmake_root/bin/qmake
+include $(call select_from_repositories,lib/import/import-qt6.inc)
 
-ifeq ($(filter-out $(SPECS),arm),)
-QMAKE_PLATFORM = genode-arm-g++
-else ifeq ($(filter-out $(SPECS),arm_64),)
-QMAKE_PLATFORM = genode-aarch64-g++
-else ifeq ($(filter-out $(SPECS),x86_32),)
-QMAKE_PLATFORM = genode-x86_32-g++
-else ifeq ($(filter-out $(SPECS),x86_64),)
-QMAKE_PLATFORM = genode-x86_64-g++
-else
-$(error Error: unsupported platform)
-endif
-
-ifeq ($(CONTRIB_DIR),)
-QT_DIR     = $(call select_from_repositories,src/lib/qt6)
-QT_API_DIR = $(call select_from_repositories,mkspecs)/..
-else
-QT_PORT_DIR := $(call select_from_ports,qt6)
-QT_DIR       = $(QT_PORT_DIR)/src/lib/qt6
-QT_API_DIR   = $(QT_DIR)/genode/api
-endif
-
-ifneq ($(VERBOSE),)
-QT6_OUTPUT_FILTER = > /dev/null
-endif
+QMAKE = build_dependencies/bin/qmake
 
 #
 # Genode libraries to be linked to Qt applications and libraries
@@ -54,7 +30,7 @@ GENODE_QMAKE_CFLAGS = \
 	$(CC_MARCH) \
 	$(CC_OPT_PIC) \
 	$(filter-out -I.,$(INCLUDES)) \
-	-I$(CURDIR)/qmake_root/include/QtCore/spec/$(QMAKE_PLATFORM)
+	-I$(CURDIR)/build_dependencies/include/QtCore/spec/$(QT_PLATFORM)
 
 GENODE_QMAKE_LFLAGS_APP = \
 	$(addprefix $(LD_OPT_PREFIX),$(LD_MARCH)) \
@@ -68,7 +44,7 @@ GENODE_QMAKE_LFLAGS_APP = \
 	-Wl,--eh-frame-hdr \
 	-Wl,-rpath-link=. \
 	-Wl,-T -Wl,$(LD_SCRIPT_DYN) \
-	-L$(CURDIR)/qmake_root/lib \
+	-L$(CURDIR)/build_dependencies/lib \
 	-Wl,--whole-archive \
 	-Wl,--start-group \
 	$(addprefix -l:,$(QT6_GENODE_LIBS_APP)) \
@@ -84,7 +60,7 @@ GENODE_QMAKE_LFLAGS_SHLIB = \
 	$(addprefix $(LD_OPT_PREFIX),$(LD_OPT_ALIGN_SANE)) \
 	-Wl,-T -Wl,$(LD_SCRIPT_SO) \
 	$(addprefix $(LD_OPT_PREFIX),--entry=0x0) \
-	-L$(CURDIR)/qmake_root/lib \
+	-L$(CURDIR)/build_dependencies/lib \
 	-Wl,--whole-archive \
 	-Wl,--start-group \
 	$(addprefix -l:,$(QT6_GENODE_LIBS_SHLIB)) \
@@ -108,8 +84,8 @@ GENODE_QMAKE_INCDIR_OPENGL := $(call select_from_ports,mesa)/include
 GENODE_QMAKE_INCDIR_EGL := $(call select_from_ports,mesa)/include
 endif
 
-GENODE_QMAKE_LIBS_OPENGL = $(CURDIR)/qmake_root/lib/mesa.lib.so
-GENODE_QMAKE_LIBS_EGL = $(CURDIR)/qmake_root/lib/egl.lib.so
+GENODE_QMAKE_LIBS_OPENGL = $(CURDIR)/build_dependencies/lib/mesa.lib.so
+GENODE_QMAKE_LIBS_EGL = $(CURDIR)/build_dependencies/lib/egl.lib.so
 
 #
 # export variables for qmake.conf
@@ -135,75 +111,51 @@ env.sh:
 
 
 #
-# prepare a directory named 'qmake_root' where qmake can find needed files
+# prepare a directory named 'build_dependencies' where qmake can find needed files
 #
 
-qmake_root:
-	$(VERBOSE)mkdir -p $@
-
-qmake_root/bin: qmake_root
+build_dependencies/bin: build_dependencies
 	$(VERBOSE)mkdir -p $@
 	$(VERBOSE)ln -sf $(QT_TOOLS_DIR)/bin/* $@/
 
-qmake_root/include: qmake_root
-	$(VERBOSE)mkdir -p $@
-	$(VERBOSE)ln -snf $(QT_API_DIR)/include/* $@/
+build_dependencies/lib/libQt6Core.so.6: build_dependencies/lib
+	$(VERBOSE)ln -sf $(QT_TOOLS_DIR)/lib/libQt6Core.so.6 $@
 
-qmake_root/lib: qmake_root
-	$(VERBOSE)mkdir -p $@
-	$(VERBOSE)ln -sf $(QT_TOOLS_DIR)/lib/libQt6Core.so.6 $@/
-
-qmake_root/lib/%.lib.so: qmake_root/lib
-	$(VERBOSE)ln -sf $(BUILD_BASE_DIR)/var/libcache/$*/$*.abi.so $@
-
-qmake_root/lib/%.lib.a: qmake_root/lib
-	$(VERBOSE)ln -sf $(BUILD_BASE_DIR)/var/libcache/$*/$*.lib.a $@
-
-qmake_root/libexec: qmake_root
+build_dependencies/libexec: build_dependencies
 	$(VERBOSE)mkdir -p $@
 	$(VERBOSE)ln -sf $(QT_TOOLS_DIR)/libexec/* $@/
 
-qmake_root/mkspecs: qmake_root
+build_dependencies/mkspecs: build_dependencies
 	$(VERBOSE)mkdir -p $@
 	$(VERBOSE)ln -sf $(QT_API_DIR)/mkspecs/* $@/
 	$(VERBOSE)rm -f $@/modules
 	$(VERBOSE)mkdir $@/modules
 	$(VERBOSE)ln -snf $(QT_API_DIR)/mkspecs/modules/* $@/modules/
-	$(VERBOSE)ln -sf $(QMAKE_PLATFORM)/qconfig.pri $@/
-	$(VERBOSE)ln -sf $(QMAKE_PLATFORM)/qmodule.pri $@/
+	$(VERBOSE)ln -sf $(QT_PLATFORM)/qconfig.pri $@/
+	$(VERBOSE)ln -sf $(QT_PLATFORM)/qmodule.pri $@/
 
 qmake_prepared.tag: env.sh \
-                    qmake_root/bin \
-                    qmake_root/include \
-                    qmake_root/lib/libc.lib.so \
-                    qmake_root/lib/libm.lib.so \
-                    qmake_root/lib/egl.lib.so \
-                    qmake_root/lib/mesa.lib.so \
-                    qmake_root/lib/qt6_component.lib.so \
-                    qmake_root/lib/stdcxx.lib.so \
-                    qmake_root/lib/ldso_so_support.lib.a \
-                    qmake_root/libexec \
-                    qmake_root/mkspecs
-
-# add symlinks for Qt6 libraries listed in the 'QT6_PORT_LIBS' variable
-ifeq ($(CONTRIB_DIR),)
-	$(VERBOSE)for qt6_lib in $(QT6_PORT_LIBS); do \
-		ln -sf $(BUILD_BASE_DIR)/var/libcache/$${qt6_lib}/$${qt6_lib}.abi.so qmake_root/lib/$${qt6_lib}.lib.so; \
-	done
-else
-	$(VERBOSE)for qt6_lib in $(QT6_PORT_LIBS); do \
-		ln -sf $(BUILD_BASE_DIR)/bin/$${qt6_lib}.lib.so qmake_root/lib/; \
-	done
-endif
+                    build_dependencies/bin \
+                    build_dependencies/include \
+                    build_dependencies/lib/libQt6Core.so.6 \
+                    build_dependencies/lib/libc.lib.so \
+                    build_dependencies/lib/libm.lib.so \
+                    build_dependencies/lib/egl.lib.so \
+                    build_dependencies/lib/mesa.lib.so \
+                    build_dependencies/lib/qt6_component.lib.so \
+                    build_dependencies/lib/stdcxx.lib.so \
+                    build_dependencies/lib/ldso_so_support.lib.a \
+                    build_dependencies/libexec \
+                    build_dependencies/mkspecs
 	$(VERBOSE)touch $@
 
 .PHONY: build_with_qmake
 
-build_with_qmake: qmake_prepared.tag
+build_with_qmake: qmake_prepared.tag qt6_so_files
 
 	$(VERBOSE)source env.sh && $(QMAKE) \
-		-spec qmake_root/mkspecs/$(QMAKE_PLATFORM) \
-		-qtconf qmake_root/mkspecs/$(QMAKE_PLATFORM)/qt.conf \
+		-spec build_dependencies/mkspecs/$(QT_PLATFORM) \
+		-qtconf build_dependencies/mkspecs/$(QT_PLATFORM)/qt.conf \
 		-nocache \
 		$(QMAKE_PROJECT_FILE) \
 		"CONFIG += force_debug_info" \

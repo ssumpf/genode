@@ -22,7 +22,7 @@ BUILD_ARTIFACTS = $(notdir $(INSTALL_LIBS)) \
                   qt6_libqjpeg.tar \
                   qt6_libqsqlite.tar
 
-cmake_prepared.tag: cmake_root/lib/ld.lib.so
+cmake_prepared.tag: build_dependencies/lib/ld.lib.so
 
 build: cmake_prepared.tag
 
@@ -42,12 +42,12 @@ build: cmake_prepared.tag
 		-DCMAKE_EXE_LINKER_FLAGS="$(GENODE_CMAKE_LFLAGS_APP)" \
 		-DCMAKE_SHARED_LINKER_FLAGS="$(GENODE_CMAKE_LFLAGS_SHLIB)" \
 		-DCMAKE_MODULE_LINKER_FLAGS="$(GENODE_CMAKE_LFLAGS_SHLIB)" \
-		-DQT_HOST_PATH="$(QT_TOOLS_DIR)" \
+		-DQT_QMAKE_TARGET_MKSPEC=$(QT_PLATFORM) \
 		-DCMAKE_INSTALL_PREFIX=/qt \
+		-DQT_HOST_PATH="$(QT_TOOLS_DIR)" \
 		-DBUILD_WITH_PCH=OFF \
 		-DCMAKE_BUILD_TYPE=RelWithDebInfo \
 		-DQT_BUILD_EXAMPLES=OFF \
-		-DQT_QMAKE_TARGET_MKSPEC=$(QT_PLATFORM) \
 		-DQT_QPA_DEFAULT_PLATFORM=genode \
 		-DFEATURE_cxx20=ON \
 		-DFEATURE_relocatable=OFF \

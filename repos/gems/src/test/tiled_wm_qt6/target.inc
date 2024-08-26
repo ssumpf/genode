@@ -1,13 +1,13 @@
 QT6_PORT_LIBS = libQt6Core libQt6Gui libQt6Widgets
 
-LIBS = base libc libm mesa stdcxx qoost $(QT6_PORT_LIBS)
+LIBS = base libc libm mesa stdcxx qoost
 
 include $(call select_from_repositories,lib/import/import-qt6_qmake.mk)
 
 QT6_GENODE_LIBS_APP += ld.lib.so
 QT6_GENODE_LIBS_APP := $(filter-out qt6_component.lib.so,$(QT6_GENODE_LIBS_APP))
 
-qmake_prepared.tag: qmake_root/lib/ld.lib.so
+qmake_prepared.tag: build_dependencies/lib/ld.lib.so
 
 INC_DIR += $(PRG_DIR)/..
 

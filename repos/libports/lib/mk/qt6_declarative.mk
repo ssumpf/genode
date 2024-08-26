@@ -1,8 +1,8 @@
-include $(call select_from_repositories,lib/import/import-qt6_cmake.mk)
-
 QT6_PORT_LIBS = libQt6Core libQt6Gui libQt6OpenGL libQt6Network libQt6Sql libQt6Test libQt6Widgets
 
-LIBS = libc libm mesa egl stdcxx $(QT6_PORT_LIBS)
+include $(call select_from_repositories,lib/import/import-qt6_cmake.mk)
+
+LIBS = libc libm mesa egl stdcxx qt6_base
 
 INSTALL_LIBS = lib/libQt6LabsAnimation.lib.so \
                lib/libQt6LabsFolderListModel.lib.so \
@@ -71,7 +71,7 @@ INSTALL_LIBS = lib/libQt6LabsAnimation.lib.so \
 BUILD_ARTIFACTS = $(notdir $(INSTALL_LIBS)) \
                   qt6_declarative_qml.tar
 
-build: cmake_prepared.tag
+build: cmake_prepared.tag qt6_so_files
 
 	@#
 	@# run cmake
@@ -79,8 +79,8 @@ build: cmake_prepared.tag
 
 	$(VERBOSE)cmake \
 		-G "Unix Makefiles" \
-		-DCMAKE_PREFIX_PATH="$(CURDIR)/cmake_root" \
-		-DCMAKE_MODULE_PATH="$(CURDIR)/cmake_root/lib/cmake/Modules" \
+		-DCMAKE_PREFIX_PATH="$(CURDIR)/build_dependencies" \
+		-DCMAKE_MODULE_PATH="$(CURDIR)/build_dependencies/lib/cmake/Modules" \
 		-DCMAKE_SYSTEM_NAME="Genode" \
 		-DCMAKE_AR="$(AR)" \
 		-DCMAKE_C_COMPILER="$(CC)" \
@@ -91,6 +91,7 @@ build: cmake_prepared.tag
 		-DCMAKE_SHARED_LINKER_FLAGS="$(GENODE_CMAKE_LFLAGS_SHLIB)" \
 		-DCMAKE_MODULE_LINKER_FLAGS="$(GENODE_CMAKE_LFLAGS_SHLIB)" \
 		-DQT_QMAKE_TARGET_MKSPEC=$(QT_PLATFORM) \
+		-DCMAKE_INSTALL_PREFIX=/qt \
 		$(QT_DIR)/qtdeclarative \
 		$(QT6_OUTPUT_FILTER)
 
@@ -105,8 +106,6 @@ build: cmake_prepared.tag
 	@#
 
 	$(VERBOSE)$(MAKE) VERBOSE=$(MAKE_VERBOSE) DESTDIR=install install
-
-	$(VERBOSE)ln -sf .$(CURDIR)/cmake_root install/qt
 
 	@#
 	@# remove shared library existence checks since many libs are not

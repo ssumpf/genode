@@ -1,4 +1,5 @@
-MIRROR_FROM_REP_DIR := lib/import/import-qt6_cmake.mk \
+MIRROR_FROM_REP_DIR := lib/import/import-qt6.inc \
+                       lib/import/import-qt6_cmake.mk \
                        lib/import/import-qt6_qmake.mk
 
 content: $(MIRROR_FROM_REP_DIR)
