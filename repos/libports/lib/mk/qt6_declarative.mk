@@ -1,8 +1,6 @@
 QT6_PORT_LIBS = libQt6Core libQt6Gui libQt6OpenGL libQt6Network libQt6Sql libQt6Test libQt6Widgets
 
-include $(call select_from_repositories,lib/import/import-qt6_cmake.mk)
-
-LIBS = libc libm mesa egl stdcxx qt6_base
+LIBS = qt6_cmake libc libm mesa egl stdcxx qt6_base
 
 INSTALL_LIBS = lib/libQt6LabsAnimation.lib.so \
                lib/libQt6LabsFolderListModel.lib.so \

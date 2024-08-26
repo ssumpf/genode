@@ -4,16 +4,10 @@
 # CMAKE_LISTS_DIR:      path to the CMakeLists.txt file
 # CMAKE_TARGET_BINARIES binaries to be stripped and linked into 'bin' and 'debug' directories
 # QT6_PORT_LIBS:        Qt6 libraries used from port (for example libQt6Core)
+# QT6_COMPONENT_LIB_SO: if defined empty, disables linking with qt6_component.lib.so
 #
 
 include $(call select_from_repositories,lib/import/import-qt6.inc)
-
-#
-# Genode libraries to be linked to Qt applications and libraries
-#
-
-QT6_GENODE_LIBS_APP   = libc.lib.so libm.lib.so stdcxx.lib.so qt6_component.lib.so
-QT6_GENODE_LIBS_SHLIB = libc.lib.so libm.lib.so stdcxx.lib.so ldso_so_support.lib.a
 
 #
 # flags to be passed to CMake

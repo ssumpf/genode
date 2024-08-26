@@ -30,6 +30,15 @@ QT6_OUTPUT_FILTER = > /dev/null
 endif
 
 #
+# Genode libraries to be linked to Qt applications and libraries
+#
+
+QT6_COMPONENT_LIB_SO   ?= qt6_component.lib.so
+QT6_GENODE_LIBS_COMMON += libc.lib.so libm.lib.so stdcxx.lib.so
+QT6_GENODE_LIBS_APP    += $(QT6_GENODE_LIBS_COMMON) $(QT6_COMPONENT_LIB_SO)
+QT6_GENODE_LIBS_SHLIB  += $(QT6_GENODE_LIBS_COMMON) ldso_so_support.lib.a
+
+#
 # common 'build_dependencies' rules
 #
 

@@ -1,8 +1,6 @@
 QT6_PORT_LIBS = libQt6Core libQt6Gui
 
-include $(call select_from_repositories,lib/import/import-qt6_cmake.mk)
-
-LIBS = libc libm egl mesa stdcxx qt6_base
+LIBS = qt6_cmake libc libm egl mesa stdcxx qt6_base
 
 INSTALL_LIBS = lib/libQt6ShaderTools.lib.so
 

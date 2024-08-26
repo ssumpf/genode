@@ -1,6 +1,4 @@
-include $(call select_from_repositories,lib/import/import-qt6_cmake.mk)
-
-LIBS = ldso_so_support libc libm stdcxx qt6_component egl mesa base qoost
+LIBS = qt6_cmake ldso_so_support libc libm stdcxx qt6_component egl mesa base qoost
 
 INSTALL_LIBS = lib/libQt6Concurrent.lib.so \
                lib/libQt6Core.lib.so \

@@ -4,6 +4,4 @@ QMAKE_TARGET_BINARIES = calculatorform
 
 QT6_PORT_LIBS = libQt6Core libQt6Gui libQt6Widgets
 
-LIBS = libc libm mesa qt6_component stdcxx
-
-include $(call select_from_repositories,lib/import/import-qt6_qmake.mk)
+LIBS = qt6_qmake libc libm mesa qt6_component stdcxx
