@@ -150,10 +150,6 @@ struct folio *shmem_read_folio_gfp(struct address_space *mapping,
 		return NULL;
 	}
 
-	printk("----- %s called %s\n", __func__,
-	       private_data->folio ? "folio already allocated"
-	                           : "allocate new folio");
-
 	if (!private_data->folio) {
 		unsigned order       = order_base_2(mapping->nrpages);
 		/* essence of shmem_alloc_folio function */
