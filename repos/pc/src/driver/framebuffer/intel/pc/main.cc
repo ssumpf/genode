@@ -436,8 +436,6 @@ void lx_emul_i915_report_modes(void * genode_xml, struct genode_mode *mode)
 		xml.attribute("hz",        mode->hz);
 		xml.attribute("mode_id",   mode->id);
 		xml.attribute("mode_name", mode->name);
-		xml.attribute("dpi_h",     mode->dpi_h);
-		xml.attribute("dpi_v",     mode->dpi_v);
 		if (!mode->enabled)
 			xml.attribute("unavailable", true);
 		if (mode->preferred)

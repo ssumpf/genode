@@ -514,7 +514,6 @@ void lx_emul_i915_iterate_modes(void * lx_data, void * genode_data)
 
 
 	list_for_each_entry(mode, &connector->modes, head) {
-		unsigned dpi_h = 0, dpi_v = 0;
 		bool skip = false;
 
 		mode_id ++;
@@ -530,31 +529,16 @@ void lx_emul_i915_iterate_modes(void * lx_data, void * genode_data)
 			       !strncmp(mode->name, prev_mode->name, DRM_DISPLAY_MODE_LEN);
 		}
 
-		{
-			unsigned  width_mm = mode->width_mm  ? mode->width_mm  : connector->display_info.width_mm;
-			unsigned height_mm = mode->height_mm ? mode->height_mm : connector->display_info.height_mm;
-
-			float  width_inch = ( width_mm / 10.0 / 2.54);
-			float height_inch = (height_mm / 10.0 / 2.54);
-
-			dpi_h =  width_inch ? mode->hdisplay /  width_inch : 0;
-			dpi_v = height_inch ? mode->vdisplay / height_inch : 0;
-		}
-
 		if (!skip) {
 			bool const max_mode = conf_max_mode.max_width && conf_max_mode.max_height;
 
 			struct genode_mode conf_mode = {
-				.width     = mode->hdisplay,
-				.height    = mode->vdisplay,
-				.dpi_h     = dpi_h,
-				.dpi_v     = dpi_v,
-				.preferred = mode->type & (DRM_MODE_TYPE_PREFERRED |
-				                           DRM_MODE_TYPE_DEFAULT),
-				.hz        = drm_mode_vrefresh(mode),
-				.id        = mode_id,
-				.enabled   = !max_mode ||
-				             !conf_smaller_max_mode(&conf_max_mode, mode)
+				.width = mode->hdisplay,
+				.height = mode->vdisplay,
+				.preferred = mode->type & (DRM_MODE_TYPE_PREFERRED | DRM_MODE_TYPE_DEFAULT),
+				.hz = drm_mode_vrefresh(mode),
+				.id = mode_id,
+				.enabled = !max_mode || !conf_smaller_max_mode(&conf_max_mode, mode)
 			};
 
 			static_assert(sizeof(conf_mode.name) == DRM_DISPLAY_MODE_LEN);
