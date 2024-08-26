@@ -1,0 +1,1374 @@
+
+
+              ===============================================
+              Release notes for the Genode OS Framework 24.08
+              ===============================================
+
+                               Genode Labs
+
+
+
+; intro
+; @nfeske
+
+
+Base framework and OS-level infrastructure
+##########################################
+
+Fostered consistency of naming
+==============================
+
+; @nfeske
+
+commit 8943a3e9490695d3cacf1723acc0112c43d5d0ff
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Thu May 30 15:46:57 2024 +0200
+
+    Remove '_drv' suffix
+    
+    Issue #4420
+
+commit fe613fa9a39825172ccdd423a447eb4a0af0a0e5
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Fri May 31 17:24:20 2024 +0200
+
+    Rename src/drivers to src/driver
+    
+    Issue genodelabs/genode#4420
+
+
+Cultivation of C++20 programming style
+======================================
+
+; @nfeske
+
+commit bb06d879aa32c9f3b7e82dfedc685445f2ed660a
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Tue Jun 4 15:18:22 2024 +0200
+
+    os: make 'Genode::Color' C++20 friendly
+    
+    This patch turns 'Color' from a class to a POD type by replacing
+    the constructors by the named create functions 'rgb', 'clamped_rgb',
+    and 'clamped_rgba'. It thereby enables the initialization of Color
+    values using { .r = ... } syntax and makes the type usable in const
+    expressions.
+    
+    It also narrows the type for color components and alpha values to
+    uint8_t. So possible integer overflows of computed values are detected
+    by -Wconversion.
+    
+    As 'Color::rgb(0, 0, 0)' is repeatedly used as a default value, the
+    patch adds the 'Color::black()' function.
+    
+    Fixes #5238
+
+commit c629c5415348ccd166d08f52026ffd77d4dfc0d3
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Wed Jun 5 12:40:13 2024 +0200
+
+    Make util/geometry.h C++20 friendly
+    
+    - Move header to base/include to make it applicable for base types
+      like 'Affinity' down the road.
+    - Represent 'Rect' as typle of point and area, which is the most
+      common form of initialization, creates in valid 'Rect' by default.
+    - Turn Point, Area, and Rect into compound types, making x, y, w, h, at,
+      area accessible without a method call
+    - 'Rect::Compound' function for constructing a 'Rect' from two points,
+      replacing a former constructor
+    - Use result type 'Rect::Cut_remainder' instead of out parameters.
+    
+    Fixes #5239
+
+commit a2b0553c51d675fcce84a543f8cd0d26ced6d522
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Fri Jun 28 16:05:26 2024 +0200
+
+    base-*: use C++20 function template syntax
+    
+    Issue #5227
+
+commit 361557e1f0936323ec2ef3a2c0ba2cccc13eee3e
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Fri Jun 28 16:35:57 2024 +0200
+
+    base-*: omit () for lambas w/o argument
+    
+    Issue #5227
+
+commit 19c13877caec99d9af927f51a53504d79e2488b6
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Fri Jun 28 17:20:59 2024 +0200
+
+    Replace use of 'typedef' by 'using'
+    
+    Issue #5227
+
+
+Reduced reliance on the C++ exception mechanism
+===============================================
+
+; @nfeske
+
+commit 7c915969222ed1da2fd3f4aac6676035ebf1fd7c
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Mon Jun 10 16:41:10 2024 +0200
+
+    Exception-less overload of 'Id_space::apply'
+    
+    This patch allows the use of the 'Id_space' utility without catching
+    'Unknown_id' exceptions. Instead, the new 'apply' overload takes a
+    second functor 'missing_fn' as argument, which is called whenever the
+    lookup fails.
+    
+    Issue #5244
+
+commit dd4b19cda7d2f2d335552b03dce8f143f6244a7b
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Mon Jun 10 17:10:11 2024 +0200
+
+    base: Remove use of Id_space::Unknown_id exception
+    
+    Issue #5244
+
+commit ef385696f617a0088ce65cfa409b6d451f95081a
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Tue Jun 11 11:52:16 2024 +0200
+
+    base/child.h: remove Nonexistent_id_space exception
+    
+    This exception got introduced as a mere convenience for implementers of
+    'Child_policy' but required a special case in the base library.
+    Following the goal of eliminating exceptions from the base system,
+    this patch removes it by making a server_id_space mandatory.
+    
+    Issue #5245
+
+commit 7de2f57ef20ca0440bb71854c8cc967d8776992d
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Tue Jun 11 14:03:50 2024 +0200
+
+    Remove Xml_node::attribute accessors
+    
+    This patch removes the two 'Xml_node::attribute' accessors along with
+    the 'Nonexistent_attribute' exception.
+    
+    Issue #5245
+    Fixes #5246
+
+commit a52c2ce1417dfe771af53be937bb39415e7248dd
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Tue Jun 11 16:53:03 2024 +0200
+
+    Remove exceptions from TRACE session interface
+    
+    - Use attempt pattern for error handling
+    - Replace lookup of pointers by with_ pattern
+    - Remove virtual Trace::Session methods
+    - Merge client.h into connection.h
+    - Update coding style of test/trace
+    
+    Issue #5245
+
+commit 8a0689d8324b8c941256062671d154bfc037f12a
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Wed Jun 12 18:06:45 2024 +0200
+
+    Remove Pd_session::Invalid_signal_source exception
+    
+    While changing 'Pd_session::alloc_context', this patch also tightens the
+    type of the imprint argument.
+    
+    Issue #5245
+
+commit 0d7d60a1f4e5c7ded3008005a2a03483b96f657c
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Thu Jun 13 16:35:00 2024 +0200
+
+    Remove exceptions from Pd_session interface
+    
+    This patch replaces exceptions of the PD session RPC interface with
+    result types.
+    The change of the quota-transfer RPC functions required the adaptation
+    of base/quota_transfer.h and base/child.h.
+    The 'alloc_signal_source' method has been renamed to 'signal_source'
+    to avoid an exceedingly long name of the corresponding result type.
+    The Pd_session::map function takes a 'Virt_range' instead of basic-type
+    arguments.
+    The 'Signal_source_capability' alias for 'Capability<Signal_source>' has
+    been removed.
+    
+    Issue #5245
+
+commit 5181d08d05038124ba988fcff848f1ddb0015aea
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Sun Jun 16 15:08:56 2024 +0200
+
+    Remove exceptions from Rm_session interface
+    
+    Issue #5245
+
+commit 14d3c4cb5ebbf2a30c1cc3ec403d423709033328
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Mon Jun 17 15:25:28 2024 +0200
+
+    Remove Cpu_session::State_access_failed exception
+    
+    This patch removes the exception formerly thrown by 'Cpu_thread::state'
+    and turns the 'Thread_state' structure into a plain compound type w/o a
+    constructor.
+    
+    Issue #5245
+    Fixes #5250
+
+
+commit d866b6b053b474fb59c321d46995263d95eefacb
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Mon Jun 17 18:19:07 2024 +0200
+
+    Remove exceptions from Cpu_session interface
+    
+    The 'Thread_creation_failed' error is now reflected as
+    'Thread::Start_result' return value. This change also removes the
+    use of 'Invalid_thread' within core as this exception is an alias
+    of Cpu_session::Thread_creation_failed.
+    
+    Issue #5245
+
+commit 0105494223d61d7a3f2320bf97376fba16bbcc99
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Tue Jun 18 18:29:31 2024 +0200
+
+    Rework Region_map interface
+    
+    - Remove exceptions
+    - Use 'Attr' struct for attach arguments
+    - Let 'attach' return 'Range' instead of 'Local_addr'
+    - Renamed 'Region_map::State' to 'Region_map::Fault'
+    
+    Issue #5245
+    Fixes #5070
+
+commit 0288cffaee2eb45ae7d2b7b1ccde08756ee5866d
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Mon Jul 1 13:36:46 2024 +0200
+
+    Remove exceptions from 'Parent' interface
+    
+    Issue #5245
+
+commit 943dfa10e757059851e376cca950dc289e69cf31
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Mon Jul 1 16:29:20 2024 +0200
+
+    base/child.h: remove exceptions from process init
+    
+    This patch replaces the former Child::Process and
+    Child::Process::Loaded_executable classes by static functions that
+    return failure conditions as return values.
+    
+    Issue #5245
+
+commit ac42ade48c9176d002017f73b127a08747b19fa8
+Author: Martin Stein <martin.stein@genode-labs.com>
+Date:   Thu May 2 13:25:26 2024 +0200
+
+    nic_router: remove use of exception handling
+    
+    Remove the use of C++ exception as much as possible from the router as C++
+    exception handling can be resource intensive and can make code hard to
+    understand.
+    
+    This also removes the garbage collection that the router used to do when a
+    session ran out of quota. This is motivated by the fact that the garbage
+    collection was rather simple and removed connection states regardless of their
+    current state, thereby causing broken connections. The change is part of this
+    commit as the approach to integrating garbage collection relied strongly on
+    exception handling.
+    
+    The user story behind removing garbage collection: The router emergency-dropped
+    an established TCP connection (with NAPT) and on the next matching packet
+    re-created it with a different NAPT port, thereby breaking the connection. With
+    this commit, existing connections are prioritized over new ones during resource
+    exhaustion and the packets that attempt to create a new connection in such a
+    state are dropped with a warning in the log (verbose_packet_drop="yes").
+    
+    Note that the state resolves itself with time as existing connections time out
+    or are closed by peers.
+    
+    Ref #4729
+
+
+Tightened GUI-session interface
+===============================
+
+; @nfeske
+
+commit eca864175cc4e5e9a076321c8b2408cee9fb827e
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Thu May 30 14:23:41 2024 +0200
+
+    Remove Gui::Session::session_control
+    
+    This functionality has long been superseded by the window
+    manager/layouter.
+    
+    Fixes #5160
+
+commit b9594c2ae81ec692e943708695d061cefa587005
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Mon Jun 10 16:10:45 2024 +0200
+
+    gui_session,nitpicker,testnit: update coding style
+    
+    - Replace 'typedef' by 'using'
+    - Avoid plain pointers
+    - Import Genode namespace into Gui::
+    - Use enum class
+    - Use Attr struct for passing multiple attributes
+    - Turn testnit into proper Genode::Component
+      - Use distinct types for top-level and child views
+      - Remove dependency from timer
+      - Use util/geometry.h
+
+commit a70354cb184c2266f514cd9db4127774f0b32761
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Mon Jun 10 16:01:00 2024 +0200
+
+    Remove gems/wrapped_gui_session.h
+    
+    This utility is no longer used.
+
+commit bd44e8853d19ae5fc41c3f2416306f81e1ea344a
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Mon Jun 10 16:03:40 2024 +0200
+
+    gui_session.h: distinguish child-view creation
+    
+    This patch replaces the optional parent argument of the create_view
+    RPC function by a dedicated create_child_view RPC function. This
+    is a preparatory step of removing the notion of an invalid handle
+    as a special case.
+    
+    Issue #5242
+
+commit e42b34ae5cd68d3bff9b4fa5db6beb0cc38ef17f
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Mon Aug 5 13:47:22 2024 +0200
+
+    gui_session: remove C++ exceptions
+    
+    To maintain ease of use at the client side, the OUT_OF_RAM and
+    OUT_OF_CAPS results are handled at the 'Gui::Connection' now.
+    
+    Gui::Connection does not inherit the Gui::Session interface any longer,
+    which allows for the use of different result types.
+    
+    Issue #5242
+    Issue #5245
+
+commit 6b6f4c815e2db5d7bcb298bf9392abd9cf97fa10
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Tue Aug 6 12:28:15 2024 +0200
+
+    gui_session: simplify input/framebuffer aggregate
+    
+    - Rename framebuffer_session to framebuffer and
+      input_session to input as those RPC interfaces are no longer
+      meant to be used as stand-alone sessions.
+    
+    - Host Connection::input and Connection::framebuffer as public
+      members, thereby removing the use of pointers. This simplifies
+      the client-sized code. E.g., '_gui.input()->pending()' becomes
+      '_gui.input.pending()'.
+    
+    Issue #5242
+
+commit b6f0fb9b68b48643b1bc8f935426c247f0ad42ed
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Tue Aug 6 15:05:10 2024 +0200
+
+    gui_session: distinguish view-stacking operations
+    
+    This patch eliminates the use of invalid view handles as special
+    Session::Command arguments. The TO_FRONT and TO_BACK operations
+    interpreted as invalid neighbor as top-most or back-most position.
+    Those corner cases are now expressed via dedicated commands. The
+    new stacking commands are FRONT, BACK, FRONT_OF, and BEHIND_OF.
+    
+    While changing the command interface, the patch removes the OP_
+    prefix from the opcode values.
+    
+    Issue #5242
+
+commit 94210ec76336a69814bf1fb67e4905244ac9840d
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Tue Aug 6 16:44:04 2024 +0200
+
+    gui_session: split alloc_view_handle, view_handle
+    
+    Express the allocation of a new view handle by a dedicated RPC function
+    instead of passing an invalid view handle to the existing 'view_handle'
+    function.
+    
+    This eliminates the notion of invalid view handles at the GUI session
+    interface, clearing the way for managing view handles via an Id_space.
+    
+    Issue #5242
+
+commit 8687e0beb2b736900f5bc11851ccb1ef34dc33d4
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Wed Aug 7 17:07:43 2024 +0200
+
+    gui_session: replace Handle_registry by Id_space
+    
+    This patch reworks the view-ID handling within the nitpicker GUI server
+    and the window manager. The namespace of view handles are now represented
+    as an Id_space. In constrast to the former "handles", which could be
+    invalid, IDs cannot be semantically overloaded with anything other than
+    an actual view reference. There is no notion of an invalid handle.
+    IDs are like C++ references (which cannot be a nullptr).
+    
+    This change requires the code to be more explicit. E.g., the stacking of
+    a few at the front-most position can no longer be expressed by passing
+    an invalid handle as neighbor.
+    
+    Issue #5242
+
+commit c39281de819edd9e181c2179fcc5bc61e61096a4
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Thu Aug 8 17:38:36 2024 +0200
+
+    gui_session: rename View_handle to View_id
+    
+    The former Gui::Session::View_handle is not called Gui::View_id.
+    
+    Issue #5242
+
+commit f53bc1982e73e601dec4d34bf0bf45face082579
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Fri Aug 9 10:59:49 2024 +0200
+
+    gui_session: definition of Gui::Title
+    
+    This commit allows all GUI clients and servers to talk about the same
+    type.
+    
+    Issue #5242
+
+commit 5887df73ed2f2b55abd88cbe7d5d8aaca5a84027
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Fri Aug 9 14:27:26 2024 +0200
+
+    gui_session: manage view ID at the client side
+    
+    This patch moves the management of view IDs from the server to the
+    client side. The former 'create_view' and 'create_child_view'
+    operations do no longer return a view ID but take a view ID as
+    argument. While changing those operations, this patch takes the
+    opportunity to allow for initial view attributes. Combined, those
+    changes simplify the window manager while accommodating typical
+    client use cases with less code.
+    
+    To ease the client-side ID management, the Gui::Connection hosts
+    a 'view_ids' ID space for optional use. E.g., the new 'Top_level_view'
+    class uses this ID space for ID allocation. This class accommodates the
+    most typical use case of opening a single window.
+    
+    The 'alloc_view_id' RPC function is no longer needed.
+    
+    Issue #5242
+
+commit 47271c31d93bf455f81d6ad8969ad6259901d69c
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Wed Aug 14 14:43:37 2024 +0200
+
+    gui_session: rename 'view_id' to 'associate'
+    
+    The view ID is specified as first argument to be consistent with 'view'
+    and 'child_view'.
+    
+    Issue #5242
+
+commit 18029deebf5c8c57b83a592674a7c0f662336362
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Wed Aug 14 15:14:33 2024 +0200
+
+    gui_session: allow return of View_capbility_error
+    
+    This interface change gives GUI servers the freedom to allocate view
+    capabilities at the time of request instead of the creation time of the
+    view. This is useful because view capabilities are rarely needed.
+    
+    Issue #5242
+
+
+Device drivers
+##############
+
+Linux device-driver environment (DDE)
+=====================================
+
+; @chelmuth, @ssumpf, @cnuke, @alex-ab
+
+commit 193b19fb78bf0d7963cf6febbba28418c9322980
+Author: Christian Helmuth <christian.helmuth@genode-labs.com>
+Date:   Fri May 31 15:45:01 2024 +0200
+
+    lx_emul: support compound pages
+    
+    Issue #5236
+
+commit 8dcb0eeb2ea407e8d669d3929952b48dce4e021b
+Author: Christian Helmuth <christian.helmuth@genode-labs.com>
+Date:   Fri May 31 15:46:21 2024 +0200
+
+    lx_emul: enable SLUB allocator (pc, virt)
+    
+    The use of the Linux-internal SLUB allocator is supported by lx_emul and
+    drivers may now decide between the Linux implementation or our emulation
+    of kmem_cache. Drivers for pc and virt already use SLUB, while other
+    drivers still use the emulation and may be adapted step-by-step incl.
+    the testing on the devices.
+    
+    Fixes #5236
+
+commit d709d51295ef06f7ebb4b7419eecfff297813ab8
+Author: Sebastian Sumpf <sebastian.sumpf@genode-labs.com>
+Date:   Wed Jun 26 20:27:09 2024 +0200
+
+    dde_linux: move linux.port to legacy_linux.port
+    
+    This is prerequisite for the Linux update. All dependencies relying on
+    the 'linux' have been adjusted to use 'legacy_linux'.
+    
+    Issue #5264
+
+commit 9df78fa650b33421ab1d5d133bada4255e3024e0
+Author: Sebastian Sumpf <sebastian.sumpf@genode-labs.com>
+Date:   Thu Jun 27 09:25:19 2024 +0200
+
+    dde_linux: Linux 6.6.47 port
+    
+    Issue #5264
+
+commit 163e2dba7a59b38cb86b94008af4fd4f37ab9979
+Author: Sebastian Sumpf <sebastian.sumpf@genode-labs.com>
+Date:   Fri Jun 28 10:29:43 2024 +0200
+
+    virt_linux: update to 6.6.47
+    
+    Issue #5264
+
+commit a903e99263090986f4876029ba33235becb147f9
+Author: Sebastian Sumpf <sebastian.sumpf@genode-labs.com>
+Date:   Thu Jun 27 11:48:24 2024 +0200
+
+    lx_emul: adjust to Linux 6.6.47
+    
+    Issue #5264
+
+commit 893c8508b20e9fe4d1afde4cf8f4ba99e6b0678f
+Author: Sebastian Sumpf <sebastian.sumpf@genode-labs.com>
+Date:   Fri Jun 28 10:30:24 2024 +0200
+
+    lxip: update to 6.6.47
+    
+    Now, we schedule before unblocking the rx_task. This is done in order to
+    execute a potentially ready ksoftirqd before unblocking the rx_task,
+    which in turn may execute soft-interrupt handlers through bottom half
+    code leading to double lock attempts of the socket spinlock.
+    
+    Issue #5264
+
+commit a702f74e5514bf7d3eab5bd553baf84b1ca1e631
+Author: Sebastian Sumpf <sebastian.sumpf@genode-labs.com>
+Date:   Mon Jul 1 11:18:33 2024 +0200
+
+    usb_hid: update to 6.6.47
+    
+    Issue #5264
+
+commit 6f3aa54963cc7320c740bdab42ec5abe84bab996
+Author: Sebastian Sumpf <sebastian.sumpf@genode-labs.com>
+Date:   Mon Jul 1 12:45:15 2024 +0200
+
+    usb_net: update to 6.6.47
+    
+    Issue #5264
+
+commit cf2b84d6006cee283cd8238ddaaa0a1ef9106ff3
+Author: Sebastian Sumpf <sebastian.sumpf@genode-labs.com>
+Date:   Mon Jul 1 17:02:49 2024 +0200
+
+    test/driver_time: update to 6.6.47
+    
+    Issue #5264
+
+commit 7b68262ea7c679b5d0f55d6d9ca616ae3240d6d4
+Author: Sebastian Sumpf <sebastian.sumpf@genode-labs.com>
+Date:   Mon Jul 1 17:24:06 2024 +0200
+
+    wireguard: update to 6.6.47
+    
+    Issue #5264
+
+commit c876cdaf46adc9c0e44e2fddb438d7763173d7f3
+Author: Sebastian Sumpf <sebastian.sumpf@genode-labs.com>
+Date:   Wed Jul 31 15:18:57 2024 +0200
+
+    pc: use linux 6.6.47
+    
+    Issue #5264
+
+commit 38650b965c04443b612a1c7302773b7d4a5971ed
+Author: Christian Helmuth <christian.helmuth@genode-labs.com>
+Date:   Fri Aug 2 14:02:06 2024 +0200
+
+    pc_nic: update to 6.6.47
+    
+    Issue #5264
+
+commit 6a63b6c735e7dd6ac8361bb6efd447121031604c
+Author: Sebastian Sumpf <sebastian.sumpf@genode-labs.com>
+Date:   Fri Aug 2 14:36:11 2024 +0200
+
+    pc_usb_host: update to 6.6.47
+    
+    Issue #5264
+
+commit 61ea87b337dc9dd219212fcf16cfaa7433eb546b
+Author: Josef Söntgen <josef.soentgen@genode-labs.com>
+Date:   Thu Aug 1 18:58:53 2024 +0200
+
+    pc_wifi: update to Linux 6.6.47
+    
+    Issue #5264
+
+commit 7bce3192cae2084ff92373cae39424df98a16483
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Tue Aug 6 13:15:32 2024 +0200
+
+    intel/display: update to 6.6.47
+    
+    Issue #5264
+
+
+Platform driver
+===============
+
+; @alex-ab
+
+commit 0c97c13562be304e42524f76f3691a498ba5d7e0
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Thu Jun 6 10:41:49 2024 +0200
+
+    pci_decode: report pci bridge configuration
+    
+    as setup by firmware after boot. The information will/can be used by the
+    platform driver to re-program bridges after a system suspend/resume cycle.
+    
+    Issue #5241
+
+commit 3216733a059101fd6aaa35fb86d661a54faa7065
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Thu Jun 6 11:08:39 2024 +0200
+
+    driver/platform: remember bridge configuration
+    
+    by evaluating the pci decode's 'devices' ROM and storing the information in
+    the pci config list model representation.
+    
+    Issue #5241
+
+commit 8b0a16d750b33cd325182ff3e1f105917f8d6164
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Thu Jun 6 11:40:01 2024 +0200
+
+    driver/platform: re-configure bridges on resume
+    
+    Fixes #5241
+
+
+Improvements for NXP's i.MX family
+==================================
+
+; @skalk
+
+commit 4a5c073ed849ec6a39e841a36083a338cfa23f8c
+Author: Josef Söntgen <josef.soentgen@genode-labs.com>
+Date:   Tue May 21 13:20:56 2024 +0200
+
+    nic/fec: use linux-imx 6.1.20
+    
+    This commit introduces an updated driver that uses the current
+    linux-imx (6.1.20) version.
+
+commit 2f33a1d428ea097038c1e4a4e4d4cee002926cab
+Author: Josef Söntgen <josef.soentgen@genode-labs.com>
+Date:   Mon May 27 14:02:10 2024 +0200
+
+    framebuffer/imx8mq: use linux-imx 6.1.20
+    
+    This commit introduces an updated driver that uses the current
+    linux-imx (6.1.20) version.
+    
+    It also contains a unified test run-script that works on both the
+    EVK as well as the MNT Reform2. The HDMI port on the later device
+    can be exercised by changing the device-tree route to
+    'imx8mq_fb-mnt_reform2-hdmi.dtb'.
+
+commit 5b4fc047fa4ac6541192158c156e09eb5c570c14
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Mon Jun 10 16:28:40 2024 +0200
+
+    sd_card/imx8mq: use linux-imx 6.1.20
+    
+    This commit introduces an updated driver that uses the current
+    linux-imx (6.1.20) version.
+
+commit b021cd0813e1be3377be3f25bdc028e83f35f23a
+Author: Josef Söntgen <josef.soentgen@genode-labs.com>
+Date:   Mon Jun 3 15:21:52 2024 +0200
+
+    Remove old DDE Linux MNT Reform 2 snippets
+
+commit a2f5e04f3e2dc7ee33837551818c0974965e6ddf
+Author: Alice Domage <alice.domage@gapfruit.com>
+Date:   Tue Feb 27 15:28:49 2024 +0100
+
+    imx8mp_iot_gate: add base-hw kernel support
+
+commit 5d51d49145326c2605298e57686b3f2814d5110a
+Author: Alice Domage <alice.domage@gapfruit.com>
+Date:   Thu Mar 14 17:02:50 2024 +0100
+
+    add: imx8mp_platform
+    
+    The driver is duplicated from imx8mq and adapted for imx8mp
+
+commit accedf54777754068874c6d5079e3e876b893710
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Wed May 22 15:51:52 2024 +0200
+
+    imx8m*_platform: unification & disable clocks
+    
+    * Unify System-Reset-Controller, General-Power-Controller, and
+      common parts of the Central-Clock-Module in between
+      i.MX 8M Quad & 8M Plus SoC
+    * Fix regression: root clocks, gates and plls not necessary get
+      disabled by default
+
+commit b58d781660697a1fa96784c111f5cc4d829a5eb4
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Mon May 27 16:02:17 2024 +0200
+
+    imx8mp_platform: correct set/unset of PLLs
+    
+    The enable-output-gate bits of the PLL 1416 and 1443 are not equal.
+    Implement the correct protocol to enable/disable the PLL, and to ensure
+    that it isn't bypassed.
+
+commit 56b1574e041a028b4265252600b8f519b723c9d7
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Thu Jun 6 15:33:57 2024 +0200
+
+    imx8mp_platform: setup IOMUX controller
+
+commit 1a52e69ca6afea4bc8e50e7bb23c29334f4326ac
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Thu Jun 6 15:34:49 2024 +0200
+
+    simple EEPROM over I2C reader for i.MX 8M IOT gate
+
+commit b0e230d042fcfba19fb5c7ba6235c9725bcc178c
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Thu Jun 6 15:36:36 2024 +0200
+
+    stmmac_nic: initial support for imx8mp_iot_gate
+
+commit b739035f4ab3a9765134d019eab7ad7f006b684a
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Tue Jun 11 14:40:06 2024 +0200
+
+    fec_nic: add support for i.MX 8M IOT gateway
+
+commit fdfe9f8ca1363d8b4e7b0730e700c268431d2325
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Tue Jun 11 15:20:50 2024 +0200
+
+    imx8mq_sd_card: add support for i.MX 8M IOT gateway
+
+commit 49d6b6272a6db36958f207a670653200640077c9
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Mon Jun 17 12:49:22 2024 +0200
+
+    imx8mp_platform: implement system reset mechanism
+    
+    - Consume system state ROM analogue to PC platform driver
+    - Use first watchdog timer as mechanism to reset system
+    - Keep first and second watchdog timer's clocks alive,
+      the second one is intended to be used by the secure world (ATF)
+
+commit 501709d5f4a440be01594b7f583232ce50c6693b
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Mon Jun 17 13:54:39 2024 +0200
+
+    imx8mp_iot_gate: add GPIO controllers to devices
+    
+    - Add missing gpio2, gpio3, gpio4, and gpio5 to board devices ROM
+
+commit 133d92a0caa64a0028f4ba237dc84d92fc752324
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Tue Jun 18 13:29:55 2024 +0200
+
+    imx8mp_iot_gate: add ECSPI device to board ROM
+    
+    - the IOT gateway uses only the second ECSPI from NXP's i.MX 8M Plus SoC
+
+commit 6306d8f00d2aedda5d8032ee24e30c3faf590eb2
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Wed Jun 19 11:41:38 2024 +0200
+
+    imx7d_sabre: move all board specifics to imx repo
+    
+    Ref genodelabs/genode#5252
+
+commit cd8fb1ebe0afd39b4fa3d8297fc09e41d9129c91
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Wed Jun 19 13:43:48 2024 +0200
+
+    tz_vmm: move trustzone example into imx repo
+    
+    Ref genodelabs/genode#5252
+
+commit 1eadf43f32391ce3b249bc7c60458a4bab90dd9a
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Wed Jun 19 13:56:51 2024 +0200
+
+    synaptics_dsx_touch: move driver to imx repository
+    
+    Ref genodelabs/genode#5252
+
+commit ea5c632a4c8b61bc2c2b0cbf422678dd11b18190
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Wed Jun 19 14:03:17 2024 +0200
+
+    imx8q_evk_i2c: move driver to imx repository
+    
+    Ref genodelabs/genode#5252
+
+commit 32984ab438c67f0e8e319ddf7a3bfba6d3cde1aa
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Wed Jun 19 14:52:12 2024 +0200
+
+    imx*_sd_card: move drivers to imx repository
+    
+    Ref genodelabs/genode#5252
+
+commit b844240e89f6a574fe6716850d45232101c853ee
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Wed Jun 19 16:48:59 2024 +0200
+
+    move remaining imx53 related files to imx repo
+    
+    Ref genodelabs/genode#5252
+
+commit 2b3fb1c72da3ce428523555447ea90256591d8dd
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Thu Jun 20 14:17:02 2024 +0200
+
+    hw: adapt to removal of cortex* directories
+    
+    Ref genodelabs/genode#5253
+
+commit a8d02b398d71d69d1a3ee7a715ce3f22b9f76ae6
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Tue Jun 25 12:02:23 2024 +0200
+
+    add pin driver with Pin_state, Pin_control, and IRQ
+    
+    - To replace the legacy GPIO session interface with the
+      newer Pin_state, Pin_control and IRQ session
+
+commit 0b7f89c50eaf24862d397aad2e8506d88d11f4e2
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Tue Jun 25 12:06:07 2024 +0200
+
+    adapt components and run-scripts to use pin driver
+
+commit 745313f056676ddebbd9c364dd9dfc123c53ca5b
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Wed Jun 26 15:49:34 2024 +0200
+
+    timer: add EPIT 2 standalone timer
+    
+    Based upon new Timer schema of genode#5138 and derived from
+    from former epit timer of Genode base repository, which got replaced by
+    this timer.
+
+
+Libraries and applications
+##########################
+
+Qt6 application framework
+=========================
+
+; @cproc
+
+commit d0c35b9d2f798634af23111657d3918f8d45f7fb
+Author: Christian Prochaska <christian.prochaska@genode-labs.com>
+Date:   Mon Aug 19 11:17:52 2024 +0200
+
+    libports: add Qt6
+    
+    Fixes #5325
+
+
+Mesa version 24.0.8
+===================
+
+; @ssumpf
+
+commit 138f5fe61a043fb786975b969adbdd1a47ea2d37
+Author: Sebastian Sumpf <sebastian.sumpf@genode-labs.com>
+Date:   Thu May 30 11:37:07 2024 +0200
+
+    mesa: update to version 24.0.8
+    
+    issue #5224
+
+commit af8b13e88cfbe6331e8383dea062ed095085f3ee
+Author: Sebastian Sumpf <sebastian.sumpf@genode-labs.com>
+Date:   Fri May 31 20:56:41 2024 +0200
+
+    mesa: zero buffer objects upon release
+    
+    Freshly allocated BOs from libdrm have to be zeroed. Since the libdrm/iris
+    caches VRAM allocations, we don't want to attach/detach parts of dataspaces at
+    every allocation. Some objects are used long (through caching in the iris
+    Gallium driver). Therefore, zero object on release where the region might
+    already be mapped.
+    
+    issue #5224
+
+commit 7c32af9d99741be2cb9d5fb29287b121e2063ebb
+Author: Sebastian Sumpf <sebastian.sumpf@genode-labs.com>
+Date:   Fri May 31 21:00:32 2024 +0200
+
+    libdrm: use pthread_mutex instead of Genode's mutex
+    
+    Use pthread_mutex because the EP can block while the thread executing a
+    batch buffer and waiting for a completion signal in the VFS-GPU plugin
+    can still make progress.
+    
+    Also return to coarser locking until we support Sync-Object Wait
+    semantics.
+    
+    issue #5224
+
+commit c85e53cb2a6db308e8827c3c36fdb0d90e85a481
+Author: Sebastian Sumpf <sebastian.sumpf@genode-labs.com>
+Date:   Fri May 31 21:24:21 2024 +0200
+
+    mesa/libdrm: move fd's out of libc's range
+    
+    Move hard coded fd's out of the libc range in order to avoid possible
+    hard to find conflicts.
+    
+    issue #5224
+
+commit ac4aaa208f2b746358c2f8ba42f730cfb4d846e1
+Author: Sebastian Sumpf <sebastian.sumpf@genode-labs.com>
+Date:   Mon Jun 3 09:23:48 2024 +0200
+
+    libdrm/iris: check for more than 1 sync object
+    
+    In '_generic_syncobj_wait' check if sync-objetcs exist, return error
+    otherwise. Do not wait because the execution model is synchroneous,
+    meaning no batch buffers are in execution when this function is called
+    (_drm_mutex).
+    
+    issue #5224
+
+
+Platforms
+#########
+
+Execution on bare hardware (base-hw)
+====================================
+
+; @skalk
+
+commit 391a919a2dfb62769f21463072441284e328f15f
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Wed Jul 3 14:44:15 2024 +0200
+
+    hw: move stack into cpu local mem area
+    
+    Ref genodelabs/genode#5310
+
+commit 080b3f0f1ef22a5b8b233ffa1624b5e460d6ecae
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Thu Jul 4 14:50:14 2024 +0200
+
+    hw: move cpu kernel object into cpu local area
+    
+    Fix genodelabs/genode#5310
+
+NOVA microhypervisor
+====================
+
+; @alex-ab
+
+commit 641ff65a2ec0691df8904dd2e85b887e6d818258
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Thu Jul 25 11:42:37 2024 +0200
+
+    nova: support to run on e-core only SOCs
+    
+    The code to group together SMT threads of one CPU and to move P-Core to
+    the beginning of Genode's affinity-space, did not consider to run on
+    SOCs with only E-Core CPUs.
+    
+    Re-structure the code to support e-Core only SOCs.
+    
+    Additionally, provide a fallback mapping in case of CPU id reordering problems.
+    Track faulty re-mapping and delay the reporting until core_log is initialized,
+    so that the warnings is visible to consumers, e.g. on Sculpt OS.
+    
+    Related to discussion of #5304
+    
+    Fixes #5307
+
+commit 6aeb5c03749e0ba4d3c8f58304f207f7acdbc249
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Mon Jul 22 10:20:44 2024 +0200
+
+    nova: enable FPU AVX support
+    
+    Add extended FPU state detection and handling (via xsave and friends) to the
+    kernel, which has to store/load more FPU state (~512 -> 2k++) during context
+    switching of threads. Additional the referenced nova branch contains various
+    optimization during VM destruction and cross core IPC resource caching.
+    
+    This FPU work is based upon upstream NOVA kernel and Hedron commits.
+    
+    Issue #5314
+    Fixes #3914
+
+commit 1b8a6c6176c2ba46876591ca13bd3a588b561e18
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Fri Jul 26 19:05:33 2024 +0200
+
+    seoul: enable AVX support
+    
+    Add preliminary support. Tested on Sculpt 24.04 with nova
+    kernel on AMD and Intel in a Debian 12 VM.
+    
+    genodelabs/genode#5314
+
+
+Build system and tools
+######################
+
+Improved reproducibility
+========================
+
+; @ssumpf
+
+commit ddcfe51ef5939b842d2d1d10280d6c698890b780
+Author: Sebastian Sumpf <sebastian.sumpf@genode-labs.com>
+Date:   Tue Jun 25 10:22:35 2024 +0200
+
+    base/global.mk: TAR_OPT
+    
+    Add TAR_OPT to global.mk that defaults to user and group 1, while
+    setting mtime to 0 for tar archives. This can be used in components to
+    produce consistent (reproducible) tar archives.
+    
+    issue #5255
+
+commit 458cb25d6cd4f97c4c5fe114dccca8e8736ac447
+Author: Sebastian Sumpf <sebastian.sumpf@genode-labs.com>
+Date:   Tue Jun 25 10:24:45 2024 +0200
+
+    qt5: use TAR_OPT for archives
+    
+    This commit produces consistent tar archives.
+    
+    issue #5255
+
+commit cfe27e07de383fb5efd04f83d2a56615821dbe61
+Author: Sebastian Sumpf <sebastian.sumpf@genode-labs.com>
+Date:   Tue Jun 25 10:25:56 2024 +0200
+
+    themed_decorator: use TAR_OPT for archive
+    
+    This commit produces a consistent tar archive.
+    
+    issue #5255
+
+commit eb656bf40c2af63fcace0a19584067ad0f8ee760
+Author: Sebastian Sumpf <sebastian.sumpf@genode-labs.com>
+Date:   Tue Jun 25 10:27:12 2024 +0200
+
+    libcrypto: add support for SOURCE_DATE_EPOCH
+    
+    Use SOURCE_DATE_EPOCH for build date if present.
+    
+    issue #5255
+
+commit 190d49527c30482e79f0a90abc684b53ec948f6e
+Author: Sebastian Sumpf <sebastian.sumpf@genode-labs.com>
+Date:   Tue Jun 25 10:28:33 2024 +0200
+
+    rump: add reproducible option to newvers.sh
+    
+    issue #5255
+
+
+Goa SDK
+=======
+
+; @jschlatow
+
+User-level debugging
+~~~~~~~~~~~~~~~~~~~~
+
+commit aeb42b0983143e6fe0a01f7f5316612709da1a9d
+Author: Johannes Schlatow <johannes.schlatow@genode-labs.com>
+Date:   Thu Jul 4 08:07:06 2024 +0200
+
+    sculpt: add debug monitor to goa testbed
+    
+    This also adds policies and domains to the nic router config for gdb and
+    vnc.
+    
+    Fixes #5293
+
+commit e01c7c74a4c1e754e6f4c1bbbc4005ae4e83936e
+Author: Johannes Schlatow <johannes.schlatow@genode-labs.com>
+Date:   Wed Jun 26 13:17:29 2024 +0200
+
+    depot: add support for debug info files
+    
+    genodelabs/genode#5015
+    genodelabs/goa#95
+
+commit a4474996f572f4457e06600241f4f9567ceb4138
+Author: Johannes Schlatow <johannes.schlatow@genode-labs.com>
+Date:   Wed Jun 26 14:12:36 2024 +0200
+
+    run: download dbg archives
+    
+    If the `--debug` option is provided, Goa will try downloading debug
+    archives for the required binary archive. The debug info files will be
+    linked into the .debug subdirectory of the run directory. Failure to
+    download a debug archive is not critical.
+    
+    genodelabs/goa#95
+
+commit 78c9aa4a6c5275e06a927105c7f8b6632fe65a65
+Author: Johannes Schlatow <johannes.schlatow@genode-labs.com>
+Date:   Wed Jun 26 16:17:02 2024 +0200
+
+    run/linux: create <project-name>.gdb file
+    
+    The <project-name>.gdb can be used as a gdb command file when attaching
+    to a Linux process:
+    
+    <project-name>$ gdb --pid <pid> --command ./var/<project-name>.gdb
+    
+    genodelabs/goa#95
+
+commit 1a935298221ff87ff7941058b9f0a93180b0c7dd
+Author: Johannes Schlatow <johannes.schlatow@genode-labs.com>
+Date:   Thu Jun 27 10:24:32 2024 +0200
+
+    build: create debug info files
+    
+    If a binary artifact contains debug info, a debug info file is created
+    and linked into dbg_dir. The original binary is stripped from debug
+    symbols and a .gnu_debuglink section is added.
+    
+    genodelabs/goa#95
+
+commit 19391c82234e17d6e77c5caf3302c04ca70728f7
+Author: Johannes Schlatow <johannes.schlatow@genode-labs.com>
+Date:   Thu Jun 27 14:12:04 2024 +0200
+
+    export/publish: create dbg archives
+    
+    When provided with the --debug argument, Goa also exports and publishes
+    dbg archives.
+    
+    genodelabs/goa#95
+
+commit c6ee308cd02ad7cb7dbd04356891be0b3b70b293
+Author: Johannes Schlatow <johannes.schlatow@genode-labs.com>
+Date:   Thu Jun 27 14:55:55 2024 +0200
+
+    build: add --with-backtrace option
+    
+    This option sets -fno-omit-frame-pointer in order to enable backtrace
+    support.
+    
+    genodelabs/goa#95
+
+commit b0df926a78147577ded48405c3481b229f568cdb
+Author: Johannes Schlatow <johannes.schlatow@genode-labs.com>
+Date:   Mon Jul 15 16:33:00 2024 +0200
+
+    run/sculpt: add target-sculpt-port-gdb option
+    
+    genodelabs/goa#95
+
+commit 2b82af0425f1f5e91d5d180258e8a3aaa1674e11
+Author: Johannes Schlatow <johannes.schlatow@genode-labs.com>
+Date:   Mon Jul 15 16:36:27 2024 +0200
+
+    run: add target-specific *_route procs
+    
+    For implementing debug monitor support, a run target may choose to route
+    PD/CPU services to <local\> instead of <parent/>. Introducing the
+    target-specific procs `pd_route`, `cpu_route`, `log_route` and
+    `rom_route` generalises the target-specific customisation of service
+    routes.
+    
+    genodelabs/goa#95
+
+commit ceeba717ac831db1496732edbf6ad169365631b9
+Author: Johannes Schlatow <johannes.schlatow@genode-labs.com>
+Date:   Mon Jul 15 16:39:16 2024 +0200
+
+    run/sculpt: add <monitor> node if debug is enabled
+    
+    genodelabs/goa#95
+
+commit 61e4570574c3c0d4e81db265e9eda44ceeac18e6
+Author: Johannes Schlatow <johannes.schlatow@genode-labs.com>
+Date:   Mon Jul 15 16:39:41 2024 +0200
+
+    goarc: add monitor and sandbox archives
+    
+    genodelabs/goa#95
+
+commit 3027732045036258035d524203722df6b688fdca
+Author: Johannes Schlatow <johannes.schlatow@genode-labs.com>
+Date:   Mon Jul 15 17:22:33 2024 +0200
+
+    run/sculpt: add target-opt-sculpt-kernel option
+    
+    genodelabs/goa#95
+
+commit 5a4f06b2aad9601430dfd2ca23ef0a54c5c0bcb9
+Author: Johannes Schlatow <johannes.schlatow@genode-labs.com>
+Date:   Fri Jul 26 14:53:13 2024 +0200
+
+    add backtrace utility
+    
+    genodelabs/goa#95
+
+commit 09e88dd61901e8b8b5bd8af47da1a344886c1a6e
+Author: Johannes Schlatow <johannes.schlatow@genode-labs.com>
+Date:   Fri Jul 26 17:09:39 2024 +0200
+
+    backtrace: adapt utility for goa
+    
+    - support using log file as stdin
+    - use built-in lookup policy for debug info files
+    
+    genodelabs/genode#95
+
+commit 69a3f47c6fcf9ce3d89f5c5d67eb29d4bb2322b2
+Author: Johannes Schlatow <johannes.schlatow@genode-labs.com>
+Date:   Fri Jul 26 17:11:57 2024 +0200
+
+    run: store output in .log file
+    
+    genodelabs/genode#95
+
+commit 73d7d26b826c2096b1be57b265b405dd7217a555
+Author: Johannes Schlatow <johannes.schlatow@genode-labs.com>
+Date:   Fri Jul 26 17:13:39 2024 +0200
+
+    add backtrace command
+    
+    genodelabs/genode#95
+
+
+Meson build system
+~~~~~~~~~~~~~~~~~~
+
+; @ssumpf
+
+commit 4b583dc96e614112a7ac3135f5d20a858c77ca27
+Author: Sebastian Sumpf <sebastian.sumpf@genode-labs.com>
+Date:   Thu May 9 18:58:06 2024 +0200
+
+    meson: initial support for the Meson build system
+    
+    https://mesonbuild.com
+    
+    Meson is integrated identically to the other build systems into Goa.
+    Currently there is support for x86_64 and executables only. arm_v8a and
+    shared library support will follow.
+    
+    * meson.tcl: handles configuration and the building step using Ninja
+    * updated documentation
+    * added 'hello_meson' example
+    * added 'hello_meson' to test.expect
+    
+    genodelabs/goa#94
+
+commit 2fd5e9ba4c1e5d66f3fcf54dec5c0c5358f52a73
+Author: Sebastian Sumpf <sebastian.sumpf@genode-labs.com>
+Date:   Tue Jun 25 08:07:35 2024 +0200
+
+    meson: log pkg-config status of abi dir
+    
+    This commit adds a pkg-config.tcl scripts that searches for required
+    modules in abi dir. Because stdout and stderr are intercepted by
+    Meson, we create a log file that is used by Goa/Meson to output
+    information if a module is present or not. The script will return
+    success in any case because sometimes libraries searched by Meson have
+    different abi names on Genode (e.g., libjpeg vs. jpeg api).
+    
+    Sample output:
+    
+    ! [package] pkg-config status:
+    ! [package]   libjpeg found: NO
+    ! [package]   libpng found: YES
+    
+    genodelabs/goa#94
+
+
+Rust cargo
+~~~~~~~~~~
+
+; @atopia
+
+commit 090c810745e2a5e5e20866b9296809813fea0489
+Author: Benjamin Lamowski <benjamin.lamowski@genode-labs.com>
+Date:   Thu Aug 15 18:32:04 2024 +0200
+
+    cargo: build Rust projects with a custom profile
+    
+    The Rust compiler profile for x86_64-unknown-freebsd assumes that thread
+    local storage (TLS) is available, and tries the TLS area via the FS
+    segment. Since Genode does not provide a TLS area to threads, this will
+    result in a nullptr dereference, which showed es segfaults in our test
+    programs from Rust 1.77 onward.
+    
+    Other than implementing x86_64 TLS support throughout our supported
+    kernels, this cannot be resolved within the premise of using a
+    precompiled stable Rust binary target for x86_64-unknown-freebsd.
+    
+    Instead, a paradigmn shift is needed: we now compile our Rust software -
+    including invoked parts of the standard library - from source, which
+    requires a nightly Rust toolchain.
+    
+    Fixes #101
+
