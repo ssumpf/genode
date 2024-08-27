@@ -929,68 +929,10 @@ Date:   Mon Aug 19 11:17:52 2024 +0200
 Mesa version 24.0.8
 ===================
 
-; @ssumpf
-
-commit 138f5fe61a043fb786975b969adbdd1a47ea2d37
-Author: Sebastian Sumpf <sebastian.sumpf@genode-labs.com>
-Date:   Thu May 30 11:37:07 2024 +0200
-
-    mesa: update to version 24.0.8
-    
-    issue #5224
-
-commit af8b13e88cfbe6331e8383dea062ed095085f3ee
-Author: Sebastian Sumpf <sebastian.sumpf@genode-labs.com>
-Date:   Fri May 31 20:56:41 2024 +0200
-
-    mesa: zero buffer objects upon release
-    
-    Freshly allocated BOs from libdrm have to be zeroed. Since the libdrm/iris
-    caches VRAM allocations, we don't want to attach/detach parts of dataspaces at
-    every allocation. Some objects are used long (through caching in the iris
-    Gallium driver). Therefore, zero object on release where the region might
-    already be mapped.
-    
-    issue #5224
-
-commit 7c32af9d99741be2cb9d5fb29287b121e2063ebb
-Author: Sebastian Sumpf <sebastian.sumpf@genode-labs.com>
-Date:   Fri May 31 21:00:32 2024 +0200
-
-    libdrm: use pthread_mutex instead of Genode's mutex
-    
-    Use pthread_mutex because the EP can block while the thread executing a
-    batch buffer and waiting for a completion signal in the VFS-GPU plugin
-    can still make progress.
-    
-    Also return to coarser locking until we support Sync-Object Wait
-    semantics.
-    
-    issue #5224
-
-commit c85e53cb2a6db308e8827c3c36fdb0d90e85a481
-Author: Sebastian Sumpf <sebastian.sumpf@genode-labs.com>
-Date:   Fri May 31 21:24:21 2024 +0200
-
-    mesa/libdrm: move fd's out of libc's range
-    
-    Move hard coded fd's out of the libc range in order to avoid possible
-    hard to find conflicts.
-    
-    issue #5224
-
-commit ac4aaa208f2b746358c2f8ba42f730cfb4d846e1
-Author: Sebastian Sumpf <sebastian.sumpf@genode-labs.com>
-Date:   Mon Jun 3 09:23:48 2024 +0200
-
-    libdrm/iris: check for more than 1 sync object
-    
-    In '_generic_syncobj_wait' check if sync-objetcs exist, return error
-    otherwise. Do not wait because the execution model is synchroneous,
-    meaning no batch buffers are in execution when this function is called
-    (_drm_mutex).
-    
-    issue #5224
+With release 24.05 we updated Mesa to major version 24. During the last few
+month we improved and fixed some bugs (memory allocations, better
+synchronization) for Intel's Iris driver and as a side effect updated Mesa to
+version 24.0.8.
 
 
 Platforms
@@ -1076,57 +1018,16 @@ Build system and tools
 Improved reproducibility
 ========================
 
-; @ssumpf
+The demand for reproducible builds has been increasing during the last few
+years. The main source that makes builds unreproducible are timestamps. On
+Genode especially components that produce TAR files suffered from this
+limitation, since the date of the archived data was set to the time of
+archiving. To avoid this issue we introduce an overwriteable global TAR_OPT in
+Genode's build system that sets the date of the archived files to the date of
+the epoch and the user/group to one. As a starting point we added the TAR_OPT to
+the Qt5-build process while other targets will incrementally follow.
 
-commit ddcfe51ef5939b842d2d1d10280d6c698890b780
-Author: Sebastian Sumpf <sebastian.sumpf@genode-labs.com>
-Date:   Tue Jun 25 10:22:35 2024 +0200
-
-    base/global.mk: TAR_OPT
-    
-    Add TAR_OPT to global.mk that defaults to user and group 1, while
-    setting mtime to 0 for tar archives. This can be used in components to
-    produce consistent (reproducible) tar archives.
-    
-    issue #5255
-
-commit 458cb25d6cd4f97c4c5fe114dccca8e8736ac447
-Author: Sebastian Sumpf <sebastian.sumpf@genode-labs.com>
-Date:   Tue Jun 25 10:24:45 2024 +0200
-
-    qt5: use TAR_OPT for archives
-    
-    This commit produces consistent tar archives.
-    
-    issue #5255
-
-commit cfe27e07de383fb5efd04f83d2a56615821dbe61
-Author: Sebastian Sumpf <sebastian.sumpf@genode-labs.com>
-Date:   Tue Jun 25 10:25:56 2024 +0200
-
-    themed_decorator: use TAR_OPT for archive
-    
-    This commit produces a consistent tar archive.
-    
-    issue #5255
-
-commit eb656bf40c2af63fcace0a19584067ad0f8ee760
-Author: Sebastian Sumpf <sebastian.sumpf@genode-labs.com>
-Date:   Tue Jun 25 10:27:12 2024 +0200
-
-    libcrypto: add support for SOURCE_DATE_EPOCH
-    
-    Use SOURCE_DATE_EPOCH for build date if present.
-    
-    issue #5255
-
-commit 190d49527c30482e79f0a90abc684b53ec948f6e
-Author: Sebastian Sumpf <sebastian.sumpf@genode-labs.com>
-Date:   Tue Jun 25 10:28:33 2024 +0200
-
-    rump: add reproducible option to newvers.sh
-    
-    issue #5255
+Additionally, we enabled our Rump port to be reproducible.
 
 
 Goa SDK
@@ -1171,47 +1072,23 @@ For detailed instructions, please refer to the corresponding
 Meson build system
 ~~~~~~~~~~~~~~~~~~
 
-; @ssumpf
+Projects like Qemu, glib, and Mesa have switched to the Python based
+[https://mesonbuild.com - Meson] build system. Mesa, for example, produces a
+large number of generated C/C++ files using Meson features. In order to ease the
+porting effort of Meson based projects to Genode we have added basic support for
+this build system to Goa.
 
-commit 4b583dc96e614112a7ac3135f5d20a858c77ca27
-Author: Sebastian Sumpf <sebastian.sumpf@genode-labs.com>
-Date:   Thu May 9 18:58:06 2024 +0200
+A Meson project can be build and executed like any other Goa supported build
+system with the addition that there can be a _meson_args_ file (like
+_cmake_args_ for CMake) where additional arguments can be passed to the meson
+command. Otherwise, Goa will look for a _meson.build_ file in the _src_
+directory which identifies the projects build system as Meson.
 
-    meson: initial support for the Meson build system
-    
-    https://mesonbuild.com
-    
-    Meson is integrated identically to the other build systems into Goa.
-    Currently there is support for x86_64 and executables only. arm_v8a and
-    shared library support will follow.
-    
-    * meson.tcl: handles configuration and the building step using Ninja
-    * updated documentation
-    * added 'hello_meson' example
-    * added 'hello_meson' to test.expect
-    
-    genodelabs/goa#94
+As a simple test you can checkout the _hello_meson_ example in the _examples_
+directory of Goa.
 
-commit 2fd5e9ba4c1e5d66f3fcf54dec5c0c5358f52a73
-Author: Sebastian Sumpf <sebastian.sumpf@genode-labs.com>
-Date:   Tue Jun 25 08:07:35 2024 +0200
-
-    meson: log pkg-config status of abi dir
-    
-    This commit adds a pkg-config.tcl scripts that searches for required
-    modules in abi dir. Because stdout and stderr are intercepted by
-    Meson, we create a log file that is used by Goa/Meson to output
-    information if a module is present or not. The script will return
-    success in any case because sometimes libraries searched by Meson have
-    different abi names on Genode (e.g., libjpeg vs. jpeg api).
-    
-    Sample output:
-    
-    ! [package] pkg-config status:
-    ! [package]   libjpeg found: NO
-    ! [package]   libpng found: YES
-    
-    genodelabs/goa#94
+At the current stage only binary targets for x86_64 systems are supported by
+Goa/Meson. Shared libraries and ARM support will be addressed next.
 
 
 Rust cargo
