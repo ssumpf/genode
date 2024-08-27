@@ -589,30 +589,18 @@ At the current stage, only binary targets for the x86_64 architecture are suppor
 Goa/Meson. Shared libraries and ARM support will be addressed next.
 
 
-Rust cargo
-~~~~~~~~~~
+Rust & Cargo
+~~~~~~~~~~~~
 
-; @atopia
-
-commit 090c810745e2a5e5e20866b9296809813fea0489
-Author: Benjamin Lamowski <benjamin.lamowski@genode-labs.com>
-Date:   Thu Aug 15 18:32:04 2024 +0200
-
-    cargo: build Rust projects with a custom profile
-    
-    The Rust compiler profile for x86_64-unknown-freebsd assumes that thread
-    local storage (TLS) is available, and tries the TLS area via the FS
-    segment. Since Genode does not provide a TLS area to threads, this will
-    result in a nullptr dereference, which showed es segfaults in our test
-    programs from Rust 1.77 onward.
-    
-    Other than implementing x86_64 TLS support throughout our supported
-    kernels, this cannot be resolved within the premise of using a
-    precompiled stable Rust binary target for x86_64-unknown-freebsd.
-    
-    Instead, a paradigmn shift is needed: we now compile our Rust software -
-    including invoked parts of the standard library - from source, which
-    requires a nightly Rust toolchain.
-    
-    Fixes #101
-
+From Rust 1.77 onward, the use of Thread Local Storage (TLS) in the binary
+'x86_64-unknown-freebsd' std library led to runtime accesses into offsets from
+the 'FS' register. Since Genode does not provide a TLS area via 'FS', this
+ended up accessing an offset into the zero page, causing a segfault. In
+response, we have implemented a custom Genode target profile for Rust, which
+allows us to still leverage the FreeBSD port of Rust's standard library while
+using the 'emulated' TLS model. In order to compile the parts of the std
+library used by an application for the custom profile, we have moved to using
+a _nightly_ Rust toolchain. For detailed instructions for setting up the
+tool chain, head over to the
+[https://genodians.org/atopia/2024-08-27-building-rust-with-a-custom-profile - blog post]
+at Genodians.org.
