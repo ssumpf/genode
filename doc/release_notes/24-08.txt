@@ -1132,171 +1132,40 @@ Date:   Tue Jun 25 10:28:33 2024 +0200
 Goa SDK
 =======
 
-; @jschlatow
-
 User-level debugging
 ~~~~~~~~~~~~~~~~~~~~
 
-commit aeb42b0983143e6fe0a01f7f5316612709da1a9d
-Author: Johannes Schlatow <johannes.schlatow@genode-labs.com>
-Date:   Thu Jul 4 08:07:06 2024 +0200
+After the addition of on-target debugging on Sculpt OS in
+[https://genode.org/documentation/release-notes/24.05#On-target_debugging_using_the_GNU_debugger__GDB_ - Genode 24.05],
+it was about time to equip Goa with debugging support as well. For this purpose,
+the tool received an optional '--debug' command-line switch, which instructs Goa
+to consider
+[https://genode.org/documentation/release-notes/23.11#Debug_information_for_depot_binaries - dbg archives].
+in its download, export and publish steps.
 
-    sculpt: add debug monitor to goa testbed
-    
-    This also adds policies and domains to the nic router config for gdb and
-    vnc.
-    
-    Fixes #5293
+When provided with this switch on 'goa run', the tool also creates a
+_<project-name>.gdb_ file in the project's _var/_ directory. This file contains
+initialization commands for the GNU debugger (GDB) and can be passed to GDB
+via the '--command' argument.
 
-commit e01c7c74a4c1e754e6f4c1bbbc4005ae4e83936e
-Author: Johannes Schlatow <johannes.schlatow@genode-labs.com>
-Date:   Wed Jun 26 13:17:29 2024 +0200
+The _Goa testbed_ package and preset have been updated accordingly to make use
+of our debug monitor. The default NIC router configuration on Sculpt OS now
+comprises an additional _gdb_ domain that is intended to accomodate a single
+client to which the router forwards port 9999 of the _uplink_ domain. This is
+intended for making the testbed's debug monitor available as a remote GDB target.
+Note that these changes will be become effective with the next Sculpt release.
+In the meantime, you may cherry-pick the
+[https://github.com/genodelabs/genode/commit/aeb42b0983143e6fe0a01f7f5316612709da1a9d - corresponding commit].
 
-    depot: add support for debug info files
-    
-    genodelabs/genode#5015
-    genodelabs/goa#95
+Along with debugging support, Goa also received a '--with-backtrace' switch and
+a 'backtrace' command. The former instructs the tool to preserve frame-pointer
+information by supplying the '-fno-omit-frame-pointer' flag to GCC. The
+'goa backtrace' command is a shortcut for 'goa run --debug --with-backtrace' that
+additionally passes the log output to our
+[https://genode.org/documentation/release-notes/24.02#Convenient_parsing_of_backtraces - backtrace tool].
 
-commit a4474996f572f4457e06600241f4f9567ceb4138
-Author: Johannes Schlatow <johannes.schlatow@genode-labs.com>
-Date:   Wed Jun 26 14:12:36 2024 +0200
-
-    run: download dbg archives
-    
-    If the `--debug` option is provided, Goa will try downloading debug
-    archives for the required binary archive. The debug info files will be
-    linked into the .debug subdirectory of the run directory. Failure to
-    download a debug archive is not critical.
-    
-    genodelabs/goa#95
-
-commit 78c9aa4a6c5275e06a927105c7f8b6632fe65a65
-Author: Johannes Schlatow <johannes.schlatow@genode-labs.com>
-Date:   Wed Jun 26 16:17:02 2024 +0200
-
-    run/linux: create <project-name>.gdb file
-    
-    The <project-name>.gdb can be used as a gdb command file when attaching
-    to a Linux process:
-    
-    <project-name>$ gdb --pid <pid> --command ./var/<project-name>.gdb
-    
-    genodelabs/goa#95
-
-commit 1a935298221ff87ff7941058b9f0a93180b0c7dd
-Author: Johannes Schlatow <johannes.schlatow@genode-labs.com>
-Date:   Thu Jun 27 10:24:32 2024 +0200
-
-    build: create debug info files
-    
-    If a binary artifact contains debug info, a debug info file is created
-    and linked into dbg_dir. The original binary is stripped from debug
-    symbols and a .gnu_debuglink section is added.
-    
-    genodelabs/goa#95
-
-commit 19391c82234e17d6e77c5caf3302c04ca70728f7
-Author: Johannes Schlatow <johannes.schlatow@genode-labs.com>
-Date:   Thu Jun 27 14:12:04 2024 +0200
-
-    export/publish: create dbg archives
-    
-    When provided with the --debug argument, Goa also exports and publishes
-    dbg archives.
-    
-    genodelabs/goa#95
-
-commit c6ee308cd02ad7cb7dbd04356891be0b3b70b293
-Author: Johannes Schlatow <johannes.schlatow@genode-labs.com>
-Date:   Thu Jun 27 14:55:55 2024 +0200
-
-    build: add --with-backtrace option
-    
-    This option sets -fno-omit-frame-pointer in order to enable backtrace
-    support.
-    
-    genodelabs/goa#95
-
-commit b0df926a78147577ded48405c3481b229f568cdb
-Author: Johannes Schlatow <johannes.schlatow@genode-labs.com>
-Date:   Mon Jul 15 16:33:00 2024 +0200
-
-    run/sculpt: add target-sculpt-port-gdb option
-    
-    genodelabs/goa#95
-
-commit 2b82af0425f1f5e91d5d180258e8a3aaa1674e11
-Author: Johannes Schlatow <johannes.schlatow@genode-labs.com>
-Date:   Mon Jul 15 16:36:27 2024 +0200
-
-    run: add target-specific *_route procs
-    
-    For implementing debug monitor support, a run target may choose to route
-    PD/CPU services to <local\> instead of <parent/>. Introducing the
-    target-specific procs `pd_route`, `cpu_route`, `log_route` and
-    `rom_route` generalises the target-specific customisation of service
-    routes.
-    
-    genodelabs/goa#95
-
-commit ceeba717ac831db1496732edbf6ad169365631b9
-Author: Johannes Schlatow <johannes.schlatow@genode-labs.com>
-Date:   Mon Jul 15 16:39:16 2024 +0200
-
-    run/sculpt: add <monitor> node if debug is enabled
-    
-    genodelabs/goa#95
-
-commit 61e4570574c3c0d4e81db265e9eda44ceeac18e6
-Author: Johannes Schlatow <johannes.schlatow@genode-labs.com>
-Date:   Mon Jul 15 16:39:41 2024 +0200
-
-    goarc: add monitor and sandbox archives
-    
-    genodelabs/goa#95
-
-commit 3027732045036258035d524203722df6b688fdca
-Author: Johannes Schlatow <johannes.schlatow@genode-labs.com>
-Date:   Mon Jul 15 17:22:33 2024 +0200
-
-    run/sculpt: add target-opt-sculpt-kernel option
-    
-    genodelabs/goa#95
-
-commit 5a4f06b2aad9601430dfd2ca23ef0a54c5c0bcb9
-Author: Johannes Schlatow <johannes.schlatow@genode-labs.com>
-Date:   Fri Jul 26 14:53:13 2024 +0200
-
-    add backtrace utility
-    
-    genodelabs/goa#95
-
-commit 09e88dd61901e8b8b5bd8af47da1a344886c1a6e
-Author: Johannes Schlatow <johannes.schlatow@genode-labs.com>
-Date:   Fri Jul 26 17:09:39 2024 +0200
-
-    backtrace: adapt utility for goa
-    
-    - support using log file as stdin
-    - use built-in lookup policy for debug info files
-    
-    genodelabs/genode#95
-
-commit 69a3f47c6fcf9ce3d89f5c5d67eb29d4bb2322b2
-Author: Johannes Schlatow <johannes.schlatow@genode-labs.com>
-Date:   Fri Jul 26 17:11:57 2024 +0200
-
-    run: store output in .log file
-    
-    genodelabs/genode#95
-
-commit 73d7d26b826c2096b1be57b265b405dd7217a555
-Author: Johannes Schlatow <johannes.schlatow@genode-labs.com>
-Date:   Fri Jul 26 17:13:39 2024 +0200
-
-    add backtrace command
-    
-    genodelabs/genode#95
+For detailed instructions, please refer to the corresponding
+[https://genodians.org/jschlatow/2024-07-31-goa-gdb - Genodians article].
 
 
 Meson build system
