@@ -20,7 +20,7 @@ Cultivation of C++20 programming style
 
 [https://genode.org/documentation/release-notes/23.05#New_tool_chain_based_on_GCC_12.3__C__20_enabled_by_default - One year ago],
 we enabled C++20 as default. With the current release, we took the chance to
-update the codebase according this version of the standard.
+update the codebase according to this version of the standard.
 
 :C++20 function template syntax:
   The 'auto' keyword can be used in many places where template types had to be
@@ -29,12 +29,11 @@ update the codebase according this version of the standard.
 :Using 'using' instead of 'typedef':
   C-style type aliases are no longer used within the framework.
 
-:/util/geometry.h:
-  The header moved from the os to base repository.
+:util/geometry.h:
+  The header has been moved from the os repository to base repository.
   'Point', 'Area', and 'Rect' have been turned into plain compound types,
   making 'x', 'y', 'w', 'h', 'at', and 'area' accessible without a method call.
-
-  'Rect' is now represented as a typle of 'Point' and 'Area', which is the most
+  'Rect' is now represented as a tuple of 'Point' and 'Area', which is the most
   common form of initialization.
   The companion utilities have been updated ('constexpr', eliminating out parameters)
   as well.
@@ -42,11 +41,9 @@ update the codebase according this version of the standard.
 :/util/color.h:
   The 'Color' type has been converted from a class to a POD type by replacing
   the constructors by the named create functions 'rgb', 'clamped_rgb',
-  and 'clamped_rgba'. It thereby enables the initialization of color
-  values using the '{ .r = ... }' syntax and makes the type usable in const
-  expressions.
-
-  The change also narrows the type for color components and alpha values to
+  and 'clamped_rgba'. This enables the initialization of color values using
+  the '{ .r = ... }' syntax and makes the type usable in const expressions.
+  The change also narrows the type for the color components and alpha values to
   'uint8_t'. So possible integer overflows of computed values are detected
   by '-Wconversion'.
 
@@ -56,18 +53,16 @@ Reduced reliance on the C++ exception mechanism
 
 In [https://genode.org/documentation/release-notes/21.11#New_pattern_for_C___error_handling - version 21.11],
 we introduced the 'Attempt' pattern as an alternative to exception-based error
-handling. While gradually applying this pattern, in particular for
-new introduced interfaces, we observed our code becoming more rigid and
-concrete, leaving no condition unconsidered. Given this added assurance,
-we are ultimately decided to remove the reliance on C++ exceptions
-from the base framework over time. The current release takes a huge leap
-in this respect.
+handling. While gradually applying this pattern, in particular for new
+introduced interfaces, we observed our code becoming more rigid and concrete,
+leaving no condition unconsidered. Given this added assurance, we ultimately
+decided to remove the reliance on C++ exceptions from the base framework over
+time. The current release takes a huge leap in this direction.
 
 :base/id_space.h:
   A new 'Id_space::apply' overload takes a second functor 'missing_fn' as
-  argument, which is called whenever the lookup fails.
-  It thereby allows the use of the 'Id_space' utility without
-  'Unknown_id' exceptions.
+  argument, which is called whenever the lookup fails. It thereby allows the
+  use of the 'Id_space' utility without 'Unknown_id' exceptions.
 
 :util/xml_node.h:
   The two 'Xml_node::attribute' accessors have been removed along with
@@ -81,8 +76,8 @@ in this respect.
 
   While touching these interfaces, we took the opportunity for modernization
   and consolidation of both the interfaces and their implementation. E.g.,
-  core's trace service received a welcome facelift, the former use of basic
-  types got replaced by dedicated types.
+  core's trace service received a welcome facelift, e.g., the former use of
+  basic types got replaced by dedicated types.
 
   The revised 'Region_map' interface uses an 'Attr' compound struct for
   specifying arguments to the 'attach' operation, which makes the intent of
@@ -91,12 +86,12 @@ in this respect.
 
 :base/child.h:
   The 'Child_policy::Nonexistent_id_space' exception has been removed by
-  making the 'server_id_space' mandatory for of each policy.
+  making the 'server_id_space' mandatory for each policy.
   The former 'Child::Process' and 'Child::Process::Loaded_executable' classes
   got replaced by static functions that return failure conditions as return
   values, eliminating the use of C++ exceptions by the child framework.
 
-The overall ambition of cutting back the use of C++ exceptions it not limited
+The overall ambition of cutting back the use of C++ exceptions is not limited
 to the base framework but can be observed for critical components as well.
 In particular, the NIC router received a profound rework in this respect.
 
@@ -115,11 +110,11 @@ corner of the framework in the past ten years since version
 The changes are as follows.
 
 * The 'Gui::Session::session_control' RPC function got removed because its
-  functionality has long been superseded by the window manager/layouter.
+  functionality has long been superseded by the window manager and layouter.
 
 * The interfaces and components received a thorough coding-style update,
   embracing C++20, avoiding plain pointers, using 'Attr' structs for passing
-  attributes, removing the notion of "invalid" handles/IDs, replacing
+  attributes, removing the notion of invalid handles/IDs, replacing
   basic types by dedicated types, and removing the use C++ exceptions.
 
 * The out-of-RAM and out-of-caps conditions are now consistently handled by
@@ -137,7 +132,7 @@ The changes are as follows.
 * Corner cases of view-stacking operations are now expressed as dedicated
   commands. The new stacking commands are FRONT, BACK, FRONT_OF, and BEHIND_OF.
 
-* View handles are now managed as 'Id_space' and hence named view IDs now.
+* View handles are managed as 'Id_space' and hence named view IDs now.
   The allocation of view IDs has been moved from the server side to the
   client, which gives clients more flexibility and reduces the surface of
   possible error conditions between client and server.
@@ -147,7 +142,7 @@ The changes are as follows.
   most typical use case of opening a single window.
 
 * The creation of new views accepts initial view attributes now,
-  which accommodates typical client use cases with less code.
+  which accommodate typical client use cases with less code.
 
 
 Fostered consistency of naming
@@ -178,31 +173,31 @@ to the emulation library itself as well as virt_linux and pc_linux driver
 ports.
 
 Thus from now on, PC platforms use Linux driver sources of kernel version
-6.6.47 for USB host controllers and devices, wifi and ethernet adapters,
+6.6.47 for USB host controllers and devices, Wifi and Ethernet adapters,
 Intel display, lxip TCP/IP protocols, and wireguard. Non-x86 platforms were
-updated for USB devices and network protocols only, but adapted in future
+updated for USB devices and network protocols only, but will be adapted in future
 releases step-by-step. All drivers work as drop-in-replacements of older
-versions on integration and configuration.
+versions with respect to integration and configuration.
 
-Our wifi driver port was amended by an online quality update concerning the
+Our Wifi driver port was amended by an online quality update concerning the
 currently established connection, which can be enabled by the
 'update_quality_interval' configuration attribute. By this feature, user
 interfaces are enabled to reflect connection-quality changes almost
 instantly. Additionally, we added support for Intel AX200/9560 wireless
-adapters and restored support for wifi devices found in Thinkpad T430
+adapters and restored support for Wifi devices found in Thinkpad T430
 notebooks.
 
 During this release cycle, we analyzed a significant network throughput drop
 resp. CPU load increase when using the
-[https://github.com/genodelabs/genode/issues/5151 - PC ethernet driver].
-Finally, we traced the effect to runtime overhead originating from our DDE
+[https://github.com/genodelabs/genode/issues/5151 - PC Ethernet driver].
+We eventually traced the effect to runtime overhead originating from our DDE
 memory allocator and the positive impact of a simple allocation-cache
 implementation confirmed our suspicion veritable. Hence, we replaced our
 custom allocator by the Linux kernel-internal SLUB allocator that is based
 on page/folio allocation. The folio API is well hidden in the kernel
 internals, still in flux, and offers only incomplete (resp. outdated)
-documentation, which meant significant research efforts reading and
-understanding kernel source code.
+documentation, which required quite a bit of research efforts reading and
+understanding the kernel's implementation.
 
 In the end, we improved our emulation implementation sufficiently and
 managed to get the PC NIC driver to work robustly with gigabit performance
@@ -212,12 +207,13 @@ and a CPU load reduced by 25-40% on Intel Kaby/Tiger Lake notebooks.
 Platform driver
 ===============
 
-During ACPI suspend the PCI bridges in the system may forget their
-PCI configuration. On resume this configuration needs to be restored, so that
-all PCI devices behind the bridge are usable again. With this release we added
-support to pci_decode to report all relevant information, which is
-used by the platform driver after an ACPI resume to re-configure the used PCI
+During ACPI suspend, the PCI bridges in the system may forget their
+PCI configuration. On resume, this configuration needs to be restored so that
+all PCI devices behind the bridge become usable again. With this release, we
+added support to the pci_decode component to report all relevant information, which is
+then picked up by the platform driver after an ACPI resume to re-configure the used PCI
 bridges.
+
 
 Improvements for NXP's i.MX family
 ==================================
@@ -457,10 +453,11 @@ Date:   Mon Aug 19 11:17:52 2024 +0200
 Mesa version 24.0.8
 ===================
 
-With release 24.05 we updated Mesa to major version 24. During the last few
-month we improved and fixed some bugs (memory allocations, better
-synchronization) for Intel's Iris driver and as a side effect updated Mesa to
-version 24.0.8.
+With release
+[https://genode.org/documentation/release-notes/24.05#Mesa_updated_to_version_24.0.1 - 24.05],
+we updated Mesa to major version 24. During the past few
+months, we improved the memory allocation and synchronization for Intel's Iris
+driver and as a side effect updated Mesa to version 24.0.8.
 
 
 Platforms
@@ -487,23 +484,24 @@ Date:   Thu Jul 4 14:50:14 2024 +0200
     
     Fix genodelabs/genode#5310
 
+
 NOVA microhypervisor
 ====================
 
 The kernel received support to handle the x86 CPU FPU extension
 [https://de.wikipedia.org/wiki/Advanced_Vector_Extensions - AVX], which is a
-family of SIMD instruction extensions which are used for optimized
-implementations of mathematical algorithms, e.g. it is used in multimedia
-applications. In principle the kernel has to detect the available AVX versions,
-e.g. AVX, AVX-2, AVX-512 and depending on it it has to save and restore more
-FPU state during thread switching.
+family of SIMD instruction extensions used for optimized
+implementations of mathematical algorithms, e.g., it is used in multimedia
+applications. In principle, the kernel has to detect the available AVX versions,
+e.g., AVX, AVX-2, AVX-512. Depending on the version, it has to save and restore
+additional FPU state during thread switching.
 Beside the general availability to Genode applications, the Seoul VMM got
 enabled as a first user of the feature. The VMM now announces the AVX feature
 to the guest VMs, so that the guest kernel can enable it and guest user
-applications can utilize it, e.g. for web browser and video de-/coding
+applications can utilize it, e.g., for web browser and video de-/coding
 use-cases. The feature got tested with Seoul for Intel and AMD systems.
 
-Additionally, the Genode core roottask now supports Intel SOCs with e-Core
+Additionally, the Genode core roottask now supports Intel SoCs with e-Core
 only CPUs, formerly named Intel ATOM CPUs and nowadays branded as Intel
 n-Series CPUs.
 
@@ -511,22 +509,23 @@ Finally, the kernel now supports the freeing of vCPU related data structures
 during VM destruction, got optimized to reduce resource overhead during cross
 CPU IPC and improved VM MSR exit handling.
 
+
 Build system and tools
 ######################
 
 Improved reproducibility
 ========================
 
-The demand for reproducible builds has been increasing during the last few
-years. The main source that makes builds unreproducible are timestamps. On
-Genode especially components that produce TAR files suffered from this
+The demand for reproducible builds has been increasing during the past few
+years. The main hindrance that makes builds unreproducible are timestamps. On
+Genode, especially components that produce TAR files suffered from this
 limitation, since the date of the archived data was set to the time of
-archiving. To avoid this issue we introduce an overwriteable global TAR_OPT in
+archiving. To avoid this issue, we introduce an customizable global TAR_OPT in
 Genode's build system that sets the date of the archived files to the date of
-the epoch and the user/group to one. As a starting point we added the TAR_OPT to
+the epoch and the user/group to one. As a starting point, we added the TAR_OPT to
 the Qt5-build process while other targets will incrementally follow.
 
-Additionally, we enabled our Rump port to be reproducible.
+Additionally, we enabled our Rump-kernel port to be reproducible.
 
 
 Goa SDK
@@ -540,7 +539,7 @@ After the addition of on-target debugging on Sculpt OS in
 it was about time to equip Goa with debugging support as well. For this purpose,
 the tool received an optional '--debug' command-line switch, which instructs Goa
 to consider
-[https://genode.org/documentation/release-notes/23.11#Debug_information_for_depot_binaries - dbg archives].
+[https://genode.org/documentation/release-notes/23.11#Debug_information_for_depot_binaries - dbg archives]
 in its download, export and publish steps.
 
 When provided with this switch on 'goa run', the tool also creates a
@@ -550,10 +549,10 @@ via the '--command' argument.
 
 The _Goa testbed_ package and preset have been updated accordingly to make use
 of our debug monitor. The default NIC router configuration on Sculpt OS now
-comprises an additional _gdb_ domain that is intended to accomodate a single
+comprises an additional _gdb_ domain that is intended to accommodate a single
 client to which the router forwards port 9999 of the _uplink_ domain. This is
 intended for making the testbed's debug monitor available as a remote GDB target.
-Note that these changes will be become effective with the next Sculpt release.
+Note that these changes will become effective with the next Sculpt release.
 In the meantime, you may cherry-pick the
 [https://github.com/genodelabs/genode/commit/aeb42b0983143e6fe0a01f7f5316612709da1a9d - corresponding commit].
 
@@ -574,19 +573,19 @@ Meson build system
 Projects like Qemu, glib, and Mesa have switched to the Python based
 [https://mesonbuild.com - Meson] build system. Mesa, for example, produces a
 large number of generated C/C++ files using Meson features. In order to ease the
-porting effort of Meson based projects to Genode we have added basic support for
+porting effort of Meson based projects to Genode, we have added basic support for
 this build system to Goa.
 
-A Meson project can be build and executed like any other Goa supported build
-system with the addition that there can be a _meson_args_ file (like
+A Meson project can be built and executed like any other Goa-supported build
+system with the addition that there can be a _meson_args_ file (analogously to
 _cmake_args_ for CMake) where additional arguments can be passed to the meson
 command. Otherwise, Goa will look for a _meson.build_ file in the _src_
-directory which identifies the projects build system as Meson.
+directory, which identifies the projects build system as Meson.
 
-As a simple test you can checkout the _hello_meson_ example in the _examples_
+As a simple test, you can checkout the _hello_meson_ example in the _examples_
 directory of Goa.
 
-At the current stage only binary targets for x86_64 systems are supported by
+At the current stage, only binary targets for the x86_64 architecture are supported by
 Goa/Meson. Shared libraries and ARM support will be addressed next.
 
 
