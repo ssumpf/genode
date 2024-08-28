@@ -144,6 +144,10 @@ The changes are as follows.
 * The creation of new views accepts initial view attributes now,
   which accommodate typical client use cases with less code.
 
+_Note that this line of work will continue over the course of the next_
+_release cycle. The GUI-related APIs of the framework will undergo further_
+_changes during that time._
+
 
 Fostered consistency of naming
 ==============================
