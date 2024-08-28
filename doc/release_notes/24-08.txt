@@ -13,7 +13,7 @@ and consolidation work. It features the Qt6 application framework in addition
 to the time-tested Qt5, consistently updates all Linux-based components and
 PC device drivers from Linux version 6.1 to version 6.6.47, and updates Mesa
 to version 24.0.8. The consolidation work revisits the framework's base and
-GUI interfaces with respect to C++20 style, the removal of exception-based
+GUI interfaces with respect to C++20 style, the move away from exception-based
 error handling, and the use of strict types.
 
 Combining Genode's recent advances of
@@ -30,6 +30,56 @@ Genode's custom microkernel (Section [Execution on bare hardware (base-hw)]).
 Base framework and OS-level infrastructure
 ##########################################
 
+Reduced reliance on the C++ exception mechanism
+===============================================
+
+In [https://genode.org/documentation/release-notes/21.11#New_pattern_for_C___error_handling - version 21.11],
+we introduced the
+[https://genode.org/documentation/genode-foundations/24.05/api/Fundamental_types.html#Exception-less_error_handling - Attempt]
+utility as an alternative to exception-based error
+handling. While gradually applying this pattern, in particular for new
+introduced interfaces, we observed our code becoming more rigid and concrete,
+leaving no condition unconsidered. Given this added assurance, we ultimately
+decided to remove the reliance on C++ exceptions from the base framework over
+time. The current release takes a huge leap in this direction.
+
+:base/id_space.h:
+  A new 'Id_space::apply' overload takes a second functor 'missing_fn' as
+  argument, which is called whenever the lookup fails. It thereby allows the
+  use of the 'Id_space' utility without 'Unknown_id' exceptions.
+
+:util/xml_node.h:
+  The two 'Xml_node::attribute' accessors have been removed along with
+  the 'Nonexistent_attribute' exception.
+  Attributes are generally accessed via the 'attribute_value' method, which
+  handles the case via a default value.
+
+:Core RPC interfaces:
+  Exceptions have been entirely removed from the RPC interfaces provided by
+  the core component, namely 'Trace', 'Pd', 'Cpu', 'Rm', and 'Region_map'.
+
+  While touching these interfaces, we took the opportunity for modernization
+  and consolidation of both the interfaces and their implementations. E.g.,
+  core's trace service received a welcome facelift, e.g., the former use of
+  basic types got replaced by dedicated types.
+
+  The revised 'Region_map' interface uses an 'Attr' compound struct for
+  specifying arguments to the 'attach' operation, which makes the intent of
+  client code more obvious. The operation returns a 'Range' instead of a
+  'Local_addr' now. The 'Region_map::State' type got renamed to 'Fault'.
+
+:base/child.h:
+  The 'Child_policy::Nonexistent_id_space' exception has been removed by
+  making the 'server_id_space' mandatory for each policy.
+  The former 'Child::Process' and 'Child::Process::Loaded_executable' classes
+  got replaced by class functions that return failure conditions as return
+  values, eliminating the use of C++ exceptions by the child framework.
+
+The overall ambition of cutting back the use of C++ exceptions is not limited
+to the base framework but can be observed for critical components as well.
+In particular, the NIC router received a profound rework in this respect.
+
+
 Cultivation of C++20 programming style
 ======================================
 
@@ -38,7 +88,7 @@ we enabled C++20 as default. With the current release, we took the chance to
 update the codebase according to this version of the standard.
 
 :C++20 function template syntax:
-  The 'auto' keyword can be used in many places where template types had to be
+  The 'auto' keyword can be used in many places where template arguments had to be
   declared manually. We updated all sources of the base framework accordingly.
 
 :Using 'using' instead of 'typedef':
@@ -63,61 +113,13 @@ update the codebase according to this version of the standard.
   by '-Wconversion'.
 
 
-Reduced reliance on the C++ exception mechanism
-===============================================
-
-In [https://genode.org/documentation/release-notes/21.11#New_pattern_for_C___error_handling - version 21.11],
-we introduced the 'Attempt' pattern as an alternative to exception-based error
-handling. While gradually applying this pattern, in particular for new
-introduced interfaces, we observed our code becoming more rigid and concrete,
-leaving no condition unconsidered. Given this added assurance, we ultimately
-decided to remove the reliance on C++ exceptions from the base framework over
-time. The current release takes a huge leap in this direction.
-
-:base/id_space.h:
-  A new 'Id_space::apply' overload takes a second functor 'missing_fn' as
-  argument, which is called whenever the lookup fails. It thereby allows the
-  use of the 'Id_space' utility without 'Unknown_id' exceptions.
-
-:util/xml_node.h:
-  The two 'Xml_node::attribute' accessors have been removed along with
-  the 'Nonexistent_attribute' exception.
-  Attributes are generally accessed via the 'attribute_value' method, which
-  handles the case via a default value.
-
-:Core RPC interfaces:
-  Exceptions have been entirely removed from the RPC interfaces provided
-  the core component, namely 'Trace', 'Pd', 'Cpu', 'Rm', 'Region_map'.
-
-  While touching these interfaces, we took the opportunity for modernization
-  and consolidation of both the interfaces and their implementation. E.g.,
-  core's trace service received a welcome facelift, e.g., the former use of
-  basic types got replaced by dedicated types.
-
-  The revised 'Region_map' interface uses an 'Attr' compound struct for
-  specifying arguments to the 'attach' operation, which makes the intent of
-  client code more obvious. The operation returns a 'Range' instead of a
-  'Local_addr' now. The 'Region_map::State' type got renamed to 'Fault'.
-
-:base/child.h:
-  The 'Child_policy::Nonexistent_id_space' exception has been removed by
-  making the 'server_id_space' mandatory for each policy.
-  The former 'Child::Process' and 'Child::Process::Loaded_executable' classes
-  got replaced by static functions that return failure conditions as return
-  values, eliminating the use of C++ exceptions by the child framework.
-
-The overall ambition of cutting back the use of C++ exceptions is not limited
-to the base framework but can be observed for critical components as well.
-In particular, the NIC router received a profound rework in this respect.
-
-
 Tightened GUI-session interface
 ===============================
 
 On our [https://genode.org/about/road-map - road map], we anticipated
 intensive work on user-facing topics, many being related to graphical user
 interfaces. While approaching these topics, we sensed that the clean
-implementation of our ideas demands a revisit of the framework's existing GUI
+implementation of our ideas would benefit from a revisit of the framework's existing GUI
 infrastructure, in particular the GUI-session interface as provided by the
 nitpicker GUI server and the window manager. Note that we barely touched this
 corner of the framework in the past ten years since version
@@ -159,9 +161,9 @@ The changes are as follows.
 * The creation of new views accepts initial view attributes now,
   which accommodate typical client use cases with less code.
 
-_Note that this line of work will continue over the course of the next_
-_release cycle. The GUI-related APIs of the framework will undergo further_
-_changes during that time._
+_As a note of caution, this line of work will continue over the course of the_
+_next release cycle. The GUI-related APIs of the framework are expected to_
+_undergo further changes during that time._
 
 
 Fostered consistency of naming
@@ -169,11 +171,11 @@ Fostered consistency of naming
 
 Within our code base, we are ardent about consistency. However, two relics
 from the infancy of the project remained standing out like sore thumbs. First,
-the '_drv' suffix of driver executables violated our established
+the '_drv' suffix of driver executables remained at odds with our established
 [https://genode.org/documentation/developer-resources/conventions - style]
 of naming things without artificial abbreviations.
-Second, the plural naming of the _<repo>/src/drivers/_ directory used to be
-inconsistent with the sibling directories _test/_, _app/_, _server/_.
+Second, the plural naming of the _<repo>/src/drivers/_ directory nagged us by
+being inconsistent with the sibling directories _test/_, _app/_, _server/_.
 The current release rectifies both inconsistencies. The '_drv' suffix has been
 dropped and the directory has been renamed to _driver/_.
 
@@ -198,7 +200,7 @@ updated for USB devices and network protocols only, but will be adapted in futur
 releases step-by-step. All drivers work as drop-in-replacements of older
 versions with respect to integration and configuration.
 
-Our Wifi driver port was amended by an online quality update concerning the
+Our Wifi driver port got amended by an online quality update concerning the
 currently established connection, which can be enabled by the
 'update_quality_interval' configuration attribute. By this feature, user
 interfaces are enabled to reflect connection-quality changes almost
@@ -206,11 +208,11 @@ instantly. Additionally, we added support for Intel AX200/9560 wireless
 adapters and restored support for Wifi devices found in Thinkpad T430
 notebooks.
 
-During this release cycle, we analyzed a significant network throughput drop
+During this release cycle, we analyzed a noticeable network throughput drop
 resp. CPU load increase when using the
 [https://github.com/genodelabs/genode/issues/5151 - PC Ethernet driver].
 We eventually traced the effect to runtime overhead originating from our DDE
-memory allocator and the positive impact of a simple allocation-cache
+memory allocator. The positive impact of a simple allocation-cache
 implementation confirmed our suspicion veritable. Hence, we replaced our
 custom allocator by the Linux kernel-internal SLUB allocator that is based
 on page/folio allocation. The folio API is well hidden in the kernel
@@ -220,7 +222,7 @@ understanding the kernel's implementation.
 
 In the end, we improved our emulation implementation sufficiently and
 managed to get the PC NIC driver to work robustly with gigabit performance
-and a CPU load reduced by 25-40% on Intel Kaby/Tiger Lake notebooks.
+and with CPU load reduced by 25-40% on Intel Kaby/Tiger Lake notebooks.
 
 
 Platform driver
@@ -231,7 +233,8 @@ PCI configuration. On resume, this configuration needs to be restored so that
 all PCI devices behind the bridge become usable again. With this release, we
 added support to the pci_decode component to report all relevant information, which is
 then picked up by the platform driver after an ACPI resume to re-configure the used PCI
-bridges.
+bridges. This change enables the successful restart of the Wifi driver
+after resume on many platforms.
 
 
 Improvements for NXP's i.MX family
@@ -253,7 +256,7 @@ specific to this SoC, support is now available for both Ethernet cards (FEC and
 ST Microelectronic' STMMAC), SD-card host controller, I2C, and GPIO.
 
 Genode's custom kernel supports two further boards now, namely the F&S Embedded
-armStone Starterkit and MNT Pocket Reform. Both using the i.MX 8M Plus SoC,
+armStone Starterkit and MNT Pocket Reform. Both are using the i.MX 8M Plus SoC
 mentioned above. The support is limited to the very basics, and no peripherals
 apart from CPU and timer are integrated yet.
 
@@ -268,7 +271,7 @@ packages and run-scripts under Genode's umbrella use the new driver now, which
 can be found under _src/driver/pin/imx_ within the genode-imx repository.
 The old driver and the 'Gpio' session interface are still existent. But now, as
 there is no hard dependency or necessity for it anymore, we mark the old
-driver, as well as the 'Gpio' session interface as being deprecated.
+driver as well as the 'Gpio' session interface as being deprecated.
 
 Finally, we moved all remaining i.MX specific parts out of Genode's main
 repository into the [https://github.com/genodelabs/genode-imx - genode-imx]
@@ -286,7 +289,7 @@ With this release, we started updating the Qt application framework from Qt5 to 
 initial port of Qt 6.6.2, covering the _qtbase_, _qtdeclarative_,
 _qtshadertools_, and _qtsvg_ modules. We are planning to support the
 _qtwebengine_ module as well in the near future, which will remove
-the dependency from Python 2 and provide us a more recent Chromium
+the dependency from Python 2 and provide us with a more recent Chromium
 engine for the Falkon and Morph web browsers.
 
 We also improved the Qt build process for both Qt6 and Qt5 by making
@@ -359,7 +362,7 @@ The demand for reproducible builds has been increasing during the past few
 years. The main hindrance that makes builds unreproducible are timestamps. On
 Genode, especially components that produce TAR files suffered from this
 limitation, since the date of the archived data was set to the time of
-archiving. To avoid this issue, we introduce an customizable global TAR_OPT in
+archiving. To avoid this issue, we introduced a customizable global TAR_OPT in
 Genode's build system that sets the date of the archived files to the date of
 the epoch and the user/group to one. As a starting point, we added the TAR_OPT to
 the Qt5-build process while other targets will incrementally follow.
@@ -414,15 +417,15 @@ Meson build system
 
 Projects like Qemu, glib, and Mesa have switched to the Python based
 [https://mesonbuild.com - Meson] build system. Mesa, for example, produces a
-large number of generated C/C++ files using Meson features. In order to ease the
-porting effort of Meson based projects to Genode, we have added basic support for
+large number of generated C/C++ files using Meson features. In order to ease
+future porting effort of Meson based projects to Genode, we have added basic support for
 this build system to Goa.
 
 A Meson project can be built and executed like any other Goa-supported build
 system with the addition that there can be a _meson_args_ file (analogously to
 _cmake_args_ for CMake) where additional arguments can be passed to the meson
 command. Otherwise, Goa will look for a _meson.build_ file in the _src_
-directory, which identifies the projects build system as Meson.
+directory, which identifies the project's build system as Meson.
 
 As a simple test, you can checkout the _hello_meson_ example in the _examples_
 directory of Goa.
