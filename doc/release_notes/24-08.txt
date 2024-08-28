@@ -531,8 +531,8 @@ Additionally, we enabled our Rump-kernel port to be reproducible.
 Goa SDK
 =======
 
-User-level debugging
-~~~~~~~~~~~~~~~~~~~~
+Debugging
+~~~~~~~~~
 
 After the addition of on-target debugging on Sculpt OS in
 [https://genode.org/documentation/release-notes/24.05#On-target_debugging_using_the_GNU_debugger__GDB_ - Genode 24.05],
@@ -546,6 +546,8 @@ When provided with this switch on 'goa run', the tool also creates a
 _<project-name>.gdb_ file in the project's _var/_ directory. This file contains
 initialization commands for the GNU debugger (GDB) and can be passed to GDB
 via the '--command' argument.
+
+[image goa_gdb_sculpt]
 
 The _Goa testbed_ package and preset have been updated accordingly to make use
 of our debug monitor. The default NIC router configuration on Sculpt OS now
