@@ -263,16 +263,20 @@ Libraries and applications
 Qt6 application framework
 =========================
 
-; @cproc
+With this release, we started updating from Qt5 to Qt6 by adding an
+initial port of Qt 6.6.2, covering the _qtbase_, _qtdeclarative_,
+_qtshadertools_ and _qtsvg_ modules. We are planning to support the
+_qtwebengine_ module as well in the near future, which will remove
+the dependency from Python 2 and provide us a more recent Chromium
+engine for the Falkon and Morph web browsers.
 
-commit d0c35b9d2f798634af23111657d3918f8d45f7fb
-Author: Christian Prochaska <christian.prochaska@genode-labs.com>
-Date:   Mon Aug 19 11:17:52 2024 +0200
+We also improved the Qt build process for both Qt6 and Qt5 by making
+sure that Qt libraries are only built when needed and stub libraries
+generated from symbol files are used otherwise.
 
-    libports: add Qt6
-    
-    Fixes #5325
-
+The Qt6 port uses updated host tools, which need to be built with the
+_tool/tool_chain_qt6_ script. Please note that Qt6 requires CMake
+version 3.19 or higher to build successfully.
 
 Mesa version 24.0.8
 ===================
