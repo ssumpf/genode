@@ -227,8 +227,8 @@ Device (FEC) for ARMv7 and ARMv8, the display management for the i.MX 8M Quad
 EVK and the MNT Reform 2, as well as the SD-card Host Controller for the same
 two boards.
 
-The Gapfruit AG and namely Alice Domage rendered outstanding service to enable
-platform support for the i.MX 8M Plus SoC and the Compulab's IOT Gateway, which
+Alice Domage of Gapfruit AG contributed outstanding work to enable
+platform support for the i.MX 8M Plus SoC and Compulab's IOT Gateway, which
 is based on it. Beside clock, powering, and reset support by a platform driver
 specific to this SoC, support is now available for both Ethernet cards (FEC and
 ST Microelectronic' STMMAC), SD-card host controller, I2C, and GPIO.
@@ -238,20 +238,23 @@ armStone Starterkit and MNT Pocket Reform. Both using the i.MX 8M Plus SoC,
 mentioned above. The support is limited to the very basics, and no peripherals
 apart from CPU and timer are integrated yet.
 
-Since release 21.11 the Pin I/O session interface is available, and shall
-replace the older Gpio session interface. By now, for the i.MX SoC's that all
-contain the same kind of GPIO controllers, a native driver existed only, which
-support the old interface. With this release, we introduce a pin driver
-implementing the favored Pin I/O session interface instead. All occurrences in
+For the fine-grained control of GPIO pins, release
+[https://genode.org/documentation/release-notes/21.11#Pin_I_O_session_interfaces - 21.11],
+introduced the pin I/O session interfaces, superseding the older 'Gpio'
+session interface. So far, however, our driver for the GPIO controller
+as present on all i.MX SoC's merely supported the old interface.
+With this release, we introduce a pin driver
+implementing the favored pin I/O session interface instead. All occurrences in
 packages and run-scripts under Genode's umbrella use the new driver now, which
-can be found under `src/driver/pin/imx` within the genode-imx repository.
-The old driver and the Gpio session interface are still existent. But now, as
+can be found under _src/driver/pin/imx_ within the genode-imx repository.
+The old driver and the 'Gpio' session interface are still existent. But now, as
 there is no hard dependency or necessity for it anymore, we mark the old
-driver, as well as the Gpio session interface as being deprecated.
+driver, as well as the 'Gpio' session interface as being deprecated.
 
 Finally, we moved all remaining i.MX specific parts out of Genode's main
-repository into the genode-imx repository to be consistent with the recent
-approach of vendor specific external repositories.
+repository into the [https://github.com/genodelabs/genode-imx - genode-imx]
+repository to be consistent with our recent
+approach of vendor-specific external repositories.
 
 
 Libraries and applications
@@ -287,14 +290,15 @@ Platforms
 Execution on bare hardware (base-hw)
 ====================================
 
-Under the hood of Genode's custom kernel the way how CPU-local memory is
+Under the hood of Genode's custom kernel, the way how CPU-local memory is
 arranged changed fundamentally.
 The kernel's virtual memory layout now comprises a CPU area. Each CPU has its
 own slot within this area, containing kernel stack, CPU object data resp. all
 CPU-local data.
-This change is transparent to most Genode developers. It was done to ease
-CPU detection and bootstrapping at runtime, for kernel stack overflow detection,
-and to retrieve the current CPU object by means of the kernel stack pointer.
+This change is transparent to most Genode developers. It was motivated to ease
+CPU detection and bootstrapping at run time, for kernel stack overflow detection,
+and for increasing the kernel's flexibility regarding multi-core hardware.
+
 
 NOVA microhypervisor
 ====================
