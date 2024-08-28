@@ -8,8 +8,23 @@
 
 
 
-; intro
-; @nfeske
+Genode 24.08 puts emphasis on the tracking of the supported 3rd-party software
+and consolidation work. It features the Qt6 application framework in addition
+to the time-tested Qt5, consistently updates all Linux-based components and
+PC device drivers from Linux version 6.1 to version 6.6.47, and updates Mesa
+to version 24.0.8. The consolidation work revisits the framework's base and
+GUI interfaces with respect to C++20 style, the removal of exception-based
+error handling, and the use of strict types.
+
+Combining Genode's recent advances of
+[https://genode.org/documentation/release-notes/24.05#On-target_debugging_using_the_GNU_debugger__GDB_ - on-target debugging]
+with the
+[https://genode.org/documentation/release-notes/23.08#Goa_tool_gets_usability_improvements_and_depot-index_publishing_support - Goa SDK],
+the release introduces remote debugging via Goa (Section [Debugging]). Further
+topics of version 24.08 range from enhanced board support for i.MX-based
+devices (Section [Improvements for NXP's i.MX family]), over the exploration
+of AVX on x86 (Section [NOVA microhypervisor]), to steady improvements of
+Genode's custom microkernel (Section [Execution on bare hardware (base-hw)]).
 
 
 Base framework and OS-level infrastructure
