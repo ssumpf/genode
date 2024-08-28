@@ -38,7 +38,7 @@ update the codebase according to this version of the standard.
   The companion utilities have been updated ('constexpr', eliminating out parameters)
   as well.
 
-:/util/color.h:
+:util/color.h:
   The 'Color' type has been converted from a class to a POD type by replacing
   the constructors by the named create functions 'rgb', 'clamped_rgb',
   and 'clamped_rgba'. This enables the initialization of color values using
