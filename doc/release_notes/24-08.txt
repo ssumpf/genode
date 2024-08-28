@@ -596,7 +596,7 @@ From Rust 1.77 onward, the binary distribution of the _std_ library
 ('x86_64-unknown-freebsd') assumes that the underlying OS kernel supports
 thread-local storage via the FS segment register on x86.
 As Genode does not provide a TLS area via FS, TLS accesses by the library
-would end up in invalid memory accesses, which renders the binary version of
+would end up in invalid memory, which renders the binary version of
 the std library unusable on Genode.
 In response, we have implemented a custom Genode target profile for Rust, which
 allows us to still leverage the FreeBSD port of Rust's standard library while
