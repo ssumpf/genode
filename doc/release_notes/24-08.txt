@@ -550,7 +550,8 @@ via the '--command' argument.
 [image goa_gdb_sculpt]
 
 The _Goa testbed_ package and preset have been updated accordingly to make use
-of our debug monitor. The default NIC router configuration on Sculpt OS now
+of our debug monitor. The figure illustrates how Goa interoperates with the
+Goa testbed. Sculpt's default NIC router configuration now
 comprises an additional _gdb_ domain that is intended to accommodate a single
 client to which the router forwards port 9999 of the _uplink_ domain. This is
 intended for making the testbed's debug monitor available as a remote GDB target.
