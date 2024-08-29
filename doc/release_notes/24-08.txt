@@ -8,7 +8,7 @@
 
 
 
-Genode 24.08 puts emphasis on the tracking of the supported 3rd-party software
+Genode 24.08 puts emphasis on keeping track of supported 3rd-party software
 and consolidation work. It features the Qt6 application framework in addition
 to the time-tested Qt5, consistently updates all Linux-based components and
 PC device drivers from Linux version 6.1 to version 6.6.47, and updates Mesa
@@ -37,7 +37,7 @@ In [https://genode.org/documentation/release-notes/21.11#New_pattern_for_C___err
 we introduced the
 [https://genode.org/documentation/genode-foundations/24.05/api/Fundamental_types.html#Exception-less_error_handling - Attempt]
 utility as an alternative to exception-based error
-handling. While gradually applying this pattern, in particular for new
+handling. While gradually applying this pattern, in particular for newly
 introduced interfaces, we observed our code becoming more rigid and concrete,
 leaving no condition unconsidered. Given this added assurance, we ultimately
 decided to remove the reliance on C++ exceptions from the base framework over
@@ -202,7 +202,7 @@ versions with respect to integration and configuration.
 
 Our Wifi driver port got amended by an online quality update concerning the
 currently established connection, which can be enabled by the
-'update_quality_interval' configuration attribute. By this feature, user
+'update_quality_interval' configuration attribute. With this feature, user
 interfaces are enabled to reflect connection-quality changes almost
 instantly. Additionally, we added support for Intel AX200/9560 wireless
 adapters and restored support for Wifi devices found in Thinkpad T430
@@ -257,7 +257,7 @@ ST Microelectronic' STMMAC), SD-card host controller, I2C, and GPIO.
 
 Genode's custom kernel supports two further boards now, namely the F&S Embedded
 armStone Starterkit and MNT Pocket Reform. Both are using the i.MX 8M Plus SoC
-mentioned above. The support is limited to the very basics, and no peripherals
+mentioned above. The support is currently limited to the very basics, and no peripherals
 apart from CPU and timer are integrated yet.
 
 For the fine-grained control of GPIO pins, release
@@ -337,15 +337,15 @@ implementations of mathematical algorithms, e.g., it is used in multimedia
 applications. In principle, the kernel has to detect the available AVX versions,
 e.g., AVX, AVX-2, AVX-512. Depending on the version, it has to save and restore
 additional FPU state during thread switching.
-Beside the general availability to Genode applications, the Seoul VMM got
-enabled as a first user of the feature. The VMM now announces the AVX feature
+Beside the general availability to Genode applications, the Seoul VMM has become
+the first user of this feature. The VMM now announces the AVX feature
 to the guest VMs, so that the guest kernel can enable it and guest user
 applications can utilize it, e.g., for web browser and video de-/coding
-use-cases. The feature got tested with Seoul for Intel and AMD systems.
+use-cases. The feature got tested with Seoul on Intel and AMD systems.
 
 Additionally, the Genode core roottask now supports Intel SoCs with e-Core
 only CPUs, formerly named Intel ATOM CPUs and nowadays branded as Intel
-n-Series CPUs.
+N-Series CPUs.
 
 Finally, the kernel now supports the freeing of vCPU related data structures
 during VM destruction, got optimized to reduce resource overhead during cross
