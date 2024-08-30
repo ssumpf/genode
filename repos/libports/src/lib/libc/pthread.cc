@@ -1309,46 +1309,27 @@ extern "C" {
 		__attribute__((alias("pthread_cond_broadcast")));
 
 
+	/*
+	 * This uses one recursive mutex, in case the 'init_once' function blocks
+	 * and/or requires another 'pthread_once' by another thread, the other thread
+	 * will block forever.
+	 */
 	int pthread_once(pthread_once_t *once, void (*init_once)(void))
 	{
+		static Pthread_mutex_recursive mutex { };
+
 		if (!once || ((once->state != PTHREAD_NEEDS_INIT) &&
 		              (once->state != PTHREAD_DONE_INIT)))
 			return EINVAL;
 
-		if (!once->mutex) {
-			pthread_mutex_t p;
-			pthread_mutex_init(&p, nullptr);
-			if (!p) return EINVAL;
+		mutex.lock();
 
-			{
-				static Mutex mutex;
-				Mutex::Guard guard(mutex);
-
-				if (!once->mutex) {
-					once->mutex = p;
-					p = nullptr;
-				}
-			}
-
-			/*
-			 * If another thread concurrently allocated a mutex and was faster,
-			 * free our mutex since it is not used.
-			 */
-			if (p) pthread_mutex_destroy(&p);
+		if (once->state == PTHREAD_NEEDS_INIT) {
+			init_once();
+			once->state = PTHREAD_DONE_INIT;
 		}
 
-		once->mutex->lock();
-
-		if (once->state == PTHREAD_DONE_INIT) {
-			once->mutex->unlock();
-			return 0;
-		}
-
-		init_once();
-
-		once->state = PTHREAD_DONE_INIT;
-
-		once->mutex->unlock();
+		mutex.unlock();
 
 		return 0;
 	}
