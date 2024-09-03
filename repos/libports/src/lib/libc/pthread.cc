@@ -1310,26 +1310,57 @@ extern "C" {
 
 
 	/*
-	 * This uses one recursive mutex, in case the 'init_once' function blocks
-	 * and/or requires another 'pthread_once' by another thread, the other thread
-	 * will block forever.
+	 * Mutex with refcounter for 'pthread_once' only
 	 */
+	struct Pthread_once_mutex : Libc::Pthread_mutex_normal
+	{
+		unsigned ref_count = 0;
+
+		void     get() { ref_count++; }
+		unsigned put() { return --ref_count; }
+	};
+
+
 	int pthread_once(pthread_once_t *once, void (*init_once)(void))
 	{
-		static Pthread_mutex_recursive mutex { };
+		static Pthread_mutex_normal lifetime_mutex { };
+
+		/* mutex per pthread_once_t */
+		Pthread_once_mutex *once_mutex = nullptr;
 
 		if (!once || ((once->state != PTHREAD_NEEDS_INIT) &&
 		              (once->state != PTHREAD_DONE_INIT)))
 			return EINVAL;
 
-		mutex.lock();
+		if (once->state == PTHREAD_DONE_INIT) return 0;
 
+		/* create/refcount mutex */
+		lifetime_mutex.lock();
+		if (!once->mutex) {
+			Libc::Allocator alloc { };
+			once->mutex = new (alloc) Pthread_once_mutex;
+		}
+
+		once_mutex = static_cast<Pthread_once_mutex *>(once->mutex);
+		once_mutex->get();
+		lifetime_mutex.unlock();
+
+		/* lock and call init_once */
+		once_mutex->lock();
 		if (once->state == PTHREAD_NEEDS_INIT) {
 			init_once();
 			once->state = PTHREAD_DONE_INIT;
 		}
+		once_mutex->unlock();
 
-		mutex.unlock();
+		/* free/refcount mutex */
+		lifetime_mutex.lock();
+		if (!once_mutex->put()) {
+			Libc::Allocator alloc { };
+			destroy(alloc, once->mutex);
+			once->mutex = nullptr;
+		}
+		lifetime_mutex.unlock();
 
 		return 0;
 	}
