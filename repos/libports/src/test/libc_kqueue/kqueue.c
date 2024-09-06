@@ -498,5 +498,8 @@ int main(int argc, char **argv)
 	retval += test_enable();
 	retval += test_queue_disabled();
 
+	if (!retval)
+		printf("--- test succeeded ---\n");
+
 	return retval;
 }

@@ -1,4 +1,4 @@
-TARGET   = test-kqueue
+TARGET   = test-libc_kqueue
 SRC_C    = kqueue.c
 LIBS     = posix
 
