@@ -1422,4 +1422,4 @@ extern "C" int pthread_once(pthread_once_t *once, void (*init_once)(void))
 	return 0;
 }
 
-typeof(pthread_once) _pthread_once __attribute__((alias("pthread_once")));
+extern "C" typeof(pthread_once) _pthread_once __attribute__((alias("pthread_once")));
