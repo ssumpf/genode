@@ -88,6 +88,7 @@ struct Sculpt::Main : Input_event_handler,
 		Build_info::from_xml(Attached_rom_dataspace(_env, "build_info").xml());
 
 	bool const _mnt_reform = (_build_info.board == "mnt_reform2");
+	bool const _imx8q_evk  = (_build_info.board == "imx8q_evk");
 
 	Registry<Child_state> _child_states { };
 
@@ -276,13 +277,13 @@ struct Sculpt::Main : Input_event_handler,
 	 **********************/
 
 	Board_info::Soc _soc {
-		.fb    = _mnt_reform,
+		.fb    = _mnt_reform || _imx8q_evk,
 		.touch = false,
 		.wifi  = false, /* initialized via PCI */
-		.usb   = _mnt_reform,
+		.usb   = _mnt_reform || _imx8q_evk,
 		.mmc   = _mnt_reform,
 		.modem = false,
-		.nic   = _mnt_reform,
+		.nic   = _mnt_reform || _imx8q_evk,
 	};
 
 	Drivers _drivers { _env, _child_states, *this, *this };
@@ -290,7 +291,7 @@ struct Sculpt::Main : Input_event_handler,
 	Drivers::Resumed _resumed = _drivers.resumed();
 
 	Board_info::Options _driver_options {
-		.display = _mnt_reform,
+		.display = _mnt_reform || _imx8q_evk,
 		.usb_net = false,
 		.nic     = false,
 		.wifi    = false,
