@@ -50,6 +50,11 @@ unsigned lx_emul_pin_last_irq(void);
  */
 void lx_emul_pin_irq_ack(unsigned pin_irq);
 
+/**
+ * Return pending GPIO controller IRQ or -1 (and invalidate pending IRQ)
+ */
+int lx_emul_pin_controller_irq(void);
+
 #ifdef __cplusplus
 }
 #endif

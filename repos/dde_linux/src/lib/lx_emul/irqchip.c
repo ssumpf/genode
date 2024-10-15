@@ -20,6 +20,7 @@
 #include <linux/slab.h>
 #include <linux/irqchip.h>
 #include <../kernel/irq/internals.h>
+#include <lx_emul/pin.h>
 
 
 static void dde_irq_ack(struct irq_data *d)
@@ -187,8 +188,11 @@ int lx_emul_irq_task_function(void * data)
 
 		for (;;) {
 			irq = lx_emul_pending_irq();
-			if (irq == -1)
-				break;
+			if (irq == -1) {
+				irq = lx_emul_pin_controller_irq();
+				if (irq == -1)
+					break;
+			}
 
 			local_irq_save(flags);
 			irq_enter();
