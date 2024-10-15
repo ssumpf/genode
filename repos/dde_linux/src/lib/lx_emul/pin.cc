@@ -30,17 +30,17 @@ namespace {
 
 			Lx_kit::Env &_env;
 
+			unsigned _pending_irq = 0;
+
 		public:
 
 			struct Number { unsigned value; };
-
-			int pending_irq = -1;
 
 			Global_irq_controller(Lx_kit::Env &env) : _env(env) { }
 
 			void trigger_irq(Number number)
 			{
-				pending_irq = number.value;
+				_pending_irq = number.value;
 
 				_env.scheduler.unblock_irq_handler();
 				_env.scheduler.schedule();
@@ -163,13 +163,6 @@ namespace {
 			_env(env), _alloc(alloc), _gic(gic)
 		{ }
 
-		int gic_irq()
-		{
-			int irq = _gic.pending_irq;
-			_gic.pending_irq = -1;
-			return irq;
-		}
-
 		template <typename FN>
 		void with_pin(Pin::Name const &name, FN const &fn)
 		{
@@ -267,10 +260,4 @@ extern "C" void lx_emul_pin_irq_ack(unsigned pin_irq)
 extern "C" unsigned lx_emul_pin_last_irq(void)
 {
 	return pins().last_irq.value;
-}
-
-
-extern "C" int lx_emul_pin_controller_irq(void)
-{
-	return pins().gic_irq();
 }
