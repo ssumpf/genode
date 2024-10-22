@@ -263,12 +263,14 @@ class Nitpicker::Capture_session : public Session_object<Capture::Session>
 			if (!_buffer.constructed())
 				return Affected_rects { };
 
+			Point const anchor = _anchor_point() + pos;
+
 			Canvas<Pixel_rgb888> canvas { _buffer->local_addr<Pixel_rgb888>(),
-			                              _anchor_point() + pos, _buffer_attr.px };
+			                              anchor, _buffer_attr.px };
 
 			if (_policy_changed) {
-				canvas.draw_box({ { }, canvas.size() }, Color::rgb(0, 0, 0));
-				_dirty_rect.mark_as_dirty({ { }, canvas.size() });
+				canvas.draw_box({ anchor, canvas.size() }, Color::rgb(0, 0, 0));
+				_dirty_rect.mark_as_dirty({ anchor, canvas.size() });
 				_policy_changed = false;
 			}
 
@@ -283,7 +285,7 @@ class Nitpicker::Capture_session : public Session_object<Capture::Session>
 				_view_stack.draw(canvas, rect);
 
 				if (i < Affected_rects::NUM_RECTS) {
-					Rect const translated(rect.p1() - _anchor_point() - pos, rect.area);
+					Rect const translated(rect.p1() - anchor, rect.area);
 					Rect const clipped = Rect::intersect(translated, buffer_rect);
 					affected.rects[i++] = clipped;
 				}
