@@ -248,7 +248,7 @@ struct Gpu::Vram
 		_gpu.unmap_gpu(_elem.id(), 0, Virtual_address());
 	}
 
-	bool mmap(Genode::Env &env)
+	bool map_vram_cpu(Genode::Env &env)
 	{
 		if (!_attached_buffer.constructed()) {
 			_attached_buffer.construct(env.rm(), cap);
@@ -548,7 +548,7 @@ class Lima::Call
 					 * 'env' is solely needed for mapping the exec buffer
 					 * and is therefor used here locally.
 					 */
-					if (_exec_buffer->mmap(env)) {
+					if (_exec_buffer->map_vram_cpu(env)) {
 						char *ptr = (char*)_exec_buffer->mmap_addr();
 						if (ptr)
 							fn(ptr, _exec_buffer_size);
@@ -723,7 +723,7 @@ class Lima::Call
 		{
 			int result = -1;
 			(void)_apply_handle(arg.handle, [&] (Vram &b) {
-				if (!b.mmap(_env))
+				if (!b.map_vram_cpu(_env))
 					return;
 				arg.offset = reinterpret_cast<::uint64_t>(b.mmap_addr());
 
