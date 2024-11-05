@@ -322,6 +322,9 @@ void kill_fasync(struct fasync_struct **fp,int sig,int band)
 		if (sig == SNDRV_PCM_STREAM_CAPTURE)
 			sound_events_add(card, EVENT_PCM_CAPTURE);
 
+		if (sig == SNDRV_PCM_STREAM_PLAYBACK)
+			sound_events_add(card, EVENT_PCM_PLAYBACK);
+
 		if (genode_mixer_update())
 			sound_events_add(card, EVENT_MIXER);
 	}
@@ -1128,7 +1131,10 @@ static void update_jack(struct sound_card *card)
 
 static void sound_dispatch(struct sound_card *card, struct snd_card *c)
 {
+
 	while (true) {
+
+		bool capture_overrun = false;
 
 		/*
 		 * Save events and clear on card struct, we need to do this because some of
@@ -1165,8 +1171,17 @@ static void sound_dispatch(struct sound_card *card, struct snd_card *c)
 			}
 		}
 
-		/* sync on capture */
-		if (_event(events, EVENT_PCM_CAPTURE)) {
+		/*
+		 * Because the record/play session requires ticks to be as exact as
+		 * possible for sample-rate calculation, we try to synchronize on the
+		 * capture irq here because it is more consistent compared to playback which
+		 * is client driven. Nevertheless, capture may experience an over-run which
+		 * we must handle also.
+		 */
+		if (_event(events, EVENT_PCM_PLAYBACK))
+			capture_overrun = !sound_pcm_capture_watermark(card->capture);
+
+		if (_event(events, EVENT_PCM_CAPTURE) || capture_overrun) {
 			sound_capture(card->capture);
 			sound_play(card->playback);
 		}
