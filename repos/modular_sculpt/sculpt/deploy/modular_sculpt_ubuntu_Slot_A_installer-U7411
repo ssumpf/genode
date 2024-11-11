@@ -1,0 +1,93 @@
+<config arch="x86_64">
+
+	<common_routes>
+		<service name="ROM" label_last="ld.lib.so"> <parent/> </service>
+		<service name="CPU">   <parent/> </service>
+		<service name="PD">    <parent/> </service>
+		<service name="LOG">   <parent/> </service>
+		<service name="Timer"> <parent/> </service>
+	</common_routes>
+
+	<default-route>
+		<service name="Timer"> <parent/> </service>
+		<any-service> <parent/> <any-child/> </any-service>
+	</default-route>
+
+	<start name="acpi_support"/>
+	<start name="black_hole"/>
+	<start name="system_clock"/>
+	<start name="fonts_fs"/>
+	<start name="default_recall_fs"/>
+
+	<start name="window_layouter"/>
+	<start name="themed_decorator"/>
+	<start name="wm"/>
+
+	<start name="mesa_gpu-cpu" pkg="mesa_gpu-cpu" priority="-2">
+		<route>
+			<service name="RM"> <parent/> </service>
+		</route>
+	</start>
+
+	<start name="touchpad"/>
+
+	<start name="default_fs_shell"/>
+
+	<start name="audio_mixer">
+		<route>
+			<service name="Audio_out"> <child name="sof_audio"/> </service>
+			<service name="Report"> <parent/> </service>
+		</route>
+	</start>
+	<start name="sof_audio"/>
+
+	<start name="shared_fs"/>
+	<start name="usb_webcam"/>
+
+	<start name="nvme"/>
+	<start name="storage_nvme"/>
+
+	<start name="nvme_fs"/>
+
+	<start name="nvme_fs_shell"/>
+
+	<start name="ubuntu_vm_fs" pkg="chroot">
+		<config> <default-policy path="/vm/ubuntu-22.04-installer-raw" writeable="yes"/> </config>
+		<route>
+			<service name="File_system"> <child name="default_fs_rw"/> </service>
+		</route>
+	</start>
+
+	<start name="ubuntu_iso_fs" pkg="chroot">
+		<config> <default-policy path="/vm/ubuntu-22.04" writeable="no"/> </config>
+		<route>
+			<service name="File_system"> <child name="nvme_fs"/> </service>
+		</route>
+	</start>
+
+	<start name="vm_ubuntu_fs"/>
+	<start name="vm_ubuntu_nvme_Slot_A-U7411" pkg="vm_block_capture_iso">
+		<route>
+			<service name="Block" label="block0">            <child name="storage_nvme" label="6"/> </service>
+			<service name="File_system" label="shared">      <child name="shared_fs"/>          </service>
+			<service name="File_system" label="vm">          <child name="ubuntu_vm_fs"/>       </service>
+			<service name="File_system" label="iso">         <child name="ubuntu_iso_fs"/>      </service>
+			<service name="ROM" label="capslock">            <parent label="capslock"/>         </service>
+			<service name="ROM" label="clipboard">           <child name="wm"/>                 </service>
+			<service name="ROM" label="platform_info">       <parent label="platform_info"/>    </service>
+			<service name="ROM" label="system">              <child name="black_hole"/>         </service>
+			<service name="Report" label="clipboard">        <child name="wm"/>                 </service>
+			<service name="Report" label_last="shape">       <child name="wm"/>                 </service>
+			<service name="Gpu">                             <child name="black_hole"/>         </service>
+			<service name="Gui">                             <child name="wm"/>                 </service>
+			<service name="Nic">                             <child name="nic_router"/>         </service>
+			<service name="Audio_out">                       <child name="audio_mixer"/>        </service>
+			<service name="Audio_in">                        <child name="black_hole"/>         </service>
+			<service name="Rtc">                             <child name="system_clock"/>       </service>
+			<service name="Usb">                             <child name="usb"/>                </service>
+			<service name="RM">                              <parent/>                          </service>
+			<service name="VM">                              <parent/>                          </service>
+		</route>
+	</start>
+
+</config>

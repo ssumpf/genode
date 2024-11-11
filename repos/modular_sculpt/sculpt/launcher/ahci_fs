@@ -1,0 +1,7 @@
+<!-- 64M is not enough apparently -->
+<launcher pkg="ext2_fs" priority="-2" ram="80M">
+	<route>
+		<service name="Block"> <child name="storage_ahci" label="4"/> </service>
+		<service name="RM"> <parent/> </service>
+	</route>
+</launcher>
