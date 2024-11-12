@@ -27,6 +27,6 @@ launcher: usb_webcam
 launcher: shared_fs
 
 launcher: record_rom
-launcher: rom_osci
+launcher: rom_osci top_view
 
-launcher: vm_windows_fs vm_windows_nvme_Slot_A
+launcher: vm_windows_fs vm_usb_fs vm_windows_nvme_Slot_A

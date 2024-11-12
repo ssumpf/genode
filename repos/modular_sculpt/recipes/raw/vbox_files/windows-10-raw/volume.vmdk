@@ -5,7 +5,7 @@ parentCID=ffffffff
 createType="fullDevice"
 
 # Extent description
-RW 201326592 FLAT "/dev/block0" 0
+RW 353345536 FLAT "/dev/block0" 0
 
 # The disk Data Base
 #DDB

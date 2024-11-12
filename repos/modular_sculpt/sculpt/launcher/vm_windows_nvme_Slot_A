@@ -2,8 +2,9 @@
 	<affinity xpos="1" ypos="0" width="2" height="2"/>
 	<route>
 		<service name="File_system" label="vm">          <child name="vm_windows_fs"/> </service>
+		<!-- <service name="File_system" label="vm">          <child name="vm_usb_fs"/> </service> -->
 		<service name="File_system" label="shared">      <child name="shared_fs"/> </service>
-		<service name="Block" label="block0">            <child name="storage_nvme" label="7"/> </service>
+		<service name="Block" label="block0">            <child name="storage_nvme" label="3"/> </service>
 		<service name="Report" label_last="shape">       <child name="wm"/> </service>
 		<service name="Report" label="clipboard">        <child name="wm"/> </service>
 		<service name="ROM" label="clipboard">           <child name="wm"/> </service>

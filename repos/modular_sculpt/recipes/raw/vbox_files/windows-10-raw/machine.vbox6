@@ -11,7 +11,9 @@
       <HardDisks>
         <HardDisk uuid="{f52c2bdb-0fc0-4ab3-a0e0-3ed30f5fdf69}" location="/volume.vmdk" format="VMDK" type="Normal"/>
       </HardDisks>
-      <DVDImages/>
+      <DVDImages>
+        <Image uuid="{1bc61eaf-9928-47f1-885e-70673943a9b8}" location="/Win10_22H2.iso"/>
+      </DVDImages>
     </MediaRegistry>
     <Hardware>
       <CPU count="4" hotplug="false">
@@ -67,7 +69,9 @@
         <AttachedDevice type="HardDisk" port="0" device="0">
           <Image uuid="{f52c2bdb-0fc0-4ab3-a0e0-3ed30f5fdf69}"/>
         </AttachedDevice>
-        <AttachedDevice passthrough="false" type="DVD" port="1" device="0"/>
+        <AttachedDevice passthrough="false" type="DVD" port="1" device="0">
+          <Image uuid="{1bc61eaf-9928-47f1-885e-70673943a9b8}"/>
+        </AttachedDevice>
       </StorageController>
     </StorageControllers>
   </Machine>
