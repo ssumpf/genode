@@ -35,4 +35,4 @@ launcher: shared_fs
 
 launcher: usb_devices_rom
 
-launcher: vm_windows_fs vm_usb_fs vm_windows_nvme_Slot_A
+launcher: vm_windows_fs vm_windows_nvme_Slot_A
