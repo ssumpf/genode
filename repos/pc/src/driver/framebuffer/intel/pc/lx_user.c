@@ -239,6 +239,9 @@ static struct drm_framebuffer * lookup_framebuffer(struct drm_crtc *crtc,
 	struct drm_plane_state  *plane;
 	struct drm_crtc_state   *crtc_state;
 
+	if (!crtc || !crtc->dev || !ctx)
+		return NULL;
+
 	state = drm_atomic_state_alloc(crtc->dev);
 	if (!state)
 		return NULL;
@@ -507,7 +510,8 @@ static void close_unused_captures(struct drm_client_dev * const dev)
 				                           DRM_MODESET_ACQUIRE_INTERRUPTIBLE,
 				                           err);
 
-				fb = lookup_framebuffer(connector->state->crtc, &ctx);
+				if (connector->state && connector->state->crtc)
+					fb = lookup_framebuffer(connector->state->crtc, &ctx);
 
 				DRM_MODESET_LOCK_ALL_END(dev->dev, ctx, err);
 
@@ -958,14 +962,12 @@ static int update_content(void *)
 
 			unchanged[index] = 0;
 
-			if (!connector->state || !connector->state->crtc)
-				continue;
-
 			DRM_MODESET_LOCK_ALL_BEGIN(dev, ctx,
 			                           DRM_MODESET_ACQUIRE_INTERRUPTIBLE,
 			                           err);
 
-			fb = lookup_framebuffer(connector->state->crtc, &ctx);
+			if (connector->state && connector->state->crtc)
+				fb = lookup_framebuffer(connector->state->crtc, &ctx);
 
 			DRM_MODESET_LOCK_ALL_END(dev, ctx, err);
 
