@@ -10,4 +10,6 @@
 		<!-- rule for flashing the ergodox firmware
 		<policy label_suffix="teensy" vendor_id="0x16c0" product_id="0x0478"/>
 		-->
+		<policy label_suffix="usb_audio" vendor_id="0x8086" product_id="0x808"/> <!-- headset intel -->
+
 </usb>

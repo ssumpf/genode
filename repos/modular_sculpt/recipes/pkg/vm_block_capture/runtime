@@ -19,8 +19,8 @@
 		<rm/>
 		<rtc/>
 		<usb/>
-		<play/>
-		<record/>
+		<audio_in/>
+		<audio_out/>
 	</requires>
 
 	<config verbose="yes">
@@ -40,8 +40,8 @@
 			<service name="File_system"/>
 			<service name="Usb"/>
 			<service name="Nic"/>
-			<service name="Play"/>
-			<service name="Record"/>
+			<service name="Audio_in"/>
+			<service name="Audio_out"/>
 			<service name="Block"/>
 			<service name="Capture"/>
 		</parent-provides>
@@ -84,6 +84,7 @@
 				<service name="Block"       label="block0"> <parent label="block0"/>        </service>
 				<service name="File_system" label="shared"> <parent label="shared"/>        </service>
 				<service name="File_system">                <parent label="vm"/>            </service>
+				<service name="ROM" label="usb_devices">    <parent label="usb_devices"/>   </service>
 				<service name="ROM" label="capslock">       <parent label="capslock"/>      </service>
 				<service name="ROM" label="platform_info">  <parent label="platform_info"/> </service>
 				<service name="ROM" label="VBoxSharedClipboard.so">

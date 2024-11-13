@@ -495,8 +495,8 @@ void Driver_manager::Main::_handle_devices_update()
 			if (vendor_id == VENDOR_VBOX)
 				_use_ohci = false;
 
-			if (class_code == CLASS_NVME)
-				has_nvme = true;
+//			if (class_code == CLASS_NVME)
+//				has_nvme = true;
 		});
 	});
 

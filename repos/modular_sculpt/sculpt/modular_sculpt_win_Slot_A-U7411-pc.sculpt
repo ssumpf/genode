@@ -2,31 +2,37 @@ deploy:     modular_sculpt_win_Slot_A-U7411
 drivers:    pc
 ram_fs:     modular_sculpt
 system:     pc
-usb:        Slot_A
+usb:        default
 manager:    modular_sculpt
 nic_router: nic
 gpu:        empty
 
-import: pkg/sculpt_drivers-pc
+#import: pkg/sculpt_drivers-pc
 import: raw/vbox_files
 
-launcher: acpi_support
-launcher: black_hole system_clock
+import: pkg/drivers_managed-pc pkg/pc_wifi
+import: src/pc_nic_drv pkg/nvme src/intel_gpu_drv
+
+
+#launcher: acpi_support
+launcher: black_hole system_clock-pc
 launcher: fonts_fs
 
 launcher: default_recall_fs
 launcher: wm window_layouter themed_decorator
 
-launcher: touchpad
-launcher: sof_audio audio_mixer
+#launcher: touchpad
+#launcher: sof_audio audio_mixer
 
 launcher: default_fs_shell
 launcher: nvme storage_nvme
 
-launcher: usb_webcam
+#launcher: usb_webcam
 launcher: shared_fs
 
-launcher: record_rom
-launcher: rom_osci top_view
+#launcher: record_rom
+#launcher: rom_osci
+
+launcher: usb_devices_rom
 
 launcher: vm_windows_fs vm_usb_fs vm_windows_nvme_Slot_A

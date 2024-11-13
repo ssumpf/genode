@@ -1,4 +1,4 @@
-<runtime ram="20M" caps="100" binary="nvme">
+<runtime ram="20M" caps="100" binary="nvme_drv">
 
 	<requires> <platform/> <report/> </requires>
 	<provides> <block/> </provides>
@@ -9,7 +9,7 @@
 	</config>
 	<content>
 		<rom label="ld.lib.so"/>
-		<rom label="nvme"/>
+		<rom label="nvme_drv"/>
 	</content>
 
 </runtime>

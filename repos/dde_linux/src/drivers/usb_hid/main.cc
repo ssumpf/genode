@@ -290,11 +290,20 @@ struct Driver
 
 		try {
 			Xml_node report_node = report_rom->xml();
+			Genode::log("USB_HID: report: ", report_node);
 			report_node.for_each_sub_node([&] (Xml_node & dev_node)
 			{
 				unsigned long c = 0;
 				dev_node.attribute("class").value(c);
 				if (c != 0x3 /* USB_CLASS_HID */) return;
+
+				/* XXX: Do NOT claim Intel head-set */
+				unsigned long p = 0;
+				dev_node.attribute("product_id").value(p);
+				if (p == 0x808) {
+					Genode::log("SKIP: ", Genode::Hex(p));
+					return;
+				}
 
 				Device::Label label;
 				dev_node.attribute("label").value(label);
