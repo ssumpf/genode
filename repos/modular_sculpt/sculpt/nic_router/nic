@@ -2,7 +2,7 @@
 	<report interval_sec="5" bytes="yes" config="yes" config_triggers="yes" links="yes" stats="yes"/>
 	<default-policy domain="default"/>
 
-	<policy label_prefix="nic -> "    domain="uplink"/>
+	<policy label_prefix="nic_drv -> "    domain="uplink"/>
 
 	<policy label_prefix="vm_ubuntu"  domain="vm_ubuntu"/>
 	<policy label_prefix="vm_windows" domain="vm_windows"/>

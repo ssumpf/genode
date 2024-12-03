@@ -137,9 +137,10 @@
 			<report devices="yes"/>
 			<policy label_prefix="ps2_drv"> <device name="ps2"/> </policy>
 			<policy label_prefix="dynamic -> vesa_fb_drv" info="yes"> <pci class="VGA"/> </policy>
-			<policy label_prefix="dynamic -> ahci_drv">    <pci class="AHCI"/>  </policy>
+			<!-- <policy label_prefix="dynamic -> ahci_drv">    <pci class="AHCI"/> </policy> -->
 			<!-- <policy label_prefix="dynamic -> nvme_drv" info="yes"> <pci class="NVME"/>  </policy> -->
 			<policy label_prefix="runtime -> nvme" info="yes"> <pci class="NVME"/>  </policy>
+			<policy label_prefix="runtime -> ahci" info="yes"> <pci class="AHCI"/>  </policy>
 			<policy label_prefix="pc_i2c_hid_drv" info="yes">
 				<device name="00:15.3" type="pci"/>
 				<device name="INT34C5" type="acpi"/>
