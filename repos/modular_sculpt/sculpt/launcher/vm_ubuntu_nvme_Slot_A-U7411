@@ -20,5 +20,6 @@
 		<service name="VM">                              <parent/> </service>
 		<service name="RM">                              <parent/> </service>
 		<service name="Gpu">                             <parent/> </service>
+		<service name="ROM" label_last="qemu-usb.lib.so"> <parent/> </service>
 	</route>
 </launcher>

@@ -23,6 +23,7 @@
 		<device vendor_id="0xb0e" product_id="0x420"/>  <!-- headset jabra -->
 		<device vendor_id="0xd8c" product_id="0x14"/>   <!-- headset newbee -->
 		<device vendor_id="0x47f" product_id="0xc053"/> <!-- headset plantronics -->
+		<device vendor_id="0x8086" product_id="0x808"/>
 	</policy>
 
 	<policy label_prefix="vm_windows">
@@ -30,5 +31,6 @@
 		<device vendor_id="0xb0e" product_id="0x420"/>  <!-- headset jabra -->
 		<device vendor_id="0xd8c" product_id="0x14"/>   <!-- headset newbee -->
 		<device vendor_id="0x47f" product_id="0xc053"/> <!-- headset plantronics -->
+		<device vendor_id="0x8086" product_id="0x808"/>
 	</policy>
 </config>

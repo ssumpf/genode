@@ -10,6 +10,7 @@
 		<service name="ROM" label="mesa_gpu.lib.so">     <child name="mesa_gpu-cpu"/> </service>
 		<service name="ROM" label="capslock">            <parent label="capslock"/> </service>
 		<service name="ROM" label="platform_info">       <parent label="platform_info"/> </service>
+		<service name="ROM" label_last="qemu-usb.lib.so"><parent/> </service>
 		<service name="Gui">                             <child name="wm"/> </service>
 		<service name="Nic">                             <child name="nic_router"/> </service>
 		<service name="Rtc">                             <child name="system_clock"/> </service>
