@@ -176,7 +176,7 @@ class Interface : public List_model<::Interface>::Element
 				},
 
 				/* produce out content */
-				[&] (Urb &urb, uint32_t idx, Byte_range_ptr &dst) {
+				[&] (Urb &urb, uint32_t idx, Byte_range_ptr &dst, genode_uint32_t &) {
 					return out_isoc(urb._driver_data.data, idx,
 					                { dst.start, dst.num_bytes });
 				},

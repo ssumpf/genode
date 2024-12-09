@@ -143,7 +143,7 @@ void Usb_device::Interface::handle_events()
 		},
 
 		/* produce out content of isochronous packet i */
-		[] (Urb &urb, uint32_t i, Byte_range_ptr &dst) {
+		[] (Urb &urb, uint32_t i, Byte_range_ptr &dst, genode_uint32_t &) {
 			struct libusb_transfer *transfer =
 				USBI_TRANSFER_TO_LIBUSB_TRANSFER(urb.itransfer);
 			if (IS_XFEROUT(transfer)) {

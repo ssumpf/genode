@@ -75,7 +75,7 @@ class Urb : Usb::Endpoint, public Usb::Interface::Urb,
 		bool canceled() const { return _canceled; }
 		USBPacket *packet() const { return _packet; }
 
-		size_t read_cache(Byte_range_ptr &dst);
+		size_t read_cache(Byte_range_ptr &dst, genode_uint32_t &real_size);
 		void   write_cache(Const_byte_range_ptr const &src);
 		void   destroy();
 };
@@ -115,7 +115,7 @@ class Isoc_cache
 		Isoc_cache(::Interface &iface, Endpoint &ep, Allocator &alloc);
 
 		void   handle(USBPacket *p);
-		size_t read(Byte_range_ptr &dst);
+		size_t read(Byte_range_ptr &dst, genode_uint32_t &real_size);
 		void   write(Const_byte_range_ptr const &src);
 		void   destroy(Urb * urb);
 		void   flush();
@@ -158,8 +158,8 @@ class Endpoint : public List_model<Endpoint>::Element
 		void handle_isoc_packet(USBPacket *p) {
 			if (_isoc_cache.constructed()) _isoc_cache->handle(p); }
 
-		size_t read_cache(Byte_range_ptr &dst) {
-			return (_isoc_cache.constructed()) ? _isoc_cache->read(dst) : 0; }
+		size_t read_cache(Byte_range_ptr &dst, genode_uint32_t &real_size) {
+			return (_isoc_cache.constructed()) ? _isoc_cache->read(dst, real_size) : 0; }
 
 		void write_cache(Const_byte_range_ptr const &src) {
 			if (_isoc_cache.constructed()) _isoc_cache->write(src); }
@@ -488,9 +488,9 @@ Urb::Urb(Registry<Urb> &registry,
 	_endpoint(endp) {}
 
 
-size_t Urb::read_cache(Byte_range_ptr &dst)
+size_t Urb::read_cache(Byte_range_ptr &dst, genode_uint32_t &real_size)
 {
-	return _canceled ? 0 : _endpoint.read_cache(dst);
+	return _canceled ? 0 : _endpoint.read_cache(dst, real_size);
 }
 
 
@@ -576,10 +576,13 @@ void Isoc_cache::handle(USBPacket *p)
 }
 
 
-size_t Isoc_cache::read(Byte_range_ptr &dst)
+size_t Isoc_cache::read(Byte_range_ptr &dst, genode_uint32_t &real_size)
 {
-	if (_ep.in())
+	real_size = _ep.max_packet_size();
+
+	if (_ep.in()) {
 		return _ep.max_packet_size();
+	}
 
 	size_t offset = _read * _ep.max_packet_size();
 	Genode::memcpy(dst.start, (void*)(_buffer+offset), _sizes[_read]);
@@ -764,8 +767,8 @@ void ::Interface::update_urbs()
 			if (!urb.canceled()) produce_out_data(urb._packet, dst); },
 		[&] (Urb &urb, Const_byte_range_ptr const &src) {
 			if (!urb.canceled()) consume_in_data(urb._packet, src); },
-		[&] (Urb &urb, uint32_t, Byte_range_ptr &dst) {
-			return urb.read_cache(dst); },
+		[&] (Urb &urb, uint32_t, Byte_range_ptr &dst, genode_uint32_t &real_size) {
+			return urb.read_cache(dst, real_size); },
 		[&] (Urb &urb, uint32_t, Const_byte_range_ptr const &src) {
 			urb.write_cache(src); },
 		[&] (Urb &urb, Usb::Tagged_packet::Return_value v)

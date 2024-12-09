@@ -24,7 +24,6 @@
 #include <packet_stream_tx/rpc_object.h>
 #include <usb_session/usb_session.h>
 #include <util/bit_allocator.h>
-
 #include <genode_c_api/usb.h>
 
 using namespace Genode;
@@ -813,13 +812,21 @@ Interface_component::_handle_request(Constructible<Packet_descriptor> &cpd,
 		{
 			genode_usb_isoc_transfer_header & hdr =
 				*reinterpret_cast<genode_usb_isoc_transfer_header*>(payload.addr);
+#if 0
+			unsigned long isoc_transfer_size = 0;
+			for (unsigned i = 0; i < hdr.number_of_packets; i++) {
+				isoc_transfer_size += hdr.packets[i].size;
+			}
+#endif
+			size_t const header_size = sizeof(genode_usb_isoc_transfer_header) +
+			                           (hdr.number_of_packets *
+			                           sizeof(genode_usb_isoc_descriptor));
 			genode_buffer_t isoc_payload {
-				(void*) ((addr_t)payload.addr +
-				         sizeof(genode_usb_isoc_transfer_header) +
-				         (hdr.number_of_packets *
-				          sizeof(genode_usb_isoc_descriptor))),
-				payload.size - sizeof(genode_usb_isoc_transfer_header) +
-				hdr.number_of_packets * sizeof(genode_usb_isoc_descriptor) };
+				(void*) ((addr_t)payload.addr + header_size),
+				payload.size - header_size };
+
+			//Genode::memset((void*)isoc_payload.addr, 0, isoc_payload.size);
+			//Genode::log("s: ", isoc_payload.size, " nr: ", (unsigned)hdr.number_of_packets);
 			cbs->isoc_fn(handle, cpd->index, hdr.number_of_packets,
 			             hdr.packets, isoc_payload, opaque_data);
 			break;
@@ -856,6 +863,7 @@ Interface_component::handle_response(genode_usb_request_handle_t handle,
 				void * data = _tx.sink()->packet_content(p);
 				genode_usb_isoc_transfer_header & hdr =
 					*reinterpret_cast<genode_usb_isoc_transfer_header*>(data);
+				//Genode::error("number_of: ", (unsigned)hdr.number_of_packets);
 				for (size_t i = 0; i < hdr.number_of_packets; i++)
 					hdr.packets[i].actual_size = actual_sizes[i+1];
 			}

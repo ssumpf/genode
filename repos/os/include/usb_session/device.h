@@ -157,10 +157,11 @@ class Usb::Urb_handler
 
 						for (uint32_t i = 0; i < _isoc_packets; i++) {
 							Byte_range_ptr dst { (char*)(payload+off), _size-off };
-							uint32_t psize = isoc_out_fn(urb, i, dst);
-							hdr.packets[i].actual_size = 0;
+							genode_uint32_t real_size = 0;
+							uint32_t psize = isoc_out_fn(urb, i, dst, real_size);
+							hdr.packets[i].actual_size = real_size;
 							hdr.packets[i].size = psize;
-							off += psize;
+							off += real_size;
 						}
 					}
 
@@ -415,7 +416,7 @@ class Usb::Interface
 		                 IN_FN  const &in_fn,
 		                 CPL_FN const &complete_fn)
 		{
-			auto isoc_out = [] (URB&, uint32_t, Byte_range_ptr&) { return 0; };
+			auto isoc_out = [] (URB&, uint32_t, Byte_range_ptr&, genode_uint32_t &) { return 0; };
 			auto isoc_in  = [] (URB&, uint32_t, Const_byte_range_ptr&) { };
 			return _urb_handler.update_urbs<URB>(out_fn, in_fn, isoc_out,
 			                                     isoc_in, complete_fn);
@@ -530,7 +531,7 @@ class Usb::Device
 		                 IN_FN  const &in_fn,
 		                 CPL_FN const &complete_fn)
 		{
-			auto isoc_out = [] (URB&, uint32_t, Byte_range_ptr&) { return 0; };
+			auto isoc_out = [] (URB&, uint32_t, Byte_range_ptr&, genode_uint32_t &) { return 0; };
 			auto isoc_in  = [] (URB&, uint32_t, Const_byte_range_ptr&) { };
 			return _urb_handler.update_urbs<URB>(out_fn, in_fn, isoc_out,
 			                                     isoc_in, complete_fn);
