@@ -29,7 +29,6 @@
 /* format-string includes */
 #include <format/snprintf.h>
 
-#include <genode_c_api/socket_types.h>
 #include <genode_c_api/socket.h>
 
 namespace {
