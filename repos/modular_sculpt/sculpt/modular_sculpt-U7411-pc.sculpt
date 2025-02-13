@@ -5,7 +5,7 @@ system:     pc
 usb:        Slot_A
 manager:    modular_sculpt
 nic_router: nic
-gpu:        empty
+gpu:        intel
 
 import: pkg/sculpt_drivers-pc
 import: raw/vbox_files
@@ -30,4 +30,4 @@ launcher: vm_ubuntu_fs vm_ubuntu_nvme_Slot_A-U7411
 launcher: vm_windows_fs vm_windows_nvme_Slot_A-U7411
 
 launcher: shell.1 shell.2 shell.3
-launcher: test-capture
+launcher: test-webcam
