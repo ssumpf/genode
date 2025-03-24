@@ -13,9 +13,8 @@ URL(virtualbox_sdk) := http://download.virtualbox.org/virtualbox/$(VERSION)/$(VI
 DIR(virtualbox_sdk) := src/virtualbox7_sdk
 SHA(virtualbox_sdk) := 3762fbd3606a748d7c5734cb02b346ec31a5aae1314bc6a68cbad2e35e2d62db
 
-#PATCHES_DIR := src/virtualbox7/patches
-#PATCHES     := $(addprefix $(PATCHES_DIR)/, $(shell cat $(REP_DIR)/$(PATCHES_DIR)/series))
-#PATCH_OPT   := -p1
+PATCHES_DIR := src/virtualbox7/patches
+PATCHES     := $(addprefix $(PATCHES_DIR)/, $(shell cat $(REP_DIR)/$(PATCHES_DIR)/series))
 
 $(call check_tool,xsltproc)
 $(call check_tool,yasm)

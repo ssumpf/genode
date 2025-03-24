@@ -1,0 +1,16 @@
+drvtap.patch
+qemu-xhci.patch
+network.patch
+smp_sipi.patch
+tm_poke.patch
+exec_state.patch
+rttimer.patch
+devsvga.patch
+shaderlib.patch
+audio.patch
+sup_ioctl_query_func_size.patch
+disk_geometry.patch
+stack_size.patch
+avx.patch
+rdrand.patch
+mousebuttons.patch

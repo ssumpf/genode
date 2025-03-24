@@ -1,0 +1,20 @@
+--- src/virtualbox7/src/VBox/VMM/VMMR3/CPUMR3CpuId.cpp
++++ src/virtualbox7/src/VBox/VMM/VMMR3/CPUMR3CpuId.cpp
+@@ -3091,7 +3091,7 @@ static int cpumR3CpuIdReadConfig(PVM pVM, PCPUMCPUIDCONFIG pConfig, PCFGMNODE pC
+      * the default is to only do this for VMs with nested paging and AMD-V or
+      * unrestricted guest mode.
+      */
+-    rc = cpumR3CpuIdReadIsaExtCfg(pVM, pIsaExts, "RDRAND", &pConfig->enmRdRand, fNestedPagingAndFullGuestExec);
++    rc = cpumR3CpuIdReadIsaExtCfg(pVM, pIsaExts, "RDRAND", &pConfig->enmRdRand, fEnforceHWusage);
+     AssertLogRelRCReturn(rc, rc);
+ 
+     /** @cfgm{/CPUM/IsaExts/RDSEED, isaextcfg, depends}
+@@ -3099,7 +3099,7 @@ static int cpumR3CpuIdReadConfig(PVM pVM, PCPUMCPUIDCONFIG pConfig, PCFGMNODE pC
+      * the default is to only do this for VMs with nested paging and AMD-V or
+      * unrestricted guest mode.
+      */
+-    rc = cpumR3CpuIdReadIsaExtCfg(pVM, pIsaExts, "RDSEED", &pConfig->enmRdSeed, fNestedPagingAndFullGuestExec);
++    rc = cpumR3CpuIdReadIsaExtCfg(pVM, pIsaExts, "RDSEED", &pConfig->enmRdSeed, fEnforceHWusage);
+     AssertLogRelRCReturn(rc, rc);
+ 
+     /** @cfgm{/CPUM/IsaExts/ADX, isaextcfg, depends}
