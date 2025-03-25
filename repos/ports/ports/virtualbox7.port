@@ -100,8 +100,12 @@ VBOX_MAIN_INC += RecordingScreenSettingsImpl DataStreamImpl
 VBOX_MAIN_INC += GuestDnDSourceImpl GuestDnDTargetImpl GuestDnDPrivate
 VBOX_MAIN_INC += VirtualBoxBase VirtualBoxErrorInfoImpl
 
+VBOX_DISASM := DisasmCore-x86-amd64 Disasm DisasmTablesX64 DisasmTables-x86-amd64
+VBOX_DISASM += DisasmFormatYasm DisasmFormatBytes DisasmMisc
+VBOX_DISASM_INC := DisasmInternal DisasmInternal-x86-amd64
+
 VBOX_SRC_VBOX := VMM Devices Runtime GuestHost
-VBOX_SRC_VBOX += Storage Disassembler
+VBOX_SRC_VBOX += Storage
 VBOX_SRC_VBOX += HostDrivers/Support
 VBOX_SRC_VBOX += HostServices/SharedFolders Main/xml/Settings.cpp
 VBOX_SRC_VBOX += HostServices/SharedClipboard
@@ -115,21 +119,21 @@ VBOX_SRC_VBOX += Main/idl/apiwrap-server.xsl
 VBOX_SRC_VBOX += Main/idl/typemap-shared.inc.xsl
 VBOX_SRC_VBOX += Main/idl/VirtualBox.dtd
 VBOX_SRC_VBOX += Main/src-server/HostDnsService.h
+VBOX_SRC_VBOX += $(addsuffix .cpp, $(addprefix Disassembler/, $(VBOX_DISASM)))
+VBOX_SRC_VBOX += $(addsuffix .h,   $(addprefix Disassembler/, $(VBOX_DISASM_INC)))
 VBOX_SRC_VBOX += $(addsuffix .h,   $(addprefix Main/include/, $(VBOX_MAIN_INC)))
 VBOX_SRC_VBOX += $(addsuffix .cpp, $(addprefix Main/src-client/, $(VBOX_MAIN_CLI)))
 VBOX_SRC_VBOX += $(addsuffix .cpp, $(addprefix Main/src-server/, $(VBOX_MAIN_SRV)))
 VBOX_SRC_VBOX += $(addsuffix .cpp, $(addprefix Main/src-all/, $(VBOX_MAIN_ALL)))
 VBOX_SRC_VBOX += $(addsuffix .cpp, $(addprefix Main/glue/, $(VBOX_MAIN_GLUE)))
 
-VBOX_INC := types.h cdefs.h hgcmsvc.h err.h dis.h log.h sup.h pci.h
-VBOX_INC += param.h ostypes.h VMMDev.h vusb.h dbg.h version.h scsiinline.h
-VBOX_INC += bioslogo.h scsi.h shflsvc.h vd.h vdmedia.h vd-common.h
-VBOX_INC += vd-plugin.h vd-ifs.h vd-ifs-internal.h vd-image-backend.h
-VBOX_INC += vd-cache-backend.h vd-filter-backend.h msi.h asmdefs.mac err.mac
-VBOX_INC += settings.h VBoxAuth.h VBoxTpG.h
-VBOX_INC += usb.h usbfilter.h vrdpusb.h AssertGuest.h bios.h ata.h vscsi.h
-VBOX_INC += RemoteDesktop Graphics ExtPack/ExtPack.h VMMDevCoreTypes.h
-VBOX_INC += VBoxGuestCoreTypes.h intnet.h
+VBOX_INC := AssertGuest.h RemoteDesktop Graphics ExtPack/ExtPack.h VBoxAuth.h
+VBOX_INC += VBoxGuestCoreTypes.h VBoxTpG.h VMMDev.h VMMDevCoreTypes.h asmdefs.mac err.mac
+VBOX_INC += apic.h ata.h bios.h bioslogo.h cdefs.h dbg.h disopcode-x86-amd64.h dis-x86-amd64.h dis.h err.h hgcmsvc.h
+VBOX_INC += intnet.h log.h msi.h ostypes.h param.h pci.h scsi.h scsiinline.h settings.h
+VBOX_INC += shflsvc.h sup.h types.h usb.h usbfilter.h vd-cache-backend.h vd-common.h
+VBOX_INC += vd-filter-backend.h vd-ifs-internal.h vd-ifs.h vd-image-backend.h vd-plugin.h
+VBOX_INC += vd.h vdmedia.h version.h vrdpusb.h vscsi.h vusb.h
 
 VBOX_INC_COM := array.h assert.h AutoLock.h ErrorInfo.h EventQueue.h Guid.h
 VBOX_INC_COM += list.h MultiResult.h string.h defs.h ptr.h VirtualBox.h com.h
