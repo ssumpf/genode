@@ -145,8 +145,8 @@ VBOX_CONTENT += $(addprefix include/VBox/com/, $(VBOX_INC_COM))
 VBOX_CONTENT += include/VBox/HostServices/
 VBOX_CONTENT += include/VBox/GuestHost/
 
-VBOX_CONTENT += src/libs/zlib-1.2.13
-VBOX_CONTENT += src/libs/xpcom18a4
+VBOX_CONTENT += src/libs/zlib-1.2.13 src/libs/liblzf-3.6 src/libs/libxml2-2.13.2
+VBOX_CONTENT += src/libs/softfloat-3e src/libs/xpcom18a4
 VBOX_CONTENT += include/VBox/vmm include/iprt Version.kmk
 VBOX_CONTENT += COPYING
 
