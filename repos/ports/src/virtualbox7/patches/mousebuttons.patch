@@ -147,6 +147,27 @@
  
          VMMDevNotifyGuest(pDevIns, pThis, pThisCC, VMMDEV_EVENT_MOUSE_POSITION_CHANGED);
      }
+@@ -4244,7 +4336,7 @@ static DECLCALLBACK(int) vmmdevSaveExec(PPDMDEVINS pDevIns, PSSMHANDLE pSSM)
+     pHlp->pfnSSMPutS32(pSSM, pThis->yMouseAbs);
+     pHlp->pfnSSMPutS32(pSSM, pThis->dzMouse);
+     pHlp->pfnSSMPutS32(pSSM, pThis->dwMouse);
+-    pHlp->pfnSSMPutU32(pSSM, pThis->fMouseButtons);
++    pHlp->pfnSSMPutU32(pSSM, pThis->mouseButtons.next());
+ 
+     pHlp->pfnSSMPutBool(pSSM, pThis->fNewGuestFilterMaskValid);
+     pHlp->pfnSSMPutU32(pSSM, pThis->fNewGuestFilterMask);
+@@ -4351,7 +4443,10 @@ static DECLCALLBACK(int) vmmdevLoadExec(PPDMDEVINS pDevIns, PSSMHANDLE pSSM, uin
+     {
+         pHlp->pfnSSMGetS32(pSSM, &pThis->dzMouse);
+         pHlp->pfnSSMGetS32(pSSM, &pThis->dwMouse);
+-        pHlp->pfnSSMGetU32(pSSM, &pThis->fMouseButtons);
++        unsigned fButtons = 0;
++        pHlp->pfnSSMGetU32(pSSM, &fButtons);
++        pThis->mouseButtons.record(fButtons);
++
+     }
+ 
+     pHlp->pfnSSMGetBool(pSSM, &pThis->fNewGuestFilterMaskValid);
 --- src/virtualbox7/src/VBox/Devices/VMMDev/VMMDevState.h
 +++ src/virtualbox7/src/VBox/Devices/VMMDev/VMMDevState.h
 @@ -150,7 +150,27 @@ typedef struct VMMDEV
