@@ -14,3 +14,4 @@ stack_size.patch
 avx.patch
 rdrand.patch
 mousebuttons.patch
+log_level.patch

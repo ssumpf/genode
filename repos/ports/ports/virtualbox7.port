@@ -66,39 +66,36 @@ VBOX_MAIN_SRV += DataStreamImpl HostPower ProgressProxyImpl
 VBOX_MAIN_SRV += os2/PerformanceOs2 ClientWatcher
 VBOX_MAIN_SRV += generic/NetIf-generic
 
-VBOX_MAIN_INC := AdditionsFacilityImpl AudioAdapterImpl AuthLibrary
-VBOX_MAIN_INC += AutoCaller AutostartDb AutoStateDep BandwidthControlImpl
-VBOX_MAIN_INC += BandwidthGroupImpl BusAssignmentManager
-VBOX_MAIN_INC += ClientToken ConsoleImpl DHCPServerImpl DisplayImpl HostImpl
-VBOX_MAIN_INC += DisplayUtils DrvAudioVRDE EventImpl ExtPackManagerImpl Global
-VBOX_MAIN_INC += GuestCtrlImplPrivate GuestDirectoryImpl LoggingNew
-VBOX_MAIN_INC += GuestFileImpl GuestFsObjInfoImpl GuestImpl GuestOSTypeImpl
-VBOX_MAIN_INC += GuestSessionImpl HashedPw KeyboardImpl MachineImplCloneVM
-VBOX_MAIN_INC += HGCM HGCMThread HGCMObjects
-VBOX_MAIN_INC += MachineImpl MediumAttachmentImpl MediumFormatImpl MediumImpl
-VBOX_MAIN_INC += MediumLock MouseImpl NATEngineImpl NATNetworkImpl
-VBOX_MAIN_INC += NetworkAdapterImpl NetworkServiceRunner
-VBOX_MAIN_INC += objectslist ObjectState vector netif
-VBOX_MAIN_INC += ParallelPortImpl PCIDeviceAttachmentImpl Performance
-VBOX_MAIN_INC += ProgressImpl ProgressProxyImpl QMTranslator SnapshotImpl
-VBOX_MAIN_INC += SecretKeyStore SerialPortImpl SessionImpl SharedFolderImpl
-VBOX_MAIN_INC += StorageControllerImpl SystemPropertiesImpl TokenImpl VMMDev
-VBOX_MAIN_INC += UsbWebcamInterface
-VBOX_MAIN_INC += USBControllerImpl USBDeviceFilterImpl USBDeviceFiltersImpl
-VBOX_MAIN_INC += USBIdDatabase USBProxyService VirtualBoxImpl VRDEServerImpl GuestProcessImpl
-VBOX_MAIN_INC += USBDeviceImpl HostUSBDeviceImpl Matching Wrapper
-VBOX_MAIN_INC += RemoteUSBDeviceImpl RemoteUSBBackend ConsoleVRDPServer
-VBOX_MAIN_INC += MachineDebuggerImpl EmulatedUSBImpl
-VBOX_MAIN_INC += ThreadTask USBProxyBackend
-VBOX_MAIN_INC += RecordingSettingsImpl GraphicsAdapterImpl PerformanceImpl
-VBOX_MAIN_INC += AudioDriver GuestSessionImplTasks ClientTokenHolder
-VBOX_MAIN_INC += DHCPConfigImpl MachineImplMoveVM MediumIOImpl
-VBOX_MAIN_INC += MachineLaunchVMCommonWorker ClientWatcher
-VBOX_MAIN_INC += CloudProviderManagerImpl HostNetworkInterfaceImpl
-VBOX_MAIN_INC += HostVideoInputDeviceImpl HostPower HostHardwareLinux
-VBOX_MAIN_INC += RecordingScreenSettingsImpl DataStreamImpl
-VBOX_MAIN_INC += GuestDnDSourceImpl GuestDnDTargetImpl GuestDnDPrivate
-VBOX_MAIN_INC += VirtualBoxBase VirtualBoxErrorInfoImpl
+VBOX_MAIN_INC := AdditionsFacilityImpl AudioAdapterImpl AudioDriver AudioSettingsImpl AuthLibrary
+VBOX_MAIN_INC += AutoCaller AutoStateDep AutostartDb BandwidthControlImpl BandwidthGroupImpl
+VBOX_MAIN_INC += BusAssignmentManager ClientToken ClientTokenHolder ClientWatcher
+VBOX_MAIN_INC += CloudProviderManagerImpl ConsoleImpl ConsoleVRDPServer CPUProfileImpl CryptoUtils
+VBOX_MAIN_INC += DHCPConfigImpl DHCPServerImpl DataStreamImpl DisplayImpl DisplayUtils
+VBOX_MAIN_INC += DrvAudioVRDE EmulatedUSBImpl EventImpl ExtPackManagerImpl FirmwareSettingsImpl
+VBOX_MAIN_INC += Global GraphicsAdapterImpl GuestCtrlImplPrivate GuestDirectoryImpl
+VBOX_MAIN_INC += GuestDnDPrivate GuestDnDSourceImpl GuestDnDTargetImpl GuestFileImpl
+VBOX_MAIN_INC += GuestFsObjInfoImpl GuestImpl GuestOSTypeImpl GuestProcessImpl GuestSessionImpl
+VBOX_MAIN_INC += GuestSessionImplTasks GuestDebugControlImpl
+VBOX_MAIN_INC += HGCM HGCMObjects HGCMThread HashedPw HostDriveImpl HostDrivePartitionImpl
+VBOX_MAIN_INC += HostHardwareLinux
+VBOX_MAIN_INC += HostImpl HostNetworkInterfaceImpl HostPower HostUSBDeviceImpl
+VBOX_MAIN_INC += HostVideoInputDeviceImpl HostX86Impl
+VBOX_MAIN_INC += KeyboardImpl LoggingNew MachineDebuggerImpl MachineImpl
+VBOX_MAIN_INC += MachineImplCloneVM MachineImplMoveVM MachineLaunchVMCommonWorker Matching
+VBOX_MAIN_INC += MediumAttachmentImpl MediumFormatImpl MediumIOImpl MediumImpl MediumLock
+VBOX_MAIN_INC += MouseImpl NATEngineImpl NATNetworkImpl NetworkAdapterImpl NetworkServiceRunner
+VBOX_MAIN_INC += NvramStoreImpl
+VBOX_MAIN_INC += ObjectState PCIDeviceAttachmentImpl ParallelPortImpl Performance PerformanceImpl
+VBOX_MAIN_INC += PlatformBase PlatformImpl PlatformPropertiesImpl ProgressImpl ProgressProxyImpl
+VBOX_MAIN_INC += QMTranslator RecordingScreenSettingsImpl
+VBOX_MAIN_INC += RecordingSettingsImpl RemoteUSBBackend RemoteUSBDeviceImpl SecretKeyStore
+VBOX_MAIN_INC += SerialPortImpl SessionImpl SharedFolderImpl SnapshotImpl StorageControllerImpl
+VBOX_MAIN_INC += SystemPropertiesImpl ThreadTask TokenImpl TrustedPlatformModuleImpl
+VBOX_MAIN_INC += USBControllerImpl USBDeviceFilterImpl
+VBOX_MAIN_INC += USBDeviceFiltersImpl USBDeviceImpl USBIdDatabase USBProxyBackend USBProxyService
+VBOX_MAIN_INC += UsbWebcamInterface VBoxNls VMMDev VRDEServerImpl VirtualBoxBase
+VBOX_MAIN_INC += VirtualBoxErrorInfoImpl VirtualBoxImpl VirtualBoxTranslator Wrapper netif
+VBOX_MAIN_INC += objectslist vector
 
 VBOX_DISASM := DisasmCore-x86-amd64 Disasm DisasmTablesX64 DisasmTables-x86-amd64
 VBOX_DISASM += DisasmFormatYasm DisasmFormatBytes DisasmMisc
@@ -116,6 +113,7 @@ VBOX_SRC_VBOX += Main/xml/VirtualBox-settings.xsd Main/xml/SchemaDefs.xsl
 VBOX_SRC_VBOX += Main/idl/docstrip.xsl Main/idl/VirtualBox.xidl
 VBOX_SRC_VBOX += Main/idl/comimpl.xsl
 VBOX_SRC_VBOX += Main/idl/apiwrap-server.xsl
+VBOX_SRC_VBOX += Main/idl/stringify-enums.xsl
 VBOX_SRC_VBOX += Main/idl/typemap-shared.inc.xsl
 VBOX_SRC_VBOX += Main/idl/VirtualBox.dtd
 VBOX_SRC_VBOX += Main/src-server/HostDnsService.h
@@ -128,8 +126,10 @@ VBOX_SRC_VBOX += $(addsuffix .cpp, $(addprefix Main/src-all/, $(VBOX_MAIN_ALL)))
 VBOX_SRC_VBOX += $(addsuffix .cpp, $(addprefix Main/glue/, $(VBOX_MAIN_GLUE)))
 
 VBOX_INC := AssertGuest.h RemoteDesktop Graphics ExtPack/ExtPack.h VBoxAuth.h
-VBOX_INC += VBoxGuestCoreTypes.h VBoxTpG.h VMMDev.h VMMDevCoreTypes.h asmdefs.mac err.mac
-VBOX_INC += apic.h ata.h bios.h bioslogo.h cdefs.h dbg.h disopcode-x86-amd64.h dis-x86-amd64.h dis.h err.h hgcmsvc.h
+VBOX_INC += VBoxGuestCoreTypes.h VBoxTpG.h VBoxCryptoIf.h VMMDev.h VMMDevCoreTypes.h
+VBOX_INC += asmdefs.mac err.mac
+VBOX_INC += apic.h ata.h bios.h bioslogo.h cdefs.h dbg.h disopcode-x86-amd64.h
+VBOX_INC += dis-x86-amd64.h dis.h err.h hgcmsvc.h
 VBOX_INC += intnet.h log.h msi.h ostypes.h param.h pci.h scsi.h scsiinline.h settings.h
 VBOX_INC += shflsvc.h sup.h types.h usb.h usbfilter.h vd-cache-backend.h vd-common.h
 VBOX_INC += vd-filter-backend.h vd-ifs-internal.h vd-ifs.h vd-image-backend.h vd-plugin.h
@@ -192,6 +192,10 @@ additional_steps : $(DOWNLOADS)
 	   --stringparam generating "sources" --param reminder 1 \
 	   -o src/virtualbox7/VBoxAPIWrap/apiwrappers-sources-odd \
 	   src/virtualbox7/src/VBox/Main/idl/apiwrap-server.xsl \
+	   src/virtualbox7/VirtualBox_stripped.xidl
+	$(VERBOSE)xsltproc --stringparam G_kind header \
+	   --stringparam generating "headers" -o src/virtualbox7/src/VBox/Main/include/StringifyEnums.h \
+	   src/virtualbox7/src/VBox/Main/idl/stringify-enums.xsl \
 	   src/virtualbox7/VirtualBox_stripped.xidl
 	$(VERBOSE)mkdir -p src/virtualbox7/VBoxAPIWrap ; \
 		cd src/virtualbox7 ; \
