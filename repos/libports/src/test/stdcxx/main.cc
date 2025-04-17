@@ -16,6 +16,19 @@
 #include <iomanip>
 #include <sstream>
 #include <string>
+#include <memory>
+
+#include <libc/component.h>
+#include <timer_session/connection.h>
+
+namespace My_timer {
+	struct Connection : Timer::Connection
+	{
+		Connection(Genode::Env &env) : Timer::Connection(env) { Genode::log("+ ", __func__); }
+		~Connection()                                         { Genode::log("+ ", __func__); }
+	};
+}
+
 
 static void test_string(double year, float month, unsigned long day)
 {
@@ -118,4 +131,21 @@ int main(int argc, char **argv)
 	test_ignore();
 
 	std::cout << "° °° °°° test-stdcxx finished °°° °° °" << std::endl;
+}
+
+void Libc::Component::construct(Libc::Env &env)
+{
+	Genode::log("- ", __LINE__);
+	{
+		std::unique_ptr<Timer::Connection> timer = std::make_unique<Timer::Connection>(env);
+		timer->msleep(1'000);
+	}
+	Genode::log("- ", __LINE__);
+	{
+		std::unique_ptr<My_timer::Connection> timer = std::make_unique<My_timer::Connection>(env);
+		timer->msleep(1'000);
+	}
+	Genode::log("- ", __LINE__);
+
+	Libc::with_libc([] { main(0, nullptr); });
 }
