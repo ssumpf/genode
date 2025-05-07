@@ -101,8 +101,7 @@ void Framebuffer_controller::_update_fb_config(Xml_node const &report)
 {
 	try {
 		static char buf[4096];
-
-		Xml_generator xml(buf, sizeof(buf), "config", [&] {
+		size_t used = Xml_generator::generate ( { buf, sizeof(buf)}, "config", [&] (Xml_generator &xml) {
 			xml.attribute("apply_on_hotplug", "no");
 			xml.node("report", [&] {
 				xml.attribute("connectors", "yes");
@@ -110,13 +109,15 @@ void Framebuffer_controller::_update_fb_config(Xml_node const &report)
 
 			report.for_each_sub_node("connector", [&] (Xml_node &node) {
 			                         _update_connector_config(xml, node); });
-		});
-		buf[xml.used()] = 0;
+		}).convert<size_t>([&] (size_t used)            { return used; },
+		                   [&] (Buffer_error) -> size_t {
+			warning("fb_config exceeds maximum buffer size"); return 0; });
 
+		buf[used] = 0;
 		{
 			New_file file { _root_dir, "fb.config" };
 
-			file.append(buf, xml.used());
+			file.append(buf, used);
 		}
 
 	} catch (...) {
