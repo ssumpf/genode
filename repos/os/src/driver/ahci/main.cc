@@ -432,19 +432,19 @@ struct Ahci::Main : Rpc_object<Typed_root<Block::Session>>, Dispatch
 			Arg_string::find_arg(args.string(), "tx_buf_size").ulong_value(0);
 
 		if (!tx_buf_size)
-			return Service::Create_error::DENIED;
+			return Session_error::DENIED;
 
 		if (tx_buf_size > ram_quota.value) {
 			error("insufficient 'ram_quota' from '", label, "',"
 			      " got ", ram_quota, ", need ", tx_buf_size);
-			return Service::Create_error::INSUFFICIENT_RAM;
+			return Session_error::INSUFFICIENT_RAM;
 		}
 
 		Port &port = driver->port(label, policy);
 
 		if (block_session[port.index].constructed()) {
 			error("Device with number=", port.index, " is already in use");
-			return Service::Create_error::DENIED;
+			return Session_error::DENIED;
 		}
 
 		port.writeable(policy.attribute_value("writeable", false));
