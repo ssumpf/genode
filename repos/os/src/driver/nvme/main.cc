@@ -1730,7 +1730,12 @@ class Nvme::Driver : Genode::Noncopyable
 		{
 			bool used(uint16_t const cid) const
 			{
-				return Bit_allocator<ENTRIES>::_array.get(cid, 1).ok();
+				using BA = Bit_allocator<ENTRIES>;
+
+				return BA::_array.get(cid, 1).template convert<bool>(
+					[&] (bool used) { return used; },
+					/* cannot happen as cid is capped to ENTRIES */
+					[&] (BA::Error) { return false; });
 			}
 		};
 
