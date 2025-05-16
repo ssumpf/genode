@@ -69,7 +69,7 @@ Cpu_session_component::create_thread(Capability<Pd_session> pd_cap,
 				                     _priority, utcb).with_result(
 
 					[&] (Thread_alloc::Allocation &thread) {
-						thread.obj.constructed().with_result(
+						thread.obj.constructed.with_result(
 							[&] (Ok) {
 								thread.obj.session_exception_sigh(_exception_sigh);
 								_thread_list.insert(&thread.obj);

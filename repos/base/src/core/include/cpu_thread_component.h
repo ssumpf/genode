@@ -175,12 +175,7 @@ class Core::Cpu_thread_component : public  Rpc_object<Cpu_thread>,
 
 		using Constructed = Attempt<Ok, Alloc_error>;
 
-		Constructed constructed() const
-		{
-			if (!_platform_thread.valid())
-				return Alloc_error::DENIED;
-			return Ok();
-		}
+		Constructed const constructed = _platform_thread.constructed;
 
 		void destroy(); /* solely called by ~Pd_session_component */
 
