@@ -66,7 +66,15 @@ class Linker::Reloc_non_plt : public Reloc_non_plt_generic
 			Elf::Addr reloc_base;
 			Elf::Sym  const *sym;
 
-			if (!(sym = lookup_symbol(rel->sym(), _dep, &reloc_base)))
+			/*
+			 * on RISC-V we have seen global, weak, functions/operators with
+			 * relocation type R_RISCV_64 which should be R_RISCV_JUMP_SLOT
+			 * -> enable sanity check
+			 */
+			if (!(sym = lookup_symbol(rel->sym(), _dep, &reloc_base,
+			                          false /* undef */,
+			                          false /* other */,
+			                          true  /* sanity check */)))
 				return;
 
 			*addr = reloc_base + sym->st_value + (addend ? rel->addend : 0);

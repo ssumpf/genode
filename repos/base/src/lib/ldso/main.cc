@@ -531,7 +531,8 @@ Object &Linker::load(Env &env, Allocator &md_alloc, char const *path,
 
 
 Elf::Sym const *Linker::lookup_symbol(unsigned sym_index, Dependency const &dep,
-                                      Elf::Addr *base, bool undef, bool other)
+                                      Elf::Addr *base, bool undef, bool other,
+                                      bool sanity_check)
 {
 	Elf_object const &elf    = static_cast<Elf_object const &>(dep.obj());
 	Elf::Sym   const *symbol = elf.symbol(sym_index);
@@ -545,6 +546,17 @@ Elf::Sym const *Linker::lookup_symbol(unsigned sym_index, Dependency const &dep,
 		*base = dep.obj().reloc_base();
 		return symbol;
 	}
+
+	/*
+	 * Symbol is not a function, weak, and undefined in this object. This implies
+	 * that the symbol cannot be resolved by ldso, for example, for global data
+	 * relocations because these symbols have to be present within the ELF object.
+	 */
+	if (sanity_check
+	    && symbol->type() == STT_NOTYPE
+	    && symbol->weak()
+	    && symbol->st_shndx == SHN_UNDEF)
+		return nullptr;
 
 	return lookup_symbol(elf.symbol_name(*symbol), dep, base, undef, other);
 }
