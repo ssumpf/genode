@@ -49,7 +49,7 @@ class Clipboard
 
 		void _handle_rom_changed()
 		{
-			Libc::with_libc([&] () { ShClSvcImplSync(_client); });
+			Libc::with_libc([&] () { ShClBackendSync(nullptr, _client); });
 		}
 
 	public:
@@ -127,8 +127,10 @@ Constructible<Clipboard> clipboard;
 
 } /* unnamed namespace */
 
+int ShClBackendReadData(PSHCLBACKEND, PSHCLCLIENT pClient, PSHCLCLIENTCMDCTX,
+                        SHCLFORMAT fFormat, void *pvData, uint32_t cbData,
+                        uint32_t *pcbActual)
 
-int ShClSvcImplReadData(PSHCLCLIENT, PSHCLCLIENTCMDCTX, SHCLFORMAT fFormat, void *pv, uint32_t cb, unsigned int *cb_out)
 {
 	if (!(fFormat & VBOX_SHCL_FMT_UNICODETEXT))
 		return VERR_NOT_IMPLEMENTED;
@@ -136,12 +138,12 @@ int ShClSvcImplReadData(PSHCLCLIENT, PSHCLCLIENTCMDCTX, SHCLFORMAT fFormat, void
 	Clipboard::Guard guard;
 
 	int rc  = VINF_SUCCESS;
-	*cb_out = 0;
+	*pcbActual = 0;
 
 	clipboard->with_content([&] (char const *utf8_string, size_t utf8_size) {
 
-		PRTUTF16 utf16_string = (PRTUTF16)pv;
-		size_t   utf16_chars  = cb/sizeof(RTUTF16);
+		PRTUTF16 utf16_string = (PRTUTF16)pvData;
+		size_t   utf16_chars  = cbData/sizeof(RTUTF16);
 
 		rc = RTStrToUtf16Ex(utf8_string, utf8_size, &utf16_string, utf16_chars, &utf16_chars);
 
@@ -151,7 +153,7 @@ int ShClSvcImplReadData(PSHCLCLIENT, PSHCLCLIENTCMDCTX, SHCLFORMAT fFormat, void
 
 		if (RT_SUCCESS(rc)) {
 			/* the protocol requires cb_out to include the null terminator */
-			*cb_out = (utf16_chars + 1)*sizeof(RTUTF16);
+			*pcbActual = (utf16_chars + 1)*sizeof(RTUTF16);
 		}
 	});
 
@@ -159,17 +161,18 @@ int ShClSvcImplReadData(PSHCLCLIENT, PSHCLCLIENTCMDCTX, SHCLFORMAT fFormat, void
 }
 
 
-int ShClSvcImplWriteData(PSHCLCLIENT, PSHCLCLIENTCMDCTX, SHCLFORMAT fFormat, void *pv, uint32_t cb)
+int ShClBackendWriteData(PSHCLBACKEND, PSHCLCLIENT pClient, PSHCLCLIENTCMDCTX,
+                         SHCLFORMAT fFormat, void *pvData, uint32_t /* cbData */)
 {
 	if (!(fFormat & VBOX_SHCL_FMT_UNICODETEXT))
 		return VERR_NOT_IMPLEMENTED;
 
-	if (pv == nullptr)
+	if (pvData == nullptr)
 		return VERR_INVALID_POINTER;
 
 	Clipboard::Guard guard;
 
-	PCRTUTF16 const utf16_string = (PCRTUTF16)pv;
+	PCRTUTF16 const utf16_string = (PCRTUTF16)pvData;
 
 	char *utf8_string;
 
@@ -187,17 +190,17 @@ int ShClSvcImplWriteData(PSHCLCLIENT, PSHCLCLIENTCMDCTX, SHCLFORMAT fFormat, voi
 	 * this operation. This generates a feedback loop to keep the host and
 	 * guest clipboards in sync.
 	 */
-	return ShClSvcHostReportFormats(clipboard->client(), VBOX_SHCL_FMT_UNICODETEXT);
+	return ShClBackendReportFormats(nullptr, clipboard->client(), VBOX_SHCL_FMT_UNICODETEXT);
 }
 
 
 /**
  * The guest is taking possession of the shared clipboard
  */
-int ShClSvcImplFormatAnnounce(PSHCLCLIENT pClient, SHCLFORMATS fFormats)
+int ShClBackendReportFormats(PSHCLBACKEND, PSHCLCLIENT pClient, SHCLFORMATS fFormats)
 {
 	/* eagerly request data from the guest */
-	return ShClSvcDataReadRequest(pClient, fFormats, NULL /* pidEvent */);
+	return ShClSvcReadDataFromGuestAsync(pClient, fFormats, NULL /* ppEvent */);
 }
 
 
@@ -207,7 +210,7 @@ int ShClSvcImplFormatAnnounce(PSHCLCLIENT pClient, SHCLFORMATS fFormats)
  * Called by HGCM svc layer on svcConnect() and svcLoadState() (after resume)
  * as well as on clipboard ROM update.
  */
-int ShClSvcImplSync(PSHCLCLIENT pClient)
+int ShClBackendSync(PSHCLBACKEND, PSHCLCLIENT pClient)
 {
 	Clipboard::Guard guard;
 
@@ -219,11 +222,11 @@ int ShClSvcImplSync(PSHCLCLIENT pClient)
 		return VINF_NO_CHANGE;
 	}
 
-	return ShClSvcHostReportFormats(clipboard->client(), VBOX_SHCL_FMT_UNICODETEXT);
+	return ShClSvcReportFormats(clipboard->client(), VBOX_SHCL_FMT_UNICODETEXT);
 }
 
 
-int ShClSvcImplDisconnect(PSHCLCLIENT pClient)
+int ShClBackendDisconnect(PSHCLBACKEND, PSHCLCLIENT pClient)
 {
 	Clipboard::Guard guard;
 
@@ -233,7 +236,7 @@ int ShClSvcImplDisconnect(PSHCLCLIENT pClient)
 }
 
 
-int ShClSvcImplConnect(PSHCLCLIENT pClient, bool /* fHeadless */)
+int ShClBackendConnect(PSHCLBACKEND, PSHCLCLIENT pClient, bool /* fHeadless */)
 {
 	Clipboard::Guard guard;
 
@@ -242,11 +245,11 @@ int ShClSvcImplConnect(PSHCLCLIENT pClient, bool /* fHeadless */)
 		return rc;
 
 	/* send initial format report to guest */
-	return ShClSvcHostReportFormats(clipboard->client(), VBOX_SHCL_FMT_UNICODETEXT);
+	return ShClSvcReportFormats(clipboard->client(), VBOX_SHCL_FMT_UNICODETEXT);
 }
 
 
-int ShClSvcImplInit(VBOXHGCMSVCFNTABLE *)
+int ShClBackendInit(PSHCLBACKEND, VBOXHGCMSVCFNTABLE *)
 {
 	try {
 		clipboard.construct(Services::env());
@@ -258,7 +261,7 @@ int ShClSvcImplInit(VBOXHGCMSVCFNTABLE *)
 }
 
 
-void ShClSvcImplDestroy()
+void ShClBackendDestroy(PSHCLBACKEND)
 {
 	clipboard.destruct();
 }
