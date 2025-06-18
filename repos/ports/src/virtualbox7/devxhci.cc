@@ -83,7 +83,7 @@ struct XHCI
 	/** The MMIO region handle. */
 	IOMMMIOHANDLE hMmio;
 
-	PTMTIMERR3        controller_timer;
+	TMTIMERHANDLE     controller_timer;
 	Timer_queue      *timer_queue;
 	Qemu::Controller *ctl;
 
@@ -119,7 +119,8 @@ struct Timer_queue : public Qemu::Timer_queue
 	};
 
 	Genode::List<Context> _context_list;
-	PTMTIMER              tm_timer;
+	PPDMDEVINS            pDevIns;
+	TMTIMERHANDLE         tm_timer;
 
 	void _append_new_context(void *qtimer, void (*cb)(void*), void *data)
 	{
@@ -158,14 +159,14 @@ struct Timer_queue : public Qemu::Timer_queue
 		Context *min = _min_pending();
 		if (min == nullptr) return;
 
-		if (TMTimerIsActive(tm_timer))
-			TMTimerStop(tm_timer);
+		if (PDMDevHlpTimerIsActive(pDevIns, tm_timer))
+			PDMDevHlpTimerStop(pDevIns, tm_timer);
 
-		uint64_t const now = TMTimerGetNano(tm_timer);
+		uint64_t const now = PDMDevHlpTimerGetNano(pDevIns, tm_timer);
 		if (min->timeout_abs_ns < now)
-			TMTimerSetNano(tm_timer, 0);
+			PDMDevHlpTimerSetNano(pDevIns, tm_timer, 0);
 		else
-			TMTimerSetNano(tm_timer, min->timeout_abs_ns - now);
+			PDMDevHlpTimerSetNano(pDevIns, tm_timer, min->timeout_abs_ns - now);
 	}
 
 	void _deactivate_timer(void *qtimer)
@@ -178,19 +179,19 @@ struct Timer_queue : public Qemu::Timer_queue
 
 		if (c == _min_pending()) {
 			c->pending = false;
-			TMTimerStop(tm_timer);
+			PDMDevHlpTimerStop(pDevIns, tm_timer);
 			_program_min_timer();
 		}
 
 		c->pending = false;
 	}
 
-	Timer_queue(Genode::Allocator &alloc, PTMTIMER timer)
-	: _alloc(alloc), tm_timer(timer) { }
+	Timer_queue(Genode::Allocator &alloc, PPDMDEVINS pDevIns, TMTIMERHANDLE timer)
+	: _alloc(alloc), pDevIns(pDevIns), tm_timer(timer) { }
 
 	void timeout()
 	{
-		uint64_t now = TMTimerGetNano(tm_timer);
+		uint64_t now = PDMDevHlpTimerGetNano(pDevIns, tm_timer);
 
 		for (Context *c = _context_list.first(); c; c = c->next()) {
 			if (c->pending && c->timeout_abs_ns <= now) {
@@ -206,7 +207,7 @@ struct Timer_queue : public Qemu::Timer_queue
 	 ** TMTimer callback **
 	 **********************/
 
-	static DECLCALLBACK(void) tm_timer_cb(PPDMDEVINS pDevIns, PTMTIMER pTimer, void *pvUser)
+	static DECLCALLBACK(void) tm_timer_cb(PPDMDEVINS pDevIns, TMTIMERHANDLE pTimer, void *pvUser)
 	{
 		PXHCI pThis    = PDMINS_2_DATA(pDevIns, PXHCI);
 		Timer_queue *q = pThis->timer_queue;
@@ -231,7 +232,7 @@ struct Timer_queue : public Qemu::Timer_queue
 	 ** Qemu::Timer_queue interface **
 	 *********************************/
 
-	Qemu::int64_t get_ns() { return TMTimerGetNano(tm_timer); }
+	Qemu::int64_t get_ns() { return PDMDevHlpTimerGetNano(pDevIns, tm_timer); }
 
 	Genode::Mutex _timer_mutex { };
 
@@ -418,11 +419,11 @@ static DECLCALLBACK(int) xhciR3Construct(PPDMDEVINS pDevIns, int iInstance, PCFG
 
 	static Libc::Allocator alloc;
 
-	int rc = PDMDevHlpTMTimerCreate(pDevIns, TMCLOCK_VIRTUAL, Timer_queue::tm_timer_cb,
-	                                pThis, TMTIMER_FLAGS_NO_CRIT_SECT,
-	                                "XHCI Timer", &pThis->controller_timer);
+	int rc = PDMDevHlpTimerCreate(pDevIns, TMCLOCK_VIRTUAL, Timer_queue::tm_timer_cb,
+	                              pThis, TMTIMER_FLAGS_NO_CRIT_SECT,
+	                              "XHCI Timer", &pThis->controller_timer);
 
-	static Timer_queue timer_queue(alloc, pThis->controller_timer);
+	static Timer_queue timer_queue(alloc, pDevIns, pThis->controller_timer);
 	pThis->timer_queue = &timer_queue;
 	static Pci_device pci_device(alloc, pDevIns);
 
