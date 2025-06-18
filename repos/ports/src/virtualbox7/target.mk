@@ -1,9 +1,9 @@
 REQUIRES = x86_64
 
-TARGET = virtualbox6
+TARGET = virtualbox7
 
 included_from_target_mk := yes
-include $(REP_DIR)/lib/mk/virtualbox6-common.inc
+include $(REP_DIR)/lib/mk/virtualbox7-common.inc
 
 CC_WARN += -Wall
 
@@ -22,25 +22,25 @@ LIBS  += mesa
 CC_OPT_main = -Wno-multistatement-macros
 CC_OPT += -DProgress=ClientProgress
 
-LIBS += virtualbox6-dis
-LIBS += virtualbox6-sup
-LIBS += virtualbox6-devices
-LIBS += virtualbox6-vmm
-LIBS += virtualbox6-main
-LIBS += virtualbox6-xpcom
-LIBS += virtualbox6-liblzf
-LIBS += virtualbox6-xml
-LIBS += virtualbox6-bios
-LIBS += virtualbox6-zlib
-LIBS += virtualbox6-storage
-LIBS += virtualbox6-runtime
-LIBS += virtualbox6-apiwrap
-LIBS += virtualbox6-client
+LIBS += virtualbox7-dis
+LIBS += virtualbox7-sup
+LIBS += virtualbox7-devices
+LIBS += virtualbox7-vmm
+LIBS += virtualbox7-main
+LIBS += virtualbox7-xpcom
+LIBS += virtualbox7-liblzf
+LIBS += virtualbox7-xml
+LIBS += virtualbox7-bios
+LIBS += virtualbox7-zlib
+LIBS += virtualbox7-storage
+LIBS += virtualbox7-runtime
+LIBS += virtualbox7-apiwrap
+LIBS += virtualbox7-client
 
 INC_DIR += $(call select_from_repositories,src/lib/libc)
 INC_DIR += $(call select_from_repositories,src/lib/libc)/spec/x86_64
 
-INC_DIR += $(REP_DIR)/src/virtualbox6
+INC_DIR += $(REP_DIR)/src/virtualbox7
 INC_DIR += $(VBOX_DIR)/HostDrivers/Support
 INC_DIR += $(VBOX_DIR)/Main/include
 INC_DIR += $(VBOX_DIR)/Main/src-server
@@ -59,6 +59,6 @@ LD_OPT = --export-dynamic
 
 LIBS += blit
 
-vpath %.cc $(REP_DIR)/src/virtualbox6/
+vpath %.cc $(REP_DIR)/src/virtualbox7/
 
 CC_CXX_WARN_STRICT =
