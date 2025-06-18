@@ -61,7 +61,8 @@ void Sup::Gmm::_add_one_slice()
 
 	_slices[_slice_index(Offset{attach_base})] = ds;
 
-	_alloc.add_range(attach_base, slice_size);
+	if (_alloc.add_range(attach_base, slice_size).failed())
+		warning("unable to to add Gmm slice to range allocator");
 
 	/* update allocation size */
 	_size_pages = { (attach_base + slice_size) >> PAGE_SHIFT };
@@ -101,10 +102,11 @@ Sup::Gmm::Vmm_addr Sup::Gmm::_alloc_pages(Pages pages)
 
 	return _alloc.alloc_aligned(bytes, align).convert<Vmm_addr>(
 
-		[&] (void *ptr) {
-			return Vmm_addr { _map.base.value + (addr_t)ptr }; },
+		[&] (Range_allocator::Allocation &a) {
+			a.deallocate = false;
+			return Vmm_addr { _map.base.value + (addr_t)a.ptr }; },
 
-		[&] (Range_allocator::Alloc_error) -> Vmm_addr {
+		[&] (Alloc_error) -> Vmm_addr {
 			error("Gmm allocation failed");
 			throw Allocation_failed();
 		}
