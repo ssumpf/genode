@@ -271,7 +271,7 @@ VBOXSTRICTRC nemR3NativeRunGC(PVM pVM, PVMCPU pVCpu)
 
 		Mutex::Guard guard(interval_mutex);
 
-		::uint64_t new_interval_ns = TMVirtualSyncGetNsToDeadline(pVM);
+		::uint64_t new_interval_ns = TMVirtualSyncGetNsToDeadline(pVM, nullptr, nullptr);
 		new_interval_ns = (new_interval_ns / RT_NS_1MS) * RT_NS_1MS;
 		new_interval_ns = max(new_interval_ns, 1 * RT_NS_1MS);
 		new_interval_ns = min(new_interval_ns, 10 * RT_NS_1MS);
@@ -405,7 +405,7 @@ int NEMR3NotifyPhysRamRegister(PVM pVM, RTGCPHYS GCPhys, RTGCPHYS cb, void *pvR3
 
 	/* invalidate PGM caches (see pgmPhysAllocPage()) */
 	PGM_INVL_ALL_VCPU_TLBS(pVM);
-	pgmPhysInvalidatePageMapTLB(pVM);
+	pgmPhysInvalidatePageMapTLB(pVM, false);
 
 	return VINF_SUCCESS;
 }

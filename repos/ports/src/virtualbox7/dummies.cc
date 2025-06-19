@@ -192,13 +192,13 @@ HRESULT VirtualBox::createAppliance(ComPtr<IAppliance> &) STOP
 
 #include "CloudProviderManagerImpl.h"
 
-CloudProviderManager::CloudProviderManager() { }
+CloudProviderManager::CloudProviderManager() : m_pVirtualBox(nullptr) { }
 CloudProviderManager::~CloudProviderManager() { }
 
-HRESULT CloudProviderManager::FinalConstruct() { return VINF_SUCCESS; }
-void    CloudProviderManager::FinalRelease()   TRACE()
-HRESULT CloudProviderManager::init()           { return VINF_SUCCESS; }
-void    CloudProviderManager::uninit()         STOP
+HRESULT CloudProviderManager::FinalConstruct()   { return VINF_SUCCESS; }
+void    CloudProviderManager::FinalRelease()     TRACE()
+HRESULT CloudProviderManager::init(VirtualBox *) { return VINF_SUCCESS; }
+void    CloudProviderManager::uninit()           STOP
 HRESULT CloudProviderManager::getProviderById       (com::Guid    const&, ComPtr<ICloudProvider>&) STOP
 HRESULT CloudProviderManager::getProviderByName     (com::Utf8Str const&, ComPtr<ICloudProvider>&) STOP
 HRESULT CloudProviderManager::getProviderByShortName(com::Utf8Str const&, ComPtr<ICloudProvider>&) STOP
@@ -341,7 +341,7 @@ RT_C_DECLS_END
 
 #include "HostHardwareLinux.h"
 
-int VBoxMainDriveInfo::updateDVDs() { return VINF_SUCCESS; }
+int VBoxMainDriveInfo::updateDVDs() RT_NOEXCEPT { return VINF_SUCCESS; }
 
 
 /* buildconfig.cpp */
@@ -363,8 +363,10 @@ VBOXDDU_DECL(int) VDIfTcpNetInstDefaultCreate(PVDIFINST, PVDINTERFACE *) { retur
 
 #include <SharedFolderImpl.h>
 
-HRESULT SharedFolder::init(Console*, com::Utf8Str const&, com::Utf8Str const&,
-                           bool, bool, com::Utf8Str const&, bool) TRACE(E_FAIL)
+HRESULT SharedFolder::init(Machine*, com::Utf8Str const&, com::Utf8Str const&,
+                           bool, bool, com::Utf8Str const &a, bool,
+                           SymlinkPolicy_T) TRACE(E_FAIL);
+
 
 
 /* ConsoleImplTeleporter.cpp */
@@ -372,7 +374,7 @@ HRESULT SharedFolder::init(Console*, com::Utf8Str const&, com::Utf8Str const&,
 #include <ConsoleImpl.h>
 
 HRESULT Console::teleport(const com::Utf8Str &, ULONG, const com::Utf8Str &, ULONG, ComPtr<IProgress> &) STOP
-HRESULT Console::i_teleporterTrg(PUVM, IMachine *, Utf8Str *, bool, Progress *, bool *) STOP
+HRESULT Console::i_teleporterTrg(PUVM, PCVMMR3VTABLE, IMachine *, Utf8Str *, bool, Progress *, bool *) STOP
 
 
 /* DBGFBp.cpp */
@@ -433,9 +435,6 @@ VMMR3DECL(int) PGMR3MappingsSize(PVM pVM, uint32_t *pcb)
 
 
 /* PGMSavedState.cpp */
-
-#include <PGMInternal.h>
-
 int  pgmR3InitSavedState(PVM, uint64_t) { return VINF_SUCCESS; }
 
 

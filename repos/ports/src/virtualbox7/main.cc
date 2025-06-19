@@ -159,9 +159,10 @@ struct Main : Event_handler
 			attempt([&] () { return createObject(); },
 			        "failed to create Machine object");
 
+			com::Utf8Str const password { };
 			HRESULT const rc =  (*this)->initFromSettings(virtualbox,
 			                                              vbox_file_path.utf8,
-			                                              nullptr);
+			                                              nullptr, password);
 			if (FAILED(rc)) {
 				Genode::error("failed to init machine from settings");
 				/*
