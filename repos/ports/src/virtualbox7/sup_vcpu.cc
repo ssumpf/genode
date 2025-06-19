@@ -23,10 +23,11 @@
 
 /* VirtualBox includes */
 #include <VBox/vmm/cpum.h> /* must be included before CPUMInternal.h */
+#define VMCPU_INCL_CPUM_GST_CTX /* needed for cpum.GstCtx */
 #include <CPUMInternal.h>  /* enable access to cpum.s.* */
 #include <HMInternal.h>    /* enable access to hm.s.* */
 #include <PGMInternal.h>   /* enable access to pgm.s.* */
-#include <VBox/vmm/vmcc.h>  /* must be included before PGMInline.h */
+#include <VBox/vmm/vmcc.h> /* must be included before PGMInline.h */
 #include <PGMInline.h>     /* pgmPhysGetRangeAtOrAbove() */
 #include <VBox/vmm/vm.h>
 #include <VBox/vmm/hm.h>
@@ -281,7 +282,8 @@ template <typename VIRT> void Sup::Vcpu_impl<VIRT>::_transfer_state_to_vcpu(CPUM
 		unsigned fpu_size = min(_vm.cpum.s.HostFeatures.cbMaxExtendedState,
 		                        sizeof(fpu._buffer));
 
-		::memcpy(fpu._buffer, ctx.pXStateR3, fpu_size);
+		/* cpumctx-x86-amd64.h */
+		::memcpy(fpu._buffer, ctx.abXState, fpu_size);
 
 		return fpu_size;
 	});
@@ -309,19 +311,19 @@ static void handle_intr_state(PVMCPUCC pVCpu, CPUMCTX &ctx, Vcpu_state &state)
 	auto const interrupt_state = state.intr_state.value();
 
 	if (!interrupt_state /* VMX_VMCS_GUEST_INT_STATE_NONE */) {
-		if (VMCPU_FF_IS_SET(pVCpu, VMCPU_FF_INHIBIT_INTERRUPTS))
-			VMCPU_FF_CLEAR(pVCpu, VMCPU_FF_INHIBIT_INTERRUPTS);
-		CPUMSetGuestNmiBlocking(pVCpu, false);
+		if (CPUMIsInInterruptShadow(&pVCpu->cpum.GstCtx))
+			CPUMClearInterruptShadow(&pVCpu->cpum.GstCtx);
+		CPUMUpdateInterruptInhibitingByNmi(&pVCpu->cpum.GstCtx, false);
 	} else {
 		if (interrupt_state & (VMX_VMCS_GUEST_INT_STATE_BLOCK_MOVSS |
 		                       VMX_VMCS_GUEST_INT_STATE_BLOCK_STI))
-			EMSetInhibitInterruptsPC(pVCpu, ctx.rip);
-		else if (VMCPU_FF_IS_SET(pVCpu, VMCPU_FF_INHIBIT_INTERRUPTS))
-			VMCPU_FF_CLEAR(pVCpu, VMCPU_FF_INHIBIT_INTERRUPTS);
+			CPUMUpdateInterruptShadowEx(&pVCpu->cpum.GstCtx, true, ctx.rip);
+		else if (CPUMIsInInterruptShadow(&pVCpu->cpum.GstCtx))
+			CPUMClearInterruptShadow(&pVCpu->cpum.GstCtx);
 
 		bool const block_nmi = RT_BOOL(interrupt_state &
 		                               VMX_VMCS_GUEST_INT_STATE_BLOCK_NMI);
-		CPUMSetGuestNmiBlocking(pVCpu, block_nmi);
+		CPUMUpdateInterruptInhibitingByNmi(&pVCpu->cpum.GstCtx, block_nmi);
 	}
 
 	/* prepare clearing blocking MOV SS or STI bits for next VM-entry */
@@ -433,7 +435,7 @@ template <typename VIRT> void Sup::Vcpu_impl<VIRT>::_transfer_state_to_vbox(CPUM
 		unsigned fpu_size = min(_vm.cpum.s.HostFeatures.cbMaxExtendedState,
 		                        sizeof(fpu._buffer));
 
-		::memcpy(ctx.pXStateR3, fpu._buffer, fpu_size);
+		::memcpy(ctx.abXState, fpu._buffer, fpu_size);
 
 		return true;
 	});
@@ -455,7 +457,7 @@ template <typename T> bool Sup::Vcpu_impl<T>::_check_and_request_irq_window()
 	if (VMCPU_FF_TEST_AND_CLEAR(pVCpu, VMCPU_FF_UPDATE_APIC))
 		APICUpdatePendingInterrupts(pVCpu);
 
-	if (VMCPU_FF_IS_SET(pVCpu, VMCPU_FF_INHIBIT_INTERRUPTS))
+	if (CPUMIsInInterruptShadow(&pVCpu->cpum.GstCtx))
 		return false;
 
 	if (!TRPMHasTrap(pVCpu) &&
@@ -598,7 +600,7 @@ typename Sup::Vcpu_impl<T>::Current_state Sup::Vcpu_impl<T>::_handle_irq_window(
 	PVMCPU pVCpu = &_vmcpu;
 
 	Assert(state.flags.value() & X86_EFL_IF);
-	Assert(!VMCPU_FF_IS_SET(pVCpu, VMCPU_FF_INHIBIT_INTERRUPTS));
+	Assert(!CPUMIsInInterruptShadow(&pVCpu->cpum.GstCtx));
 	Assert(!VMX_EXIT_INT_INFO_IS_VALID(state.inj_info.value()));
 	Assert(_irq_window);
 
@@ -836,7 +838,7 @@ template <typename T> VBOXSTRICTRC Sup::Vcpu_impl<T>::run()
 	}
 
 	/* track guest mode changes - see VMM/VMMAll/IEMAllCImpl.cpp.h */
-	PGMChangeMode(pVCpu, ctx.cr0, ctx.cr4, ctx.msrEFER);
+	PGMChangeMode(pVCpu, ctx.cr0, ctx.cr4, ctx.msrEFER, false /* fForce */);
 
 	/* avoid assertion in EMHandleRCTmpl.h, normally set by SVMRO/VMXR0 */
 	if (TRPMHasTrap(pVCpu))
