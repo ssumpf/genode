@@ -60,7 +60,6 @@ void Sup::Vm::init(PSUPDRVSESSION psession, Cpu_count cpu_count)
 
 		cpu.idCpu           = i;
 		cpu.pVMR3           = this;
-		cpu.idHostCpu       = NIL_RTCPUID;
 		cpu.hNativeThread   = NIL_RTNATIVETHREAD;
 		cpu.hNativeThreadR0 = NIL_RTNATIVETHREAD;
 		cpu.enmState        = VMCPUSTATE_STOPPED;
