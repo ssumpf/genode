@@ -6,10 +6,13 @@ SRC_CC += Main/xml/Settings.cpp
 
 SRC_CC += Main/src-all/AuthLibrary.cpp
 SRC_CC += Main/src-all/AutoCaller.cpp
+SRC_CC += Main/src-all/ConsoleSharedFolderImpl.cpp
+SRC_CC += Main/src-all/CryptoUtils.cpp
 SRC_CC += Main/src-all/EventImpl.cpp
 SRC_CC += Main/src-all/DisplayResampleImage.cpp
 SRC_CC += Main/src-all/DisplayUtils.cpp
 SRC_CC += Main/src-all/Global.cpp
+SRC_CC += Main/src-all/GlobalStatusConversion.cpp
 SRC_CC += Main/src-all/HashedPw.cpp
 SRC_CC += Main/src-all/PCIDeviceAttachmentImpl.cpp
 SRC_CC += Main/src-all/ProgressImpl.cpp
@@ -17,7 +20,6 @@ SRC_CC += Main/src-all/SecretKeyStore.cpp
 SRC_CC += Main/src-all/SharedFolderImpl.cpp
 SRC_CC += Main/src-all/ThreadTask.cpp
 SRC_CC += Main/src-all/VirtualBoxBase.cpp
-SRC_CC += Main/src-all/GlobalStatusConversion.cpp
 SRC_CC += Main/src-all/VirtualBoxErrorInfoImpl.cpp
 SRC_CC += Main/src-server/AudioAdapterImpl.cpp
 SRC_CC += Main/src-server/BandwidthControlImpl.cpp
@@ -69,8 +71,13 @@ SRC_CC += Main/src-server/os2/PerformanceOs2.cpp
 # generated from VBox/Main/idl/comimpl.xsl
 SRC_CC += Main/VBoxEvents.cpp
 
+# generated from VBox/Main/idl/stringify-enums.xsl
+SRC_CC += Main/StringifyEnums.cpp
+
+
 # see comment in virtualbox7-client.mk
 CC_OPT_Main/src-server/MediumImpl = -Wno-enum-compare
+
 
 # prevent double define of 'LOG_GROUP'
 VBOX_CC_OPT += -DIN_VBOXSVC

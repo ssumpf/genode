@@ -13,9 +13,10 @@ SRC_CC += Main/glue/AutoLock.cpp
 SRC_CC += Main/glue/com.cpp
 SRC_CC += Main/glue/ErrorInfo.cpp
 SRC_CC += Main/glue/EventQueue.cpp
-SRC_CC += Main/glue/NativeEventQueue.cpp
 SRC_CC += Main/glue/GetVBoxUserHomeDirectory.cpp
+SRC_CC += Main/glue/NativeEventQueue.cpp
 SRC_CC += Main/glue/string.cpp
+SRC_CC += Main/glue/VBoxLogRelCreate.cpp
 SRC_CC += Main/glue/xpcom/helpers.cpp
 SRC_CC += xpcom/base/nsID.cpp
 SRC_CC += xpcom/build/nsXPComInit.cpp
@@ -87,7 +88,7 @@ INC_DIR += $(XPCOM_DIR)/ipc/ipcd/extensions/transmngr/common
 INC_DIR += $(XPCOM_DIR)/ipc/ipcd/extensions/dconnect/src
 
 CC_OPT += -D_PR_PTHREADS
-CC_OPT += -DMOZ_DLL_SUFFIX= '-DMOZ_USER_DIR=""'
+CC_OPT += -DMOZ_DLL_SUFFIX= '-DMOZ_USER_DIR=""' '-DKBUILD_TYPE="genode"'
 
 CC_OPT_xpcom/ds/nsQuickSort := -Dregister=
 

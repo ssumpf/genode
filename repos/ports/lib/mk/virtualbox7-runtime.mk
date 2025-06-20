@@ -132,6 +132,7 @@ FILTERED_OUT_SRC_CC += Runtime/r3/alloc-ef-cpp.cpp
 FILTERED_OUT_SRC_CC += Runtime/r3/memsafer-r3.cpp
 
 FILTERED_OUT_SRC_CC += Runtime/common/string/nocrt-%.cpp
+FILTERED_OUT_SRC_CC += Runtime/r3/mempage-%.cpp
 FILTERED_OUT_SRC_CC += Runtime/r3/nocrt-%.cpp
 
 # avoid static allocation of 1 MiB array 'g_aCPInfo'

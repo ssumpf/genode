@@ -32,11 +32,11 @@ HRESULT Machine::exportTo(const ComPtr<IAppliance> &aAppliance,
                           ComPtr<IVirtualSystemDescription> &aDescription) STOP
 
 /* com.cpp */
-
+#if 0
 int com::VBoxLogRelCreate(char const*, char const*, unsigned int, char const*,
                           char const*, unsigned int, unsigned int, unsigned int,
                           unsigned int, unsigned long, RTERRINFO*) { return NS_OK; }
-
+#endif
 
 /* DisplayPNGUtil.cpp */
 
@@ -139,6 +139,8 @@ int        USBProxyBackendUsbIp::wait(unsigned int) STOP
 
 AudioDriver::AudioDriver(Console *) STOP
 AudioDriver::~AudioDriver() { }
+int AudioDriver::doDetachDriverViaEmt(PUVM, PCVMMR3VTABLE, util::AutoWriteLock *) STOP
+int AudioDriver::doAttachDriverViaEmt(PUVM, PCVMMR3VTABLE, util::AutoWriteLock *) STOP
 
 
 /* USBProxyService.cpp */
@@ -359,16 +361,6 @@ uint32_t RTBldCfgVersionMinor(void) { return ~0; }
 VBOXDDU_DECL(int) VDIfTcpNetInstDefaultCreate(PVDIFINST, PVDINTERFACE *) { return VINF_SUCCESS; }
 
 
-/* SharedFolderImpl.cpp */
-
-#include <SharedFolderImpl.h>
-
-HRESULT SharedFolder::init(Machine*, com::Utf8Str const&, com::Utf8Str const&,
-                           bool, bool, com::Utf8Str const &a, bool,
-                           SymlinkPolicy_T) TRACE(E_FAIL);
-
-
-
 /* ConsoleImplTeleporter.cpp */
 
 #include <ConsoleImpl.h>
@@ -455,3 +447,8 @@ DECLHIDDEN(int) supR3HardenedRecvPreInitData(PCSUPPREINITDATA) STOP
 /* VBoxXPCOMImpImp.c */
 
 void *_ZTV14nsGetInterface = nullptr;
+
+
+#include "UsbCardReader.h"
+
+UsbCardReader::UsbCardReader(Console *console) : mParent(console) { }

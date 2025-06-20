@@ -12,11 +12,17 @@ LIBS  += stdcxx
 # - At the client side, we rename the 'Progress' class to 'ClientProgress'
 # - We set the 'VBOX_COM_INPROC' define for the client code only
 #
-VBOX_CC_OPT += -DProgress=ClientProgress
 VBOX_CC_OPT += -DVBOX_COM_INPROC
 
+VBOX_CC_OPT += -DProgress=ClientProgress
 SRC_CC += Main/src-all/ProgressImpl.cpp
 
+VBOX_CC_OPT += -DSsmStream=ClientSsmStream
+SRC_CC += Main/src-all/CryptoUtils.cpp
+
+VBOX_CC_OPT += -DNvramStore=ClientNvramStore
+
+SRC_CC += Main/src-all/CryptoUtils.cpp
 SRC_CC += Main/src-client/AdditionsFacilityImpl.cpp
 SRC_CC += Main/src-client/BusAssignmentManager.cpp
 SRC_CC += Main/src-client/ClientTokenHolder.cpp
@@ -42,6 +48,7 @@ SRC_CC += Main/src-client/GuestDnDTargetImpl
 SRC_CC += Main/src-client/GuestImpl
 SRC_CC += Main/src-client/GuestSessionImpl
 SRC_CC += Main/src-client/GuestSessionImplTasks
+SRC_CC += Main/src-client/GuestShClPrivate
 
 SRC_CC += Main/src-client/HGCM.cpp
 SRC_CC += Main/src-client/HGCMObjects.cpp
@@ -68,6 +75,10 @@ CC_OPT_Main/src-client/ConsoleImpl         = -Wno-enum-compare
 CC_OPT_Main/src-client/GuestImpl           = -Wno-enum-compare
 CC_OPT_Main/src-client/RemoteUSBDeviceImpl = -Wno-enum-compare
 CC_OPT_Main/src-client/GuestDnDPrivate     = -Wno-enum-compare
+
+INC_DIR += $(REP_DIR)/src/virtualbox7
+SRC_CC  += dummies-client.cc
+vpath dummies-client.cc $(REP_DIR)/src/virtualbox7
 
 INC_DIR += $(VBOX_DIR)/Main/xml
 INC_DIR += $(VBOX_DIR)/Main/include
