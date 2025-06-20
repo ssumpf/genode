@@ -30,3 +30,8 @@ HRESULT ClientNvramStore::getNonVolatileStorageFile(com::Utf8Str &) STOP
 HRESULT ClientNvramStore::getUefiVariableStore(ComPtr<IUefiVariableStore> &) STOP
 HRESULT ClientNvramStore::getKeyId(com::Utf8Str &aKeyId) STOP
 HRESULT ClientNvramStore::getKeyStore(com::Utf8Str &) STOP
+
+
+#include "UsbCardReader.h"
+
+UsbCardReader::UsbCardReader(Console *console) : mParent(console) { }

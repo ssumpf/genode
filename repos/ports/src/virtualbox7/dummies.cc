@@ -141,6 +141,7 @@ AudioDriver::AudioDriver(Console *) STOP
 AudioDriver::~AudioDriver() { }
 int AudioDriver::doDetachDriverViaEmt(PUVM, PCVMMR3VTABLE, util::AutoWriteLock *) STOP
 int AudioDriver::doAttachDriverViaEmt(PUVM, PCVMMR3VTABLE, util::AutoWriteLock *) STOP
+int AudioDriver::InitializeConfig(AudioDriverCfg *) { return VINF_SUCCESS; }
 
 
 /* USBProxyService.cpp */
@@ -449,6 +450,11 @@ DECLHIDDEN(int) supR3HardenedRecvPreInitData(PCSUPPREINITDATA) STOP
 void *_ZTV14nsGetInterface = nullptr;
 
 
-#include "UsbCardReader.h"
+/* VBox/Runtime/generic/http-curl.cpp (cURL based http-client) */
+#include <iprt/http.h>
 
-UsbCardReader::UsbCardReader(Console *console) : mParent(console) { }
+RTR3DECL(int) RTHttpCreate(PRTHTTP) STOP
+RTR3DECL(int) RTHttpDestroy(RTHTTP) STOP
+RTR3DECL(int) RTHttpQueryProxyInfoForUrl(RTHTTP, const char *, PRTHTTPPROXYINFO) STOP
+RTR3DECL(int) RTHttpFreeProxyInfo(PRTHTTPPROXYINFO) STOP
+RTR3DECL(int) RTHttpUseSystemProxySettings(RTHTTP) STOP
