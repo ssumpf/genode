@@ -458,3 +458,40 @@ RTR3DECL(int) RTHttpDestroy(RTHTTP) STOP
 RTR3DECL(int) RTHttpQueryProxyInfoForUrl(RTHTTP, const char *, PRTHTTPPROXYINFO) STOP
 RTR3DECL(int) RTHttpFreeProxyInfo(PRTHTTPPROXYINFO) STOP
 RTR3DECL(int) RTHttpUseSystemProxySettings(RTHTTP) STOP
+
+
+/* GuestFsInfoImpl.cpp */
+#include <GuestFsInfoImpl.h>
+
+GuestFsInfo::GuestFsInfo() STOP
+GuestFsInfo::~GuestFsInfo() STOP
+
+int  GuestFsInfo::init(PCGSTCTLFSINFO) STOP
+void GuestFsInfo::uninit(void) STOP
+
+HRESULT GuestFsInfo::FinalConstruct(void) STOP
+void GuestFsInfo::FinalRelease() TRACE()
+
+HRESULT GuestFsInfo::getFreeSize(LONG64 *) STOP
+HRESULT GuestFsInfo::getTotalSize(LONG64 *) STOP
+HRESULT GuestFsInfo::getBlockSize(ULONG *) STOP
+HRESULT GuestFsInfo::getSectorSize(ULONG *) STOP
+HRESULT GuestFsInfo::getSerialNumber(ULONG *) STOP
+HRESULT GuestFsInfo::getIsRemote(BOOL *) STOP
+HRESULT GuestFsInfo::getIsCaseSensitive(BOOL *) STOP
+HRESULT GuestFsInfo::getIsReadOnly(BOOL *) STOP
+HRESULT GuestFsInfo::getIsCompressed(BOOL *) STOP
+HRESULT GuestFsInfo::getSupportsFileCompression(BOOL *) STOP
+HRESULT GuestFsInfo::getMaxComponent(ULONG *) STOP
+HRESULT GuestFsInfo::getType(com::Utf8Str &) STOP
+HRESULT GuestFsInfo::getLabel(com::Utf8Str &) STOP
+HRESULT GuestFsInfo::getMountPoint(com::Utf8Str &) STOP
+
+
+/* UsbCardReader.cpp */
+#include "UsbCardReader.h"
+
+UsbCardReader::UsbCardReader(Console *console) : mParent(console) { }
+UsbCardReader::~UsbCardReader() { }
+int UsbCardReader::VRDENotify(uint32_t, void *, uint32_t) STOP
+int UsbCardReader::VRDEResponse(int, void *, uint32_t, void *, uint32_t) STOP
