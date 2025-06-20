@@ -495,3 +495,23 @@ UsbCardReader::UsbCardReader(Console *console) : mParent(console) { }
 UsbCardReader::~UsbCardReader() { }
 int UsbCardReader::VRDENotify(uint32_t, void *, uint32_t) STOP
 int UsbCardReader::VRDEResponse(int, void *, uint32_t, void *, uint32_t) STOP
+
+
+/* HostDriveImpl.cpp */
+#include "HostDriveImpl.h"
+
+HostDrive::HostDrive() STOP
+HostDrive::~HostDrive() STOP
+
+HRESULT HostDrive::FinalConstruct() STOP
+void HostDrive::FinalRelease() TRACE()
+
+void HostDrive::uninit() STOP
+
+HRESULT HostDrive::getDrivePath(com::Utf8Str &) STOP
+HRESULT HostDrive::getPartitioningType(PartitioningType_T *) STOP
+HRESULT HostDrive::getUuid(com::Guid &) STOP
+HRESULT HostDrive::getSectorSize(ULONG *) STOP
+HRESULT HostDrive::getSize(LONG64 *) STOP
+HRESULT HostDrive::getModel(com::Utf8Str &) STOP
+HRESULT HostDrive::getPartitions(std::vector<ComPtr<IHostDrivePartition> > &) STOP

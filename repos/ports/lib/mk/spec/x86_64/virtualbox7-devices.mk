@@ -95,6 +95,7 @@ SRC_CC += Devices/Storage/VSCSI/VSCSISense.cpp
 SRC_CC += Devices/Storage/VSCSI/VSCSIVpdPagePool.cpp
 SRC_CC += Devices/Trace/DrvIfsTrace.cpp
 SRC_CC += Devices/Trace/DrvIfsTrace-serial.cpp
+SRC_CC += Devices/Trace/DrvIfsTrace-tpm.cpp
 SRC_CC += Devices/USB/DevOHCI.cpp
 SRC_CC += Devices/USB/DrvVUSBRootHub.cpp
 SRC_CC += Devices/USB/VUSBDevice.cpp
