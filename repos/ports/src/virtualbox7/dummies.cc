@@ -515,3 +515,69 @@ HRESULT HostDrive::getSectorSize(ULONG *) STOP
 HRESULT HostDrive::getSize(LONG64 *) STOP
 HRESULT HostDrive::getModel(com::Utf8Str &) STOP
 HRESULT HostDrive::getPartitions(std::vector<ComPtr<IHostDrivePartition> > &) STOP
+
+
+/* HostHardwareLinux.cpp */
+#include "HostHardwareLinux.h"
+
+int VBoxMainDriveInfo::updateFixedDrives() RT_NOEXCEPT STOP
+
+
+/* HostDriveImpl.cpp */
+#include "HostDriveImpl.h"
+
+HRESULT HostDrive::initFromPathAndModel(const com::Utf8Str &, const com::Utf8Str &) STOP
+
+
+/* NvramStoreImpl.cpp */
+#include "NvramStoreImpl.h"
+
+NvramStore::NvramStore() STOP
+NvramStore::~NvramStore() STOP
+
+void NvramStore::FinalRelease() STOP
+HRESULT NvramStore::FinalConstruct() STOP
+
+HRESULT NvramStore::init(Machine *) STOP
+HRESULT NvramStore::init(Machine *, NvramStore *that) STOP
+HRESULT NvramStore::initCopy(Machine *, NvramStore *) STOP
+void NvramStore::uninit() STOP
+
+com::Utf8Str NvramStore::i_getNonVolatileStorageFile() STOP
+int  NvramStore::i_getNonVolatileStorageFile(com::Utf8Str &) STOP
+void NvramStore::i_updateNonVolatileStorageFile(const Utf8Str &) STOP
+int NvramStore:: i_loadStore(const char *) STOP
+int NvramStore:: i_saveStore(void) STOP
+void NvramStore::i_rollback() STOP
+void NvramStore::i_commit() STOP
+void NvramStore::i_copyFrom(NvramStore *) STOP
+
+HRESULT NvramStore::i_loadSettings(const settings::NvramSettings &) STOP
+HRESULT NvramStore::i_saveSettings(settings::NvramSettings &) STOP
+HRESULT NvramStore::i_applyDefaults(GuestOSType *) STOP
+
+HRESULT NvramStore::initUefiVariableStore(ULONG) STOP
+HRESULT NvramStore::getNonVolatileStorageFile(com::Utf8Str &) STOP
+HRESULT NvramStore::getUefiVariableStore(ComPtr<IUefiVariableStore> &) STOP
+HRESULT NvramStore::getKeyId(com::Utf8Str &) STOP
+HRESULT NvramStore::getKeyStore(com::Utf8Str &) STOP
+
+
+#include <iprt/crypto/x509.h>
+
+/* x509-create-sign.cpp */
+RTDECL(int) RTCrX509Certificate_GenerateSelfSignedRsa(RTDIGESTTYPE, uint32_t, uint32_t,
+                                                      uint32_t, uint64_t, const char *,
+                                                      const char *, const char *, PRTERRINFO) STOP
+
+/* x509-file.cpp */
+RTDECL(int) RTCrX509Certificate_ReadFromFile(PRTCRX509CERTIFICATE, const char *, uint32_t,
+                                             PCRTASN1ALLOCATORVTABLE, PRTERRINFO) STOP
+
+
+/* x509-core.cpp */
+RTDECL(bool) RTCrX509Validity_IsValidAtTimeSpec(PCRTCRX509VALIDITY, PCRTTIMESPEC)  STOP
+
+
+/* VBoxRTImpImp.c (generated) */
+void RTCrX509Certificate_Delete(PRTCRX509CERTIFICATE) STOP

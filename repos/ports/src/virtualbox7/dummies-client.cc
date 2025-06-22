@@ -18,17 +18,17 @@
 
 static bool const debug = true;
 
-ClientNvramStore::ClientNvramStore() TRACE()
-ClientNvramStore::~ClientNvramStore() { }
+ClientNvramStore::ClientNvramStore() STOP
+ClientNvramStore::~ClientNvramStore() STOP
 
-void ClientNvramStore::FinalRelease() { }
-HRESULT ClientNvramStore::FinalConstruct() { return S_OK; }
+void ClientNvramStore::FinalRelease() STOP
+HRESULT ClientNvramStore::FinalConstruct() STOP
 
-HRESULT ClientNvramStore::init(Console *, const com::Utf8Str &) { return S_OK; }
+HRESULT ClientNvramStore::init(Console *, const com::Utf8Str &) STOP
 void ClientNvramStore::uninit() STOP;
 
 HRESULT ClientNvramStore::initUefiVariableStore(ULONG) STOP
 HRESULT ClientNvramStore::getNonVolatileStorageFile(com::Utf8Str &) STOP
 HRESULT ClientNvramStore::getUefiVariableStore(ComPtr<IUefiVariableStore> &) STOP
-HRESULT ClientNvramStore::getKeyId(com::Utf8Str &aKeyId) STOP
+HRESULT ClientNvramStore::getKeyId(com::Utf8Str &) STOP
 HRESULT ClientNvramStore::getKeyStore(com::Utf8Str &) STOP
