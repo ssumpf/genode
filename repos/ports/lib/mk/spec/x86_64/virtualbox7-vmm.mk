@@ -12,6 +12,8 @@ SRC_CC += VMM/VMMR3/SSM.cpp
 SRC_CC += VMM/VMMR3/NEMR3.cpp
 SRC_CC += VMM/VMMAll/NEMAll.cpp
 
+SRC_CC += VMM/VMMR3/VMMR3VTable.cpp
+
 SRC_CC += VMM/VMMR3/PDM.cpp
 SRC_CC += VMM/VMMR3/PDMBlkCache.cpp
 SRC_CC += VMM/VMMR3/PDMDevice.cpp
@@ -80,7 +82,16 @@ SRC_CC += VMM/VMMR3/VMMGuruMeditation.cpp
 SRC_CC += VMM/VMMAll/IEMAll.cpp
 SRC_S  += VMM/VMMAll/IEMAllAImpl.asm
 SRC_CC += VMM/VMMAll/IEMAllAImplC.cpp
+SRC_CC += VMM/VMMAll/IEMAllCImpl.cpp
+SRC_CC += VMM/VMMAll/IEMAllDbg.cpp
+SRC_CC += VMM/VMMAll/IEMAllCImplSvmInstr.cpp
+SRC_CC += VMM/VMMAll/IEMAllCImplVmxInstr.cpp
 SRC_CC += VMM/VMMR3/IEMR3.cpp
+
+SRC_CC += VMM/VMMAll/IEMAllIntprTables1.cpp
+SRC_CC += VMM/VMMAll/IEMAllIntprTables2.cpp
+SRC_CC += VMM/VMMAll/IEMAllIntprTables3.cpp
+SRC_CC += VMM/VMMAll/IEMAllIntprTables4.cpp
 
 SRC_CC += VMM/VMMAll/GIMAll.cpp
 SRC_CC += VMM/VMMAll/GIMAllHv.cpp
