@@ -455,15 +455,26 @@ int NEMR3NotifyPhysMmioExUnmap(PVM pVM, RTGCPHYS GCPhys, RTGCPHYS cb, ::uint32_t
 }
 
 
+int NEMR3NotifyPhysMmioExUnmap(PVM pVM, RTGCPHYS GCPhys, RTGCPHYS cb, uint32_t fFlags, void *pvRam,
+                               void *pvMmio2, ::uint8_t *pu2State, ::uint32_t *puNemRange) STOP
+
+
+int NEMR3PhysMmio2QueryAndResetDirtyBitmap(PVM pVM, RTGCPHYS GCPhys, RTGCPHYS cb, ::uint32_t uNemRange,
+                                           void *pvBitmap, size_t cbBitmap) STOP
+
+
+bool NEMR3IsMmio2DirtyPageTrackingSupported(PVM pVM) STOP
+
+
 int NEMR3NotifyPhysRomRegisterEarly(PVM pVM, RTGCPHYS GCPhys, RTGCPHYS cb, void *pvPages,
-                                    ::uint32_t fFlags, ::uint8_t *pu2State)
+                                    ::uint32_t fFlags, ::uint8_t *pu2State, ::uint32_t *puNemRange)
+
 {
 	return VINF_SUCCESS;
 }
 
-
 int NEMR3NotifyPhysRomRegisterLate(PVM pVM, RTGCPHYS GCPhys, RTGCPHYS cb, void *pvPages,
-                                   ::uint32_t fFlags, ::uint8_t *pu2State)
+                                   ::uint32_t fFlags, ::uint8_t *pu2State, ::uint32_t *puNemRange)
 {
 	return VINF_SUCCESS;
 }

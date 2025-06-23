@@ -20,6 +20,9 @@
 #include "stub_macros.h"
 #include "util.h"
 
+/* vbox includes */
+#include "PGMInternal.h"
+
 static bool const debug = true;
 
 
@@ -414,6 +417,23 @@ PRTDBGLINE DBGFR3AsLineByAddrA(PUVM, RTDBGAS, PCDBGFADDRESS,
 }
 
 
+int DBGFR3AsSymbolByName(PUVM, RTDBGAS, const char *, PRTDBGSYMBOL, PRTDBGMOD) STOP
+int DBGFR3AsSetAlias(PUVM, RTDBGAS, RTDBGAS) STOP
+RTDBGAS  DBGFR3AsResolveAndRetain(PUVM, RTDBGAS) STOP
+RTDBGCFG DBGFR3AsGetConfig(PUVM) STOP
+
+
+/* DBGFR3ModInMem.cpp */
+
+int DBGFR3ModInMem(PUVM, PCDBGFADDRESS, uint32_t, const char *, const char *,
+                   RTLDRARCH, uint32_t, PRTDBGMOD, PRTERRINFO) STOP
+
+
+/* DBGConsole.cpp */
+
+int DBGCCreate(PUVM, PCDBGCIO, unsigned) STOP
+
+
 /* PGMMap.cpp */
 
 #include <VBox/vmm/pgm.h>
@@ -426,7 +446,7 @@ VMMR3DECL(int) PGMR3MappingsSize(PVM pVM, uint32_t *pcb)
 
 
 /* PGMSavedState.cpp */
-int  pgmR3InitSavedState(PVM, uint64_t) { return VINF_SUCCESS; }
+int  pgmR3InitSavedState(PVM, ::uint64_t) { return VINF_SUCCESS; }
 
 
 /* nsProxyRelease.cpp */
@@ -628,3 +648,9 @@ VMM_INT_DECL(int) GCMXcptDE(PVMCPUCC, PCPUMCTX) STOP
 #include <VBox/vmm/dbgf.h>
 
 VMM_INT_DECL(VBOXSTRICTRC) DBGFTrap03Handler(PVMCC, PVMCPUCC, PCPUMCTX) STOP
+
+
+/* PDMAllNetShaper.cpp */
+#include <VBox/vmm/pdmnetshaper.h>
+
+VMM_INT_DECL(bool) PDMNetShaperAllocateBandwidth(PVMCC, PPDMNSFILTER, size_t) STOP
