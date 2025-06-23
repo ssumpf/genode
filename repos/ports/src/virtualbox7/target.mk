@@ -36,6 +36,7 @@ LIBS += virtualbox7-storage
 LIBS += virtualbox7-runtime
 LIBS += virtualbox7-apiwrap
 LIBS += virtualbox7-client
+LIBS += virtualbox7-softfloat
 
 INC_DIR += $(call select_from_repositories,src/lib/libc)
 INC_DIR += $(call select_from_repositories,src/lib/libc)/spec/x86_64
