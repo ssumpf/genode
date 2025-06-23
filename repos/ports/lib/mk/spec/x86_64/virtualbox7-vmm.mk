@@ -48,6 +48,7 @@ SRC_CC += VMM/VMMR3/PDMThread.cpp
 
 SRC_CC += VMM/VMMR3/PDMUsb.cpp
 
+SRC_CC += VMM/VMMAll/CPUMAllCpuId.cpp
 SRC_CC += VMM/VMMAll/CPUMAllMsrs.cpp
 SRC_CC += VMM/VMMAll/CPUMAllRegs.cpp
 

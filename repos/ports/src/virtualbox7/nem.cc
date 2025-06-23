@@ -295,6 +295,12 @@ VBOXSTRICTRC nemR3NativeRunGC(PVM pVM, PVMCPU pVCpu)
 }
 
 
+bool nemR3NativeNotifyDebugEventChanged(PVM pVM, bool fUseDebugLoop) STOP
+
+
+bool nemR3NativeNotifyDebugEventChangedPerCpu(PVM pVM, PVMCPU pVCpu, bool fUseDebugLoop) STOP
+
+
 bool NEMR3CanExecuteGuest(PVM pVM, PVMCPU pVCpu)
 {
 	return true;
