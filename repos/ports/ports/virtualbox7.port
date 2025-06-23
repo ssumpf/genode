@@ -92,6 +92,7 @@ VBOX_MAIN_INC += KeyboardImpl LoggingNew MachineDebuggerImpl MachineImpl
 VBOX_MAIN_INC += MachineImplCloneVM MachineImplMoveVM MachineLaunchVMCommonWorker Matching
 VBOX_MAIN_INC += MediumAttachmentImpl MediumFormatImpl MediumIOImpl MediumImpl MediumLock
 VBOX_MAIN_INC += MouseImpl NATEngineImpl NATNetworkImpl NetworkAdapterImpl NetworkServiceRunner
+VBOX_MAIN_INC += NvramStoreImpl
 VBOX_MAIN_INC += ObjectState PCIDeviceAttachmentImpl ParallelPortImpl Performance PerformanceImpl
 VBOX_MAIN_INC += PlatformBase PlatformImpl PlatformPropertiesImpl PlatformX86Impl
 VBOX_MAIN_INC += ProgressImpl ProgressProxyImpl QMTranslator RecordingScreenSettingsImpl
