@@ -544,3 +544,19 @@ void NEMHCNotifyPhysPageChanged(PVMCC pVM, RTGCPHYS GCPhys, RTHCPHYS HCPhysPrev,
 	NEMHCNotifyPhysPageProtChanged(pVM, GCPhys, HCPhysNew, nullptr, fPageProt, enmType, pu2State);
 }
 
+
+/*
+ * XXX: Double check
+ * NEM backend uses nested paging for the guest.
+ * NEM_FEAT_F_NESTED_PAGING    RT_BIT(0)
+ * NEM backend uses full (unrestricted) guest execution.
+ * NEM_FEAT_F_FULL_GST_EXEC    RT_BIT(1)
+ * NEM backend offers an xsave/xrstor interface.
+ * NEM_FEAT_F_XSAVE_XRSTOR
+ */
+VMM_INT_DECL(uint32_t) NEMHCGetFeatures(PVMCC pVM)
+{
+	RT_NOREF(pVM);
+	return NEM_FEAT_F_NESTED_PAGING | NEM_FEAT_F_FULL_GST_EXEC |
+	       NEM_FEAT_F_XSAVE_XRSTOR;
+}
