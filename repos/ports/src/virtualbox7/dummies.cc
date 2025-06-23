@@ -31,12 +31,10 @@ HRESULT Machine::exportTo(const ComPtr<IAppliance> &aAppliance,
                           const com::Utf8Str &aLocation,
                           ComPtr<IVirtualSystemDescription> &aDescription) STOP
 
-/* com.cpp */
-#if 0
-int com::VBoxLogRelCreate(char const*, char const*, unsigned int, char const*,
-                          char const*, unsigned int, unsigned int, unsigned int,
-                          unsigned int, unsigned long, RTERRINFO*) { return NS_OK; }
-#endif
+
+/* log.cpp */
+RTR0DECL(int) RTLogSetR0ThreadNameV(PRTLOGGER, const char *, va_list) STOP
+
 
 /* DisplayPNGUtil.cpp */
 
@@ -581,3 +579,37 @@ RTDECL(bool) RTCrX509Validity_IsValidAtTimeSpec(PCRTCRX509VALIDITY, PCRTTIMESPEC
 
 /* VBoxRTImpImp.c (generated) */
 void RTCrX509Certificate_Delete(PRTCRX509CERTIFICATE) STOP
+
+
+#include <iprt/sha.h>
+
+/* openssl-sha256.cpp */
+RTDECL(void) RTSha256(const void *, size_t, uint8_t pabHash[RTSHA256_HASH_SIZE]) STOP
+
+
+/* sha256str.cpp */
+RTDECL(int) RTSha256ToString(uint8_t const pabDigest[RTSHA256_HASH_SIZE], char *, size_t) STOP
+
+
+/* openssl-sha1.cpp/alt-sha1.cpp */
+RTDECL(void) RTSha1(const void *, size_t, uint8_t pabDigest[RTSHA1_HASH_SIZE]) STOP
+
+
+/* sha1str.cpp */
+RTDECL(int) RTSha1ToString(uint8_t const pabDigest[RTSHA1_HASH_SIZE], char *, size_t) STOP
+
+
+/* devm.cpp */
+#include "internal/dvm.h"
+
+RTDECL(int) RTDvmMapOpen(RTDVM) STOP
+RTDECL(int) RTDvmMapQueryTableLocations(RTDVM, uint32_t,
+                                        PRTDVMTABLELOCATION, size_t, size_t *) STOP
+RTDECL(RTDVMFORMATTYPE) RTDvmMapGetFormatType(RTDVM) STOP
+RTDECL(uint32_t) RTDvmMapGetValidVolumes(RTDVM) STOP
+RTDECL(int) RTDvmMapQueryFirstVolume(RTDVM, PRTDVMVOLUME) STOP
+RTDECL(int) RTDvmMapQueryNextVolume(RTDVM, RTDVMVOLUME, PRTDVMVOLUME) STOP
+RTDECL(uint32_t) RTDvmVolumeRelease(RTDVMVOLUME) STOP
+RTDECL(uint64_t) RTDvmVolumeGetSize(RTDVMVOLUME) STOP
+RTDECL(int) RTDvmVolumeQueryRange(RTDVMVOLUME, uint64_t *, uint64_t *) STOP
+RTDECL(uint32_t) RTDvmVolumeGetIndex(RTDVMVOLUME, RTDVMVOLIDX) STOP

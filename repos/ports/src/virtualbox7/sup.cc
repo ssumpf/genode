@@ -744,12 +744,12 @@ static void ioctl(SUPSETVMFORFAST &request)
  ** VirtualBox suplib interface **
  *********************************/
 
-int suplibOsInit(PSUPLIBDATA pThis, bool fPreInited, bool fUnrestricted,
-                 SUPINITOP *penmWhat, PRTERRINFO pErrInfo)
+DECLHIDDEN(int) suplibOsInit(PSUPLIBDATA pThis, bool fPreInited, uint32_t fFlags,
+                             SUPINITOP *penmWhat, PRTERRINFO pErrInfo)
 {
 	/* set hDevice to !NIL_RTFILE - checked by SUPR3PageAllocEx() */
 	pThis->hDevice       = !NIL_RTFILE;
-	pThis->fUnrestricted = fUnrestricted;
+	pThis->fUnrestricted = RT_BOOL(fFlags & SUPR3INIT_F_UNRESTRICTED);
 
 	return VINF_SUCCESS;
 }
@@ -804,7 +804,8 @@ int suplibOsIOCtlFast(PSUPLIBDATA pThis, uintptr_t uFunction,
                       uintptr_t idCpu) STOP
 
 
-int suplibOsPageAlloc(PSUPLIBDATA pThis, size_t cPages, void **ppvPages) STOP
+DECLHIDDEN(int) suplibOsPageAlloc(PSUPLIBDATA pThis, size_t cPages,
+                                  uint32_t fFlags, void **ppvPages) STOP
 
 
 int suplibOsPageFree(PSUPLIBDATA pThis, void *pvPages, size_t cPages) STOP
