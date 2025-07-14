@@ -204,7 +204,10 @@ class Genodefb :
 
 			Lock();
 
-			if (_display_bitmap.isNull()) {
+			/* keep ComPtr on stack so that it stays valid during usage */
+			ComPtr<IDisplaySourceBitmap> display_bitmap = _display_bitmap;
+
+			if (display_bitmap.isNull()) {
 				_clear_screen();
 				Unlock();
 				return S_OK;
@@ -216,12 +219,12 @@ class Genodefb :
 			ULONG ulBitsPerPixel = 0;
 			ULONG ulBytesPerLine = 0;
 			BitmapFormat_T bitmapFormat = BitmapFormat_Opaque;
-			_display_bitmap->QueryBitmapInfo(&pAddress,
-			                                 &ulWidth,
-			                                 &ulHeight,
-			                                 &ulBitsPerPixel,
-			                                 &ulBytesPerLine,
-			                                 &bitmapFormat);
+			display_bitmap->QueryBitmapInfo(&pAddress,
+			                                &ulWidth,
+			                                &ulHeight,
+			                                &ulBitsPerPixel,
+			                                &ulBytesPerLine,
+			                                &bitmapFormat);
 
 			Gui::Area const area_fb = Gui::Area(_gui_win.area.w,
 			                                    _gui_win.area.h);
