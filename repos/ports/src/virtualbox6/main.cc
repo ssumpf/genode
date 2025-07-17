@@ -354,13 +354,19 @@ struct Main : Event_handler
 			 */
 			ComPtr<Genodefb> c_fb = fb->fb;
 
-			c_fb->Lock();
+			auto hrc = c_fb->Lock();
+			if (hrc != S_OK)
+				Genode::error(__func__, ":", __LINE__, " failed ", hrc);
 
 			try {
 				fn();
-				c_fb->Unlock();
+				hrc = c_fb->Unlock();
+				if (hrc != S_OK)
+					Genode::error(__func__, ":", __LINE__, " failed ", hrc);
 			} catch (...) {
-				c_fb->Unlock();
+				hrc = c_fb->Unlock();
+				if (hrc != S_OK)
+					Genode::error(__func__, ":", __LINE__, " failed ", hrc);
 				throw;
 			}
 		}

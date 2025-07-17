@@ -117,7 +117,9 @@ class Genodefb :
 
 		void update_mode(Gui::Rect gui_win)
 		{
-			Lock();
+			auto hrc = Lock();
+			if (hrc != S_OK)
+				Genode::error(__func__, ":", __LINE__, " failed ", hrc);
 
 			_gui_win = gui_win;
 
@@ -128,17 +130,23 @@ class Genodefb :
 
 			_fb_base = _attach();
 
-			Unlock();
+			hrc = Unlock();
+			if (hrc != S_OK)
+				Genode::error(__func__, ":", __LINE__, " failed ", hrc);
 		}
 
 		void invalidate_gui()
 		{
-			Lock();
+			auto hrc = Lock();
+			if (hrc != S_OK)
+				Genode::error(__func__, ":", __LINE__, " failed ", hrc);
 
 			_gui  = nullptr;
 			_view = nullptr;
 
-			Unlock();
+			hrc = Unlock();
+			if (hrc != S_OK)
+				Genode::error(__func__, ":", __LINE__, " failed ", hrc);
 		}
 
 		STDMETHODIMP Lock()
@@ -160,7 +168,9 @@ class Genodefb :
 			/* save the new bitmap reference */
 			_display->QuerySourceBitmap(screen, _display_bitmap.asOutParam());
 
-			Lock();
+			auto hrc = Lock();
+			if (hrc != S_OK)
+				Genode::error(__func__, ":", __LINE__, " failed ", hrc);
 
 			bool const ok = (w <= (ULONG)_gui_win.area.w) &&
 			                (h <= (ULONG)_gui_win.area.h);
@@ -190,7 +200,9 @@ class Genodefb :
 				            " (host: ", _gui_win.area, ") origin: ", ox, ",", oy);
 			}
 
-			Unlock();
+			hrc = Unlock();
+			if (hrc != S_OK)
+				Genode::error(__func__, ":", __LINE__, " failed ", hrc);
 
 			/* request appropriate NotifyUpdate() */
 			_display->InvalidateAndUpdateScreen(screen);
@@ -217,7 +229,9 @@ class Genodefb :
 
 		HRESULT NotifyUpdate(ULONG o_x, ULONG o_y, ULONG width, ULONG height) override
 		{
-			Lock();
+			auto hrc = Lock();
+			if (hrc != S_OK)
+				Genode::error(__func__, ":", __LINE__, " failed ", hrc);
 
 			if (!_fb_base || !_gui)
 				return S_OK;
@@ -227,7 +241,9 @@ class Genodefb :
 
 			if (display_bitmap.isNull()) {
 				_clear_screen();
-				Unlock();
+				hrc = Unlock();
+				if (hrc != S_OK)
+					Genode::error(__func__, ":", __LINE__, " failed ", hrc);
 				return S_OK;
 			}
 
@@ -267,7 +283,9 @@ class Genodefb :
 
 			_gui->framebuffer.refresh(o_x, o_y, width, height);
 
-			Unlock();
+			hrc = Unlock();
+			if (hrc != S_OK)
+				Genode::error(__func__, ":", __LINE__, " failed ", hrc);
 
 			return S_OK;
 		}
@@ -277,7 +295,9 @@ class Genodefb :
 		                               PRUint32 imageSize,
 		                               PRUint8 *image) override
 		{
-			Lock();
+			auto hrc = Lock();
+			if (hrc != S_OK)
+				Genode::error(__func__, ":", __LINE__, " failed ", hrc);
 
 			if (!_fb_base || !_gui)
 				return S_OK;
@@ -302,7 +322,9 @@ class Genodefb :
 
 			_gui->framebuffer.refresh(o_x, o_y, area_vm.w, area_vm.h);
 
-			Unlock();
+			hrc = Unlock();
+			if (hrc != S_OK)
+				Genode::error(__func__, ":", __LINE__, " failed ", hrc);
 
 			return S_OK;
 		}
