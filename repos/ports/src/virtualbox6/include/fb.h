@@ -164,13 +164,15 @@ class Genodefb :
 		{
 			HRESULT result = E_FAIL;
 
-
-			/* save the new bitmap reference */
-			_display->QuerySourceBitmap(screen, _display_bitmap.asOutParam());
+			ComPtr<IDisplaySourceBitmap> tmp { };
+			_display->QuerySourceBitmap(screen, tmp.asOutParam());
 
 			auto hrc = Lock();
 			if (hrc != S_OK)
 				Genode::error(__func__, ":", __LINE__, " failed ", hrc);
+
+			/* save the new bitmap reference */
+			_display_bitmap = tmp;
 
 			bool const ok = (w <= (ULONG)_gui_win.area.w) &&
 			                (h <= (ULONG)_gui_win.area.h);
