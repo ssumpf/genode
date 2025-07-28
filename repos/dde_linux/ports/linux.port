@@ -1,9 +1,9 @@
 LICENSE   := GPLv2
-VERSION   := 6.12.34
+VERSION   := 6.12.40
 DOWNLOADS := linux.archive
 
 URL(linux) := https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-$(VERSION).tar.xz
-SHA(linux) := a7f3fe381f67eca4172e9b63efb61a14bd7f9e1278e03603d0ff5a93f270c24d
+SHA(linux) := 4811af1317f98d2cccea3c7695969a2c03a27cb02fd2d5327032dd5341842933
 DIR(linux) := src/linux
 
 #
