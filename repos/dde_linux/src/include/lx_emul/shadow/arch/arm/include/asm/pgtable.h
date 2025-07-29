@@ -35,6 +35,10 @@ pte_t pte_mkwrite(pte_t pte, struct vm_area_struct *vma);
 pte_t pte_mkwrite(pte_t pte);
 #endif
 
+#ifndef pgprot_writecombine
+#define pgprot_writecombine(prot) (prot)
+#endif
+
 int pte_none(pte_t pte);
 int pte_present(pte_t pte);
 int pte_swp_soft_dirty(pte_t pte);
