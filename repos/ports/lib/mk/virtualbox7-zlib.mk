@@ -1,6 +1,6 @@
 include $(REP_DIR)/lib/mk/virtualbox7-common.inc
 
-ZLIB_DIR = $(VIRTUALBOX_DIR)/src/libs/zlib-1.2.13
+ZLIB_DIR = $(VIRTUALBOX_DIR)/src/libs/zlib-1.3.1
 INC_DIR += $(ZLIB_DIR)
 SRC_C    = $(notdir $(wildcard $(ZLIB_DIR)/*.c))
 

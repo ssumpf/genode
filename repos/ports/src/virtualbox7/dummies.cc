@@ -429,11 +429,6 @@ int DBGFR3ModInMem(PUVM, PCDBGFADDRESS, uint32_t, const char *, const char *,
                    RTLDRARCH, uint32_t, PRTDBGMOD, PRTERRINFO) STOP
 
 
-/* DBGConsole.cpp */
-
-int DBGCCreate(PUVM, PCDBGCIO, unsigned) STOP
-
-
 /* PGMMap.cpp */
 
 #include <VBox/vmm/pgm.h>
@@ -562,10 +557,10 @@ HRESULT NvramStore::initCopy(Machine *, NvramStore *) STOP
 void NvramStore::uninit() STOP
 
 com::Utf8Str NvramStore::i_getNonVolatileStorageFile() STOP
-int  NvramStore::i_getNonVolatileStorageFile(com::Utf8Str &) STOP
+
 void NvramStore::i_updateNonVolatileStorageFile(const Utf8Str &) STOP
-int NvramStore:: i_loadStore(const char *) STOP
-int NvramStore:: i_saveStore(void) STOP
+int  NvramStore::i_loadStore(const char *) STOP
+int  NvramStore::i_saveStore(void) STOP
 void NvramStore::i_rollback() STOP
 void NvramStore::i_commit() STOP
 void NvramStore::i_copyFrom(NvramStore *) STOP
