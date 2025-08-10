@@ -3,7 +3,7 @@
   <Machine uuid="{7f4c15ef-929b-4c16-8c9a-c9aa32e3cc9b}" name="Ubuntu 22.04" OSType="Ubuntu_64" snapshotFolder="Snapshots" lastStateChange="2025-08-07T18:26:24Z">
     <MediaRegistry>
       <HardDisks>
-        <HardDisk uuid="{c81042a2-d3a5-4036-b542-7ec555908a46}" location="machine.vdi" format="VDI" type="Normal"/>
+        <HardDisk uuid="{d65876fd-b855-4a35-bbfe-115447c1b9ba}" location="machine.vdi" format="VDI" type="Normal"/>
       </HardDisks>
       <DVDImages>
         <Image uuid="{67ec61dd-c7d8-4f36-99ee-d5f4a9eaf0bd}" location="installer.iso"/>
@@ -57,7 +57,7 @@
       <StorageControllers>
         <StorageController name="SATA" type="AHCI" PortCount="4" useHostIOCache="true" Bootable="true" IDE0MasterEmulationPort="0" IDE0SlaveEmulationPort="1" IDE1MasterEmulationPort="2" IDE1SlaveEmulationPort="3">
           <AttachedDevice type="HardDisk" hotpluggable="false" port="0" device="0">
-            <Image uuid="{c81042a2-d3a5-4036-b542-7ec555908a46}"/>
+            <Image uuid="{d65876fd-b855-4a35-bbfe-115447c1b9ba}"/>
           </AttachedDevice>
           <AttachedDevice passthrough="false" type="DVD" port="3" device="0">
             <Image uuid="{67ec61dd-c7d8-4f36-99ee-d5f4a9eaf0bd}"/>
