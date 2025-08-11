@@ -708,7 +708,7 @@ void Main::handle_vbox_event(VBoxEventType_T ev_type, IEvent &ev)
 			 * working, like VBoxEventType_OnGuestSessionRegistered.
 			 *
 			 * For a list of "VBoxEventType_..." events see
-			 * virtualbox6_sdk/sdk/bindings/xpcom/include/VirtualBox_XPCOM.h
+			 * virtualbox7_sdk/sdk/bindings/xpcom/include/VirtualBox_XPCOM.h
 			 */
 			_sync_capslock();
 		} break;

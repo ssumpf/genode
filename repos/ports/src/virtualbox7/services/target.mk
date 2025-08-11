@@ -1,6 +1,6 @@
-TARGET = dummy-virtualbox6-services
+TARGET = dummy-virtualbox7-services
 
 BUILD_ARTIFACTS :=
 
-LIBS += virtualbox6-sharedclipboard
-LIBS += virtualbox6-sharedfolders
+LIBS += virtualbox7-sharedclipboard
+LIBS += virtualbox7-sharedfolders

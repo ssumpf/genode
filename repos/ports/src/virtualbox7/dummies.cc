@@ -333,7 +333,7 @@ const char * RTBldCfgRevisionStr(void)
 
 DECLHIDDEN(int) rtProcInitExePath(char *pszPath, size_t cchPath)
 {
-	Genode::copy_cstring(pszPath, "/virtualbox6", cchPath);
+	Genode::copy_cstring(pszPath, "/virtualbox7", cchPath);
 
 	return VINF_SUCCESS;
 }
@@ -545,14 +545,14 @@ HRESULT HostDrive::initFromPathAndModel(const com::Utf8Str &, const com::Utf8Str
 /* NvramStoreImpl.cpp */
 #include "NvramStoreImpl.h"
 
-NvramStore::NvramStore() STOP
+NvramStore::NvramStore() TRACE()
 NvramStore::~NvramStore() STOP
 
 void NvramStore::FinalRelease() STOP
-HRESULT NvramStore::FinalConstruct() STOP
+HRESULT NvramStore::FinalConstruct() TRACE(VINF_SUCCESS)
 
-HRESULT NvramStore::init(Machine *) STOP
-HRESULT NvramStore::init(Machine *, NvramStore *that) STOP
+HRESULT NvramStore::init(Machine *) TRACE(VINF_SUCCESS)
+HRESULT NvramStore::init(Machine *, NvramStore *that) TRACE(VINF_SUCCESS)
 HRESULT NvramStore::initCopy(Machine *, NvramStore *) STOP
 void NvramStore::uninit() STOP
 
@@ -562,10 +562,10 @@ void NvramStore::i_updateNonVolatileStorageFile(const Utf8Str &) STOP
 int  NvramStore::i_loadStore(const char *) STOP
 int  NvramStore::i_saveStore(void) STOP
 void NvramStore::i_rollback() STOP
-void NvramStore::i_commit() STOP
+void NvramStore::i_commit() TRACE()
 void NvramStore::i_copyFrom(NvramStore *) STOP
 
-HRESULT NvramStore::i_loadSettings(const settings::NvramSettings &) STOP
+HRESULT NvramStore::i_loadSettings(const settings::NvramSettings &) TRACE(VINF_SUCCESS)
 HRESULT NvramStore::i_saveSettings(settings::NvramSettings &) STOP
 HRESULT NvramStore::i_applyDefaults(GuestOSType *) STOP
 
