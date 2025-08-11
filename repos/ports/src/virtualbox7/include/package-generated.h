@@ -3,7 +3,7 @@
 
 /*
  * The definition of 'VBOX_PACKAGE_STRING' is provided via
- * 'lib/mk/virtualbox6-common.inc'
+ * 'lib/mk/virtualbox7-common.inc'
  */
 
 #endif
