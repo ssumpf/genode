@@ -13,44 +13,24 @@
  * Copyright (C) 2024 Genode Labs GmbH
  *
  * This file is distributed under the terms of the GNU General Public License
- * version 2 or later.
+ * version 2.
  */
 
 #include <base/log.h>
 #include <util/fifo.h>
-
-#include <genode_c_api/nic_client.h>
 
 #include <lx_kit/env.h>
 #include <lx_emul/task.h>
 
 #include "lx_socket.h"
 #include "lx_user.h"
-#include "net_driver.h"
+
 
 using namespace Genode;
 
 struct Lx_call;
 
 using Socket_queue = Fifo<Lx_call>;
-
-
-struct Statics
-{
-	genode_socket_wakeup        *wakeup_remote { nullptr };
-	genode_socket_config         config{ };
-	bool                         address_configured { false };
-	bool                         address_valid      { false };
-	Constructible<Session_label> label { };
-};
-
-
-static Statics &statics()
-{
-	static Statics instance { };
-	return instance;
-}
-
 
 
 struct genode_socket_handle
@@ -98,7 +78,6 @@ struct Lx_call : private Socket_queue::Element
 		while (!finished) {
 			if (may_block == false)
 				warning("socket interface call blocked (this should not happen)");
-			genode_socket_wakeup_remote();
 			genode_socket_wait_for_progress();
 		}
 	}
@@ -437,39 +416,6 @@ struct Lx_sock_release : Lx_call
 };
 
 
-struct Lx_nic_link_state : Lx_call
-{
-	bool state { false };
-
-	Lx_nic_link_state(genode_socket_handle &handle) : Lx_call(handle)
-	{
-		schedule();
-	}
-
-	void execute() override
-	{
-		state = lx_nic_client_link_state();
-		finished = true;
-	}
-};
-
-
-struct Lx_nic_update_link_state : Lx_call
-{
-	bool state { false };
-
-	Lx_nic_update_link_state(genode_socket_handle &handle) : Lx_call(handle)
-	{
-		schedule();
-	}
-
-	void execute() override
-	{
-		state = lx_nic_client_update_link_state();
-		finished = true;
-	}
-};
-
 /*
  * Dispatch socket calls in Linux task
  */
@@ -522,63 +468,28 @@ static void _destroy_handle(genode_socket_handle *handle)
 }
 
 
-static genode_socket_handle _disposable_handle()
-{
-	return {
-		.sock  = nullptr,
-		.task  = lx_socket_dispatch_root(),
-		.queue = static_cast<Socket_queue *>(lx_socket_dispatch_queue()),
-	};
-}
-
 /*
  * Genode socket C-API
  */
 
 void genode_socket_config_address(struct genode_socket_config *config)
 {
+	genode_socket_handle handle = {
+		.task  = lx_socket_dispatch_root(),
+		.queue = static_cast<Socket_queue *>(lx_socket_dispatch_queue()),
+	};
 
-	statics().config = *config;
-	statics().address_valid = true;
-
-	genode_socket_handle handle { _disposable_handle() };
-	Lx_nic_link_state    link   { handle };
-	if (link.state) {
-		/* local implementation here */
-		statics().address_configured = false;
-		socket_config_address();
-	}
-
-	/* wait for link state change to trigger ip configuration */
-	while (!statics().address_configured) {
-		genode_socket_wakeup_remote();
-		genode_socket_wait_for_progress();
-	}
-}
-
-
-extern "C" unsigned int ic_myaddr;
-extern "C" unsigned int ic_netmask;
-extern "C" unsigned int ic_gateway;
-extern "C" unsigned int ic_nameservers[1];
-
-void genode_socket_config_info(struct genode_socket_info *info)
-{
-	if (!info) return;
-	info->ip_addr    = ic_myaddr;
-	info->netmask    = ic_netmask;
-	info->gateway    = ic_gateway;
-	info->nameserver = ic_nameservers[0];
-
-	genode_socket_handle handle { _disposable_handle() };
-	Lx_nic_link_state link { handle };
-	info->link_state = link.state;
+	Lx_address addr { handle, config };
 }
 
 
 void genode_socket_configure_mtu(unsigned mtu)
 {
-	genode_socket_handle handle { _disposable_handle() };
+	genode_socket_handle handle = {
+		.task  = lx_socket_dispatch_root(),
+		.queue = static_cast<Socket_queue *>(lx_socket_dispatch_queue()),
+	};
+
 	Lx_mtu addr { handle, mtu };
 }
 
@@ -746,76 +657,4 @@ enum Errno genode_socket_release(struct genode_socket_handle *handle)
 	handle->sock = nullptr;
 	_destroy_handle(handle);
 	return release.err;
-}
-
-
-void genode_socket_wakeup_remote(void)
-{
-	genode_nic_client_notify_peers();
-}
-
-
-void genode_socket_register_wakeup(struct genode_socket_wakeup *remote)
-{
-	statics().wakeup_remote = remote;
-}
-
-
-/*
- * local C-interface
- */
-
-void socket_schedule_peer(void)
-{
-	if (statics().wakeup_remote && statics().wakeup_remote->callback) {
-		statics().wakeup_remote->callback(statics().wakeup_remote->data);
-	}
-}
-
-
-void socket_config_address(void)
-{
-	if (statics().address_configured || statics().address_valid == false)
-		return;
-
-	genode_socket_handle handle { _disposable_handle() };
-
-	Lx_address addr { handle, &statics().config };
-
-	statics().address_configured = true;
-}
-
-
-void socket_unconfigure_address(void)
-{
-	statics().address_configured = false;
-}
-
-
-void socket_update_link_state(void)
-{
-	genode_socket_handle handle { _disposable_handle() };
-	Lx_nic_update_link_state link { handle };
-
-	if (link.state)
-		socket_config_address();
-	else
-		statics().address_configured = false;
-}
-
-
-void socket_label(char const *label)
-{
-	if (statics().label.constructed()) return;
-
-	statics().label.construct(label);
-}
-
-
-char const *socket_nic_client_label()
-{
-	if (statics().label.constructed())
-		return statics().label->string();
-
-	return "";
 }

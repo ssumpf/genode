@@ -8,7 +8,7 @@
  * Copyright (C) 2024 Genode Labs GmbH
  *
  * This file is distributed under the terms of the GNU General Public License
- * version 2 or later.
+ * version 2.
  */
 
 #include <lx_kit/env.h>
@@ -35,23 +35,16 @@ struct Main
 	Io_signal_handler<Main> nic_client_handler { env.ep(), *this,
 		&Main::handle_nic_client };
 
-	Io_signal_handler<Main> link_state_handler { env.ep(), *this,
-		&Main::handle_link_state };
-
 	Main(Env &env, genode_socket_io_progress *io_progress)
 	: env(env), io_progress(io_progress)
 	{ }
 
-	void _io_progress()
-	{
-		if (io_progress && io_progress->callback)
-			io_progress->callback(io_progress->data);
-	}
-
 	void handle_schedule()
 	{
 		Lx_kit::env().scheduler.execute();
-		_io_progress();
+
+		if (io_progress && io_progress->callback)
+			io_progress->callback(io_progress->data);
 	}
 
 	void handle_nic_client()
@@ -66,21 +59,15 @@ struct Main
 		lx_emul_task_unblock(lx_nic_client_rx_task());
 		Lx_kit::env().scheduler.execute();
 
-		_io_progress();
-	}
-
-	void handle_link_state()
-	{
-		socket_update_link_state();
-		_io_progress();
+		if (io_progress && io_progress->callback)
+			io_progress->callback(io_progress->data);
 	}
 
 	void init()
 	{
 		genode_nic_client_init(genode_env_ptr(env),
 		                       genode_allocator_ptr(Lx_kit::env().heap),
-		                       genode_signal_handler_ptr(nic_client_handler),
-		                       genode_signal_handler_ptr(link_state_handler));
+		                       genode_signal_handler_ptr(nic_client_handler));
 	}
 
 	Main(const Main&) = delete;
@@ -88,14 +75,11 @@ struct Main
 };
 
 
-bool genode_socket_init(struct genode_env *_env,
-                        struct genode_socket_io_progress *io_progress,
-                        char const *label)
+void genode_socket_init(struct genode_env *_env,
+                        struct genode_socket_io_progress *io_progress)
 {
 	Env &env = *static_cast<Env *>(_env);
 	static Main main { env, io_progress };
-
-	socket_label(label);
 
 	Lx_kit::initialize(env, main.schedule_handler);
 
@@ -108,6 +92,4 @@ bool genode_socket_init(struct genode_env *_env,
 
 	/* wait to finish initialization before returning to callee */
 	lx_emul_execute_kernel_until(lx_user_startup_complete, nullptr);
-
-	return lx_nic_client_initialized();
 }

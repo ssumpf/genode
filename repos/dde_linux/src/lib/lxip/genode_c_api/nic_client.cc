@@ -7,8 +7,8 @@
 /*
  * Copyright (C) 2021 Genode Labs GmbH
  *
- * This file is part of the Genode OS framework, which is distributed
- * under the terms of the GNU Affero General Public License version 3.
+ * This file is distributed under the terms of the GNU General Public License
+ * version 2.
  */
 
 #include <base/registry.h>
@@ -25,7 +25,6 @@ struct Statics
 	Env                                    *env_ptr;
 	Allocator                              *alloc_ptr;
 	Signal_context_capability               sigh { };
-	Signal_context_capability               link_sigh { };
 	Registry<Registered<genode_nic_client>> nic_clients { };
 };
 
@@ -59,15 +58,12 @@ struct genode_nic_client : private Noncopyable, private Interface
 
 	public:
 
-		genode_nic_client(Env &env, Allocator &alloc,
-		                  Signal_context_capability sigh,
-		                  Signal_context_capability link_sigh,
-		                  Session_label const &session_label)
+		genode_nic_client(Env &env, Allocator &alloc, Signal_context_capability sigh,
+		              Session_label    const &session_label)
 		:
 			_env(env), _alloc(alloc),
 			_session_label(session_label)
 		{
-			_connection.link_state_sigh(link_sigh);
 			_connection.rx_channel()->sigh_ready_to_ack   (sigh);
 			_connection.rx_channel()->sigh_packet_avail   (sigh);
 			_connection.tx_channel()->sigh_ack_avail      (sigh);
@@ -183,20 +179,16 @@ struct genode_nic_client : private Noncopyable, private Interface
 		}
 
 		Nic::Mac_address mac_address() { return _connection.mac_address(); }
-
-		bool link_state() { return _connection.link_state(); }
 };
 
 
 void genode_nic_client_init(genode_env            *env_ptr,
                             genode_allocator      *alloc_ptr,
-                            genode_signal_handler *sigh_ptr,
-                            genode_signal_handler *link_sig_ptr)
+                            genode_signal_handler *sigh_ptr)
 {
 	statics().env_ptr   = env_ptr;
 	statics().alloc_ptr = alloc_ptr;
 	statics().sigh      = cap(sigh_ptr);
-	statics().link_sigh = cap(link_sig_ptr);
 }
 
 
@@ -215,12 +207,6 @@ genode_mac_address genode_nic_client_mac_address(genode_nic_client *nic_client_p
 	Genode::memcpy(genode_mac.addr, &mac.addr, sizeof(genode_mac_address));
 
 	return genode_mac;
-}
-
-
-bool genode_nic_client_link_state(genode_nic_client *nic_client_ptr)
-{
-	return nic_client_ptr->link_state();
 }
 
 
@@ -249,13 +235,10 @@ struct genode_nic_client *genode_nic_client_create(char const *label)
 		return nullptr;
 	}
 
-	try {
-		return new (*statics().alloc_ptr)
-			Registered<genode_nic_client>(statics().nic_clients, *statics().env_ptr,
-			                              *statics().alloc_ptr,
-			                              statics().sigh, statics().link_sigh,
-			                              Session_label(label));
-	} catch (...) { return nullptr; }
+	return new (*statics().alloc_ptr)
+		Registered<genode_nic_client>(statics().nic_clients, *statics().env_ptr,
+		                              *statics().alloc_ptr, statics().sigh,
+		                              Session_label(label));
 }
 
 

@@ -3,7 +3,7 @@ LIBS           := jitterentropy virt_lx_emul virt_linux_generated
 SHARED_LIB     := yes
 
 TARGET_LIB_DIR := $(LXIP_DIR)
-INC_DIR        += $(LXIP_DIR)/shadow $(LXIP_DIR)
+INC_DIR        += $(LXIP_DIR)/shadow $(LXIP_DIR)/include $(LXIP_DIR)
 
 SRC_CC += lx_emul/random.cc
 
@@ -31,9 +31,5 @@ LD_OPT += -Bsymbolic-functions
 vpath %.cc $(REP_DIR)/src/lib
 vpath %.c  $(LXIP_DIR)/spec/$(SPEC_ARCH)
 vpath %    $(LXIP_DIR)
-
-C_API = $(dir $(call select_from_repositories,src/lib/genode_c_api))
-
-vpath genode_c_api/nic_client.cc $(C_API)
 
 # vi: set ft=make :

@@ -1,8 +1,8 @@
 SHARED_LIB = yes
 
-VFS_DIR := $(call select_from_repositories,src/lib/vfs/ip)
+VFS_DIR  = $(REP_DIR)/src/lib/vfs/lxip
 LIBS     = lxip format
-SRC_CC   = vfs.cc vfs_lxip.cc
+SRC_CC   = vfs.cc
 LD_OPT  += --version-script=$(VFS_DIR)/symbol.map
 
 CC_OPT += -Wno-error=missing-field-initializers

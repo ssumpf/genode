@@ -8,7 +8,7 @@
  * Copyright (C) 2024 Genode Labs GmbH
  *
  * This file is distributed under the terms of the GNU General Public License
- * version 2 or later.
+ * version 2.
  */
 
 #include <lx_emul.h>
@@ -362,12 +362,6 @@ int netdev_register_kobject(struct net_device * ndev)
 {
 	lx_emul_trace(__func__);
 	return 0;
-}
-
-
-void netdev_unregister_kobject(struct net_device * ndev)
-{
-	lx_emul_trace(__func__);
 }
 
 
