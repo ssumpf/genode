@@ -570,9 +570,9 @@ void genode_socket_config_info(struct genode_socket_info *info)
 	info->gateway    = ic_gateway;
 	info->nameserver = ic_nameservers[0];
 
-	genode_socket_handle handle { _disposable_handle() };
-	Lx_nic_link_state link { handle };
-	info->link_state = link.state;
+	//genode_socket_handle handle { _disposable_handle() };
+	//Lx_nic_link_state link { handle };
+	info->link_state = true;
 }
 
 
