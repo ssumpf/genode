@@ -108,7 +108,8 @@ static int driver_net_xmit(struct sk_buff *skb, struct net_device *dev)
 	stats->tx_packets++;
 	stats->tx_bytes += skb->len;
 
-	socket_schedule_peer();
+	//socket_schedule_peer(;
+	genode_nic_client_notify_peers();
 
 	return NETDEV_TX_OK;
 }
@@ -181,7 +182,8 @@ static int rx_task_function(void *arg)
 		                        &ctx)) {
 			progress = true; }
 
-		if (progress) socket_schedule_peer();
+		//if (progress) socket_schedule_peer();
+		if (progress) genode_nic_client_notify_peers();
 	}
 
 	return 0;
