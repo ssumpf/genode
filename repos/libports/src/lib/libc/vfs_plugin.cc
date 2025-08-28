@@ -826,8 +826,10 @@ ssize_t Libc::Vfs_plugin::write(File_descriptor *fd, const void *buf,
 
 				_out_result = _handle->fs().write(_handle, src, partial_out_count);
 
-				if (_out_result == Result::WRITE_ERR_WOULD_BLOCK)
+				if (_out_result == Result::WRITE_ERR_WOULD_BLOCK) {
+					Genode::warning("write: would block");
 					return Fn::INCOMPLETE;
+				}
 
 				if (_out_result != Result::WRITE_OK)
 					return Fn::COMPLETE;
