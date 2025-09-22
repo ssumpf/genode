@@ -148,13 +148,16 @@ ENTRY_POINT ?= 0x0
 
 $(LIB_SO): $(SHARED_LIBS)
 
+comma = ,
+
 $(LIB_SO): $(STATIC_LIBS) $(OBJECTS) $(wildcard $(LD_SCRIPT_SO))
 	$(MSG_MERGE)$(LIB_SO)
-	$(VERBOSE)libs=$(LIB_CACHE_DIR); $(LD) -o $(LIB_SO) -soname=$(LIB_SO) -shared --eh-frame-hdr \
-	                $(LD_OPT) -T $(LD_SCRIPT_SO) --entry=$(ENTRY_POINT) \
-	                --whole-archive --start-group \
+	$(VERBOSE)libs=$(LIB_CACHE_DIR); $(CC) -o $(LIB_SO) -Wl,-soname=$(LIB_SO) -shared -Wl,--eh-frame-hdr \
+	                $(addprefix -Wl$(comma),$(LD_OPT)) -Wl,-T $(LD_SCRIPT_SO) -Wl,--entry=$(ENTRY_POINT) \
+	                 -nostartfiles -nodefaultlibs \
+	                -Wl,--whole-archive -Wl,--start-group \
 	                $(SHARED_LIBS) $(STATIC_LIBS_BRIEF) $(OBJECTS) \
-	                --end-group --no-whole-archive \
+	                -Wl,--end-group -Wl,--no-whole-archive \
 	                $(LIBGCC)
 
 $(ABI_SO): $(LD_SCRIPT_SO)
