@@ -35,13 +35,53 @@ struct Lx_call;
 using Socket_queue = Fifo<Lx_call>;
 
 
+class Keepalive_timer
+{
+	using Periodic_timeout = Timer::Periodic_timeout<Keepalive_timer>;
+
+	private:
+
+		Timer::Connection               _timer    { Lx_kit::env().env };
+		Constructible<Periodic_timeout> _timeout  { };
+		unsigned long                   _refcount { 0 };
+
+		void _handle_timeout(Genode::Duration)
+		{
+			Lx_kit::env().scheduler.execute();
+		}
+
+		Keepalive_timer(const Keepalive_timer&) = delete;
+		Keepalive_timer operator=(const Keepalive_timer&) = delete;
+
+	public:
+
+		Keepalive_timer() { }
+
+		void get()
+		{
+			if (_refcount == 0)
+				_timeout.construct(_timer, *this,
+			                     &Keepalive_timer::_handle_timeout,
+			                     Microseconds { 1000 * 1000U });
+			++_refcount;
+		}
+
+		void put()
+		{
+			if (_refcount == 0) return;
+			if (--_refcount == 0) _timeout.destruct();
+		}
+};
+
+
 struct Statics
 {
-	genode_socket_wakeup        *wakeup_remote { nullptr };
-	genode_socket_config         config{ };
-	bool                         address_configured { false };
-	bool                         address_valid      { false };
-	Constructible<Session_label> label { };
+	genode_socket_wakeup          *wakeup_remote { nullptr };
+	genode_socket_config           config{ };
+	bool                           address_configured { false };
+	bool                           address_valid      { false };
+	Constructible<Session_label>   label { };
+	Constructible<Keepalive_timer> keepalive { };
 };
 
 
@@ -55,9 +95,10 @@ static Statics &statics()
 
 struct genode_socket_handle
 {
-	struct socket      *sock  { nullptr };
-	struct task_struct *task  { nullptr };
-	Socket_queue       *queue { };
+	struct socket      *sock      { nullptr };
+	struct task_struct *task      { nullptr };
+	Socket_queue       *queue     { };
+	bool                keepalive { false };
 };
 
 
@@ -691,6 +732,25 @@ enum Errno genode_socket_setsockopt(struct genode_socket_handle *handle,
                                     unsigned optlen)
 {
 	Lx_setsockopt sock_opt { *handle, level, opt, optval, optlen };
+
+	if (opt == GENODE_SO_KEEPALIVE && sock_opt.err == GENODE_ENONE) {
+		unsigned val = *(unsigned *)optval;
+
+		/* since keep alive is per socket we cannot disable it once activated */
+		if (val && statics().keepalive.constructed() == false)
+			statics().keepalive.construct();
+
+		if (val && handle->keepalive == false) {
+			statics().keepalive->get();
+			handle->keepalive = true;
+		}
+
+		if (!val && handle->keepalive) {
+			statics().keepalive->put();
+			handle->keepalive = false;
+		}
+	}
+
 	return sock_opt.err;
 }
 
@@ -743,6 +803,12 @@ enum Errno genode_socket_shutdown(struct genode_socket_handle *handle,
 enum Errno genode_socket_release(struct genode_socket_handle *handle)
 {
 	Lx_release release { *handle };
+
+	if (handle->keepalive) {
+		statics().keepalive->put();
+		handle->keepalive = false;
+	}
+
 	handle->sock = nullptr;
 	_destroy_handle(handle);
 	return release.err;
