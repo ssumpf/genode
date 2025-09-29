@@ -12,6 +12,7 @@ DIR(linux) := src/linux
 PATCH_FILES := \
                audio_jack.patch \
                i2c_hid_settings.patch \
+               i2c_hid_timeout.patch \
                i915_memcpy_32bit.patch \
                i915_meteorlake.patch \
                i915_min_alignment.patch \
