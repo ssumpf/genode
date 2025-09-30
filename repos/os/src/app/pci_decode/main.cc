@@ -219,6 +219,15 @@ bus_t Main::parse_pci_function(Bdf        bdf,
 				g.attribute("address", string(addr));
 				g.attribute("size",    string(size));
 				if (pf) g.attribute("prefetchable", true);
+
+				/* Heuristic - Intel graphic device */
+				if (pf && bar == 2 && Bdf::string(bdf) == "00:02.0") {
+					auto const vendor_id = cfg.read<Config::Vendor>();
+					auto const class_id  = cfg.read<Config::Class> ();
+
+					if (vendor_id == 0x8086 && class_id == 3)
+						g.attribute("writecombined", true);
+				}
 			});
 		}, [&] (uint64_t addr, uint64_t size, unsigned bar) {
 			g.node("io_port_range", [&]
