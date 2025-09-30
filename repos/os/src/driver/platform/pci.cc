@@ -73,7 +73,7 @@ struct Config_helper
 		Config::Command::Bus_master_enable::set(cmd, 1);
 
 		_dev.for_each_io_mem([&] (unsigned, Driver::Device::Io_mem::Range r,
-		                          Driver::Device::Pci_bar b, bool)
+		                          Driver::Device::Pci_bar b, bool, bool)
 		{
 			_config.set_bar_address(b.number, r.start);
 
@@ -123,7 +123,7 @@ struct Config_helper
 
 		/* enable memory space when I/O mem is defined */
 		_dev.for_each_io_mem([&] (unsigned, Driver::Device::Io_mem::Range,
-		                          Driver::Device::Pci_bar, bool) {
+		                          Driver::Device::Pci_bar, bool, bool) {
 			Config::Command::Memory_space_enable::set(cmd, 1); });
 
 		/* enable i/o space when I/O ports are defined */

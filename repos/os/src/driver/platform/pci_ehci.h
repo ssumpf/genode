@@ -67,7 +67,7 @@ void Driver::pci_ehci_quirks(Env                      &env,
 
 	/* find ehci controller registers behind PCI bar zero */
 	dev.for_each_io_mem([&] (unsigned, Device::Io_mem::Range range,
-	                         Device::Pci_bar bar, bool)
+	                         Device::Pci_bar bar, bool, bool)
 	{
 		if (!bar.valid() || bar.number != 0)
 			return;

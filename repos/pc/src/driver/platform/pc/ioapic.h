@@ -140,7 +140,7 @@ class Driver::Ioapic_factory : public Driver::Irq_controller_factory
 			device.for_each_io_mmu([&] (Device::Io_mmu const &iommu) {
 				if (iommu_idx++) return;
 
-				device.for_each_io_mem([&] (unsigned idx, Range range, Device::Pci_bar, bool)
+				device.for_each_io_mem([&] (unsigned idx, Range range, Device::Pci_bar, bool, bool)
 				{
 					try {
 						if (idx == 0)
