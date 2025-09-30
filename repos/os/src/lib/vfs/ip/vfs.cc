@@ -892,20 +892,20 @@ class Vfs::Ip_accept_file final : public Vfs::Ip_file
 };
 
 
-class Vfs_ip::Ip_sockopt_dir : public Vfs_ip::Directory
+class Vfs::Ip_sockopt_dir : public Directory
 {
-		Sockopt_file_system _sockopt_fs;
+		Vfs_ip::Sockopt_file_system _sockopt_fs;
 
 		File _dummy { "dummy" };
 
 	public:
 
 		Ip_sockopt_dir(Vfs::Env &env, genode_socket_handle &sock)
-		: Directory(Sockopt_file_system::type_name()),
+		: Directory(Vfs_ip::Sockopt_file_system::type_name()),
 		  _sockopt_fs(env, sock)
 		{ }
 
-		Vfs_ip::Node *child(char const *name) override
+		Node *child(char const *name) override
 		{
 			Directory_service::Stat out;
 			if (_sockopt_fs.stat(name, out) == Directory_service::STAT_OK) {
@@ -941,7 +941,7 @@ class Vfs_ip::Ip_sockopt_dir : public Vfs_ip::Directory
 };
 
 
-class Vfs_ip::Ip_socket_dir final : public Ip::Socket_dir
+class Vfs::Ip_socket_dir final : public Ip::Socket_dir
 {
 	public:
 
@@ -980,9 +980,9 @@ class Vfs_ip::Ip_socket_dir final : public Ip::Socket_dir
 		Ip_local_file   _local_file   { *this, _sock };
 		Ip_remote_file  _remote_file  { *this, _sock };
 
-		Ip_sockopt_dir _sockopt_fs { _env, _sock };
+		Vfs::Ip_sockopt_dir _sockopt_fs { _env, _sock };
 
-		struct Accept_socket_file : Vfs_ip::File
+		struct Accept_socket_file : Vfs::File
 		{
 			Accept_socket_file() : Vfs::File("accept_socket") { }
 
@@ -1196,8 +1196,8 @@ Vfs::Ip_socket_dir::_accept_new_socket(Vfs::File_system &fs,
 	}
 
 	try {
-		Vfs_ip::Ip_socket_handle *handle = new (alloc)
-			Vfs_ip::Ip_socket_handle(_env, fs, alloc, _parent, *new_sock);
+		Vfs::Ip_socket_handle *handle = new (alloc)
+			Vfs::Ip_socket_handle(_env, fs, alloc, _parent, *new_sock);
 		*out_handle = handle;
 		return Vfs::Directory_service::Open_result::OPEN_OK;
 	}
@@ -1285,8 +1285,8 @@ class Ip::Protocol_dir_impl : public Protocol_dir
 			}
 
 			try {
-				Vfs_ip::Ip_socket_handle *handle = new (alloc)
-					Vfs_ip::Ip_socket_handle(_env, fs, alloc, *this, *sock);
+				Vfs::Ip_socket_handle *handle = new (alloc)
+					Vfs::Ip_socket_handle(_env, fs, alloc, *this, *sock);
 				*out_handle = handle;
 				return Vfs::Directory_service::Open_result::OPEN_OK;
 			}
@@ -1913,7 +1913,7 @@ class Vfs::Ip_file_system : public  Vfs::File_system,
 		void close(Vfs_handle *vfs_handle) override
 		{
 			Ip_vfs_file_handle *file_handle =
-				dynamic_cast<Vfs_ip::Ip_vfs_file_handle*>(vfs_handle);
+				dynamic_cast<Vfs::Ip_vfs_file_handle*>(vfs_handle);
 
 			if (file_handle)
 				_read_ready_waiters_ptr->remove(file_handle->read_ready_elem);

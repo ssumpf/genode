@@ -15,6 +15,7 @@
 #define _SOCKOPT_H_
 
 /* Genode includes */
+#include <util/xml_generator.h>
 #include <vfs/single_file_system.h>
 #include <vfs/dir_file_system.h>
 
@@ -32,6 +33,7 @@ class Vfs_ip::Sockopt_value_file_system : public Vfs::Single_file_system
 	public:
 
 		using Name = Genode::String<64>;
+		using Xml_node = Genode::Xml_node;
 
 	private:
 
@@ -104,8 +106,8 @@ class Vfs_ip::Sockopt_value_file_system : public Vfs::Single_file_system
 		Config _config(Name const &name) const
 		{
 			char buf[Config::capacity()] { };
-			Genode::Generator::generate({ buf, sizeof(buf) }, type_name(),
-				[&] (Genode::Generator &g) { g.attribute("name", name); }
+			Genode::Xml_generator::generate({ buf, sizeof(buf) }, type_name(),
+				[&] (Genode::Xml_generator &g) { g.attribute("name", name); }
 			).with_error([&] (Genode::Buffer_error) {
 				Genode::warning("VFS value fs config failed (", _file_name, ")");
 			});
@@ -117,14 +119,14 @@ class Vfs_ip::Sockopt_value_file_system : public Vfs::Single_file_system
 		Sockopt_value_file_system(Name const &name, genode_socket_handle &sock)
 		:
 			Single_file_system(Vfs::Node_type::TRANSACTIONAL_FILE, type(),
-			                   Vfs::Node_rwx::rw(), Vfs::Node(_config(name))),
+			                   Vfs::Node_rwx::rw(), Xml_node(_config(name).string())),
 			_file_name(name), _sock(sock) { }
 
 		static char const *type_name() { return "sockopt"; }
 
 		char const *type() override { return type_name(); }
 
-		bool matches(Vfs::Node const &node) const
+		bool matches(Xml_node const &node) const
 		{
 			return node.has_type(type_name()) &&
 			       node.attribute_value("name", Name()) == _file_name;
@@ -178,6 +180,8 @@ class Vfs_ip::Sockopt_factory : public Vfs::File_system_factory
 {
 	private:
 
+		using Xml_node = Genode::Xml_node;
+
 		template<Sock_opt OPTNAME, bool READONLY = false>
 		using Sockopt = Sockopt_value_file_system<GENODE_SOL_SOCKET, OPTNAME, READONLY>;
 
@@ -202,7 +206,7 @@ class Vfs_ip::Sockopt_factory : public Vfs::File_system_factory
 
 		Sockopt_factory(genode_socket_handle &sock) : _sock(sock) { }
 
-		Vfs::File_system *create(Vfs::Env &, Vfs::Node const &node) override
+		Vfs::File_system *create(Vfs::Env &, Xml_node const &node) override
 		{
 			if (node.has_type(Sockopt<GENODE_SO_INVALID>::type_name())) {
 				if (_so_error.matches(node))      return &_so_error;
@@ -224,8 +228,8 @@ class Vfs_ip::Sockopt_file_system : private Sockopt_factory,
 	private:
 
 		using Config    = Genode::String<512>;
-		using Node      = Vfs::Node;
-		using Generator = Genode::Generator;
+		using Node      = Genode::Xml_node;
+		using Generator = Genode::Xml_generator;
 
 		static Config _config()
 		{
@@ -253,7 +257,7 @@ class Vfs_ip::Sockopt_file_system : private Sockopt_factory,
 
 		Sockopt_file_system(Vfs::Env &env, genode_socket_handle &sock)
 		: Sockopt_factory(sock),
-		  Dir_file_system(env, Node(_config()), *this)
+		  Dir_file_system(env, Node(_config().string()), *this)
 		{ }
 
 		static char const *type_name() { return "sockopts"; }
