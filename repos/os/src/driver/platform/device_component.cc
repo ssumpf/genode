@@ -334,8 +334,7 @@ Device_component::Device_component(Registry<Device_component> &registry,
 		{
 			_with_reserved_quota_for_session<Io_mem_session>(session, [&] {
 				Io_mem &iomem = *(new (session.heap())
-					Io_mem(_reserved_mem_registry, {0}, idx, range, false,
-					       false));
+					Io_mem(_reserved_mem_registry, {0}, idx, range, false, false));
 				iomem.io_mem.construct(_env, iomem.range.start,
 				                       iomem.range.size, false);
 			});

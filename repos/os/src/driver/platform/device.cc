@@ -232,7 +232,7 @@ void Driver::Device::update(Allocator &alloc, Node const &node,
 			Range range { node.attribute_value<addr_t>("address", 0),
 			              node.attribute_value<size_t>("size",    0) };
 			bool  pf    { node.attribute_value("prefetchable", false) };
-			bool  wc    { node.attribute_value("writecombined", false) };
+			bool  wc    { node.attribute_value("wc", false) };
 
 			return *new (alloc) Io_mem(bar, range, pf, wc);
 		},
