@@ -135,6 +135,7 @@ void Thread::ipc_copy_msg(Thread &sender)
 							oir.factory(_obj_id_ref_ptr[i], _pd,
 								[&] (auto &new_oir) {
 								_obj_id_ref_ptr[i] = nullptr;
+								new_oir.add_to_utcb();
 								to_add = new_oir.capid();
 							});
 						}
