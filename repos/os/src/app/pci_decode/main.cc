@@ -221,12 +221,12 @@ bus_t Main::parse_pci_function(Bdf        bdf,
 				if (pf) g.attribute("prefetchable", true);
 
 				/* Heuristic - Intel graphic device */
-				if (pf && bar == 2 && Bdf::string(bdf) == "00:02.0") {
+				if (pf && bar == 2 && bdf == Bdf(0,2,0)) {
 					auto const vendor_id = cfg.read<Config::Vendor>();
-					auto const class_id  = cfg.read<Config::Class> ();
+					auto const class_id  = cfg.read<Config::Base_class_code>();
 
 					if (vendor_id == 0x8086 && class_id == 3)
-						g.attribute("writecombined", true);
+						g.attribute("wc", true);
 				}
 			});
 		}, [&] (uint64_t addr, uint64_t size, unsigned bar) {

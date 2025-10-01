@@ -41,7 +41,6 @@ struct Pci::Config : Genode::Mmio<0x45>
 	};
 
 	struct Device : Register<0x2, 16> {};
-	struct Class  : Register<0xb,  8> {};
 
 	struct Command : Register<0x4, 16>
 	{
