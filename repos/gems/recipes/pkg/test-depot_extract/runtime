@@ -1,6 +1,6 @@
 <runtime ram="128M" caps="5000" binary="init">
 
-	<fail after_seconds="20"/>
+	<fail after_seconds="25"/>
 	<succeed>
 			*test1/raw/good/2025-09-24*done*
 			*test1/image/os-pc-2025-09-24*done*
@@ -119,7 +119,7 @@
 			<binary name="sequence"/>
 			<config>
 				<start name="dummy" caps="100">
-					<config> <sleep ms="12000"/> <exit/> </config>
+					<config> <sleep ms="18000"/> <exit/> </config>
 				</start>
 				<start name="fs_query" caps="120" ram="2M">
 					<config>
