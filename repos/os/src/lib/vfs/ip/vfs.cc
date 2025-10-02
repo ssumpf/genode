@@ -563,9 +563,7 @@ class Vfs_ip::Ip_bind_file final : public Vfs_ip::Ip_file
 			if (!handle.write_content_line(src)) return -1;
 
 			long port = get_port(handle.content_buffer);
-			if (port == -1)  {
-				return -1;
-			}
+			if (port == -1) return -1;
 
 			/* port is free, try to bind it */
 			genode_sockaddr addr;
