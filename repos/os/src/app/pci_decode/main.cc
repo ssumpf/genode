@@ -638,7 +638,7 @@ void Main::parse_intel_opregion(Generator &g, Bdf const bdf,
 	if (!phys_asls)
 		return;
 
-	addr_t asls_size = 2 * 4096 /* OPREGION_SIZE */;
+	size_t asls_size = 2 * 4096 /* OPREGION_SIZE */;
 
 	try {
 		Attached_io_mem_dataspace map_asls(env, phys_asls, asls_size);
@@ -659,7 +659,7 @@ void Main::parse_intel_opregion(Generator &g, Bdf const bdf,
 			    opregion.read<Opregion::Minor>() >= 1) {
 
 				if (rvda > asls_size)
-					asls_size += rvda - asls_size;
+					asls_size += size_t(rvda - asls_size);
 				asls_size += opregion.read<Opregion::Asle_rvds>();
 			} else {
 				warning("rvda/rvds unsupported case");
