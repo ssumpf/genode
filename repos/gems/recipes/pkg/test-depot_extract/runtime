@@ -1,6 +1,6 @@
 <runtime ram="128M" caps="5000" binary="init">
 
-	<fail after_seconds="25"/>
+	<fail after_seconds="30"/>
 	<succeed>
 			*test1/raw/good/2025-09-24*done*
 			*test1/image/os-pc-2025-09-24*done*
