@@ -152,13 +152,13 @@ Bootstrap::Platform::Cpu_id Bootstrap::Platform::enable_mmu()
 	case Cpu::Current_el::EL3:
 		{
 			prepare_and_leave_el3();
-			::Board::Pic pic __attribute__((unused)) {};
 		}
 		[[fallthrough]];
 	case Cpu::Current_el::EL2:
 		prepare_and_leave_el2(ttbr, cpu_id);
 		[[fallthrough]];
 	case Cpu::Current_el::EL1:
+		{ ::Board::Pic pic __attribute__((unused)) {}; }
 		break;
 	case Cpu::Current_el::EL0:
 		Genode::error("cannot enable MMU in EL0");
