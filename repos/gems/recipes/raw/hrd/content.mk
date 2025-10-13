@@ -5,5 +5,5 @@ hrd.tar:
 	mkdir -p bin
 	sed "1s/usr.//" $(GENODE_DIR)/tool/hrd > bin/hrd
 	chmod 755 bin/hrd
-	tar cf $@ --mtime='2025-09-29 00:00Z' bin
+	tar --owner=0 --group=0 --numeric-owner --mode='go=' --mtime='2025-09-29 00:00Z' -cf $@ bin
 	rm -rf bin
