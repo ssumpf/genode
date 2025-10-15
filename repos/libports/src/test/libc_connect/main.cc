@@ -182,6 +182,7 @@ static void test_nonblocking_connect_connected()
 
 	char c;
 	res = recv(s, &c, 1, MSG_PEEK);
+printf("XXX test_nonblocking_connect_connected(): recv(): res: %d, errno: %d\n", res, errno);
 	if (!((res == -1) && (errno == EAGAIN))) DIE();
 
 	/* keep the netty server alive */
@@ -203,6 +204,7 @@ static void test_nonblocking_connect_connected()
 	/* test recv() with MSG_PEEK */
 
 	res = recv(s, &receive_buf, sizeof(receive_buf), MSG_PEEK);
+printf("XXX test_nonblocking_connect_connected(): recv(): res: %d, errno: %d\n", res, errno);
 	if (!((res == sizeof(receive_buf)) && (receive_buf == send_buf))) DIE();
 
 	receive_buf = 0;
@@ -250,14 +252,17 @@ static void test_nonblocking_connect_connection_refused()
 	socklen_t opt_len = sizeof(so_error);
 
 	res = getsockopt(s, SOL_SOCKET, SO_ERROR, &so_error, &opt_len);
+printf("XXX test_nonblocking_connect_connection_refused(): getsockopt(): res: %d, so_error: %d\n", res, so_error);
 
 	if (!((res == 0) && (so_error == ECONNREFUSED))) DIE();
 
 	res = getsockopt(s, SOL_SOCKET, SO_ERROR, &so_error, &opt_len);
+printf("XXX test_nonblocking_connect_connection_refused(): getsockopt(): res: %d, so_error: %d\n", res, so_error);
 
 	if (!((res == 0) && (so_error == 0))) DIE();
 
 	res = connect(s, paddr, sizeof(addr));
+printf("XXX test_nonblocking_connect_connection_refused(): connect(): res: %d, errno: %d\n", res, errno);
 
 	/*
 	 * FreeBSD: res = -1, errno = ECONNREFUSED
@@ -278,6 +283,7 @@ static void test_nonblocking_connect_connection_refused()
 
 	char c;
 	res = recv(s, &c, 1, MSG_PEEK);
+printf("XXX test_nonblocking_connect_connection_refused(): recv(): res: %d, errno: %d\n", res, errno);
 	if (!((res == 0) ||
 	      ((res == -1) && (errno == ENOTCONN)))) DIE();
 
