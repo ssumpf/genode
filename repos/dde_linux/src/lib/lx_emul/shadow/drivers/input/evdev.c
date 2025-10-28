@@ -94,7 +94,7 @@ enum evdev_motion {
 	MOTION_TOUCHSCREEN, /* absolute motion */
 };
 
-enum evdev_motion evdev_motion(struct input_dev const *dev)
+static enum evdev_motion evdev_motion(struct input_dev const *dev)
 {
 	if (is_rel_dev(dev))
 		return MOTION_MOUSE;
@@ -738,6 +738,8 @@ static void init_motion(struct evdev *evdev)
 }
 
 
+unsigned evdev_count;
+
 static int evdev_connect(struct input_handler *handler, struct input_dev *dev,
                          const struct input_device_id *id)
 {
@@ -778,6 +780,7 @@ static int evdev_connect(struct input_handler *handler, struct input_dev *dev,
 	       dev->mt ? "MULTITOUCH " : "",
 	       evdev->motion != MOTION_NONE ? NAME_OF_MOTION(evdev->motion) : "");
 
+	evdev_count++;
 	return 0;
 
 err_unregister_handle:
@@ -794,6 +797,7 @@ static void evdev_disconnect(struct input_handle *handle)
 {
 	struct evdev *evdev = handle->private;
 
+	evdev_count--;
 	printk("Disconnected device: %s\n", dev_name(&handle->dev->dev));
 
 	input_close_device(handle);
