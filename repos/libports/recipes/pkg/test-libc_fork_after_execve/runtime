@@ -1,0 +1,44 @@
+<runtime ram="32M" caps="2000" binary="init">
+
+	<requires> <timer/> </requires>
+
+	<fail after_seconds="90"/>
+	<succeed>child "test-fork_after_execve" exited with exit value 0</succeed>
+
+	<content>
+		<rom label="ld.lib.so"/>
+		<rom label="libc.lib.so"/>
+		<rom label="libm.lib.so"/>
+		<rom label="posix.lib.so"/>
+		<rom label="vfs.lib.so"/>
+		<rom label="vfs"/>
+		<rom label="test-fork_after_execve"/>
+		<rom label="test_shared.lib.so"/>
+	</content>
+
+	<config verbose="yes">
+		<parent-provides>
+			<service name="ROM"/>
+			<service name="LOG"/>
+			<service name="CPU"/>
+			<service name="PD"/>
+		</parent-provides>
+		<start name="test-fork_after_execve" caps="1500" ram="10M">
+			<config ld_verbose="yes">
+				<arg value="test-fork_after_execve"/>
+				<arg value="0"/>
+				<libc stdin="/null" stdout="/log" stderr="/log"/>
+				<vfs>
+					<null/> <log/>
+					<rom name="test-fork_after_execve"/>
+				</vfs>
+			</config>
+			<route>
+				<service name="ROM" label="/test-fork_after_execve">
+					<parent label="test-fork_after_execve"/> </service>
+				<any-service> <parent/> </any-service>
+			</route>
+		</start>
+	</config>
+
+</runtime>
