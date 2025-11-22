@@ -27,8 +27,8 @@ int main(int argc, char **argv)
 
 		printf("initial instance\n");
 
-		char argv0[20];
-		char argv1[20];
+		char argv0[25];
+		char argv1[25];
 
 		snprintf(argv0, sizeof(argv0), "test-fork_after_execve");
 		snprintf(argv1, sizeof(argv1), "%d", version + 1);
