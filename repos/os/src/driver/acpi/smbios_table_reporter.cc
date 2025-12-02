@@ -24,7 +24,7 @@
 using namespace Genode;
 
 static constexpr uint8_t PAGE_SIZE_LOG2 = AT_PAGE.log2;
-static constexpr size_t  PAGE_SIZE      = return 1 << PAGE_SIZE_LOG2;
+static constexpr size_t  PAGE_SIZE      = 1u << PAGE_SIZE_LOG2;
 
 
 Smbios_table_reporter::Smbios_table_reporter(Env       &env,
