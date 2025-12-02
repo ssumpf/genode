@@ -35,12 +35,10 @@ namespace Genode {
 	 * Alignment to the power of two
 	 */
 	template <typename T>
-	static constexpr T _align_mask(Align align) {
-		return ~(((T)1 << align.log2) - (T)1); }
+	static constexpr T _align_mask(Align a)   { return ~T((T(1) << a.log2) - 1u); }
 
 	template <typename T>
-	static constexpr T _align_offset(Align align) {
-		return   ((T)1 << align.log2) - (T)1;  }
+	static constexpr T _align_offset(Align a) { return  T((T(1) << a.log2) - 1u); }
 
 	template <typename T>
 	static constexpr T align_addr(T addr, Align align) {
