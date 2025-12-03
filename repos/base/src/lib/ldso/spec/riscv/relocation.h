@@ -89,8 +89,7 @@ class Linker::Reloc_non_plt : public Reloc_non_plt_generic
 				if (verbose_reloc(_dep))
 					log("LD: reloc: ", rel, " type: ", (int)rel->type());
 
-				try {
-					switch(rel->type()) {
+				switch(rel->type()) {
 					case R_64:       _glob_dat_64(rel, addr, true);  break;
 					case R_RELATIVE: _relative(rel, addr);           break;
 					case R_JMPSLOT:                                  break;
@@ -101,10 +100,6 @@ class Linker::Reloc_non_plt : public Reloc_non_plt_generic
 							throw Incompatible();
 						}
 						break;
-					}
-				} catch (Linker::Not_found &symbol) {
-					warning("LD: Reloc_non_plt(", _dep.obj().name(),
-					        "): symbol not found: '", symbol, "'");
 				}
 			}
 		}
