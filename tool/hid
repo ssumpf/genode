@@ -778,7 +778,7 @@ proc _hid_from_xml_rec { text info_var } {
 			if {[string length $trimmed] > 0} {
 				foreach line [split $child_text "\n"] {
 					set decoded [string trim [_xml_decoded $line]]
-					lappend result [list ":" 1 "" "" "" "" "" $decoded] } }
+					lappend result [list ":" 1 "" "" "" "" "" "" $decoded] } }
 		}
 
 		if {$child_type == "compound"} {
@@ -823,7 +823,7 @@ proc _hid_from_xml_rec { text info_var } {
 					lappend hid_attrs [list 0 "" $tag "" $value] }
 			}
 
-			lappend result [list $hid_type 1 "" "+ " "" $hid_attrs $hid_children ""]
+			lappend result [list $hid_type "" 1 "" "+ " "" $hid_attrs $hid_children ""]
 		}
 	}
 
