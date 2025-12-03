@@ -678,6 +678,8 @@ set default_test_pkgs {
 	test-libc_getenv
 	test-libc_kqueue
 	test-libc_pipe
+	test-libc_udp_unreachable_lwip
+	test-libc_udp_unreachable_lxip
 	test-libc_vfs
 	test-libc_vfs_audit
 	test-libc_vfs_block
