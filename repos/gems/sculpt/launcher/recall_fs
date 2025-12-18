@@ -1,5 +1,9 @@
 <launcher priority="-3" pkg="recall_fs">
+	<config>
+		<default-policy path_prefix="/recall" client_identity="no" writeable="yes"/>
+	</config>
 	<route>
+		<service name="ROM" label_last="chroot"> <parent/> </service>
 		<service name="File_system"> <child name="default_fs_rw"/> </service>
 	</route>
 </launcher>
