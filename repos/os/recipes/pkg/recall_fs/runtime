@@ -2,7 +2,7 @@ runtime ram: 2M | caps: 150 | binary: chroot
 + requires | + file_system
 + provides | + file_system
 + config
-  + default-policy path_prefix: /recall | writeable: yes
+  + default-policy path_prefix: /recall | client_identity: no | writeable: yes
 + content
   + rom label: ld.lib.so
   + rom label: chroot
