@@ -258,7 +258,7 @@ struct Vfs_ip::Socket_dir : Vfs_ip::Directory
 	virtual genode_sockaddr &remote_addr() = 0;
 	virtual void     close() override = 0;
 	virtual bool     closed() const = 0;
-	virtual Errno    error(Errno const err) = 0;
+	virtual Errno    socket_error(Errno const err) = 0;
 
 	Socket_dir(char const *name) : Vfs_ip::Directory(name) { }
 };
@@ -414,7 +414,7 @@ class Vfs_ip::Ip_file : public Vfs_ip::File
 
 		Errno _write_err = GENODE_ENONE;
 
-		Errno error(Errno const err) { return _parent.error(err); }
+		Errno socket_error(Errno const err) { return _parent.socket_error(err); }
 
 	public:
 
@@ -478,8 +478,8 @@ class Vfs_ip::Ip_data_file final : public Vfs_ip::Ip_file
 			if (_parent.parent().type() == Protocol_dir::TYPE_DGRAM)
 				msg_send.name(_parent.remote_addr());
 
-			_write_err = error(genode_socket_sendmsg(&_sock, msg_send.header(),
-			                                         &bytes_sent));
+			_write_err = socket_error(genode_socket_sendmsg(&_sock, msg_send.header(),
+			                                                &bytes_sent));
 
 			/* propagate EAGAIN */
 			if (_write_err == GENODE_EAGAIN)
@@ -495,7 +495,8 @@ class Vfs_ip::Ip_data_file final : public Vfs_ip::Ip_file
 			unsigned long bytes = 0;
 			Msg_header    msg_recv { dst.start, dst.num_bytes };
 
-			Errno err = error(genode_socket_recvmsg(&_sock, msg_recv.header(), &bytes, false));
+			Errno err = socket_error(genode_socket_recvmsg(&_sock, msg_recv.header(),
+			                                               &bytes, false));
 			if (err == GENODE_EAGAIN)
 				throw Would_block();
 
@@ -532,8 +533,8 @@ class Vfs_ip::Ip_peek_file final : public Vfs_ip::Ip_file
 			unsigned long bytes_avail = 0;
 			Msg_header    msg_recv { dst.start, dst.num_bytes };
 
-			Errno err = error(genode_socket_recvmsg(&_sock, msg_recv.header(),
-			                                        &bytes_avail, true));
+			Errno err = socket_error(genode_socket_recvmsg(&_sock, msg_recv.header(),
+			                                               &bytes_avail, true));
 
 			if (err == GENODE_EAGAIN)
 				return -1;
@@ -569,7 +570,7 @@ class Vfs_ip::Ip_bind_file final : public Vfs_ip::Ip_file
 			addr.in.port = host_to_big_endian<genode_uint16_t>(uint16_t(port));
 			addr.in.addr = get_addr(handle.content_buffer);
 
-			_write_err = error(genode_socket_bind(&_sock, &addr));
+			_write_err = socket_error(genode_socket_bind(&_sock, &addr));
 			if (_write_err != GENODE_ENONE) return -1;
 
 			return src.num_bytes;
@@ -619,7 +620,7 @@ class Vfs_ip::Ip_listen_file final : public Vfs_ip::Ip_file
 
 			if (_backlog == ~0UL) return -1;
 
-			_write_err = error(genode_socket_listen(&_sock, (int)_backlog));
+			_write_err = socket_error(genode_socket_listen(&_sock, (int)_backlog));
 			if (_write_err != GENODE_ENONE) {
 				handle.write_content_line(Const_byte_range_ptr("", 0));
 				return -1;
@@ -681,7 +682,7 @@ class Vfs_ip::Ip_connect_file final : public Vfs_ip::Ip_file
 			addr.in.port = host_to_big_endian<genode_uint16_t>(uint16_t(port));
 			addr.in.addr = get_addr(handle.content_buffer);
 
-			_write_err = error(genode_socket_connect(&_sock, &addr));
+			_write_err = socket_error(genode_socket_connect(&_sock, &addr));
 
 			switch (_write_err) {
 			case GENODE_EINPROGRESS:
@@ -910,7 +911,7 @@ class Vfs_ip::Ip_error_file : public Vfs_ip::File
 		                 Allocator &alloc) {
 			return _error_fs.open(path, 0, out_handle, alloc); }
 
-		Errno error(Errno const err) { return _error_fs.error(err); }
+		Errno socket_error(Errno const err) { return _error_fs.socket_error(err); }
 };
 
 
@@ -1091,7 +1092,7 @@ class Vfs_ip::Ip_socket_dir final : public Socket_dir
 			}
 
 			/* error file */
-			if (Genode::strcmp(path, _error_fs.name()) == 0) {
+			if (strcmp(path, _error_fs.name()) == 0) {
 				/* add leading slash back to path */
 				Open_result res = _error_fs.open(path - 1, out_handle, alloc);
 				if (res == Open_result::OPEN_OK) return res;
@@ -1119,9 +1120,9 @@ class Vfs_ip::Ip_socket_dir final : public Socket_dir
 		bool closed() const override { return _closed; }
 
 
-		Errno error(Errno const err) override
+		Errno socket_error(Errno const err) override
 		{
-			return _error_fs.error(err);
+			return _error_fs.socket_error(err);
 		}
 
 		/*************************
@@ -1134,7 +1135,7 @@ class Vfs_ip::Ip_socket_dir final : public Socket_dir
 				if (n && strcmp(n->name(), name) == 0)
 					return n;
 
-			if (Genode::strcmp(_error_fs.name(), name) == 0)
+			if (strcmp(_error_fs.name(), name) == 0)
 				return &_error_fs;
 
 			/* check sockopts */
@@ -1228,7 +1229,7 @@ Vfs_ip::Ip_socket_dir::_accept_new_socket(File_system &fs,
 	Errno err;
 	genode_socket_handle *new_sock = genode_socket_accept(&_sock, nullptr, &err);
 	if (err != GENODE_ENONE) {
-		Genode::error("accept socket failed");
+		error("accept socket failed");
 		return res;
 	}
 

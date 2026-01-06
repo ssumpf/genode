@@ -17,22 +17,22 @@
 #ifndef _SOCKET_ERROR_
 #define _SOCKET_ERROR_
 
+#include <genode_c_api/socket.h>
 #include <vfs/single_file_system.h>
 
+
 namespace Vfs_ip {
+	using namespace Genode;
+	using namespace Genode::Vfs;
+
 	class Error_file_system;
 }
 
-class Vfs_ip::Error_file_system : public Vfs::Single_file_system
+class Vfs_ip::Error_file_system : public Single_file_system
 {
 	private:
 
-		using Allocator            = Genode::Allocator;
-		using Config               = Genode::String<64>;
-		using Byte_range_ptr       = Genode::Byte_range_ptr;
-		using Const_byte_range_ptr = Genode::Const_byte_range_ptr;
-
-		using size_t = Genode::size_t;
+		using Config = String<64>;
 
 		static constexpr unsigned BUF_SIZE = 64;
 
@@ -52,8 +52,8 @@ class Vfs_ip::Error_file_system : public Vfs::Single_file_system
 
 			Read_result read(Byte_range_ptr const &dst, size_t &out_count) override
 			{
-				unsigned len = Genode::min(fs.BUF_SIZE, unsigned(dst.num_bytes));
-				Genode::memcpy(dst.start, &fs._error, len);
+				unsigned len = min(fs.BUF_SIZE, unsigned(dst.num_bytes));
+				memcpy(dst.start, &fs._error, len);
 				out_count = len;
 
 				return READ_OK;
@@ -74,35 +74,35 @@ class Vfs_ip::Error_file_system : public Vfs::Single_file_system
 		Config _config() const
 		{
 			char buf[Config::capacity()] { };
-			Genode::Generator::generate({ buf, sizeof(buf) }, type_name(),
-				[] (Genode::Generator &) { }
-			).with_error([&] (Genode::Buffer_error) {
-				Genode::warning("VFS value fs config failed (", type_name(), ")");
+			Generator::generate({ buf, sizeof(buf) }, type_name(),
+				[] (Generator &) { }
+			).with_error([&] (Buffer_error) {
+				warning("VFS value fs config failed (", type_name(), ")");
 			});
-			return Config(Genode::Cstring(buf));
+			return Config(Cstring(buf));
 		}
 
 	public:
 
 		Error_file_system()
 		:
-			Single_file_system(Vfs::Node_type::TRANSACTIONAL_FILE, type(),
-			                   Vfs::Node_rwx::rw(), Vfs::Node(_config()))
+			Single_file_system(Node_type::TRANSACTIONAL_FILE, type(),
+			                   Node_rwx::rw(), Node(_config()))
 		{ }
 
-		Errno error(Errno const err)
+		Errno socket_error(Errno const err)
 		{
 			if (err == _err) return err;
 
 			_err = err;
 
-			Genode::Generator::generate({ _error, sizeof(_error) }, type_name(),
-				[&] (Genode::Generator &g) {
+			Generator::generate({ _error, sizeof(_error) }, type_name(),
+				[&] (Generator &g) {
 					g.attribute("name", _err_string(err));
 					g.attribute("value", unsigned(err));
 				}
-			).with_error([&] (Genode::Buffer_error) {
-				Genode::warning("Error fs failed (", type_name(), ")");
+			).with_error([&] (Buffer_error) {
+				warning("Error fs failed (", type_name(), ")");
 			});
 
 			return err;
@@ -112,9 +112,9 @@ class Vfs_ip::Error_file_system : public Vfs::Single_file_system
 
 		char const *type() override { return type_name(); }
 
-		bool matches(Vfs::Node const &) const
+		bool matches(Node const &) const
 		{
-			Genode::error("Error_file_system::matches");
+			error("Error_file_system::matches");
 			return false;
 		}
 
@@ -147,8 +147,8 @@ class Vfs_ip::Error_file_system : public Vfs::Single_file_system
 				*out_handle = new (alloc) Vfs_handle(*this, alloc);
 				return OPEN_OK;
 			}
-			catch (Genode::Out_of_ram)  { Genode::error("out of ram"); return OPEN_ERR_OUT_OF_RAM; }
-			catch (Genode::Out_of_caps) { Genode::error("out of caps");return OPEN_ERR_OUT_OF_CAPS; }
+			catch (Out_of_ram)  { error("out of ram"); return OPEN_ERR_OUT_OF_RAM; }
+			catch (Out_of_caps) { error("out of caps");return OPEN_ERR_OUT_OF_CAPS; }
 		}
 
 		Stat_result stat(char const *path, Stat &out) override
@@ -237,7 +237,7 @@ class Vfs_ip::Error_file_system : public Vfs::Single_file_system
 			char const *string = table[err];
 
 			if (string == nullptr)
-				Genode::warning(__func__ , ": Errno: ", unsigned(err), " is not initialized");
+				warning(__func__ , ": Errno: ", unsigned(err), " is not initialized");
 
 			return string;
 		}
