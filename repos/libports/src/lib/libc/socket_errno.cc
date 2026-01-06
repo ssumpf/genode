@@ -1,5 +1,5 @@
 /*
- * \brief  Convert Genode errno to libc errno
+ * \brief  Convert Genode's socket errno to libc errno
  * \author Sebastian Sumpf
  * \date   2025-12-03
  */
@@ -15,9 +15,9 @@
 
 #include <errno.h>
 
-#include <internal/libc_errno.h>
+#include <internal/socket_errno.h>
 
-int Libc::libc_errno(int genode_errno)
+int Libc::socket_errno(int genode_errno)
 {
 	/* -1 means "value not present" in our libc */
 	static int table[GENODE_MAX_ERRNO] = {

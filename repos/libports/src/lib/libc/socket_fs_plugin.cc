@@ -42,7 +42,7 @@
 #include <internal/file.h>
 #include <internal/errno.h>
 #include <internal/init.h>
-#include <internal/libc_errno.h>
+#include <internal/socket_errno.h>
 #include <internal/pthread.h>
 
 
@@ -398,7 +398,7 @@ struct Libc::Socket_fs::Context : Plugin_context
 			Node node { Const_byte_range_ptr { buf, size_t(bytes) } };
 			int genode_errno = node.attribute_value("value", -1);
 
-			errno = libc_errno(genode_errno);
+			errno = socket_errno(genode_errno);
 		}
 };
 
