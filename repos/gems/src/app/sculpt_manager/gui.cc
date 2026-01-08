@@ -93,7 +93,7 @@ struct Gui::Session_component : Rpc_object<Gui::Session>,
 			if (click(ev)) _clicked = true;
 			if (clack(ev)) _clicked = false;
 
-			bool const new_seq = (!orig_clicked && _clicked);
+			bool const new_seq = (orig_clicked != _clicked);
 
 			if (new_seq)
 				_global_input_seq_number.value++;

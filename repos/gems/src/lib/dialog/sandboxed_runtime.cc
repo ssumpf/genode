@@ -96,7 +96,7 @@ struct Sandboxed_runtime::Gui_session : Session_object<Gui::Session>
 			if (click(ev)) _clicked = true;
 			if (clack(ev)) _clicked = false;
 
-			bool const new_seq = (!orig_clicked && _clicked);
+			bool const new_seq = (orig_clicked != _clicked);
 			if (new_seq)
 				_view._runtime._global_seq_number.value++;
 
