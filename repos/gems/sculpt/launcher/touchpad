@@ -1,7 +1,7 @@
 <launcher pkg="pc_i2c_hid" priority="-2">
-	<config info="Fujtisu U7411 (SYNAPTICS)"/>
-	<!--
 	<config gpio_pin="266" bus_addr="21" hid_addr="1"  info="Fujtisu U7511 (ELAN)"/>
+	<!--
+	<config info="Fujtisu U7411 (SYNAPTICS)"/>
 	<config gpio_pin="174" bus_addr="44" hid_addr="32" info="Fujtisu U7412 (SYNAPTICS)"/>
 	<config gpio_pin="174" bus_addr="44" hid_addr="32" info="Fujtisu U7413 (SYNAPTICS)"/>
 	<config gpio_pin="3"   bus_addr="44" hid_addr="32" info="Framework Gen12/Gen13"/>
