@@ -18,3 +18,4 @@ log_level.patch
 vmdk.patch
 setjmp.patch
 display.patch
+gcc14.patch
