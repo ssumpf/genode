@@ -27,6 +27,8 @@ HRESULT ClientNvramStore::FinalConstruct() STOP
 HRESULT ClientNvramStore::init(Console *, const com::Utf8Str &) STOP
 void ClientNvramStore::uninit() STOP;
 
+com::Utf8Str ClientNvramStore::i_getNonVolatileStorageFile() STOP
+
 HRESULT ClientNvramStore::initUefiVariableStore(ULONG) STOP
 HRESULT ClientNvramStore::getNonVolatileStorageFile(com::Utf8Str &) STOP
 HRESULT ClientNvramStore::getUefiVariableStore(ComPtr<IUefiVariableStore> &) STOP
