@@ -17,3 +17,4 @@ mousebuttons.patch
 log_level.patch
 vmdk.patch
 setjmp.patch
+display.patch
