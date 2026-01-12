@@ -484,7 +484,7 @@ Main::Monitor::Fb::Fb(Env &env, Gui::Connection &gui,
                       ComPtr<IDisplay> const &display, unsigned id,
                       Gui::Top_level_view &view)
 :
-	id(id), display(display), fb(new Genodefb(env, gui, display, id, view))
+	id(id), display(display), fb(new Genodefb(env, &gui, display, id, &view))
 {
 	display->AttachFramebuffer(id, fb, guid.asOutParam());
 }
@@ -541,6 +541,11 @@ Main::Monitor::Monitor(Registry<Monitor> &registry, Env &env,
 
 Main::Monitor::~Monitor()
 {
+	synchronize([&]() {
+		if (fb.constructed() && !fb->fb.isNull())
+			fb->fb->invalidate_gui();
+	});
+
 	display->SetVideoModeHint(id, false, false, 0, 0, 0, 0, 0, true);
 }
 
