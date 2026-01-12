@@ -491,6 +491,9 @@ Main::Monitor::Fb::Fb(Env &env, Gui::Connection &gui,
 Main::Monitor::Fb::~Fb()
 {
 	display->DetachFramebuffer(id, guid.raw());
+
+	if (!fb.isNull())
+		fb->invalidate_gui();
 }
 
 
