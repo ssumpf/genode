@@ -6,7 +6,7 @@
                      sampler_idx = dst_param.reg.idx;
 -                    AssertReturn(sampler_idx < RT_ELEMENTS(reg_maps->sampler_type), E_INVALIDARG);
 +                    /* triggers in native VirtualBox6 as well */
-+                    //AssertReturn(sampler_idx < RT_ELEMENTS(reg_maps->sampler_type), E_INVALIDARG);
++                    if (!(sampler_idx < RT_ELEMENTS(reg_maps->sampler_type))) return E_INVALIDARG;
  
                      TRACE("Setting fake 2D sampler for 1.x pixelshader.\n");
                      reg_maps->sampler_type[sampler_idx] = WINED3DSTT_2D;
