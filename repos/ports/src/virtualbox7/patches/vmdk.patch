@@ -1,11 +1,11 @@
 diff --git src/virtualbox7/src/VBox/Storage/VMDK.cpp src/virtualbox7/src/VBox/Storage/VMDK.cpp
-index d62e3757..9c6efbdd 100644
+index e8a41921..ebeb7a41 100644
 --- src/virtualbox7/src/VBox/Storage/VMDK.cpp
 +++ src/virtualbox7/src/VBox/Storage/VMDK.cpp
-@@ -48,6 +48,17 @@
- #include <iprt/string.h>
+@@ -49,6 +49,17 @@
  #include <iprt/zip.h>
  #include <iprt/asm.h>
+ #include <iprt/zero.h>
 +
 +#ifdef __GENODE__
 +/*

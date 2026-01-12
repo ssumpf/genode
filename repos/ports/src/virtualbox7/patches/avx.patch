@@ -1,6 +1,6 @@
---- src/virtualbox7/src/VBox/VMM/VMMR3/CPUMR3CpuId.cpp
-+++ src/virtualbox7/src/VBox/VMM/VMMR3/CPUMR3CpuId.cpp
-@@ -992,6 +992,8 @@ static int cpumR3CpuIdInstallAndExplodeLeaves(PVM pVM, PCPUM pCpum, PCPUMCPUIDLE
+--- src/virtualbox7/src/VBox/VMM/VMMR3/target-x86/CPUMR3CpuId-x86.cpp
++++ src/virtualbox7/src/VBox/VMM/VMMR3/target-x86/CPUMR3CpuId-x86.cpp
+@@ -967,6 +967,8 @@ static int cpumR3CpuIdInstallAndExplodeLeaves(PVM pVM, PCPUM pCpum, PCPUMCPUIDLE
                                     pCpum->GuestFeatures.cbMaxExtendedState),
                                    VERR_CPUM_IPE_1);
              pVCpu0->cpum.s.Guest.aoffXState[iComponent] = pSubLeaf->uEbx;
@@ -9,7 +9,7 @@
          }
  
      /* Copy the CPU #0  data to the other CPUs. */
-@@ -2144,6 +2146,8 @@ static int cpumR3CpuIdSanitize(PVM pVM, PCPUM pCpum, PCPUMCPUIDCONFIG pConfig)
+@@ -2125,6 +2127,8 @@ static int cpumR3CpuIdSanitize(PVM pVM, PCPUM pCpum, PCPUMCPUIDCONFIG pConfig)
                                                VERR_CPUM_IPE_2);
                          continue;
                      case 1:
@@ -18,15 +18,15 @@
                          pCurLeaf->uEax &= 0;
                          pCurLeaf->uEcx &= 0;
                          pCurLeaf->uEdx &= 0;
-@@ -3019,6 +3023,7 @@ static int cpumR3CpuIdReadConfig(PVM pVM, PCPUMCPUIDCONFIG pConfig, PCFGMNODE pC
+@@ -3004,6 +3008,7 @@ static int cpumR3CpuIdReadConfig(PVM pVM, PCPUMCPUIDCONFIG pConfig, PCFGMNODE pC
      rc = cpumR3CpuIdReadIsaExtCfgLegacy(pVM, pIsaExts, pCpumCfg, "SSE4.2", &pConfig->enmSse42, true);
      AssertLogRelRCReturn(rc, rc);
  
 +    bool const fEnforceHWusage = true;
-     bool const fMayHaveXSave = pVM->cpum.s.HostFeatures.fXSaveRstor
-                             && pVM->cpum.s.HostFeatures.fOpSysXSaveRstor
-                             && (  VM_IS_NEM_ENABLED(pVM)
-@@ -3043,7 +3048,7 @@ static int cpumR3CpuIdReadConfig(PVM pVM, PCPUMCPUIDCONFIG pConfig, PCFGMNODE pC
+ #ifdef RT_ARCH_AMD64
+     bool const fMayHaveXSave = pVM->cpum.s.HostFeatures.s.fXSaveRstor
+                             && pVM->cpum.s.HostFeatures.s.fOpSysXSaveRstor
+@@ -3033,7 +3038,7 @@ static int cpumR3CpuIdReadConfig(PVM pVM, PCPUMCPUIDCONFIG pConfig, PCFGMNODE pC
       * XSAVE is exposed too.  For the time being the default is to only expose this
       * to VMs with nested paging and AMD-V or unrestricted guest execution mode.
       */
@@ -35,7 +35,7 @@
                                      fMayHaveXSave && pConfig->enmXSave && (fXStateHostMask & XSAVE_C_YMM)  /*fAllowed*/);
      AssertLogRelRCReturn(rc, rc);
  
-@@ -3052,7 +3057,7 @@ static int cpumR3CpuIdReadConfig(PVM pVM, PCPUMCPUIDCONFIG pConfig, PCFGMNODE pC
+@@ -3042,7 +3047,7 @@ static int cpumR3CpuIdReadConfig(PVM pVM, PCPUMCPUIDCONFIG pConfig, PCFGMNODE pC
       * XSAVE is exposed too. For the time being the default is to only expose this
       * to VMs with nested paging and AMD-V or unrestricted guest execution mode.
       */
@@ -44,7 +44,7 @@
                                      fMayHaveXSave && pConfig->enmXSave && (fXStateHostMask & XSAVE_C_YMM) /*fAllowed*/);
      AssertLogRelRCReturn(rc, rc);
  
-@@ -3061,7 +3066,7 @@ static int cpumR3CpuIdReadConfig(PVM pVM, PCPUMCPUIDCONFIG pConfig, PCFGMNODE pC
+@@ -3051,7 +3056,7 @@ static int cpumR3CpuIdReadConfig(PVM pVM, PCPUMCPUIDCONFIG pConfig, PCFGMNODE pC
       * default is to only do this for VMs with nested paging and AMD-V or
       * unrestricted guest mode.
       */
@@ -53,7 +53,7 @@
      AssertLogRelRCReturn(rc, rc);
  
      /** @cfgm{/CPUM/IsaExts/PCLMUL, isaextcfg, depends}
-@@ -3209,7 +3214,7 @@ static int cpumR3CpuIdReadConfig(PVM pVM, PCPUMCPUIDCONFIG pConfig, PCFGMNODE pC
+@@ -3199,7 +3204,7 @@ static int cpumR3CpuIdReadConfig(PVM pVM, PCPUMCPUIDCONFIG pConfig, PCFGMNODE pC
       * being the default is to only do this for VMs with nested paging and AMD-V or
       * unrestricted guest mode.
       */
