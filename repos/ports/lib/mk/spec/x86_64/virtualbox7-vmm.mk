@@ -90,18 +90,19 @@ SRC_CC += VMM/VMMAll/SELMAll.cpp
 SRC_CC += VMM/VMMR3/VMMGuruMeditation.cpp
 
 SRC_CC += VMM/VMMAll/IEMAll.cpp
-SRC_S  += VMM/VMMAll/IEMAllAImpl.asm
-SRC_CC += VMM/VMMAll/IEMAllAImplC.cpp
-SRC_CC += VMM/VMMAll/IEMAllCImpl.cpp
-SRC_CC += VMM/VMMAll/IEMAllDbg.cpp
-SRC_CC += VMM/VMMAll/IEMAllCImplSvmInstr.cpp
-SRC_CC += VMM/VMMAll/IEMAllCImplVmxInstr.cpp
 SRC_CC += VMM/VMMR3/IEMR3.cpp
 
-SRC_CC += VMM/VMMAll/IEMAllIntprTables1.cpp
-SRC_CC += VMM/VMMAll/IEMAllIntprTables2.cpp
-SRC_CC += VMM/VMMAll/IEMAllIntprTables3.cpp
-SRC_CC += VMM/VMMAll/IEMAllIntprTables4.cpp
+SRC_S  += VMM/VMMAll/target-x86/IEMAllAImpl-x86-amd64.asm
+SRC_CC += VMM/VMMAll/target-x86/IEMAllAImplC-x86.cpp
+SRC_CC += VMM/VMMAll/target-x86/IEMAllCImpl-x86.cpp
+SRC_CC += VMM/VMMAll/target-x86/IEMAllCImplSvmInstr-x86.cpp
+SRC_CC += VMM/VMMAll/target-x86/IEMAllCImplVmxInstr-x86.cpp
+SRC_CC += VMM/VMMAll/target-x86/IEMAllDbg-x86.cpp
+
+SRC_CC += VMM/VMMAll/target-x86/IEMAllIntprTables1-x86.cpp
+SRC_CC += VMM/VMMAll/target-x86/IEMAllIntprTables2-x86.cpp
+SRC_CC += VMM/VMMAll/target-x86/IEMAllIntprTables3-x86.cpp
+SRC_CC += VMM/VMMAll/target-x86/IEMAllIntprTables4-x86.cpp
 
 SRC_CC += VMM/VMMAll/GIMAll.cpp
 SRC_CC += VMM/VMMAll/GIMAllHv.cpp
@@ -150,6 +151,7 @@ CC_OPT += -DKBUILD_TYPE=\"debug\" \
 # definitions needed by VMMAll.cpp
 CC_OPT += -DVBOX_SVN_REV=~0
 
+INC_DIR += $(VBOX_DIR)/VMM
 INC_DIR += $(VBOX_DIR)/VMM/include
 INC_DIR += $(VIRTUALBOX_DIR)/src/libs/softfloat-3e/source/include
 
