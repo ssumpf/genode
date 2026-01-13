@@ -72,7 +72,8 @@ VBOX_MAIN_SRV += USBControllerImpl USBDeviceFilterImpl USBDeviceFiltersImpl
 VBOX_MAIN_SRV += VRDEServerImpl TokenImpl SerialPortImpl
 VBOX_MAIN_SRV += generic/NetIf-generic os2/PerformanceOs2
 
-VBOX_MAIN_INC := AdditionsFacilityImpl AudioAdapterImpl AudioDriver AudioSettingsImpl AuthLibrary
+VBOX_MAIN_INC := AdditionsFacilityImpl
+VBOX_MAIN_INC += AudioAdapterImpl AudioDriver AudioSettingsImpl AuthLibrary AudioUtils
 VBOX_MAIN_INC += AutoCaller AutoStateDep AutostartDb BandwidthControlImpl BandwidthGroupImpl
 VBOX_MAIN_INC += BusAssignmentManager ClientToken ClientTokenHolder ClientWatcher
 VBOX_MAIN_INC += CloudProviderManagerImpl ConsoleImpl ConsoleSharedFolderImpl
@@ -96,7 +97,8 @@ VBOX_MAIN_INC += NvramStoreImpl
 VBOX_MAIN_INC += ObjectState PCIDeviceAttachmentImpl ParallelPortImpl Performance PerformanceImpl
 VBOX_MAIN_INC += PlatformBase PlatformImpl PlatformPropertiesImpl PlatformX86Impl
 VBOX_MAIN_INC += ProgressImpl ProgressProxyImpl QMTranslator RecordingScreenSettingsImpl
-VBOX_MAIN_INC += RecordingSettingsImpl RemoteUSBBackend RemoteUSBDeviceImpl SecretKeyStore
+VBOX_MAIN_INC += RecordingSettingsImpl RecordingContext RecordingUtils
+VBOX_MAIN_INC += RemoteUSBBackend RemoteUSBDeviceImpl SecretKeyStore
 VBOX_MAIN_INC += SerialPortImpl SessionImpl SharedFolderImpl SnapshotImpl StorageControllerImpl
 VBOX_MAIN_INC += SystemPropertiesImpl ThreadTask TokenImpl TrustedPlatformModuleImpl
 VBOX_MAIN_INC += UefiVariableStoreImpl UsbCardReader USBControllerImpl USBDeviceFilterImpl
@@ -104,6 +106,8 @@ VBOX_MAIN_INC += USBDeviceFiltersImpl USBDeviceImpl USBIdDatabase USBProxyBacken
 VBOX_MAIN_INC += UsbWebcamInterface VBoxNls VMMDev VRDEServerImpl VirtualBoxBase
 VBOX_MAIN_INC += VirtualBoxErrorInfoImpl VirtualBoxImpl VirtualBoxTranslator Wrapper netif
 VBOX_MAIN_INC += objectslist vector
+
+
 
 VBOX_DISASM := DisasmCore-x86-amd64 Disasm DisasmTablesX64 DisasmTables-x86-amd64
 VBOX_DISASM += DisasmFormatYasm DisasmFormatBytes DisasmMisc
