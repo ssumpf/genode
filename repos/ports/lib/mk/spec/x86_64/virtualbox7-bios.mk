@@ -7,7 +7,7 @@ endif
 SRC_O += VBoxPcBiosBinary8086.o  VBoxPcBiosBinary286.o  VBoxPcBiosBinary386.o
 SRC_O += VBoxVgaBiosBinary8086.o VBoxVgaBiosBinary286.o VBoxVgaBiosBinary386.o
 SRC_O += XVBoxBiosLogoBin.o
-SRC_O += VBoxEFI32.o VBoxEFI64.o
+SRC_O += VBoxEFI-x86.o VBoxEFI-amd64.o
 
 VBox%.o : VBox%.rom
 	$(MSG_CONVERT)$@
@@ -37,7 +37,7 @@ XVBoxBiosLogoBin.o: $(VBOX_DIR)/Devices/Graphics/BIOS/vbox_bios_splash.bmp
 	               "g_abVgaDefBiosLogoEnd:;" | \
 		$(AS) $(AS_OPT) -f -o $@ -
 
-VBoxEFI%.o: $(VBOX_DIR)/Devices/EFI/FirmwareBin/VBoxEFI%.fd
+VBoxEFI-%.o: $(VBOX_DIR)/Devices/EFI/FirmwareBin/VBoxEFI-%.fd
 	$(MSG_CONVERT)$@
 	$(VERBOSE)echo ".global g_abEfiFirmware$*, g_cbEfiFirmware$*;" \
 	               ".data;" \
