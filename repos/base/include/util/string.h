@@ -568,7 +568,7 @@ namespace Genode {
 		result = v;
 
 		/* if no fractional part exists, return current value */
-		if (i < s.num_bytes && s.start[i] != '.') {
+		if (!(i < s.num_bytes) || s.start[i] != '.') {
 			result = neg ? -v : v;
 			return i;
 		}
