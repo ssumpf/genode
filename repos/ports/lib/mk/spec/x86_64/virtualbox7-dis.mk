@@ -1,6 +1,7 @@
 include $(REP_DIR)/lib/mk/virtualbox7-common.inc
 
-SRC_CC += VMM/VMMR3/CPUMDbg.cpp
+SRC_CC += VMM/VMMR3/target-x86/CPUMR3Dbg-x86.cpp
+
 SRC_CC += VMM/VMMR3/DBGF.cpp
 SRC_CC += VMM/VMMR3/DBGFAddr.cpp
 SRC_CC += VMM/VMMR3/DBGFDisas.cpp

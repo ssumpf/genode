@@ -140,7 +140,7 @@ vbetables-gen: Devices/Graphics/BIOS/vbetables-gen.c
 	$(MSG_BUILD)$@
 	$(VERBOSE)gcc $(VBOX_CC_OPT) $(addprefix -I,$(INC_DIR)) -o $@ $^
 
-Devices/PC/ACPI/VBoxAcpi.o: vboxaml.hex vboxssdt_standard.hex vboxssdt_cpuhotplug.hex
+Devices/PC/ACPI/VBoxAcpi.o: vboxaml.hex
 
 vboxaml.hex: vbox.dsl
 	$(VERBOSE)( \
@@ -148,26 +148,6 @@ vboxaml.hex: vbox.dsl
 	 mv $@ $@.tmp && \
 	 sed "s/vboxaml_aml_code/AmlCode/g" <$@.tmp >$@ && \
 	 rm $@.tmp \
-	)
-
-vboxssdt_standard.hex: vbox-standard.dsl
-	$(VERBOSE)( \
-	 iasl -tc -vi -vr -vs -p $@ $^ && \
-	 mv $@ $@.tmp && \
-	 sed "s/AmlCode\|vboxssdt_standard_aml_code/AmlCodeSsdtStandard/g" <$@.tmp >$@.tmp2 && \
-	 sed "s/__VBOXSSDT-STANDARD_HEX__/__VBOXSSDT_STANDARD_HEX__/g" <$@.tmp2 >$@ && \
-	 rm $@.tmp $@.tmp2 \
-	)
-
-vboxssdt_cpuhotplug.hex: vbox-cpuhotplug.dsl
-	$(VERBOSE)( \
-	 gcc -E -P -x c -o $@.pre $< && \
-	 sed "s/<NL>/\n/g" <$@.pre >$@.pre1 && \
-	 iasl -tc -vi -vr -vs -p $@ $@.pre1 && \
-	 mv $@ $@.tmp && \
-	 sed "s/AmlCode\|vboxssdt_cpuhotplug_aml_code/AmlCodeSsdtCpuHotPlug/g" <$@.tmp >$@.tmp2 && \
-	 sed "s/__VBOXSSDT-CPUHOTPLUG_HEX__/__VBOXSSDT_CPUHOTPLUG_HEX__/g" <$@.tmp2 >$@ && \
-	 rm $@.tmp $@.tmp2 $@.pre $@.pre1 \
 	)
 
 vpath %.dsl $(VBOX_DIR)/Devices/PC
