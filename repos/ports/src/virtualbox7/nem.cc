@@ -26,7 +26,7 @@
 #include <VBox/vmm/vmcc.h>      /* must be included before PGMInline.h */
 #include <PGMInline.h>
 #include <VBox/vmm/nem.h>
-#include <VBox/vmm/apic.h>
+#include <VBox/apic.h>
 #include <VBox/vmm/em.h>
 #include <VBox/err.h>
 

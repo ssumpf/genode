@@ -29,9 +29,10 @@
 #include <PGMInternal.h>   /* enable access to pgm.s.* */
 #include <VBox/vmm/vmcc.h> /* must be included before PGMInline.h */
 #include <PGMInline.h>     /* pgmPhysGetRangeAtOrAbove() */
+#include <VBox/vmm/pdmapic.h>
 #include <VBox/vmm/vm.h>
 #include <VBox/vmm/hm.h>
-#include <VBox/vmm/apic.h>
+#include <VBox/apic.h>
 #include <VBox/vmm/em.h>
 #include <VBox/vmm/pdmapi.h>
 #include <VBox/err.h>
@@ -254,7 +255,7 @@ template <typename VIRT> void Sup::Vcpu_impl<VIRT>::_transfer_state_to_vcpu(CPUM
 	bool interrupt_pending    = false;
 	uint8_t tpr               = 0;
 	uint8_t pending_interrupt = 0;
-	APICGetTpr(&_vmcpu, &tpr, &interrupt_pending, &pending_interrupt);
+	PDMApicGetTpr(&_vmcpu, &tpr, &interrupt_pending, &pending_interrupt);
 
 	state.tpr.charge(tpr);
 	state.tpr_threshold.charge(0);
@@ -279,7 +280,7 @@ template <typename VIRT> void Sup::Vcpu_impl<VIRT>::_transfer_state_to_vcpu(CPUM
 	}
 
 	_state->ref.fpu.charge([&](Vcpu_state::Fpu::State &fpu) {
-		unsigned fpu_size = min(_vm.cpum.s.HostFeatures.cbMaxExtendedState,
+		unsigned fpu_size = min(_vm.cpum.s.HostFeatures.s.cbMaxExtendedState,
 		                        sizeof(fpu._buffer));
 
 		/* cpumctx-x86-amd64.h */
@@ -428,11 +429,11 @@ template <typename VIRT> void Sup::Vcpu_impl<VIRT>::_transfer_state_to_vbox(CPUM
 
 	_vmcpu.cpum.s.fUseFlags |= CPUM_USED_FPU_GUEST;
 
-	APICSetTpr(pVCpu, tpr);
+	PDMApicSetTpr(pVCpu, tpr);
 
 	/* import FPU state - start */
 	_state->ref.fpu.with_state([&](Vcpu_state::Fpu::State const &fpu) {
-		unsigned fpu_size = min(_vm.cpum.s.HostFeatures.cbMaxExtendedState,
+		unsigned fpu_size = min(_vm.cpum.s.HostFeatures.s.cbMaxExtendedState,
 		                        sizeof(fpu._buffer));
 
 		::memcpy(ctx.abXState, fpu._buffer, fpu_size);
@@ -455,7 +456,7 @@ template <typename T> bool Sup::Vcpu_impl<T>::_check_and_request_irq_window()
 	PVMCPU pVCpu = &_vmcpu;
 
 	if (VMCPU_FF_TEST_AND_CLEAR(pVCpu, VMCPU_FF_UPDATE_APIC))
-		APICUpdatePendingInterrupts(pVCpu);
+		PDMApicUpdatePendingInterrupts(pVCpu);
 
 	if (CPUMIsInInterruptShadow(&pVCpu->cpum.GstCtx))
 		return false;
@@ -607,7 +608,7 @@ typename Sup::Vcpu_impl<T>::Current_state Sup::Vcpu_impl<T>::_handle_irq_window(
 	_irq_window = false;
 
 	/* request current tpr state from guest, it may block IRQs */
-	APICSetTpr(pVCpu, state.tpr.value());
+	PDMApicSetTpr(pVCpu, state.tpr.value());
 
 	if (!TRPMHasTrap(pVCpu)) {
 
@@ -629,7 +630,7 @@ typename Sup::Vcpu_impl<T>::Current_state Sup::Vcpu_impl<T>::_handle_irq_window(
 		}
 
 		if (!TRPMHasTrap(pVCpu)) {
-			/* happens if APICSetTpr (see above) mask IRQ */
+			/* happens if PDMApicSetTpr (see above) mask IRQ */
 			state.inj_info.charge(VMX_ENTRY_INT_INFO_NONE);
 			return PAUSED;
 		}
