@@ -4,6 +4,7 @@ LIBS  += stdcxx
 
 SRC_CC += Main/xml/Settings.cpp
 
+SRC_CC += Main/src-all/AudioUtils.cpp
 SRC_CC += Main/src-all/AuthLibrary.cpp
 SRC_CC += Main/src-all/AutoCaller.cpp
 SRC_CC += Main/src-all/ConsoleSharedFolderImpl.cpp
@@ -17,6 +18,7 @@ SRC_CC += Main/src-all/HashedPw.cpp
 SRC_CC += Main/src-all/PCIDeviceAttachmentImpl.cpp
 SRC_CC += Main/src-all/PlatformPropertiesImpl.cpp
 SRC_CC += Main/src-all/ProgressImpl.cpp
+SRC_CC += Main/src-all/RecordingUtils.cpp
 SRC_CC += Main/src-all/SecretKeyStore.cpp
 SRC_CC += Main/src-all/SharedFolderImpl.cpp
 SRC_CC += Main/src-all/ThreadTask.cpp

@@ -70,9 +70,14 @@ SRC_CC += VMM/VMMR3/DBGFR3SampleReport.cpp
 SRC_CC += VMM/VMMR3/DBGFR3Type.cpp
 
 SRC_CC += VMM/VMMR3/CPUM.cpp
+SRC_CC += VMM/VMMR3/CPUMR3CpuIdInfo.cpp
+SRC_CC += VMM/VMMR3/CPUMR3CpuIdInfo-x86.cpp
 SRC_CC += VMM/VMMR3/CPUMR3Db.cpp
+SRC_CC += VMM/VMMR3/CPUMR3Host-x86.cpp
 
 SRC_CC += VMM/VMMR3/target-x86/CPUMR3CpuId-x86.cpp
+SRC_CC += VMM/VMMR3/target-x86/CPUMR3-x86.cpp
+SRC_CC += VMM/VMMR3/target-x86/CPUMR3Msr-x86.cpp
 
 SRC_CC += VMM/VMMAll/EMAll.cpp
 SRC_CC += VMM/VMMR3/EM.cpp
@@ -90,14 +95,22 @@ SRC_CC += VMM/VMMAll/SELMAll.cpp
 SRC_CC += VMM/VMMR3/VMMGuruMeditation.cpp
 
 SRC_CC += VMM/VMMAll/IEMAll.cpp
+SRC_CC += VMM/VMMAll/IEMAllMem.cpp
+SRC_CC += VMM/VMMAll/IEMAllTlb.cpp
 SRC_CC += VMM/VMMR3/IEMR3.cpp
 
+SRC_CC += VMM/VMMAll/target-x86/IEMAll-x86.cpp
 SRC_S  += VMM/VMMAll/target-x86/IEMAllAImpl-x86-amd64.asm
 SRC_CC += VMM/VMMAll/target-x86/IEMAllAImplC-x86.cpp
 SRC_CC += VMM/VMMAll/target-x86/IEMAllCImpl-x86.cpp
 SRC_CC += VMM/VMMAll/target-x86/IEMAllCImplSvmInstr-x86.cpp
 SRC_CC += VMM/VMMAll/target-x86/IEMAllCImplVmxInstr-x86.cpp
+SRC_CC += VMM/VMMAll/target-x86/IEMAllHlpFpu-x86.cpp
 SRC_CC += VMM/VMMAll/target-x86/IEMAllDbg-x86.cpp
+SRC_CC += VMM/VMMAll/target-x86/IEMAllMem-x86.cp
+SRC_CC += VMM/VMMAll/target-x86/IEMAllOpcodeFetch-x86.cpp
+SRC_CC += VMM/VMMAll/target-x86/IEMAllOpHlp-x86.cpp
+SRC_CC += VMM/VMMAll/target-x86/IEMAllXcpt-x86.cpp
 
 SRC_CC += VMM/VMMAll/target-x86/IEMAllIntprTables1-x86.cpp
 SRC_CC += VMM/VMMAll/target-x86/IEMAllIntprTables2-x86.cpp
@@ -136,6 +149,7 @@ SRC_CC += VMM/VMMAll/IOMAllMmioNew.cpp
 
 SRC_CC += VMM/VMMR3/APIC.cpp
 SRC_CC += VMM/VMMAll/APICAll.cpp
+SRC_CC += VMM/VMMAll/PDMAllApic.cpp
 
 SRC_CC += VMM/VMMR3/MM.cpp
 SRC_CC += VMM/VMMR3/MMHeap.cpp
