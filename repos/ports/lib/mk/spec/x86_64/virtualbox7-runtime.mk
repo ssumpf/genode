@@ -28,6 +28,12 @@ SRC_CC += $(call all_cpp_files_of_sub_dir,Runtime/generic/)
 SRC_CC += $(call all_cpp_files_of_sub_dir,Runtime/r3/)
 
 SRC_CC += Runtime/VBox/log-vbox.cpp
+
+SRC_CC += Runtime/common/acpi/acpi-ast.cpp
+SRC_CC += Runtime/common/acpi/acpi-compiler.cpp
+SRC_CC += Runtime/common/acpi/acpi-decompiler.cpp
+SRC_CC += Runtime/common/acpi/acpi-ns.cpp
+SRC_CC += Runtime/common/acpi/acpi.cpp
 SRC_CC += Runtime/common/asn1/asn1-default-allocator.cpp
 SRC_CC += Runtime/common/checksum/alt-md5.cpp
 SRC_CC += Runtime/common/checksum/alt-sha512.cpp
@@ -40,12 +46,14 @@ SRC_CC += Runtime/common/checksum/md5str.cpp
 SRC_CC += Runtime/common/checksum/sha512str.cpp
 SRC_CC += Runtime/common/dbg/dbgstackdumpself.cpp
 SRC_CC += Runtime/common/fs/isovfs.cpp
+SRC_CC += Runtime/common/fs/udfhlp.cpp
 SRC_CC += Runtime/common/ldr/ldr.cpp
 SRC_CC += Runtime/common/ldr/ldrEx.cpp
 SRC_CC += Runtime/common/ldr/ldrFile.cpp
 SRC_CC += Runtime/common/ldr/ldrNative.cpp
 SRC_CC += Runtime/common/net/macstr.cpp
 SRC_CC += Runtime/common/net/netaddrstr2.cpp
+SRC_CC += Runtime/common/script/scriptlex.cpp
 SRC_CC += Runtime/common/sort/shellsort.cpp
 SRC_CC += Runtime/common/time/time.cpp
 SRC_CC += Runtime/common/time/timeprog.cpp
