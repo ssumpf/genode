@@ -836,7 +836,7 @@ void Libc::Component::construct(Libc::Env &env)
 
 		{
 			nsCOMPtr<nsIServiceManager> serviceManager;
-			HRESULT const rc = NS_InitXPCOM2(getter_AddRefs(serviceManager), nsnull, nsnull);
+			HRESULT const rc = NS_InitXPCOM2Ex(getter_AddRefs(serviceManager), nsnull, nsnull, 0);
 			if (NS_FAILED(rc))
 			{
 				Genode::error("failed to initialize XPCOM, rc=", rc);
