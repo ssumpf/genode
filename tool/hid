@@ -680,9 +680,9 @@ proc _hid_as_tree_recursively { indent hid { last 0 } { one_attr_per_line 0 } } 
 		# quoted content
 		if {[hid_type $child_hid] == ":"} {
 			if {[string length [hid_quoted $child_hid]] == 0} {
-				puts $out_fd "$indent:"
+				append result "$indent:\n"
 			} else {
-				puts $out_fd "$indent: [hid_quoted $child_hid]"
+				append result "$indent: [hid_quoted $child_hid]\n"
 			}
 		} else {
 			set sub_node_indent "$indent[string_trim [hid_anchor $child_hid]] "
