@@ -138,7 +138,7 @@ int        USBProxyBackendUsbIp::wait(unsigned int) STOP
 
 #include "AudioDriver.h"
 
-AudioDriver::AudioDriver(Console *) STOP
+AudioDriver::AudioDriver(Console *) TRACE()
 AudioDriver::~AudioDriver() { }
 int AudioDriver::doDetachDriverViaEmt(PUVM, PCVMMR3VTABLE, util::AutoWriteLock *) STOP
 int AudioDriver::doAttachDriverViaEmt(PUVM, PCVMMR3VTABLE, util::AutoWriteLock *) STOP

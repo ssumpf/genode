@@ -203,7 +203,6 @@ VMM_INT_DECL(int) NEMHCResumeCpuTickOnAll(PVMCC pVM, PVMCPUCC pVCpu,
                                           ::uint64_t uPausedTscValue) STOP
 
 
-VMMR3_INT_DECL(VBOXSTRICTRC) NEMR3RunGC(PVM pVM, PVMCPU pVCpu) STOP
 
 DECLHIDDEN(int) nemR3NativeInitCompletedRing3(PVM pVM) STOP
 
@@ -258,7 +257,7 @@ void nemR3NativeReset(PVM pVM) TRACE()
 void nemR3NativeResetCpu(PVMCPU pVCpu, bool fInitIpi) { }
 
 
-VBOXSTRICTRC nemR3NativeRunGC(PVM pVM, PVMCPU pVCpu)
+VMMR3_INT_DECL(VBOXSTRICTRC) NEMR3RunGC(PVM pVM, PVMCPU pVCpu)
 {
 	using namespace Sup;
 

@@ -198,6 +198,10 @@ static int vmmr0_gvmm_create_vm(GVMMCREATEVMREQ &request)
 	request.pVMR3 = &new_vm;
 	request.pVMR0 = (PVMR0)request.pVMR3;
 
+	/* see PGM.cpp 7.2.4 /PGMR3.cpp >7.2.4 */
+	request.pVMR3->pgm.s.HCPhysMmioPg = RTHCPHYS(request.pVMR3->pgm.s.abMmioPg);
+	request.pVMR3->pgm.s.HCPhysZeroPg = RTHCPHYS(request.pVMR3->pgm.s.abZeroPg);
+
 	return VINF_SUCCESS;
 }
 
