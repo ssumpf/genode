@@ -13,10 +13,11 @@
       <CPU count="2">
         <HardwareVirtExLargePages enabled="true"/>
         <PAE enabled="true"/>
-        <NestedHWVirt enabled="false"/>
+        <NestedHWVirt enabled="true"/>
         <LongMode enabled="true"/>
         <X2APIC enabled="false"/>
       </CPU>
+      <Chipset type="ICH9"/>
       <Memory RAMSize="4096"/>
       <!-- types: BIOS, EFI, EFI32, EFI64, EFIDUAL -->
       <Firmware type="BIOS"/>
@@ -31,7 +32,6 @@
       -->
       <RemoteDisplay enabled="false"/>
       <Paravirt provider="KVM"/>
-      <Firmware/>
       <BIOS>
         <IOAPIC enabled="true"/>
         <SmbiosUuidLittleEndian enabled="true"/>
@@ -43,7 +43,11 @@
       </USB>
       <Network>
         <Adapter slot="0" enabled="true" MACAddress="080027B46610" cable="true" type="82540EM">
-          <BridgedInterface/>
+          <DisabledModes>
+            <InternalNetwork name="intnet"/>
+            <NATNetwork name="NatNetwork"/>
+          </DisabledModes>
+          <BridgedInterface name="eth0"/>
         </Adapter>
       </Network>
       <UART>
