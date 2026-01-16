@@ -31,6 +31,7 @@
 			<dir name="shared"> <fs label="shared -> /" writeable="yes"/> </dir>
 			<rom name="VBoxSharedClipboard.so"/>
 			<rom name="VBoxSharedFolders.so"/>
+			<rom name="VBoxVMM.so"/>
 			<fs label="vm -> /" writeable="yes"/>
 		</vfs>
 		<libc stdout="/dev/log" stderr="/dev/log" rtc="/dev/rtc" pipe="/pipe">
@@ -69,6 +70,7 @@
 		<rom label="virtualbox7-shaderlib.lib.so"/>
 		<rom label="virtualbox7-sharedclipboard.lib.so" as="VBoxSharedClipboard.so"/>
 		<rom label="virtualbox7-sharedfolders.lib.so" as="VBoxSharedFolders.so"/>
+		<rom label="virtualbox7-dummy.lib.so" as="VBoxVMM.so"/>
 		<rom label="zlib.lib.so"/>
 	</content>
 
