@@ -18,13 +18,13 @@
 
 static bool const debug = true;
 
-ClientNvramStore::ClientNvramStore() STOP
+ClientNvramStore::ClientNvramStore() TRACE()
 ClientNvramStore::~ClientNvramStore() STOP
 
 void ClientNvramStore::FinalRelease() STOP
-HRESULT ClientNvramStore::FinalConstruct() STOP
+HRESULT ClientNvramStore::FinalConstruct() TRACE(VINF_SUCCESS)
 
-HRESULT ClientNvramStore::init(Console *, const com::Utf8Str &) STOP
+HRESULT ClientNvramStore::init(Console *, const com::Utf8Str &) TRACE(VINF_SUCCESS)
 void ClientNvramStore::uninit() STOP;
 
 com::Utf8Str ClientNvramStore::i_getNonVolatileStorageFile() STOP

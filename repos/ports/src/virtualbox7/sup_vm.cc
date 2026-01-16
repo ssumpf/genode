@@ -46,6 +46,7 @@ void Sup::Vm::init(PSUPDRVSESSION psession, Cpu_count cpu_count)
 	 */
 
 	VM::enmVMState       = VMSTATE_CREATING;
+	VM::enmTarget        = VMTARGET_X86;
 	VM::paVMPagesR3      = (R3PTRTYPE(PSUPPAGE))pages;
 	VM::pVMR0ForCall     = (PVMR0)this;
 	VM::pSession         = psession;
