@@ -34,6 +34,12 @@ VBOX_CC_OPT += -DRT_OS_FREEBSD
 # build for x86
 VBOX_CC_OPT += -DVBOX_VMM_TARGET_X86
 
+#
+# Stay compatible with the vboxdrv.ko version. Do no enable
+# VBOX_WITH_MINIMAL_R0 because it will break our gmm handling.
+#
+VBOX_CC_OPT += -DVBOX_WITH_R0_MODULES
+
 VBOX_CC_OPT += -DVBOX_WITHOUT_TESTING_FEATURES
 VBOX_CC_OPT += -DVBOX_WITH_3RD_IEM_STEP
 VBOX_CC_OPT += -DVBOX_WITH_AUDIO_HDA_ASYNC_IO

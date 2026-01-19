@@ -649,12 +649,3 @@ VMM_INT_DECL(VBOXSTRICTRC) DBGFTrap03Handler(PVMCC, PVMCPUCC, PCPUMCTX) STOP
 #include <VBox/vmm/pdmnetshaper.h>
 
 VMM_INT_DECL(bool) PDMNetShaperAllocateBandwidth(PVMCC, PPDMNSFILTER, size_t) STOP
-
-
-/* GMM.cpp */
-#include <VBox/vmm/gmm.h>
-
-VMMR3_INT_DECL(int) GMMR3ResetSharedModules(PVM pVM)
-{
-	return VINF_SUCCESS;
-}
