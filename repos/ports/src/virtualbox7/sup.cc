@@ -560,6 +560,38 @@ static int vmmr0_pgm_allocate_handy_pages(PVMR0 pvmr0)
 }
 
 
+/*
+ * See: PGMR0PhysHandlerInitReqHandler in PGMR0.cpp
+ */
+static int vmmr0_pgm_phys_handler_init(PVMR0 pvmr0, uint32_t cEntries)
+{
+	Sup::Vm &vm = *(Sup::Vm *)pvmr0;
+
+	AssertReturn(vm.pgm.s.PhysHandlerAllocator.m_paNodes == NULL, VERR_WRONG_ORDER);
+	AssertLogRelMsgReturn(cEntries <= _64K, ("%#x\n", cEntries), VERR_OUT_OF_RANGE);
+
+	uint32_t       cbTreeAndBitmap = 0;
+	uint32_t const cbTotalAligned  = pgmHandlerPhysicalCalcTableSizes(&cEntries, &cbTreeAndBitmap);
+
+	uint8_t *pb = (uint8_t *)RTMemPageAlloc(cbTotalAligned);
+	if (*pb) return VERR_NO_MEMORY;
+
+	vm.pgm.s.PhysHandlerAllocator.initSlabAllocator(cEntries, (PPGMPHYSHANDLER)&pb[cbTreeAndBitmap],
+	                                                (uint64_t *)&pb[sizeof(PGMPHYSHANDLERTREE)]);
+	vm.pgm.s.pPhysHandlerTree = (PPGMPHYSHANDLERTREE)pb;
+	vm.pgm.s.pPhysHandlerTree->initWithAllocator(&vm.pgm.s.PhysHandlerAllocator);
+
+	vm.pgm.s.PhysHandlerAllocator.m_paNodes      = (PGMPHYSHANDLER *)(pb + cbTreeAndBitmap);
+	vm.pgm.s.PhysHandlerAllocator.m_pbmAlloc     = (uint64_t *)(pb + sizeof(PGMPHYSHANDLERTREE));
+	vm.pgm.s.PhysHandlerAllocator.m_cNodes       = cEntries;
+	vm.pgm.s.PhysHandlerAllocator.m_cErrors      = 0;
+	vm.pgm.s.PhysHandlerAllocator.m_idxAllocHint = 0;
+	vm.pgm.s.PhysHandlerAllocator.m_uPadding     = 0;
+
+	return VINF_SUCCESS;
+}
+
+
 static int vmmr0_vmmr0_init(PVMR0 pvmr0)
 {
 	/* produces
@@ -645,6 +677,10 @@ static void ioctl(SUPCALLVMMR0 &request)
 
 	case VMMR0_DO_PGM_ALLOCATE_HANDY_PAGES:
 		rc = vmmr0_pgm_allocate_handy_pages(request.u.In.pVMR0);
+		return;
+
+	case VMMR0_DO_PGM_PHYS_HANDLER_INIT:
+		rc = vmmr0_pgm_phys_handler_init(request.u.In.pVMR0, request.u.In.u64Arg);
 		return;
 
 	case VMMR0_DO_VMMR0_INIT:
