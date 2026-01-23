@@ -115,3 +115,9 @@ extern "C" int statfs(const char *path, struct statfs *buf)
 	return res;
 }
 
+
+extern "C" void *mempcpy(void *dest, const void *src, unsigned long n)
+{
+	memcpy(dest, src, n);
+	return (void *)((char *)dest + n);
+}
