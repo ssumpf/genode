@@ -1,5 +1,7 @@
 REQUIRES += x86
 
+CC_OLEVEL = -O0
+
 VBOX_MACH := $(filter $(SPECS), x86_32 x86_64)
 
 VBOX_MACH_CC_OPT_x86_32  = -DRT_ARCH_X86 -D__X86__
