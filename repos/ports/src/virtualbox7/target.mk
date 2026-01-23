@@ -6,7 +6,7 @@ included_from_target_mk := yes
 include $(REP_DIR)/lib/mk/virtualbox7-common.inc
 
 CC_WARN += -Wall
-
+CC_OLEVEL = -O0
 SRC_CC := main.cc drivers.cc glx_x11.cc
 SRC_CC += libc.cc unimpl.cc dummies.cc pdm.cc devices.cc nem.cc
 SRC_CC += pthread.cc network.cc devxhci.cc
