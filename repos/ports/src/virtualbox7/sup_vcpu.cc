@@ -48,6 +48,8 @@
 #include <sup_vcpu.h>
 #include <pthread_emt.h>
 
+#include <os/backtrace.h>
+
 using namespace Genode;
 
 
@@ -458,13 +460,15 @@ template <typename T> bool Sup::Vcpu_impl<T>::_check_and_request_irq_window()
 	if (VMCPU_FF_TEST_AND_CLEAR(pVCpu, VMCPU_FF_UPDATE_APIC))
 		PDMApicUpdatePendingInterrupts(pVCpu);
 
-	if (CPUMIsInInterruptShadow(&pVCpu->cpum.GstCtx))
+	if (CPUMIsInInterruptShadow(&pVCpu->cpum.GstCtx)) {
 		return false;
+	}
 
 	if (!TRPMHasTrap(pVCpu) &&
 		!VMCPU_FF_IS_ANY_SET(pVCpu, (VMCPU_FF_INTERRUPT_APIC |
-		                             VMCPU_FF_INTERRUPT_PIC)))
+		                             VMCPU_FF_INTERRUPT_PIC))) {
 		return false;
+	}
 
 	_state->ref.inj_info.charge(REQ_IRQ_WINDOW_EXIT);
 
@@ -531,6 +535,10 @@ typename Sup::Vcpu_impl<T>::Current_state Sup::Vcpu_impl<T>::_handle_npt_ept(VBO
 	rc = VINF_EM_RAW_EMULATE_INSTR;
 
 	RTGCPHYS const GCPhys = PAGE_ADDRESS(_state->ref.qual_secondary.value());
+
+	if (GCPhys == 0) {
+		warning("EPT: ", Hex(GCPhys), " IP: ", Hex(_state->ref.ip.value()), " EXI: ", Hex(_state->ref.qual_primary.value()));
+	}
 
 	PPGMRAMRANGE const pRam = pgmPhysGetRangeAtOrAbove(&_vm, GCPhys);
 	if (!pRam)
