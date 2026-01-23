@@ -16,6 +16,7 @@
 
 #include <base/log.h>
 #include <base/sleep.h>
+#include <os/backtrace.h>
 
 #define TRACE(retval) \
 	{ \
@@ -31,6 +32,7 @@
 		              "not implemented, eip=", \
 		              __builtin_return_address(0)); \
 		/* noreturn function sparing the need for a return value */ \
+		Genode::backtrace(); \
 		Genode::sleep_forever(); \
 	}
 

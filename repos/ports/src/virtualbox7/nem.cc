@@ -178,6 +178,12 @@ struct Sup::Nem
 		return _gmm.alloc_from_reservation(pages);
 	}
 
+
+	Gmm::Vmm_addr alloc_page()
+	{
+		return _gmm.alloc_from_reservation( { 1 } );
+	}
+
 	Gmm & gmm() { return _gmm; }
 
 	Nem(Gmm &gmm) : _gmm(gmm) { }
@@ -216,6 +222,12 @@ void nemHCNativeNotifyHandlerPhysicalRegister(PVMCC pVM,
 int nemR3NativeInit(PVM pVM, bool fFallback, bool fForced)
 {
 	VM_SET_MAIN_EXECUTION_ENGINE(pVM, VM_EXEC_ENGINE_NATIVE_API);
+
+	/*
+	 * Explicitly enable NEM mode - forced by MMIO2 assertions and PGM_PAGE_INIT
+	 * with host address 0x0000ffffffff0000  (see: pgmPhysMmio2RegisterWorker)
+	 */
+	PGMR3EnableNemMode(pVM);
 
 	return VINF_SUCCESS;
 }
@@ -336,26 +348,31 @@ void nemR3NativeNotifyFF(PVM pVM, PVMCPU pVCpu, ::uint32_t fFlags)
 }
 
 
-static void update_pgm_large_page(PVM pVM, addr_t guest_addr, addr_t host_addr,
-                                  uint32_t page_id)
+static void update_pgm_page(PVM pVM, addr_t guest_addr, addr_t host_addr,
+                            uint32_t page_id, unsigned count)
 {
 	/* init all pages in large page (see PGMR3PhysAllocateLargeHandyPage()) */
-	for (unsigned i = 0; i < X86_PAGE_2M_SIZE/X86_PAGE_4K_SIZE; ++i) {
+	for (unsigned i = 0; i < count; ++i) {
 
 		PPGMPAGE page = nullptr;
 
 		pgmPhysGetPageEx(pVM, guest_addr, &page);
 
+		/*
+		 * We are called from pgmR3PhysInitAndLinkRamRange (PGMPhys.cpp) with
+		 * VBOX_WITH_PGM_NEM_MODE set via NEMR3NotifyPhysRamRegister (with
+		 * VBOX_WITH_NATIVE_NEM set and PGM_IS_IN_NEM_MODE set
+		 */
 		if (PGM_PAGE_GET_TYPE(page) != PGMPAGETYPE_RAM)
 			error(__func__, ": page is not RAM");
-		if (!PGM_PAGE_IS_ZERO(page))
-			error(__func__, ": page is not zero page");
+		if (!PGM_PAGE_IS_ALLOCATED(page)) {
+			error(__func__, ": page is not allocated: ", page, " state: ", (unsigned)(page->s.uStateY & 0x7));
+			Genode::backtrace();
+			STOP;
+		}
 
-		pVM->pgm.s.cZeroPages--;
-		pVM->pgm.s.cPrivatePages++;
 		PGM_PAGE_SET_HCPHYS(pVM, page, host_addr);
 		PGM_PAGE_SET_PAGEID(pVM, page, page_id);
-		PGM_PAGE_SET_STATE(pVM, page, PGM_PAGE_STATE_ALLOCATED);
 		PGM_PAGE_SET_PDE_TYPE(pVM, page, PGM_PAGE_PDE_TYPE_PDE);
 		PGM_PAGE_SET_PTE_INDEX(pVM, page, 0);
 		PGM_PAGE_SET_TRACKING(pVM, page, 0);
@@ -365,6 +382,43 @@ static void update_pgm_large_page(PVM pVM, addr_t guest_addr, addr_t host_addr,
 		host_addr  += X86_PAGE_4K_SIZE;
 		guest_addr += X86_PAGE_4K_SIZE;
 	}
+}
+
+
+template <typename T>
+static constexpr bool aligned_2M(T value) { return aligned(value, 21); }
+
+
+static
+void for_each_vmm_addr(RTGCPHYS GCPhys, RTGCPHYS cb, void *pvR3, auto const &fn)
+{
+	using Vmm_addr = Sup::Gmm::Vmm_addr;
+
+	addr_t vmm_addr   = addr_t(pvR3);
+	addr_t guest_addr = addr_t(GCPhys);
+
+	size_t addend = size_t(_4K);
+
+	/*
+	 * Try to map 2MB pages
+	 *
+	 * Ranges within the first 2 MiB are mapped 4KB to prevent  errors with ROM
+	 * mappings below 1 MiB. Also, a range of 64 KiB at 1 MiB is replaced
+	 * regularly on A20 switching. Both facts invalidate our large-page mapping.
+	 */
+	if (aligned_2M(GCPhys) && aligned_2M(vmm_addr) &&
+	    cb >= _2M && GCPhys >= _2M)
+		addend = size_t(_2M);
+
+	auto loop = [&](size_t addend) {
+		for (; vmm_addr + addend <= addr_t(pvR3) + cb;
+		       vmm_addr   += addend,
+		       guest_addr += addend)
+			fn(Vmm_addr { vmm_addr }, guest_addr, addend);
+	};
+
+	loop(addend);
+	loop(size_t(_4K));
 }
 
 
@@ -382,35 +436,21 @@ int NEMR3NotifyPhysRamRegister(PVM pVM, RTGCPHYS GCPhys, RTGCPHYS cb, void *pvR3
 	 * below 4 GiB and "Above 4GB Base RAM" (see MMR3InitPaging()). We eagerly
 	 * map all 2M-aligened "large" pages in the ranges to guest memory and
 	 * initialize PGM to benefit from reduced TLB usage and less backing store
-	 * for many mapped regions. RAM pages outside the large pages are backed on
-	 * demand by PGM by "small" handy pages by default. Unfortunately, the
-	 * configuration of NEM disables automatic use of large pages in PGM.
+	 * for many mapped regions.
 	 */
+	for_each_vmm_addr(GCPhys, cb, pvR3, [&](Sup::Gmm::Vmm_addr const vmm_addr,
+	                                        addr_t             const guest_addr,
+	                                        size_t             const size) {
 
-	/* start at first 2M-aligned page in range */
-	addr_t const guest_base = RT_ALIGN(GCPhys, X86_PAGE_2M_SIZE);
-
-	/* iterate over all large pages in range */
-	for (addr_t addr = guest_base; addr + _2M <= GCPhys + cb; addr += _2M ) {
-
-		/*
-		 * We skip the first 2 MiB to prevent errors with ROM mappings below 1
-		 * MiB. Also, a range of 64 KiB at 1 MiB is replaced regularly on A20
-		 * switching. Both facts invalidate our large-page mapping.
-		 */
-		if (addr < _2M) continue;
-
-		/* allocate and map in GMM */
-		Sup::Gmm::Vmm_addr const vmm_addr    = nem_ptr->alloc_large_page();
-		Sup::Gmm::Page_id  const vmm_page_id = nem_ptr->gmm().page_id(vmm_addr);
-		uint32_t           const page_id32   = nem_ptr->gmm().page_id_as_uint32(vmm_page_id);
+		Sup::Gmm::Page_id const vmm_page_id = nem_ptr->gmm().page_id(vmm_addr);
+		uint32_t          const page_id32   = nem_ptr->gmm().page_id_as_uint32(vmm_page_id);
 
 		Sup::Nem::Protection const prot { true, true, true };
 
-		nem_ptr->map_to_guest(vmm_addr.value, addr, X86_PAGE_2M_SIZE, prot);
+		nem_ptr->map_to_guest(vmm_addr.value, guest_addr, size, prot);
 
-		update_pgm_large_page(pVM, addr, vmm_addr.value, page_id32);
-	}
+		update_pgm_page(pVM, guest_addr, vmm_addr.value, page_id32, size / _4K);
+	});
 
 	/* invalidate PGM caches (see pgmPhysAllocPage()) */
 	PGM_INVL_ALL_VCPU_TLBS(pVM);
@@ -466,7 +506,11 @@ int NEMR3PhysMmio2QueryAndResetDirtyBitmap(PVM pVM, RTGCPHYS GCPhys, RTGCPHYS cb
                                            void *pvBitmap, size_t cbBitmap) STOP
 
 
-bool NEMR3IsMmio2DirtyPageTrackingSupported(PVM pVM) STOP
+bool NEMR3IsMmio2DirtyPageTrackingSupported(PVM pVM)
+{
+	RT_NOREF(pVM);
+	return false;
+}
 
 
 int NEMR3NotifyPhysRomRegisterEarly(PVM pVM, RTGCPHYS GCPhys, RTGCPHYS cb, void *pvPages,
@@ -533,12 +577,54 @@ void NEMHCNotifyPhysPageProtChanged(PVMCC pVM, RTGCPHYS GCPhys, RTHCPHYS HCPhys,
 		.executable = (fPageProt & NEM_PAGE_PROT_EXECUTE) != 0,
 	};
 
+	/* page is not mapped yet and has no HCPhys address ROM || MMIO2 */
+	if (HCPhys == 0x0000fffffffff000 || HCPhys == 0xffffffff0000) {
+
+		/* map in GMM */
+		Sup::Gmm::Vmm_addr const vmm_addr { addr_t(pvR3) };
+		Sup::Gmm::Page_id  const vmm_page_id = nem_ptr->gmm().page_id(vmm_addr);
+		uint32_t           const page_id32   = nem_ptr->gmm().page_id_as_uint32(vmm_page_id);
+
+		nem_ptr->map_page_to_guest(vmm_addr.value, GCPhys, prot);
+
+		PPGMPAGE page = nullptr;
+		pgmPhysGetPageEx(pVM, GCPhys, &page);
+
+		/*
+		 * We have only seen this with ROM's so far via pgmR3PhysRomRegisterLocked
+		 * and MMIO2 via pgmPhysMmio2RegisterWorker
+		 */
+		if (PGM_PAGE_GET_TYPE(page) != PGMPAGETYPE_ROM &&
+		    PGM_PAGE_GET_TYPE(page) != PGMPAGETYPE_MMIO2)
+			error(__func__, " un-mapped page with no host address is not ROM or MMIO2 (",
+			      unsigned(PGM_PAGE_GET_TYPE(page)), ")");
+
+		PGM_PAGE_SET_HCPHYS(pVM, page, vmm_addr.value);
+		PGM_PAGE_SET_STATE(pVM, page,  PGM_PAGE_STATE_ALLOCATED);
+		PGM_PAGE_SET_PDE_TYPE(pVM, page, PGM_PAGE_PDE_TYPE_DONTCARE);
+		PGM_PAGE_SET_PTE_INDEX(pVM, page, 0);
+		PGM_PAGE_SET_TRACKING(pVM, page, 0);
+
+		/* MMIO2 pages use PGM_MMIO2_PAGEID_MAKE for the creation page ids */
+		if (PGM_PAGE_GET_TYPE(page) != PGMPAGETYPE_MMIO2)
+			PGM_PAGE_SET_PAGEID(pVM, page, page_id32);
+
+		/*
+		 * TODO: check if this is necessary here
+		 *
+		 * invalidate PGM caches (see pgmPhysAllocPage())
+		 */
+		PGM_INVL_ALL_VCPU_TLBS(pVM);
+		pgmPhysInvalidatePageMapTLB(pVM, false);
+
+		return;
+	}
+
 	/*
 	 * The passed host and guest addresses may not be aligned, e.g., when
 	 * called from DevVGA.cpp vgaLFBAccess(). Therefore, we do the alignment
 	 * here explicitly.
 	 */
-
 	nem_ptr->map_page_to_guest(HCPhys & ~PAGE_OFFSET_MASK,
 	                           GCPhys & ~PAGE_OFFSET_MASK, prot);
 }

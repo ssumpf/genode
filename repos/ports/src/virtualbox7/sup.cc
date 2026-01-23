@@ -41,6 +41,10 @@ static bool const debug = true;
 
 using namespace Genode;
 
+using Vmm_addr = Sup::Gmm::Vmm_addr;
+using Page_id  = Sup::Gmm::Page_id;
+using Pages    = Sup::Gmm::Pages;
+
 static Sup::Drv *sup_drv;
 
 void Sup::init(Env &env)
@@ -303,9 +307,6 @@ static int vmmr0_gmm_allocate_pages(GMMALLOCATEPAGESREQ &request)
 {
 	Sup::Gmm::Pages pages { request.cPages };
 
-	using Vmm_addr = Sup::Gmm::Vmm_addr;
-	using Page_id  = Sup::Gmm::Page_id;
-
 	Vmm_addr const vmm_addr = sup_drv->gmm().alloc_from_reservation(pages);
 
 	for (unsigned i = 0; i < request.cPages; i++) {
@@ -329,9 +330,6 @@ static int vmmr0_gmm_free_pages(GMMFREEPAGESREQ &request)
 	for (unsigned i = 0; i < request.cPages; i++) {
 
 		GMMFREEPAGEDESC &page = request.aPages[i];
-
-		using Vmm_addr = Sup::Gmm::Vmm_addr;
-		using Page_id  = Sup::Gmm::Page_id;
 
 		Page_id const page_id { page.idPage };
 
@@ -537,9 +535,6 @@ static int vmmr0_pgm_allocate_handy_pages(PVMR0 pvmr0)
 	uint32_t const start_idx = vm.pgm.s.cHandyPages;
 	uint32_t const stop_idx  = RT_ELEMENTS(vm.pgm.s.aHandyPages);
 
-	using Vmm_addr = Sup::Gmm::Vmm_addr;
-	using Page_id  = Sup::Gmm::Page_id;
-
 	for (unsigned i = start_idx; i < stop_idx; ++i) {
 
 		Vmm_addr const vmm_addr = sup_drv->gmm().alloc_from_reservation( Sup::Gmm::Pages { 1 } );
@@ -738,8 +733,6 @@ static void ioctl(SUPGETPAGINGMODE &request)
 
 static void ioctl(SUPPAGEFREE &request)
 {
-	using Vmm_addr = Sup::Gmm::Vmm_addr;
-
 	Vmm_addr const vmm_addr { (addr_t)request.u.In.pvR3 };
 
 	sup_drv->gmm().free(vmm_addr);
@@ -756,12 +749,9 @@ static void ioctl(SUPPAGEALLOCEX &request)
 	 * nemHCNativeNotifyPhysPageProtChanged(). Therefore, we allocate also
 	 * MMHyper page allocations from GMM.
 	 */
-
 	with_inout_ioctl(request, [&] (auto const &in, auto &out, auto &) {
 
 		Sup::Gmm::Pages pages { in.cPages };
-
-		using Vmm_addr = Sup::Gmm::Vmm_addr;
 
 		Vmm_addr const vmm_addr = sup_drv->gmm().alloc_ex(pages);
 
@@ -844,9 +834,25 @@ int suplibOsIOCtlFast(PSUPLIBDATA pThis, uintptr_t uFunction,
                       uintptr_t idCpu) STOP
 
 
-DECLHIDDEN(int) suplibOsPageAlloc(PSUPLIBDATA pThis, size_t cPages,
-                                  uint32_t fFlags, void **ppvPages) STOP
+
+DECLHIDDEN(int) suplibOsPageAlloc(PSUPLIBDATA, size_t cPages,
+                                  uint32_t, void **ppvPages)
+{
+	Pages pages { cPages };
+
+	Vmm_addr const vmm_addr = sup_drv->gmm().alloc_ex(pages);
+
+	*ppvPages = reinterpret_cast<void *>(vmm_addr.value);
+
+	return VINF_SUCCESS;
+}
 
 
-int suplibOsPageFree(PSUPLIBDATA pThis, void *pvPages, size_t cPages) STOP
+int suplibOsPageFree(PSUPLIBDATA, void *pvPages, size_t /* cPages */)
+{
+	Vmm_addr const vmm_addr { addr_t(pvPages) };
 
+	sup_drv->gmm().free(vmm_addr);
+
+	return VINF_SUCCESS;
+}
