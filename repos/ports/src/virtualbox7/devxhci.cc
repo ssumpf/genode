@@ -420,7 +420,7 @@ static DECLCALLBACK(int) xhciR3Construct(PPDMDEVINS pDevIns, int iInstance, PCFG
 	static Libc::Allocator alloc;
 
 	int rc = PDMDevHlpTimerCreate(pDevIns, TMCLOCK_VIRTUAL, Timer_queue::tm_timer_cb,
-	                              pThis, TMTIMER_FLAGS_NO_CRIT_SECT,
+	                              pThis, TMTIMER_FLAGS_NO_CRIT_SECT | TMTIMER_FLAGS_NO_RING0,
 	                              "XHCI Timer", &pThis->controller_timer);
 
 	static Timer_queue timer_queue(alloc, pDevIns, pThis->controller_timer);
