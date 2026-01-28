@@ -61,11 +61,11 @@
       </SharedFolders>
       <Clipboard mode="Bidirectional"/>
       <StorageControllers>
-        <StorageController name="SATA" type="AHCI" PortCount="4" useHostIOCache="true" Bootable="true" IDE0MasterEmulationPort="0" IDE0SlaveEmulationPort="1" IDE1MasterEmulationPort="2" IDE1SlaveEmulationPort="3">
+        <StorageController name="SATA" type="AHCI" PortCount="2" useHostIOCache="true" Bootable="true" IDE0MasterEmulationPort="0" IDE0SlaveEmulationPort="1" IDE1MasterEmulationPort="2" IDE1SlaveEmulationPort="3">
           <AttachedDevice type="HardDisk" hotpluggable="false" port="0" device="0">
             <Image uuid="{d65876fd-b855-4a35-bbfe-115447c1b9ba}"/>
           </AttachedDevice>
-          <AttachedDevice passthrough="false" type="DVD" port="3" device="0">
+          <AttachedDevice passthrough="false" hotpluggable="false" type="DVD" port="1" device="0">
             <Image uuid="{67ec61dd-c7d8-4f36-99ee-d5f4a9eaf0bd}"/>
           </AttachedDevice>
         </StorageController>
