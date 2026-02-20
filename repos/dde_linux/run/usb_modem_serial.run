@@ -1,0 +1,145 @@
+#
+# Provides a serial console to the AT-command uart of the modem (ttyUSB3 for
+# Quectel, ttyUSB0 for Huawei)
+#
+
+assert {![have_board linux]}
+
+if {[have_cmd_switch --autopilot]} {
+	assert {[have_include power_on/qemu] && [have_board pc]} \
+		"Autopilot mode is not supported on this platform."
+}
+
+create_boot_directory
+import_from_depot [depot_user]/src/[base_src] \
+                  [depot_user]/pkg/test_usb_host-[board] \
+                  [depot_user]/src/black_hole \
+                  [depot_user]/src/nic_router \
+                  [depot_user]/src/init \
+                  [depot_user]/src/report_rom \
+                  [depot_user]/src/terminal_crosslink \
+                  [depot_user]/src/usb_net \
+                  [depot_user]/src/usb_serial \
+
+build { driver/usb_net driver/usb_serial }
+
+install_config {
+config | verbose: yes
++ parent-provides
+  + service ROM
+  + service IRQ
+  + service IO_MEM
+  + service IO_PORT
+  + service PD
+  + service RM
+  + service CPU
+  + service LOG
++ default-route
+  + any-service
+    + parent
+    + any-child
++ default | caps: 100 | ram: 1M
++ start timer
+  + provides
+    + service Timer
++ start nic_router | caps: 200 | ram: 16M
+  + provides
+  | + service Nic
+  | + service Uplink
+  + config | verbose_domain_state: yes
+    + policy | label_prefix: usb_net | domain: uplink
+    + domain uplink | use_arp: no
++ start terminal_crosslink
+  + provides
+  | + service Terminal
+  + config | buffer: 32K
++ start report_rom | caps: 120 | ram: 2M
+  + provides
+  | + service Report
+  | + service ROM
+  + config | verbose: no
+  | + default-policy | report: usb -> usb -> devices
+  + route
+    + any-service
+      + parent
++ start usb | caps: 1500 | ram: 32M | managing_system: yes
+  + binary init
+  + provides
+  | + service Usb
+  + route
+    + service ROM | label: config
+    | + parent | label: drivers.config
+    + service Report | + child report_rom
+    + service Timer  | + child timer
+    + any-service    | + parent
++ start black_hole | ram: 2M
+  + provides
+  | + service Terminal
+  + config
+  | + terminal
+  + route
+    + service Timer | + child timer
+    + any-service   | + parent
++ start usb_serial | caps: 180 | ram: 11M
+  + config
+  + route
+    + service ROM | label: report | + child report_rom
+    + service Terminal            | + child terminal_crosslink
+    + service Usb                 | + child usb
+    + service Timer               | + child timer
+    + any-service                 | + parent
++ start usb_net | ram: 16M | caps: 200
+  + provides
+  | + service Terminal
+  + config
+  | + device | vendor_id: 0x12d1 | product_id: 0x15c1 | configuration: 3
+  |   . MIBM config profile is 3 for Huawei ME906e, 0 lets Linux driver choose config
+  + route
+    + service Timer                     | + child timer
+    + service Usb                       | + child usb
+    + service Terminal | label: ttyUSB3 | + child terminal_crosslink
+    + service Terminal                  | + child black_hole
+    + service Uplink                    | + child nic_router
+    + any-service                       | + parent
+-
+}
+
+
+#
+# Define USB host controller config
+#
+set fd [open [run_dir]/genode/usb_host.config w]
+puts $fd {
+config | bios_handoff: no
++ report | devices: yes
++ policy | label_prefix: usb_serial
+  + device | vendor_id: 0x067b | product_id: 0x2303 | . Prolific PL2303
+  + device | vendor_id: 0x0557 | product_id: 0x2008 | . Prolific PL2303
+  + device | vendor_id: 0x0403 | product_id: 0x6001 | . FTDI FT232
++ policy | label_prefix: usb_net
+  + device | vendor_id: 0x2c7c | product_id: 0x125  | . Quectel EG-25g (AT = ttyUSB3)
+  + device | vendor_id: 0x12d1 | product_id: 0x15c1 | . Huawei ME906e  (AT = ttyUSB0)
+-
+}
+close $fd
+
+build_boot_image [build_artifacts]
+
+append qemu_args " -nographic "
+append qemu_args " -device nec-usb-xhci,id=xhci"
+append qemu_args " -device usb-serial,chardev=serial0,bus=xhci.0"
+
+
+if {[have_include "power_on/qemu"]} {
+
+	if { [expr ![info exists env(BUS)] || ![info exists env(DEVICE)]] } {
+		puts stderr "BUS and/or DEVICE environment variables not found."
+		exit 1
+	}
+
+	puts "Using BUS $env(BUS) DEVICE $env(DEVICE)"
+
+	append qemu_args " -device usb-host,hostbus=$env(BUS),hostaddr=$env(DEVICE),bus=xhci.0 "
+}
+
+run_genode_until forever
