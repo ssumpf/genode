@@ -370,96 +370,27 @@ Date:   Thu Dec 4 16:25:12 2025 +0100
 Linux device-driver environment
 ===============================
 
-; @jsoentgen
+This release features the first step in updating the used Linux version in
+our device-driver environment to a recent 6.18 LTS release.
 
-Author: Josef Söntgen <josef.soentgen@genode-labs.com>
-Date:   Mon Jan 12 11:45:30 2026 +0100
+In particular, we started with updating all 'virt_linux'-based components.
+This includes the TCP/IP stack, USB client device drivers like 'usb_hid',
+'usb_net' and 'usb_serial', as well as the wireguard port.
 
-    dde_linux: move linux.port (6.12) to legacy_linux.port
-    
-    This is prerequisite for the Linux update. All dependencies relying on
-    the 'linux' have been adjusted to use 'legacy_linux'.
-    
-    Issue #5798.
+Changes to the internal structuring within in Linux prompted us to adapt
+our Linux emulation environment and guard those changes with kernel version
+checks to keep them compatible with components that for moment still rely
+on an older Linux release.
 
-commit 370c2d1cc6e3b672ebacd1c8304f69f9ca30aec7
-Author: Josef Söntgen <josef.soentgen@genode-labs.com>
-Date:   Mon Jan 12 11:59:43 2026 +0100
+We also decided to drop support for ARMv6, which only concerns support for
+the Raspberry Pi 1, as this platform has not seen much use in recent years
+and the practical relevance is debatable.
+On the other hand, the 'usb_serial' component is now also available for
+ARMv8.
 
-    dde_linux: update linux to 6.18.5
-    
-    This commit updates the DDE Linux version to LTS 6.18.5. Support
-    for 'arm_v6' was dropped in this update.
-    
-    Fixes #5798.
-
-commit 5708c987d954c4f02cdfa6e57a2d630b7601931d
-Author: Josef Söntgen <josef.soentgen@genode-labs.com>
-Date:   Thu Jan 15 17:51:22 2026 +0100
-
-    squash dde_linux: update linux to 6.18.5 (lxip)
-    
-    * Changes to how softirqs are treated, due to the RT merge, require
-      adaptions. TIMER_SOFTIRQ is now handled within 'lx_emul_time_handle'
-      and all architectures feature a 'irq.c' shadow implementation for
-      'do_softirq_own_stack'.
-    
-    * Shadow for 'cacheinfo.c' added on arm.
-    
-    Issue #5798.
-
-commit ddf8c6d3910fccc5decce8339d31d15e138c96a7
-Author: Josef Söntgen <josef.soentgen@genode-labs.com>
-Date:   Fri Jan 16 17:32:49 2026 +0100
-
-    squash dde_linux: update linux to 6.18.5 (usb_hid)
-    
-    * Shadow 'evdev.c' adjusted for changed driver table matches
-      definition.
-    
-    Issue #5798.
-
-commit 850b2d97e323de86ba612037419caa07f8133662
-Author: Josef Söntgen <josef.soentgen@genode-labs.com>
-Date:   Tue Jan 20 15:00:52 2026 +0100
-
-    squash dde_linux: update linux to 6.18.5 (usb_net)
-    
-    * Since CRC32 table generation moved to 'lib/crc',
-      'import-lx_emul_common.inc' was changed to support both ways
-      by checking '$(USE_LINUX_6185)' (only used by 'virt_linux'
-      for now.
-    
-    * 'lx_emul/nic.c' implementation was adapted to support the
-      change to 'struct sockaddr_storage' in 'dev_set_mac_address()'.
-    
-    Issue #5798.
-
-commit 64616a89415caffdd156ef8a99c56e1168decded
-Author: Josef Söntgen <josef.soentgen@genode-labs.com>
-Date:   Fri Jan 23 15:48:38 2026 +0100
-
-    squash dde_linux: update linux to 6.18.5 (usb_serial)
-    
-    * 'arm_v8a' support was enabled.
-    
-    Issue #5798.
-
-commit cedf6568f056813c1d3d0198e9a612ed5b397767
-Author: Josef Söntgen <josef.soentgen@genode-labs.com>
-Date:   Mon Jan 26 18:12:40 2026 +0100
-
-    squash dde_linux: update linux to 6.18.5 (wireguard)
-    
-    Issue #5798.
-
-commit 2ce6b44c5ea2fc680184c6a1b617b5d9d9d9854f
-Author: Josef Söntgen <josef.soentgen@genode-labs.com>
-Date:   Wed Feb 11 12:35:30 2026 +0100
-
-    fixup 'dde_linux: update linux to 6.18.5' (arm_v6 removal)
-    
-    Issue #5798.
+As of now, the update of 'virt_linux' to 6.18.5 is complete, while the
+update of 'pc_linux' is at the starting block. We might consider bumping
+the LTS version during this task to be closer to the current LTS release.
 
 
 TCP/IP
@@ -547,34 +478,18 @@ Date:   Fri Oct 24 07:44:04 2025 +0200
 Software provided via the Genode-world repository
 #################################################
 
-; @jsoentgen, @alex-ab, @cproc
+; @alex-ab, @cproc
 
 Housekeeping
 ------------
 
-commit d17d30653281d3b3a3a777987dcd02c6f9b88599
-Author: Josef Söntgen <josef.soentgen@genode-labs.com>
-Date:   Tue Feb 17 16:05:45 2026 +0100
+The runtime files of the Goa projects maintained within the
+Genode-world repository were converted from XML to HID.
 
-    Convert runtime files to HID
-    
-    Issue genodelabs/genode-world#426.
-
-commit 0f479de00fcb407103e7378527f2b209080a7387
-Author: Josef Söntgen <josef.soentgen@genode-labs.com>
-Date:   Wed Feb 18 10:20:33 2026 +0100
-
-    ports: import CI run-scripts from world
-    
-    This commit imports the limited number of run-scripts currently
-    located in 'legacy/run' used for within the nightly CI. In the
-    process they are converted to HID.
-    This is done because 'legacy/run' will not be part of the ongoing
-    HID conversion and to make it clear that those run-scripts are
-    in fact actively maintained while 'legacy' itself is on the
-    chopping block.
-    
-    Fixes #5811.
+In addition, the currently used run-scripts for CI testing also got the
+HID treatment and to make their usage more apparent were moved into the
+Genode-ports repository. This legacy portion of Genode-world is
+slated for removal in summer of 2026.
 
 New port of Git
 ---------------
@@ -601,13 +516,9 @@ Date:   Wed Dec 10 16:04:44 2025 +0100
 FIO benchmark
 -------------
 
-commit 58a31bcc23cb7819fe34ee23aafbf15965e82af3
-Author: Josef Söntgen <josef.soentgen@genode-labs.com>
-Date:   Thu Sep 18 16:12:15 2025 +0200
-
-    benchmarks: add fio-3.39
-    
-    Fixes genodelabs/genode-world#418
+A port of the well-known _flexible I/O tester_ joins the Genode-world
+repository. Among others, it is used to exercise the I/O aspects of
+our POSIX runtime.
 
 
 Platforms
@@ -858,24 +769,27 @@ Date:   Wed Feb 18 14:02:37 2026 +0100
 Run-tool support for AMT TLS
 ============================
 
-; @jsoentgen
+With newer versions of Intel's Active Management Technology (AMT)
+using TLS is mandatory. So we extended our run-tool plugins that
+deal with AMT to capture serial messages as well as to power-cycle
+the machine in question.
 
-commit 2004e515c7f54ecfb93253657d1840d356f7c2a2
-Author: Josef Söntgen <josef.soentgen@genode-labs.com>
-Date:   Wed Feb 4 14:24:50 2026 +0100
+The RUN_OPT flag '--wsman-tls' switches use of TLS on when set to
+'yes', the default is 'no'.
 
-    tool/run: add support for AMT TLS
-    
-    Newer Intel AMT versions (>= 16.1) do not support using the
-    non TLS ports (16992, 16993) any longer.
-    
-    The RUN_OPT flag '--wsman-tls' switches use of TLS on when set to
-    'yes', the default is 'no.'
-    
-    The RUN_OPT flag '--amtterm-tls' switches use of TLS on when set to
-    'yes', the default is 'no.' Using TLS requires the host's certificate.
-    For now this downloaded via 'openssl s_client ...' and stored as
-    '[log_amt_host].cert'.
-    
-    Issue #5804.
+The RUN_OPT flag '--amtterm-tls' switches use of TLS on when set to
+'yes', the default is 'no'. As TLS SoL requires the host's certificate,
+downloading and placing it into the build directory beforehand is vital.
 
+The following command can be used to obtain the certificate:
+
+!openssl s_client -connect <host>:16993 < /dev/null 2> /dev/null | openssl x509 > <host>.cert
+
+It might also be necessary to active the serial redirection with. The
+following command illustrates how to perform this operation using the 'wsman-cli'
+program:
+
+!wsman --https --endpoint https://admin:<password>@<host>:16993 \
+!      --noverifypeer --noverifyhost \
+!      put http://intel.com/wbem/wscim/1/amt-schema/1/AMT_RedirectionService \
+!      -k ListenerEnabled=true
