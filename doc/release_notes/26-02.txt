@@ -229,30 +229,52 @@ Date:   Wed Jan 28 14:34:11 2026 +0100
 Migration from GitHub to Codeberg
 #################################
 
-; @jschlatow
+As outlined in our [https://genode.org/about/road-map - road map],
+we migrated all but the main (genode.git) repository from GitHub to Codeberg.
+From now on, you will find all genode-* repositories as well as the Goa
+repository at
 
-commit 5470c4cbc168e6b588c4c32453615b1c7b6755b0
-Author: Johannes Schlatow <johannes.schlatow@genode-labs.com>
-Date:   Wed Feb 4 15:51:58 2026 +0100
+  [https://codeberg.org/genodelabs]
 
-    Check and change repository URLs to codeberg.org
-    
-    This commit adds a check into the genode build system for every
-    git repository found under repos/. In case a repository refers to
-    github.com/genodelabs, it checks whether the corresponding
-    repository is already available on codeberg.org. If it is, the
-    URL is updated (after user confirmation) and the master branch
-    is renamed to "main".
-    
-    Issue #5805
+Along with the git repositories, all issues, pull requests and comments have
+been migrated as well. The repositories at GitHub have been made read-only and
+therefore will not receive any updates. In the course of the migration, we have
+also changed the name of the default branch from "master" to "main".
 
-commit b54494100b47bc0160ebad03a33c956685d3e72f
-Author: Johannes Schlatow <johannes.schlatow@genode-labs.com>
-Date:   Tue Feb 10 09:28:29 2026 +0100
+In order to adapt to these changes on your side, we advise you to switch to the
+current master branch in your clone of https://github.com/genodelabs/genode.git
+and follow the instructions that are printed by any build command. For Goa, you
+can trigger the migration with the following commands:
 
-    Update links to repositories (GitHub -> Codeberg)
-    
-    Issue #5805
+! goa update-goa master
+! goa versions
+
+Note that the migration to Codeberg implies a few more changes for contributors:
+Contributors must create an account at codeberg.org. It is possible to link
+the new account to your GitHub account. This enables Codeberg to associate
+your former comments (entered on GitHub) to your new account on Codeberg (i.e.
+you may use different user names on both platforms). In case you forked any
+repository on GitHub you should consider creating a new fork on Codeberg and
+manually pushing your branches and tags to the new fork to restore the state of
+the forked repository as it was on GitHub. The following instruction serve as
+a guideline:
+
+! git clone --bare https://github.com/<user>/<repo> bare_clone
+! cd bare_clone
+! git branch -m master main
+! git remote set-url origin ssh://git@codeberg.com/<user>/<repo>
+! git push --mirror
+
+Codeberg uses Forgejo and has a very similar UI compared to GitHub. However,
+there are a few changes when it comes to referencing issues and commits. On
+Github, you are able to push a commit referencing an issue via '#<issue-number>'
+to your fork and this commit will be shown in the corresponding issue of
+the original repository from which you forked. On Codeberg, however, you
+must explicitly mention the repository where the issue resides via, e.g.,
+'genodelabs/goa#<issue-number>'. Similarly, if you want to reference a commit
+from a fork in an issue comment, you must name the fork explicitly, e.g.
+'jschlatow/goa@<commit-hash>'.
+
 
 Base framework and OS-level infrastructure
 ##########################################
@@ -600,171 +622,53 @@ Build system and tooling
 Goa SDK
 =======
 
-; @jschlatow
+Following the spirit of this release, we converted all examples provided
+in the Goa repository from XML to HID, and made HID the new default.
+Furthermore, we integrated schema validation of _runtime_ files, _index_ files,
+runtime configs (against init.hsd) and component configs
+(determined by depot-provided .hsd files).
 
-commit a2bd64d6c05fa7f1cc7dafec8c677f921837f96d
-Author: Johannes Schlatow <johannes.schlatow@genode-labs.com>
-Date:   Sat Jan 31 11:14:01 2026 +0100
+With the move of genode-world towards Goa, we also reflected on the structure
+of Goa's project directories. Since day one, Goa provided for multiple
+pkg definitions in a single Goa project as subdirectories under _pkg/_,
+which has rarely been used in practice. We therefore removed the substructure
+of the _pkg/_ directory so that the _runtime_, _archives_ and _README_ files are
+now supposed to be placed in the _pkg/_ directory directly.
+In the meantime, Goa has been enabled to detect, build and export Goa projects
+that are referenced as dependencies. Dependent runtimes can therefore be hosted
+in arbitrary subdirectories instead. For instance, a _test/_ subdirectory
+can be used for defining a Goa project as a test case for the parent project.
+This test case can be run by executing 'goa run -C test' from the parent
+directory. Note that the name and hierarchy of the subdirectory is arbitrary.
+However, we actually decided to give any _test/_ directory a special meaning:
+Whenever Goa is run recursively via 'goa -r', it ignores any project that
+has a _/test/_ path element so that test cases can be easily ignored for
+publishing. For testing, we added the '--only-tests' command-line switch that
+inverts this logic.
 
-    Don't timeout at user confirmations
+With the scenario of nested Goa projects in mind, we also removed the
+possibility to modify the project name and directory via _goarc_ files, which
+did not make much sense anymore. If needed one may resort to symlinks instead.
 
-commit d6b6cf28e6388bb07d2cdc4c068fa39c57c070cc
-Author: Johannes Schlatow <johannes.schlatow@genode-labs.com>
-Date:   Mon Feb 2 12:42:51 2026 +0100
+Last but no least, we reflected on the way how Goa passes the required linker
+flags and libraries to the 3rd-party build system. So far, we used environment
+variables such as 'LDFLAGS' and 'LIBS' to achieve this. Yet, not all 3rd-party
+projects, especially projects with custom _configure_ scripts, make use of
+these. We eventually found
+[https://gcc.gnu.org/onlinedocs/gcc/Spec-Files.html - GCC spec files]
+to be a robust alternative to environment variables that reduces the need
+for patching. We already applied the new approach to Goa's support for
+autoconf, make, cmake, qmake and cargo.
 
-    util: allow typing backspace in user confirmation
+Note that not all the aforementioned changes entered Goa's _25.10_ branch.
+In order to maintain compatibility with Sculpt 25.10 and corresponding Goa
+projects, we omitted the switch towards using HID by default and the
+flattening of the _pkg/_ directory from the _25.10_ branch and only added it to
+the _main_ branch. You may conveniently switch between both branches with
+the following commands:
 
-commit 97f7665cef14ceba59b8a6469125719350a19bc9
-Author: Johannes Schlatow <johannes.schlatow@genode-labs.com>
-Date:   Mon Feb 2 12:43:24 2026 +0100
-
-    util: fix user confirmation when called a 2nd time
-    
-    When called a second time (after the user confirmed with a non-empty
-    input the first time), `user_confirmation` did not wait for any
-    input and simply returned the default option.
-
-commit 41d66919b870feb6b41b8d54c17a7e0c6003b017
-Author: Johannes Schlatow <johannes.schlatow@genode-labs.com>
-Date:   Sat Jan 31 11:16:08 2026 +0100
-
-    Check remote URLs and migrate to Codeberg
-    
-    Issue #160
-
-commit 889a402201b86ccc8524c7f0c78ef9a124b42231
-Author: Johannes Schlatow <johannes.schlatow@genode-labs.com>
-Date:   Thu Feb 5 11:56:35 2026 +0100
-
-    run: validate runtime config against hsd files
-    
-    Issue #161
-
-commit b68d9364c1d0103cf091b4a7a842b097e95bb742
-Author: Johannes Schlatow <johannes.schlatow@genode-labs.com>
-Date:   Fri Feb 6 14:53:05 2026 +0100
-
-    validate runtime file against hsd (run & export)
-    
-    Issue #161
-
-commit 8e32c0e545f12d3b87343fdcca72bbdd59ea384d
-Author: Johannes Schlatow <johannes.schlatow@genode-labs.com>
-Date:   Mon Feb 9 17:51:39 2026 +0100
-
-    validate depot index against hsd
-
-commit 2e587929819c33c8454092018629d073b5ea7c92
-Author: Johannes Schlatow <johannes.schlatow@genode-labs.com>
-Date:   Wed Feb 11 12:15:59 2026 +0100
-
-    examples: convert runtime files to HID
-
-commit dc2d80f9e01bb205ca6108bca860cc33a4e3b017
-Author: Johannes Schlatow <johannes.schlatow@genode-labs.com>
-Date:   Wed Feb 11 12:16:25 2026 +0100
-
-    doc: convert to HID
-
-commit de3ba779024bad8a477763fb62b5e796a807cb6c
-Author: Johannes Schlatow <johannes.schlatow@genode-labs.com>
-Date:   Fri Feb 13 15:22:48 2026 +0100
-
-    remove --pkg argument
-    
-    This commit remove the rarely used support for hosting multiple
-    runtime scenarios in a single project directory. It also flattens
-    the project-directory hierarchy as it removes the need for a subdirectory
-    in pkg/.
-    
-    genodelabs/goa#164
-
-commit 699ea2bbced8de07671259bd7ae082a55574ec83
-Author: Johannes Schlatow <johannes.schlatow@genode-labs.com>
-Date:   Fri Feb 13 15:37:49 2026 +0100
-
-    adapt examples to changed pkg/ structure
-    
-    genodelabs/goa#164
-
-commit 61cc4c67db035732986725d52fc3dcd4f1253a99
-Author: Johannes Schlatow <johannes.schlatow@genode-labs.com>
-Date:   Fri Feb 13 17:18:47 2026 +0100
-
-    test: add multiple_hello_world
-    
-    genodelabs/goa#164
-
-commit 08b816718c6e0977aaef1bc42b179a20daacd683
-Author: Johannes Schlatow <johannes.schlatow@genode-labs.com>
-Date:   Mon Feb 16 16:28:41 2026 +0100
-
-    Remove project_name and project_dir from config
-    
-    Enabling the override of project_dir and project_name in goarc files
-    has unintended side-effects. Since there is negligible benefit of
-    this possibility (if needed, symlinks are your friends), we rather
-    remove it.
-    
-    genodelabs/goa#164
-
-commit f19caf200377d35bad8ab39ada15a6234b67d24a
-Author: Johannes Schlatow <johannes.schlatow@genode-labs.com>
-Date:   Mon Feb 16 16:50:09 2026 +0100
-
-    Limit recursive execution to non-test projects
-    
-    This also adds the `--only-tests` switch, which inverses the logic.
-    
-    genodelabs/goa#164
-
-commit 8c35bbb4eee4241b669980c5263520da2e561f4f
-Author: Johannes Schlatow <johannes.schlatow@genode-labs.com>
-Date:   Thu Feb 19 22:19:15 2026 +0100
-
-    Add helper for creating a GCC spec file
-    
-    Issue #166
-
-commit 8f32293299244f9a853ba12f674bbefa7740dcf5
-Author: Christian Prochaska <christian.prochaska@genode-labs.com>
-Date:   Sun Dec 7 19:20:27 2025 +0100
-
-    autoconf: pass linker options in a GCC spec file
-    
-    Fixes genodelabs/goa#158
-
-commit a417cc986f03c0c462ce6dfa48f6941c3d309f2e
-Author: Johannes Schlatow <johannes.schlatow@genode-labs.com>
-Date:   Wed Feb 18 14:04:34 2026 +0100
-
-    cargo: pass linker options in a GCC spec file
-    
-    genodelabs/goa#166
-
-commit 2dd3eedde80f8695db9b325bedf522fb0d249508
-Author: Johannes Schlatow <johannes.schlatow@genode-labs.com>
-Date:   Wed Feb 18 14:04:20 2026 +0100
-
-    qmake: pass linker options in a GCC spec file
-    
-    genodelabs/goa#166
-
-commit 600f93a83767eab2592160e4339a6ca1a14941d8
-Author: Johannes Schlatow <johannes.schlatow@genode-labs.com>
-Date:   Wed Feb 18 14:04:00 2026 +0100
-
-    cmake: pass linker options in a GCC spec file
-    
-    genodelabs/goa#166
-
-commit dae579008e0105b847e34656cb1d14c2afdc8f08
-Author: Johannes Schlatow <johannes.schlatow@genode-labs.com>
-Date:   Wed Feb 18 14:02:37 2026 +0100
-
-    make: pass linker option in a GCC spec file
-    
-    genodelabs/goa#166
+! goa update-goa main
+! goa update-goa 25.10
 
 Run-tool support for AMT TLS
 ============================
