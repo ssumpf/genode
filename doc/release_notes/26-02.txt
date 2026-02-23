@@ -1,0 +1,881 @@
+
+
+              ===============================================
+              Release notes for the Genode OS Framework 26.02
+              ===============================================
+
+                               Genode Labs
+
+
+
+; intro
+; @nfeske
+
+Human-inclined data (HID) format by default
+###########################################
+
+; @nfeske
+
+commit 7b0fa18e763a33bf5a89f3477697b5819a0dff30
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Tue Sep 30 15:09:11 2025 +0200
+
+    sculpt.run: interoperability with both XML and HID
+    
+    This patch makes sculpt.run accept launchers and deploy files in both
+    formats XML and HID.
+    
+    Issue #5710
+
+commit 597457ad02dc2306295ad810f81f813952b4548d
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Mon Jan 5 14:26:27 2026 +0100
+
+    tool/hid: try to preserve XML comments
+    
+    The regular expression used for capturing (and dropping) XML comments
+    was limited to single-line comments. This patch enhances the pattern
+    to capture multi-line comments, and tries to preserve the captured
+    information, either as disabled node or as an textual comment.
+    
+    Observed with repos/gems/sculpt/launcher/mixer.
+    
+    Fixes #5782
+
+commit 7bc0160788e16a24652af513b67fe9899084a582
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Mon Jan 5 16:27:09 2026 +0100
+
+    tool/hid: work around Tcl's string trim
+    
+    Tcl's built-in 'string trim' function seems to produce invalid UTF-8
+    sequences for certain strings. This patch sidesteps this problem
+    by using a regexp for trimming.
+    
+    Observed with repos/os/src/server/event_filter/fr_bepo.chargen.
+    
+    Issue #5782
+
+commit d11570e06a2d091e91fe8e795882bd90b43b0f6a
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Mon Jan 5 17:24:51 2026 +0100
+
+    tool/hid: don't generate top-level comment
+    
+    This patch omits comments preceeding the top-level node because
+    such comments are (currently) not recognized by Genode's util/hid.h
+    as valid HID data.
+    
+    Observed with repos/os/src/server/event_filter/en_us.chargen.
+    
+    Issue #5782
+
+commit d5cc64b70ccf3341beccae071d6caae27a613eb2
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Tue Jan 6 13:59:36 2026 +0100
+
+    tool/hid: attach line comments to preceeding node
+    
+    This patch adjusts the internal representation of HID data closer to the
+    foreseen commenting style, which places the documentation of a node
+    below the node declaration, giving the node declaration the purpose of
+    a headline for the subsequent comments.
+    
+    Hence, comment lines are now attached to the preceding node, not the
+    following node. The internal name of the field has been changed from
+    'preface' to 'doc'.
+    
+    Issue #5782
+
+commit 4691a06b17082ceb8e79efb5b6dc602c5ea1c32a
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Wed Jan 14 17:30:30 2026 +0100
+
+    tool/hid: separate first non-name attr by |
+    
+    When a node has no name, put the first attribute on the next line to
+    avoid the pipe character, which looks nicer when more attribute lines
+    follow.
+    
+    When all attributes fit on the node line, join them via | separators.
+    
+    Issue #5788
+
+commit 9bb8627628f79d7bafe2eff5aaa23bb1b2271bcc
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Thu Jan 15 14:43:15 2026 +0100
+
+    tool/hid: distinguish doc from annotation for XML
+    
+    When importing XML, interpret comments appearing at the right side of a
+    node as an annotion of the preceeding node, not as the documentation of
+    the following node.
+    
+    This fixes the relation of trailing comments with tabular formatted
+    nodes, as used in repos/os/src/server/event_filter/en_us.chargen.
+    
+    Issue #5782
+
+commit 4400d9b8eb8ed136d2eab5540ca2770368845a10
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Thu Jan 15 17:51:59 2026 +0100
+
+    tool/hid: errro when missing '|' before attribute
+    
+    Issue #5788
+
+commit b07fb5fe983f280f48f6a43699e67baeb75dc394
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Fri Jan 16 14:56:32 2026 +0100
+
+    tool/hid: add check command
+    
+    Fixes #5790
+
+commit bbdbc9823b27ff62b193cb36b982cfe2e2b9e2c6
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Thu Jan 22 15:17:28 2026 +0100
+
+    tool/hid: avoid superfluous newline before '-'
+
+commit 6d9b97e72e68edf3f51e5aa149a894eede11017f
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Wed Jan 28 11:50:26 2026 +0100
+
+    tool/hid: simplify parser
+    
+    The syntactic refinement of issue #5788 (always separating the first
+    non-name attr by '|') lends itself to the simplification of the
+    parser. This patch removes recursion by splitting each line into
+    '|'-separated segments that are handled independently. This has
+    the welcome side effect of making the parser more strict. I.e.,
+    missing spaces around '|' delimiters are now reported as an error.
+    
+    Issue #5788
+
+commit 48b65744b856b705fb0faf8bde61c23d79c0efb0
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Thu Dec 11 14:52:32 2025 +0100
+
+    Vim syntax highlighting for HID and Genode log
+
+commit 5e7c0b7c949f8143908fa1a384ac6eba1528f325
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Thu Aug 7 14:22:22 2025 +0200
+
+    ldso: globally disable 'generate_xml' by default
+    
+    This patch changes the default mode of the 'Generator' to HID.
+    For each individual component, the mode can still be switched back
+    to XML by enabling the 'generate_xml' attribute at the top level
+    of the component's config.
+    
+    Issue #5786
+
+commit 9d7b895919693f91c3317f0d4417f246be4e613a
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Thu Jan 15 16:54:14 2026 +0100
+
+    Hid_generator: separate first non-name attr by |
+    
+    Issue #5788
+
+commit e0db8080ed94ece935ebb507d06d3956eee0172f
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Mon Jan 19 16:03:01 2026 +0100
+
+    tool/depot: validate HID-based pkg/runtime files
+    
+    Issue #5790
+
+commit f27ebe205df64007518d75541c0c6d35628b7f80
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Tue Jan 20 16:05:26 2026 +0100
+
+    mk: pick up .hsd files as build artifacts
+    
+    Issue #5786
+
+commit 49782e682f3f988057ac90365dd552b9f0ed801b
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Sun Jan 18 00:21:41 2026 +0100
+
+    init: HID schema description
+    
+    Issue #5786
+
+commit 1afa796cd03063ee5a4807b44a2e904732d3f935
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Tue Jan 20 17:04:20 2026 +0100
+
+    tool/run: validate HID-formatted init configs
+    
+    Issue #5786
+
+commit 9c9c322b675c68a4606dc4ecebf483dbb07d8b21
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Wed Jan 28 16:05:10 2026 +0100
+
+    tool/run: validate inline-defined HID sub configs
+    
+    Issue #5790
+
+commit ee480ccc34293a3c71831be0d62b199a3a67f746
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Wed Jan 28 14:34:11 2026 +0100
+
+    nic_router: add nic_router.hsd
+
+Migration from GitHub to Codeberg
+#################################
+
+; @jschlatow
+
+commit 5470c4cbc168e6b588c4c32453615b1c7b6755b0
+Author: Johannes Schlatow <johannes.schlatow@genode-labs.com>
+Date:   Wed Feb 4 15:51:58 2026 +0100
+
+    Check and change repository URLs to codeberg.org
+    
+    This commit adds a check into the genode build system for every
+    git repository found under repos/. In case a repository refers to
+    github.com/genodelabs, it checks whether the corresponding
+    repository is already available on codeberg.org. If it is, the
+    URL is updated (after user confirmation) and the master branch
+    is renamed to "main".
+    
+    Issue #5805
+
+commit b54494100b47bc0160ebad03a33c956685d3e72f
+Author: Johannes Schlatow <johannes.schlatow@genode-labs.com>
+Date:   Tue Feb 10 09:28:29 2026 +0100
+
+    Update links to repositories (GitHub -> Codeberg)
+    
+    Issue #5805
+
+Base framework and OS-level infrastructure
+##########################################
+
+API refinements
+===============
+
+; @nfeske
+
+commit 8f2df063219648bc079374d926a49b5c4d3dfa52
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Fri Nov 28 13:43:21 2025 +0100
+
+    util/misc_math.h: let log2 return uint8_t
+    
+    The return value of the edge case log2(0) is now explicitly specified as
+    second parameter.
+    
+    Issue #5660
+
+commit 60c27d06024d680dc95987c0389f569bce9f0a95
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Mon Dec 1 12:01:14 2025 +0100
+
+    base: use Align argument type
+    
+    The 'Align' type is meant to be used as argument for aligned allocations
+    and replaces the former use of basic unsigned values. Typical argument
+    values AT_PAGE, AT_16_BYTES, AT_MWORD are now defined by the public API,
+    alleviating many former uses of 'get_page_size_log2()'.
+    
+    Fixes #5660
+
+commit a04d87840a376f552dc5e4cbad1ea4c3ff01a106
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Mon Dec 1 14:32:53 2025 +0100
+
+    base: replace get_page_size() by plain constant
+    
+    The internal base/internal/page_size.h header provides the
+    'get_page_size()' and 'get_page_size_log()' functions, which used to be
+    actual function calls in the past (coming from base-pistachio where the
+    page size was obtained from the KIP) but changed to constexpr later.
+    This patch turns those to the plain constants PAGE_SIZE_LOG2, PAGE_SIZE,
+    and PAGE_MASK, thereby simplifying the code using them.
+    
+    Fixes #5762
+
+commit edf5fff20b03d16e4e83ce06dff8a1be37ee09bb
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Tue Dec 2 15:16:18 2025 +0100
+
+    util/string.h: replace memset by bzero
+    
+    Fixes #5763
+
+commit 7df1a2f60acb60a64edf6aa837a7cbfa76566922
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Thu Dec 4 11:44:56 2025 +0100
+
+    server/vfs: use Genode namespace
+    
+    Issue #5671
+
+commit bef6ed334d2f3eba82e65bd2f257f8c6f2908679
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Tue Dec 9 15:24:49 2025 +0100
+
+    vfs: namespace reorganisation
+    
+    The VFS infrastructure (include/vfs/) has now become part of 'Genode::',
+    which alleviates the need to prefix Genode:: types inside the 'Vfs'.
+    
+    Each VFS file-system type now lives in a dedicated namespace prefixed
+    with 'Vfs_', which includes the 'Genode' and 'Genode::Vfs' namespaces.
+    This gives each plugin a natural place for custom types, flattening the
+    type hierarchy in cases where a compound file system is constructed.
+    
+    Issue #4706
+
+commit 21836c39cb364a50785eed34c3fa91070f700bb9
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Thu Dec 4 15:29:38 2025 +0100
+
+    Remove diag session argument
+    
+    Core's diag feature was useful during the introduction of cap-quota
+    accounting and trading around 2017. Given that the feature has remained
+    unused (except for two run scripts vmm_x86.run and virtualbox6.run) ever
+    since, this patch removes it.
+    
+    Fixes #5662
+
+commit 3c4bbb3dc9b9b7ba9fe45ffd04c96c7422953bc6
+Author: Norman Feske <norman.feske@genode-labs.com>
+Date:   Thu Dec 4 13:40:09 2025 +0100
+
+    Remove UART session interface
+    
+    This patch also removes the long unused uart.run script (only supported
+    on pbxa9) and the test/uart program that was solely present in this run
+    script.
+    
+    Fixes #5654
+
+commit cfd24f819085925ed3cf8871201ecbffdd7c1f79
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Thu Dec 4 16:25:12 2025 +0100
+
+    base: remove exceptions from VM session API
+    
+    Fix genodelabs/genode#5665
+
+
+Linux device-driver environment
+===============================
+
+; @jsoentgen
+
+Author: Josef Söntgen <josef.soentgen@genode-labs.com>
+Date:   Mon Jan 12 11:45:30 2026 +0100
+
+    dde_linux: move linux.port (6.12) to legacy_linux.port
+    
+    This is prerequisite for the Linux update. All dependencies relying on
+    the 'linux' have been adjusted to use 'legacy_linux'.
+    
+    Issue #5798.
+
+commit 370c2d1cc6e3b672ebacd1c8304f69f9ca30aec7
+Author: Josef Söntgen <josef.soentgen@genode-labs.com>
+Date:   Mon Jan 12 11:59:43 2026 +0100
+
+    dde_linux: update linux to 6.18.5
+    
+    This commit updates the DDE Linux version to LTS 6.18.5. Support
+    for 'arm_v6' was dropped in this update.
+    
+    Fixes #5798.
+
+commit 5708c987d954c4f02cdfa6e57a2d630b7601931d
+Author: Josef Söntgen <josef.soentgen@genode-labs.com>
+Date:   Thu Jan 15 17:51:22 2026 +0100
+
+    squash dde_linux: update linux to 6.18.5 (lxip)
+    
+    * Changes to how softirqs are treated, due to the RT merge, require
+      adaptions. TIMER_SOFTIRQ is now handled within 'lx_emul_time_handle'
+      and all architectures feature a 'irq.c' shadow implementation for
+      'do_softirq_own_stack'.
+    
+    * Shadow for 'cacheinfo.c' added on arm.
+    
+    Issue #5798.
+
+commit ddf8c6d3910fccc5decce8339d31d15e138c96a7
+Author: Josef Söntgen <josef.soentgen@genode-labs.com>
+Date:   Fri Jan 16 17:32:49 2026 +0100
+
+    squash dde_linux: update linux to 6.18.5 (usb_hid)
+    
+    * Shadow 'evdev.c' adjusted for changed driver table matches
+      definition.
+    
+    Issue #5798.
+
+commit 850b2d97e323de86ba612037419caa07f8133662
+Author: Josef Söntgen <josef.soentgen@genode-labs.com>
+Date:   Tue Jan 20 15:00:52 2026 +0100
+
+    squash dde_linux: update linux to 6.18.5 (usb_net)
+    
+    * Since CRC32 table generation moved to 'lib/crc',
+      'import-lx_emul_common.inc' was changed to support both ways
+      by checking '$(USE_LINUX_6185)' (only used by 'virt_linux'
+      for now.
+    
+    * 'lx_emul/nic.c' implementation was adapted to support the
+      change to 'struct sockaddr_storage' in 'dev_set_mac_address()'.
+    
+    Issue #5798.
+
+commit 64616a89415caffdd156ef8a99c56e1168decded
+Author: Josef Söntgen <josef.soentgen@genode-labs.com>
+Date:   Fri Jan 23 15:48:38 2026 +0100
+
+    squash dde_linux: update linux to 6.18.5 (usb_serial)
+    
+    * 'arm_v8a' support was enabled.
+    
+    Issue #5798.
+
+commit cedf6568f056813c1d3d0198e9a612ed5b397767
+Author: Josef Söntgen <josef.soentgen@genode-labs.com>
+Date:   Mon Jan 26 18:12:40 2026 +0100
+
+    squash dde_linux: update linux to 6.18.5 (wireguard)
+    
+    Issue #5798.
+
+commit 2ce6b44c5ea2fc680184c6a1b617b5d9d9d9854f
+Author: Josef Söntgen <josef.soentgen@genode-labs.com>
+Date:   Wed Feb 11 12:35:30 2026 +0100
+
+    fixup 'dde_linux: update linux to 6.18.5' (arm_v6 removal)
+    
+    Issue #5798.
+
+
+TCP/IP
+======
+
+; @ssumpf
+
+commit 86071c26d43e4552311859542ebf353f0903d977
+Author: Sebastian Sumpf <sebastian.sumpf@genode-labs.com>
+Date:   Fri Nov 28 21:09:30 2025 +0100
+
+    vfs/ip: add Error_file_system
+    
+    * Add and connect 'error' file for each socket
+    
+    * The 'error' file is a Single_file_system using Genode::Generator to
+      create an 'error'-node with the 'name' set to the
+      genode_c_api/socket.h minus GENODE_ and 'value' set the corresponding
+      enum value
+    
+    issue #5768
+
+commit ed1975a8fe44965f394a698e0aa92e56f9477050
+Author: Sebastian Sumpf <sebastian.sumpf@genode-labs.com>
+Date:   Tue Dec 2 13:37:08 2025 +0100
+
+    libc/socket_fs: use error file
+    
+    * Retrieve Genode::Errno from 'error' file and translate it libc's errno
+    
+    * Adjust lwip to return the same results as lxip
+    
+    * Adjust tests to new errno's
+    
+    issue #5768
+
+commit 87e512967809e8a6299c9386ae6619f22868f2dc
+Author: Christian Prochaska <christian.prochaska@genode-labs.com>
+Date:   Wed Oct 15 12:24:56 2025 +0200
+
+    libc: test 'recv' with MSG_PEEK
+    
+    * add recv with MSG_PEEK flag set to libc_connect test
+    
+    Issue #5768
+
+commit 62c4cfd1376be0231e6cbb496846cfe02ae569e2
+Author: Sebastian Sumpf <sebastian.sumpf@genode-labs.com>
+Date:   Wed Dec 3 20:26:49 2025 +0100
+
+    depot_autopilot: add test-libc_udp_unreachable test
+    
+    Tests returned errno for unreachable network (Nic session is routed to
+    the black_hole) when using UDP with lxip/lwip.
+    
+    issue #5768
+
+commit 14241026ec1c4d33a9152d023acaafe7d51f13e3
+Author: Sebastian Sumpf <sebastian.sumpf@genode-labs.com>
+Date:   Wed Dec 3 21:36:21 2025 +0100
+
+    lwip: Effective C++
+    
+    issue #5768
+
+
+Event filter
+============
+
+; @chelmuth
+
+commit 1c9786b3dbe4ffbf7cc0224adeecf6254b4436cf
+Author: Christian Helmuth <christian.helmuth@genode-labs.com>
+Date:   Fri Oct 24 07:44:04 2025 +0200
+
+    event_filter: report key combinations as shortcuts
+    
+    Report a configured list of key combinations as distinct shortcut
+    reports that are labeled by given names. Key events are preserved for
+    further processing (resp. not filtered out).
+    
+    Fixes #5774
+
+
+Software provided via the Genode-world repository
+#################################################
+
+; @jsoentgen, @alex-ab, @cproc
+
+Housekeeping
+------------
+
+commit d17d30653281d3b3a3a777987dcd02c6f9b88599
+Author: Josef Söntgen <josef.soentgen@genode-labs.com>
+Date:   Tue Feb 17 16:05:45 2026 +0100
+
+    Convert runtime files to HID
+    
+    Issue genodelabs/genode-world#426.
+
+commit 0f479de00fcb407103e7378527f2b209080a7387
+Author: Josef Söntgen <josef.soentgen@genode-labs.com>
+Date:   Wed Feb 18 10:20:33 2026 +0100
+
+    ports: import CI run-scripts from world
+    
+    This commit imports the limited number of run-scripts currently
+    located in 'legacy/run' used for within the nightly CI. In the
+    process they are converted to HID.
+    This is done because 'legacy/run' will not be part of the ongoing
+    HID conversion and to make it clear that those run-scripts are
+    in fact actively maintained while 'legacy' itself is on the
+    chopping block.
+    
+    Fixes #5811.
+
+New port of Git
+---------------
+
+commit c7a5993e114680cd019dbf4e17a82e51c91c983c
+Author: Christian Prochaska <christian.prochaska@genode-labs.com>
+Date:   Mon Feb 16 11:45:43 2026 +0100
+
+    add Git
+    
+    Fixes genodelabs/genode-world#425
+
+Seoul VMM
+---------
+
+commit 911582058f5988a3bef926ab0b3ccfdea65f771d
+Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
+Date:   Wed Dec 10 16:04:44 2025 +0100
+
+    seoul: convert to goa project
+    
+    Fixes #419
+
+FIO benchmark
+-------------
+
+commit 58a31bcc23cb7819fe34ee23aafbf15965e82af3
+Author: Josef Söntgen <josef.soentgen@genode-labs.com>
+Date:   Thu Sep 18 16:12:15 2025 +0200
+
+    benchmarks: add fio-3.39
+    
+    Fixes genodelabs/genode-world#418
+
+
+Platforms
+#########
+
+Execution on bare hardware (base-hw)
+====================================
+
+; @skalk
+
+commit 44319317fb85f0dd0c989a7edd74b9e0ea69012c
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Fri Dec 5 14:25:47 2025 +0100
+
+    hw: sanitize Kernel::Irq class
+    
+    This commit cleans up the class API of Kernel::Irq, and related code.
+    Specifically it does:
+    
+    * Remove dynamic_cast on user-interrupt retrieval path
+    * Use scoped access of interrupts when accessing its Pool (container class,
+      instead of returning references or pointers
+    * Shorten and unify names of arguments, member variables
+    
+    Fix #5767
+
+commit f6590f0555607eba355b62f6ac49dade7b94ea4b
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Tue Dec 9 12:02:22 2025 +0100
+
+    hw: reflect ASID allocation error
+    
+    This commit reflects a failed allocation of a new address-space ID
+    during the Pd construction to the corresponding session call, and
+    returns a SERVICE_DENIED return value then.
+    Moreover, it removes the corresponding allocator from the kernel
+    part into core.
+    
+    Fix #5580
+
+commit 13b099c13af5f4d7927d5ff2cda646c344046090
+Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
+Date:   Wed Jan 7 13:26:54 2026 +0100
+
+    hw: check current in mmu more precisely on arm
+    
+    On Armv7/8 we have to compare either address-space id as well as
+    page-table address of the MMU registers with the values of a pd to
+    check for equality.
+    This commit fixes a regression that entered the code base by
+    issue #5732.
+    
+    Fix #5785
+
+
+Linux
+=====
+
+; @nfeske
+
+commit 043430c7f627d9b1f01659d4b3e3ecae9201412d
+Author: boinsoft <me@b0in.xyz>
+Date:   Tue Jan 6 13:22:50 2026 -0800
+
+    fb_sdl: SDL2/3 compatability conversion
+    
+    Converts the SDL2 fb_sdl codebase to SDL3 via an sdl2/sdl3.h shim.
+    
+    Confirmed working on stock SDL2 Ubuntu LTS 24.04. Confirmed working
+    on manually compiled SDL3 on Ubuntu LTS 24.04. make run/demo
+    BOARD=linux KERNEL=linux runs and is visually correct.
+    
+    Fixes #5784
+
+
+Build system and tooling
+########################
+
+Goa SDK
+=======
+
+; @jschlatow
+
+commit a2bd64d6c05fa7f1cc7dafec8c677f921837f96d
+Author: Johannes Schlatow <johannes.schlatow@genode-labs.com>
+Date:   Sat Jan 31 11:14:01 2026 +0100
+
+    Don't timeout at user confirmations
+
+commit d6b6cf28e6388bb07d2cdc4c068fa39c57c070cc
+Author: Johannes Schlatow <johannes.schlatow@genode-labs.com>
+Date:   Mon Feb 2 12:42:51 2026 +0100
+
+    util: allow typing backspace in user confirmation
+
+commit 97f7665cef14ceba59b8a6469125719350a19bc9
+Author: Johannes Schlatow <johannes.schlatow@genode-labs.com>
+Date:   Mon Feb 2 12:43:24 2026 +0100
+
+    util: fix user confirmation when called a 2nd time
+    
+    When called a second time (after the user confirmed with a non-empty
+    input the first time), `user_confirmation` did not wait for any
+    input and simply returned the default option.
+
+commit 41d66919b870feb6b41b8d54c17a7e0c6003b017
+Author: Johannes Schlatow <johannes.schlatow@genode-labs.com>
+Date:   Sat Jan 31 11:16:08 2026 +0100
+
+    Check remote URLs and migrate to Codeberg
+    
+    Issue #160
+
+commit 889a402201b86ccc8524c7f0c78ef9a124b42231
+Author: Johannes Schlatow <johannes.schlatow@genode-labs.com>
+Date:   Thu Feb 5 11:56:35 2026 +0100
+
+    run: validate runtime config against hsd files
+    
+    Issue #161
+
+commit b68d9364c1d0103cf091b4a7a842b097e95bb742
+Author: Johannes Schlatow <johannes.schlatow@genode-labs.com>
+Date:   Fri Feb 6 14:53:05 2026 +0100
+
+    validate runtime file against hsd (run & export)
+    
+    Issue #161
+
+commit 8e32c0e545f12d3b87343fdcca72bbdd59ea384d
+Author: Johannes Schlatow <johannes.schlatow@genode-labs.com>
+Date:   Mon Feb 9 17:51:39 2026 +0100
+
+    validate depot index against hsd
+
+commit 2e587929819c33c8454092018629d073b5ea7c92
+Author: Johannes Schlatow <johannes.schlatow@genode-labs.com>
+Date:   Wed Feb 11 12:15:59 2026 +0100
+
+    examples: convert runtime files to HID
+
+commit dc2d80f9e01bb205ca6108bca860cc33a4e3b017
+Author: Johannes Schlatow <johannes.schlatow@genode-labs.com>
+Date:   Wed Feb 11 12:16:25 2026 +0100
+
+    doc: convert to HID
+
+commit de3ba779024bad8a477763fb62b5e796a807cb6c
+Author: Johannes Schlatow <johannes.schlatow@genode-labs.com>
+Date:   Fri Feb 13 15:22:48 2026 +0100
+
+    remove --pkg argument
+    
+    This commit remove the rarely used support for hosting multiple
+    runtime scenarios in a single project directory. It also flattens
+    the project-directory hierarchy as it removes the need for a subdirectory
+    in pkg/.
+    
+    genodelabs/goa#164
+
+commit 699ea2bbced8de07671259bd7ae082a55574ec83
+Author: Johannes Schlatow <johannes.schlatow@genode-labs.com>
+Date:   Fri Feb 13 15:37:49 2026 +0100
+
+    adapt examples to changed pkg/ structure
+    
+    genodelabs/goa#164
+
+commit 61cc4c67db035732986725d52fc3dcd4f1253a99
+Author: Johannes Schlatow <johannes.schlatow@genode-labs.com>
+Date:   Fri Feb 13 17:18:47 2026 +0100
+
+    test: add multiple_hello_world
+    
+    genodelabs/goa#164
+
+commit 08b816718c6e0977aaef1bc42b179a20daacd683
+Author: Johannes Schlatow <johannes.schlatow@genode-labs.com>
+Date:   Mon Feb 16 16:28:41 2026 +0100
+
+    Remove project_name and project_dir from config
+    
+    Enabling the override of project_dir and project_name in goarc files
+    has unintended side-effects. Since there is negligible benefit of
+    this possibility (if needed, symlinks are your friends), we rather
+    remove it.
+    
+    genodelabs/goa#164
+
+commit f19caf200377d35bad8ab39ada15a6234b67d24a
+Author: Johannes Schlatow <johannes.schlatow@genode-labs.com>
+Date:   Mon Feb 16 16:50:09 2026 +0100
+
+    Limit recursive execution to non-test projects
+    
+    This also adds the `--only-tests` switch, which inverses the logic.
+    
+    genodelabs/goa#164
+
+commit 8c35bbb4eee4241b669980c5263520da2e561f4f
+Author: Johannes Schlatow <johannes.schlatow@genode-labs.com>
+Date:   Thu Feb 19 22:19:15 2026 +0100
+
+    Add helper for creating a GCC spec file
+    
+    Issue #166
+
+commit 8f32293299244f9a853ba12f674bbefa7740dcf5
+Author: Christian Prochaska <christian.prochaska@genode-labs.com>
+Date:   Sun Dec 7 19:20:27 2025 +0100
+
+    autoconf: pass linker options in a GCC spec file
+    
+    Fixes genodelabs/goa#158
+
+commit a417cc986f03c0c462ce6dfa48f6941c3d309f2e
+Author: Johannes Schlatow <johannes.schlatow@genode-labs.com>
+Date:   Wed Feb 18 14:04:34 2026 +0100
+
+    cargo: pass linker options in a GCC spec file
+    
+    genodelabs/goa#166
+
+commit 2dd3eedde80f8695db9b325bedf522fb0d249508
+Author: Johannes Schlatow <johannes.schlatow@genode-labs.com>
+Date:   Wed Feb 18 14:04:20 2026 +0100
+
+    qmake: pass linker options in a GCC spec file
+    
+    genodelabs/goa#166
+
+commit 600f93a83767eab2592160e4339a6ca1a14941d8
+Author: Johannes Schlatow <johannes.schlatow@genode-labs.com>
+Date:   Wed Feb 18 14:04:00 2026 +0100
+
+    cmake: pass linker options in a GCC spec file
+    
+    genodelabs/goa#166
+
+commit dae579008e0105b847e34656cb1d14c2afdc8f08
+Author: Johannes Schlatow <johannes.schlatow@genode-labs.com>
+Date:   Wed Feb 18 14:02:37 2026 +0100
+
+    make: pass linker option in a GCC spec file
+    
+    genodelabs/goa#166
+
+Run-tool support for AMT TLS
+============================
+
+; @jsoentgen
+
+commit 2004e515c7f54ecfb93253657d1840d356f7c2a2
+Author: Josef Söntgen <josef.soentgen@genode-labs.com>
+Date:   Wed Feb 4 14:24:50 2026 +0100
+
+    tool/run: add support for AMT TLS
+    
+    Newer Intel AMT versions (>= 16.1) do not support using the
+    non TLS ports (16992, 16993) any longer.
+    
+    The RUN_OPT flag '--wsman-tls' switches use of TLS on when set to
+    'yes', the default is 'no.'
+    
+    The RUN_OPT flag '--amtterm-tls' switches use of TLS on when set to
+    'yes', the default is 'no.' Using TLS requires the host's certificate.
+    For now this downloaded via 'openssl s_client ...' and stored as
+    '[log_amt_host].cert'.
+    
+    Issue #5804.
+
