@@ -14,217 +14,44 @@
 Human-inclined data (HID) format by default
 ###########################################
 
-; @nfeske
+Throughout the past year, we have thoroughly
+[https://genode.org/documentation/release-notes/25.08#Consideration_of_a_lean_alternative_to_XML - evaluated]
+the potential replacement of XML by a custom alternative optimized for human
+use and understanding. As part of the evaluation, we published an
+[https://genodians.org/nfeske/2025-10-30-sculpt-human - experimental variant]
+of Sculpt OS to gather practical experience and feedback, which in turn
+allowed us to gradually refine the format into its final form over the past
+few months. With the current release, we have now switched the Genode OS
+framework to the new HID format by default.
 
-commit 7b0fa18e763a33bf5a89f3477697b5819a0dff30
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Tue Sep 30 15:09:11 2025 +0200
+:Human-inclined data (HID) documentation:
 
-    sculpt.run: interoperability with both XML and HID
-    
-    This patch makes sculpt.run accept launchers and deploy files in both
-    formats XML and HID.
-    
-    Issue #5710
+  [https://genode.org/documentation/hid]
 
-commit 597457ad02dc2306295ad810f81f813952b4548d
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Mon Jan 5 14:26:27 2026 +0100
+It goes without saying that such a transition would have been unrealistic
+without adequate tooling. This is where our HID-processing tool at _tool/hid_
+came into play, which we enhanced iteratively. The tool has not only become
+able to convert between XML and HID but to retain comments. It largely reduced
+the conversion work to the final retouching, supplementing human taste and
+intent.
 
-    tool/hid: try to preserve XML comments
-    
-    The regular expression used for capturing (and dropping) XML comments
-    was limited to single-line comments. This patch enhances the pattern
-    to capture multi-line comments, and tries to preserve the captured
-    information, either as disabled node or as an textual comment.
-    
-    Observed with repos/gems/sculpt/launcher/mixer.
-    
-    Fixes #5782
+The HID tool has also become the natural place for providing the mechanism
+for validating data against schema definitions. Combined with concise
+schema definitions, the new 'check' command automates the offline validation
+of configurations. Genode's run tool leverages this facility whenever a .hsd
+schema for a given component exists, providing a safety guardrail similar to
+the formerly used .xsd files.
 
-commit 7bc0160788e16a24652af513b67fe9899084a582
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Mon Jan 5 16:27:09 2026 +0100
+The HID-based .hsd files lend themselves to become hosts of documentation
+that is traditionally kept in REAME files. Hence, over time, we plan to
+replace free-form READMEs by semi-formal yet human-readable .hsd files.
+This, however, is not today. At the current time, the README files of the
+framework still speak of XML. This will be rectified in concert with the
+revision of the Genode books in the upcoming release 26.05 in May.
 
-    tool/hid: work around Tcl's string trim
-    
-    Tcl's built-in 'string trim' function seems to produce invalid UTF-8
-    sequences for certain strings. This patch sidesteps this problem
-    by using a regexp for trimming.
-    
-    Observed with repos/os/src/server/event_filter/fr_bepo.chargen.
-    
-    Issue #5782
+Note that Genode will retain support for XML in addition to HID until version
+26.08.
 
-commit d11570e06a2d091e91fe8e795882bd90b43b0f6a
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Mon Jan 5 17:24:51 2026 +0100
-
-    tool/hid: don't generate top-level comment
-    
-    This patch omits comments preceeding the top-level node because
-    such comments are (currently) not recognized by Genode's util/hid.h
-    as valid HID data.
-    
-    Observed with repos/os/src/server/event_filter/en_us.chargen.
-    
-    Issue #5782
-
-commit d5cc64b70ccf3341beccae071d6caae27a613eb2
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Tue Jan 6 13:59:36 2026 +0100
-
-    tool/hid: attach line comments to preceeding node
-    
-    This patch adjusts the internal representation of HID data closer to the
-    foreseen commenting style, which places the documentation of a node
-    below the node declaration, giving the node declaration the purpose of
-    a headline for the subsequent comments.
-    
-    Hence, comment lines are now attached to the preceding node, not the
-    following node. The internal name of the field has been changed from
-    'preface' to 'doc'.
-    
-    Issue #5782
-
-commit 4691a06b17082ceb8e79efb5b6dc602c5ea1c32a
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Wed Jan 14 17:30:30 2026 +0100
-
-    tool/hid: separate first non-name attr by |
-    
-    When a node has no name, put the first attribute on the next line to
-    avoid the pipe character, which looks nicer when more attribute lines
-    follow.
-    
-    When all attributes fit on the node line, join them via | separators.
-    
-    Issue #5788
-
-commit 9bb8627628f79d7bafe2eff5aaa23bb1b2271bcc
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Thu Jan 15 14:43:15 2026 +0100
-
-    tool/hid: distinguish doc from annotation for XML
-    
-    When importing XML, interpret comments appearing at the right side of a
-    node as an annotion of the preceeding node, not as the documentation of
-    the following node.
-    
-    This fixes the relation of trailing comments with tabular formatted
-    nodes, as used in repos/os/src/server/event_filter/en_us.chargen.
-    
-    Issue #5782
-
-commit 4400d9b8eb8ed136d2eab5540ca2770368845a10
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Thu Jan 15 17:51:59 2026 +0100
-
-    tool/hid: errro when missing '|' before attribute
-    
-    Issue #5788
-
-commit b07fb5fe983f280f48f6a43699e67baeb75dc394
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Fri Jan 16 14:56:32 2026 +0100
-
-    tool/hid: add check command
-    
-    Fixes #5790
-
-commit bbdbc9823b27ff62b193cb36b982cfe2e2b9e2c6
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Thu Jan 22 15:17:28 2026 +0100
-
-    tool/hid: avoid superfluous newline before '-'
-
-commit 6d9b97e72e68edf3f51e5aa149a894eede11017f
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Wed Jan 28 11:50:26 2026 +0100
-
-    tool/hid: simplify parser
-    
-    The syntactic refinement of issue #5788 (always separating the first
-    non-name attr by '|') lends itself to the simplification of the
-    parser. This patch removes recursion by splitting each line into
-    '|'-separated segments that are handled independently. This has
-    the welcome side effect of making the parser more strict. I.e.,
-    missing spaces around '|' delimiters are now reported as an error.
-    
-    Issue #5788
-
-commit 48b65744b856b705fb0faf8bde61c23d79c0efb0
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Thu Dec 11 14:52:32 2025 +0100
-
-    Vim syntax highlighting for HID and Genode log
-
-commit 5e7c0b7c949f8143908fa1a384ac6eba1528f325
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Thu Aug 7 14:22:22 2025 +0200
-
-    ldso: globally disable 'generate_xml' by default
-    
-    This patch changes the default mode of the 'Generator' to HID.
-    For each individual component, the mode can still be switched back
-    to XML by enabling the 'generate_xml' attribute at the top level
-    of the component's config.
-    
-    Issue #5786
-
-commit 9d7b895919693f91c3317f0d4417f246be4e613a
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Thu Jan 15 16:54:14 2026 +0100
-
-    Hid_generator: separate first non-name attr by |
-    
-    Issue #5788
-
-commit e0db8080ed94ece935ebb507d06d3956eee0172f
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Mon Jan 19 16:03:01 2026 +0100
-
-    tool/depot: validate HID-based pkg/runtime files
-    
-    Issue #5790
-
-commit f27ebe205df64007518d75541c0c6d35628b7f80
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Tue Jan 20 16:05:26 2026 +0100
-
-    mk: pick up .hsd files as build artifacts
-    
-    Issue #5786
-
-commit 49782e682f3f988057ac90365dd552b9f0ed801b
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Sun Jan 18 00:21:41 2026 +0100
-
-    init: HID schema description
-    
-    Issue #5786
-
-commit 1afa796cd03063ee5a4807b44a2e904732d3f935
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Tue Jan 20 17:04:20 2026 +0100
-
-    tool/run: validate HID-formatted init configs
-    
-    Issue #5786
-
-commit 9c9c322b675c68a4606dc4ecebf483dbb07d8b21
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Wed Jan 28 16:05:10 2026 +0100
-
-    tool/run: validate inline-defined HID sub configs
-    
-    Issue #5790
-
-commit ee480ccc34293a3c71831be0d62b199a3a67f746
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Wed Jan 28 14:34:11 2026 +0100
-
-    nic_router: add nic_router.hsd
 
 Migration from GitHub to Codeberg
 #################################
@@ -233,6 +60,8 @@ As outlined in our [https://genode.org/about/road-map - road map],
 we migrated all but the main (genode.git) repository from GitHub to Codeberg.
 From now on, you will find all genode-* repositories as well as the Goa
 repository at
+
+:Genode Labs at Codeberg:
 
   [https://codeberg.org/genodelabs]
 
