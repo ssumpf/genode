@@ -198,16 +198,16 @@ TCP/IP
 Genode's libc expects correct error values when using POSIX sockets. These error
 values are obtained through the _vfs_ip_-plugin which communicates directly with
 both IP stacks (lwIP and lxip). Up until now, we have tried to tunnel all socket
-errors through the file-system session which let, because of the limited error
-states of the session, to heuristics and emulation at the libc side. Because
+errors through the file-system session which led - because of the limited error
+states of the session - to heuristics and emulation at the libc side. Because
 both IP-stacks now implement the socket C-API, and therefore, return unified
 error codes, we changed this behavior by writing the error codes to a dedicated
-error file for each socket. libc now retrieves a socket error from the file and
+error file for each socket. The libc now retrieves a socket error from the file and
 translates it to the corresponding libc errno. This change results in improved
 compliance with the POSIX standard. Additionally, we made sure that both
-IP-stacks return consistent results while also adding common usage patterns,
-like _recv_ with MSG_PEEK set on a non-blocking socket which is used for
-connection status testing, to our testing infrastructure.
+IP-stacks return consistent results while also enhancing our testing
+infrastructure with common usage patterns like _recv_ with MSG_PEEK set on a
+non-blocking socket as used for connection status testing.
 
 
 Event filter
