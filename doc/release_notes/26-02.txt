@@ -597,21 +597,16 @@ Date:   Wed Jan 7 13:26:54 2026 +0100
 Linux
 =====
 
-; @nfeske
-
-commit 043430c7f627d9b1f01659d4b3e3ecae9201412d
-Author: boinsoft <me@b0in.xyz>
-Date:   Tue Jan 6 13:22:50 2026 -0800
-
-    fb_sdl: SDL2/3 compatability conversion
-    
-    Converts the SDL2 fb_sdl codebase to SDL3 via an sdl2/sdl3.h shim.
-    
-    Confirmed working on stock SDL2 Ubuntu LTS 24.04. Confirmed working
-    on manually compiled SDL3 on Ubuntu LTS 24.04. make run/demo
-    BOARD=linux KERNEL=linux runs and is visually correct.
-    
-    Fixes #5784
+For test-driving interactive system scenarios on Linux, Genode employs the
+[https://github.com/genodelabs/genode/tree/master/repos/os/src/driver/framebuffer/sdl - fb_sdl]
+component as pseudo display and input driver. In
+[https://genode.org/documentation/release-notes/23.11#Linux - version 23.11],
+it received an update to [https://wiki.libsdl.org/SDL2 - SDL2]. The current
+release [https://github.com/genodelabs/genode/pull/5784 - adds] principal
+support for [https://wiki.libsdl.org/SDL3 - SDL3] in addition.
+Whereas the time-tested version 2 is still used by default, version 3 can now
+be selected by setting the environment variable GENODE_FB_SDL_VERSION to 3
+at build time.
 
 
 Build system and tooling
