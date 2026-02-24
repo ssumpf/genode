@@ -547,52 +547,20 @@ Platforms
 Execution on bare hardware (base-hw)
 ====================================
 
-; @skalk
+Genode's custom kernel now exports additional information when collecting
+execution times of subjects in the system via the TRACE service. Beforehand
+execution times of all threads got collected. Now when using hardware-assisted
+virtualization, the cpu usage of virtual-cpus is tracked too. Moreover,
+subject properties of the new scheduler introduced in
+[https://genode.org/documentation/release-notes/25.08#Kernel_scheduling_for_fairness_and_low_latency
+- release 25.08] are getting exposed additionally. Namely, the weights and warp
+values of the individual threads and virtual-cpus.
 
-commit 44319317fb85f0dd0c989a7edd74b9e0ea69012c
-Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
-Date:   Fri Dec 5 14:25:47 2025 +0100
-
-    hw: sanitize Kernel::Irq class
-    
-    This commit cleans up the class API of Kernel::Irq, and related code.
-    Specifically it does:
-    
-    * Remove dynamic_cast on user-interrupt retrieval path
-    * Use scoped access of interrupts when accessing its Pool (container class,
-      instead of returning references or pointers
-    * Shorten and unify names of arguments, member variables
-    
-    Fix #5767
-
-commit f6590f0555607eba355b62f6ac49dade7b94ea4b
-Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
-Date:   Tue Dec 9 12:02:22 2025 +0100
-
-    hw: reflect ASID allocation error
-    
-    This commit reflects a failed allocation of a new address-space ID
-    during the Pd construction to the corresponding session call, and
-    returns a SERVICE_DENIED return value then.
-    Moreover, it removes the corresponding allocator from the kernel
-    part into core.
-    
-    Fix #5580
-
-commit 13b099c13af5f4d7927d5ff2cda646c344046090
-Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
-Date:   Wed Jan 7 13:26:54 2026 +0100
-
-    hw: check current in mmu more precisely on arm
-    
-    On Armv7/8 we have to compare either address-space id as well as
-    page-table address of the MMU registers with the values of a pd to
-    check for equality.
-    This commit fixes a regression that entered the code base by
-    issue #5732.
-    
-    Fix #5785
-
+The enduring effort to keep and enhance the quality of the bare hardware
+runtime's code-base are going on. This time by reworking the kernel internal
+interrupt representation, as well as the allocation of hardware-based address
+space identifiers. A failure of the latter gets now reflected to upper layers of
+the system.
 
 Linux
 =====
