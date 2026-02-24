@@ -527,13 +527,10 @@ Date:   Mon Feb 16 11:45:43 2026 +0100
 Seoul VMM
 ---------
 
-commit 911582058f5988a3bef926ab0b3ccfdea65f771d
-Author: Alexander Boettcher <alexander.boettcher@genode-labs.com>
-Date:   Wed Dec 10 16:04:44 2025 +0100
-
-    seoul: convert to goa project
-    
-    Fixes #419
+The Seoul VMM got converted to be usable with goa. All Genode specific code
+located in genode-world has been moved to the Seoul source repository and a
+make based build enviornment was crafted. The goa project now imports this
+modified Seoul repository and uses the Makefile to build the VMM.
 
 FIO benchmark
 -------------
