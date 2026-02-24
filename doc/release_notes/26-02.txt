@@ -527,10 +527,11 @@ Date:   Mon Feb 16 11:45:43 2026 +0100
 Seoul VMM
 ---------
 
-The Seoul VMM got converted to be usable with goa. All Genode specific code
+The Seoul VMM got converted to be usable with Goa. All Genode specific code
 located in genode-world has been moved to the Seoul source repository and a
-make based build enviornment was crafted. The goa project now imports this
-modified Seoul repository and uses the Makefile to build the VMM.
+make-based build environment was crafted. The new
+[https://codeberg.org/genodelabs/genode-world/src/branch/main/vmm/seoul - Goa project]
+imports this modified Seoul repository and uses a 'Makefile' to build the VMM.
 
 FIO benchmark
 -------------
