@@ -282,111 +282,55 @@ Base framework and OS-level infrastructure
 API refinements
 ===============
 
-; @nfeske
+New 'Align' argument type
+-------------------------
 
-commit 8f2df063219648bc079374d926a49b5c4d3dfa52
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Fri Nov 28 13:43:21 2025 +0100
+The 'Align' type defined at _util/misc_math.h_ is meant to be used as argument
+for aligned allocations and replaces the former use of basic unsigned values.
+Typical argument values AT_PAGE, AT_16_BYTES, AT_MWORD are now defined by the
+public API, alleviating many former uses of 'get_page_size_log2()'.
+In non-typical cases, the 'Align' name self-documents the purpose the argument
+when passed around. When defining an alignment, the notion '{ .log2 = 10 }'
+nicely highlights the meaning of 10 is an 2^n exponent.
 
-    util/misc_math.h: let log2 return uint8_t
-    
-    The return value of the edge case log2(0) is now explicitly specified as
-    second parameter.
-    
-    Issue #5660
+Removal of memset
+-----------------
 
-commit 60c27d06024d680dc95987c0389f569bce9f0a95
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Mon Dec 1 12:01:14 2025 +0100
+Raw memory-clearing via 'memset' has arguably been a rarity throughout the
+framework. As almost all of these calls used to specify 0 as fill character,
+we have now replaced 'memset' by 'bzero'. The latter has a narrower interface
+and no return value. Still, calls of 'bzero' rightfully remain a rarity.
 
-    base: use Align argument type
-    
-    The 'Align' type is meant to be used as argument for aligned allocations
-    and replaces the former use of basic unsigned values. Typical argument
-    values AT_PAGE, AT_16_BYTES, AT_MWORD are now defined by the public API,
-    alleviating many former uses of 'get_page_size_log2()'.
-    
-    Fixes #5660
+Removed diag session argument
+-----------------------------
 
-commit a04d87840a376f552dc5e4cbad1ea4c3ff01a106
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Mon Dec 1 14:32:53 2025 +0100
+Core's diag feature was a useful debugging aid during the introduction of
+cap-quota accounting and trading around
+[https://genode.org/documentation/release-notes/17.05#Assignment_and_trading_of_capability_quota version 17.05].
+Given that the feature has remained unused ever since, we have now removed it.
 
-    base: replace get_page_size() by plain constant
-    
-    The internal base/internal/page_size.h header provides the
-    'get_page_size()' and 'get_page_size_log()' functions, which used to be
-    actual function calls in the past (coming from base-pistachio where the
-    page size was obtained from the KIP) but changed to constexpr later.
-    This patch turns those to the plain constants PAGE_SIZE_LOG2, PAGE_SIZE,
-    and PAGE_MASK, thereby simplifying the code using them.
-    
-    Fixes #5762
+Removed UART session interface
+------------------------------
 
-commit edf5fff20b03d16e4e83ce06dff8a1be37ee09bb
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Tue Dec 2 15:16:18 2025 +0100
+The UART session interface was introduced in
+[https://genode.org/documentation/release-notes/12.11#New_UART_session_interface - version 12.11]
+to extend the terminal session interface with the ability of setting the baud
+rate. This was long before the configuration-based
+[https://genode.org/documentation/genode-foundations/25.05/components/Component_configuration.html#Server-side_policy_selection - server-side policy selection]
+became the predominant pattern for out-of-band concerns like this.
+Since the split of session interfaces between terminal and UART is no longer
+justified, the UART session got removed now.
 
-    util/string.h: replace memset by bzero
-    
-    Fixes #5763
+VFS library
+-----------
 
-commit 7df1a2f60acb60a64edf6aa837a7cbfa76566922
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Thu Dec 4 11:44:56 2025 +0100
+The VFS infrastructure at _include/vfs/_ has now become part of the 'Genode::'
+namespace, which alleviates the need to prefix Genode types inside the 'Vfs'.
 
-    server/vfs: use Genode namespace
-    
-    Issue #5671
-
-commit bef6ed334d2f3eba82e65bd2f257f8c6f2908679
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Tue Dec 9 15:24:49 2025 +0100
-
-    vfs: namespace reorganisation
-    
-    The VFS infrastructure (include/vfs/) has now become part of 'Genode::',
-    which alleviates the need to prefix Genode:: types inside the 'Vfs'.
-    
-    Each VFS file-system type now lives in a dedicated namespace prefixed
-    with 'Vfs_', which includes the 'Genode' and 'Genode::Vfs' namespaces.
-    This gives each plugin a natural place for custom types, flattening the
-    type hierarchy in cases where a compound file system is constructed.
-    
-    Issue #4706
-
-commit 21836c39cb364a50785eed34c3fa91070f700bb9
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Thu Dec 4 15:29:38 2025 +0100
-
-    Remove diag session argument
-    
-    Core's diag feature was useful during the introduction of cap-quota
-    accounting and trading around 2017. Given that the feature has remained
-    unused (except for two run scripts vmm_x86.run and virtualbox6.run) ever
-    since, this patch removes it.
-    
-    Fixes #5662
-
-commit 3c4bbb3dc9b9b7ba9fe45ffd04c96c7422953bc6
-Author: Norman Feske <norman.feske@genode-labs.com>
-Date:   Thu Dec 4 13:40:09 2025 +0100
-
-    Remove UART session interface
-    
-    This patch also removes the long unused uart.run script (only supported
-    on pbxa9) and the test/uart program that was solely present in this run
-    script.
-    
-    Fixes #5654
-
-commit cfd24f819085925ed3cf8871201ecbffdd7c1f79
-Author: Stefan Kalkowski <stefan.kalkowski@genode-labs.com>
-Date:   Thu Dec 4 16:25:12 2025 +0100
-
-    base: remove exceptions from VM session API
-    
-    Fix genodelabs/genode#5665
+Each VFS file-system type now lives in a dedicated namespace prefixed
+with 'Vfs_', which includes the 'Genode' and 'Genode::Vfs' namespaces.
+This gives each plugin a natural place for custom types, flattening the
+type hierarchy in cases where a compound file system is constructed.
 
 
 Linux device-driver environment
