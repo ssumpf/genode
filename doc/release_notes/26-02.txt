@@ -269,13 +269,9 @@ slated for removal in summer of 2026.
 New port of Git
 ---------------
 
-commit c7a5993e114680cd019dbf4e17a82e51c91c983c
-Author: Christian Prochaska <christian.prochaska@genode-labs.com>
-Date:   Mon Feb 16 11:45:43 2026 +0100
-
-    add Git
-    
-    Fixes genodelabs/genode-world#425
+The Git version control system is an essential tool in our Genode development
+workflow and we added a port to genode-world as part of our roadmap toward
+self-hosted development on Sculpt OS.
 
 Seoul VMM
 ---------
