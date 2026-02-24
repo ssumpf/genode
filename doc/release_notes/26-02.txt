@@ -195,65 +195,19 @@ the LTS version during this line of work to closely track the current LTS releas
 TCP/IP
 ======
 
-; @ssumpf
-
-commit 86071c26d43e4552311859542ebf353f0903d977
-Author: Sebastian Sumpf <sebastian.sumpf@genode-labs.com>
-Date:   Fri Nov 28 21:09:30 2025 +0100
-
-    vfs/ip: add Error_file_system
-    
-    * Add and connect 'error' file for each socket
-    
-    * The 'error' file is a Single_file_system using Genode::Generator to
-      create an 'error'-node with the 'name' set to the
-      genode_c_api/socket.h minus GENODE_ and 'value' set the corresponding
-      enum value
-    
-    issue #5768
-
-commit ed1975a8fe44965f394a698e0aa92e56f9477050
-Author: Sebastian Sumpf <sebastian.sumpf@genode-labs.com>
-Date:   Tue Dec 2 13:37:08 2025 +0100
-
-    libc/socket_fs: use error file
-    
-    * Retrieve Genode::Errno from 'error' file and translate it libc's errno
-    
-    * Adjust lwip to return the same results as lxip
-    
-    * Adjust tests to new errno's
-    
-    issue #5768
-
-commit 87e512967809e8a6299c9386ae6619f22868f2dc
-Author: Christian Prochaska <christian.prochaska@genode-labs.com>
-Date:   Wed Oct 15 12:24:56 2025 +0200
-
-    libc: test 'recv' with MSG_PEEK
-    
-    * add recv with MSG_PEEK flag set to libc_connect test
-    
-    Issue #5768
-
-commit 62c4cfd1376be0231e6cbb496846cfe02ae569e2
-Author: Sebastian Sumpf <sebastian.sumpf@genode-labs.com>
-Date:   Wed Dec 3 20:26:49 2025 +0100
-
-    depot_autopilot: add test-libc_udp_unreachable test
-    
-    Tests returned errno for unreachable network (Nic session is routed to
-    the black_hole) when using UDP with lxip/lwip.
-    
-    issue #5768
-
-commit 14241026ec1c4d33a9152d023acaafe7d51f13e3
-Author: Sebastian Sumpf <sebastian.sumpf@genode-labs.com>
-Date:   Wed Dec 3 21:36:21 2025 +0100
-
-    lwip: Effective C++
-    
-    issue #5768
+Genode's libc expects correct error values when using POSIX sockets. These error
+values are obtained through the _vfs_ip_-plugin which communicates directly with
+both IP stacks (lwIP and lxip). Up until now, we have tried to tunnel all socket
+errors through the file-system session which let, because of the limited error
+states of the session, to heuristics and emulation at the libc side. Because
+both IP-stacks now implement the socket C-API, and therefore, return unified
+error codes, we changed this behavior by writing the error codes to a dedicated
+error file for each socket. libc now retrieves a socket error from the file and
+translates it to the corresponding libc errno. This change results in improved
+compliance with the POSIX standard. Additionally, we made sure that both
+IP-stacks return consistent results while also adding common usage patterns,
+like _recv_ with MSG_PEEK set on a non-blocking socket which is used for
+connection status testing, to our testing infrastructure.
 
 
 Event filter
