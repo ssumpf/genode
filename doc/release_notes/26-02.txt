@@ -426,19 +426,40 @@ Date:   Wed Dec 3 21:36:21 2025 +0100
 Event filter
 ============
 
-; @chelmuth
+The global-key Nitpicker feature facilitates the implementation of global
+key combinations, for example, the window manager's KEY_SCREEN shortcuts. If
+the global key is pressed all subsequent input events are passed to the
+configured handler of the global key by Nitpicker until no key is pressed.
+This effectively removes those input events from the event stream of the
+current focused component. Thus, an outside observer can't detect key
+combinations while leaving the event stream unmodified and usable by the
+focused Nitpicker client. An example use case of such an observer is a
+global screen lock that is activated if Win+L is pressed while the Win key
+is also handled by clients (e.g., a virtual machine).
 
-commit 1c9786b3dbe4ffbf7cc0224adeecf6254b4436cf
-Author: Christian Helmuth <christian.helmuth@genode-labs.com>
-Date:   Fri Oct 24 07:44:04 2025 +0200
+In this release, we enhanced the event-filter component to support reporting
+of _shortcuts_ if configured key combinations are observed. The key events
+are preserved for further processing (resp. not filtered out).
 
-    event_filter: report key combinations as shortcuts
-    
-    Report a configured list of key combinations as distinct shortcut
-    reports that are labeled by given names. Key events are preserved for
-    further processing (resp. not filtered out).
-    
-    Fixes #5774
+! report
+! + shortcut screenshot
+!   + key KEY_LEFTMETA
+!   + key KEY_S
+! + shortcut screenlock
+!   + key KEY_LEFTMETA
+!   + key KEY_L
+
+The example configuration declares two shortcut reports named screenlock and
+screenshot. Event filter creates two report sessions labeled by the shortcut
+names and reports each occurrence of the combinations. The report provides
+the shortcut 'name' and a unique 'serial' number as attributes like follows.
+
+! shortcut screenshot | serial: 7
+
+Report observers must record the last observed serial number for comparison
+on later report updates. The first serial number and future changes of its
+value shall be interpreted as shortcut events. Note, reports missing a valid
+'serial' attribute must be ignored.
 
 
 Software provided via the Genode-world repository
