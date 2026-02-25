@@ -75,7 +75,7 @@ leverages this facility whenever a schema (.hsd) for a given component exists,
 providing a safety guardrail similar to the formerly used .xsd files.
 
 The HID-based .hsd files lend themselves to become hosts for documentation
-that is traditionally kept in REAME files. Hence, over time, we plan to
+that is traditionally kept in README files. Hence, over time, we plan to
 replace free-form READMEs by semi-formal yet human-readable .hsd files.
 This, however, is not today. At the current time, the README files of the
 framework still speak of XML. This will be rectified in concert with the
@@ -118,7 +118,7 @@ your former comments (entered on GitHub) to your new account on Codeberg (i.e.
 you may use different user names on both platforms). In case you forked any
 repository on GitHub, you should consider creating a new fork on Codeberg and
 manually pushing your branches and tags to the new fork to restore the state of
-the forked repository as it was on GitHub. The following instruction serve as
+the forked repository as it was on GitHub. The following instructions serve as
 a guideline:
 
 ! git clone --bare https://github.com/<user>/<repo> bare_clone
@@ -151,9 +151,9 @@ The 'Align' type defined at _util/misc_math.h_ is meant to be used as argument
 for aligned allocations and replaces the former use of basic unsigned values.
 Typical argument values AT_PAGE, AT_16_BYTES, AT_MWORD are now defined by the
 public API.
-In non-typical cases, the 'Align' name self-documents the purpose the argument
+In non-typical cases, the 'Align' name self-documents the purpose of the argument
 when passed around. When defining an alignment, the notion '{ .log2 = 10 }'
-nicely expresses the meaning of 10 is an 2^n exponent.
+nicely expresses the meaning of 10 as a 2^n exponent.
 
 Removal of memset
 -----------------
@@ -168,7 +168,7 @@ Removed diag session argument
 
 Core's diag feature had been a useful debugging aid during the introduction of
 cap-quota accounting and trading around
-[https://genode.org/documentation/release-notes/17.05#Assignment_and_trading_of_capability_quota version 17.05].
+[https://genode.org/documentation/release-notes/17.05#Assignment_and_trading_of_capability_quota - version 17.05].
 Given that the feature has remained unused ever since, we have removed it.
 
 Removed UART session interface
@@ -328,7 +328,7 @@ Execution on bare hardware (base-hw)
 Genode's custom kernel now exports additional information when collecting
 execution times of subjects in the system via the TRACE service. Beforehand,
 execution times of all threads got collected. Now when using hardware-assisted
-virtualization, the CPU usage of virtual CPUS is tracked too. Moreover,
+virtualization, the CPU usage of virtual CPUs is tracked too. Moreover,
 subject properties of the new scheduler introduced in
 [https://genode.org/documentation/release-notes/25.08#Kernel_scheduling_for_fairness_and_low_latency - release 25.08]
 are getting exposed additionally. Namely, the weights and warp
@@ -430,7 +430,7 @@ The following command can be used to obtain the certificate:
 
 !openssl s_client -connect <host>:16993 < /dev/null 2> /dev/null | openssl x509 > <host>.cert
 
-It might also be necessary to active the serial redirection with. The
+It might also be necessary to activate the serial redirection. The
 following command illustrates how to perform this operation using the 'wsman-cli'
 program:
 
