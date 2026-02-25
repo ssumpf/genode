@@ -89,7 +89,7 @@ level of its node.
 !   pkg: nfeske/pkg/rom_osci/2025-12-12
 ! -
 
-In the example, 'verbose' and 'arch' are attribute of the 'config' node
+In the example, 'verbose' and 'arch' are attributes of the 'config' node
 whereas 'ram' and 'pkg' are attributes of the 'start' node.
 Note that the indentation gives a little room for creative freedom. The
 attributes of 'config' are indented in a roomy way whereas the 'start'
@@ -117,14 +117,15 @@ or in the compacted form
 
 The '|' character splits one line into multiple segments where each segment
 denotes a separate line with its indentation retained from the segment.
-Note that '|' delimits the preceeding attribute value.
+Note that '|' delimits the preceding attribute value.
 Hence, '|' characters cannot appear in attribute values.
 
 Tabular arrangement
 ~~~~~~~~~~~~~~~~~~~
 
 The merging of lines can be leveraged for compacting nested nodes.
-For example
+
+For example,
 ! + route
 !   + service ROM
 !     label: recording
@@ -142,7 +143,7 @@ could be written as
 !                                      + child wm
 !   + any-service
 !                                      + parent
-and thus can be compated to
+and thus can be compacted to
 ! + route
 !   + service ROM | label: recording | + child record_rom
 !   + service Gui                    | + child wm
@@ -275,13 +276,13 @@ Syntax
 * Attribute values can contain spaces and any printable UTF-8 characters
   except '|'.
 
-* Leading and trailing space around an attribute value is not part the value.
+* Leading and trailing space around an attribute value is not part of the value.
 
 * A node type can be followed by a node name separated by space.
   A node name is an attribute value.
 
 * Quoted content and comments can contain spaces and any printable UTF-8
-  characters. Quoted content may contain tabs.
+  characters. Quoted content may contain tabs and '|'.
 
 * Attribute values must be separated from the tag with at least one space.
 
@@ -357,7 +358,7 @@ current scope may host arbitrary sub nodes.
 Node categories
 ---------------
 
-A 'category' node can have one or more 'node' sub nodes that fulfil
+A 'category' node can have one or more 'node' sub nodes that fulfill
 the role of a category of nodes.
 
 ! + category route_target
@@ -448,7 +449,7 @@ Usage
 
 ! hid [-i] [--import-xml] <command> [<options>] <input-file>
 
-With the option '-i' specfied, the '<input-file>' is modified in place.
+With the option '-i' specified, the '<input-file>' is modified in place.
 
 By specifying '-' as '<input-file>', the tool reads from stdin.
 
