@@ -151,8 +151,9 @@ The 'Align' type defined at _util/misc_math.h_ is meant to be used as argument
 for aligned allocations and replaces the former use of basic unsigned values.
 Typical argument values AT_PAGE, AT_16_BYTES, AT_MWORD are now defined by the
 public API.
-In non-typical cases, the 'Align' name self-documents the purpose of the argument
-when passed around. When defining an alignment, the notion '{ .log2 = 10 }'
+Whenever an alignment value is passed around, the type name fittingly
+describes the purpose of the parameter.
+When using a specific alignment, the notion '{ .log2 = 10 }'
 nicely expresses the meaning of 10 as a 2^n exponent.
 
 Removal of memset
