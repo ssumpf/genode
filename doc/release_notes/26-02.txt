@@ -8,8 +8,33 @@
 
 
 
-; intro
-; @nfeske
+With version 26.02, we celebrate a new human-friendly way of interacting with
+configurations and other structured data. Our custom designed human-inclined
+data (HID) format evolved during two years of experimentation and practical
+evaluation, while having taken each single use case encountered in the
+Genode-based Sculpt OS as input. With the final touches, tooling, and
+documentation added during the release cycle, Genode 26.02 finalizes the
+format and consistently replaces the use of XML by HID
+(Section [Human-inclined data (HID) format by default]).
+
+Speaking of transitions, as planned on our
+[https://genode.org/about/road-map - roadmap], we completed the first half of
+the project's migration from GitHub to Codeberg.
+Section [Migration from GitHub to Codeberg] describes the intermediate state
+and provides practical guidance for users and contributors.
+
+The technical topics of the release revolve around the progressive update of
+our Linux device-driver environment (DDE-Linux) to kernel version 6.18
+(Section [Linux device-driver environment]), usability improvements of the Goa
+SDK (Section [Goa SDK]), input-event processing (Section [Event filter]), and
+code rigidity
+(Sections [API refinements] and [Execution on bare hardware (base-hw)]).
+
+Feature-wise, version 26.02 further cultivates the genode-world repository as
+designated place for ported 3rd-party software, adding the port of Git as
+stepping stone on our way towards self-hosted development on Sculpt OS
+(Section [Software provided via the Genode-world repository]).
+
 
 Human-inclined data (HID) format by default
 ###########################################
@@ -28,6 +53,9 @@ framework to the new HID format by default.
 
   [https://genode.org/documentation/hid]
 
+[image hid_osci_example]
+  Genode's new way of textual configuration
+
 The switch entails all run scripts, Sculpt OS, the Goa SDK, all automated
 tests, and all depot packages provided by Genode's main repository.
 It goes without saying that such a
@@ -40,8 +68,9 @@ final retouching, supplementing human taste and intent as a post-processing
 step.
 
 The HID tool has also become the natural solution for validating data against
-schema definitions. Combined with concise schema definitions, the new 'check'
-command automates the offline validation of configurations. Genode's run tool
+schema definitions. Driven by concisely expressed data schemas that blend
+formalism with human-readable documentation, the new 'check'
+command aids the offline validation of configurations. Genode's run tool
 leverages this facility whenever a schema (.hsd) for a given component exists,
 providing a safety guardrail similar to the formerly used .xsd files.
 
@@ -251,8 +280,6 @@ value shall be interpreted as shortcut events. Note that reports missing a valid
 
 Software provided via the Genode-world repository
 #################################################
-
-; @alex-ab, @cproc
 
 Housekeeping
 ------------
