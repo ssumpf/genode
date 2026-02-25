@@ -270,8 +270,10 @@ New port of Git
 ---------------
 
 The Git version control system is an essential tool in our Genode development
-workflow and we added a port to genode-world as part of our roadmap toward
-self-hosted development on Sculpt OS.
+workflow. Following our roadmap towards self-hosted development on Sculpt OS,
+we have now added a
+[https://codeberg.org/genodelabs/genode-world/src/branch/main/devel/git - port]
+to the genode-world repository.
 
 Seoul VMM
 ---------
