@@ -204,7 +204,7 @@ our device-driver environment to a recent 6.18 LTS release.
 
 In particular, we started with updating all 'virt_linux'-based components.
 This includes the TCP/IP stack, USB client device drivers like 'usb_hid',
-'usb_net' and 'usb_serial', as well as the wireguard port.
+'usb_net', and 'usb_serial' as well as the wireguard port.
 
 Changes to the internal structuring within Linux prompted us to adapt
 our Linux emulation environment and guard those changes with kernel version
@@ -258,13 +258,13 @@ In this release, we enhanced the event-filter component to support the reporting
 of _shortcuts_ if configured key combinations are observed. The key events
 are preserved for further processing (resp. not filtered out).
 
-! report
-! + shortcut screenshot
-!   + key KEY_LEFTMETA
-!   + key KEY_S
-! + shortcut screenlock
-!   + key KEY_LEFTMETA
-!   + key KEY_L
+! + report
+!   + shortcut screenshot
+!     + key KEY_LEFTMETA
+!     + key KEY_S
+!   + shortcut screenlock
+!     + key KEY_LEFTMETA
+!     + key KEY_L
 
 The example configuration declares two shortcut reports named screenlock and
 screenshot. The event filter creates two report sessions labeled after the shortcut
@@ -272,6 +272,7 @@ names and reports each occurrence of the combinations. The report provides
 the shortcut 'name' and a unique 'serial' number as attributes like as follows.
 
 ! shortcut screenshot | serial: 7
+! -
 
 Report observers must record the last observed serial number for comparison
 on later report updates. The first serial number and future changes of its
@@ -429,13 +430,13 @@ downloading and placing it into the build directory beforehand is vital.
 
 The following command can be used to obtain the certificate:
 
-!openssl s_client -connect <host>:16993 < /dev/null 2> /dev/null | openssl x509 > <host>.cert
+! openssl s_client -connect <host>:16993 < /dev/null | openssl x509 > <host>.cert
 
 It might also be necessary to activate the serial redirection. The
 following command illustrates how to perform this operation using the 'wsman-cli'
 program:
 
-!wsman --https --endpoint https://admin:<password>@<host>:16993 \
-!      --noverifypeer --noverifyhost \
-!      put http://intel.com/wbem/wscim/1/amt-schema/1/AMT_RedirectionService \
-!      -k ListenerEnabled=true
+! wsman --https --endpoint https://admin:<password>@<host>:16993 \
+!       --noverifypeer --noverifyhost \
+!       put http://intel.com/wbem/wscim/1/amt-schema/1/AMT_RedirectionService \
+!       -k ListenerEnabled=true
