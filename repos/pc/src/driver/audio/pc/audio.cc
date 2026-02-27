@@ -782,47 +782,63 @@ extern "C" void genode_mixer_update_controls(struct genode_mixer_controls *contr
 
 	if (!_audio().mixer_update && !force) return;
 
-	_audio().config.node().for_each_sub_node("control", [&] (Node const &node) {
+	using Name = Genode::String<32>;
+	Name const config_profile_name =
+		_audio().config.node().attribute_value("profile", Name());
 
-		unsigned id = node.attribute_value("id", ~0u);
-		if (id == ~0u) return;
+	if (config_profile_name == "") {
+		warning("no profile name specified");
+		return;
+	}
 
-		Type const name = node.attribute_value("type", Type());
-		Ctrl_type  type = genode_control_type(name);
-		if (type == CTRL_INVALID) return;
+	_audio().config.node().for_each_sub_node("profile", [&] (Node const &node) {
 
-		unsigned channel = node.attribute_value("channel", ~0u);
-		if (type != CTRL_ENUMERATED && channel > 1) return;
+		Name const profile_name = node.attribute_value("name", Name());
+		if (profile_name != config_profile_name)
+			return;
 
-		unsigned selected = node.attribute_value("selected", ~0u);
-		if (type == CTRL_ENUMERATED && selected == ~0u) return;
+		node.for_each_sub_node("control", [&] (Node const &node) {
 
-		struct genode_mixer_control *control = mixer_control(controls, id, max);
-		if (control == nullptr) return;
+			unsigned id = node.attribute_value("id", ~0u);
+			if (id == ~0u) return;
 
-		control->id   = id;
-		control->type = type;
+			Type const name = node.attribute_value("type", Type());
+			Ctrl_type  type = genode_control_type(name);
+			if (type == CTRL_INVALID) return;
 
-		switch (type) {
-		case CTRL_BOOL:
-		{
-			bool value = node.attribute_value("value", false);
-			control->values[channel] = value ? 1 : 0;
-			break;
-		}
-		case CTRL_INTEGER:
-		{
-			unsigned value = node.attribute_value("value", ~0u);
-			control->values[channel] = value;
-			break;
-		}
-		case CTRL_ENUMERATED:
-		{
-			control->values[0] = selected;
-			break;
-		}
-		case CTRL_INVALID: break;
-		}
+			unsigned channel = node.attribute_value("channel", ~0u);
+			if (type != CTRL_ENUMERATED && channel > 1) return;
+
+			unsigned selected = node.attribute_value("selected", ~0u);
+			if (type == CTRL_ENUMERATED && selected == ~0u) return;
+
+			struct genode_mixer_control *control = mixer_control(controls, id, max);
+			if (control == nullptr) return;
+
+			control->id   = id;
+			control->type = type;
+
+			switch (type) {
+			case CTRL_BOOL:
+			{
+				bool value = node.attribute_value("value", false);
+				control->values[channel] = value ? 1 : 0;
+				break;
+			}
+			case CTRL_INTEGER:
+			{
+				unsigned value = node.attribute_value("value", ~0u);
+				control->values[channel] = value;
+				break;
+			}
+			case CTRL_ENUMERATED:
+			{
+				control->values[0] = selected;
+				break;
+			}
+			case CTRL_INVALID: break;
+			}
+		});
 	});
 
 	_audio().mixer_update = false;
@@ -871,4 +887,66 @@ extern "C" void genode_devices_report(struct genode_devices *devices)
 
 	if (result == Buffer_error::EXCEEDED)
 		warning("\"devices\" report exceeds maximum size");
+}
+
+extern "C" bool genode_query_routing(struct genode_routing *routing)
+{
+	if (!routing)
+		return false;
+
+	bool result = false;
+
+	using Name = Genode::String<32>;
+	Name const config_profile_name =
+		_audio().config.node().attribute_value("profile", Name());
+
+	if (config_profile_name == "") {
+		warning("no profile name specified");
+		return false;
+	}
+
+	_audio().config.node().for_each_sub_node("profile", [&] (Node const &node) {
+
+		Name const profile_name = node.attribute_value("name", Name());
+		if (profile_name != config_profile_name)
+			return;
+
+		node.with_sub_node("routing",
+			[&] (Node const &node) {
+
+				log("Use routing information from profile ", profile_name);
+
+				using Device_name = String<16>;
+
+				Device_name const playback =
+					node.attribute_value("playback", Device_name("N/A"));
+				Device_name const mic_headset =
+					node.attribute_value("mic_headset", Device_name("N/A"));
+				Device_name const mic_internal =
+					node.attribute_value("mic_internal", Device_name("N/A"));
+
+				unsigned const speaker_external_id =
+					node.attribute_value("speaker_external_id", 0u);
+				unsigned const speaker_internal_id =
+					node.attribute_value("speaker_internal_id", 0u);
+				unsigned const mic_external_id =
+					node.attribute_value("mic_external_id", 0u);
+				unsigned const mic_internal_id =
+					node.attribute_value("mic_internal_id", 0u);
+
+				memcpy(routing->playback, playback.string(), sizeof(routing->playback));
+				memcpy(routing->mic_headset, mic_headset.string(), sizeof(routing->mic_headset));
+				memcpy(routing->mic_internal, mic_internal.string(), sizeof(routing->mic_internal));
+
+				routing->speaker_external_index = speaker_external_id;
+				routing->speaker_internal_index = speaker_internal_id;
+				routing->mic_external_index = mic_external_id;
+				routing->mic_internal_index = mic_internal_id;
+
+				result = true;
+			},
+			[&] { error("no routing specified"); });
+	});
+
+	return result;
 }

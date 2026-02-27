@@ -8,6 +8,7 @@ LIBS   := base pc_lx_emul jitterentropy
 INC_DIR += $(REL_PRG_DIR) $(REL_PRG_DIR)/shadow
 INC_DIR += $(LX_SRC_DIR)/sound/hda/core
 INC_DIR += $(LX_SRC_DIR)/sound/hda/common
+INC_DIR += $(LX_SRC_DIR)/sound/hda/controllers
 
 SRC_CC += audio.cc
 SRC_CC += firmware.cc

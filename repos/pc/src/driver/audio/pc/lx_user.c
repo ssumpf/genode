@@ -28,34 +28,6 @@ static bool const debug = false;
 
 struct mixer;
 
-/* routes, needs to be configured per platform */
-struct sound_routing
-{
-	char const name[64];
-	char const playback[64];
-	char const mic_headset[64];
-	char const mic_internal[64];
-
-	unsigned const speaker_external_index;
-	unsigned const speaker_internal_index;
-	unsigned const mic_external_index;
-	unsigned const mic_internal_index;
-};
-
-
-/* routes for tigerlake */
-struct sound_routing tigerlake = {
-	.name = "TigerLake",
-	.playback     = "pcmC0D0p",
-	.mic_headset  = "pcmC0D0c",
-	.mic_internal = "pcmC0D6c",
-
-	.speaker_external_index = 1,  // headphone playback switch
-	.speaker_internal_index = 3,  // speaker_mode playback switch
-	.mic_external_index     = 13, // capture switch for external microphone
-	.mic_internal_index     = 30, // dmic0 capture switch for internal microphone
-};
-
 
 /* mixer */
 enum { MAX_CTL_VALS = 2 };
@@ -104,16 +76,16 @@ struct sound_handle
  */
 struct sound_card
 {
-	unsigned              sound_events;
-	enum Device_mode      speaker_mode;
-	enum Device_mode      microphone_mode;
-	bool                  jack_plugged;
-	struct sound_routing *routing;
-	struct mixer         *mixer;
-	struct sound_handle  *playback;
-	struct sound_handle  *capture;
-	struct sound_handle  *mic_headset;
-	struct sound_handle  *mic_internal;
+	unsigned               sound_events;
+	enum Device_mode       speaker_mode;
+	enum Device_mode       microphone_mode;
+	bool                   jack_plugged;
+	struct genode_routing *routing;
+	struct mixer          *mixer;
+	struct sound_handle   *playback;
+	struct sound_handle   *capture;
+	struct sound_handle   *mic_headset;
+	struct sound_handle   *mic_internal;
 };
 
 
@@ -265,6 +237,9 @@ static struct snd_card *wait_for_card(void)
 
 static int sound_ioctl(struct sound_handle *handle, unsigned cmd, void *arg)
 {
+	if (!handle)
+		return -1;
+
 	struct file *file = handle->file;
 	return file->f_op->unlocked_ioctl(file, cmd, (unsigned long)arg);
 }
@@ -384,6 +359,9 @@ static void sound_param_init(struct snd_pcm_hw_params *params)
 static void sound_param_configure(struct sound_handle *handle)
 {
 	int err;
+
+	if (!handle)
+		return;
 
 	struct snd_pcm_hw_params *params = kzalloc(sizeof(*params), GFP_KERNEL);
 
@@ -506,7 +484,7 @@ struct sound_handle *sound_device_open(struct snd_card *card, char const *node,
 		return NULL;
 	}
 
-	handle =  sound_devt_open(stream->dev->devt);
+	handle = sound_devt_open(stream->dev->devt);
 
 	/* hide data in fasync of runtime */
 	if (stream->substream->runtime && data) {
@@ -552,6 +530,10 @@ struct sound_handle *sound_device_setup(struct snd_card *card, char const *node,
 static int sound_device_close(struct sound_handle *handle)
 {
 	int err = 0;
+
+	if (!handle)
+		return 0;
+
 	if (handle->file->f_op->release)
 		err = handle->file->f_op->release(handle->inode, handle->file);
 
@@ -614,6 +596,8 @@ static int mixer_control_set(struct mixer_control *control, unsigned int id, int
 	int err;
 
 	if (!control || id >= control->info.count) return -EINVAL;
+
+	if (!control->mixer) return -EINVAL;
 
 	element.id.numid = control->info.id.numid;
 	err = sound_ioctl(control->mixer->handle, SNDRV_CTL_IOCTL_ELEM_READ, &element);
@@ -900,6 +884,9 @@ static void dump_pcm_state(struct sound_handle *handle, char const *msg)
 
 bool sound_pcm_play_watermark(struct sound_handle *handle)
 {
+	if (!handle)
+		return false;
+
 	int err;
 	struct snd_pcm_status64 status = { 0 };
 	snd_pcm_uframes_t frames = 0;
@@ -932,6 +919,9 @@ bool sound_pcm_play_watermark(struct sound_handle *handle)
 
 bool sound_pcm_capture_watermark(struct sound_handle *handle)
 {
+	if (!handle)
+		return false;
+
 	int err;
 	struct snd_pcm_status64 status = { 0 };
 
@@ -969,6 +959,9 @@ static void *silence_data(void)
 
 static void sound_play(struct sound_handle *handle)
 {
+	if (!handle)
+		return;
+
 	int err;
 	void *buffer;
 
@@ -1009,7 +1002,9 @@ static void *capture_data(void)
 
 static void sound_capture(struct sound_handle *handle)
 {
-	int err;
+	if (!handle)
+		return;
+
 	struct genode_audio_packet packet  = {
 		.data = capture_data(),
 		.samples = genode_audio_samples_per_period(),
@@ -1022,7 +1017,7 @@ static void sound_capture(struct sound_handle *handle)
 		xfer.buf    = packet.data;
 		xfer.frames = packet.samples;
 
-		err = sound_ioctl(handle, SNDRV_PCM_IOCTL_READI_FRAMES, &xfer);
+		int const err = sound_ioctl(handle, SNDRV_PCM_IOCTL_READI_FRAMES, &xfer);
 		if (err) {
 			printk("%s:%d err=%d\n", __func__, __LINE__, err);
 			dump_pcm_state(handle, __func__);
@@ -1102,6 +1097,7 @@ struct input_handler jack_handler = {
 	.id_table = jack_ids,
 };
 
+
 static void update_mixer(struct sound_card *card)
 {
 	int err;
@@ -1123,29 +1119,44 @@ static void update_mixer(struct sound_card *card)
 		if (err) printk("%s:%d err=%d\n", __func__, __LINE__ ,err);
 	}
 
-
 	/* update speaker & mics */
-	index = card->routing->speaker_external_index;
-	value = card->jack_plugged && (card->speaker_mode == EXTERNAL);
-	mixer_control_set(&mixer->controls[index], 0, value);
-	mixer_control_set(&mixer->controls[index], 1, value);
+	if (card->routing->speaker_external_index) {
+		index = card->routing->speaker_external_index;
+		value = card->jack_plugged && (card->speaker_mode == EXTERNAL);
+		mixer_control_set(&mixer->controls[index], 0, value);
+		mixer_control_set(&mixer->controls[index], 1, value);
+	}
 
-	index = card->routing->speaker_internal_index;
-	value = (!card->jack_plugged && (card->speaker_mode == EXTERNAL))
-	         || (card->speaker_mode == INTERNAL);
-	mixer_control_set(&mixer->controls[index], 0, value);
-	mixer_control_set(&mixer->controls[index], 1, value);
+	if (card->routing->speaker_internal_index) {
+		index = card->routing->speaker_internal_index;
+		value = (!card->jack_plugged && (card->speaker_mode == EXTERNAL))
+		         || (card->speaker_mode == INTERNAL);
+		mixer_control_set(&mixer->controls[index], 0, value);
+		mixer_control_set(&mixer->controls[index], 1, value);
+	}
 
-	index = card->routing->mic_external_index;
-	value = card->jack_plugged && (card->microphone_mode == EXTERNAL);
-	mixer_control_set(&mixer->controls[index], 0, value);
-	mixer_control_set(&mixer->controls[index], 1, value);
+	if (card->routing->mic_external_index) {
+		index = card->routing->mic_external_index;
+		value = card->jack_plugged && (card->microphone_mode == EXTERNAL);
+		mixer_control_set(&mixer->controls[index], 0, value);
+		mixer_control_set(&mixer->controls[index], 1, value);
+	}
 
-	index = card->routing->mic_internal_index;
-	value = (!card->jack_plugged && (card->microphone_mode == EXTERNAL))
-	         || (card->microphone_mode == INTERNAL);
-	mixer_control_set(&mixer->controls[index], 0, value);
-	mixer_control_set(&mixer->controls[index], 1, value);
+	if (card->routing->mic_internal_index) {
+		index = card->routing->mic_internal_index;
+		value = (!card->jack_plugged && (card->microphone_mode == EXTERNAL))
+		         || (card->microphone_mode == INTERNAL);
+		mixer_control_set(&mixer->controls[index], 0, value);
+		mixer_control_set(&mixer->controls[index], 1, value);
+	}
+
+	/* capture switch covers internal as well as external, force it on */
+	if (card->routing->mic_internal_index &&
+	    card->routing->mic_external_index &&
+	   (card->routing->mic_internal_index == card->routing->mic_external_index)) {
+		mixer_control_set(&mixer->controls[index], 0, 1);
+		mixer_control_set(&mixer->controls[index], 1, 1);
+	}
 
 	/* rewrite all externally configured and valid mixer controls */
 	mixer_update_controls(mixer, true);
@@ -1153,8 +1164,10 @@ static void update_mixer(struct sound_card *card)
 	/* configure capture device */
 	card->capture = (card->jack_plugged && (card->microphone_mode == EXTERNAL)) ?
 	                card->mic_headset : card->mic_internal;
-	err = sound_ioctl(card->capture, SNDRV_PCM_IOCTL_PREPARE, NULL);
-	if (err) printk("%s:%d err=%d\n", __func__, __LINE__ ,err);
+	if (card->capture) {
+		err = sound_ioctl(card->capture, SNDRV_PCM_IOCTL_PREPARE, NULL);
+		if (err) printk("%s:%d err=%d\n", __func__, __LINE__ ,err);
+	}
 }
 
 
@@ -1229,26 +1242,19 @@ static int sound_card_task(void *data)
 {
 	struct snd_card *card = wait_for_card();
 	struct mixer mixer;
+	struct genode_routing routing;
 	int err;
 
-	struct sound_card sound_card = {
-		.sound_events    = 0,
-		.microphone_mode = DEFAULT,
-		.routing         = data,
-		.mixer           = &mixer,
-	};
+	/*
+	 * Report all devices belonging to the sound-card and its
+	 * mixer controls first so that a user is able to start
+	 * the driver to gather information before attempting to
+	 * configure the device.
+	 */
 
 	if (!card) {
 		printk("Error: No sound card found\n");
 		sleep_forever();
-	}
-
-	/* register jack handler */
-	sound_events_add(&sound_card, EVENT_JACK_UNPLUGGED);
-	jack_handler.private = &sound_card;
-	err = input_register_handler(&jack_handler);
-	if (err) {
-		printk("Error: Could not register jack input handler (err=%d\n", err);
 	}
 
 	report_pcm_devices(card);
@@ -1272,21 +1278,61 @@ static int sound_card_task(void *data)
 		sleep_forever();
 	}
 
+	mixer_report_controls(&mixer);
+
+	memset(&routing, 0, sizeof (routing));
+	if (!genode_query_routing(&routing)) {
+		printk("Error: could not query routing information\n");
+		sleep_forever();
+	}
+
+	struct sound_card sound_card = {
+		.sound_events    = 0,
+		.microphone_mode = DEFAULT,
+		.routing         = &routing,
+		.mixer           = &mixer,
+	};
+
+	/* register jack handler */
+	sound_events_add(&sound_card, EVENT_JACK_UNPLUGGED);
+	jack_handler.private = &sound_card;
+	err = input_register_handler(&jack_handler);
+	if (err) {
+		printk("Error: Could not register jack input handler (err=%d\n", err);
+	}
+
 	/* open devices */
-	sound_card.playback = sound_device_setup(card,
-	                                         sound_card.routing->playback,
-	                                         &sound_card);
-	if (!sound_card.playback) sleep_forever();
+	sound_card.playback =
+		sound_device_setup(card,
+		                   sound_card.routing->playback,
+		                   &sound_card);
+	if (!sound_card.playback)
+		printk("Could not setup playback device '%s', "
+		       "playback not available\n",
+		       sound_card.routing->playback);
 
-	sound_card.mic_internal = sound_device_setup(card,
-	                                             sound_card.routing->mic_internal,
-	                                             &sound_card);
-	if (!sound_card.mic_internal) sleep_forever();
+	sound_card.mic_internal =
+		sound_device_setup(card,
+		                   sound_card.routing->mic_internal,
+		                   &sound_card);
+	if (!sound_card.mic_internal)
+		printk("Could not setup internal mic device '%s', "
+		       "playback not available\n",
+		        sound_card.routing->mic_internal);
 
-	sound_card.mic_headset = sound_device_setup(card,
-	                                            sound_card.routing->mic_headset,
-	                                            &sound_card);
-	if (!sound_card.mic_headset) sleep_forever();
+	/* with normal HDA devices there is only on mic device */
+	if (strcmp(sound_card.routing->mic_headset,
+	           sound_card.routing->mic_internal) != 0) {
+		sound_card.mic_headset =
+			sound_device_setup(card,
+			                   sound_card.routing->mic_headset,
+			                   &sound_card);
+		if (!sound_card.mic_headset)
+			printk("Could not setup headset mic device '%s', "
+			       "playback not available\n",
+			       sound_card.routing->mic_headset);
+	} else
+		sound_card.mic_headset = sound_card.mic_internal;
 
 	/* configure mixer */
 	sound_events_add(&sound_card, EVENT_MIXER);
@@ -1305,7 +1351,7 @@ static int sound_card_task(void *data)
 
 void lx_user_init(void)
 {
-	int pid = kernel_thread(sound_card_task, &tigerlake, "lx_user", CLONE_FS | CLONE_FILES);
+	int pid = kernel_thread(sound_card_task, NULL, "lx_user", CLONE_FS | CLONE_FILES);
 	_lx_user_task = find_task_by_pid_ns(pid, NULL);
 	/* highest prio because this is time critical */
 	lx_emul_task_priority(_lx_user_task, 0);

@@ -94,45 +94,93 @@ config | prio_levels: 2
   + config | verbose: yes
     + default-policy | report: audio_drv -> mixer
 
-+ start pc_audio | priority: -1 | ram: 8M
-  + config | report_mixer: no | report_devices: yes | speaker_priority: external | mic_priority: external
-    + control Headphone Playback Volume     | id:  0 | channel: 0 | type: int  | value: 87 | min: 0 | max: 87
-    + control Headphone Playback Volume     | id:  0 | channel: 1 | type: int  | value: 87 | min: 0 | max: 87
-    + control Speaker Playback Volume       | id:  2 | channel: 0 | type: int  | value: 87 | min: 0 | max: 87
-    + control Speaker Playback Volume       | id:  2 | channel: 1 | type: int  | value: 87 | min: 0 | max: 87
-    + control Loopback Mixing               | id:  4              | type: enum | selected: 0
-    + control Headset Mic Playback Volume   | id:  5 | channel: 0 | type: int  | value:     0 | min: 0 | max: 31
-    + control Headset Mic Playback Volume   | id:  5 | channel: 1 | type: int  | value:     0 | min: 0 | max: 31
-    + control Headset Mic Playback Switch   | id:  6 | channel: 0 | type: bool | value: false
-    + control Headset Mic Playback Switch   | id:  6 | channel: 1 | type: bool | value: false
-    + control Headphone Mic Playback Volume | id:  7 | channel: 0 | type: int  | value:     0 | min: 0 | max: 31
-    + control Headphone Mic Playback Volume | id:  7 | channel: 1 | type: int  | value:     0 | min: 0 | max: 31
-    + control Headphone Mic Playback Switch | id:  8 | channel: 0 | type: bool | value: false
-    + control Headphone Mic Playback Switch | id:  8 | channel: 1 | type: bool | value: false
-    + control Auto-Mute Mode                | id:  9              | type: enum | selected: 0
-    + control Input Source                  | id: 10              | type: enum | selected: 0
-    + control Input Source                  | id: 11              | type: enum | selected: 0
-    + control Capture Volume                | id: 12 | channel: 0 | type: int  | value:    63 | min: 0 | max: 63
-    + control Capture Volume                | id: 12 | channel: 1 | type: int  | value:    63 | min: 0 | max: 63
-    + control Capture Volume                | id: 14 | channel: 0 | type: int  | value:    63 | min: 0 | max: 63
-    + control Capture Volume                | id: 14 | channel: 1 | type: int  | value:    63 | min: 0 | max: 63
-    + control Capture Switch                | id: 15 | channel: 0 | type: bool | value:  true
-    + control Capture Switch                | id: 15 | channel: 1 | type: bool | value:  true
-    + control Headset Mic Boost Volume      | id: 16 | channel: 0 | type: int  | value:     0 | min: 0 | max:  3
-    + control Headset Mic Boost Volume      | id: 16 | channel: 1 | type: int  | value:     0 | min: 0 | max:  3
-    + control Headphone Mic Boost Volume    | id: 17 | channel: 0 | type: int  | value:     0 | min: 0 | max:  3
-    + control Headphone Mic Boost Volume    | id: 17 | channel: 1 | type: int  | value:     0 | min: 0 | max:  3
-    + control Master Playback Volume        | id: 18 | channel: 0 | type: int  | value:    87 | min: 0 | max: 87
-    + control Master Playback Switch        | id: 19 | channel: 0 | type: bool | value:  true
-    + control Headset Mic Phantom Jack      | id: 20 | channel: 0 | type: bool | value:  true
-    + control Headphone Mic Jack            | id: 21 | channel: 0 | type: bool | value: false
-    + control Speaker Phantom Jack          | id: 22 | channel: 0 | type: bool | value:  true
-    + control Dmic0 Capture Volume          | id: 29 | channel: 0 | type: int  | value:    50 | min: 0 | max: 70
-    + control Dmic0 Capture Volume          | id: 29 | channel: 1 | type: int  | value:    50 | min: 0 | max: 70
-    + control Dmic0 Capture Switch          | id: 30 | channel: 0 | type: bool | value:  true
-    + control Dmic0 Capture Switch          | id: 30 | channel: 1 | type: bool | value:  true
-    + control Dmic1 2nd Capture Volume      | id: 32 | channel: 0 | type: int  | value:    70 | min: 0 | max: 70
-    + control Dmic1 2nd Capture Volume      | id: 32 | channel: 1 | type: int  | value:    70 | min: 0 | max: 70
++ start pc_audio | priority: -1 | ram: 10M
+  + config | report_mixer: yes | report_devices: yes | speaker_priority: external | mic_priority: external
+           | . profile: auto-detect
+    + profile fuji3 | . HDA
+      + routing | playback: pcmC0D0p | mic_internal: pcmC0D0c | mic_headset: pcmC0D0c
+                | speaker_external_id: 1 | speaker_internal_id: 3
+                | mic_external_id:     7 | mic_internal_id:     7
+      + control Headphone Playback Volume | id:  0 | channel: 0 | type: int  | value:    87 | min: 0 | max: 87
+      + control Headphone Playback Volume | id:  0 | channel: 1 | type: int  | value:    87 | min: 0 | max: 87
+      + control Speaker Playback Volume   | id:  2 | channel: 0 | type: int  | value:    87 | min: 0 | max: 87
+      + control Speaker Playback Volume   | id:  2 | channel: 1 | type: int  | value:    87 | min: 0 | max: 87
+      + control Loopback Mixing           | id:  4 | type: enum | selected: 0
+      + control Auto-Mute Mode            | id:  5 | type: enum | selected: 0
+      + control Capture Volume            | id:  6 | channel: 0 | type: int  | value:    63 | min: 0 | max: 63
+      + control Capture Volume            | id:  6 | channel: 1 | type: int  | value:    63 | min: 0 | max: 63
+      + control Master Playback Volume    | id:  9 | channel: 0 | type: int  | value:    60 | min: 0 | max: 87
+      + control Master Playback Switch    | id: 10 | channel: 0 | type: bool | value:  true
+    + profile fuji4 | . HDA
+      + routing | playback: pcmC0D0p | mic_internal: pcmC0D0c | mic_headset: pcmC0D0c
+                | speaker_external_id: 1 | speaker_internal_id: 3
+                | mic_external_id:     7 | mic_internal_id:     7
+      + control Headphone Playback Volume | id:  0 | channel: 0 | type: int  | value:    40 | min: 0 | max: 87
+      + control Headphone Playback Volume | id:  0 | channel: 1 | type: int  | value:    40 | min: 0 | max: 87
+      + control Speaker Playback Volume   | id:  2 | channel: 0 | type: int  | value:    87 | min: 0 | max: 87
+      + control Speaker Playback Volume   | id:  2 | channel: 1 | type: int  | value:    87 | min: 0 | max: 87
+      + control Loopback Mixing           | id:  4 | type: enum | selected: 0
+      + control Auto-Mute Mode            | id:  5 | type: enum | selected: 0
+      + control Capture Volume            | id:  6 | channel: 0 | type: int  | value:    63 | min: 0 | max: 63
+      + control Capture Volume            | id:  6 | channel: 1 | type: int  | value:    63 | min: 0 | max: 63
+      + control Master Playback Volume    | id:  9 | channel: 0 | type: int  | value:    60 | min: 0 | max: 87
+      + control Master Playback Switch    | id: 10 | channel: 0 | type: bool | value:  true
+    + profile fuji5 | . SOF Tiger Lake
+      + routing | playback: pcmC0D0p | mic_internal: pcmC0D6c | mic_headset: pcmC0D0c
+                | speaker_external_id:  1 | speaker_internal_id:  3
+                | mic_external_id:     13 | mic_internal_id:     30
+      + control Headphone Playback Volume | id:  0 | channel: 0 | type: int  | value: 87 | min: 0 | max: 87
+      + control Headphone Playback Volume | id:  0 | channel: 1 | type: int  | value: 87 | min: 0 | max: 87
+      + control Speaker Playback Volume   | id:  2 | channel: 0 | type: int  | value: 87 | min: 0 | max: 87
+      + control Speaker Playback Volume   | id:  2 | channel: 1 | type: int  | value: 87 | min: 0 | max: 87
+      + control Loopback Mixing           | id:  4              | type: enum | selected: 0
+      + control Auto-Mute Mode            | id:  9              | type: enum | selected: 0
+      + control Input Source              | id: 10              | type: enum | selected: 0
+      + control Input Source              | id: 11              | type: enum | selected: 0
+      + control Capture Volume            | id: 12 | channel: 0 | type: int  | value: 63 | min: 0 | max: 63
+      + control Capture Volume            | id: 12 | channel: 1 | type: int  | value: 63 | min: 0 | max: 63
+      + control Capture Volume            | id: 14 | channel: 0 | type: int  | value: 63 | min: 0 | max: 63
+      + control Capture Volume            | id: 14 | channel: 1 | type: int  | value: 63 | min: 0 | max: 63
+      + control Master Playback Volume    | id: 18 | channel: 0 | type: int  | value: 60 | min: 0 | max: 87
+      + control Master Playback Switch    | id: 19 | channel: 0 | type: bool | value: true
+      + control Dmic0 Capture Volume      | id: 29 | channel: 0 | type: int  | value: 70 | min: 0 | max: 70
+      + control Dmic0 Capture Volume      | id: 29 | channel: 1 | type: int  | value: 70 | min: 0 | max: 70
+      + control Dmic1 2nd Capture Volume  | id: 32 | channel: 0 | type: int  | value: 70 | min: 0 | max: 70
+      + control Dmic1 2nd Capture Volume  | id: 32 | channel: 1 | type: int  | value: 70 | min: 0 | max: 70
+    + profile shuttle | . HDA
+      + routing | playback: pcmC0D0p | mic_internal: pcmC0D0c | mic_headset: pcmC0D0c
+                | speaker_external_id: 1 | mic_external_id: 6
+      + control Master Playback Volume    | id:  0 | channel: 0 | type: int  | value: 60 | min: 0 | max: 87
+      + control Master Playback Volume    | id:  0 | channel: 1 | type: int  | value: 60 | min: 0 | max: 87
+      + control Loopback Mixing           | id:  2              | type: enum | selected: 0
+      + control Capture Volume            | id:  5 | channel: 0 | type: int  | value: 63 | min: 0 | max: 63
+      + control Capture Volume            | id:  5 | channel: 1 | type: int  | value: 63 | min: 0 | max: 63
+    + profile t490 | . HDA
+      + routing | playback: pcmC0D0p | mic_internal: pcmC0D0c | mic_headset: pcmC0D0c
+                | speaker_external_id: 1 | speaker_internal_id: 3
+                | mic_external_id:     6 | mic_internal_id:     6
+      + control Headphone Playback Volume | id:  0 | channel: 0 | type: int  | value: 87 | min: 0 | max: 87
+      + control Headphone Playback Volume | id:  0 | channel: 1 | type: int  | value: 87 | min: 0 | max: 87
+      + control Speaker Playback Volume   | id:  2 | channel: 0 | type: int  | value: 87 | min: 0 | max: 87
+      + control Speaker Playback Volume   | id:  2 | channel: 1 | type: int  | value: 87 | min: 0 | max: 87
+      + control Auto-Mute Mode            | id:  4 | type: enum | selected: 0
+      + control Capture Volume            | id:  5 | channel: 0 | type: int  | value: 63 | min: 0 | max: 63
+      + control Capture Volume            | id:  5 | channel: 1 | type: int  | value: 63 | min: 0 | max: 63
+      + control Master Playback Volume    | id:  9 | channel: 0 | type: int  | value: 60 | min: 0 | max: 87
+      + control Master Playback Switch    | id: 10 | channel: 0 | type: bool | value: true
+    + profile x280 | . HDA
+      + routing | playback: pcmC0D0p | mic_internal: pcmC0D0c | mic_headset: pcmC0D0c
+                | speaker_external_id: 1 | speaker_internal_id: 3
+                | mic_external_id:     6 | mic_internal_id:     6
+      + control Headphone Playback Volume | id:  0 | channel: 0 | type: int  | value: 87 | min: 0 | max: 87
+      + control Headphone Playback Volume | id:  0 | channel: 1 | type: int  | value: 87 | min: 0 | max: 87
+      + control Speaker Playback Volume   | id:  2 | channel: 0 | type: int  | value: 87 | min: 0 | max: 87
+      + control Speaker Playback Volume   | id:  2 | channel: 1 | type: int  | value: 87 | min: 0 | max: 87
+      + control Auto-Mute Mode            | id:  4 | type: enum | selected: 0
+      + control Capture Volume            | id:  5 | channel: 0 | type: int  | value: 63 | min: 0 | max: 63
+      + control Capture Volume            | id:  5 | channel: 1 | type: int  | value: 63 | min: 0 | max: 63
+      + control Master Playback Volume    | id:  9 | channel: 0 | type: int  | value: 60 | min: 0 | max: 87
+      + control Master Playback Switch    | id: 10 | channel: 0 | type: bool | value: true
   + route
     + service Report | + child mixer_report_rom
     + any-service
@@ -145,12 +193,14 @@ config | prio_levels: 2
     + service Record
     + service Play
   + config | jitter_ms: 10
-    + mix left  | + play | label_suffix: left
-    + mix right | + play | label_suffix: right
-    + policy | label_suffix: mic_left  | record: left  | volume: 1.0
-    + policy | label_suffix: mic_right | record: right | volume: 1.0
-    + policy | label_suffix: left      | record: left  | volume: 1.0
-    + policy | label_suffix: right     | record: right | volume: 1.0
+    + mix left
+      + play | label_suffix: -> mic_left | volume: 1.0
+      + play | label_suffix: -> left     | volume: 0.5
+    + mix right
+      + play | label_suffix: -> mic_right | volume: 1.0
+      + play | label_suffix: -> right     | volume: 0.5
+    + policy | label_suffix: left  | record: left  | volume: 1.0
+    + policy | label_suffix: right | record: right | volume: 1.0
   + route
     + service Report | + child mixer_report_rom
     + service Timer  | + child timer

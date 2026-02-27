@@ -71,6 +71,19 @@ struct genode_devices
 };
 
 
+struct genode_routing
+{
+	char playback[16];
+	char mic_headset[16];
+	char mic_internal[16];
+
+	unsigned speaker_external_index;
+	unsigned speaker_internal_index;
+	unsigned mic_external_index;
+	unsigned mic_internal_index;
+};
+
+
 void genode_audio_init(struct genode_env *env_ptr,
                        struct genode_allocator *alloc_ptr);
 
@@ -84,6 +97,7 @@ void genode_mixer_update_controls(struct genode_mixer_controls *controls, bool f
 bool genode_mixer_update(void);
 enum Device_mode genode_speaker_mode(void);
 enum Device_mode genode_microphone_mode(void);
+bool genode_query_routing(struct genode_routing *routing);
 
 void genode_devices_report(struct genode_devices *devices);
 

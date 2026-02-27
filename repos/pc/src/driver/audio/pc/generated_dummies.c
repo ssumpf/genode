@@ -680,6 +680,21 @@ int oops_in_progress;	/* If set, an oops, panic(), BUG() or die() is in progress
 enum reboot_mode panic_reboot_mode;
 
 
+#include <linux/moduleparam.h>
+
+const struct kernel_param_ops param_ops_bool;
+
+
+#include <linux/moduleparam.h>
+
+const struct kernel_param_ops param_ops_charp;
+
+
+#include <linux/moduleparam.h>
+
+const struct kernel_param_ops param_ops_int;
+
+
 #include <linux/pci.h>
 
 const struct cpumask * pci_irq_get_affinity(struct pci_dev * dev,int nr)
@@ -699,6 +714,14 @@ void pci_restore_state(struct pci_dev * dev)
 #include <linux/pci.h>
 
 int pci_save_state(struct pci_dev * dev)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/pci.h>
+
+int pci_write_config_word(const struct pci_dev * dev,int where,u16 val)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -837,6 +860,14 @@ int remap_vmalloc_range(struct vm_area_struct * vma,void * addr,unsigned long pg
 #include <linux/proc_fs.h>
 
 void remove_proc_entry(const char * name,struct proc_dir_entry * parent)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/firmware.h>
+
+int request_firmware_nowait(struct module * module,bool uevent,const char * name,struct device * device,gfp_t gfp,void * context,void (* cont)(const struct firmware * fw,void * context))
 {
 	lx_emul_trace_and_stop(__func__);
 }

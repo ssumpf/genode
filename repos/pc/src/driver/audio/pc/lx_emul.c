@@ -128,6 +128,20 @@ void __iomem * pci_ioremap_bar(struct pci_dev *pdev, int bar)
 }
 
 
+void __iomem * pcim_iomap_region(struct pci_dev * pdev,int bar,const char * name)
+{
+	return pci_ioremap_bar(pdev, bar);
+}
+
+
+int pci_read_config_byte(const struct pci_dev * dev,int where,u8 * val)
+{
+	printk("%s: where=0x%x\n", __func__, where);
+	*val = 0;
+	return 0;
+}
+
+
 int pci_read_config_dword(const struct pci_dev *dev, int where, u32 *val)
 {
 	printk("%s: where=0x%x\n", __func__, where);
@@ -143,6 +157,12 @@ int pci_read_config_word(const struct pci_dev *dev, int where, u16 *val)
 	return 0;
 }
 
+
+int pci_write_config_byte(const struct pci_dev * dev,int where,u8 val)
+{
+	printk("%s: where=0x%x\n", __func__, where);
+	return 0;
+}
 
 
 int pci_write_config_dword(const struct pci_dev *dev, int where, u32 val)

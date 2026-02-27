@@ -136,6 +136,7 @@ sound/hda/common/bind.c
 sound/hda/common/codec.c
 sound/hda/common/controller.c
 sound/hda/common/jack.c
+sound/hda/controllers/intel.c
 sound/hda/core/array.c
 sound/hda/core/bus.c
 sound/hda/core/component.c
