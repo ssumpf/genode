@@ -865,14 +865,6 @@ void remove_proc_entry(const char * name,struct proc_dir_entry * parent)
 }
 
 
-#include <linux/firmware.h>
-
-int request_firmware_nowait(struct module * module,bool uevent,const char * name,struct device * device,gfp_t gfp,void * context,void (* cont)(const struct firmware * fw,void * context))
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 #include <linux/seq_file.h>
 
 struct list_head * seq_list_next(void * v,struct list_head * head,loff_t * ppos)
@@ -1062,13 +1054,6 @@ struct snd_soc_acpi_mach snd_soc_acpi_intel_rpl_sdw_machines[] = {};
 #include <sound/soc.h>
 
 int snd_soc_new_compress(struct snd_soc_pcm_runtime * rtd)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-extern void sof_ipc4_create_exception_debugfs_node(struct snd_sof_dev * sdev);
-void sof_ipc4_create_exception_debugfs_node(struct snd_sof_dev * sdev)
 {
 	lx_emul_trace_and_stop(__func__);
 }

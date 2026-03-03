@@ -1,25 +1,16 @@
-<runtime ram="8M" caps="200" binary="pc_audio">
-
-	<requires>
-		<platform/>
-		<report/>
-		<timer/>
-		<rm/>
-	</requires>
-
-	<provides>
-		<audio_in/>
-		<audio_out/>
-	</provides>
-
-	<content>
-		<rom label="ld.lib.so"/>
-		<rom label="pc_audio"/>
-		<rom label="sof-hda-generic-2ch.tplg"/>
-		<rom label="sof-tgl.ri"/>
-	</content>
-
-	<config>
-	</config>
-
-</runtime>
+runtime | ram: 10M | caps: 200 | binary: pc_audio
++ requires
+  + platform
+  + report
+  + timer
+  + rm
++ content
+  + rom | label: ld.lib.so
+  + rom | label: pc_audio
+  + rom | label: sof_firmware.tar
+  + rom | label: vfs.lib.so
++ config | report_mixer: yes | report_devices: yes
+         | speaker_priority: external | mic_priority: external
+  + vfs
+    + dir firmware | + tar sof_firmware.tar
+-

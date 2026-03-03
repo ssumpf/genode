@@ -356,23 +356,24 @@ static void sound_param_init(struct snd_pcm_hw_params *params)
 	params->info  = 0;
 }
 
-static void sound_param_configure(struct sound_handle *handle)
+static int sound_param_configure(struct sound_handle *handle)
 {
 	int err;
 
 	if (!handle)
-		return;
+		return -EINVAL;
 
 	struct snd_pcm_hw_params *params = kzalloc(sizeof(*params), GFP_KERNEL);
 
-	if (!params) return;
+	if (!params)
+		return -ENOMEM;
 
 	sound_param_init(params);
 
 	err = sound_ioctl(handle, SNDRV_PCM_IOCTL_HW_REFINE, params);
 	if (err) {
 		printk("Error: IOCTL_HW_REFINE: %d\n", err);
-		return;
+		return err;
 	}
 
 	sound_param_set_mask(params, SNDRV_PCM_HW_PARAM_ACCESS,    SNDRV_PCM_ACCESS_RW_INTERLEAVED);
@@ -389,6 +390,8 @@ static void sound_param_configure(struct sound_handle *handle)
 		printk("IOCTL_HW_PARAMS: %d\n", err);
 
 	kfree(params);
+
+	return err;
 }
 
 
@@ -503,30 +506,6 @@ struct sound_handle *sound_device_open(struct snd_card *card, char const *node,
 }
 
 
-static
-struct sound_handle *sound_device_setup(struct snd_card *card, char const *node,
-                                        void *data)
-{
-	int err;
-	struct sound_handle *handle = sound_device_open(card, node, data);
-	if (!handle) {
-		printk("%s:%d: Error could not open '%s'\n", __func__, __LINE__, node);
-		return NULL;
-	}
-	
-	sound_param_configure(handle);
-
-	err = sound_ioctl(handle, SNDRV_PCM_IOCTL_PREPARE, NULL);
-	if (err) {
-		printk("%s:%d: Error could not prepare '%s' err=%d\n", __func__, __LINE__,
-		       node, err);
-		return NULL;
-	}
-
-	return handle;
-}
-
-
 static int sound_device_close(struct sound_handle *handle)
 {
 	int err = 0;
@@ -539,6 +518,36 @@ static int sound_device_close(struct sound_handle *handle)
 
 	free_sound_handle(handle);
 	return err;
+}
+
+
+static struct sound_handle *sound_device_setup(struct snd_card *card,
+                                               char const *node,
+                                               void *data)
+{
+	int err;
+	struct sound_handle *handle = sound_device_open(card, node, data);
+	if (!handle) {
+		printk("%s:%d: Error could not open '%s'\n", __func__, __LINE__, node);
+		return NULL;
+	}
+	
+	err = sound_param_configure(handle);
+	if (err) {
+		printk("%s:%d: Error could not configure '%s' err=%d\n",
+		       __func__, __LINE__, node, err);
+		(void)sound_device_close(handle);
+		return NULL;
+	}
+
+	err = sound_ioctl(handle, SNDRV_PCM_IOCTL_PREPARE, NULL);
+	if (err) {
+		printk("%s:%d: Error could not prepare '%s' err=%d\n", __func__, __LINE__,
+		       node, err);
+		return NULL;
+	}
+
+	return handle;
 }
 
 

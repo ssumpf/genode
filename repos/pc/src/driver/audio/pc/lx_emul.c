@@ -30,52 +30,6 @@ const struct attribute_group input_poller_attribute_group;
 
 pteval_t __default_kernel_pte_mask __read_mostly = ~0;
 
-extern int  lx_emul_request_firmware_nowait(const char *name, void *dest, size_t *result);
-extern void lx_emul_release_firmware(void const *data, size_t size);
-
-
-/**
- * firmware
- */
-int request_firmware(const struct firmware ** firmware_p,
-                     const char * name, struct device * device)
-{
-	struct firmware *fw;
-
-	const char * base = kbasename(name);
-
-	if (!firmware_p) {
-		return -1;
-	}
-
-	fw = kzalloc(sizeof (struct firmware), GFP_KERNEL);
-
-	if (lx_emul_request_firmware_nowait(base, &fw->data, &fw->size)) {
-		kfree(fw);
-		return -1;
-	}
-
-	*firmware_p = fw;
-
-	return 0;
-}
-
-
-int firmware_request_nowarn(const struct firmware ** firmware,
-                            const char * name,
-                            struct device * device)
-{
-	return request_firmware(firmware, name, device);
-}
-
-
-void release_firmware(const struct firmware * fw)
-{
-	lx_emul_release_firmware(fw->data, fw->size);
-	kfree(fw);
-}
-
-
 /*
  * vmap
  */

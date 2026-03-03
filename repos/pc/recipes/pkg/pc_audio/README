@@ -1,2 +1,1 @@
-
-Package that bundles Linux's audio driver with Sound  Open Firmware (sof).
+Audio driver for HDA/SOF ported from Linux

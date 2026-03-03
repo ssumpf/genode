@@ -73,6 +73,7 @@ lib/genalloc.c
 lib/hexdump.c
 lib/idr.c
 lib/iomap_copy.c
+lib/iomem_copy.c
 lib/iov_iter.c
 lib/irq_regs.c
 lib/kasprintf.c
@@ -148,11 +149,11 @@ sound/hda/core/ext/stream.c
 sound/hda/core/hda_bus_type.c
 sound/hda/core/hdmi_chmap.c
 sound/hda/core/i915.c
-sound/hda/core/regmap.c
-sound/hda/core/stream.c
 sound/hda/core/intel-dsp-config.c
 sound/hda/core/intel-nhlt.c
 sound/hda/core/intel-sdw-acpi.c
+sound/hda/core/regmap.c
+sound/hda/core/stream.c
 sound/hda/core/trace.c
 sound/last.c
 sound/pci/ac97/ac97_codec.c
@@ -160,13 +161,19 @@ sound/pci/ac97/ac97_pcm.c
 sound/soc/codecs/ac97.c
 sound/soc/codecs/dmic.c
 sound/soc/codecs/hdac_hda.c
+sound/soc/codecs/rt712-sdca.c
 sound/soc/intel/boards/hda_dsp_common.c
 sound/soc/intel/boards/skl_hda_dsp_generic.c
 sound/soc/intel/boards/sof_board_helpers.c
+sound/soc/intel/common/soc-acpi-intel-arl-match.c
 sound/soc/intel/common/soc-acpi-intel-hda-match.c
+sound/soc/intel/common/soc-acpi-intel-mtl-match.c
+sound/soc/intel/common/soc-acpi-intel-sdca-quirks.c
 sound/soc/intel/common/soc-acpi-intel-sdw-mockup-match.c
 sound/soc/intel/common/soc-acpi-intel-skl-match.c
 sound/soc/intel/common/soc-acpi-intel-tgl-match.c
+sound/soc/intel/common/sof-function-topology-lib.c
+sound/soc/sdca/sdca_device.c
 sound/soc/soc-ac97.c
 sound/soc/soc-acpi.c
 sound/soc/soc-card.c
@@ -203,6 +210,8 @@ sound/soc/sof/intel/hda-stream.c
 sound/soc/sof/intel/hda-trace.c
 sound/soc/sof/intel/hda.c
 sound/soc/sof/intel/icl.c
+sound/soc/sof/intel/mtl.c
+sound/soc/sof/intel/pci-mtl.c
 sound/soc/sof/intel/pci-tgl.c
 sound/soc/sof/intel/tgl.c
 sound/soc/sof/iomem-utils.c
@@ -217,6 +226,7 @@ sound/soc/sof/ipc4-control.c
 sound/soc/sof/ipc4-loader.c
 sound/soc/sof/ipc4-mtrace.c
 sound/soc/sof/ipc4-pcm.c
+sound/soc/sof/ipc4-telemetry.c
 sound/soc/sof/ipc4-topology.c
 sound/soc/sof/ipc4.c
 sound/soc/sof/loader.c
@@ -231,4 +241,3 @@ sound/soc/sof/topology.c
 sound/soc/sof/trace.c
 sound/soc/sof/xtensa/core.c
 sound/sound_core.c
-lib/iomem_copy.c

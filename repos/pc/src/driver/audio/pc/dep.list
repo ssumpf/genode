@@ -55,6 +55,8 @@ include/linux/gpio.h
 include/linux/gpio/driver.h
 include/linux/gpio/machine.h
 include/linux/hdmi.h
+include/linux/hid.h
+include/linux/hid_bpf.h
 include/linux/hte.h
 include/linux/hwspinlock.h
 include/linux/i2c.h
@@ -70,12 +72,15 @@ include/linux/pinctrl/pinctrl-state.h
 include/linux/pinctrl/pinctrl.h
 include/linux/platform_data/x86/soc.h
 include/linux/pnp.h
+include/linux/power_supply.h
 include/linux/proc_ns.h
 include/linux/rcupdate_trace.h
 include/linux/regmap.h
 include/linux/regulator/consumer.h
 include/linux/soundwire/sdw.h
 include/linux/soundwire/sdw_intel.h
+include/linux/soundwire/sdw_registers.h
+include/linux/soundwire/sdw_type.h
 include/linux/spi/spi.h
 include/linux/vga_switcheroo.h
 include/linux/vgaarb.h
@@ -110,6 +115,7 @@ include/sound/pcm.h
 include/sound/pcm_drm_eld.h
 include/sound/pcm_params.h
 include/sound/sdca.h
+include/sound/sdca_function.h
 include/sound/soc-acpi-intel-match.h
 include/sound/soc-acpi-intel-ssp-common.h
 include/sound/soc-acpi.h
@@ -154,6 +160,7 @@ include/uapi/linux/fanotify.h
 include/uapi/linux/fb.h
 include/uapi/linux/filter.h
 include/uapi/linux/gpio.h
+include/uapi/linux/hid.h
 include/uapi/linux/i2c.h
 include/uapi/linux/input-event-codes.h
 include/uapi/linux/input.h
@@ -198,11 +205,14 @@ sound/pci/ac97/ac97_local.h
 sound/pci/ac97/ac97_patch.c
 sound/pci/ac97/ac97_patch.h
 sound/soc/codecs/hdac_hda.h
+sound/soc/codecs/rt712-sdca.h
 sound/soc/intel/boards/hda_dsp_common.h
 sound/soc/intel/boards/sof_board_helpers.h
 sound/soc/intel/boards/sof_hdmi_common.h
+sound/soc/intel/common/soc-acpi-intel-sdca-quirks.h
 sound/soc/intel/common/soc-acpi-intel-sdw-mockup-match.h
 sound/soc/intel/common/soc-intel-quirks.h
+sound/soc/intel/common/sof-function-topology-lib.h
 sound/soc/sof/intel/ext_manifest.h
 sound/soc/sof/intel/hda-ipc.h
 sound/soc/sof/intel/hda.h
