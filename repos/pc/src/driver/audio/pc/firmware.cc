@@ -28,6 +28,8 @@ struct Firmware_list
 
 
 Firmware_list fw_list[] = {
+	{ "sof-adl.ri", 525056 },
+	{ "sof-rpl.ri", 525056 },
 	{ "sof-tgl.ri", 525056 },
 	{ "sof-hda-generic-2ch.tplg", 44247 },
 };
