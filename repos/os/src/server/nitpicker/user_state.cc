@@ -268,13 +268,6 @@ void User_state::_handle_input_event(Input::Event ev)
 		if (global_receiver) {
 			_global_key_sequence = true;
 			_input_receiver      = global_receiver;
-
-			/* deliver current pointer position at start of key sequence */
-			_pointer.with_result(
-				[&] (Point at) {
-					Absolute_motion motion { at.x, at.y };
-					_input_receiver->submit_input_event(motion); },
-				[&] (Nowhere) { });
 		}
 
 		/*
@@ -283,6 +276,17 @@ void User_state::_handle_input_event(Input::Event ev)
 		 */
 		if (!global_receiver)
 			_input_receiver = _focused;
+
+		/*
+		 * Deliver current pointer position at start of key sequence because
+		 * the last motion event might have been sent to a different session.
+		 */
+		if (_input_receiver)
+			_pointer.with_result(
+				[&] (Point at) {
+					Absolute_motion motion { at.x, at.y };
+					_input_receiver->submit_input_event(motion); },
+				[&] (Nowhere) { });
 
 		/*
 		 * Inject initially suppressed touch event on BTN_TOUCH press. This can
@@ -359,20 +363,9 @@ void User_state::_handle_input_event(Input::Event ev)
 	 * Deliver press/release event to focused session or the receiver of global
 	 * key.
 	 */
-	ev.handle_press([&] (Keycode key, Codepoint) {
-
-		if (!_input_receiver)
-			return;
-
-		if (!_mouse_button(key) || _global_key_sequence
-		 || _takes_input(_hovered, _focused))
+	if (ev.press() || ev.release())
+		if (_input_receiver)
 			_input_receiver->submit_input_event(ev);
-		else
-			_input_receiver = nullptr;
-	});
-
-	if (ev.release() && _input_receiver)
-		_input_receiver->submit_input_event(ev);
 
 	/*
 	 * Detect end of key sequence
