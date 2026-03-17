@@ -98,3 +98,41 @@ struct Main
 
 
 void Component::construct(Env &env) { static Main main { env }; }
+
+
+/* the configuration is not dynamically changeable */
+unsigned lx_emul_handle_config(char const *label, unsigned long vendor_id,
+                               unsigned long product_id)
+{
+	Attached_rom_dataspace config_rom { Lx_kit::env().env, "config" };
+	config_rom.update();
+
+	using Name  = String<64>;
+	Name name { label };
+
+	bool     matched       = false;
+	unsigned configuration = 0;
+	config_rom.node().for_each_sub_node("device", [&] (Node const &node) {
+		if (matched) return;
+
+		if (name == node.attribute_value("name", Name()) ||
+		    (node.attribute_value("vendor_id", 0ul) == vendor_id &&
+		     node.attribute_value("product_id", 0ul) == product_id))
+			matched = true;
+
+		if (matched) {
+			configuration = node.attribute_value("configuration", 0u);
+
+			genode_mac_address_reporter_config(node);
+
+			if (node.has_attribute("mac")) {
+				auto const mac = config_rom.node().attribute_value("mac", Nic::Mac_address{});
+				log("Trying to use configured mac: ", mac);
+				lx_emul_nic_set_mac_address(mac.addr, sizeof(mac.addr));
+			}
+			log("Use configuration: ", configuration);
+		}
+	});
+
+	return configuration;
+}
