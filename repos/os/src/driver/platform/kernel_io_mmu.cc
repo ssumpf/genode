@@ -23,51 +23,27 @@
 
 /* local includes */
 #include <device.h>
+#include <dma_address.h>
 #include <kernel_io_mmu.h>
 
 using namespace Driver;
 
 
-Kernel_io_mmu::Device_pd::Region_map_client::Attach_result
-Kernel_io_mmu::Device_pd::Region_map_client::attach(Dataspace_capability ds,
-                                                    Attr const &attr)
-{
-	for (;;) {
-		Attach_result const result = Genode::Region_map_client::attach(ds, attr);
-		if (result == Attach_error::OUT_OF_RAM) {
-			if (!upgrade_ram())
-				return result;
-			continue;
-		}
-		if (result == Attach_error::OUT_OF_CAPS) {
-			if (!upgrade_caps())
-				return result;
-			continue;
-		}
-		return result;
-	}
-}
-
-
-bool Kernel_io_mmu::Device_pd::Region_map_client::upgrade_ram()
+bool Kernel_io_mmu::Device_pd::_upgrade_ram()
 {
 	Ram_quota const ram { 4096 };
-	if (!_ram_guard.try_withdraw(ram))
-		return false;
 
-	_env.pd().transfer_quota(_pd.rpc_cap(), ram);
-	return true;
+	return _env.pd().transfer_quota(_pd.rpc_cap(), ram)
+	       == Pd_session::Transfer_result::OK;
 }
 
 
-bool Kernel_io_mmu::Device_pd::Region_map_client::upgrade_caps()
+bool Kernel_io_mmu::Device_pd::_upgrade_caps()
 {
 	Cap_quota const caps { 2 };
-	if (!_cap_guard.try_withdraw(caps))
-		return false;
 
-	_env.pd().transfer_quota(_pd.rpc_cap(), caps);
-	return true;
+	return _env.pd().transfer_quota(_pd.rpc_cap(), caps)
+	       == Pd_session::Transfer_result::OK;
 }
 
 
@@ -103,10 +79,10 @@ Kernel_io_mmu::Device_pd::add_range(Io_mmu::Range        const &range,
 			}
 		);
 
-		if (result == Error::OUT_OF_RAM && _address_space.upgrade_ram())
+		if (result == Error::OUT_OF_RAM && _upgrade_ram())
 			continue;
 
-		if (result == Error::OUT_OF_CAPS && _address_space.upgrade_caps())
+		if (result == Error::OUT_OF_CAPS && _upgrade_caps())
 			continue;
 
 		return result;
@@ -116,18 +92,26 @@ Kernel_io_mmu::Device_pd::add_range(Io_mmu::Range        const &range,
 
 void Kernel_io_mmu::Device_pd::remove_range(Io_mmu::Range const &range)
 {
-	_address_space.detach(range.start);
+	_rm.detach(range.start);
 }
 
 
-Kernel_io_mmu::Device_pd::Device_pd(Env &env, Ram_quota_guard &ram_guard,
-                                    Cap_quota_guard &cap_guard,
-                                    Allocator &md_alloc)
+Driver::Cost Kernel_io_mmu::Device_pd::costs(Dma_address_list &list)
+{
+	size_t mappings = 0;
+	list.for_each([&] (auto &) { mappings++; });
 
+	constexpr size_t overhead_ram_mapping      = 300;
+	constexpr size_t overhead_mappings_per_cap = 25;
+
+	return { mappings * overhead_ram_mapping,
+	         mappings / overhead_mappings_per_cap + 1 };
+}
+
+
+Kernel_io_mmu::Device_pd::Device_pd(Env &env)
 :
-	Io_mmu::Domain(md_alloc),
-	_pd(env, Pd_connection::Device_pd()),
-	_address_space(env, _pd, ram_guard, cap_guard)
+	_env(env)
 {
 	_pd.ref_account(env.pd_session_cap());
 }
@@ -141,22 +125,23 @@ void Kernel_io_mmu::enregister(Device const &device, Domain &domain)
 		Attached_io_mem_dataspace io_mem { _env, cfg.addr, 0x1000 };
 		Pci::Bdf bdf {cfg.bus_num, cfg.dev_num, cfg.func_num};
 
-		dpd._address_space.attach(io_mem.cap(), {
+		dpd._rm.attach(io_mem.cap(), {
 			.size       = 0x1000,  .offset    = { },
 			.use_at     = { },     .at        = { },
 			.executable = { },     .writeable = true
 		}).with_result(
-			[&] (Region_map::Range range) {
+			[&] (auto &range) {
 
 				/* trigger eager mapping of memory */
-				dpd._pd.map(Pd_session::Virt_range { range.start, range.num_bytes });
+				dpd._pd.map(Pd_session::Virt_range { range.start,
+				                                     range.num_bytes });
 
 				/* try to assign pci device to this protection domain */
 				if (!dpd._pd.assign_pci(range.start, Pci::Bdf::rid(bdf)))
 					log("Assignment of PCI device ", bdf, " to device PD failed, no IOMMU?!");
 
-				/* we don't need the mapping anymore */
-				dpd._address_space.detach(range.start);
+				/* after assignment, we don't need the mapping anymore */
+				dpd._rm.detach(range.start);
 			},
 			[&] (Region_map::Attach_error) {
 				error("failed to attach PCI device to device PD"); }
@@ -173,29 +158,29 @@ void Kernel_io_mmu::deregister(Device const &, Domain &)
 
 
 Io_mmu::Domain &
-Kernel_io_mmu::create_domain(Allocator       &md_alloc,
-                             Ram_quota_guard &ram_guard,
-                             Cap_quota_guard &cap_guard)
+Kernel_io_mmu::create_domain()
 {
-	return *new (md_alloc) Device_pd(_env, ram_guard, cap_guard, md_alloc);
+	return *new (_domain_alloc) Device_pd(_env);
 }
 
 
-void Kernel_io_mmu::destroy_domain(Allocator &md_alloc, Driver::Io_mmu::Domain &domain)
+void Kernel_io_mmu::destroy_domain(Driver::Io_mmu::Domain &domain)
 {
 	auto device_pd = static_cast<Device_pd *>(&domain);
 
 	if (device_pd)
-		destroy(md_alloc, device_pd);
+		destroy(_domain_alloc, device_pd);
 }
 
 
-Kernel_io_mmu::Kernel_io_mmu(Env                     &env,
-                             Io_mmu_devices           &io_mmu_devices,
-                             Device_name        const &name)
+Kernel_io_mmu::Kernel_io_mmu(Env               &env,
+                             Allocator         &md_alloc,
+                             Io_mmu_devices    &io_mmu_devices,
+                             Device_name const &name)
 :
 	Io_mmu(io_mmu_devices, name),
-	_env(env)
+	_env(env),
+	_domain_alloc(md_alloc)
 { };
 
 

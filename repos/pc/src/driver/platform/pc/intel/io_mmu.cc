@@ -66,6 +66,16 @@ void Intel::Io_mmu::Domain::remove_range(Range const &range)
 }
 
 
+Driver::Cost Intel::Io_mmu::Domain::costs(Dma_address_list &list)
+{
+	size_t count = 0;
+	_with_table([&] (auto &table) {
+		count = table.table_count(list); });
+
+	return _talloc.costs(count);
+}
+
+
 /* Flush write-buffer if required by hardware */
 void Intel::Io_mmu::flush_write_buffer()
 {
@@ -470,8 +480,9 @@ Intel::Io_mmu::Io_mmu(Env                            &env,
                       Device::Name             const &name,
                       Device::Io_mem::Range           range,
                       Translation_table_registry     &table_registry,
-                      Context_table_allocator        &table_allocator,
+                      Table_allocator                &table_allocator,
                       Domain_allocator               &domain_allocator,
+                      Allocator                      &domain_slab,
                       unsigned                        irq_number)
 : Attached_mmio(env, {(char *)range.start, range.size}),
   Driver::Io_mmu(io_mmu_devices, name),
@@ -479,6 +490,7 @@ Intel::Io_mmu::Io_mmu(Env                            &env,
   _table_registry(table_registry),
   _table_allocator(table_allocator),
   _domain_allocator(domain_allocator),
+  _domain_slab(domain_slab),
   _managed_root_table(_env, _table_allocator, _table_registry, !coherent_page_walk()),
   _default_mappings(_env, _table_allocator, _table_registry, !coherent_page_walk(),
                     _sagaw_to_levels())

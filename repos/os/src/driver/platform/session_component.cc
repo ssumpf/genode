@@ -19,12 +19,17 @@
 
 using Driver::Session_component;
 
+namespace Debug {
+	Genode::size_t _avail_ram = 0;
+	Genode::size_t _avail_caps = 0;
+}
 
 Genode::Capability<Platform::Device_interface>
 Session_component::_acquire(Device &device)
 {
 	Device_component * dc = new (heap())
-		Device_component(_device_registry, _env, *this, _devices, device);
+		Device_component(_device_registry, _env, *this, _dma_address_list,
+		                 _devices, device);
 
 	device.acquire(*this);
 	update_devices_rom();
@@ -52,98 +57,18 @@ void Session_component::_free_dma_buffer(Dma_buffer &buf)
 {
 	Ram_dataspace_capability cap = buf.cap;
 
-	_domain.remove_range({ buf.dma_addr, buf.size });
-	for_each_io_mmu([&] (auto &io_mmu) {
-		io_mmu.iotlb_flush(_domain); });
+	with_io_mmu_domain([&] (auto &domain) {
+		domain.remove_range({ buf.dma_addr(), buf.phys_range.size });
+		for_each_io_mmu([&] (auto &io_mmu) {
+			io_mmu.iotlb_flush(domain); });
+	});
 
 	destroy(heap(), &buf);
-	_env_ram.free(cap);
 }
 
 
-Driver::Io_mmu::Domain & Session_component::_create_domain()
+void Session_component::update_policy()
 {
-	/* Use non-functional domain if no IOMMU is in use */
-	static Io_mmu::Domain dummy { *(Allocator*)(nullptr) };
-
-	Io_mmu::Domain *domain = &dummy;
-
-	_devices.for_each([&] (Device const &dev) {
-		if (!matches(dev) || domain != &dummy)
-			return;
-
-		_devices.with_io_mmu(dev, [&] (auto &io_mmu) {
-			domain = &io_mmu.create_domain(heap(),
-			                               _ram_quota_guard(),
-			                               _cap_quota_guard());
-		});
-	});
-
-	return *domain;
-}
-
-
-void Session_component::_destroy_domain()
-{
-	bool reference_invalidated = false;
-
-	_devices.for_each([&] (Device const &dev) {
-		if (!matches(dev) || reference_invalidated)
-			return;
-
-		_devices.with_io_mmu(dev, [&] (auto &io_mmu) {
-			io_mmu.destroy_domain(heap(), _domain);
-			reference_invalidated = true;
-		});
-	});
-}
-
-
-bool Session_component::_dma_remapable() const
-{
-	/* iterate IOMMU devices and determine address translation mode */
-	bool mpu_present   { false };
-	bool iommu_present { false };
-
-	_devices.for_each([&] (Device const &dev) {
-		if (!matches(dev)) return;
-
-		_devices.with_io_mmu(dev, [&] (auto &io_mmu) {
-			if (io_mmu.mpu()) mpu_present   = true;
-			else              iommu_present = true;
-		});
-	});
-
-	return iommu_present && !mpu_present;
-}
-
-
-bool Session_component::matches(Device const &dev) const
-{
-	return with_matching_policy(label(), _config.node(),
-		[&] (Node const &policy) {
-
-			/* check PCI devices */
-			if (pci_device_matches(policy, dev))
-				return true;
-
-			/* check for dedicated device name */
-			bool ret = false;
-			policy.for_each_sub_node("device", [&] (Node const &node) {
-				if (dev.name() == node.attribute_value("name", Device::Name()))
-					ret = true;
-			});
-			return ret;
-
-		}, [] { return false; });
-};
-
-
-void Session_component::update_policy(bool info, Policy_version version)
-{
-	_info    = info;
-	_version = version;
-
 	enum Device_state { AWAY, CHANGED, UNCHANGED };
 
 	_device_registry.for_each([&] (Device_component &dc) {
@@ -151,7 +76,7 @@ void Session_component::update_policy(bool info, Policy_version version)
 		_devices.for_each([&] (Device const &dev) {
 			if (dev.name() != dc.device())
 				return;
-			state = (dev.owner(*this) && matches(dev)) ? UNCHANGED : CHANGED;
+			state = (dev.owner(*this) && _pd.matches(dev)) ? UNCHANGED : CHANGED;
 		});
 
 		if (state == UNCHANGED)
@@ -172,11 +97,11 @@ void Session_component::update_policy(bool info, Policy_version version)
 
 void Session_component::generate(Generator &g)
 {
-	if (_version.valid())
-		g.attribute("version", _version);
+	if (_pd._version.valid())
+		g.attribute("version", _pd._version);
 
 	_devices.for_each([&] (Device const &dev) {
-		if (matches(dev)) dev.generate(g, _info); });
+		if (_pd.matches(dev)) dev.generate(g, _pd._info); });
 }
 
 
@@ -192,7 +117,9 @@ void Session_component::update_devices_rom()
 void Session_component::enable_device(Device const &device)
 {
 	_devices.with_io_mmu(device, [&] (auto &io_mmu) {
-		io_mmu.enregister(device, _domain); });
+		with_io_mmu_domain([&] (auto &domain) {
+			io_mmu.enregister(device, domain); });
+	});
 	pci_enable(_env, device);
 }
 
@@ -201,7 +128,9 @@ void Session_component::disable_device(Device const &device)
 {
 	pci_disable(_env, device);
 	_devices.with_io_mmu(device, [&] (auto &io_mmu) {
-		io_mmu.deregister(device, _domain); });
+		with_io_mmu_domain([&] (auto &domain) {
+			io_mmu.deregister(device, domain); });
+	});
 }
 
 
@@ -216,7 +145,7 @@ Session_component::acquire_device(Platform::Session::Device_name const &name)
 
 	_devices.for_each([&] (Device &dev)
 	{
-		if (dev.name() != name || !matches(dev))
+		if (dev.name() != name || !_pd.matches(dev))
 			return;
 		if (dev.owned())
 			warning("Cannot aquire device ", name, " already in use");
@@ -234,7 +163,7 @@ Session_component::acquire_single_device()
 	Capability<Platform::Device_interface> cap;
 
 	_devices.for_each([&] (Device &dev) {
-		if (!cap.valid() && matches(dev) && !dev.owned())
+		if (!cap.valid() && _pd.matches(dev) && !dev.owned())
 			cap = _acquire(dev); });
 
 	return cap;
@@ -252,83 +181,88 @@ void Session_component::release_device(Capability<Platform::Device_interface> de
 }
 
 
+Genode::Attempt<Genode::Ok, Genode::Alloc_error> Session_component::update_iommu_costs()
+{
+	using Result = Attempt<Ok, Alloc_error>;
+
+	if (!_pd._dma_remapable())
+		return Ok();
+
+	auto costs = _pd._domain.costs(_dma_address_list);
+	Ram_quota const ram  { (costs.ram  > _costs.ram)  ? costs.ram-_costs.ram   : 0 };
+	Cap_quota const caps { (costs.caps > _costs.caps) ? costs.caps-_costs.caps : 0 };
+
+	return _ram_quota_guard().reserve(ram).convert<Result>(
+		[&] (Ram_quota_guard::Reservation &reserved_ram) {
+			return _cap_quota_guard().reserve(caps).convert<Result>(
+				[&] (Cap_quota_guard::Reservation &reserved_caps) {
+					reserved_ram.deallocate  = false;
+					reserved_caps.deallocate = false;
+					_costs = costs;
+					return Ok();
+				},
+				[&] (Cap_quota_guard::Error) {
+					return Alloc_error::OUT_OF_CAPS;
+				});
+		},
+		[&] (Ram_quota_guard::Error) {
+			return Alloc_error::OUT_OF_RAM;
+		});
+}
+
+
 Genode::Ram_dataspace_capability
 Session_component::alloc_dma_buffer(size_t const size, Cache cache)
 {
-	struct Guard {
+	using Result = Genode::Ram_dataspace_capability;
 
-		Accounted_ram_allocator &_env_ram;
-		Heap                    &_heap;
-		Io_mmu::Domain          &_domain;
-		bool                     _cleanup { true };
+	auto error = [] (Alloc_error e) {
+		if (e == Alloc_error::OUT_OF_RAM)
+			throw Out_of_ram();
+		if (e == Alloc_error::OUT_OF_CAPS)
+			throw Out_of_caps();
+		return Result();
+	};
 
-		Ram_dataspace_capability ram_cap { };
+	auto res = _dma_buffer_alloc.create(_dma_buffers, _env_ram, size, cache,
+	                                    _env.pd(), _pd._dma_address_alloc,
+	                                    _dma_address_list, _pd._dma_remapable());
 
-		struct {
-			Dma_buffer * buf { nullptr };
-		};
-
-		void disarm() { _cleanup = false; }
-
-		Guard(Accounted_ram_allocator &env_ram,
-		      Heap                    &heap,
-		      Io_mmu::Domain          &domain)
-		:
-			_env_ram(env_ram), _heap(heap), _domain(domain)
-		{ }
-
-		~Guard()
-		{
-			if (_cleanup && buf) {
-				/* make sure to remove buffer range from domain */
-				_domain.remove_range({ buf->dma_addr, buf->size });
-				destroy(_heap, buf);
-			}
-
-			if (_cleanup && ram_cap.valid())
-				_env_ram.free(ram_cap);
-		}
-	} guard { _env_ram, heap(), _domain };
-
-	/*
-	 * Check available quota beforehand and reflect the state back
-	 * to the client because the 'Expanding_pd_session_client' will
-	 * ask its parent otherwise.
-	 */
-	enum { WATERMARK_CAP_QUOTA = 8, };
-	if (_env.pd().avail_caps().value < WATERMARK_CAP_QUOTA)
-		throw Out_of_caps();
-
-	enum { WATERMARK_RAM_QUOTA = 4096, };
-	if (_env.pd().avail_ram().value < WATERMARK_RAM_QUOTA)
-		throw Out_of_ram();
-
-	try {
-		guard.ram_cap = _env_ram.alloc(size, cache);
-	} catch (Ram_allocator::Denied) { }
-
-	if (!guard.ram_cap.valid()) return guard.ram_cap;
-
-
-	try {
-		Dma_buffer &buf = _dma_allocator.alloc_buffer(guard.ram_cap,
-		                                              _env.pd().dma_addr(guard.ram_cap),
-		                                              _env.pd().ram_size(guard.ram_cap),
-		                                              _dma_remapable());
-		guard.buf = &buf;
-
-		_domain.add_range({ buf.dma_addr, buf.size }, buf.phys_addr, buf.cap).with_error(
-			[] (auto err) {
-				if (err == decltype(err)::OUT_OF_RAM)
-					throw Out_of_ram();
-				if (err == decltype(err)::OUT_OF_CAPS)
-					throw Out_of_caps();
-		});
-
-	} catch (Dma_allocator::Out_of_virtual_memory) { }
-
-	guard.disarm();
-	return guard.ram_cap;
+	return res.convert<Result>(
+		[&] (auto &a) {
+			return a.obj.constructed().template convert<Result>(
+				[&] (auto) {
+					return update_iommu_costs().convert<Result>(
+					[&] (auto) {
+						auto &buf = a.obj;
+						if (_pd._domain.add_range({buf.dma_addr(),
+						                          buf.phys_range.size},
+						                          buf.phys_range.start,
+						                          buf.cap).failed())
+							Genode::error("Inserting DMA buffer into ",
+							              "IOMMU table failed!");
+						a.deallocate = false;
+						size_t acaps = _env.pd().avail_caps().value;
+						size_t aram  = _env.pd().avail_ram().value;
+						if (Debug::_avail_ram > aram) {
+							Genode::error("Created dma_buffer avail_ram shrinks: ", aram);
+							Debug::_avail_ram = aram;
+						}
+						if (Debug::_avail_caps > acaps) {
+							Genode::error("Created dma_buffer avail_caps shrinks: ", acaps);
+							Debug::_avail_caps = acaps;
+						}
+						return a.obj.cap;
+					},
+					[&] (auto e) {
+						return error(e);
+					});
+				},
+				[&] (auto e) {
+					return error(e);
+				});
+		},
+		[&] (auto &e) { return error(e); });
 }
 
 
@@ -336,9 +270,9 @@ void Session_component::free_dma_buffer(Ram_dataspace_capability ram_cap)
 {
 	if (!ram_cap.valid()) { return; }
 
-	_dma_allocator.buffer_registry().for_each([&] (Dma_buffer &buf) {
-		if (buf.cap.local_name() == ram_cap.local_name())
-			_free_dma_buffer(buf); });
+	_dma_buffers.with_element({ram_cap},
+		[&] (Dma_buffer &buf) { _free_dma_buffer(buf); },
+		[] () { /* ignore wrong capability argument */ });
 }
 
 
@@ -349,30 +283,21 @@ Genode::addr_t Session_component::dma_addr(Ram_dataspace_capability ram_cap)
 	if (!ram_cap.valid())
 		return ret;
 
-	_dma_allocator.buffer_registry().for_each([&] (Dma_buffer const &buf) {
-		if (buf.cap.local_name() == ram_cap.local_name())
-			ret = buf.dma_addr; });
+	_dma_buffers.with_element({ram_cap},
+		[&] (Dma_buffer &buf) { ret = buf.dma_addr(); },
+		[] () { /* ignore wrong capability argument */ });
 
 	return ret;
 }
 
 
-Session_component::Session_component(Env                          &env,
-                                     Attached_rom_dataspace const &config,
-                                     Device_model                 &devices,
-                                     Session_registry             &registry,
-                                     Label          const         &label,
-                                     Resources      const         &resources,
-                                     bool           const          info,
-                                     Policy_version const          version)
+Session_component::Session_component(Env &env, Pd &pd, Device_model &devices,
+                                     Resources const &resources)
 :
-	Session_object<Platform::Session>(env.ep(), resources, label),
-	Session_registry::Element(registry, *this),
+	Session_object<Platform::Session>(env.ep(), resources, pd.label()),
+	Session_registry::Element(pd._sessions, *this),
 	Dynamic_rom_session::Producer("devices"),
-	_env(env), _config(config), _devices(devices),
-	_info(info), _version(version),
-	_dma_allocator(_md_alloc),
-	_domain(_create_domain())
+	_env(env), _pd(pd), _devices(devices)
 {
 	/*
 	 * FIXME: As the ROM session does not propagate Out_of_*
@@ -383,21 +308,31 @@ Session_component::Session_component(Env                          &env,
 	 *        we account the costs here until the ROM session interface
 	 *        changes.
 	 */
-	if (!_cap_quota_guard().try_withdraw(Cap_quota{Rom_session::CAP_QUOTA}))
-		throw Out_of_caps();
-	if (!_ram_quota_guard().try_withdraw(Ram_quota{5*1024}))
-		throw Out_of_ram();
+	_ram_quota_guard().reserve(Ram_quota(5*1024)).with_result(
+		[&] (Ram_quota_guard::Reservation &reserved_ram) {
+			_cap_quota_guard().reserve(Cap_quota(Rom_session::CAP_QUOTA)).with_result(
+				[&] (Cap_quota_guard::Reservation &reserved_caps) {
+					reserved_ram.deallocate  = false;
+					reserved_caps.deallocate = false;
+				},
+				[&] (Cap_quota_guard::Error) {
+					throw Out_of_caps();
+				});
+		},
+		[&] (Ram_quota_guard::Error) {
+			throw Out_of_ram();
+		});
 
-	/*
-	 * Iterate matching devices and reserve reserved memory regions at DMA
-	 * allocator.
-	 */
-	_devices.for_each([&] (Device const &dev) {
-		if (!matches(dev)) return;
-
-		dev.for_each_reserved_memory([&] (unsigned, Io_mmu::Range range) {
-			_dma_allocator.reserve(range.start, range.size); });
-	});
+	size_t acaps = env.pd().avail_caps().value;
+	size_t aram  = env.pd().avail_ram().value;
+	if (Debug::_avail_ram > aram) {
+		error("Created session_component avail_ram shrinks: ", aram);
+		Debug::_avail_ram = aram;
+	}
+	if (Debug::_avail_caps > acaps) {
+		error("Created session_component avail_caps shrinks: ", acaps);
+		Debug::_avail_caps = acaps;
+	}
 }
 
 
@@ -407,12 +342,10 @@ Session_component::~Session_component()
 		_release_device(dc); });
 
 	/* free up dma buffers */
-	_dma_allocator.buffer_registry().for_each([&] (Dma_buffer &buf) {
-		_free_dma_buffer(buf); });
-
-	_destroy_domain();
+	while (_dma_buffers.with_any_element([&] (Dma_buffer &buf) {
+		_free_dma_buffer(buf); })) ;
 
 	/* replenish quota for rom sessions, see constructor for explanation */
-	_cap_quota_guard().replenish(Cap_quota{Rom_session::CAP_QUOTA});
-	_ram_quota_guard().replenish(Ram_quota{5*1024});
+	_cap_quota_guard().replenish(Cap_quota{Rom_session::CAP_QUOTA + _costs.caps});
+	_ram_quota_guard().replenish(Ram_quota{5*1024 + _costs.ram});
 }

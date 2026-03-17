@@ -136,14 +136,15 @@ void Driver::Device_component::_release_resources()
 
 	_io_mmu.destruct();
 
-	_reserved_mem_registry.for_each([&] (Io_mem &iomem)
+	_reserved_mem_registry.for_each([&] (auto &rmem)
 	{
 		_session.with_io_mmu_domain([&] (auto &domain) {
-			domain.remove_range(iomem.range);
+			domain.remove_range({rmem.dma_reservation.start,
+			                     rmem.dma_reservation.end-rmem.dma_reservation.start+1});
 			_session.for_each_io_mmu([&] (auto &io_mmu) {
 				io_mmu.iotlb_flush(domain); });
 		});
-		destroy(_session.heap(), &iomem);
+		destroy(_session.heap(), &rmem);
 	});
 
 	_pci_config.destruct();
@@ -259,6 +260,7 @@ void Device_component::_with_reserved_quota_for_session(Driver::Session_componen
 Device_component::Device_component(Registry<Device_component> &registry,
                                    Env                        &env,
                                    Driver::Session_component  &session,
+                                   Dma_address_list           &dma_list,
                                    Driver::Device_model       &model,
                                    Driver::Device             &device)
 :
@@ -320,22 +322,28 @@ Device_component::Device_component(Registry<Device_component> &registry,
 				_pci_config.construct(cfg.addr, bdf); });
 		});
 
-		device.for_each_reserved_memory([&] (unsigned idx, Range range)
+		device.for_each_reserved_memory([&] (unsigned, Range range, auto &)
 		{
 			_with_reserved_quota_for_session<Io_mem_session>(session, [&] {
-				Io_mem &iomem = *(new (session.heap())
-					Io_mem(_reserved_mem_registry, {0}, idx, range, false));
-				iomem.io_mem.construct(_env, iomem.range.start,
-				                       iomem.range.size, false);
-				session.with_io_mmu_domain([&] (auto &domain) {
-					domain.add_range(iomem.range, iomem.range.start,
-					                 iomem.io_mem->dataspace()).with_error(
-						[] (auto err) {
-							if (err == decltype(err)::OUT_OF_RAM)
-								throw Out_of_ram();
-							if (err == decltype(err)::OUT_OF_CAPS)
-								throw Out_of_caps();
-					});
+				auto &rmem = *(new (session.heap())
+					Reserved_mem(_reserved_mem_registry, range, dma_list));
+
+				session.update_iommu_costs().with_result(
+					[&] (auto) {
+						rmem.io_mem.construct(_env, range.start, range.size,
+						                      false);
+						session.with_io_mmu_domain([&] (auto &domain) {
+							if (domain.add_range(range, range.start,
+							                 rmem.io_mem->dataspace()).failed())
+								Genode::error("Inserting DMA buffer into ",
+								              "IOMMU table failed!");
+						});
+					},
+					[&] (auto err) {
+						if (err == decltype(err)::OUT_OF_RAM)
+							throw Out_of_ram();
+						if (err == decltype(err)::OUT_OF_CAPS)
+							throw Out_of_caps();
 				});
 			});
 		});
