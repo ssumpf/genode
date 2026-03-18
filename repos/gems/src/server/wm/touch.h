@@ -30,7 +30,8 @@ struct Wm::Touch
 	{
 		private:
 
-			Position _last_observed { };
+			Position _last_touch_observed   { };
+			Position _last_pointer_observed { };
 
 			bool     _touched = false;
 
@@ -44,9 +45,15 @@ struct Wm::Touch
 			{
 				bool pointer_report_update_needed = false;
 
-				/* invalidate touch position on any absolute motion */
-				if (ev.absolute_motion())
-					_last_observed = { .valid = false, .value = { } };
+				ev.handle_absolute_motion([&] (int x, int y) {
+					Point const point { x, y };
+
+					/* invalidate touch position when pointer moves */
+					if (!_last_pointer_observed.valid || _last_pointer_observed.value != point)
+						_last_touch_observed = { .valid = false, .value = { } };
+
+					_last_pointer_observed = { .valid = true, .value = point };
+				});
 
 				/*
 				 * update pointer report with touch position on BTN_TOUCH
@@ -63,14 +70,14 @@ struct Wm::Touch
 				/* update touch position before BTN_TOUCH key press */
 				ev.handle_touch([&] (Input::Touch_id id, float x, float y) {
 					if (id.value == 0 && !_touched)
-						_last_observed = { .valid = true, .value = { (int)x, (int)y }};
+						_last_touch_observed = { .valid = true, .value = { (int)x, (int)y }};
 				});
 
 				if (pointer_report_update_needed)
 					_tracker.update_pointer_report();
 			}
 
-			Position last_observed_pos() const { return _last_observed; }
+			Position last_observed_pos() const { return _last_touch_observed; }
 	};
 };
 
