@@ -241,7 +241,7 @@ class Driver::Page_table_allocator
 			using Result = Attempt<addr_t, Error>;
 			Result result = Error();
 
-			/**
+			/*
 			 * Non-optimal: we've to iterate through the whole tree,
 			 *              there is no indexing with virtual addresses
 			 */
