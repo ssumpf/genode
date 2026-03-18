@@ -439,7 +439,7 @@ Driver::Device::~Device()
 
 void Driver::Device_model::_acquire_io_mmus()
 {
-	/**
+	/*
 	 * If the decision was made to delegate IOMMU control to the kernel
 	 * keep that decision
 	 */
@@ -460,7 +460,7 @@ void Driver::Device_model::_acquire_io_mmus()
 
 	});
 
-	/**
+	/*
 	 * If there is was no IOMMU detected, it doesn't mean there is no at all,
 	 * potentially we just do not support it, but the kernel might do so
 	 * (e.g. Nova on AMD platform), in that case use the kernel interface if
