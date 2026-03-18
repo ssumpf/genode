@@ -60,7 +60,7 @@ class Driver::Device_component : public Rpc_object<Platform::Device_interface,
 				idx(idx), number(number), remapped_nbr(number), type(type),
 				polarity(polarity), mode(mode), shared(shared) {}
 
-			void map(Device_component &);
+			Irq_session_capability map(Device_component &);
 			void unmap(Device_component &);
 		};
 

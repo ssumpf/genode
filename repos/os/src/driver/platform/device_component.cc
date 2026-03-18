@@ -19,12 +19,15 @@
 
 using Driver::Device_component;
 
-void Device_component::Irq::map(Device_component &dc)
+Genode::Irq_session_capability Device_component::Irq::map(Device_component &dc)
 {
-	if (irq.constructed() || sirq.constructed())
-		return;
+	if (irq.constructed())
+	   return irq->cap();
 
-	using Irq_info = Driver::Io_mmu::Irq_info;
+	if (sirq.constructed())
+	   return sirq->cap();
+
+	using Irq_info   = Driver::Io_mmu::Irq_info;
 	using Irq_config = Irq_controller::Irq_config;
 
 	auto remap = [&] (Device::Name      const &iommu_name,
@@ -39,7 +42,6 @@ void Device_component::Irq::map(Device_component &dc)
 
 		/* store remapped number at irq object */
 		remapped_nbr = irq_info.irq_number;
-		return irq_info;
 	};
 
 	auto remap_legacy_irq = [&] ()
@@ -68,27 +70,27 @@ void Device_component::Irq::map(Device_component &dc)
 			sirq.construct(dc._env.ep().rpc_ep(), shared_irq, mode, polarity);
 			remap_legacy_irq();
 		});
-		return;
+		return sirq.constructed() ? sirq->cap() : Irq_session_capability();
 	}
 
 	/* Non-shared legacy interrupt */
 	if (type == Irq_session::TYPE_LEGACY) {
 		irq.construct(dc._env, number, mode, polarity);
 		remap_legacy_irq();
-		return;
+		return irq->cap();
 	}
 
 	/* Non-shared Msi-(x) interrupt */
 	dc._with_pci_config([&] (auto &pci_config) {
 		irq.construct(dc._env, number, pci_config.addr, type,
 		              Pci::Bdf::rid(pci_config.bdf));
+		Irq_session::Info info = irq->info();
 		dc._with_io_mmu([&] (Io_mmu const &io_mmu) {
-			auto rirq = remap(io_mmu.name, pci_config.bdf, irq->info(),
-			                  Irq_config::Invalid());
-			pci_msi_enable(dc._env, dc, pci_config.addr,
-			               rirq.session_info, type);
-		});
+			remap(io_mmu.name, pci_config.bdf, info, Irq_config::Invalid()); });
+		pci_msi_enable(dc._env, dc, pci_config.addr, info, type);
 	});
+
+	return irq.constructed() ? irq->cap() : Irq_session_capability();
 }
 
 
@@ -196,8 +198,7 @@ Genode::Irq_session_capability Device_component::irq(unsigned idx)
 			if (irq.idx != idx)
 				return;
 
-			irq.map(*this);
-			cap = irq.shared ? irq.sirq->cap() : irq.irq->cap();
+			cap = irq.map(*this);
 		});
 	} catch (Service_denied) { error("irq could not be setup ", _device_name); }
 
