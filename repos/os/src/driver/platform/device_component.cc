@@ -52,7 +52,7 @@ void Device_component::Irq::map(Device_component &dc)
 			remap(controller.iommu(), controller.bdf(),
 			      dummy_info, controller.irq_config(number));
 
-			/**
+			/*
 			 * Core/Kernel is and remains in control of the IRQ controller. When
 			 * IRQ remapping is enabled, however, we need to modify the upper 32bit
 			 * of the corresponding redirection table entry. This is save for
