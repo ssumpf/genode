@@ -157,7 +157,7 @@ void usb_notify_add_device(struct usb_device * udev)
 	unsigned config = lx_emul_handle_config(dev_name(&udev->dev), udev->descriptor.idVendor,
 	                                        udev->descriptor.idProduct);
 
-	if (config && config < udev->descriptor.bNumConfigurations &&
+	if (config && config <= udev->descriptor.bNumConfigurations &&
 	    (!udev->actconfig || udev->actconfig->desc.bConfigurationValue != config)) {
 		int err = usb_set_configuration(udev, config);
 		if (err) printk("set configuration failed: %d\n", err);
