@@ -43,8 +43,6 @@ struct Main
 	                                       &Main::handle_signal  };
 	Signal_handler<Main> usb_rom_handler { env.ep(), *this,
 	                                       &Main::handle_usb_rom };
-	Signal_handler<Main> config_handler  { env.ep(), *this,
-	                                       &Main::handle_config  };
 
 	Main(Env &env)
 	:
@@ -60,9 +58,6 @@ struct Main
 		genode_uplink_init(genode_env_ptr(env),
 		                   genode_allocator_ptr(Lx_kit::env().heap),
 		                   genode_signal_handler_ptr(signal_handler));
-
-		config_rom.sigh(config_handler);
-		handle_config();
 
 		lx_emul_start_kernel(nullptr);
 	}
@@ -85,22 +80,6 @@ struct Main
 	{
 		lx_emul_usb_client_rom_update();
 		Lx_kit::env().scheduler.execute();
-	}
-
-	void handle_config()
-	{
-		config_rom.update();
-		genode_mac_address_reporter_config(config_rom.node());
-
-		/* read USB configuration setting */
-		usb_config = config_rom.node().attribute_value("configuration", 0ul);
-
-		/* retrieve possible MAC */
-		if (config_rom.node().has_attribute("mac")) {
-			auto const mac = config_rom.node().attribute_value("mac", Nic::Mac_address{});
-			log("Trying to use configured mac: ", mac);
-			lx_emul_nic_set_mac_address(mac.addr, sizeof(mac.addr));
-		}
 	}
 };
 
