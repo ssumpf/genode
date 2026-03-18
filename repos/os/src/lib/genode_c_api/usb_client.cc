@@ -469,8 +469,7 @@ struct Session
 	~Session() {
 		_model.for_each([&] (Device &dev) { destroy(_alloc, &dev); }); }
 
-	void update(genode_usb_client_dev_add_t add,
-	            genode_usb_client_dev_del_t del)
+	void update_model()
 	{
 		_usb.with_node([&] (Node const &node) {
 			_model.update_from_node(node,
@@ -492,9 +491,6 @@ struct Session
 				[&] (Device &dev)
 				{
 					dev._state = Device::REMOVED;
-					if (dev.driver_data()) del(dev.handle(), dev.driver_data());
-					dev.update(_alloc, Node());
-					destroy(_alloc, &dev);
 				},
 
 				/* update */
@@ -504,12 +500,22 @@ struct Session
 				}
 			);
 		});
+	}
 
-		/* add new devices for C-API client after it got successfully added */
+	/*
+	 * Add/delete devices for a C-API client after they got added/removed by
+	 * update_model
+	 */
+	void update(genode_usb_client_dev_add_t add,
+	            genode_usb_client_dev_del_t del)
+	{
 		_model.for_each([&] (Device &dev) {
-			if (!dev.driver_data())
-				dev.driver_data(add(dev.handle(), dev.name().string(),
-				                    dev.speed()));
+			if (dev._state == Device::REMOVED) {
+				if (dev.driver_data()) del(dev.handle(), dev.driver_data());
+				dev.update(_alloc, Node());
+				destroy(_alloc, &dev);
+			} else if (!dev.driver_data())
+					dev.driver_data(add(dev.handle(), dev.name().string(), dev.speed()));
 		});
 	}
 };
@@ -559,8 +565,15 @@ void Genode_c_api::initialize_usb_client(Env                      &env,
 
 
 extern "C"
-void genode_usb_client_update(genode_usb_client_dev_add_t add,
-                              genode_usb_client_dev_del_t del)
+void genode_usb_client_update_model(void)
+{
+	if (_usb_session) _usb_session->update_model();
+}
+
+
+extern "C"
+void genode_usb_client_update_devices(genode_usb_client_dev_add_t add,
+                                      genode_usb_client_dev_del_t del)
 {
 	if (_usb_session) _usb_session->update(add, del);
 }
