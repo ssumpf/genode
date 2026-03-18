@@ -420,7 +420,7 @@ void Intel::Io_mmu::enregister(Device const &device, Driver::Io_mmu::Domain &dom
 		: root_table().insert_context<L3_TABLE_SIZE_LOG2>(
 			bdf, intel_domain._table_phys, intel_domain._domain_id);
 
-	/**
+	/*
 	 * We need to invalidate the context-cache entry for this device and
 	 * IOTLB entries for the previously used domain id.
 	 *
