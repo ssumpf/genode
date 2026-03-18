@@ -500,7 +500,7 @@ Intel::Io_mmu::Io_mmu(Env                            &env,
 
 	_init();
 
-	/**
+	/*
 	 * Insert all default mappings (reserved memory of devices)
 	 */
 	devices.for_each([&] (auto const &device) {
