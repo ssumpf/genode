@@ -353,7 +353,7 @@ struct Event_filter::Main : Source::Factory, Source::Trigger
 			                                 _include_accessor);
 
 		if (node.type() == Merge_source::name())
-			return *new (_heap) Merge_source(owner, node, *this);
+			return *new (_heap) Merge_source(owner, node, *this, _include_accessor);
 
 		if (node.type() == Chargen_source::name())
 			return *new (_heap) Chargen_source(owner, node, *this, _heap,
