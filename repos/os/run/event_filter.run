@@ -589,49 +589,69 @@ config
 + sleep | ms: 100
 + usb
   + touch | x: 15 | y: 15
+  + press | code: BTN_TOUCH
   + touch | x: 15 | y: 25
   + touch-release | id: 0
+  + release | code: BTN_TOUCH
   + touch | x: 15 | y: 400
+  + press | code: BTN_TOUCH
   + touch | x: 15 | y: 200
   + touch-release
+  + release | code: BTN_TOUCH
   + touch | x: 15 | y: 200
+  + press | code: BTN_TOUCH
   + touch | x: 15 | y: 220
 + sleep | ms: 400
 + sleep | ms: 100
 + usb
   + touch | x: 15 | y: 400
   + touch-release
+  + release | code: BTN_TOUCH
   + touch | x: 15 | y: 15
+  + press | code: BTN_TOUCH
   + touch | x: 15 | y: 65
   + touch | x: 15 | y: 120
   + touch-release | id: 0
+  + release | code: BTN_TOUCH
   + touch | x: 50 | y: 15
+  + press | code: BTN_TOUCH
   + touch | x: 50 | y: 65
   + touch | x: 50 | y: 120
   + touch-release | id: 0
+  + release | code: BTN_TOUCH
   + touch | id: 0 | x: 15 | y: 15
+  + press | code: BTN_TOUCH
   + touch | id: 1 | x: 10 | y: 10
   + touch | id: 0 | x: 15 | y: 65
   + touch-release | id: 1
   + touch-release | id: 0
+  + release | code: BTN_TOUCH
 + expect_touch   | x: 15 | y: 15
++ expect_press   | code: BTN_TOUCH
 + expect_touch   | x: 15 | y: 25
 + expect_touch_release
++ expect_release | code: BTN_TOUCH
 + expect_touch   | x: 15 | y: 400
++ expect_press   | code: BTN_TOUCH
 + expect_touch   | x: 15 | y: 200
 + expect_touch_release
++ expect_release | code: BTN_TOUCH
 + expect_touch   | x: 15 | y: 200
++ expect_press   | code: BTN_TOUCH
 + expect_touch   | x: 15 | y: 220
 + expect_touch_release
++ expect_release | code: BTN_TOUCH
 + expect_press   | code: KEY_DASHBOARD
 + expect_release | code: KEY_DASHBOARD
 + expect_press   | code: KEY_SCREEN
 + expect_release | code: KEY_SCREEN
 + expect_touch   | id: 0 | x: 15 | y: 15
++ expect_press   | code: BTN_TOUCH
 + expect_touch   | id: 1 | x: 10 | y: 10
 + expect_touch   | id: 0 | x: 15 | y: 65
 + expect_touch_release | id: 1
 + expect_touch_release | id: 0
++ expect_release | code: BTN_TOUCH
 
 + message | string: test shortcut report
 + filter_config
