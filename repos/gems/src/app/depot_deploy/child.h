@@ -886,19 +886,16 @@ void Depot_deploy::Child::_gen_routes(Generator &g,
 
 			Resource::Name const name = conn.attribute_value("name", Resource::Name());
 			bool const named = (name.length() > 1);
-
-			if (resource.type == Resource::FS) {
-				if (named) {
-					using Prefix = String<Resource::Name::capacity() + 3>;
+			if (named) {
+				using Prefix = String<Resource::Name::capacity() + 3>;
+				if (resource.type == Resource::FS)
 					g.attribute("label_prefix", Prefix { name, " ->" });
-				}
-			} else if (resource.type == Resource::ROM) {
-				if (named)
+				else if (resource.type == Resource::ROM)
 					g.attribute("label_last", name);
-			} else {
-				if (named) {
+				else
 					g.attribute("label", name);
-				} else if (conn.has_attribute("label_last")) {
+			} else {
+				if (conn.has_attribute("label_last")) {
 					using Last = Resource::Name;
 					Last const last = conn.attribute_value("label_last", Last());
 					g.attribute("label_last", last);
