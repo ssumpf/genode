@@ -48,10 +48,6 @@ one of the following filters:
 
   Merges the results of any number of filters that appear as child nodes.
 
-  A '<merge>' node may contain '<include>' nodes, which include further
-  content into the '<merge>' node. The included ROM must have a '<merge>'
-  top-level node.
-
 :<chargen>:
 
   Supplements the input-event stream of another filter with artificial
