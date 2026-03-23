@@ -1138,7 +1138,7 @@ struct Sculpt::Main : Input_event_handler,
 	 * part decoupled from the lower-level runtime configuration generator.
 	 */
 	Rom_handler<Main> _init_config_rom {
-		_env, "runtime_init_config", *this, &Main::_handle_init_config };
+		_env, "runtime_config", *this, &Main::_handle_init_config };
 
 	Runtime_config _cached_init_config { _heap };
 
@@ -1825,7 +1825,7 @@ struct Sculpt::Main : Input_event_handler,
 	Modem_config _curr_modem_config { };
 
 	Rom_handler<Main> _modem_state_rom {
-		_env, "report -> runtime/modem/state", *this, &Main::_handle_modem_state };
+		_env, "report -> modem/state", *this, &Main::_handle_modem_state };
 
 	void _handle_modem_state(Node const &modem_state)
 	{
