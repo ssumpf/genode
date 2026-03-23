@@ -242,7 +242,7 @@ namespace Sculpt {
 
 	static inline void connect_i2c(Generator &g)
 	{
-		g.node("i2c", [&] { g.node("parent"); });
+		g.node("i2c", [&] { gen_named_node(g, "child", "platform"); });
 	}
 
 	static inline void connect_config_fs(Generator &g)
