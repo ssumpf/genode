@@ -488,7 +488,7 @@ struct Session
 				},
 
 				/* destroy */
-				[&] (Device &dev)
+				[] (Device &dev)
 				{
 					dev._state = Device::REMOVED;
 				},
@@ -509,13 +509,35 @@ struct Session
 	void update(genode_usb_client_dev_add_t add,
 	            genode_usb_client_dev_del_t del)
 	{
-		_model.for_each([&] (Device &dev) {
-			if (dev._state == Device::REMOVED) {
+		/* delete devices marked as removed  */
+		while (true) {
+
+			bool found = false;
+			genode_usb_client_dev_handle_t handle;
+
+			_space.for_each<Device>([&] (Device &dev) {
+				if (dev._state == Device::REMOVED) {
+					handle = dev.handle();
+					found = true;
+				}
+			});
+
+			if (!found) break;
+
+			auto remove = [&] (Device &dev)
+			{
 				if (dev.driver_data()) del(dev.handle(), dev.driver_data());
 				dev.update(_alloc, Node());
 				destroy(_alloc, &dev);
-			} else if (!dev.driver_data())
-					dev.driver_data(add(dev.handle(), dev.name().string(), dev.speed()));
+			};
+
+			_space.apply<Device>({ handle }, remove, [] (){});
+		}
+
+		/* add new devices */
+		_model.for_each([&] (Device &dev) {
+			if (!dev.driver_data())
+				dev.driver_data(add(dev.handle(), dev.name().string(), dev.speed()));
 		});
 	}
 };
