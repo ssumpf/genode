@@ -25,7 +25,7 @@ config | focus: rom
 + policy | label_prefix: backdrop        | domain: background
 + default-policy                         | domain: default
 
-+ global-key KEY_DASHBOARD | label: global_keys_handler -> input
++ global-key KEY_DASHBOARD | label: global_keys -> input
 + global-key KEY_PRINT     | label: screenshot -> keys -> input
 + global-key KEY_POWER     | label: leitzentrale -> manager -> fader ->
 -
