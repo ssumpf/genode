@@ -299,8 +299,6 @@ if {![file exists bin/sample.f32] && [play_sample_file]} {
 
 lappend_if [play_sample_file] boot_modules sample.f32
 
-append boot_modules " sof_firmware.tar "
-
 build_boot_image $boot_modules
 
 run_genode_until forever
