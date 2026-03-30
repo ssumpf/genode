@@ -593,7 +593,7 @@ void Main::parse_acpi_device_info(Node const &node, Generator &g)
 				g.attribute("name", "NHLT");
 				g.attribute("type", "acpi-table");
 				g.node("io_mem", [&] {
-					g.attribute("address", addr);
+					g.attribute("address", String<20>(Hex(addr)));
 					g.attribute("size", size);
 				});
 			});
