@@ -590,7 +590,7 @@ struct Sculpt::Main : Input_event_handler,
 
 	Depot::Archive::User _index_user = _build_info.depot_user;
 
-	Expanding_reporter _depot_query_reporter { _env, "query", "depot_query"};
+	Expanding_reporter _depot_query_reporter { _env, "query", "child/depot_query"};
 
 	bool _system_dialog_watches_depot() const
 	{
