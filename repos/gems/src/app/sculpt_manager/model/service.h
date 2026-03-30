@@ -167,18 +167,6 @@ struct Sculpt::Service
 	}
 
 	void generate(Generator &g) const { generate(g, [] { }); }
-
-	/**
-	 * Return name of file-system service
-	 */
-	Start_name fs_name() const
-	{
-		bool const parent = !server.valid();
-		if (parent)
-			return name;   /* "report" and "config" file system */
-
-		return server;      /* file system provided by a child */
-	}
 };
 
 #endif /* _MODEL__SERVICE_H_ */
