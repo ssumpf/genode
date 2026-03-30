@@ -92,6 +92,21 @@ class Driver::Session_component
 
 		void with_io_mmu_domain(auto const &fn) { fn(_domain); }
 
+		void for_each_io_mmu(auto const &fn)
+		{
+			_devices.for_each_io_mmu([&] (auto &io_mmu) {
+				bool match = false;
+				_devices.for_each([&] (Device const &dev) {
+					if (matches(dev))
+						dev.with_io_mmu([&] (auto &dev_io_mmu) {
+							if (dev_io_mmu.name == io_mmu.name())
+								match = true; });
+				});
+
+				if (match) fn(io_mmu);
+			});
+		}
+
 	private:
 
 		friend class Root;

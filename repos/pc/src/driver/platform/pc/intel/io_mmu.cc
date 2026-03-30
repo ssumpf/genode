@@ -455,6 +455,15 @@ void Intel::Io_mmu::deregister(Device const &device, Driver::Io_mmu::Domain &dom
 	invalidator().invalidate_all(intel_domain._domain_id);
 }
 
+
+void Intel::Io_mmu::iotlb_flush(Driver::Io_mmu::Domain &domain)
+{
+	Domain &intel_domain = static_cast<Domain&>(domain);
+
+	invalidator().invalidate_iotlb(intel_domain._domain_id);
+}
+
+
 Intel::Io_mmu::Io_mmu(Env                            &env,
                       Io_mmu_devices                 &io_mmu_devices,
                       Device_model                   &devices,

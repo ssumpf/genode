@@ -625,6 +625,8 @@ class Intel::Io_mmu : private Attached_mmio<0x800>,
 		void deregister(Device const &device,
 		                Driver::Io_mmu::Domain &domain) override;
 
+		void iotlb_flush(Driver::Io_mmu::Domain &domain) override;
+
 		/**
 		 * Constructor/Destructor
 		 */

@@ -53,6 +53,8 @@ void Session_component::_free_dma_buffer(Dma_buffer &buf)
 	Ram_dataspace_capability cap = buf.cap;
 
 	_domain.remove_range({ buf.dma_addr, buf.size });
+	for_each_io_mmu([&] (auto &io_mmu) {
+		io_mmu.iotlb_flush(_domain); });
 
 	destroy(heap(), &buf);
 	_env_ram.free(cap);

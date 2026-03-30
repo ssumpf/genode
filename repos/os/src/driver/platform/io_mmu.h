@@ -130,6 +130,8 @@ class Driver::Io_mmu : private Io_mmu_devices::Element
 		virtual void enregister(Device const &, Domain &) {};
 		virtual void deregister(Device const &, Domain &) {};
 
+		virtual void iotlb_flush(Domain &) {};
+
 		virtual void generate(Generator &) const { }
 
 		Io_mmu(Io_mmu_devices &io_mmu_devices, Device_name const &name)

@@ -135,7 +135,10 @@ void Driver::Device_component::_release_resources()
 	_reserved_mem_registry.for_each([&] (Io_mem &iomem)
 	{
 		_session.with_io_mmu_domain([&] (auto &domain) {
-			domain.remove_range(iomem.range); });
+			domain.remove_range(iomem.range);
+			_session.for_each_io_mmu([&] (auto &io_mmu) {
+				io_mmu.iotlb_flush(domain); });
+		});
 		destroy(_session.heap(), &iomem);
 	});
 
