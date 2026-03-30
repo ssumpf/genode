@@ -549,15 +549,20 @@ class Driver::Device_model : public Device_owner
 
 		void with_io_mmu(Device::Name const &name, auto const &fn)
 		{
-			_io_mmus.for_each([&] (auto &io_mmu) {
-				if (_kernel_io_mmu.constructed() ||
-				    io_mmu.name() == name) fn(io_mmu); });
+			if (_kernel_io_mmu.constructed())
+				fn(*_kernel_io_mmu);
+			else
+				_io_mmus.for_each([&] (auto &io_mmu) {
+					if (io_mmu.name() == name) fn(io_mmu); });
 		}
 
 		void with_io_mmu(Device const &dev, auto const &fn)
 		{
-			dev.with_io_mmu([&] (auto const &im) {
-				with_io_mmu(im.name, fn); });
+			if (_kernel_io_mmu.constructed())
+				with_io_mmu(_kernel_io_mmu->name, fn);
+			else
+				dev.with_io_mmu([&] (auto const &im) {
+					with_io_mmu(im.name, fn); });
 		}
 
 		void with_irq_controller(Device::Name const &name, auto const &fn)
