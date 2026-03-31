@@ -12,9 +12,6 @@ lib/symbols/zlib:
 LICENSE:
 	echo "zlib license" > $@
 
-FindZLIB.cmake:
-	echo 'set(ZLIB_FOUND True)' > $@
-
 VERSION := $(shell sed -n 's/VERSION.*:=[ ]*\(.*\)/\1/p' $(REP_DIR)/ports/zlib.port)
 
 zlib.pc:
