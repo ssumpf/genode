@@ -1,0 +1,28 @@
+This patch adds an lx_emul hook to configure the Designware I2C controller,
+which is used by I2C HID devices on Tigerlake/Alderlake/Meteorlake. Settings
+currently get lost in rudimentary ACPI emulation.
+
+--- src/linux/drivers/i2c/busses/i2c-designware-common.c
++++ src/linux/drivers/i2c/busses/i2c-designware-common.c
+@@ -34,6 +34,10 @@
+ 
+ #include "i2c-designware-core.h"
+ 
++#ifdef I2C_HID_CONFIGURE_HOOK
++extern void lx_emul_i2c_configure(struct device *);
++#endif
++
+ static const char *const abort_sources[] = {
+ 	[ABRT_7B_ADDR_NOACK] =
+ 		"slave address not acknowledged (7bit mode)",
+@@ -395,6 +399,10 @@
+ 	else if (is_acpi_node(fwnode))
+ 		i2c_dw_acpi_configure(device);
+ 
++#ifdef I2C_HID_CONFIGURE_HOOK
++	lx_emul_i2c_configure(device);
++#endif
++
+ 	return i2c_dw_validate_speed(dev);
+ }
+ EXPORT_SYMBOL_GPL(i2c_dw_fw_parse_and_configure);
