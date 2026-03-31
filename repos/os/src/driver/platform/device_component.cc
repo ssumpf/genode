@@ -42,6 +42,8 @@ Genode::Irq_session_capability Device_component::Irq::map(Device_component &dc)
 
 		/* store remapped number at irq object */
 		remapped_nbr = irq_info.irq_number;
+
+		return irq_info;
 	};
 
 	auto remap_legacy_irq = [&] ()
@@ -86,7 +88,9 @@ Genode::Irq_session_capability Device_component::Irq::map(Device_component &dc)
 		              Pci::Bdf::rid(pci_config.bdf));
 		Irq_session::Info info = irq->info();
 		dc._with_io_mmu([&] (Io_mmu const &io_mmu) {
-			remap(io_mmu.name, pci_config.bdf, info, Irq_config::Invalid()); });
+			info = remap(io_mmu.name, pci_config.bdf, info,
+			             Irq_config::Invalid()).session_info;
+		});
 		pci_msi_enable(dc._env, dc, pci_config.addr, info, type);
 	});
 
