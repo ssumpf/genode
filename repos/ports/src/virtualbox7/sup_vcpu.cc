@@ -307,7 +307,7 @@ template <typename VIRT> void Sup::Vcpu_impl<VIRT>::_transfer_state_to_vcpu(CPUM
 
 
 /*
- * Based on hmR0VmxImportGuestIntrState()
+ * Based on vmxHCImportGuestIntrState
  */
 static void handle_intr_state(PVMCPUCC pVCpu, CPUMCTX &ctx, Vcpu_state &state)
 {
@@ -316,25 +316,30 @@ static void handle_intr_state(PVMCPUCC pVCpu, CPUMCTX &ctx, Vcpu_state &state)
 	if (!interrupt_state /* VMX_VMCS_GUEST_INT_STATE_NONE */) {
 		if (CPUMIsInInterruptShadow(&pVCpu->cpum.GstCtx))
 			CPUMClearInterruptShadow(&pVCpu->cpum.GstCtx);
-		CPUMUpdateInterruptInhibitingByNmi(&pVCpu->cpum.GstCtx, false);
-	} else {
-		if (interrupt_state & (VMX_VMCS_GUEST_INT_STATE_BLOCK_MOVSS |
-		                       VMX_VMCS_GUEST_INT_STATE_BLOCK_STI))
-			CPUMUpdateInterruptShadowEx(&pVCpu->cpum.GstCtx, true, ctx.rip);
-		else if (CPUMIsInInterruptShadow(&pVCpu->cpum.GstCtx))
-			CPUMClearInterruptShadow(&pVCpu->cpum.GstCtx);
-
-		bool const block_nmi = RT_BOOL(interrupt_state &
-		                               VMX_VMCS_GUEST_INT_STATE_BLOCK_NMI);
-		CPUMUpdateInterruptInhibitingByNmi(&pVCpu->cpum.GstCtx, block_nmi);
+		CPUMClearInterruptInhibitingByNmiEx(&pVCpu->cpum.GstCtx);
+		return;
 	}
 
+	bool block_movss = RT_BOOL(interrupt_state &
+	                           VMX_VMCS_GUEST_INT_STATE_BLOCK_MOVSS);
+	bool block_sti   = RT_BOOL(interrupt_state &
+	                           VMX_VMCS_GUEST_INT_STATE_BLOCK_STI);
+	CPUMUpdateInterruptShadowSsStiEx(&pVCpu->cpum.GstCtx,
+	                                 block_movss, block_sti,
+	                                 pVCpu->cpum.GstCtx.rip);
+
+	if (CPUMIsInInterruptShadow(&pVCpu->cpum.GstCtx))
+		CPUMClearInterruptShadow(&pVCpu->cpum.GstCtx);
+
+	bool const block_nmi = RT_BOOL(interrupt_state &
+	                               VMX_VMCS_GUEST_INT_STATE_BLOCK_NMI);
+	CPUMUpdateInterruptInhibitingByNmiEx(&pVCpu->cpum.GstCtx, block_nmi);
+
 	/* prepare clearing blocking MOV SS or STI bits for next VM-entry */
-	if (interrupt_state & (VMX_VMCS_GUEST_INT_STATE_BLOCK_MOVSS |
-	                       VMX_VMCS_GUEST_INT_STATE_BLOCK_STI)) {
+	if (block_movss || block_sti) {
 		state.intr_state.charge(state.intr_state.value() &
 		                        ~unsigned(VMX_VMCS_GUEST_INT_STATE_BLOCK_MOVSS |
-		                                   VMX_VMCS_GUEST_INT_STATE_BLOCK_STI));
+		                                  VMX_VMCS_GUEST_INT_STATE_BLOCK_STI));
 		state.actv_state.charge(VMX_VMCS_GUEST_ACTIVITY_ACTIVE);
 	}
 }
@@ -651,33 +656,24 @@ typename Sup::Vcpu_impl<T>::Current_state Sup::Vcpu_impl<T>::_handle_irq_window(
 	Assert(TRPMHasTrap(pVCpu));
 
 	/* interrupt can be dispatched */
-	uint8_t   u8Vector   { };
-	TRPMEVENT event_type { TRPM_HARDWARE_INT };
-	SVMEVENT  event      { };
-	uint32_t  errorcode  { };
-	RTGCUINT  cr2        { };
+	uint8_t     u8Vector   { };
+	TRPMEVENT   event_type { TRPM_HARDWARE_INT };
+	SVMEVENT    event      { };
+	uint32_t    errorcode  { };
+	RTGCUINTPTR fault_addr { };
+	uint8_t     instr      { };
 
 	/* If a new event is pending, then dispatch it now. */
-	int rc = TRPMQueryTrapAll(pVCpu, &u8Vector, &event_type, &errorcode, &cr2, 0, 0);
-	AssertRC(rc);
-	if (rc != VINF_SUCCESS) {
-		Genode::warning("no trap available");
-		return RUNNING;
-	}
+	u8Vector = TRPMGetTrapAll(pVCpu, &event_type, &errorcode, &fault_addr, &instr, NULL /* pfIcebp */);
+
+	event.u          = 0;
+	event.n.u1Valid  = 1;
+	event.n.u8Vector = u8Vector;
 
 	/* based upon hmR0SvmTrpmTrapToPendingEvent */
 	switch (event_type) {
 	case TRPM_TRAP:
-		event.n.u1Valid  = 1;
-		event.n.u8Vector = u8Vector;
-
 		switch (u8Vector) {
-			case X86_XCPT_NMI:
-				event.n.u3Type = SVM_EVENT_NMI;
-
-				static_assert(SVM_EVENT_NMI == VMX_ENTRY_INT_INFO_TYPE_NMI,
-				              "SVM vs VMX mismatch");
-				break;
 			default:
 				Genode::error("unsupported injection case - "
 				              "TRPM_TRAP, vector=", u8Vector);
@@ -686,8 +682,6 @@ typename Sup::Vcpu_impl<T>::Current_state Sup::Vcpu_impl<T>::_handle_irq_window(
 		}
 		break;
 	case TRPM_HARDWARE_INT:
-		event.n.u1Valid  = 1;
-		event.n.u8Vector = u8Vector;
 		event.n.u3Type   = SVM_EVENT_EXTERNAL_IRQ;
 
 		static_assert(VMX_ENTRY_INT_INFO_TYPE_EXT_INT == SVM_EVENT_EXTERNAL_IRQ,
@@ -695,12 +689,16 @@ typename Sup::Vcpu_impl<T>::Current_state Sup::Vcpu_impl<T>::_handle_irq_window(
 
 		break;
 	case TRPM_SOFTWARE_INT:
-		event.n.u1Valid  = 1;
-		event.n.u8Vector = u8Vector;
 		event.n.u3Type = SVM_EVENT_SOFTWARE_INT;
 
 		static_assert(VMX_ENTRY_INT_INFO_TYPE_SW_INT == SVM_EVENT_SOFTWARE_INT,
 		              "SVM vs VMX mismatch");
+		break;
+	case TRPM_NMI:
+		event.n.u3Type = SVM_EVENT_NMI;
+		static_assert(VMX_ENTRY_INT_INFO_TYPE_NMI == SVM_EVENT_NMI,
+		              "SVM vs VMX mismatch");
+		break;
 	default:
 		Genode::error("unsupported injection case");
 		Assert(!"unsupported injection case");
@@ -708,7 +706,7 @@ typename Sup::Vcpu_impl<T>::Current_state Sup::Vcpu_impl<T>::_handle_irq_window(
 	}
 
 	/* Clear the pending trap. */
-	rc = TRPMResetTrap(pVCpu);
+	int const rc = TRPMResetTrap(pVCpu);
 	AssertRC(rc);
 
 	state.inj_info.charge(event.u);
