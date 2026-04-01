@@ -1,4 +1,4 @@
-content: include lib/symbols/zlib LICENSE FindZLIB.cmake zlib.pc
+content: include lib/symbols/zlib LICENSE zlib.pc
 
 PORT_DIR := $(call port_dir,$(REP_DIR)/ports/zlib)
 

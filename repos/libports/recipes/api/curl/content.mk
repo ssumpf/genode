@@ -17,7 +17,7 @@ include:
 
 content: src/lib/curl
 
-content: LICENSE FindCURL.cmake libcurl.pc
+content: LICENSE libcurl.pc
 
 LICENSE:
 	cp $(PORT_DIR)/src/lib/curl/COPYING $@
