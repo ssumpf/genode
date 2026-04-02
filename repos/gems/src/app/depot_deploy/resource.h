@@ -53,7 +53,7 @@ struct Depot_deploy::Resource
 		case GPU:         return "Gpu";
 		case LOG:         return "LOG";
 		case RM:          return "RM";
-		case I2C:         return "I2C";
+		case I2C:         return "I2c";
 		case IO_MEM:      return "IO_MEM";
 		case IO_PORT:     return "IO_PORT";
 		case IRQ:         return "IRQ";
