@@ -1940,6 +1940,7 @@ struct Sculpt::Main : Input_event_handler,
 				                                  node.attribute_value("height", 1U)); }); });
 
 		_drivers.update_soc(_soc);
+		_drivers.update_options(_driver_options);
 		_gui_config.trigger_update();
 
 		/*
