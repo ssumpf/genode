@@ -121,6 +121,7 @@ schema option
   + node irq
   + node trace
   + node vm
+  + node i2c
 
 + node alias
   + attr name  | type: any
