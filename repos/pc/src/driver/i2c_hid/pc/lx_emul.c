@@ -137,3 +137,9 @@ void lx_emul_i2c_configure(struct device *device)
 			break;
 	}
 }
+
+
+bool lx_emul_configured_gpio_chip(char const *name)
+{
+	return !strcmp(i2c_hid_config.gpiochip_name, name);
+}
