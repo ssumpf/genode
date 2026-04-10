@@ -210,7 +210,11 @@ VMM_INT_DECL(int) NEMHCResumeCpuTickOnAll(PVMCC pVM, PVMCPUCC pVCpu,
 
 
 
-DECLHIDDEN(int) nemR3NativeInitCompletedRing3(PVM pVM) STOP
+DECLHIDDEN(int) nemR3NativeInitCompletedRing3(PVM pVM)
+{
+	return VINF_SUCCESS;
+}
+
 
 void nemHCNativeNotifyHandlerPhysicalRegister(PVMCC pVM,
                                               PGMPHYSHANDLERKIND enmKind,
