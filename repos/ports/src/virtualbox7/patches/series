@@ -19,3 +19,4 @@ vmdk.patch
 setjmp.patch
 display.patch
 gcc14.patch
+tsc_mode.patch
