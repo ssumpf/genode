@@ -464,6 +464,7 @@ struct Session
 		_env(env), _alloc(alloc), _handler_cap(io_cap)
 	{
 		_usb.sigh(rom_cap);
+		update_model();
 	}
 
 	~Session() {
