@@ -1497,7 +1497,7 @@ struct Sculpt::Main : Input_event_handler,
 				s.widget(_wifi_widget, Ap_selector_widget::Attr {
 					.selected = _selected_bssid }); });
 
-		if (selected == "intel_fb" || selected == "vesa_fb")
+		if (selected == "intel_fb" || selected == "vesa_fb" || selected == "boot_fb" )
 			s.widget(_fb_widget, _fb_connectors, _fb_config_model, _hovered_display);
 
 		if ((selected == "usb") && _storage._storage_devices.num_usb_devices)
@@ -2110,6 +2110,9 @@ struct Sculpt::Main : Input_event_handler,
 
 	Vfs::Handler<Main> _vesa_fb_connectors_handler {
 		_vfs, "/report/vesa_fb/connectors", *this, &Main::_handle_fb_connectors };
+
+	Vfs::Handler<Main> _boot_fb_connectors_handler {
+		_vfs, "/report/boot_fb/connectors", *this, &Main::_handle_fb_connectors };
 
 	void _handle_fb_connectors(Node const &connectors)
 	{
