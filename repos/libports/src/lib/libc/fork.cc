@@ -149,6 +149,8 @@ void Libc::Child_config::_generate(Generator &g, Node const &config,
 				g.attribute("pipe", node.attribute_value("pipe", Path()));
 			if (node.has_attribute("socket"))
 				g.attribute("socket", node.attribute_value("socket", Path()));
+			if (node.has_attribute("rng"))
+				g.attribute("rng", node.attribute_value("rng", Path()));
 		});
 
 		{
