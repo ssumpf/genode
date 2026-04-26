@@ -149,7 +149,7 @@ struct Terminal::Main : Character_consumer
 
 	Point _pointer { }; /* pointer positon in pixels */
 
-	bool _shift_pressed = false;
+	bool _shift_pressed = false, _alt_pressed = false;
 
 	unsigned _ctrl_pressed = 0; /* number of control keys pressed */
 
@@ -415,6 +415,9 @@ void Terminal::Main::_handle_input()
 			_schedule_flush();
 		}
 
+		if (event.key_press  (Input::KEY_LEFTALT)) _alt_pressed = true;
+		if (event.key_release(Input::KEY_LEFTALT)) _alt_pressed = false;
+
 		if (event.key_press(Input::BTN_LEFT)) {
 			if (_shift_pressed) {
 				_selecting = true;
@@ -444,6 +447,10 @@ void Terminal::Main::_handle_input()
 			_paste_clipboard_content();
 
 		event.handle_press([&] (Input::Keycode, Codepoint codepoint) {
+
+			/* add ESC prefix to characters typed while alt is held */
+			if (_alt_pressed && codepoint.valid())
+				_read_buffer.add(27);
 
 			/* control-key combinations */
 			if (_ctrl_pressed
