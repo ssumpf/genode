@@ -52,7 +52,12 @@ struct Vesa_driver::Main
 	Area _virt_size { 1, 1 };
 	Area _phys_size { 1, 1 };
 
+	Blit::Flip   _flip   { };
+	Blit::Rotate _rotate { Blit::Rotate::R0 };
+
 	void _handle_config();
+	void _rotate_flip();
+
 	Area _configured_size(Node const &);
 
 	Signal_handler<Main> _config_handler { _env.ep(), *this, &Main::_handle_config };
@@ -62,9 +67,8 @@ struct Vesa_driver::Main
 	 * Capture
 	 */
 
-	Capture::Connection _capture { _env };
-
-	Constructible<Capture::Connection::Screen> _captured_screen { };
+	Constructible<Capture::Connection>         _capture { };
+	Constructible<Capture::Connection::Screen> _screen  { };
 
 
 	/*
@@ -103,7 +107,7 @@ void Vesa_driver::Main::_handle_timer()
 
 	Surface<Pixel> surface(_fb_ds->local_addr<Pixel>(), _phys_size);
 
-	_captured_screen->apply_to_surface(surface);
+	_screen->apply_to_surface(surface);
 }
 
 
@@ -152,8 +156,18 @@ void Vesa_driver::Main::_handle_config()
 	auto const  period_ms       = config.attribute_value("period_ms", 20UL);
 	Area const  configured_size = _configured_size(config);
 
-	if (configured_size == _virt_size)
-		return;
+	config.with_optional_sub_node("merge", [&] (auto const &merge) {
+		merge.with_optional_sub_node("connector", [&] (auto const &conn) {
+			auto const rotate = conn.attribute_value("rotate" , 0U);
+			auto const flip   = conn.attribute_value("flip"   , false);
+
+			_flip  = { .enabled = flip };
+			_rotate = (rotate ==  90) ? Blit::Rotate::R90  :
+			          (rotate == 180) ? Blit::Rotate::R180 :
+			          (rotate == 270) ? Blit::Rotate::R270 :
+			                            Blit::Rotate::R0;
+		});
+	});
 
 	_fb_ds.destruct();
 	_timer.trigger_periodic(0);
@@ -165,7 +179,8 @@ void Vesa_driver::Main::_handle_config()
 		Area virt_size { configure.w, configure.h };
 		Area phys_size = virt_size;
 
-		if (Framebuffer::set_mode(_reporter, phys_size, virt_size, BITS_PER_PIXEL) != 0) {
+		if (Framebuffer::set_mode(_reporter, phys_size, virt_size,
+		                          BITS_PER_PIXEL, _rotate, _flip) != 0) {
 			warning("could not set ", configure);
 			return false;
 		}
@@ -191,16 +206,44 @@ void Vesa_driver::Main::_handle_config()
 	/* enable pixel capturing */
 	_fb_ds.construct(_env.rm(), Framebuffer::hw_framebuffer());
 
+	_rotate_flip();
+
+	_timer.trigger_periodic(period_ms * 1000);
+}
+
+
+void Vesa_driver::Main::_rotate_flip()
+{
+	_screen .destruct();
+	_capture.destruct();
+
+	auto const r_ps = Blit::transformed(_phys_size, _rotate);
+	auto const r_vs = Blit::transformed(_virt_size, _rotate);
+
+	Point const p_90  = { .x = 0, .y = int(r_ps.h - r_vs.h) };
+	Point const p_180 = { .x = int(r_ps.w - r_vs.w),
+	                      .y = int(r_ps.h - r_vs.h) };
+	Point const p_270 = { .x = int(r_ps.w - r_vs.w), .y = 0 };
+
+	Point po = { };
+
+	switch (_rotate) {
+		case Blit::Rotate::R0  : po = !_flip.enabled ? po    : p_270; break;
+		case Blit::Rotate::R90 : po = !_flip.enabled ? p_90  : po;    break;
+		case Blit::Rotate::R180: po = !_flip.enabled ? p_180 : p_90;  break;
+		case Blit::Rotate::R270: po = !_flip.enabled ? p_270 : p_180; break;
+	}
+
 	using Attr = Capture::Connection::Screen::Attr;
 
-	_captured_screen.construct(_capture, _env.rm(), Attr {
-		.px       = _phys_size,
-		.mm       = { },
-		.viewport = { { }, _virt_size },
-		.rotate   = { },
-		.flip     = { } });
+	Attr attr = { .px       = r_ps,
+	              .mm       = Blit::transformed({ }, _rotate),
+	              .viewport = { .at = po, .area = r_vs },
+	              .rotate   = _rotate,
+	              .flip     = _flip };
 
-	_timer.trigger_periodic(period_ms*1000);
+	_capture.construct(_env);
+	_screen .construct(*_capture, _env.rm(), attr);
 }
 
 

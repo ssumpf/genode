@@ -54,7 +54,8 @@ namespace Framebuffer {
 	 * \return  0 on success,
 	 *          non-zero otherwise
 	 */
-	int set_mode(Expanding_reporter &, Area &, Area &, unsigned);
+	int set_mode(Expanding_reporter &, Area &, Area &, unsigned,
+	             Blit::Rotate, Blit::Flip);
 
 	/**
 	 * Map given device memory, return out_addr (map address)

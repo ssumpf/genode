@@ -139,14 +139,21 @@ static void generate_report(Generator           &g,
                             mb_vbe_ctrl_t const &ctrl_info,
                             mb_vbe_mode_t const &mode_info,
                             unsigned      const  depth,
-                            uint16_t      const  vesa_mode)
+                            uint16_t      const  vesa_mode,
+                            Blit::Rotate  const  rotate,
+                            Blit::Flip    const  flip)
 {
 	g.node("merge", [&]() {
 		g.attribute("name", "mirror");
 
 		g.node("connector", [&] () {
 			g.attribute("connected", true);
+			g.attribute("enabled", true);
 			g.attribute("name", "VESA");
+			g.attribute("rotate", rotate == Blit::Rotate::R90  ? "90"  :
+			                      rotate == Blit::Rotate::R180 ? "180" :
+			                      rotate == Blit::Rotate::R270 ? "270" : "0");
+			g.attribute("flip"  , flip.enabled);
 
 			for_each_mode(ctrl_info, [&](auto const &mode) {
 
@@ -223,7 +230,9 @@ int Framebuffer::map_io_mem(addr_t base, size_t size, bool write_combined,
 
 int Framebuffer::set_mode(Expanding_reporter &reporter,
                           Capture::Area &phys, Capture::Area &virt,
-                          unsigned const depth)
+                          unsigned const depth,
+                          Blit::Rotate rotate,
+                          Blit::Flip flip)
 {
 	/* set location of data types */
 	auto &ctrl_info = *reinterpret_cast<mb_vbe_ctrl_t*>(X86emu::x86_mem.data_addr()
@@ -297,7 +306,7 @@ int Framebuffer::set_mode(Expanding_reporter &reporter,
 		X86emu::print_regions();
 
 	reporter.generate([&] (Generator &g) {
-		generate_report(g, ctrl_info, mode_info, depth, vesa_mode); });
+		generate_report(g, ctrl_info, mode_info, depth, vesa_mode, rotate, flip); });
 
 	return 0;
 }
