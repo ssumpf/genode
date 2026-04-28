@@ -43,6 +43,7 @@ set use_ahci 0
 set use_nvme 0
 set use_wifi 1
 set use_usb 1
+set use_nic 1
 
 proc priority_timer    { } { return { | priority:  0 } }
 proc priority_base     { } { return { | priority: -1 } }
@@ -120,6 +121,7 @@ proc restartable_drivers { } {
 } [input_config] {
 } [wifi_config] {
 } [usb_config] {
+} [nic_config] {
   |         + start nano3d | caps: 100 | ram: 8M
   |           + route
   |             + any-service
@@ -539,8 +541,6 @@ proc wifi_config { } {
 	set return_wifi ""
 
 	append return_wifi {
-  |         + start ps2 | caps: 100 | ram: 3M
-  |
   |         + start pc_rtc | caps: 100 | ram: 1M
   |           + provides
   |           | + service Rtc
@@ -592,6 +592,21 @@ proc wifi_config { } {
 	return $return_wifi
 }
 
+
+proc nic_config { } {
+	global use_nic
+
+	if {!$use_nic} { return }
+
+	return {
+  |         + start nic | caps: 150 | ram: 16M
+  |           + binary pc_nic
+  |           + route
+  |             + service Uplink | + child nic_router
+  |             + any-service    | + parent }
+}
+
+
 build {
 	core timer init lib/ld
 	server/report_rom
@@ -637,6 +652,10 @@ if {$use_wifi} {
 
 if {$use_usb} {
 	import_from_depot [depot_user]/src/pc_usb_host
+}
+
+if {$use_nic} {
+	import_from_depot [depot_user]/src/pc_nic
 }
 
 set config ""
@@ -711,6 +730,8 @@ config | verbose: no | prio_levels: 4
   |   + pci | class: WIFI
   | + policy | label: usb | info: yes
   |   + pci | class: USB
+  | + policy | label: nic | info: yes
+  |   + pci | class: ETHERNET
   + route
     + service ROM | label: system
     | + child dynamic_rom
@@ -738,6 +759,7 @@ config | verbose: no | prio_levels: 4
     + service Report                               | + child drivers_reports
     + service Platform | label_prefix: ps2 ->      | + child platform | label: ps2
     + service Platform | label_prefix: wifi ->     | + child platform | label: wifi
+    + service Platform | label_prefix: nic ->      | + child platform | label: nic
     + service Platform | label_prefix: fb ->       | + child platform | label: fb
     + service Platform | label_prefix: usb ->      | + child platform | label: usb
     + service Platform | label_prefix: intel_fb -> | + child gpu
