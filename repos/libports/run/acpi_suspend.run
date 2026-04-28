@@ -42,6 +42,7 @@ set use_gpe "no"
 set use_ahci 0
 set use_nvme 0
 set use_wifi 1
+set use_usb 1
 
 proc priority_timer    { } { return { | priority:  0 } }
 proc priority_base     { } { return { | priority: -1 } }
@@ -77,6 +78,24 @@ proc display_config { } {
 }
 
 
+proc usb_config { } {
+
+	global use_usb
+
+	if {!$use_usb} { return }
+
+	return {
+  |         + start usb | caps: 200 | ram: 12M
+  |           + binary pc_usb_host
+  |           + provides | + service Usb
+  |           + config
+  |           | + report | devices: no
+  |           + route
+  |             + service Report | + child report_rom
+  |             + any-service    | + parent }
+}
+
+
 proc restartable_drivers { } {
 
 	set return_drivers ""
@@ -100,6 +119,7 @@ proc restartable_drivers { } {
 } [display_config] {
 } [input_config] {
 } [wifi_config] {
+} [usb_config] {
   |         + start nano3d | caps: 100 | ram: 8M
   |           + route
   |             + any-service
@@ -615,6 +635,10 @@ if {$use_wifi} {
 	                  [depot_user]/raw/pc_wifi_firmware
 }
 
+if {$use_usb} {
+	import_from_depot [depot_user]/src/pc_usb_host
+}
+
 set config ""
 append config {
 config | verbose: no | prio_levels: 4
@@ -653,18 +677,15 @@ config | verbose: no | prio_levels: 4
 + start acpi | caps: 350 | ram: 8M } [priority_base] {
   + config | report: yes
   + route
-    + service Report
-    | + child drivers_reports
+    + service Report | + child drivers_reports
     + any-service
       + parent
       + any-child
 
 + start pci_decode | caps: 350 | ram: 1M } [priority_base] {
   + route
-    + service ROM | label: system
-    | + child drivers_reports
-    + service Report
-    | + child drivers_reports
+    + service ROM | label: system | + child drivers_reports
+    + service Report              | + child drivers_reports
     + any-service
       + parent
       + any-child
@@ -688,6 +709,8 @@ config | verbose: no | prio_levels: 4
   | | + pci | class: NVME
   | + policy | label: wifi | info: yes
   |   + pci | class: WIFI
+  | + policy | label: usb | info: yes
+  |   + pci | class: USB
   + route
     + service ROM | label: system
     | + child dynamic_rom
@@ -712,16 +735,12 @@ config | verbose: no | prio_levels: 4
 + start drivers_init | caps: 10000 | ram: 128M } [priority_drivers] {
   + binary init
   + route
-    + service Report
-    | + child drivers_reports
-    + service Platform | label_prefix: ps2 ->
-    | + child platform | label: ps2
-    + service Platform | label_prefix: wifi ->
-    | + child platform | label: wifi
-    + service Platform | label_prefix: fb ->
-    | + child platform | label: fb
-    + service Platform | label_prefix: intel_fb ->
-    | + child gpu
+    + service Report                               | + child drivers_reports
+    + service Platform | label_prefix: ps2 ->      | + child platform | label: ps2
+    + service Platform | label_prefix: wifi ->     | + child platform | label: wifi
+    + service Platform | label_prefix: fb ->       | + child platform | label: fb
+    + service Platform | label_prefix: usb ->      | + child platform | label: usb
+    + service Platform | label_prefix: intel_fb -> | + child gpu
     + service ROM | label: intel_fb -> intel_opregion
     | + child drivers_reports | label: intel_fb -> intel_opregion
     + service ROM | label: config
@@ -888,5 +907,10 @@ if {[have_include "power_on/qemu"] && $use_nvme} {
 	append qemu_args " -device nvme,drive=nvme0,serial=fnord,id=nvme0n1,bus=root_port1 "
 }
 
+if {$use_usb} {
+	append qemu_args " -device nec-usb-xhci,id=xhci"
+	append qemu_args " -device usb-kbd,bus=xhci.0"
+	append qemu_args " -device usb-mouse,bus=xhci.0"
+}
 
 run_genode_until forever
