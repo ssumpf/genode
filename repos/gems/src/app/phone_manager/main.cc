@@ -976,9 +976,14 @@ struct Sculpt::Main : Input_event_handler,
 			});
 
 			_drivers.with_board_info([&] (Board_info const &board_info) {
+				Network_widget::Avail avail = {
+					.nic    = board_info.soc.nic,
+					.wifi   = board_info.wifi_avail(),
+					.usb    = false,
+					.mobile = board_info.soc.modem };
 				auto enabled = Network_widget::Enabled::from_runtime(_runtime_state);
 				s.widget(_network_widget, _network_title_bar.selected(),
-				         _network._nic_state, board_info, enabled,
+				         _network._nic_state, avail, enabled,
 					[&] (Scope<Frame, Vbox, Frame, Vbox> &s) {
 						if (enabled.wifi)
 							s.widget(_wifi_widget, Ap_selector_widget::Attr {
