@@ -124,6 +124,7 @@ namespace Nova {
 		uint32_t const sel_exc;     /* number of cap selectors for exceptions  */
 		uint32_t const sel_vm;      /* number of cap selectors for VM handling */
 		uint32_t const sel_gsi;     /* number of global system interrupts      */
+		uint32_t const sel_msi;     /* start  of msi within [0...sel_gsi]      */
 		uint32_t const page_sizes;  /* supported page sizes                    */
 		uint32_t const utcb_sizes;  /* supported utcb sizes                    */
 		uint32_t const tsc_freq;    /* time-stamp counter frequency in kHz     */

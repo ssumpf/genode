@@ -221,8 +221,8 @@ static Range_allocator::Result allocate(Range_allocator &irq_alloc, Irq_args con
 	if (args.type() == Irq_session::TYPE_LEGACY)
 		return irq_alloc.alloc_addr(1, n);
 
-	/* XXX last GSI number unknown - assume 40 GSIs (depends on IO-APIC) */
-	auto const range_msi = Range_allocator::Range(40, kernel_hip().sel_gsi - 1);
+	auto const range_msi = Range_allocator::Range(kernel_hip().sel_msi,
+	                                              kernel_hip().sel_gsi - 1);
 
 	return irq_alloc.alloc_aligned(1 /* size */, Align { .log2 = 0 }, range_msi);
 }
