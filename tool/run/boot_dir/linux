@@ -41,9 +41,9 @@ proc run_boot_dir {binaries} {
 
 	if {[have_board pc]} {
 
-		build_initrd $binaries
+#		build_initrd $binaries
 
-		copy_file [genode_dir]/tool/boot/vmlinuz [run_dir]/vmlinuz
+#   copy_file [genode_dir]/tool/boot/vmlinuz [run_dir]/vmlinuz
 
 		if {[have_include "image/iso"]} {
 			install_iso_bootloader_to_run_dir
@@ -61,7 +61,7 @@ proc run_boot_dir {binaries} {
 		puts $fh "set timeout=0"
 		puts $fh "menuentry [grub_menuentry] {"
 		puts $fh " insmod linux"
-		puts $fh " linux /vmlinuz console=ttyS0,115200 amd_iommu=off intel_iommu=off"
+		puts $fh " linux /bzImage console=ttyS0,115200 root=/dev/ram debug init=/bin/sh"
 		puts $fh " initrd /initrd"
 		puts $fh "}"
 		close $fh
