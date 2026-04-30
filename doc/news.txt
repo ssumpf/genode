@@ -21,7 +21,7 @@ Below the surface of the administrative user interface, a major paradigm shift
 awaits the user when risking a look under the hood. The system no longer
 processes configuration data as mere input to its internal data model but it
 exposes the data model directly to the user. Thereby Sculpt OS not only lays
-the entire construction plan of the system into the your hands for inspection
+the entire construction plan of the system into your hands for inspection
 but the construction plan is live! Any change takes immediate effect and the
 wiring between all components can be changed at will on the fly. This gives a
 unique blend of interactivity with the comforts of a declarative way of life.
