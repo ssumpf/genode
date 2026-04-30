@@ -1,0 +1,318 @@
+assert {[have_spec x86_64]}
+
+set use_net 0
+set use_overlay 0
+set use_serial 1
+set use_top 0
+
+
+proc get_env_var { var_name default_value } {
+	if {[info exists ::env($var_name)]} {
+		return $::env($var_name)
+	}
+	return $default_value
+}
+
+proc vbox_iso { } {
+	return [get_env_var VBOX_ISO test.iso]
+}
+
+
+create_boot_directory
+
+
+set depot_archives { }
+
+lappend depot_archives [depot_user]/pkg/[drivers_interactive_pkg]
+lappend depot_archives [depot_user]/pkg/themed_wm
+lappend depot_archives [depot_user]/src/[base_src]
+lappend depot_archives [depot_user]/src/clipboard
+lappend depot_archives [depot_user]/src/init
+lappend depot_archives [depot_user]/src/jpeg
+lappend depot_archives [depot_user]/src/libc
+lappend depot_archives [depot_user]/src/nitpicker
+lappend depot_archives [depot_user]/src/report_rom
+lappend depot_archives [depot_user]/src/vfs_import
+lappend depot_archives [depot_user]/src/vfs_pipe
+lappend depot_archives [depot_user]/src/vfs_legacy_oss
+lappend depot_archives [depot_user]/src/mesa
+lappend depot_archives [depot_user]/src/expat
+lappend depot_archives [depot_user]/src/libdrm
+lappend depot_archives [depot_user]/src/libyuv
+lappend depot_archives [depot_user]/src/vfs_gpu
+
+lappend_if [expr $use_net] depot_archives [depot_user]/src/pc_nic
+lappend_if [expr $use_net] depot_archives [depot_user]/src/nic_router
+
+import_from_depot $depot_archives
+
+
+set build_components {
+	lib/libc lib/vfs lib/libiconv lib/stdcxx
+	lib/qemu-usb lib/virtualbox7-shaderlib
+	lib/virtualbox7-dummy
+	driver/audio
+	virtualbox7
+}
+
+lappend_if [expr $use_top]    build_components app/top
+lappend_if [expr $use_serial] build_components server/log_terminal
+lappend_if [have_spec x86]    build_components driver/rtc
+
+build $build_components
+
+set config {
+<config prio_levels="4" verbose="yes">
+	<parent-provides>
+		<service name="ROM"/>
+		<service name="IRQ"/>
+		<service name="IO_MEM"/>
+		<service name="IO_PORT"/>
+		<service name="PD"/>
+		<service name="RM"/>
+		<service name="CPU"/>
+		<service name="LOG"/>
+		<service name="VM"/>}
+
+append_if [expr $use_top] config {
+		<service name="TRACE"/>}
+
+append config {
+	</parent-provides>
+	<default-route>
+		<any-service> <parent/> <any-child/> </any-service>
+	</default-route>
+	<default caps="100" ram="1M"/>
+	<start name="timer" priority="0">
+		<provides> <service name="Timer"/> </provides>
+	</start>}
+
+append_if [expr $use_top] config {
+	<start name="top" priority="0" ram="2M">
+		<config period_ms="15000"/>
+		<route>
+			<service name="TRACE"> <parent label=""/> </service>
+			<any-service> <parent/> <any-child/> </any-service>
+		</route>
+	</start>}
+
+append config {
+	<start name="drivers" caps="1500" ram="64M" managing_system="yes" priority="-1">
+		<binary name="init"/>
+		<route>
+			<service name="ROM" label="config"> <parent label="drivers.config"/> </service>
+			<service name="Timer">   <child name="timer"/> </service>
+			<service name="Capture"> <child name="nitpicker"/> </service>
+			<service name="Event">   <child name="nitpicker"/> </service>
+			<any-service> <parent/> </any-service>
+		</route>
+	</start>
+
+	<start name="pc_rtc" priority="-1">
+		<provides>
+			<service name="Rtc"/>
+		</provides>
+	</start>}
+
+append_if [expr $use_net] config {
+	<start name="nic_router" caps="120" ram="5M" priority="-1">
+		<provides>
+			<service name="Nic"/>
+			<service name="Uplink"/>
+		</provides>
+		<config verbose_domain_state="yes">
+			<policy label_prefix="vbox" domain="downlink"/>
+			<policy label_prefix="nic"  domain="uplink"/>
+
+			<domain name="uplink">
+				<nat domain="downlink"
+				     tcp-ports="16384"
+				     udp-ports="16384"
+				     icmp-ids="16384"/>
+			</domain>
+
+			<domain name="downlink" interface="10.0.3.1/24" verbose_packets="no">
+				<dhcp-server ip_first="10.0.3.100" ip_last="10.0.3.200">
+					<dns-server ip="8.8.8.8"/>
+					<dns-server ip="1.1.1.1"/>
+				</dhcp-server>
+				<tcp dst="0.0.0.0/0"> <permit-any domain="uplink"/> </tcp>
+				<udp dst="0.0.0.0/0"> <permit-any domain="uplink"/> </udp>
+				<icmp dst="0.0.0.0/0" domain="uplink"/>
+			</domain>
+		</config>
+	</start>
+
+	<start name="nic" ram="8M" priority="-1">
+		<binary name="pc_nic"/>
+		<route>
+			<service name="Platform"> <child name="drivers"/> </service>
+			<service name="Uplink"> <child name="nic_router"/> </service>
+			<any-service> <parent/> <any-child/> </any-service>
+		</route>
+	</start>}
+
+append_if [expr $use_serial] config {
+	<start name="log_terminal" ram="2M" priority="-1">
+		<provides>
+			<service name="Terminal"/>
+		</provides>
+	</start>}
+
+append config {
+	<start name="report_rom" ram="2M" priority="-1">
+		<provides> <service name="Report"/> <service name="ROM"/> </provides>
+		<config>
+			<policy label="pointer -> hover" report="nitpicker -> hover"/>
+			<policy label="pointer -> xray"  report="nitpicker -> xray"/>
+			<policy label="clipboard -> focus" report="nitpicker -> focus"/>
+		</config>
+	</start>
+
+	<start name="nitpicker" ram="4M" priority="-1">
+		<provides>
+			<service name="Gui"/> <service name="Capture"/> <service name="Event"/>
+		</provides>
+		<config focus="rom">
+			<capture/> <event/>
+
+			<report focus="yes" hover="yes"/>
+
+			<domain name="pointer"  layer="1" content="client" label="no" origin="pointer"/>
+			<domain name="default"  layer="2" content="client" label="no" hover="always"/>
+
+			<policy label_prefix="pointer" domain="pointer"/>
+			<default-policy domain="default"/>
+		</config>
+		<route>
+			<service name="Report"> <child name="report_rom"/> </service>
+			<any-service> <parent/> <any-child/> </any-service>
+		</route>
+	</start>
+
+	<start name="pointer" ram="2M" priority="-1">
+		<provides> <service name="Report"/> </provides>
+		<config shapes="yes"/>
+		<route>
+			<service name="Gui"> <child name="nitpicker"/>  </service>
+			<service name="ROM" label="hover"> <child name="report_rom"/> </service>
+			<service name="ROM" label="xray"> <child name="report_rom"/> </service>
+			<any-service> <parent/> </any-service>
+		</route>
+	</start>
+
+	<start name="clipboard" ram="2M" priority="-1">
+		<provides>
+			<service name="ROM"/> <service name="Report"/>
+		</provides>
+		<config verbose="yes" match_labels="yes">
+			<default-policy domain="default"/>
+		</config>
+		<route>
+			<service name="ROM" label="focus"> <child name="report_rom"/> </service>
+			<any-service> <parent/> <any-child/> </any-service>
+		</route>
+	</start>
+
+	<start name="wm" caps="1000" ram="32M" priority="-1">
+		<binary name="init"/>
+		<provides>
+			<service name="Gui"/> <service name="Report"/> <service name="ROM"/>
+		</provides>
+		<route>
+			<service name="ROM" label="config"> <parent label="wm.config"/> </service>
+			<service name="ROM"    label_last="clipboard"> <child name="clipboard"/> </service>
+			<service name="Report" label_last="clipboard"> <child name="clipboard"/> </service>
+			<service name="Report" label_last="shape">  <child name="pointer"/> </service>
+			<service name="Gui"> <child name="nitpicker"/> </service>
+			<any-service> <parent/> <any-child/> </any-service>
+		</route>
+	</start>
+
+	<start name="vbox1" priority="-2" caps="1800" ram="3000M">
+		<binary name="virtualbox7"/>
+		<config vbox_file="virtualbox7.vbox" vm_name="TestVM" ld_verbose="yes">
+			<libc stdout="/dev/log" stderr="/dev/log" pipe="/pipe" rtc="/dev/rtc">
+				 <pthread placement="single-cpu"/>
+			</libc>
+			<vfs>
+				<dir name="dev">
+					<log/> <rtc/> <null/> <zero/>
+				</dir>
+				<dir name="pipe"> <pipe/> </dir>}
+
+append_if [expr $use_serial] config {
+				<dir name="dev"> <terminal/> </dir>}
+
+append config {
+				<rom name="VBoxVMM.so"/>
+				<rom name="} [vbox_iso] {"/>
+				<tar name="virtualbox7.tar"/>}
+append_if [expr $use_overlay] config {
+				<dir name="ram"> <ram/> </dir>
+				<import>
+					<dir name="ram"> <rom name="overlay.vdi"/> </dir>
+				</import>}
+append config {
+			</vfs>
+			<monitor label="VBOX-1"/>
+			<arg>virtualbox</arg>
+			<env name="VBOX_USER_HOME">/</env>
+			<env name="VBOX_LOG_DEST">file=/dev/log</env>
+			<env name="VBOX_LOG">-*.e.l.f</env>
+			<env name="VBOX_RELEASE_LOG_DEST">file=/dev/log</env>
+			<env name="VBOX_RELEASE_LOG">-*.e.l.f</env>
+		</config>
+		<route>
+			<service name="Nic"> <child name="nic_router"/> </service>
+			<service name="Gui"> <child name="wm"/> </service>
+			<service name="VM"> <parent diag="yes"/> </service>
+			<service name="Report" label="shape"> <child name="wm"/> </service>
+			<!-- XXX: create actual VBoxVMM.so -->
+			<service name="ROM" label="VBoxVMM.so">
+				<parent label="virtualbox7-dummy.lib.so"/>
+			</service>
+			<service name="ROM"    label="clipboard"> <child name="wm"/> </service>
+			<service name="Report" label="clipboard"> <child name="wm"/> </service>
+			<service name="Report"> <child name="report_rom"/> </service>
+			<any-service> <parent/> <any-child/> </any-service>
+		</route>
+	</start>
+</config>}
+
+install_config $config
+
+exec tar cf bin/virtualbox7.tar -C [genode_dir]/repos/ports/run virtualbox7.vbox
+
+#
+# Define VESA driver resolution
+#
+set fd [open bin/fb.config w]
+puts $fd {<config buffered="yes" width="1280" height="1024"/>}
+close $fd
+
+#
+# Pin the nitpicker focus to the window manager by providing a static focus ROM
+#
+set fd [open [run_dir]/genode/focus w]
+puts $fd "<focus label=\"wm -> focus\"/>"
+close $fd
+
+set boot_modules [build_artifacts]
+append boot_modules { virtualbox7.tar }
+
+# create link to var/run in case iso exists there
+if {![info exists [vbox_iso]]} {
+	exec ln -sf [pwd]/var/run/[vbox_iso] bin/[vbox_iso]
+}
+append boot_modules [vbox_iso]
+
+append_if [expr $use_overlay] boot_modules { overlay.vdi }
+
+lappend boot_modules pci_audio
+
+build_boot_image $boot_modules
+
+append qemu_args " -m 3500 -cpu EPYC "
+
+run_genode_until forever
