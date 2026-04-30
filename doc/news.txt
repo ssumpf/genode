@@ -4,6 +4,52 @@
                                ===========
 
 
+Sculpt OS release 26.04 | 2026-04-30
+####################################
+
+| Sculpt OS 26.04 gives the user unprecedented transparency and interactive
+| control over all components underpinning the operating system.
+
+Version 26.04 of the Genode-based general-purpose OS lays all building blocks
+of the operating system into the hands of the user, including all formerly
+hard-wired components. It invites the user to explore, customize, and
+restructure the system architecture on the fly. Right after booting the new
+version, one is presented with all the running components ready to be
+(literally) touched, controlled, and extended.
+
+Below the surface of the administrative user interface, a major paradigm shift
+awaits the user when risking a look under the hood. The system no longer
+processes configuration data as mere input to its internal data model but it
+exposes the data model directly to the user. Thereby Sculpt OS not only lays
+the entire construction plan of the system into the your hands for inspection
+but the construction plan is live! Any change takes immediate effect and the
+wiring between all components can be changed at will on the fly. This gives a
+unique blend of interactivity with the comforts of a declarative way of life.
+
+Speaking of the construction plan, by leveraging Genode's
+[https://genode.org/documentation/hid - human-inclined data (HID)] format,
+the inter-relationships of all building blocks as well as any state reported
+by components are now presented in a human-digestible way unclouded by
+syntactic noise, fostering clarity and understanding all the way down.
+
+Regarding technical advances of the new version and device support in
+particular, all Linux-based drivers have been updated to kernel version 6.18,
+making the system compatible with most modern Intel-PC hardware. Laptop users
+may appreciate the new USB networking option that is now offered by default.
+
+Software-wise, the new version comes with a longed-after update of Qt6 along
+with the Chromium-based Falkon browser, downloadable at the depot of _cproc_.
+In the same menu, one can find the experimental first version of the Goa SDK
+running natively on Sculpt OS without the need of a Linux VM. For the first
+time, Genode components can now be developed, compiled, and tested using
+Sculpt OS on its own. The amazement of walking without crutches.
+
+Sculpt OS 26.04 is available as ready-to-use system image for PC hardware,
+the PinePhone, and the MNT Reform laptop at the
+[https:/download/sculpt - Sculpt download page] accompanied
+with updated [https:/documentation/articles/sculpt-26-04 - documentation].
+
+
 Genode OS Framework release 26.02 | 2026-02-26
 ##############################################
 
