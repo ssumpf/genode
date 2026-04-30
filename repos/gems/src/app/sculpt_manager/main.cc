@@ -759,13 +759,6 @@ struct Sculpt::Main : Input_event_handler,
 
 	void _handle_depot_query_blueprint(Node const &blueprint)
 	{
-		/*
-		 * Drop intermediate results that will be superseded by a newer query.
-		 * This is important because an outdated blueprint would be disregarded
-		 * by 'handle_deploy' anyway while at the same time a new query is
-		 * issued. This can result a feedback loop where blueprints are
-		 * requested but never applied.
-		 */
 		if (blueprint.attribute_value("version", 0U) != _depot_query_version)
 			return;
 
