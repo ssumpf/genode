@@ -377,7 +377,7 @@ static void update_pgm_page(PVM pVM, addr_t guest_addr, addr_t host_addr,
 
 
 template <typename T>
-static constexpr bool aligned_2M(T value) { return aligned(value, 21); }
+static constexpr bool aligned_2M(T value) { return aligned(value, { .log2 = 21 }); }
 
 
 static

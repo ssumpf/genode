@@ -98,7 +98,7 @@ void Sup::Gmm::_update_pool_size()
 Sup::Gmm::Vmm_addr Sup::Gmm::_alloc_pages(Pages pages)
 {
 	size_t const bytes = pages.value << PAGE_SHIFT;
-	size_t const align = min(log2(bytes, PAGE_SHIFT), 21ul /* 2MB */);
+	Align  const align = { .log2 = min(log2(bytes, PAGE_SHIFT), 21ul /* 2MB */) };
 
 	return _alloc.alloc_aligned(bytes, align).convert<Vmm_addr>(
 
