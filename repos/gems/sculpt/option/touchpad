@@ -1,8 +1,8 @@
 option
 + child touchpad | pkg: pc_i2c_hid | priority: media
   + config
-    + i2c_slave  | irq: 266 | bus_addr: 44 | hid_addr: 32 | gpio_chip: INT34C5  | . Fujitsu U7411 (SYNAPTICS)
-    x i2c_slave  | irq: 266 | bus_addr: 21 | hid_addr: 1  | gpio_chip: INT34C5  | . Fujitsu U7511 (ELAN)
+    x i2c_slave  | irq: 266 | bus_addr: 44 | hid_addr: 32 | gpio_chip: INT34C5  | . Fujitsu U7411 (SYNAPTICS)
+    + i2c_slave  | irq: 266 | bus_addr: 21 | hid_addr: 1  | gpio_chip: INT34C5  | . Fujitsu U7511 (ELAN)
     x i2c_slave  | irq: 174 | bus_addr: 44 | hid_addr: 32 | gpio_chip: INT34C5  | . Fujitsu U7412/U7413 (SYNAPTICS)
     x i2c_slave  | irq: 3   | bus_addr: 44 | hid_addr: 32 | gpio_chip: INT34C5  | . Framework Gen12/Gen13
     x i2c_slave  | irq: 352 | bus_addr: 44 | hid_addr: 32 | gpio_chip: INTC1083 | . Framework Core Ultra Series 1
