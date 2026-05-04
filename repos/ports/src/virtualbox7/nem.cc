@@ -171,19 +171,6 @@ struct Sup::Nem
 		map_to_guest(host_addr, guest_addr, X86_PAGE_SIZE, prot);
 	}
 
-	Gmm::Vmm_addr alloc_large_page()
-	{
-		Gmm::Pages const pages { X86_PAGE_2M_SIZE/X86_PAGE_4K_SIZE };
-
-		return _gmm.alloc_from_reservation(pages);
-	}
-
-
-	Gmm::Vmm_addr alloc_page()
-	{
-		return _gmm.alloc_from_reservation( { 1 } );
-	}
-
 	Gmm & gmm() { return _gmm; }
 
 	Nem(Gmm &gmm) : _gmm(gmm) { }
