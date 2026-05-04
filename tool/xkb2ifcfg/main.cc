@@ -74,13 +74,16 @@ class Expanding_xml_buffer
 		template <typename FUNC>
 		void generate(char const *name, FUNC const &func)
 		{
-			Genode::retry<Xml_generator::Buffer_exceeded>(
-				[&] () {
-					Xml_generator xml(_buffer, _buffer_size,
-					                  name, [&] () { func(xml); });
-				},
-				[&] () { _increase_buffer(); }
-			);
+			do {
+				Xml_generator::Result result =
+					Xml_generator::generate({ _buffer, _buffer_size }, name,
+					                        [&] (Xml_generator &g) { func(g); });
+
+				if (result.ok())
+					break;
+
+				_increase_buffer();
+			} while (true);
 		}
 };
 
