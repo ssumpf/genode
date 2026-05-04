@@ -257,7 +257,7 @@ append_if [expr $use_serial] config {
 
 append config {
       + rom VBoxVMM.so
-      + rom } [vbox_iso] {
+      + rom test.iso
       + tar virtualbox7.tar}
 
 append_if [expr $use_overlay] config {
@@ -266,7 +266,7 @@ append_if [expr $use_overlay] config {
         + dir ram | + rom overlay.vdi}
 
 append config {
-    + monitor VBOX-1
+    + monitor | label: VBOX-1
     + arg virtualbox
     + env VBOX_USER_HOME        | : /
     + env VBOX_LOG_DEST         | : file=/dev/log
@@ -284,6 +284,8 @@ append config {
     + service ROM    | label: VBoxVMM.so
       . XXX: create actual VBoxVMM.so
       + parent | label: virtualbox7-dummy.lib.so
+    + service ROM    | label: test.iso
+      + parent | label: } [vbox_iso] {
     + any-service
       + parent
       + any-child
