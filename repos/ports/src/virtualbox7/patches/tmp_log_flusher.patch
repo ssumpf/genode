@@ -1,0 +1,24 @@
+FIXME: add log flusher support
+
+--- src/virtualbox7/src/VBox/VMM/VMMR3/VMMR3.cpp
++++ src/virtualbox7/src/VBox/VMM/VMMR3/VMMR3.cpp
+@@ -809,6 +809,9 @@ VMMR3_INT_DECL(int) VMMR3UpdateLoggers(PVM pVM)
+ /**
+  * @callback_method_impl{FNRTTHREAD, Ring-0 log flusher thread.}
+  */
++
++#include <base/sleep.h>
++
+ static DECLCALLBACK(int) vmmR3LogFlusher(RTTHREAD hThreadSelf, void *pvUser)
+ {
+     PVM const pVM = (PVM)pvUser;
+@@ -882,6 +885,9 @@ static DECLCALLBACK(int) vmmR3LogFlusher(RTTHREAD hThreadSelf, void *pvUser)
+             }
+             else
+             {
++                RTLogPrintf("Genode: vmmR3LogFlusher: suspend forever\n");
++                Genode::sleep_forever();
++
+                 Assert(Item.s.idCpu     == UINT16_MAX);
+                 Assert(Item.s.idxLogger == UINT8_MAX);
+                 Assert(Item.s.idxBuffer == UINT8_MAX);

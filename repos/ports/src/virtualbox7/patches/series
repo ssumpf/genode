@@ -20,3 +20,8 @@ setjmp.patch
 display.patch
 gcc14.patch
 tsc_mode.patch
+minimal.patch
+native_api.patch
+full_encrypted.patch
+tmp_log_flusher.patch
+pdmdriver.patch

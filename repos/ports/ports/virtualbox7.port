@@ -1,17 +1,17 @@
 LICENSE         := GPLv3
-VERSION         := 7.2.4
+VERSION         := 7.2.8
 DOWNLOADS       := virtualbox.archive virtualbox_sdk.archive
 
 VIRTUALBOX_TBZ2    := VirtualBox-$(VERSION).tar.bz2
-VIRTUALBOX_SDK_ZIP := VirtualBoxSDK-$(VERSION)-170995.zip
+VIRTUALBOX_SDK_ZIP := VirtualBoxSDK-$(VERSION)-173730.zip
 
 URL(virtualbox) := http://download.virtualbox.org/virtualbox/$(VERSION)/$(VIRTUALBOX_TBZ2)
 DIR(virtualbox) := src/virtualbox7
-SHA(virtualbox) := d281ec981b5f580211a0cedd1b75a1adcb0fbfcbb768d8c2bf4429f4763e8bbd
+SHA(virtualbox) := 0642ed4a12b7204cd30c0abbc2c10c1cc7ad55ce1756a01e86a16d4b6b066592
 
 URL(virtualbox_sdk) := http://download.virtualbox.org/virtualbox/$(VERSION)/$(VIRTUALBOX_SDK_ZIP)
 DIR(virtualbox_sdk) := src/virtualbox7_sdk
-SHA(virtualbox_sdk) := da755498b14d9a9c5e5885ea6f3e8ca581af2a1bcb18b91895637eefa17f71b4
+SHA(virtualbox_sdk) := f2d5c1a0fc5ac4aa746c7d52c5660306a6d9fdd77dfc389e317a871cbb2a6ad1
 
 PATCHES_DIR := src/virtualbox7/patches
 PATCHES     := $(addprefix $(PATCHES_DIR)/, $(shell cat $(REP_DIR)/$(PATCHES_DIR)/series))
@@ -28,7 +28,7 @@ VBOX_MAIN_ALL += PCIDeviceAttachmentImpl ProgressImpl SharedFolderImpl
 VBOX_MAIN_ALL += ThreadTask VirtualBoxBase GlobalStatusConversion
 VBOX_MAIN_ALL += EventImpl Global HashedPw SecretKeyStore CryptoUtils
 VBOX_MAIN_ALL += ConsoleSharedFolderImpl NvramStoreImpl VirtualBoxErrorInfoImpl
-VBOX_MAIN_ALL += PlatformPropertiesImpl RecordingUtils
+VBOX_MAIN_ALL += RecordingUtils
 
 
 VBOX_MAIN_CLI := AdditionsFacilityImpl BusAssignmentManager
@@ -65,8 +65,8 @@ VBOX_MAIN_SRV += TrustedPlatformModuleImpl MachineImpl MachineImplCloneVM
 VBOX_MAIN_SRV += MediumImpl MediumAttachmentImpl MediumFormatImpl MediumLock
 VBOX_MAIN_SRV += ParallelPortImpl NATEngineImpl NATNetworkImpl
 VBOX_MAIN_SRV += NetworkAdapterImpl SnapshotImpl NetworkServiceRunner
-VBOX_MAIN_SRV += PerformanceImpl Performance PlatformImpl PlatformX86Impl
-VBOX_MAIN_SRV += RecordingScreenSettingsImpl RecordingSettingsImpl
+VBOX_MAIN_SRV += PerformanceImpl Performance PlatformImpl PlatformPropertiesImpl
+VBOX_MAIN_SRV += PlatformX86Impl RecordingScreenSettingsImpl RecordingSettingsImpl
 VBOX_MAIN_SRV += StorageControllerImpl VirtualBoxImpl SystemPropertiesImpl
 VBOX_MAIN_SRV += USBControllerImpl USBDeviceFilterImpl USBDeviceFiltersImpl
 VBOX_MAIN_SRV += VRDEServerImpl TokenImpl SerialPortImpl
@@ -138,7 +138,8 @@ VBOX_SRC_VBOX += $(addsuffix .cpp, $(addprefix Main/src-all/, $(VBOX_MAIN_ALL)))
 VBOX_SRC_VBOX += $(addsuffix .cpp, $(addprefix Main/glue/, $(VBOX_MAIN_GLUE)))
 
 VBOX_INC := AssertGuest.h RemoteDesktop Graphics ExtPack/ExtPack.h VBoxAuth.h
-VBOX_INC += VBoxGuestCoreTypes.h VBoxTpG.h VBoxCryptoIf.h VMMDev.h VMMDevCoreTypes.h
+VBOX_INC += VBoxGuestCoreTypes.h VBoxTpG.h VBoxCryptoIf.h VBoxPktDmp.h
+VBOX_INC += VMMDev.h VMMDevCoreTypes.h
 VBOX_INC += asmdefs.mac err.mac
 VBOX_INC += apic.h ata.h bios.h bioslogo.h cdefs.h dbg.h disopcode-x86-amd64.h
 VBOX_INC += dis-x86-amd64.h dis.h err.h hgcmsvc.h
@@ -157,7 +158,7 @@ VBOX_CONTENT += $(addprefix include/VBox/com/, $(VBOX_INC_COM))
 VBOX_CONTENT += include/VBox/HostServices/
 VBOX_CONTENT += include/VBox/GuestHost/
 
-VBOX_CONTENT += src/libs/zlib-1.3.1 src/libs/liblzf-3.6 src/libs/libxml2-2.13.8
+VBOX_CONTENT += src/libs/zlib-1.3.2 src/libs/liblzf-3.6 src/libs/libxml2-2.13.8
 VBOX_CONTENT += src/libs/softfloat-3e src/libs/xpcom18a4
 VBOX_CONTENT += include/VBox/vmm include/iprt Version.kmk
 VBOX_CONTENT += COPYING

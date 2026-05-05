@@ -1,0 +1,85 @@
+Use minimal R0 path without VMMR3CallR0Emt calls where possible.
+
+--- src/virtualbox7/src/VBox/VMM/VMMR3/PDMR3Device.cpp
++++ src/virtualbox7/src/VBox/VMM/VMMR3/PDMR3Device.cpp
+@@ -369,7 +369,8 @@ int pdmR3DevInit(PVM pVM)
+                            VERR_PDM_TOO_MANY_DEVICE_INSTANCES);
+         PPDMDEVINS   pDevIns;
+         PPDMCRITSECT pCritSect;
+-#if defined(VBOX_WITH_R0_MODULES) && !defined(VBOX_WITH_MINIMAL_R0)
++#if 0
++defined(VBOX_WITH_R0_MODULES) && !defined(VBOX_WITH_MINIMAL_R0)
+         if (fR0Enabled || fRCEnabled)
+         {
+             AssertLogRel(fR0Enabled /* not possible to just enabled raw-mode atm. */);
+--- src/virtualbox7/src/VBox/VMM/VMMR3/PDMR3Queue.cpp
++++ src/virtualbox7/src/VBox/VMM/VMMR3/PDMR3Queue.cpp
+@@ -114,7 +114,8 @@ static int pdmR3QueueCreateLocked(PVM pVM, size_t cbItem, uint32_t cItems, uint3
+      */
+     PPDMQUEUE      pQueue;
+     PDMQUEUEHANDLE hQueue;
+-#if defined(VBOX_WITH_R0_MODULES) && !defined(VBOX_WITH_MINIMAL_R0)
++#if 0
++defined(VBOX_WITH_R0_MODULES) && !defined(VBOX_WITH_MINIMAL_R0)
+     if (fRZEnabled)
+     {
+         /* Call ring-0 to allocate and create the queue: */
+--- src/virtualbox7/src/VBox/VMM/VMMR3/PGMR3.cpp
++++ src/virtualbox7/src/VBox/VMM/VMMR3/PGMR3.cpp
+@@ -826,9 +826,9 @@ VMMR3DECL(int) PGMR3Init(PVM pVM)
+     AssertReleaseReturn(pVM->pgm.s.cPhysHandlerTypes == 0, VERR_WRONG_ORDER);
+     for (size_t i = 0; i < RT_ELEMENTS(pVM->pgm.s.aPhysHandlerTypes); i++)
+     {
+-#if defined(VBOX_WITH_R0_MODULES) && !defined(VBOX_WITH_MINIMAL_R0)
+-        if (fDriverless)
+-#endif
++//#if defined(VBOX_WITH_R0_MODULES) && !defined(VBOX_WITH_MINIMAL_R0)
++//        if (fDriverless)
++//#endif
+             pVM->pgm.s.aPhysHandlerTypes[i].hType  = i | (RTRandU64() & ~(uint64_t)PGMPHYSHANDLERTYPE_IDX_MASK);
+         pVM->pgm.s.aPhysHandlerTypes[i].enmKind    = PGMPHYSHANDLERKIND_INVALID;
+         pVM->pgm.s.aPhysHandlerTypes[i].pfnHandler = pgmR3HandlerPhysicalHandlerInvalid;
+--- src/virtualbox7/src/VBox/VMM/VMMR3/PGMR3Phys.cpp
++++ src/virtualbox7/src/VBox/VMM/VMMR3/PGMR3Phys.cpp
+@@ -1850,7 +1850,8 @@ static int pgmR3PhysAllocateRamRange(PVM pVM, PVMCPU pVCpu, uint32_t cGuestPages
+     int                        rc;
+     PGMPHYSALLOCATERAMRANGEREQ AllocRangeReq;
+     AllocRangeReq.idNewRange   = UINT32_MAX / 4;
+-#if defined(VBOX_WITH_R0_MODULES) && !defined(VBOX_WITH_MINIMAL_R0)
++#if 0
++#defined(VBOX_WITH_R0_MODULES) && !defined(VBOX_WITH_MINIMAL_R0)
+     if (!SUPR3IsDriverless())
+     {
+         AllocRangeReq.Hdr.u32Magic = SUPVMMR0REQHDR_MAGIC;
+@@ -3311,7 +3312,8 @@ VMMR3_INT_DECL(int) PGMR3PhysMmio2Register(PVM pVM, PPDMDEVINS pDevIns, uint32_t
+          * must call ring-0 to do the job as we'll need physical addresses
+          * and maybe a ring-0 mapping address for it all.
+          */
+-#if defined(VBOX_WITH_R0_MODULES) && !defined(VBOX_WITH_MINIMAL_R0)
++#if 0
++defined(VBOX_WITH_R0_MODULES) && !defined(VBOX_WITH_MINIMAL_R0)
+         if (!SUPR3IsDriverless())
+         {
+             PGMPHYSMMIO2REGISTERREQ Mmio2RegReq;
+@@ -4769,7 +4771,8 @@ static int pgmR3PhysRomRegisterLocked(PVM pVM, PPDMDEVINS pDevIns, RTGCPHYS GCPh
+          * Allocate a ROM range.
+          * Note! We don't clean up the ROM range here on failure, VM destruction does that.
+          */
+-#if defined(VBOX_WITH_R0_MODULES) && !defined(VBOX_WITH_MINIMAL_R0)
++#if 0
++defined(VBOX_WITH_R0_MODULES) && !defined(VBOX_WITH_MINIMAL_R0)
+         if (!SUPR3IsDriverless())
+         {
+             PGMPHYSROMALLOCATERANGEREQ RomRangeReq;
+--- src/virtualbox7/src/VBox/VMM/VMMR3/TMR3.cpp
++++ src/virtualbox7/src/VBox/VMM/VMMR3/TMR3.cpp
+@@ -1628,7 +1628,8 @@ static int tmR3TimerQueueGrow(PVM pVM, PTMTIMERQUEUE pQueue, uint32_t cNewTimers
+      * Do the growing.
+      */
+     int rc;
+-#if defined(VBOX_WITH_R0_MODULES) && !defined(VBOX_WITH_MINIMAL_R0)
++#if 0
++defined(VBOX_WITH_R0_MODULES) && !defined(VBOX_WITH_MINIMAL_R0)
+     if (!SUPR3IsDriverless())
+     {
+         rc = VMMR3CallR0Emt(pVM, VMMGetCpu(pVM), VMMR0_DO_TM_GROW_TIMER_QUEUE,

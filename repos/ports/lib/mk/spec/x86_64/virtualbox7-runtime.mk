@@ -5,7 +5,7 @@ LIBICONV_DIR := $(call select_from_ports,libiconv)
 INC_DIR += $(VBOX_DIR)/Runtime/include
 
 INC_DIR += $(VIRTUALBOX_DIR)/src/libs/liblzf-3.6
-INC_DIR += $(VIRTUALBOX_DIR)/src/libs/zlib-1.3.1
+INC_DIR += $(VIRTUALBOX_DIR)/src/libs/zlib-1.3.2
 INC_DIR += $(LIBICONV_DIR)/include/iconv
 INC_DIR += $(REP_DIR)/src/virtualbox7/include/libc
 

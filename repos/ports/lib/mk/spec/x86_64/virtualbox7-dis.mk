@@ -2,13 +2,13 @@ include $(REP_DIR)/lib/mk/virtualbox7-common.inc
 
 SRC_CC += VMM/VMMR3/target-x86/CPUMR3Dbg-x86.cpp
 
-SRC_CC += VMM/VMMR3/DBGF.cpp
-SRC_CC += VMM/VMMR3/DBGFAddr.cpp
-SRC_CC += VMM/VMMR3/DBGFDisas.cpp
-SRC_CC += VMM/VMMR3/DBGFMem.cpp
+SRC_CC += VMM/VMMR3/DBGFR3.cpp
+SRC_CC += VMM/VMMR3/DBGFR3Addr.cpp
+SRC_CC += VMM/VMMR3/DBGFR3Disas.cpp
+SRC_CC += VMM/VMMR3/DBGFR3Mem.cpp
 SRC_CC += VMM/VMMR3/DBGFR3Bp.cpp
 SRC_CC += VMM/VMMR3/DBGFR3Trace.cpp
-SRC_CC += VMM/VMMR3/DBGFReg.cpp
+SRC_CC += VMM/VMMR3/DBGFR3Reg.cpp
 
 SRC_CC += $(addprefix Disassembler/, $(notdir $(wildcard $(VBOX_DIR)/Disassembler/*.cpp)))
 

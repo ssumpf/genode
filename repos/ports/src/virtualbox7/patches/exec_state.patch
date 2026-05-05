@@ -1,7 +1,8 @@
 Avoid the race between checking a remote state and the decision.
---- src/virtualbox7/src/VBox/VMM/VMMR3/VMEmt.cpp
-+++ src/virtualbox7/src/VBox/VMM/VMMR3/VMEmt.cpp
-@@ -913,9 +913,10 @@ static DECLCALLBACK(void) vmR3HaltGlobal1NotifyCpuFF(PUVMCPU pUVCpu, uint32_t fF
+
+--- src/virtualbox7/src/VBox/VMM/VMMR3/VMR3Emt.cpp
++++ src/virtualbox7/src/VBox/VMM/VMMR3/VMR3Emt.cpp
+@@ -922,9 +922,10 @@ static DECLCALLBACK(void) vmR3HaltGlobal1NotifyCpuFF(PUVMCPU pUVCpu, uint32_t fF
                      AssertRC(rc);
                  }
              }
@@ -14,7 +15,7 @@ Avoid the race between checking a remote state and the decision.
          }
      }
      /* This probably makes little sense: */
-@@ -1055,8 +1056,8 @@ static DECLCALLBACK(void) vmR3DefaultNotifyCpuFF(PUVMCPU pUVCpu, uint32_t fFlags
+@@ -1064,8 +1065,8 @@ static DECLCALLBACK(void) vmR3DefaultNotifyCpuFF(PUVMCPU pUVCpu, uint32_t fFlags
          if (pVCpu)
          {
              VMCPUSTATE enmState = pVCpu->enmState;
