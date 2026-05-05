@@ -19,11 +19,6 @@
 
 using Driver::Session_component;
 
-namespace Debug {
-	Genode::size_t _avail_ram = 0;
-	Genode::size_t _avail_caps = 0;
-}
-
 Genode::Capability<Platform::Device_interface>
 Session_component::_acquire(Device &device)
 {
@@ -242,16 +237,6 @@ Session_component::alloc_dma_buffer(size_t const size, Cache cache)
 							Genode::error("Inserting DMA buffer into ",
 							              "IOMMU table failed!");
 						a.deallocate = false;
-						size_t acaps = _env.pd().avail_caps().value;
-						size_t aram  = _env.pd().avail_ram().value;
-						if (Debug::_avail_ram > aram) {
-							Genode::error("Created dma_buffer avail_ram shrinks: ", aram);
-							Debug::_avail_ram = aram;
-						}
-						if (Debug::_avail_caps > acaps) {
-							Genode::error("Created dma_buffer avail_caps shrinks: ", acaps);
-							Debug::_avail_caps = acaps;
-						}
 						return a.obj.cap;
 					},
 					[&] (auto e) {
@@ -322,17 +307,6 @@ Session_component::Session_component(Env &env, Pd &pd, Device_model &devices,
 		[&] (Ram_quota_guard::Error) {
 			throw Out_of_ram();
 		});
-
-	size_t acaps = env.pd().avail_caps().value;
-	size_t aram  = env.pd().avail_ram().value;
-	if (Debug::_avail_ram > aram) {
-		error("Created session_component avail_ram shrinks: ", aram);
-		Debug::_avail_ram = aram;
-	}
-	if (Debug::_avail_caps > acaps) {
-		error("Created session_component avail_caps shrinks: ", acaps);
-		Debug::_avail_caps = acaps;
-	}
 }
 
 
