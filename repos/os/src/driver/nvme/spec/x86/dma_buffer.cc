@@ -15,5 +15,5 @@
 #include <dma_buffer.h>
 
 Util::Dma_buffer::Dma_buffer(Platform::Connection &platform, Genode::size_t size)
-: Platform::Dma_buffer(platform, size, UNCACHED)
+: Platform::Dma_buffer(platform, size, CACHED)
 { }
