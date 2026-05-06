@@ -556,11 +556,11 @@ struct Nvme::Queue : Util::Dma_buffer
 	size_t   len;
 	uint32_t max_entries;
 
-	Queue(Platform::Connection &platform,
-	      uint32_t              max_entries,
-	      size_t                len)
+	Queue(Dma::Connection &con,
+	      uint32_t         max_entries,
+	      size_t           len)
 	:
-		Dma_buffer(platform, len * max_entries),
+		Dma_buffer(con, len * max_entries),
 		len(len), max_entries(max_entries) {};
 };
 
@@ -656,20 +656,20 @@ struct Nvme::Io_queue : Noncopyable
 	Util::Dma_buffer _dma_buffer;
 	Util::Dma_buffer _prp_list_helper;
 
-	Io_queue(Io_queue_space          &space,
-	         Io_queue_space::Id       id,
-	         Platform::Connection    &platform,
-	         size_t                   tx_buf_size)
+	Io_queue(Io_queue_space     &space,
+	         Io_queue_space::Id  id,
+	         Dma::Connection    &dma,
+	         size_t              tx_buf_size)
 	:
 		_elem            { *this, space, id },
-		_dma_buffer      { platform, tx_buf_size },
-		_prp_list_helper { platform, Nvme::PRP_DS_SIZE }
+		_dma_buffer      { dma, tx_buf_size },
+		_prp_list_helper { dma, Nvme::PRP_DS_SIZE }
 	{ }
 
-	addr_t               dma_addr() const { return _dma_buffer.dma_addr(); }
+	addr_t               dma_addr() const { return _dma_buffer.bus_addr(); }
 	Dataspace_capability dma_cap()        { return _dma_buffer.cap(); }
 
-	addr_t prp_dma_addr() const { return _prp_list_helper.dma_addr(); }
+	addr_t prp_dma_addr() const { return _prp_list_helper.bus_addr(); }
 	addr_t prp_addr()     const { return (addr_t)_prp_list_helper.local_addr<void>(); }
 
 	Io_queue_space::Id queue_id() const {  return _elem.id(); }
@@ -936,6 +936,7 @@ class Nvme::Controller : Platform::Device,
 
 	Genode::Env          &_env;
 	Platform::Connection &_platform;
+	Dma::Connection      &_dma;
 	Mmio::Delayer        &_delayer;
 
 	/*
@@ -950,11 +951,11 @@ class Nvme::Controller : Platform::Device,
 	Constructible<Nvme::Cq> &_admin_cq = _cq[0];
 	Constructible<Nvme::Sq> &_admin_sq = _sq[0];
 
-	Util::Dma_buffer _nvme_identify { _platform, IDENTIFY_LEN };
+	Util::Dma_buffer _nvme_identify { _dma, IDENTIFY_LEN };
 
 	Genode::Constructible<Identify_data> _identify_data { };
 
-	Util::Dma_buffer _nvme_nslist { _platform, IDENTIFY_LEN };
+	Util::Dma_buffer _nvme_nslist { _dma, IDENTIFY_LEN };
 	uint32_t   _nvme_nslist_count { 0 };
 
 	size_t _mdts_bytes { 0 };
@@ -991,10 +992,10 @@ class Nvme::Controller : Platform::Device,
 		Util::Dma_buffer dma_buffer;
 
 		Hmb_chunk(Registry<Hmb_chunk> &registry,
-		          Platform::Connection &platform, size_t size)
+		          Dma::Connection &dma, size_t size)
 		:
 			_elem { registry, *this },
-			dma_buffer { platform, size }
+			dma_buffer { dma, size }
 		{ }
 
 		virtual ~Hmb_chunk() { }
@@ -1096,13 +1097,13 @@ class Nvme::Controller : Platform::Device,
 	 */
 	void _setup_admin()
 	{
-		_admin_cq.construct(_platform, MAX_ADMIN_ENTRIES, CQE_LEN);
+		_admin_cq.construct(_dma, MAX_ADMIN_ENTRIES, CQE_LEN);
 		write<Aqa::Acqs>(MAX_ADMIN_ENTRIES_MASK);
-		write<Acq>(_admin_cq->dma_addr());
+		write<Acq>(_admin_cq->bus_addr());
 
-		_admin_sq.construct(_platform, MAX_ADMIN_ENTRIES, SQE_LEN);
+		_admin_sq.construct(_dma, MAX_ADMIN_ENTRIES, SQE_LEN);
 		write<Aqa::Asqs>(MAX_ADMIN_ENTRIES_MASK);
-		write<Asq>(_admin_sq->dma_addr());
+		write<Asq>(_admin_sq->bus_addr());
 	}
 
 	/**
@@ -1209,7 +1210,7 @@ class Nvme::Controller : Platform::Device,
 
 		Sqe_identify b(_admin_command(Opcode::IDENTIFY, 0, NSLIST_CID));
 
-		b.write<Nvme::Sqe_identify::Prp1>(_nvme_nslist.dma_addr());
+		b.write<Nvme::Sqe_identify::Prp1>(_nvme_nslist.bus_addr());
 		b.write<Nvme::Sqe_identify::Cdw10::Cns>(Cns::NSLIST);
 
 		write<Admin_sdb::Sqt>(_admin_sq->tail);
@@ -1244,10 +1245,10 @@ class Nvme::Controller : Platform::Device,
 		uint16_t const  id = 0;
 
 		if (!_nvme_query_ns[id].constructed())
-			_nvme_query_ns[id].construct(_platform, IDENTIFY_LEN);
+			_nvme_query_ns[id].construct(_dma, IDENTIFY_LEN);
 
 		Sqe_identify b(_admin_command(Opcode::IDENTIFY, ns[id], QUERYNS_CID));
-		b.write<Nvme::Sqe_identify::Prp1>(_nvme_query_ns[id]->dma_addr());
+		b.write<Nvme::Sqe_identify::Prp1>(_nvme_query_ns[id]->bus_addr());
 		b.write<Nvme::Sqe_identify::Cdw10::Cns>(Cns::IDENTIFY_NS);
 
 		write<Admin_sdb::Sqt>(_admin_sq->tail);
@@ -1274,7 +1275,7 @@ class Nvme::Controller : Platform::Device,
 	void _identify()
 	{
 		Sqe_identify b(_admin_command(Opcode::IDENTIFY, 0, IDENTIFY_CID));
-		b.write<Nvme::Sqe_identify::Prp1>(_nvme_identify.dma_addr());
+		b.write<Nvme::Sqe_identify::Prp1>(_nvme_identify.bus_addr());
 		b.write<Nvme::Sqe_identify::Cdw10::Cns>(Cns::IDENTIFY);
 
 		write<Admin_sdb::Sqt>(_admin_sq->tail);
@@ -1364,7 +1365,7 @@ class Nvme::Controller : Platform::Device,
 		uint32_t const num_entries = bytes / HMB_CHUNK_SIZE;
 
 		try {
-			_hmb_descr_list_buffer.construct(_platform, HMB_LIST_SIZE);
+			_hmb_descr_list_buffer.construct(_dma, HMB_LIST_SIZE);
 		} catch (... /* intentional catch-all */) {
 			warning("could not allocate HMB descriptor list page");
 			return;
@@ -1379,9 +1380,9 @@ class Nvme::Controller : Platform::Device,
 			try {
 				Hmb_chunk *c =
 					new (_hmb_alloc) Hmb_chunk(*_hmb_chunk_registry,
-					                           _platform, HMB_CHUNK_SIZE);
+					                           _dma, HMB_CHUNK_SIZE);
 
-				Hmb_de e(*list, c->dma_buffer.dma_addr(), HMB_CHUNK_UNITS);
+				Hmb_de e(*list, c->dma_buffer.bus_addr(), HMB_CHUNK_UNITS);
 				list.construct(list->start + Hmb_de::SIZE, list->num_bytes - Hmb_de::SIZE);
 
 			} catch (... /* intentional catch-all */) {
@@ -1396,7 +1397,7 @@ class Nvme::Controller : Platform::Device,
 		}
 
 		Set_hmb b(_admin_command(Opcode::SET_FEATURES, 0, SET_HMB_CID),
-		          _hmb_descr_list_buffer->dma_addr(), units, num_entries);
+		          _hmb_descr_list_buffer->bus_addr(), units, num_entries);
 
 		write<Admin_sdb::Sqt>(_admin_sq->tail);
 
@@ -1452,7 +1453,7 @@ class Nvme::Controller : Platform::Device,
 	void _setup_io_cq(uint16_t id)
 	{
 		if (!_cq[id].constructed()) {
-			_cq[id].construct(_platform, _max_io_entries, CQE_LEN);
+			_cq[id].construct(_dma, _max_io_entries, CQE_LEN);
 			char *mmio_start = local_addr<char>() + 0x1000 + (id * 8);
 			_dbl[id].construct(Byte_range_ptr(mmio_start, 8));
 		}
@@ -1460,7 +1461,7 @@ class Nvme::Controller : Platform::Device,
 		Nvme::Cq &cq = *_cq[id];
 
 		Sqe_create_cq b(_admin_command(Opcode::CREATE_IO_CQ, 0, CREATE_IO_CQ_CID));
-		b.write<Nvme::Sqe_create_cq::Prp1>(cq.dma_addr());
+		b.write<Nvme::Sqe_create_cq::Prp1>(cq.bus_addr());
 		b.write<Nvme::Sqe_create_cq::Cdw10::Qid>(id);
 		b.write<Nvme::Sqe_create_cq::Cdw10::Qsize>(_max_io_entries_mask);
 		b.write<Nvme::Sqe_create_cq::Cdw11::Pc>(1);
@@ -1504,12 +1505,12 @@ class Nvme::Controller : Platform::Device,
 	void _setup_io_sq(uint16_t id, uint16_t cqid)
 	{
 		if (!_sq[id].constructed())
-			_sq[id].construct(_platform, _max_io_entries, SQE_LEN);
+			_sq[id].construct(_dma, _max_io_entries, SQE_LEN);
 
 		Nvme::Sq &sq = *_sq[id];
 
 		Sqe_create_sq b(_admin_command(Opcode::CREATE_IO_SQ, 0, CREATE_IO_SQ_CID));
-		b.write<Nvme::Sqe_create_sq::Prp1>(sq.dma_addr());
+		b.write<Nvme::Sqe_create_sq::Prp1>(sq.bus_addr());
 		b.write<Nvme::Sqe_create_sq::Cdw10::Qid>(id);
 		b.write<Nvme::Sqe_create_sq::Cdw10::Qsize>(_max_io_entries_mask);
 		b.write<Nvme::Sqe_create_sq::Cdw11::Pc>(1);
@@ -1556,13 +1557,14 @@ class Nvme::Controller : Platform::Device,
 	 */
 	Controller(Genode::Env              &env,
 	           Platform::Connection     &platform,
+	           Dma::Connection          &dma,
 	           Mmio::Delayer            &delayer,
 	           Signal_context_capability irq_sigh)
 	:
 		Platform::Device(platform),
 		Platform::Device::Mmio<SIZE>((Platform::Device&)*this),
 		Platform::Device::Irq((Platform::Device&)*this),
-		_env(env), _platform(platform), _delayer(delayer)
+		_env(env), _platform(platform), _dma(dma), _delayer(delayer)
 	{
 		sigh(irq_sigh);
 	}
@@ -1913,6 +1915,7 @@ class Nvme::Driver : Genode::Noncopyable
 
 		Genode::Env          &_env;
 		Platform::Connection  _platform { _env };
+		Dma::Connection       _dma { _env };
 		Sliced_heap           _sliced_heap { _env.ram(), _env.rm() };
 
 		Genode::Attached_rom_dataspace &_config_rom;
@@ -1994,7 +1997,7 @@ class Nvme::Driver : Genode::Noncopyable
 		Signal_context_capability const _irq_sigh;
 		Signal_context_capability const _restart_sigh;
 
-		Reconstructible<Nvme::Controller> _nvme_ctrlr { _env, _platform,
+		Reconstructible<Nvme::Controller> _nvme_ctrlr { _env, _platform, _dma,
 		                                                _delayer, _irq_sigh };
 
 		/***********
@@ -2164,7 +2167,7 @@ class Nvme::Driver : Genode::Noncopyable
 			if (resume_driver) {
 				_stop_processing = false;
 
-				_nvme_ctrlr.construct(_env, _platform, _delayer, _irq_sigh);
+				_nvme_ctrlr.construct(_env, _platform, _dma, _delayer, _irq_sigh);
 				reinit(*_nvme_ctrlr);
 
 				log("driver resumed");
@@ -2465,7 +2468,7 @@ class Nvme::Driver : Genode::Noncopyable
 						ctrlr.setup_io(new_id, new_id);
 
 						new (_sliced_heap) Io_queue(_io_queue_space, new_id,
-						                            _platform, tx_buf_size);
+						                            _dma, tx_buf_size);
 						return Io_queue_create_result { new_id };
 					} catch (Nvme::Controller::Initialization_failed) {
 						_io_queue_map.free(new_id.value - 1); }

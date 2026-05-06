@@ -14,6 +14,6 @@
 /* local includes */
 #include <dma_buffer.h>
 
-Util::Dma_buffer::Dma_buffer(Platform::Connection &platform, Genode::size_t size)
-: Platform::Dma_buffer(platform, size, CACHED)
+Util::Dma_buffer::Dma_buffer(Dma::Connection &con, Genode::size_t size)
+: Dma::Buffer(con, size, CACHED)
 { }

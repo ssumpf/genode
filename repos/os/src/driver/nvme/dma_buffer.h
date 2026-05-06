@@ -15,7 +15,7 @@
 #define _NVME_DMA_BUFFER_H_
 
 /* Genode includes */
-#include <platform_session/dma_buffer.h>
+#include <dma_session/buffer.h>
 
 namespace Util {
 
@@ -25,11 +25,11 @@ namespace Util {
 	 * We use an arch-specific Dma_buffer implementation to care about
 	 * whether to use CACHED or UNCACHED memory.
 	 */
-	class Dma_buffer : public Platform::Dma_buffer
+	class Dma_buffer : public Dma::Buffer
 	{
 		public:
 
-			Dma_buffer(Platform::Connection &platform, size_t size);
+			Dma_buffer(Dma::Connection &platform, size_t size);
 
 		/**
 		 * If needed, we can add a method for cache clean/invalidate operations

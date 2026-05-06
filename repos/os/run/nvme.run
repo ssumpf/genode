@@ -100,7 +100,9 @@ config | verbose: no
     + service ROM                    | + parent
 
 + start platform | caps: 100 | ram: 2M | managing_system: yes
-  + provides | + service Platform
+  + provides
+    + service Platform
+    + service Dma
   + route
     + service ROM     | label: devices | + child report_rom
     + service Report                   | + child report_rom
@@ -122,6 +124,7 @@ config | verbose: no
     + policy | label_prefix: block_tester | writeable: no
   + route
     + service Platform | + child platform
+    + service Dma      | + child platform
     + service Timer    | + child timer
     + service CPU      | + parent
     + service ROM      | + parent
