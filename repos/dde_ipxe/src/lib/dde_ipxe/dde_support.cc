@@ -31,7 +31,7 @@
 #include <io_port_session/connection.h>
 #include <irq_session/connection.h>
 #include <platform_session/device.h>
-#include <platform_session/dma_buffer.h>
+#include <dma_session/buffer.h>
 #include <rm_session/connection.h>
 #include <region_map/client.h>
 #include <timer_session/connection.h>
@@ -160,7 +160,8 @@ struct Pci_driver
 	Platform::Connection   _pci     { _env };
 	Platform::Device       _dev     { _pci };
 	Platform::Device::Irq  _irq     { _dev };
-	Platform::Dma_buffer   _dma     { _pci, BACKING_STORE_SIZE, CACHED };
+	Dma::Connection        _dma     { _env };
+	Dma::Buffer            _buf     { _dma, BACKING_STORE_SIZE, CACHED };
 	Constructible<Io_mem>  _mmio    {};
 	Constructible<Io_port> _io_port {};
 
@@ -233,10 +234,10 @@ struct Pci_driver
 	dde_pci_device_t device() { return _pci_info; }
 
 	Range dma() {
-		return { (addr_t)_dma.local_addr<void>(), BACKING_STORE_SIZE }; }
+		return { (addr_t)_buf.local_addr<void>(), BACKING_STORE_SIZE }; }
 
 	Genode::addr_t virt_to_dma(Genode::addr_t virt) {
-		return virt - (addr_t)_dma.local_addr<void>() + _dma.dma_addr(); }
+		return virt - (addr_t)_buf.local_addr<void>() + _buf.bus_addr(); }
 
 	void irq(irq_handler handler, void * data)
 	{
