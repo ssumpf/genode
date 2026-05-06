@@ -13,7 +13,7 @@
 
 #include <base/component.h>
 #include <platform_session/connection.h>
-#include <platform_session/dma_buffer.h>
+#include <dma_session/buffer.h>
 #include <virtio/mmio_device.h>
 
 #include "component.h"
@@ -30,7 +30,8 @@ struct Virtio_mmio_fb::Main
 	Platform::Device        platform_device { platform,
 	                                          Platform::Device::Type { "gpu" } };
 	Virtio::Device          virtio_device   { platform_device };
-	Virtio_fb::Driver       driver          { env, platform, virtio_device };
+	Dma::Connection         dma             { env };
+	Virtio_fb::Driver       driver          { env, dma, virtio_device };
 
 	Main(Env &env)
 	try : env(env) { log("--- VirtIO MMIO Framebuffer driver started ---"); }

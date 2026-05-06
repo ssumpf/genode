@@ -182,7 +182,7 @@ class Virtio_fb::Driver
 
 		using Control_queue = Virtio::Queue<Control_header, Control_queue_traits>;
 
-		class Fb_memory_resource : public Platform::Dma_buffer
+		class Fb_memory_resource : public Dma::Buffer
 		{
 			private:
 
@@ -197,15 +197,15 @@ class Virtio_fb::Driver
 
 			public:
 
-				Fb_memory_resource(Platform::Connection       &platform,
-				                   Capture::Area        const &area)
-				: Platform::Dma_buffer(platform, _fb_size(area), UNCACHED) {}
+				Fb_memory_resource(Dma::Connection     &dma,
+				                   Capture::Area const &area)
+				: Dma::Buffer(dma, _fb_size(area), UNCACHED) {}
 		};
 
 		Env                   &_env;
-		Platform::Connection  &_platform;
+		Dma::Connection       &_dma;
 		Virtio::Device        &_device;
-		Control_queue          _ctrl_vq { _platform, 4, 512 };
+		Control_queue          _ctrl_vq { _dma, 4, 512 };
 		uint32_t const         _num_scanouts;
 		Signal_handler<Driver> _irq_handler { _env.ep(), *this, &Driver::_handle_irq };
 
@@ -322,7 +322,7 @@ class Virtio_fb::Driver
 			}
 
 			try {
-				_fb_res.construct(_platform, _display_area);
+				_fb_res.construct(_dma, _display_area);
 			} catch (...) {
 				error("Failed to allocate framebuffer!");
 				throw;
@@ -331,7 +331,7 @@ class Virtio_fb::Driver
 			{
 				Control_header attach_cmd { Control_header::CMD_RESOURCE_ATTACH_BACKING };
 				Attach_backing attach_data {
-					.addr   = _fb_res->dma_addr(),
+					.addr   = _fb_res->bus_addr(),
 					.length = static_cast<uint32_t>(_fb_res->size())
 				};
 
@@ -521,11 +521,11 @@ class Virtio_fb::Driver
 
 	public:
 
-		Driver(Env                    &env,
-		       Platform::Connection   &platform,
-		       Virtio::Device         &device)
+		Driver(Env             &env,
+		       Dma::Connection &dma,
+		       Virtio::Device  &device)
 		: _env(env),
-		  _platform(platform),
+		  _dma(dma),
 		  _device(device),
 		  _num_scanouts(_init_device(_device, _ctrl_vq.description()))
 		{

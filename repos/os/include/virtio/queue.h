@@ -14,7 +14,7 @@
 #ifndef _INCLUDE__VIRTIO__QUEUE_H_
 #define _INCLUDE__VIRTIO__QUEUE_H_
 
-#include <platform_session/dma_buffer.h>
+#include <dma_session/buffer.h>
 #include <base/stdint.h>
 #include <util/misc_math.h>
 
@@ -80,9 +80,9 @@ class Virtio::Queue
 		Queue(Queue const &) = delete;
 		Queue &operator = (Queue const &) = delete;
 
-		static addr_t _dma_addr(Platform::Connection &p,
+		static addr_t _dma_addr(Dma::Connection &p,
 		                        Dataspace_capability  c) {
-			return p.dma_addr(static_cap_cast<Ram_dataspace>(c)); }
+			return p.bus_addr(static_cap_cast<Ram_dataspace>(c)); }
 
 	protected:
 
@@ -137,10 +137,10 @@ class Virtio::Queue
 				Buffer_pool(Buffer_pool const &) = delete;
 				Buffer_pool &operator = (Buffer_pool const &) = delete;
 
-				Platform::Dma_buffer _ds;
-				uint16_t       const _buffer_count;
-				uint16_t       const _buffer_size;
-				addr_t         const _phys_base;
+				Dma::Buffer    _ds;
+				uint16_t const _buffer_count;
+				uint16_t const _buffer_size;
+				addr_t   const _phys_base;
 
 				static size_t _ds_size(uint16_t buffer_count, uint16_t buffer_size) {
 					return buffer_count * align_natural(buffer_size); }
@@ -154,15 +154,15 @@ class Virtio::Queue
 					uint16_t  size;
 				};
 
-				Buffer_pool(Platform::Connection &plat,
-				            uint16_t        const buffer_count,
-				            uint16_t        const buffer_size)
+				Buffer_pool(Dma::Connection &dma,
+				            uint16_t const   buffer_count,
+				            uint16_t const   buffer_size)
 				:
-					_ds(plat, buffer_count * align_natural(buffer_size),
+					_ds(dma, buffer_count * align_natural(buffer_size),
 					    CACHED),
 					_buffer_count(buffer_count),
 					_buffer_size(buffer_size),
-					_phys_base(_ds.dma_addr()) {}
+					_phys_base(_ds.bus_addr()) {}
 
 				const Buffer get(uint16_t descriptor_idx) const
 				{
@@ -208,7 +208,7 @@ class Virtio::Queue
 
 
 		uint16_t                    const _queue_size;
-		Platform::Dma_buffer              _ds;
+		Dma::Buffer                       _ds;
 		Buffer_pool                       _buffers;
 		Avail            volatile * const _avail;
 		Used             volatile * const _used;
@@ -561,16 +561,16 @@ class Virtio::Queue
 			print(output, _queue_size);
 		}
 
-		Queue(Platform::Connection &plat,
-		      uint16_t              queue_size,
-		      uint16_t              buffer_size)
+		Queue(Dma::Connection &dma,
+		      uint16_t         queue_size,
+		      uint16_t         buffer_size)
 		: _queue_size(queue_size),
-		  _ds(plat, _ds_size(queue_size), UNCACHED),
-		  _buffers(plat, queue_size, _check_buffer_size(buffer_size)),
+		  _ds(dma, _ds_size(queue_size), UNCACHED),
+		  _buffers(dma, queue_size, _check_buffer_size(buffer_size)),
 		  _avail(_init_avail(_ds.local_addr<uint8_t>(), queue_size)),
 		  _used(_init_used(_ds.local_addr<uint8_t>(), queue_size)),
 		  _descriptors(_ds.local_addr<uint8_t>(), queue_size),
-		  _description(_init_description(queue_size, _ds.dma_addr()))
+		  _description(_init_description(queue_size, _ds.bus_addr()))
 		{
 			_fill_descriptor_table();
 		}

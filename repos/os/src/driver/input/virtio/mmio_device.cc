@@ -31,7 +31,8 @@ struct Virtio_mmio_input::Main
 	                                          Platform::Device::Type { "input" } };
 	Virtio::Device          virtio_device   { platform_device };
 	Attached_rom_dataspace  config          { env, "config" };
-	Virtio_input::Driver    driver          { env, platform, virtio_device,
+	Dma::Connection         dma             { env };
+	Virtio_input::Driver    driver          { env, dma, virtio_device,
 	                                          config.node() };
 
 	Main(Env &env)

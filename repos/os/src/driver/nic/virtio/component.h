@@ -287,17 +287,17 @@ class Virtio_nic::Device : Noncopyable
 
 	public:
 
-		Device(Virtio::Device       &device,
-		       Platform::Connection &plat,
-		       Genode::Node   const &node)
+		Device(Virtio::Device     &device,
+		       Dma::Connection    &dma,
+		       Genode::Node const &node)
 		try :
 			_verbose     { node.attribute_value("verbose", false) },
 			_device      { device },
 			_hw_features { _init_hw_features(node) },
-			_rx_vq       { plat,
+			_rx_vq       { dma,
 			               _vq_size(RX_VQ, node, "rx_queue_size"),
 			               _buf_size(RX_VQ, node, "rx_buffer_size") },
-			_tx_vq       { plat,
+			_tx_vq       { dma,
 			               _vq_size(TX_VQ, node, "tx_queue_size"),
 			               _buf_size(TX_VQ, node, "tx_buffer_size") }
 		{ }
@@ -488,13 +488,13 @@ class Virtio_nic::Uplink_client : public Virtio_nic::Device,
 
 	public:
 
-		Uplink_client(Env                  &env,
-		              Allocator            &alloc,
-		              Virtio::Device       &device,
-		              Platform::Connection &plat,
-		              Genode::Node   const &node)
+		Uplink_client(Env                &env,
+		              Allocator          &alloc,
+		              Virtio::Device     &device,
+		              Dma::Connection    &dma,
+		              Genode::Node const &node)
 		:
-			Device             { device, plat, node },
+			Device             { device, dma, node },
 			Uplink_client_base { env, alloc, read_mac_address() },
 			_irq_handler       { env.ep(), *this, &Uplink_client::_handle_irq }
 		{
