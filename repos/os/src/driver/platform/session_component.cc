@@ -58,7 +58,7 @@ void Session_component::_free_dma_buffer(Dma_buffer &buf)
 			io_mmu.iotlb_flush(domain); });
 	});
 
-	destroy(heap(), &buf);
+	_dma_buffer_alloc.destroy(buf);
 }
 
 
