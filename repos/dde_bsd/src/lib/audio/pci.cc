@@ -17,7 +17,7 @@
 #include <base/object_pool.h>
 #include <dataspace/client.h>
 #include <platform_session/device.h>
-#include <platform_session/dma_buffer.h>
+#include <dma_session/buffer.h>
 #include <util/retry.h>
 
 /* local includes */
@@ -46,7 +46,8 @@ class Pci_driver
 
 		Genode::Env           &_env;
 		Platform::Connection   _pci    { _env };
-		Platform::Dma_buffer   _buffer { _pci, DMA_SIZE, Genode::CACHED };
+		Dma::Connection        _dma    { _env };
+		Dma::Buffer            _buffer { _dma, DMA_SIZE, Genode::CACHED };
 		Genode::Allocator_avl  _alloc;
 
 		struct Device
@@ -238,10 +239,10 @@ class Pci_driver
 			_alloc.free((void*)virt, size); }
 
 		Genode::addr_t virt_to_phys(Genode::addr_t virt) {
-			return virt - _buffer_base() + _buffer.dma_addr(); }
+			return virt - _buffer_base() + _buffer.bus_addr(); }
 
 		Genode::addr_t phys_to_virt(Genode::addr_t phys) {
-			return phys - _buffer.dma_addr() + _buffer_base(); }
+			return phys - _buffer.bus_addr() + _buffer_base(); }
 };
 
 
