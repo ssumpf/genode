@@ -15,7 +15,6 @@
 #define _INCLUDE__PLATFORM_SESSION__CLIENT_H_
 
 #include <base/rpc_client.h>
-#include <base/log.h>
 #include <platform_session/capability.h>
 
 namespace Platform { struct Client; }
@@ -37,23 +36,6 @@ struct Platform::Client : Genode::Rpc_client<Session>
 
 	void release_device(Capability<Device_interface> device) override {
 		call<Rpc_release_device>(device); }
-
-	Ram_dataspace_capability alloc_dma_buffer(size_t size, Cache cache) override {
-		return call<Rpc_alloc_dma_buffer>(size, cache); }
-
-	void free_dma_buffer(Ram_dataspace_capability cap) override {
-		call<Rpc_free_dma_buffer>(cap); }
-
-	addr_t dma_addr(Ram_dataspace_capability cap) override
-	{
-		addr_t const result = call<Rpc_dma_addr>(cap);
-
-		/* the platform driver may lack the 'managing_system' role */
-		if (!result)
-			warning("unable to obtain DMA address from platform driver");
-
-		return result;
-	}
 };
 
 #endif /* _INCLUDE__PLATFORM_SESSION__CLIENT_H_ */

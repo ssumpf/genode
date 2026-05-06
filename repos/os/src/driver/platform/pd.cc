@@ -16,7 +16,7 @@
 #include <pd.h>
 #include <root.h>
 
-using Driver::Pd;
+using namespace Driver;;
 
 Driver::Io_mmu::Domain & Pd::_create_domain()
 {
@@ -102,10 +102,19 @@ void Pd::update_policy(bool info, Policy_version version)
 }
 
 
-void Pd::close_all_sessions(Root &root)
+template <>
+void Pd::close_all_sessions<Driver::Root<Session_component>>(Root<Session_component> &root)
 {
 	_sessions.for_each([&] (auto &session) {
-		root.close(session.cap()); });
+					   root.close(session.cap()); });
+}
+
+
+template <>
+void Pd::close_all_sessions<Driver::Root<Dma_component>>(Root<Dma_component> &root)
+{
+	_dma_sessions.for_each([&] (auto &session) {
+						   root.close(session.cap()); });
 }
 
 
@@ -145,4 +154,6 @@ Pd::~Pd()
 {
 	_sessions.for_each([&] (auto &) {
 		error("Session for label ", _label, " still existent!"); });
+	_dma_sessions.for_each([&] (auto &) {
+		error("DMA session for label ", _label, " still existent!"); });
 }

@@ -34,7 +34,7 @@
 
 namespace Driver {
 	class Session_component;
-	class Root;
+	template <typename> class Root;
 }
 
 
@@ -89,13 +89,10 @@ class Driver::Session_component
 		Device_capability acquire_device(Device_name const &) override;
 		Device_capability acquire_single_device() override;
 		void release_device(Device_capability) override;
-		Ram_dataspace_capability alloc_dma_buffer(size_t, Cache) override;
-		void free_dma_buffer(Ram_dataspace_capability ram_cap) override;
-		addr_t dma_addr(Ram_dataspace_capability) override;
 
 	private:
 
-		friend class Root;
+		friend class Root<Session_component>;
 
 		Env          &_env;
 		Pd           &_pd;
@@ -108,12 +105,7 @@ class Driver::Session_component
 
 		Registry<Device_component> _device_registry { };
 
-		Memory::Constrained_obj_allocator<Dma_buffer>
-			_dma_buffer_alloc { _md_alloc };
-
 		Dma_address_list _dma_address_list { };
-
-		Dictionary<Dma_buffer, Dma_buffer_name> _dma_buffers {};
 
 		Cost _costs { 0, 0 };
 
@@ -122,7 +114,6 @@ class Driver::Session_component
 
 		Device_capability _acquire(Device &device);
 		void              _release_device(Device_component &dc);
-		void              _free_dma_buffer(Dma_buffer &buf);
 
 		/*
 		 * Noncopyable

@@ -24,7 +24,7 @@
 #undef  private
 /* WARNING DO NOT COPY THIS !!! */
 
-#include <platform_session/dma_buffer.h>
+#include <dma_session/buffer.h>
 
 using namespace Genode;
 
@@ -62,6 +62,7 @@ struct Main
 	Expanding_reporter device_reporter { env, "devices" };
 
 	Reconstructible<Platform::Connection> platform { env };
+	Reconstructible<Dma::Connection> dma { env };
 
 	Signal_handler<Main> device_rom_handler { env.ep(), *this,
 	                                          &Main::handle_device_update };
@@ -171,10 +172,12 @@ struct Main
 			stop_driver(2);
 			stop_driver(3);
 			/* allocate big DMA dataspace */
-			Platform::Dma_buffer buffer { *platform, 0x80000, UNCACHED };
+			Dma::Buffer buffer { *dma, 0x80000, UNCACHED };
 			/* close the whole session */
 			platform.destruct();
+			dma.destruct();
 			platform.construct(env);
+			dma.construct(env);
 			platform->sigh(device_rom_handler);
 			start_driver(0);
 			start_driver(1);
@@ -182,7 +185,7 @@ struct Main
 			start_driver(3);
 			/* repeatedly start and destroy device sessions to detect leakages */
 			for (unsigned idx = 0; idx < 1000; idx++) {
-				Platform::Dma_buffer dma { *platform, 0x4000, UNCACHED };
+				Dma::Buffer b { *dma, 0x4000, UNCACHED };
 			}
 			next_step(0, 0, 0x40000000, 32);
 			return; }

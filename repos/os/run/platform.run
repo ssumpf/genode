@@ -66,7 +66,9 @@ config
   + route | + any-service | + parent
 
 + start platform | managing_system: yes
-  + provides | + service Platform
+  + provides
+    + service Dma
+    + service Platform
   + route
     + service ROM | label: config  | + child report_fs_rom
     + service ROM | label: devices | + child report_fs_rom
@@ -77,6 +79,7 @@ config
   + route
     + service Report | label: config  | + child fs_report | label: config
     + service Report | label: devices | + child fs_report | label: devices
+    + service Dma                     | + child platform
     + service Platform                | + child platform
     + any-service                     | + parent
 -

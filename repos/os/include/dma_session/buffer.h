@@ -1,6 +1,7 @@
 /*
  * \brief  Utility to allocate and locally attach a DMA buffer
  * \author Norman Feske
+ * \author Stefan Kalkowski
  * \date   2022-02-02
  */
 
@@ -11,55 +12,59 @@
  * under the terms of the GNU Affero General Public License version 3.
  */
 
-#ifndef _INCLUDE__PLATFORM_SESSION__DMA_BUFFER_H_
-#define _INCLUDE__PLATFORM_SESSION__DMA_BUFFER_H_
+#ifndef _INCLUDE__DMA_SESSION__BUFFER_H_
+#define _INCLUDE__DMA_SESSION__BUFFER_H_
 
 /* Genode includes */
 #include <base/attached_dataspace.h>
-#include <platform_session/connection.h>
+#include <dma_session/connection.h>
 
-class Platform::Dma_buffer : Noncopyable
+class Dma::Buffer : Noncopyable
 {
 	private:
 
 		struct Allocation
 		{
-			Platform::Connection &platform;
+			Dma::Connection &con;
 
 			size_t const size;
 			Cache  const cache;
 
-			Ram_dataspace_capability _alloc() {
-				return platform.alloc_dma_buffer(size, cache); }
+			Ram_dataspace_capability _alloc()
+			{
+				Ram_dataspace_capability cap;
+				con.alloc(size, cache).with_result(
+					[&] (auto c) { cap = c; },
+					[]  (auto) { /* do nothing */ });
+				return cap;
+			}
 
 			Ram_dataspace_capability cap = _alloc();
 
-			addr_t const dma_addr = platform.dma_addr(cap);
+			addr_t const bus_addr = con.bus_addr(cap);
 
-			Allocation(Connection &platform, size_t size, Cache cache)
-			: platform(platform), size(size), cache(cache) { }
+			Allocation(Connection &con, size_t size, Cache cache)
+			: con(con), size(size), cache(cache) { }
 
-			~Allocation() { platform.free_dma_buffer(cap); }
+			~Allocation() { con.free(cap); }
 
 		} _allocation;
 
-		Attached_dataspace _ds { _allocation.platform._env.rm(), _allocation.cap };
+		Attached_dataspace _ds { _allocation.con._env.rm(), _allocation.cap };
 
 	public:
 
 		/**
 		 * Constructor
 		 *
-		 * \param platform  platform session used for the buffer allocation
-		 * \param size      DMA buffer size in bytes
+		 * \param con  dma session used for the buffer allocation
+		 * \param size DMA buffer size in bytes
 		 *
-		 * \throw Out_of_ram
-		 * \throw Out_of_caps
 		 * \throw Region_map::Region_conflict
 		 */
-		Dma_buffer(Connection &platform, size_t size, Cache cache)
+		Buffer(Dma::Connection &con, size_t size, Cache cache)
 		:
-			_allocation(platform, size, cache)
+			_allocation(con, size, cache)
 		{ }
 
 		/**
@@ -71,7 +76,7 @@ class Platform::Dma_buffer : Noncopyable
 		/**
 		 * Return bus address to be used for DMA operations
 		 */
-		addr_t dma_addr() const { return _allocation.dma_addr; }
+		addr_t bus_addr() const { return _allocation.bus_addr; }
 
 		/**
 		 * Return DMA-buffer size in bytes
@@ -84,4 +89,4 @@ class Platform::Dma_buffer : Noncopyable
 		Dataspace_capability cap() { return _ds.cap(); }
 };
 
-#endif /* _INCLUDE__PLATFORM_SESSION__DMA_BUFFER_H_ */
+#endif /* _INCLUDE__DMA_SESSION__BUFFER_H_ */

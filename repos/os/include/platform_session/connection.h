@@ -25,7 +25,6 @@
 namespace Platform {
 
 	struct Device;
-	struct Dma_buffer;
 	struct Connection;
 }
 
@@ -35,9 +34,8 @@ class Platform::Connection : public Genode::Connection<Session>,
 {
 	private:
 
-		/* 'Device' and 'Dma_buffer' access the '_env' member */
+		/* 'Device' accesses the '_env' member */
 		friend class Device;
-		friend class Dma_buffer;
 
 		Env                              &_env;
 		Rom_session_client                _rom     { devices_rom() };
@@ -108,12 +106,6 @@ class Platform::Connection : public Genode::Connection<Session>,
 				return retry_with_upgrade(Ram_quota{20*1024}, Cap_quota{6}, [&] () {
 					return Client::acquire_single_device(); });
 			});
-		}
-
-		Ram_dataspace_capability alloc_dma_buffer(size_t size, Cache cache) override
-		{
-			return retry_with_upgrade(Ram_quota{max((size_t)4096, size)}, Cap_quota{2}, [&] () {
-				return Client::alloc_dma_buffer(size, cache); });
 		}
 
 		void with_xml(auto const &fn)

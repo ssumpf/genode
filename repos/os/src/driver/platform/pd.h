@@ -26,8 +26,11 @@ namespace Driver {
 	using namespace Genode;
 
 	class Pd;
-	class Root;
 	class Session_component;
+	class Dma_component;
+
+	using Pd_allocator  = Memory::Constrained_obj_allocator<Pd>;
+	using Pd_dictionary = Browsable_dictionary<Pd, Session::Label>;
 }
 
 
@@ -47,6 +50,7 @@ class Driver::Pd
 		friend class Genode::Dictionary<Pd, Session::Label>;
 		friend class Browsable_dictionary<Pd, Session::Label>;
 		friend class Session_component;
+		friend class Dma_component;
 
 		Env &_env;
 
@@ -65,6 +69,7 @@ class Driver::Pd
 		Io_mmu::Domain &_domain;
 
 		Registry<Session_component> _sessions {};
+		Registry<Dma_component>     _dma_sessions {};
 
 		Io_mmu::Domain & _create_domain();
 		void _destroy_domain();
@@ -112,13 +117,15 @@ class Driver::Pd
 			});
 		}
 
-
-		void close_all_sessions(Root &);
+		template <typename T>
+		void close_all_sessions(T &);
 
 		bool empty()
 		{
 			bool empty = true;
 			_sessions.for_each([&] (auto const &) {
+				empty = false; });
+			_dma_sessions.for_each([&] (auto const &) {
 				empty = false; });
 			return empty;
 		}

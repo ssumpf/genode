@@ -17,8 +17,6 @@
 #include <base/quota_guard.h>
 #include <base/ram_allocator.h>
 #include <base/rpc_args.h>
-#include <base/cache.h>
-#include <dataspace/capability.h>
 #include <rom_session/capability.h>
 #include <irq_session/capability.h>
 #include <io_mem_session/capability.h>
@@ -88,21 +86,6 @@ struct Platform::Session : Genode::Session
 	 */
 	virtual void release_device(Capability<Device_interface> device) = 0;
 
-	/**
-	  * Allocate memory suitable for DMA
-	  */
-	virtual Ram_dataspace_capability alloc_dma_buffer(size_t, Cache) = 0;
-
-	/**
-	 * Free previously allocated DMA memory
-	 */
-	virtual void free_dma_buffer(Ram_dataspace_capability) = 0;
-
-	/**
-	 * Return the bus address of the previously allocated DMA memory
-	 */
-	virtual addr_t dma_addr(Ram_dataspace_capability) = 0;
-
 
 	/*********************
 	 ** RPC declaration **
@@ -115,17 +98,9 @@ struct Platform::Session : Genode::Session
 	GENODE_RPC_THROW(Rpc_acquire_single_device, Capability<Device_interface>,
 	                 acquire_single_device, GENODE_TYPE_LIST(Out_of_ram, Out_of_caps));
 	GENODE_RPC(Rpc_release_device, void, release_device, Capability<Device_interface>);
-	GENODE_RPC_THROW(Rpc_alloc_dma_buffer, Ram_dataspace_capability,
-	                 alloc_dma_buffer,
-	                 GENODE_TYPE_LIST(Out_of_ram, Out_of_caps), size_t, Cache);
-	GENODE_RPC(Rpc_free_dma_buffer, void, free_dma_buffer,
-	           Ram_dataspace_capability);
-	GENODE_RPC(Rpc_dma_addr, addr_t, dma_addr,
-	           Ram_dataspace_capability);
 
-	GENODE_RPC_INTERFACE(Rpc_devices_rom, Rpc_acquire_device, Rpc_acquire_single_device,
-	                     Rpc_release_device, Rpc_alloc_dma_buffer, Rpc_free_dma_buffer,
-	                     Rpc_dma_addr);
+	GENODE_RPC_INTERFACE(Rpc_devices_rom, Rpc_acquire_device,
+	                     Rpc_acquire_single_device, Rpc_release_device);
 };
 
 #endif /* _INCLUDE__PLATFORM_SESSION__PLATFORM_SESSION_H_ */

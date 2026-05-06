@@ -41,7 +41,11 @@ class Driver::Common : Device_reporter
 		Signal_handler<Common> _dev_handler {
 			_env.ep(), *this, &Common::_handle_devices };
 
-		Driver::Root _root;
+		Pd_allocator  _pd_alloc { _heap };
+		Pd_dictionary _pds {};
+
+		Driver::Root<Session_component> _root;
+		Driver::Root<Dma_component>     _dma_root;
 
 		Constructible<Expanding_reporter> _cfg_reporter { };
 		Constructible<Expanding_reporter> _dev_reporter { };
@@ -157,6 +161,7 @@ void Driver::Common::handle_config(Node const &config)
 void Driver::Common::announce_service()
 {
 	_env.parent().announce(_env.ep().manage(_root));
+	_env.parent().announce(_env.ep().manage(_dma_root));
 }
 
 
@@ -166,7 +171,8 @@ Driver::Common::Common(Genode::Env                  &env,
 	_env(env),
 	_rom_name(config_rom.node().attribute_value("devices_rom",
 	                                            String<64>("devices"))),
-	_root(_env, _sliced_heap, _heap, config_rom, _devices)
+	_root(_env, _sliced_heap, _pd_alloc, _pds, config_rom, _devices),
+	_dma_root(_env, _sliced_heap, _pd_alloc, _pds, config_rom, _devices)
 {
 	_wait_for_initial_devices();
 
