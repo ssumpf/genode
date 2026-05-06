@@ -81,7 +81,7 @@ class Ahci::Driver : Noncopyable
 		bool _enable_atapi;
 		bool _schedule_stop { };
 
-		unsigned _scan_ports(Env::Local_rm &rm, Platform::Connection &plat, Hba &hba)
+		unsigned _scan_ports(Env::Local_rm &rm, Dma::Connection &dma, Hba &hba)
 		{
 			log("port scan:");
 
@@ -89,7 +89,7 @@ class Ahci::Driver : Noncopyable
 
 			for (unsigned index = 0; index < MAX_PORTS; index++) {
 
-				Port_base port(index, plat, hba, _delayer);
+				Port_base port(index, dma, hba, _delayer);
 
 				if (port.implemented() == false)
 					continue;
@@ -98,7 +98,7 @@ class Ahci::Driver : Noncopyable
 				if (port.ata()) {
 					try {
 						_ata[index].construct();
-						_ports[index].construct(*_ata[index], rm, plat,
+						_ports[index].construct(*_ata[index], rm, dma,
 						                        hba, _delayer, index);
 						enabled = true;
 					} catch (...) { }
@@ -107,7 +107,7 @@ class Ahci::Driver : Noncopyable
 				} else if (port.atapi() && _enable_atapi) {
 					try {
 						_atapi[index].construct();
-						_ports[index].construct(*_atapi[index], rm, plat,
+						_ports[index].construct(*_atapi[index], rm, dma,
 						                        hba, _delayer, index);
 						enabled = true;
 					} catch (...) { }
@@ -180,9 +180,9 @@ class Ahci::Driver : Noncopyable
 		: _env(env), _dispatch(dispatch), _enable_atapi(support_atapi)
 		{
 			/* search for devices */
-			_resources.with_platform([&](auto &platform) {
+			_resources.with_dma([&](auto &dma) {
 				_resources.with_hba([&](auto &hba) {
-					unsigned port_count = _scan_ports(env.rm(), platform, hba);
+					unsigned port_count = _scan_ports(env.rm(), dma, hba);
 
 					if (port_count != hba.port_count())
 						log("controller port count differs from detected ports (CAP.NP=",

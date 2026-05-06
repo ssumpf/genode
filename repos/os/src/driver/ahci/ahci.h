@@ -17,7 +17,7 @@
 
 #include <block/request_stream.h>
 #include <platform_session/device.h>
-#include <platform_session/dma_buffer.h>
+#include <dma_session/buffer.h>
 #include <os/reporter.h>
 #include <util/retry.h>
 #include <util/reconstructible.h>
@@ -240,6 +240,7 @@ struct Ahci::Resources
 		using Device = Platform::Device;
 
 		Platform::Connection              _platform;
+		Dma::Connection                   _dma;
 		Signal_context_capability const   _irq_cap;
 		Reconstructible<Device>           _device { _platform };
 		Reconstructible<Device::Irq>      _irq    { *_device };
@@ -290,7 +291,7 @@ struct Ahci::Resources
 
 		Resources(Env &env, Signal_context_capability const &irq_cap)
 		:
-			_platform(env), _irq_cap(irq_cap)
+			_platform(env), _dma(env), _irq_cap(irq_cap)
 		{
 			reinit();
 		}
@@ -345,7 +346,7 @@ struct Ahci::Resources
 			fn(_hba);
 		}
 
-		void with_platform(auto const &fn) { fn(_platform); }
+		void with_dma(auto const &fn) { fn(_dma); }
 };
 
 
@@ -648,17 +649,17 @@ struct Ahci::Port_base
 	};
 
 	unsigned             const  index;
-	Platform::Connection       &plat;
+	Dma::Connection            &dma;
 	Hba                        &hba;
 	Mmio_port::Delayer         &delayer;
 
 	static constexpr addr_t offset() { return 0x100; }
 	static constexpr size_t size()   { return 0x80;  }
 
-	Port_base(unsigned index, Platform::Connection &plat, Hba &hba,
+	Port_base(unsigned index, Dma::Connection &dma, Hba &hba,
 	          Mmio_port::Delayer &delayer)
 	:
-	  index(index), plat(plat), hba(hba), delayer(delayer) { }
+	  index(index), dma(dma), hba(hba), delayer(delayer) { }
 
 	void with_mmio_port(auto const &fn) const
 	{
@@ -857,7 +858,7 @@ struct Ahci::Port : private Port_base
 	using Port_base::index;
 	using Port_base::hba;
 	using Port_base::delayer;
-	using Port_base::plat;
+	using Port_base::dma;
 
 	struct Not_ready : Exception { };
 
@@ -867,10 +868,10 @@ struct Ahci::Port : private Port_base
 
 	bool stop_processing { };
 
-	Platform::Dma_buffer device_dma { plat, 0x1000, CACHED };
-	Platform::Dma_buffer cmd_dma    { plat,
+	Dma::Buffer device_dma { dma, 0x1000, CACHED };
+	Dma::Buffer cmd_dma    { dma,
 		align_addr(cmd_slots * Command_table::size(), AT_PAGE), CACHED };
-	Platform::Dma_buffer device_info_dma { plat, 0x1000, CACHED };
+	Dma::Buffer device_info_dma { dma, 0x1000, CACHED };
 
 	addr_t device_info_dma_addr = 0;
 
@@ -889,10 +890,10 @@ struct Ahci::Port : private Port_base
 		}, fn_error);
 	}
 
-	Port(Protocol &protocol, Env::Local_rm &rm, Platform::Connection &plat,
+	Port(Protocol &protocol, Env::Local_rm &rm, Dma::Connection &dma,
 	     Hba &hba, Mmio_port::Delayer &delayer, unsigned index)
 	:
-		Port_base(index, plat, hba, delayer),
+		Port_base(index, dma, hba, delayer),
 		protocol(protocol), rm(rm)
 	{
 		reinit();
@@ -1112,7 +1113,7 @@ struct Ahci::Port : private Port_base
 	void setup_memory(Port_mmio &mmio)
 	{
 		/* command list 1K */
-		addr_t phys = device_dma.dma_addr();
+		addr_t phys = device_dma.bus_addr();
 
 		cmd_list.construct(device_dma.local_addr<char>(), device_dma.size());
 		command_list_base(phys, mmio);
@@ -1126,7 +1127,7 @@ struct Ahci::Port : private Port_base
 
 		/* command table */
 		cmd_table.construct(cmd_dma.local_addr<char>(), cmd_dma.size());
-		phys      = cmd_dma.dma_addr();
+		phys      = cmd_dma.bus_addr();
 
 		/* set command table addresses in command list */
 		for (unsigned i = 0; i < cmd_slots; i++) {
@@ -1136,7 +1137,7 @@ struct Ahci::Port : private Port_base
 		}
 
 		/* dataspace for device info */
-		device_info_dma_addr = device_info_dma.dma_addr();
+		device_info_dma_addr = device_info_dma.bus_addr();
 		device_info.construct(device_info_dma.local_addr<char>(), device_info_dma.size());
 	}
 
@@ -1181,14 +1182,14 @@ struct Ahci::Port : private Port_base
 	}
 
 	static constexpr unsigned MAX_DMA_BUFFER = 64u;
-	Constructible<Platform::Dma_buffer> _dma_buffer[MAX_DMA_BUFFER] { };
+	Constructible<Dma::Buffer> _dma_buffer[MAX_DMA_BUFFER] { };
 
 	Dataspace_capability alloc_buffer(unsigned long id, size_t size)
 	{
 		if (id >= MAX_DMA_BUFFER || _dma_buffer[id].constructed())
 			return Dataspace_capability();
 
-		_dma_buffer[id].construct(plat, size, CACHED);
+		_dma_buffer[id].construct(dma, size, CACHED);
 
 		return _dma_buffer[id]->cap();
 	}
@@ -1204,7 +1205,7 @@ struct Ahci::Port : private Port_base
 	addr_t dma_base(unsigned long id) const
 	{
 		return id < MAX_DMA_BUFFER && _dma_buffer[id].constructed()
-		       ? _dma_buffer[id]->dma_addr() : 0ull;
+		       ? _dma_buffer[id]->bus_addr() : 0ull;
 	}
 
 	/**********************

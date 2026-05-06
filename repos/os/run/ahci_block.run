@@ -71,7 +71,9 @@ config
     + service ROM                 | + parent
 
 + start platform | caps: 100 | managing_system: yes
-  + provides | + service Platform
+  + provides
+    + service Dma
+    + service Platform
   + route
     + service ROM | label: devices | + child report_rom
     + service Report               | + child report_rom
@@ -93,7 +95,8 @@ config
     + service Report
     + service ROM
   + config | verbose: yes
-+ start ahci | ram: 10M
+
++ start ahci | ram: 10M | caps: 150
   + provides | + service Block
   + config | atapi: yes
     + report | ports: yes
