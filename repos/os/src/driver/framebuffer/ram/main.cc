@@ -16,7 +16,7 @@
 #include <base/log.h>
 #include <capture_session/connection.h>
 #include <platform_session/device.h>
-#include <platform_session/dma_buffer.h>
+#include <dma_session/buffer.h>
 #include <timer_session/connection.h>
 #include <util/endian.h>
 #include <util/mmio.h>
@@ -60,8 +60,9 @@ class Main
 		Platform::Device::Mmio<0> _fw_mem { _fw_dev };
 		Fw                        _fw { {_fw_mem.local_addr<char>(), _fw_mem.size()} };
 
-		Platform::Dma_buffer _fb_dma     { _platform, SCR_HEIGHT * SCR_STRIDE, UNCACHED };
-		Platform::Dma_buffer _config_dma { _platform, 0x1000, UNCACHED };
+		Dma::Connection _dma        { _env };
+		Dma::Buffer     _fb_dma     { _dma, SCR_HEIGHT * SCR_STRIDE, UNCACHED };
+		Dma::Buffer     _config_dma { _dma, 0x1000, UNCACHED };
 
 		Capture::Area const _size { SCR_WIDTH, SCR_HEIGHT };
 		Capture::Connection _capture { _env };
@@ -168,8 +169,8 @@ class Main
 			_fw_selector(file.key);
 
 			addr_t config_addr = (addr_t)_config_dma.local_addr<addr_t>();
-			addr_t config_phys = _config_dma.dma_addr();
-			addr_t fb_phys     = _fb_dma.dma_addr();
+			addr_t config_phys = _config_dma.bus_addr();
+			addr_t fb_phys     = _fb_dma.bus_addr();
 
 			Ram_fb_config config { {(char *)config_addr, _config_dma.size()} };
 			config.write<Ram_fb_config::Address>(host_to_big_endian(fb_phys));
