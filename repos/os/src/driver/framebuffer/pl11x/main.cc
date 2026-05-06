@@ -17,7 +17,7 @@
 #include <base/component.h>
 #include <base/log.h>
 #include <platform_session/device.h>
-#include <platform_session/dma_buffer.h>
+#include <dma_session/buffer.h>
 #include <timer_session/connection.h>
 #include <capture_session/connection.h>
 #include <blit/painter.h>
@@ -96,7 +96,9 @@ struct Pl11x_driver::Main
 	Platform::Device          _sp810_dev { _platform, Type { "arm,sp810" } };
 	Platform::Device::Mmio<0> _lcd_io_mem { _pl11x_dev };
 	Platform::Device::Mmio<0> _sys_mem    { _sp810_dev };
-	Platform::Dma_buffer      _fb_dma     { _platform, FRAMEBUFFER_SIZE, UNCACHED };
+
+	Dma::Connection _dma    { _env };
+	Dma::Buffer     _fb_dma { _dma, FRAMEBUFFER_SIZE, UNCACHED };
 
 	void _init_device();
 
@@ -199,7 +201,7 @@ void Pl11x_driver::Main::_init_device()
 	reg_write(PL11X_REG_TIMING3, tim3);
 
 	/* set framebuffer address and ctrl register */
-	reg_write(PL11X_REG_UPBASE, _fb_dma.dma_addr());
+	reg_write(PL11X_REG_UPBASE, _fb_dma.bus_addr());
 	reg_write(PL11X_REG_LPBASE, 0);
 	reg_write(PL11X_REG_IMSC,   0);
 	reg_write(PL11X_REG_CTRL,   ctrl);
