@@ -46,9 +46,10 @@ struct Lx_kit::Env
 	Pci_fixup_calls      pci_fixup_calls { heap                };
 	Console              console         { };
 	Platform::Connection platform        { env };
+	Dma::Connection      dma             { env };
 	Timer::Connection    timer           { env };
-	Mem_allocator        memory          { env, heap, platform, CACHED   };
-	Mem_allocator        uncached_memory { env, heap, platform, UNCACHED };
+	Mem_allocator        memory          { env, heap, dma, CACHED   };
+	Mem_allocator        uncached_memory { env, heap, dma, UNCACHED };
 	Scheduler            scheduler       { env.ep() };
 	Device_list          devices         { env.ep(), heap, platform };
 	Lx_kit::Timeout      timeout         { timer, scheduler };

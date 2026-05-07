@@ -74,6 +74,7 @@ config | prio_levels: 2
 
 + start platform | caps: 400 | ram: 4M | managing_system: yes
   + provides
+  | + service Dma
   | + service Platform
   + config
   | + report | devices: yes

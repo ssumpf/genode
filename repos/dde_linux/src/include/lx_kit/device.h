@@ -19,6 +19,7 @@
 #include <base/node.h>
 #include <irq_session/client.h>
 #include <io_mem_session/client.h>
+#include <dma_session/connection.h>
 #include <platform_session/device.h>
 #include <pci/types.h>
 #include <util/list.h>

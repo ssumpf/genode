@@ -36,10 +36,10 @@ void Lx_kit::Mem_allocator::free_buffer(void * addr)
 	}
 
 	void const * virt_addr = (void const *)buffer->virt_addr();
-	void const * dma_addr  = (void const *)buffer->dma_addr();
+	void const * bus_addr  = (void const *)buffer->bus_addr();
 
 	_virt_to_dma.remove(Buffer_info::Query_addr(virt_addr));
-	_dma_to_virt.remove(Buffer_info::Query_addr(dma_addr));
+	_dma_to_virt.remove(Buffer_info::Query_addr(bus_addr));
 
 	destroy(_heap, buffer);
 }
@@ -127,20 +127,20 @@ Genode::addr_t Lx_kit::Mem_allocator::dma_addr(void * addr)
 	_virt_to_dma.apply(Buffer_info::Query_addr(addr),
 	                   [&] (Buffer_info const &info) {
 		addr_t const offset = (addr_t)addr - info.buffer.virt_addr();
-		ret = info.buffer.dma_addr() + offset;
+		ret = info.buffer.bus_addr() + offset;
 	});
 
 	return ret;
 }
 
 
-Genode::addr_t Lx_kit::Mem_allocator::virt_addr(void * dma_addr)
+Genode::addr_t Lx_kit::Mem_allocator::virt_addr(void * bus_addr)
 {
 	addr_t ret = 0UL;
 
-	_dma_to_virt.apply(Buffer_info::Query_addr(dma_addr),
+	_dma_to_virt.apply(Buffer_info::Query_addr(bus_addr),
 	                   [&] (Buffer_info const &info) {
-		addr_t const offset = (addr_t)dma_addr - info.buffer.dma_addr();
+		addr_t const offset = (addr_t)bus_addr - info.buffer.bus_addr();
 		ret = info.buffer.virt_addr() + offset;
 	});
 
@@ -187,8 +187,8 @@ Genode::size_t Lx_kit::Mem_allocator::size(const void * ptr)
 }
 
 
-Lx_kit::Mem_allocator::Mem_allocator(Genode::Env          &env,
-                                     Heap                 &heap,
-                                     Platform::Connection &platform,
-                                     Cache                 cache_attr)
-: _env(env), _heap(heap), _platform(platform), _cache_attr(cache_attr) {}
+Lx_kit::Mem_allocator::Mem_allocator(Genode::Env     &env,
+                                     Heap            &heap,
+                                     Dma::Connection &dma,
+                                     Cache            cache_attr)
+: _env(env), _heap(heap), _dma(dma), _cache_attr(cache_attr) {}

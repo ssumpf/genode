@@ -19,6 +19,7 @@
 #include <base/heap.h>
 
 namespace Platform { struct Connection;  }
+namespace Dma      { struct Connection;  }
 namespace Lx_kit   { struct Device_list; }
 
 struct Platform::Connection
@@ -26,6 +27,10 @@ struct Platform::Connection
 	Connection(Genode::Env &) {}
 };
 
+struct Dma::Connection
+{
+	Connection(Genode::Env &) {}
+};
 
 struct Lx_kit::Device_list
 {

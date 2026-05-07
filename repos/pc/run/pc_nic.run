@@ -62,7 +62,9 @@ config | prio_levels: 2
       + any-child
 
 + start platform | caps: 400 | ram: 4M | managing_system: yes
-  + provides | + service Platform
+  + provides
+    + service Dma
+    + service Platform
   + config
   | + report | devices: yes
   | + policy | label_prefix: pc_nic | info: yes | + pci | class: ETHERNET
@@ -73,7 +75,7 @@ config | prio_levels: 2
       + parent
       + any-child
 
-+ start pc_nic | caps: 120 | ram: 16M | priority: -1
++ start pc_nic | caps: 140 | ram: 16M | priority: -1
   + config | ld_verbose: yes
 
 + start nic_router | caps: 150 | ram: 8M

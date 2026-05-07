@@ -15,28 +15,28 @@
 #define _LX_KIT__DMA_BUFFER_H_
 
 #include <lx_kit/memory.h>
-#include <platform_session/dma_buffer.h>
+#include <dma_session/buffer.h>
 
 namespace Lx_kit { class Dma_buffer; }
 
 
-class Lx_kit::Dma_buffer : Platform::Dma_buffer, public Lx_kit::Mem_allocator::Buffer
+class Lx_kit::Dma_buffer : Dma::Buffer, public Lx_kit::Mem_allocator::Buffer
 {
 	public:
 
-		using Platform::Dma_buffer::Dma_buffer;
+		using Dma::Buffer::Buffer;
 
-		size_t dma_addr() const override {
-			return Platform::Dma_buffer::dma_addr(); }
+		size_t bus_addr() const override {
+			return Dma::Buffer::bus_addr(); }
 
 		size_t size() const override {
-			return Platform::Dma_buffer::size(); }
+			return Dma::Buffer::size(); }
 
 		size_t virt_addr() const override {
-			return (size_t) Platform::Dma_buffer::local_addr<void>(); }
+			return (size_t) Dma::Buffer::local_addr<void>(); }
 
 		Dataspace_capability cap() override {
-			return Platform::Dma_buffer::cap(); }
+			return Dma::Buffer::cap(); }
 };
 
 #endif /* _LX_KIT__DMA_BUFFER_H_ */

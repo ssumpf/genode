@@ -106,6 +106,7 @@ config | verbose: yes | prio_levels: 4
 
 + start platform | caps: 100 | ram: 2M | managing_system: yes | priority: -1
   + provides
+  | + service Dma
   | + service Platform
   + route
   | + service ROM | label: devices | + child report_rom
@@ -145,6 +146,8 @@ append config {
   + binary init
   + route
   | + service Report                | + child report_rom
+  | + service Dma      | label: usb | + child platform | label: usb
+  | + service Dma                   | + child platform | label: intel_fb
   | + service Platform | label: usb | + child platform | label: usb
   | + service Platform              | + child platform | label: intel_fb
   | + service ROM | label: intel_fb -> intel_opregion
@@ -162,6 +165,7 @@ append config {
     | + service CPU
     | + service LOG
     | + service TRACE
+    | + service Dma
     | + service Platform
     | + service Timer
     + default-route
@@ -225,6 +229,7 @@ append_if $use_gpu config {
     + start intel_gpu | caps: 2000 | ram: 90M
       + provides
       | + service Gpu
+      | + service Dma
       | + service Platform
       + config | max_framebuffer_memory: 64M
       | + device | vendor: 0x8086 | device: 0x1606 | generation:   8 | platform: broadwell   | description: HD Graphics (BDW GT1 ULT)
@@ -238,8 +243,8 @@ append_if $use_gpu config {
       | + device | vendor: 0x8086 | device: 0x3ea0 | generation:   9 | platform: whiskeylake | description: UHD Graphics 620 (Whiskey Lake, Gen9p5)
       | + device | vendor: 0x8086 | device: 0x9a49 | generation:  12 | platform: tigerlake   | description: Iris Xe Graphics (Tiger Lake, Xe)
       + route
-        + service Platform
-        | + parent
+        + service Dma      | + parent
+        + service Platform | + parent
         + any-service
           + parent
           + any-child
@@ -250,6 +255,7 @@ append config {
       + binary pc_intel_fb
       + route }
 append_if $use_gpu config {
+        + service Dma                       | + child intel_gpu
         + service Platform                  | + child intel_gpu }
 append config {
         + service ROM     | label: config   | + child config_rom | label: fb.config
@@ -276,6 +282,7 @@ append_if $use_usb config {
       + config | bios_handoff: no
       | + report | devices: yes
       + route
+        + service Dma      | + parent | label: usb
         + service Platform | + parent | label: usb
         + service Report   | + child report_rom_usb
         + any-service

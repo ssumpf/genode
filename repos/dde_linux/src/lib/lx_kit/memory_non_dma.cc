@@ -28,7 +28,7 @@ class Non_dma_buffer : Attached_ram_dataspace,
 		using Attached_ram_dataspace::Attached_ram_dataspace;
 
 		/* emulate idempotent virt-dma mapping */
-		size_t dma_addr() const override {
+		size_t bus_addr() const override {
 			return (size_t) Attached_ram_dataspace::local_addr<void>(); }
 
 		size_t size() const override {
@@ -55,6 +55,6 @@ Lx_kit::Mem_allocator::alloc_buffer(size_t size)
 		touch_read((unsigned char const volatile*)(buffer.virt_addr() + sz)); }
 
 	_virt_to_dma.insert(buffer.virt_addr(), buffer);
-	_dma_to_virt.insert(buffer.dma_addr(),  buffer);
+	_dma_to_virt.insert(buffer.bus_addr(),  buffer);
 	return buffer;
 }

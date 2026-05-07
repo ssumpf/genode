@@ -22,7 +22,7 @@
 #include <lx_kit/byte_range.h>
 #include <lx_kit/map.h>
 
-namespace Platform { class Connection; }
+namespace Dma { class Connection; }
 
 namespace Lx_kit {
 	using namespace Genode;
@@ -38,7 +38,7 @@ class Lx_kit::Mem_allocator
 		{
 			virtual ~Buffer() {}
 
-			virtual size_t dma_addr()  const   = 0;
+			virtual size_t bus_addr()  const   = 0;
 			virtual size_t size()      const   = 0;
 			virtual size_t virt_addr() const   = 0;
 			virtual Dataspace_capability cap() = 0;
@@ -83,7 +83,7 @@ class Lx_kit::Mem_allocator
 
 		Env                  &_env;
 		Heap                 &_heap;
-		Platform::Connection &_platform;
+		Dma::Connection      &_dma;
 		Cache                 _cache_attr;
 		Allocator_avl         _mem         { &_heap };
 		Map<Buffer_info>      _virt_to_dma {  _heap };
@@ -91,10 +91,10 @@ class Lx_kit::Mem_allocator
 
 	public:
 
-		Mem_allocator(Env                  &env,
-		              Heap                 &heap,
-		              Platform::Connection &platform,
-		              Cache                 cache_attr);
+		Mem_allocator(Env             &env,
+		              Heap            &heap,
+		              Dma::Connection &dma,
+		              Cache            cache_attr);
 
 		Buffer              &alloc_buffer(size_t size);
 		void                 free_buffer(void *addr);
