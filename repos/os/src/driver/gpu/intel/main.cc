@@ -1835,7 +1835,6 @@ class Gpu::Session_component : public Genode::Session_object<Gpu::Session>
 
 		Genode::Env              &_env;
 		Genode::Env::Local_rm    &_rm;
-		Accounted_ram_allocator   _ram;
 		Igd::Device              &_device;
 		Heap                      _heap { _device._pci_backend_alloc, _rm };
 		/* used to mark ownership of an allocated VRAM object */
@@ -2021,7 +2020,6 @@ class Gpu::Session_component : public Genode::Session_object<Gpu::Session>
 			Session_object(ep, resources, label),
 			_env(env),
 			_rm(rm),
-			_ram(ram, _ram_quota_guard(), _cap_quota_guard()),
 			_device(device),
 			_vgpu(_device, _heap, ram, rm)
 		{ }
