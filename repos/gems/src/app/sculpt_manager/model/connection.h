@@ -58,6 +58,7 @@ struct Sculpt::Connection : List_model<Connection>::Element
 		case Service::Type::PD:          return "Protection domain";
 		case Service::Type::PLAY:        return "Play";
 		case Service::Type::RECORD:      return "Record";
+		case Service::Type::DMA:         return "Device memory access";
 		case Service::Type::UNDEFINED:   break;
 		}
 		return "<undefined>";

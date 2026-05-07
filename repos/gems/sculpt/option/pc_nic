@@ -1,5 +1,6 @@
 option
 + child nic | pkg: pc_nic
   + connect
+    + dma      | + parent | label: nic
     + platform | + parent | label: nic
 -

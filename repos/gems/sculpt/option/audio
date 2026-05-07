@@ -11,6 +11,7 @@ option
     + mixer | field: record.adc-0:1        | value: 160
 
   + connect
+    + dma      | + child platform | label: audio
     + platform | + child platform | label: audio
     + record   | + child mixer
     + play     | + child mixer

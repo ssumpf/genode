@@ -217,6 +217,9 @@ namespace Sculpt {
 
 	static inline void connect_platform(Generator &g, auto const &label)
 	{
+		g.node("dma", [&] {
+			gen_named_node(g, "child", "platform", [&] {
+				g.attribute("label", label); }); });
 		g.node("platform", [&] {
 			gen_named_node(g, "child", "platform", [&] {
 				g.attribute("label", label); }); });

@@ -3,6 +3,7 @@ option
   + connect
     + io_mem            | + parent
     + io_port           | + parent
+    + dma               | + child platform | label: acpica
     + platform          | + child platform | label: acpica
     + rom platform_info | + parent         | label: platform_info
     + rom system        | + child model    | label: system

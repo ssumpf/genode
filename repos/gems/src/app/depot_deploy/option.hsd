@@ -72,6 +72,8 @@ schema option
     + node | category: target
   + node record
     + node | category: target
+  + node dma         | + attr name | type: any | default:
+    + node | category: target
   + node platform    | + attr name | type: any | default:
     + node | category: target
   + node pin_state   | + attr name | type: any | default:
@@ -114,6 +116,7 @@ schema option
   + node capture
   + node play
   + node record
+  + node dma      | + attr name  | type: any | default:
   + node platform | + attr name  | type: any | default:
   + node pin_state
   + node pin_control

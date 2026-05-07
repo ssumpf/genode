@@ -30,7 +30,7 @@ struct Depot_deploy::Resource
 		AUDIO_IN, AUDIO_OUT, BLOCK, EVENT, CAPTURE, FS, NIC, GUI, GPU, LOG,
 		RM, IO_MEM, IO_PORT, IRQ, REPORT, ROM, TERMINAL, TRACE, USB, RTC,
 		I2C, PLATFORM, PIN_STATE, PIN_CONTROL, VM, PD, UPLINK, PLAY, RECORD,
-		UNDEFINED
+		DMA, UNDEFINED
 	};
 
 	using Node_type = String<16>;  /* runtime node type */
@@ -70,6 +70,7 @@ struct Depot_deploy::Resource
 		case PD:          return "PD";
 		case PLAY:        return "Play";
 		case RECORD:      return "Record";
+		case DMA:         return "Dma";
 		case UNDEFINED:   break;
 		}
 		return "undefined";
@@ -98,7 +99,7 @@ struct Depot_deploy::Resource::Types
 
 	Dictionary<Entry, Node_type> dict { };
 
-	Entry const _entries[30] {
+	Entry const _entries[31] {
 		{ dict, "audio_in",    AUDIO_IN    }, /* deprecated */
 		{ dict, "audio_out",   AUDIO_OUT   }, /* deprecated */
 		{ dict, "block",       BLOCK       },
@@ -129,6 +130,7 @@ struct Depot_deploy::Resource::Types
 		{ dict, "pd",          PD          },
 		{ dict, "play",        PLAY        },
 		{ dict, "record",      RECORD      },
+		{ dict, "dma",         DMA         },
 	};
 
 	Node_type node_type(Resource const &resource) const

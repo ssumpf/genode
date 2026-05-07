@@ -2,6 +2,11 @@ option
 
 + child platform | binary: init | caps: 1500 | ram: 32M | managing_system: yes
   + provides
+    + dma
+    + dma nic
+    + dma wifi
+    + dma audio
+    + dma acpica
     + platform
     + platform nic
     + platform wifi
@@ -44,6 +49,7 @@ option
   + provides
     + usb
   + connect
+    + dma        | + child platform | label: usb
     + platform   | + child platform | label: usb
     + report     | + child report
     + rom config | + child model    | label: child/usb
@@ -52,8 +58,10 @@ option
   + managed | max_ram: 256M | max_caps: 5000
   + provides
     + gpu
+    + dma
     + platform
   + connect
+    + dma        | + child platform | label: intel_gpu
     + platform   | + child platform | label: intel_gpu
     + rom config | + child model    | label: child/gpu
     + rom system | + child model    | label: system
@@ -63,6 +71,7 @@ option
   + managed | max_ram: 256M | max_caps: 5000 | disable: while_suspended
   + heartbeat | restart_after_skipped: 2
   + connect
+    + dma                | + child intel_gpu
     + platform           | + child intel_gpu
     + capture            | + child gui
     + report             | + child report
@@ -81,6 +90,7 @@ option
 + child vesa_fb | binary: vesa_fb | ram: 8M | caps: 110 | priority: media | enabled: discover
   + managed | max_ram: 256M | max_caps: 5000
   + connect
+    + dma        | + child platform | label: vesa_fb
     + platform   | + child platform | label: vesa_fb
     + capture    | + child gui
     + report     | + child report
@@ -92,6 +102,7 @@ option
   + managed | disable: while_suspended
   + config | capslock_led: rom | numlock_led: rom | system: yes
   + connect
+    + dma          | + child platform     | label: ps2
     + platform     | + child platform     | label: ps2
     + rom capslock | + child report       | label: global_keys/capslock
     + rom numlock  | + child report       | label: global_keys/numlock
@@ -111,6 +122,7 @@ option
     + policy | label: 4 | device: 4 | writeable: yes
     + policy | label: 5 | device: 5 | writeable: yes
   + connect
+    + dma        | + child platform | label: ahci
     + platform   | + child platform | label: ahci
     + rom system | + child model    | label: system
     + report     | + child report
@@ -123,6 +135,7 @@ option
     + report | namespaces: yes
     + policy | label: 1 | namespace: 1 | writeable: yes
   + connect
+    + dma        | + child platform | label: nvme
     + platform   | + child platform | label: nvme
     + rom system | + child model    | label: system
     + report     | + child report
@@ -144,6 +157,7 @@ option
   + managed | disable: while_suspended
   + config
   + connect
+    + dma         | + child platform | label: nic
     + platform    | + child platform | label: nic
     + uplink      | + child network  | label: nic
     + report      | + child report
@@ -165,6 +179,7 @@ option
   |   + dir firmware
   |     + tar pc_wifi_firmware.tar
   + connect
+    + dma                           | + child platform | label: wifi
     + platform                      | + child platform | label: wifi
     + uplink                        | + child network  | label: wifi
     + report                        | + child report

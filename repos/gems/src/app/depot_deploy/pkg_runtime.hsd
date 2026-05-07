@@ -47,6 +47,8 @@ schema runtime
   + node capture
   + node play
   + node record
+  + node dma      | + attr name  | type: any | default:
+                  | + attr label | type: any | default: | . deprecated, use 'name'
   + node platform | + attr name  | type: any | default:
                   | + attr label | type: any | default: | . deprecated, use 'name'
   + node pin_state

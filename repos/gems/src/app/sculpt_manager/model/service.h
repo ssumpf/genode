@@ -28,7 +28,8 @@ struct Sculpt::Service
 	enum class Type {
 		AUDIO_IN, AUDIO_OUT, BLOCK, EVENT, CAPTURE, FS, NIC, GUI, GPU,
 		RM, IO_MEM, IO_PORT, IRQ, REPORT, ROM, TERMINAL, TRACE, USB, RTC, I2C,
-		PLATFORM, PIN_STATE, PIN_CONTROL, VM, PD, UPLINK, PLAY, RECORD, UNDEFINED };
+		PLATFORM, PIN_STATE, PIN_CONTROL, VM, PD, UPLINK, PLAY, RECORD,
+		DMA, UNDEFINED };
 
 	enum class Match_label { EXACT, LAST, FS };
 
@@ -69,6 +70,7 @@ struct Sculpt::Service
 		case Type::PD:          return "pd";
 		case Type::PLAY:        return "play";
 		case Type::RECORD:      return "record";
+		case Type::DMA:         return "dma";
 		case Type::UNDEFINED:   break;
 		}
 		return "undefined";
@@ -108,6 +110,7 @@ struct Sculpt::Service
 		case Type::PD:          return "PD";
 		case Type::PLAY:        return "Play";
 		case Type::RECORD:      return "Record";
+		case Type::DMA:         return "Dma";
 		case Type::UNDEFINED:   break;
 		}
 		return "undefined";
