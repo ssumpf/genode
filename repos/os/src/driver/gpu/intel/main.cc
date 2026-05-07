@@ -25,7 +25,7 @@
 #include <base/session_object.h>
 #include <dataspace/client.h>
 #include <gpu/info_intel.h>
-#include <platform_session/dma_buffer.h>
+#include <dma_session/buffer.h>
 #include <platform_session/device.h>
 #include <root/component.h>
 #include <timer_session/connection.h>
@@ -78,44 +78,48 @@ struct Igd::Device
 
 	struct Pci_backend_alloc : Utils::Backend_alloc, Ram_allocator
 	{
-		Env                  &_env;
-		Platform::Connection &_pci;
+		Env             &_env;
+		Dma::Connection  _dma { _env };
 
-		Pci_backend_alloc(Env &env, Platform::Connection &pci)
-		: _env(env), _pci(pci) { }
+		Pci_backend_alloc(Env &env) : _env(env) { }
 
 		Ram_dataspace_capability alloc(size_t size) override
 		{
 			enum {
-				UPGRADE_RAM      = 8 * PAGE_SIZE,
-				UPGRADE_CAPS     = 2,
-				UPGRADE_ATTEMPTS = ~0U
+				UPGRADE_RAM  = 8 * PAGE_SIZE,
+				UPGRADE_CAPS = 2,
 			};
 
-			return retry<Out_of_ram>(
-				[&] () {
-					return retry<Out_of_caps>(
-						[&] () { return _pci.Client::alloc_dma_buffer(size, CACHED); },
-						[&] ()
-						{
+			Ram_dataspace_capability ret;
+
+			while (true) {
+				auto result = _dma.call<Dma::Session::Rpc_alloc>(size, CACHED);
+				bool done = result.template convert<bool>(
+					[&] (auto cap) {
+						ret = cap;
+						return true;
+					}, [&] (auto error) {
+						if (error == decltype(error)::OUT_OF_CAPS) {
 							if (_env.pd().avail_caps().value < UPGRADE_CAPS) {
 								if (DEBUG) warning("alloc dma vram: out of caps");
 								throw Out_of_caps();
 							}
-
-							_pci.upgrade_caps(UPGRADE_CAPS);
-						},
-						UPGRADE_ATTEMPTS);
-				},
-				[&] ()
-				{
-					if (_env.pd().avail_ram().value < size) {
-						if (DEBUG) warning("alloc dma vram: out of ram");
-						throw Out_of_ram();
-					}
-					_pci.upgrade_ram(size);
-				},
-				UPGRADE_ATTEMPTS);
+							_dma.upgrade_caps(UPGRADE_CAPS);
+							return false;
+						}
+						if (error == decltype(error)::OUT_OF_RAM) {
+							if (_env.pd().avail_ram().value < size) {
+								if (DEBUG) warning("alloc dma vram: out of ram");
+								throw Out_of_ram();
+							}
+							_dma.upgrade_ram(UPGRADE_RAM);
+							return false;
+						}
+						return true;
+					});
+				if (done)
+					return ret;
+			}
 		}
 
 		void free(Ram_dataspace_capability cap) override
@@ -125,7 +129,7 @@ struct Igd::Device
 				return;
 			}
 
-			_pci.free_dma_buffer(cap);
+			_dma.free(cap);
 		}
 
 		void _free(Genode::Ram::Allocation &a) override { free(a.cap); }
@@ -134,7 +138,7 @@ struct Igd::Device
 
 		addr_t dma_addr(Ram_dataspace_capability ds_cap) override
 		{
-			return _pci.dma_addr(ds_cap);
+			return _dma.bus_addr(ds_cap);
 		}
 
 		/**
@@ -1276,7 +1280,6 @@ struct Igd::Device
 	 */
 	Device(Genode::Env            &env,
 	       Genode::Allocator      &alloc,
-	       Platform::Connection   &platform,
 	       Platform::Resources    &res,
 	       Rm_connection          &rm,
 	       Genode::Node           &supported,
@@ -1285,28 +1288,26 @@ struct Igd::Device
 	       uint8_t                 gmch_ctl)
 	:
 		_env(env), _md_alloc(alloc), _resources(res), _rm(rm),
-		_pci_backend_alloc(_env, platform)
+		_pci_backend_alloc(_env)
 	{
 		using namespace Genode;
 
 		_resources.with_mmio([&](auto &mmio) {
-			_resources.with_platform([&](auto &plat_con) {
-				auto const ggtt_base = mmio.base() + (mmio.size() / 2);
+			auto const ggtt_base = mmio.base() + (mmio.size() / 2);
 
-				_ggtt.construct(plat_con, mmio, ggtt_base,
-				                _ggtt_size(gmch_ctl), _resources.aperture_size(),
-				                _resources.aperture_reserved());
+			_ggtt.construct(_pci_backend_alloc._dma, mmio, ggtt_base,
+			                _ggtt_size(gmch_ctl), _resources.aperture_size(),
+			                _resources.aperture_reserved());
 
-				if (!_supported(mmio, supported, device_id, revision))
-					throw Unsupported_device();
+			if (!_supported(mmio, supported, device_id, revision))
+				throw Unsupported_device();
 
-				_ggtt->dump();
+			_ggtt->dump();
 
-				_vgpu_avail = (_resources.aperture_size() - _resources.aperture_reserved())
-				            / Vgpu::DUMMY_MESA_APERTURE_SIZE;
+			_vgpu_avail = (_resources.aperture_size() - _resources.aperture_reserved())
+			            / Vgpu::DUMMY_MESA_APERTURE_SIZE;
 
-				reinit(mmio);
-			});
+			reinit(mmio);
 		}, []() {
 			throw Unsupported_device();
 		});
@@ -2451,6 +2452,8 @@ struct Main : Irq_ack_handler, Gpu_reset_handler
 
 	Platform::Root _platform_root { _env, _md_alloc, _dev, *this, *this };
 
+	Dma::Root _dma_root { _env, _md_alloc };
+
 	Constructible<Igd::Device>            _igd_device { };
 	Constructible<Attached_rom_dataspace> _system_rom { };
 
@@ -2488,7 +2491,7 @@ struct Main : Irq_ack_handler, Gpu_reset_handler
 			}
 
 			try {
-				_igd_device.construct(_env, _md_alloc, plat_con, _dev, _rm,
+				_igd_device.construct(_env, _md_alloc, _dev, _rm,
 				                      _config_rom.node(), device_id,
 				                      revision, gmch_ctl);
 				_gpu_root.manage(*_igd_device);

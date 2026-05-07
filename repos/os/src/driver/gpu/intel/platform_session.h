@@ -17,6 +17,7 @@
 #include <region_map/client.h>
 #include <rm_session/connection.h>
 #include <platform_session/platform_session.h>
+#include <dma_session/dma_session.h>
 #include <os/dynamic_rom_session.h>
 #include <types.h>
 
@@ -46,6 +47,13 @@ namespace Platform {
 	class Io_mem_session_component;
 	class Irq_session_component;
 	class Resources;
+	class Root;
+}
+
+namespace Dma {
+	using namespace Genode;
+
+	class Session_component;
 	class Root;
 }
 
@@ -181,49 +189,10 @@ class Platform::Session_component : public Rpc_object<Session>,
 		Connection         &_platform;
 		Hw_ready_state     &_hw_ready;
 		Gpu_reset_handler  &_reset_handler;
-		Heap                _heap { _env.ram(), _env.rm() };
 		Device_component    _device_component;
 		Dynamic_rom_session _rom_session { _env.ep(), _env.ram(),
 		                                   _env.rm(), *this    };
 		bool                _acquired { false };
-
-		/*
-		 * track DMA memory allocations so we can free them at session
-		 * destruction
-		 */
-		struct Buffer : Registry<Buffer>::Element
-		{
-			Platform::Connection &platform;
-
-			Ram_dataspace_capability cap { };
-
-			Buffer(Registry<Buffer> &registry,
-			       Connection       &platform,
-			       size_t            size,
-			       Cache             cache)
-			:
-				Registry<Buffer>::Element(registry, *this),
-				platform(platform)
-			{
-				/*
-				 * Invoke directly on session so that Out_of ram/cap are
-				 * forwarded directly to the client, e.g. w/o attempts
-				 * by this driver to upgrade the session from its own
-				 * quota.
-				 */
-				Platform::Client session_wo_retry(platform.cap());
-				cap = session_wo_retry.alloc_dma_buffer(size, cache);
-			}
-
-			~Buffer()
-			{
-				if (cap.valid())
-					platform.free_dma_buffer(cap);
-			}
-
-			addr_t dma_addr() const { return platform.dma_addr(cap); }
-		};
-		Registry<Buffer> _dma_registry { };
 
 	public:
 
@@ -256,11 +225,6 @@ class Platform::Session_component : public Rpc_object<Session>,
 
 			/* clear ggtt */
 			_reset_handler.reset();
-
-			/* free DMA allocations */
-			_dma_registry.for_each([&](Buffer &dma) {
-				destroy(_heap, &dma);
-			});
 		}
 
 		Device_capability acquire_single_device() override
@@ -280,34 +244,6 @@ class Platform::Session_component : public Rpc_object<Session>,
 		Device_capability acquire_device(Device_name const & /* string */) override
 		{
 			return acquire_single_device();
-		}
-
-		Ram_dataspace_capability alloc_dma_buffer(size_t size, Cache cache) override
-		{
-			Buffer &db = *(new (_heap)
-				Buffer(_dma_registry, _platform, size, cache));
-
-			return db.cap;
-		}
-
-		void free_dma_buffer(Ram_dataspace_capability cap) override
-		{
-			if (!cap.valid()) return;
-
-			_dma_registry.for_each([&](Buffer &db) {
-				if ((db.cap == cap) == false) return;
-				destroy(_heap, &db);
-			});
-		}
-
-		addr_t dma_addr(Ram_dataspace_capability cap) override
-		{
-			addr_t ret = 0UL;
-			_dma_registry.for_each([&](Buffer &db) {
-				if ((db.cap == cap) == false) return;
-				ret = db.dma_addr();
-			});
-			return ret;
 		}
 
 		Rom_session_capability devices_rom() override
@@ -408,6 +344,30 @@ class Platform::Session_component : public Rpc_object<Session>,
 					copy_node(g, sub_node, { max_depth.value - 1 }); });
 			});
 		}
+};
+
+
+class Dma::Session_component : public Rpc_object<Session>
+{
+	private:
+
+		friend class Root;
+
+		Env        &_env;
+		Connection  _dma { _env };
+
+	public:
+
+		Session_component(Env &env) : _env(env) { }
+
+		Session::Alloc_result alloc(size_t size, Cache cache) override {
+			return _dma.alloc(size, cache); }
+
+		void free(Ram_dataspace_capability cap) override {
+			_dma.free(cap); }
+
+		addr_t bus_addr(Ram_dataspace_capability cap) override {
+			return _dma.bus_addr(cap); }
 };
 
 
@@ -797,6 +757,49 @@ class Platform::Root : public Root_component<Session_component, Genode::Single_c
 				return _session->handle_irq();
 
 			return false;
+		}
+};
+
+
+class Dma::Root : public Root_component<Session_component, Genode::Single_client>
+{
+	private:
+
+		Env &_env;
+
+		Constructible<Session_component> _session { };
+
+	public:
+
+		Root(Env &env, Allocator &md_alloc)
+		:
+			Root_component<Session_component,
+			               Genode::Single_client>(&env.ep().rpc_ep(), &md_alloc),
+			_env(env)
+		{
+			env.parent().announce(env.ep().manage(*this));
+		}
+
+		Create_result _create_session(char const * /* args */) override
+		{
+			_session.construct(_env);
+
+			if (!_session.constructed())
+				return Create_error::DENIED;
+
+			return *_session;
+		}
+
+		void _upgrade_session(Session_component &, const char *args) override
+		{
+			if (_session.constructed())
+				_session->_dma.upgrade({ ram_quota_from_args(args),
+				                         cap_quota_from_args(args) });
+		}
+
+		void _destroy_session(Session_component &) override
+		{
+			if (_session.constructed()) _session.destruct();
 		}
 };
 

@@ -123,7 +123,7 @@ class Igd::Ggtt
 
 		uint64_t *_entries;
 
-		Platform::Dma_buffer _scratch_page;
+		Dma::Buffer _scratch_page;
 
 		size_t const _aperture_size;
 		size_t const _aperture_entries;
@@ -144,7 +144,7 @@ class Igd::Ggtt
 		/**
 		 * Constructor
 		 *
-		 * \param platform       reference to Platform::Connection object
+		 * \param dma            reference to Dma::Connection object
 		 * \param mmio           reference to Igd::Mmio object
 		 * \param base           virtual base address of GGTT start
 		 * \param size           size of GGTT in bytes
@@ -152,7 +152,7 @@ class Igd::Ggtt
 		 * \param scratch_page   physical address of the scratch page
 		 * \param fb_size        size of the framebuffer region in the GTT in bytes
 		 */
-		Ggtt(Platform::Connection &platform, Igd::Mmio &mmio,
+		Ggtt(Dma::Connection &dma, Igd::Mmio &mmio,
 		     addr_t base, size_t size, size_t aperture_size, size_t fb_size)
 		:
 			_base(base),
@@ -160,7 +160,7 @@ class Igd::Ggtt
 			/* make the last entry/page unavailable */
 			_num_entries((_size / 8) - 1),
 			_entries((uint64_t*)_base),
-			_scratch_page(platform, PAGE_SIZE, Genode::CACHED),
+			_scratch_page(dma, PAGE_SIZE, Genode::CACHED),
 			_aperture_size(aperture_size),
 			_aperture_entries(_aperture_size / PAGE_SIZE)
 		{
@@ -170,7 +170,7 @@ class Igd::Ggtt
 				_space.set(i);
 			}
 			for (size_t i = fb_entries; i < _num_entries; i++) {
-				_insert_pte(mmio, _scratch_page.dma_addr(), i);
+				_insert_pte(mmio, _scratch_page.bus_addr(), i);
 			}
 
 		}
@@ -180,7 +180,7 @@ class Igd::Ggtt
 			auto const entries = Genode::min(fb_size / PAGE_SIZE, _num_entries);
 
 			for (size_t i = 0; i < entries; i++) {
-				_insert_pte(mmio, _scratch_page.dma_addr(), i);
+				_insert_pte(mmio, _scratch_page.bus_addr(), i);
 			}
 		}
 
@@ -217,7 +217,7 @@ class Igd::Ggtt
 			}
 
 			_space.clear(offset);
-			_insert_pte(mmio, _scratch_page.dma_addr(), offset);
+			_insert_pte(mmio, _scratch_page.bus_addr(), offset);
 		}
 
 		/**
@@ -303,7 +303,7 @@ class Igd::Ggtt
 			log("GGTT");
 			log("  vaddr:", Hex(_base), " size:", Hex(_size), " entries:", _num_entries,
 			    " used:", _space.used(), " aperture_size:", Hex(_aperture_size));
-			log("  scratch_page:", Hex(_scratch_page.dma_addr()), " (PA)");
+			log("  scratch_page:", Hex(_scratch_page.bus_addr()), " (PA)");
 
 			if (!dump_entries) { return; }
 
