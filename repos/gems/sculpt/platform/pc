@@ -21,6 +21,7 @@ config | verbose: yes
 
 + default | caps: 100 | ram: 1M
 
++ service Dma      | + default-policy | + child platform
 + service Platform | + default-policy | + child platform
 
 + start report_rom | ram: 2M
@@ -73,7 +74,9 @@ config | verbose: yes
 
 + start platform | caps: 400 | ram: 6M | managing_system: yes
   + binary pc_platform
-  + provides | + service Platform
+  + provides
+    + service Dma
+    + service Platform
   + route
     + service ROM | label: system       | + parent | label: system
     + service ROM | label: sleep_states | + parent | label: sleep_states

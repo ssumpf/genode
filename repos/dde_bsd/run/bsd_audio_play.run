@@ -57,7 +57,9 @@ config | verbose: yes | prio_levels: 4
     + any-service                    | + parent
 
 + start platform | caps: 100 | managing_system: yes | priority: -1
-  + provides | + service Platform
+  + provides
+    + service Dma
+    + service Platform
   + route
     + service ROM   | label: devices | + child report_rom
     + service Timer                  | + child timer

@@ -78,7 +78,9 @@ config
       + any-child
 
 + start platform | caps: 400 | managing_system: yes | ram: 4M
-  + provides | + service Platform
+  + provides
+    + service Dma
+    + service Platform
   + config
   | + policy | label_prefix: ps2             | + device ps2
   | + policy | label_prefix: usb | info: yes | + pci | class: USB
@@ -92,6 +94,7 @@ config
 + start ps2 | caps: 100 | ram: 2M
   + config | verbose_keyboard: no | verbose_mouse: no | verbose_scancodes: no
   + route
+    + service Dma      | + child platform
     + service Platform | + child platform
     + service Timer    | + child timer
     + service Event    | + child event_filter | label: ps2

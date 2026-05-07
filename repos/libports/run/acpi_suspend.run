@@ -111,6 +111,7 @@ proc restartable_drivers { } {
   |           + service RM
   |           + service CPU
   |           + service LOG
+  |           + service Dma
   |           + service Platform
   |           + service Report
   |           + service Timer
@@ -226,6 +227,7 @@ proc input_config { } {
   |         + start ps2 | caps: 100 | ram: 3M
   |           + config
   |           + route
+  |             + service Dma      | + parent
   |             + service Platform | + parent
   |             + service Event    | + child event_filter | label: ps2
   |             + any-service
@@ -338,6 +340,7 @@ proc ahci_config { } {
              | device: 0
              | writeable: no
   + route
+    + service Dma                 | + child platform
     + service Platform            | + child platform
     + service ROM | label: system | + child dynamic_rom
     + service Report              | + child drivers_reports
@@ -381,6 +384,7 @@ proc nvme_config { } {
   |        | system:           yes
   | + policy | label: test-nvme ->  | writeable: no
   + route
+    + service Dma                 | + child platform
     + service Platform            | + child platform
     + service ROM | label: system | + child dynamic_rom
     + service Report              | + child drivers_reports
@@ -418,6 +422,7 @@ proc gpu_config { } {
   + binary intel_gpu
   + provides
   | + service Gpu
+  | + service Dma
   | + service Platform
   + config | system: yes
   | + device
@@ -481,6 +486,8 @@ proc gpu_config { } {
   |          platform:    tigerlake
   |          description: Iris Xe Graphics (Tiger Lake, Xe)
   + route
+    + service Dma
+    | + child platform | label: fb
     + service Platform
     | + child platform | label: fb
     + service ROM | label: system
@@ -712,6 +719,7 @@ config | verbose: no | prio_levels: 4
 + start platform | caps: 300 | managing_system: yes | ram: 8M } [priority_base] {
   + binary pc_platform
   + provides
+  | + service Dma
   | + service Platform
   + config | system: yes
   | + report | devices: yes
@@ -757,6 +765,12 @@ config | verbose: no | prio_levels: 4
   + binary init
   + route
     + service Report                               | + child drivers_reports
+    + service Dma      | label_prefix: ps2 ->      | + child platform | label: ps2
+    + service Dma      | label_prefix: wifi ->     | + child platform | label: wifi
+    + service Dma      | label_prefix: nic ->      | + child platform | label: nic
+    + service Dma      | label_prefix: fb ->       | + child platform | label: fb
+    + service Dma      | label_prefix: usb ->      | + child platform | label: usb
+    + service Dma      | label_prefix: intel_fb -> | + child gpu
     + service Platform | label_prefix: ps2 ->      | + child platform | label: ps2
     + service Platform | label_prefix: wifi ->     | + child platform | label: wifi
     + service Platform | label_prefix: nic ->      | + child platform | label: nic
@@ -807,6 +821,8 @@ config | verbose: no | prio_levels: 4
   |        poll_reg:   yes
   |        use_gpe:    } $use_gpe {
   + route
+    + service Dma
+    | + child platform
     + service Platform
     | + child platform
     + service ROM | label: system

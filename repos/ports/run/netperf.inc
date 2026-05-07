@@ -198,7 +198,9 @@ proc wifi_start_nodes { } { return [join [list {
       + any-child
 
 + start platform | caps: 100 | ram: 2M | managing_system: yes | priority: -1
-  + provides | + service Platform
+  + provides
+    + service Dma
+    + service Platform
   + config | + policy | label_prefix: nic | info: yes | + pci | class: WIFI
   + route
     + service ROM | label: devices | + child report_rom

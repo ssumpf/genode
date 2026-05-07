@@ -63,7 +63,9 @@ config
     + any-service                    | + parent
 
 + start platform | caps: 100 | ram: 2M | managing_system: yes
-  + provides | + service Platform
+  + provides
+    + service Dma
+    + service Platform
   + config
     + policy | label: audio ->
       + pci | class: AUDIO

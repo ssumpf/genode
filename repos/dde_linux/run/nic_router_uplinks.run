@@ -69,7 +69,9 @@ config
       + parent
 
 + start platform | caps: 100 | ram: 2M | managing_system: yes
-  + provides | + service Platform
+  + provides
+    + service Dma
+    + service Platform
   + config
     + policy | label_prefix: wifi | info: yes | + pci | class: WIFI
     + policy | label_prefix: nic  | info: yes | + pci | class: ETHERNET

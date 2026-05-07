@@ -13,6 +13,7 @@ config | verbose: yes
   + service Timer
   + service Block
   + service Report
+  + service Dma
   + service Platform
 
 + default-route | + any-service | + parent
