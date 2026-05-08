@@ -43,138 +43,131 @@ import_from_depot [depot_user]/src/[base_src] \
                   [depot_user]/src/zlib
 
 install_config {
-<config prio_levels="4">
-	<parent-provides>
-		<service name="ROM"/>
-		<service name="IRQ"/>
-		<service name="IO_MEM"/>
-		<service name="IO_PORT"/>
-		<service name="PD"/>
-		<service name="RM"/>
-		<service name="CPU"/>
-		<service name="LOG"/>
-		<service name="VM"/>
-	</parent-provides>
-	<default-route>
-		<any-service> <parent/> <any-child/> </any-service>
-	</default-route>
-	<default caps="150" ram="1M"/>
+config | prio_levels: 4
++ parent-provides
+  + service ROM
+  + service IRQ
+  + service IO_MEM
+  + service IO_PORT
+  + service PD
+  + service RM
+  + service CPU
+  + service LOG
+  + service VM
 
-	<start name="timer">
-		<provides> <service name="Timer"/> </provides>
-	</start>
++ default-route
+  + any-service
+    + parent
+    + any-child
++ default | caps: 150 | ram: 1M
 
-	<start name="report_rom" priority="-1">
-		<provides> <service name="Report"/> <service name="ROM"/> </provides>
-		<config>
-			<policy label="pci_decode -> system" report="acpi -> acpi"/>
-			<policy label="platform -> devices"  report="pci_decode -> devices"/>
-			<policy label="pointer -> hover"     report="nitpicker -> hover"/>
-			<policy label="pointer -> xray"      report="nitpicker -> xray"/>
-		</config>
-	</start>
++ start timer
+  + provides | + service Timer
 
-	<start name="acpi" caps="250" ram="8M">
-		<route>
-			<service name="Report"> <child name="report_rom"/> </service>
-			<any-service> <parent/> <any-child/> </any-service>
-		</route>
-	</start>
++ start report_rom | priority: -1
+  + provides
+    + service Report
+    + service ROM
+  + config
+    + policy | label: pci_decode -> system | report: acpi -> acpi
+    + policy | label: platform -> devices | report: pci_decode -> devices
+    + policy | label: pointer -> hover | report: nitpicker -> hover
+    + policy | label: pointer -> xray | report: nitpicker -> xray
 
-	<start name="pci_decode" caps="350" ram="2M">
-		<route>
-			<service name="ROM" label="system"> <child name="report_rom"/> </service>
-			<service name="Report"> <child name="report_rom"/> </service>
-			<any-service> <parent/> <any-child/> </any-service>
-		</route>
-	</start>
++ start acpi | caps: 250 | ram: 8M
+  + route
+    + service Report | + child report_rom
+    + any-service
+      + parent
+      + any-child
 
-	<start name="platform" caps="100" ram="2M" managing_system="yes">
-		<provides> <service name="Platform"/> </provides>
-		<route>
-			<service name="Report">              <child name="report_rom"/> </service>
-			<service name="ROM" label="devices"> <child name="report_rom"/> </service>
-			<any-service> <parent/> <any-child/> </any-service>
-		</route>
-		<config>
-			<policy label_prefix="usb" info="yes"> <pci class="USB"/> </policy>
-		</config>
-	</start>
++ start pci_decode | caps: 350 | ram: 2M
+  + route
+    + service ROM | label: system | + child report_rom
+    + service Report              | + child report_rom
+    + any-service
+      + parent
+      + any-child
 
-	<start name="usb" ram="16M" priority="-1">
-		<binary name="pc_usb_host"/>
-		<provides> <service name="Usb"/> </provides>
-		<config bios_handoff="no">
-			<report devices="yes" config="yes"/>
-			<policy label_prefix="virtualbox"> <device class="0x3"/> </policy>
-		</config>
-		<route>
-			<service name="IRQ"> <child name="acpi"/> </service>
-			<service name="Report"> <child name="report_rom"/> </service>
-			<any-service> <parent/> <any-child/> </any-service>
-		</route>
-	</start>
++ start platform | caps: 100 | ram: 2M | managing_system: yes
+  + provides
+    + service Dma
+    + service Platform
+  + route
+    + service Report               | + child report_rom
+    + service ROM | label: devices | + child report_rom
+    + any-service
+      + parent
+      + any-child
+  + config
+    + policy | label_prefix: usb | info: yes
+      + pci | class: USB
 
-	<start name="nitpicker" ram="12M" priority="-1">
-		<provides> <service name="Gui"/> </provides>
-		<config>
-			<report focus="yes" hover="yes" />
++ start usb | ram: 16M | priority: -1
+  + binary pc_usb_host
+  + provides | + service Usb
+  + config | bios_handoff: no
+    + report | devices: yes | config: yes
+    + policy | label_prefix: virtualbox
+      + device | class: 0x3
+  + route
+    + service IRQ    | + child acpi
+    + service Report | + child report_rom
+    + any-service
+      + parent
+      + any-child
 
-			<domain name="" layer="3" content="client" label="no" focus="click" hover="always"/>
++ start nitpicker | ram: 12M | priority: -1
+  + provides | + service Gui
+  + config
+    + report | focus: yes | hover: yes
+    + domain | layer: 3 | content: client | label: no | focus: click | hover: always
+    + default-policy | domain:
+  + route
+    + service Report | + child report_rom
+    + any-service
+      + parent
+      + any-child
 
-			<default-policy domain=""/>
-		</config>
-		<route>
-			<service name="Report"> <child name="report_rom"/> </service>
-			<any-service> <parent/> <any-child /> </any-service>
-		</route>
-	</start>
++ start black_hole
+  + provides
+  | + service Event
+  | + service Nic
+  + config
+    + event
+    + nic
 
-	<start name="black_hole">
-		<provides>
-			<service name="Event"/>
-			<service name="Nic"/>
-		</provides>
-		<config>
-			<event/> <nic/>
-		</config>
-	</start>
++ start log_terminal | ram: 2M | priority: -1
+  + provides | + service Terminal
 
-	<start name="log_terminal" ram="2M" priority="-1">
-		<provides>
-			<service name="Terminal"/>
-		</provides>
-	</start>
-
-	<start name="virtualbox" caps="800" ram="1024M" priority="-2">
-		<binary name="virtualbox6"/>
-		<config vbox_file="vbox6_genode_usb_hid_raw.vbox" vm_name="TestVM" xhci="yes">
-			<vfs>
-				<dir name="dev">
-					<log/> <terminal/> <null/>
-					<inline name="rtc">2022-08-10 00:01</inline>
-				</dir>
-				<dir name="pipe"> <pipe/> </dir>
-				<rom name="vbox6_genode_usb_hid_raw.vbox"/>
-				<rom name="usb_hid_raw.iso"/>
-			</vfs>
-			<libc stdout="/dev/log" stderr="/dev/log" pipe="/pipe" rtc="/dev/rtc"/>
-			<monitor label="VBOX-1"/>
-			<arg>virtualbox</arg>
-			<env name="VBOX_USER_HOME">/</env>
-			<env name="VBOX_LOG_DEST">file=/dev/log</env>
-			<env name="VBOX_LOG"></env>
-			<env name="VBOX_LOG_FLAGS">thread</env>
-			<env name="VBOX_RELEASE_LOG_DEST">file=/dev/log</env>
-			<env name="VBOX_RELEASE_LOG"></env>
-			<env name="VBOX_RELEASE_LOG_FLAGS">thread</env>
-		</config>
-		<route>
-			<service name="Report"><child name="report_rom" /></service>
-			<any-service> <parent/> <any-child /> </any-service>
-		</route>
-	</start>
-</config>
++ start virtualbox | caps: 800 | ram: 1024M | priority: -2
+  + binary virtualbox6
+  + config | vbox_file: vbox6_genode_usb_hid_raw.vbox | vm_name: TestVM | xhci: yes
+    + vfs
+      + dir dev
+        + log
+        + terminal
+        + null
+        + inline rtc | : 2022-08-10 00:01
+      + dir pipe | + pipe
+      + rom vbox6_genode_usb_hid_raw.vbox
+      + rom usb_hid_raw.iso
+    + libc | stdout: /dev/log | stderr: /dev/log | pipe: /pipe | rtc: /dev/rtc
+    + monitor | label: VBOX-1
+    + arg     | : virtualbox
+    + env VBOX_USER_HOME | : /
+    + env VBOX_LOG_DEST  | : file=/dev/log
+    + env VBOX_LOG
+    + env VBOX_LOG_FLAGS | : thread
+    + env VBOX_RELEASE_LOG_DEST  | : file=/dev/log
+    + env VBOX_RELEASE_LOG
+    + env VBOX_RELEASE_LOG_FLAGS | : thread
+  + route
+    + service Report | + child report_rom
+    + any-service
+      + parent
+      + any-child
+-
 }
 
 puts "--- executing the 'usb_hid_raw' run script to generate the 'usb_hid_raw.iso' image ---"
