@@ -11,22 +11,25 @@ create_boot_directory
 #
 
 install_config {
-<config>
-	<parent-provides>
-		<service name="LOG"/>
-		<service name="PD"/>
-		<service name="CPU"/>
-		<service name="ROM"/>
-	</parent-provides>
-	<default-route>
-		<any-service> <parent/> <any-child/> </any-service>
-	</default-route>
-	<default caps="60" ram="1M"/>
-	<start name="hello_server">
-		<provides> <service name="Hello"/> </provides>
-	</start>
-	<start name="hello_client"/>
-</config>}
+config
++ parent-provides
+  + service LOG
+  + service PD
+  + service CPU
+  + service ROM
+
++ default-route
+  + any-service
+    + parent
+    + any-child
++ default | caps: 60 | ram: 1M
+
++ start hello_server
+  + provides | + service Hello
+
++ start hello_client
+-
+}
 
 #
 # Boot image
