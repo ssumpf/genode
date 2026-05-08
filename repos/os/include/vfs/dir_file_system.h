@@ -778,18 +778,46 @@ class Genode::Vfs::Dir_file_system : public File_system
 			for (File_system *fs = _first_file_system; fs; fs = fs->next) {
 				Vfs_watch_handle *sub_handle;
 
-				if (fs->watch(sub_path, &sub_handle, alloc) == WATCH_OK) {
+				Watch_result r = fs->watch(sub_path, &sub_handle, alloc);
+				switch (r) {
+				case WATCH_OK:
 					if (meta_handle == nullptr) {
 						/* at least one non-static FS, allocate handle */
-						meta_handle = new (alloc) Dir_watch_handle(*this, alloc);
-						*handle = meta_handle;
-						res = WATCH_OK;
+						try {
+							meta_handle = new (alloc) Dir_watch_handle(*this, alloc);
+							*handle = meta_handle;
+							res = WATCH_OK;
+						} catch (Out_of_ram) {
+							fs->close(sub_handle);
+							return WATCH_ERR_OUT_OF_RAM;
+						} catch (Out_of_caps) {
+							fs->close(sub_handle);
+							return WATCH_ERR_OUT_OF_CAPS;
+						}
 					}
 
-					/* attach child FS handle to returned handle */
-					new (alloc)
-						Dir_watch_handle::Watch_handle_element(
-							meta_handle->handle_registry, *sub_handle);
+					try {
+						/* attach child FS handle to returned handle */
+						new (alloc)
+							Dir_watch_handle::Watch_handle_element(
+								meta_handle->handle_registry, *sub_handle);
+					} catch (Out_of_ram) {
+						destroy(alloc, meta_handle);
+						fs->close(sub_handle);
+						return WATCH_ERR_OUT_OF_RAM;
+					} catch (Out_of_caps) {
+						destroy(alloc, meta_handle);
+						fs->close(sub_handle);
+						return WATCH_ERR_OUT_OF_CAPS;
+					}
+
+					break;
+				case WATCH_ERR_STATIC:
+				case WATCH_ERR_UNACCESSIBLE:
+					break;
+				case WATCH_ERR_OUT_OF_RAM:
+				case WATCH_ERR_OUT_OF_CAPS:
+					return r;
 				}
 			}
 
