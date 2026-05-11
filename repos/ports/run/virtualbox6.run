@@ -48,218 +48,229 @@ lappend_if [have_spec x86]    build_components driver/rtc
 build $build_components
 
 set config {
-<config prio_levels="4" verbose="yes">
-	<parent-provides>
-		<service name="ROM"/>
-		<service name="IRQ"/>
-		<service name="IO_MEM"/>
-		<service name="IO_PORT"/>
-		<service name="PD"/>
-		<service name="RM"/>
-		<service name="CPU"/>
-		<service name="LOG"/>
-		<service name="VM"/>}
+config | prio_levels: 4 | verbose: yes
++ parent-provides
+  + service ROM
+  + service IRQ
+  + service IO_MEM
+  + service IO_PORT
+  + service PD
+  + service RM
+  + service CPU
+  + service LOG
+  + service VM
+}
 
 append_if [expr $use_top] config {
-		<service name="TRACE"/>}
+  + service TRACE}
 
 append config {
-	</parent-provides>
-	<default-route>
-		<any-service> <parent/> <any-child/> </any-service>
-	</default-route>
-	<default caps="100" ram="1M"/>
-	<start name="timer" priority="0">
-		<provides> <service name="Timer"/> </provides>
-	</start>}
++ default-route
+  + any-service
+    + parent
+    + any-child
++ default | caps: 100 | ram: 1M
++ start timer | priority: 0
+  + provides | + service Timer}
 
 append_if [expr $use_top] config {
-	<start name="top" priority="0" ram="2M">
-		<config period_ms="15000"/>
-		<route>
-			<service name="TRACE"> <parent label=""/> </service>
-			<any-service> <parent/> <any-child/> </any-service>
-		</route>
-	</start>}
++ start top | priority: 0 | ram: 2M
+  + config | period_ms: 15000
+  + route
+    + service TRACE
+    | + parent | label:
+    + any-service
+      + parent
+      + any-child}
 
 append config {
-	<start name="drivers" caps="1500" ram="64M" managing_system="yes" priority="-1">
-		<binary name="init"/>
-		<route>
-			<service name="ROM" label="config"> <parent label="drivers.config"/> </service>
-			<service name="Timer">   <child name="timer"/> </service>
-			<service name="Capture"> <child name="nitpicker"/> </service>
-			<service name="Event">   <child name="nitpicker"/> </service>
-			<any-service> <parent/> </any-service>
-		</route>
-	</start>
++ start drivers | caps: 1500 | ram: 64M | managing_system: yes | priority: -1
+  + binary init
+  + route
+    + service ROM | label: config
+    | + parent | label: drivers.config
+    + service Timer
+    | + child timer
+    + service Capture
+    | + child nitpicker
+    + service Event
+    | + child nitpicker
+    + any-service
+      + parent
 
-	<start name="pc_rtc" priority="-1">
-		<provides>
-			<service name="Rtc"/>
-		</provides>
-	</start>}
++ start pc_rtc | priority: -1
+  + provides | + service Rtc
+}
 
 append_if [expr $use_net] config {
-	<start name="nic_router" caps="120" ram="5M" priority="-1">
-		<provides>
-			<service name="Nic"/>
-			<service name="Uplink"/>
-		</provides>
-		<config verbose_domain_state="yes">
-			<policy label_prefix="vbox" domain="downlink"/>
-			<policy label_prefix="nic"  domain="uplink"/>
++ start nic_router | caps: 120 | ram: 5M | priority: -1
+  + provides
+    + service Nic
+    + service Uplink
+  + config | verbose_domain_state: yes
+    + policy | label_prefix: vbox | domain: downlink
+    + policy | label_prefix: nic | domain: uplink
+    + domain uplink
+    | + nat
+    |       domain:    downlink
+    |       tcp-ports: 16384
+    |       udp-ports: 16384
+    |       icmp-ids:  16384
+    + domain downlink | interface: 10.0.3.1/24 | verbose_packets: no
+      + dhcp-server | ip_first: 10.0.3.100 | ip_last: 10.0.3.200
+      | + dns-server | ip: 8.8.8.8
+      | + dns-server | ip: 1.1.1.1
+      + tcp | dst: 0.0.0.0/0
+      | + permit-any | domain: uplink
+      + udp | dst: 0.0.0.0/0
+      | + permit-any | domain: uplink
+      + icmp | dst: 0.0.0.0/0 | domain: uplink
 
-			<domain name="uplink">
-				<nat domain="downlink"
-				     tcp-ports="16384"
-				     udp-ports="16384"
-				     icmp-ids="16384"/>
-			</domain>
-
-			<domain name="downlink" interface="10.0.3.1/24" verbose_packets="no">
-				<dhcp-server ip_first="10.0.3.100" ip_last="10.0.3.200">
-					<dns-server ip="8.8.8.8"/>
-					<dns-server ip="1.1.1.1"/>
-				</dhcp-server>
-				<tcp dst="0.0.0.0/0"> <permit-any domain="uplink"/> </tcp>
-				<udp dst="0.0.0.0/0"> <permit-any domain="uplink"/> </udp>
-				<icmp dst="0.0.0.0/0" domain="uplink"/>
-			</domain>
-		</config>
-	</start>
-
-	<start name="nic" ram="8M" priority="-1">
-		<binary name="pc_nic"/>
-		<route>
-			<service name="Platform"> <child name="drivers"/> </service>
-			<service name="Uplink"> <child name="nic_router"/> </service>
-			<any-service> <parent/> <any-child/> </any-service>
-		</route>
-	</start>}
++ start nic | ram: 8M | priority: -1
+  + binary pc_nic
+  + route
+    + service Platform | + child drivers
+    + service Uplink   | + child nic_router
+    + any-service
+      + parent
+      + any-child}
 
 append_if [expr $use_serial] config {
-	<start name="log_terminal" ram="2M" priority="-1">
-		<provides>
-			<service name="Terminal"/>
-		</provides>
-	</start>}
++ start log_terminal | ram: 2M | priority: -1
+  + provides | + service Terminal}
 
 append config {
-	<start name="report_rom" ram="2M" priority="-1">
-		<provides> <service name="Report"/> <service name="ROM"/> </provides>
-		<config>
-			<policy label="pointer -> hover" report="nitpicker -> hover"/>
-			<policy label="pointer -> xray"  report="nitpicker -> xray"/>
-			<policy label="clipboard -> focus" report="nitpicker -> focus"/>
-		</config>
-	</start>
++ start report_rom | ram: 2M | priority: -1
+  + provides
+    + service Report
+    + service ROM
+  + config
+    + policy | label: pointer -> hover   | report: nitpicker -> hover
+    + policy | label: pointer -> xray    | report: nitpicker -> xray
+    + policy | label: clipboard -> focus | report: nitpicker -> focus
 
-	<start name="nitpicker" ram="4M" priority="-1">
-		<provides>
-			<service name="Gui"/> <service name="Capture"/> <service name="Event"/>
-		</provides>
-		<config focus="rom">
-			<capture/> <event/>
++ start nitpicker | ram: 4M | priority: -1
+  + provides
+    + service Gui
+    + service Capture
+    + service Event
+  + config | focus: rom
+    + capture
+    + event
+    + report
+    |        focus: yes
+    |        hover: yes
+    + domain pointer
+    |        layer:   1
+    |        content: client
+    |        label:   no
+    |        origin:  pointer
+    + domain default
+    |        layer:   2
+    |        content: client
+    |        label:   no
+    |        hover:   always
+    + policy
+    |        label_prefix: pointer
+    |        domain:       pointer
+    + default-policy
+                     domain: default
+  + route
+    + service Report | + child report_rom
+    + any-service
+      + parent
+      + any-child
 
-			<report focus="yes" hover="yes"/>
++ start pointer | ram: 2M | priority: -1
+  + provides
+    + service Report
+  + config | shapes: yes
+  + route
+    + service Gui
+    | + child nitpicker
+    + service ROM | label: hover
+    | + child report_rom
+    + service ROM | label: xray
+    | + child report_rom
+    + any-service
+      + parent
 
-			<domain name="pointer"  layer="1" content="client" label="no" origin="pointer"/>
-			<domain name="default"  layer="2" content="client" label="no" hover="always"/>
++ start clipboard | ram: 2M | priority: -1
+  + provides
+    + service ROM
+    + service Report
+  + config | verbose: yes | match_labels: yes
+    + default-policy | domain: default
+  + route
+    + service ROM | label: focus
+    | + child report_rom
+    + any-service
+      + parent
+      + any-child
 
-			<policy label_prefix="pointer" domain="pointer"/>
-			<default-policy domain="default"/>
-		</config>
-		<route>
-			<service name="Report"> <child name="report_rom"/> </service>
-			<any-service> <parent/> <any-child/> </any-service>
-		</route>
-	</start>
++ start wm | caps: 1000 | ram: 32M | priority: -1
+  + binary init
+  + provides
+    + service Gui
+    + service Report
+    + service ROM
+  + route
+    + service ROM    | label: config         | + parent | label: wm.config
+    + service ROM    | label_last: clipboard | + child clipboard
+    + service Report | label_last: clipboard | + child clipboard
+    + service Report | label_last: shape     | + child pointer
+    + service Gui                            | + child nitpicker
+    + any-service
+      + parent
+      + any-child
 
-	<start name="pointer" ram="2M" priority="-1">
-		<provides> <service name="Report"/> </provides>
-		<config shapes="yes"/>
-		<route>
-			<service name="Gui"> <child name="nitpicker"/>  </service>
-			<service name="ROM" label="hover"> <child name="report_rom"/> </service>
-			<service name="ROM" label="xray"> <child name="report_rom"/> </service>
-			<any-service> <parent/> </any-service>
-		</route>
-	</start>
-
-	<start name="clipboard" ram="2M" priority="-1">
-		<provides>
-			<service name="ROM"/> <service name="Report"/>
-		</provides>
-		<config verbose="yes" match_labels="yes">
-			<default-policy domain="default"/>
-		</config>
-		<route>
-			<service name="ROM" label="focus"> <child name="report_rom"/> </service>
-			<any-service> <parent/> <any-child/> </any-service>
-		</route>
-	</start>
-
-	<start name="wm" caps="1000" ram="32M" priority="-1">
-		<binary name="init"/>
-		<provides>
-			<service name="Gui"/> <service name="Report"/> <service name="ROM"/>
-		</provides>
-		<route>
-			<service name="ROM" label="config"> <parent label="wm.config"/> </service>
-			<service name="ROM"    label_last="clipboard"> <child name="clipboard"/> </service>
-			<service name="Report" label_last="clipboard"> <child name="clipboard"/> </service>
-			<service name="Report" label_last="shape">  <child name="pointer"/> </service>
-			<service name="Gui"> <child name="nitpicker"/> </service>
-			<any-service> <parent/> <any-child/> </any-service>
-		</route>
-	</start>
-
-	<start name="vbox1" priority="-2" caps="1800" ram="3000M">
-		<binary name="virtualbox6"/>
-		<config vbox_file="virtualbox6.vbox" vm_name="TestVM" ld_verbose="yes">
-			<libc stdout="/dev/log" stderr="/dev/log" pipe="/pipe" rtc="/dev/rtc">
-				 <pthread placement="single-cpu"/>
-			</libc>
-			<vfs>
-				<dir name="dev">
-					<log/> <rtc/> <null/> <zero/>
-				</dir>
-				<dir name="pipe"> <pipe/> </dir>}
++ start vbox1 | priority: -2 | caps: 1800 | ram: 3000M
+  + binary virtualbox6
+  + config | vbox_file: virtualbox6.vbox | vm_name: TestVM | ld_verbose: yes
+    + libc | stdout: /dev/log | stderr: /dev/log | pipe: /pipe | rtc: /dev/rtc
+    | + pthread | placement: single-cpu
+    + vfs
+      + dir dev
+      | + log
+      | + rtc
+      | + null
+      | + zero
+      + dir pipe
+        + pipe}
 
 append_if [expr $use_serial] config {
-				<dir name="dev"> <terminal/> </dir>}
+      + dir dev | + terminal}
 
 append config {
-				<rom name="virtualbox6.vbox"/>
-				<rom name="test.iso"/>}
+      + rom test.iso
+      + rom virtualbox6.vbox}
+
 append_if [expr $use_overlay] config {
-				<dir name="ram"> <ram/> </dir>
-				<import>
-					<dir name="ram"> <rom name="overlay.vdi"/> </dir>
-				</import>}
+      + dir ram | + ram
+      + import
+        + dir ram | + rom overlay.vdi}
+
 append config {
-			</vfs>
-			<monitor label="VBOX-1"/>
-			<arg>virtualbox</arg>
-			<env name="VBOX_USER_HOME">/</env>
-			<env name="VBOX_LOG_DEST">file=/dev/log</env>
-			<env name="VBOX_LOG">-*.e.l.f</env>
-			<env name="VBOX_RELEASE_LOG_DEST">file=/dev/log</env>
-			<env name="VBOX_RELEASE_LOG">-*.e.l.f</env>
-		</config>
-		<route>
-			<service name="Nic"> <child name="nic_router"/> </service>
-			<service name="Gui"> <child name="wm"/> </service>
-			<service name="VM"> <parent/> </service>
-			<service name="Report" label="shape"> <child name="wm"/> </service>
-			<service name="ROM"    label="clipboard"> <child name="wm"/> </service>
-			<service name="Report" label="clipboard"> <child name="wm"/> </service>
-			<service name="Report"> <child name="report_rom"/> </service>
-			<any-service> <parent/> <any-child/> </any-service>
-		</route>
-	</start>
-</config>}
+    + monitor | label: VBOX-1
+    + arg virtualbox
+    + env VBOX_USER_HOME        | : /
+    + env VBOX_LOG_DEST         | : file=/dev/log
+    + env VBOX_LOG              | : -*.e.l.f
+    + env VBOX_RELEASE_LOG_DEST | : file=/dev/log
+    + env VBOX_RELEASE_LOG      | : -*.e.l.f
+  + route
+    + service Nic                       | + child nic_router
+    + service Gui                       | + child wm
+    + service VM                        | + parent
+    + service Report | label: shape     | + child wm
+    + service Report | label: clipboard | + child wm
+    + service Report                    | + child report_rom
+    + service ROM    | label: clipboard | + child wm
+    + service ROM    | label: test.iso  | + parent
+    + any-service
+      + parent
+      + any-child
+-}
 
 install_config $config
 
@@ -269,14 +280,16 @@ copy_file [genode_dir]/repos/ports/run/virtualbox6.vbox bin/
 # Define VESA driver resolution
 #
 set fd [open bin/fb.config w]
-puts $fd {<config buffered="yes" width="1280" height="1024"/>}
+puts $fd {config | buffered: yes | width: 1280 | height: 1024}
+puts $fd {-}
 close $fd
 
 #
 # Pin the nitpicker focus to the window manager by providing a static focus ROM
 #
 set fd [open [run_dir]/genode/focus w]
-puts $fd "<focus label=\"wm -> focus\"/>"
+puts $fd "focus | label: wm -> focus"
+puts $fd "-"
 close $fd
 
 set boot_modules [build_artifacts]
