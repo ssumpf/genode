@@ -17,7 +17,7 @@ foreach path $paths {
 	cd $path
 
 	try {
-		set result [git remote -v | grep -e github\.com\[:/\]genodelabs/genode-]
+		set result [git remote -v | grep -e github\.com\[:/\]genodelabs/genode]
 		set remotes [lsort -unique [lmap line [split $result \n] { lindex $line 0 }]]
 	} trap CHILDSTATUS { } { continue
 	} on error { msg }     { error $msg $::errorInfo }
