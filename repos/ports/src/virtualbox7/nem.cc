@@ -528,20 +528,31 @@ int NEMR3NotifyPhysRomRegisterLate(PVM pVM, RTGCPHYS GCPhys, RTGCPHYS cb, void *
  */
 void NEMR3NotifySetA20(PVMCPU pVCpu, bool fEnabled)
 {
+	/*
+	 * Note: pVM->nem.s.fA20Enabled is set to fEnabled before this function is
+	 * called, checking it against fEnabled to detect changes doesn't work
+	 */
 	PVM pVM = pVCpu->CTX_SUFF(pVM);
 
-	/* unmap HMA guest memory on A20 change */
-	if (pVM->nem.s.fA20Enabled != fEnabled) {
-		pVM->nem.s.fA20Enabled  = fEnabled;
+	/*
+	 * unmap/map HMA guest memory when A20 is disabled/enabled
+	 *
+	 * The unmap is necessary so the instruction emulator is called and can
+	 * emulate A20 gate behavior in case the gate disabled (bit 20 is hardwired to
+	 * zero).
+	 */
+	Sup::Nem::Protection const prot {
+		.readable   = fEnabled,
+		.writeable  = fEnabled,
+		.executable = fEnabled,
+	};
 
-		Sup::Nem::Protection const prot_none {
-			.readable   = false,
-			.writeable  = false,
-			.executable = false,
-		};
+	for (RTGCPHYS GCPhys = _1M; GCPhys < _1M + _64K; GCPhys += X86_PAGE_SIZE) {
 
-		for (RTGCPHYS GCPhys = _1M; GCPhys < _1M + _64K; GCPhys += X86_PAGE_SIZE)
-			nem_ptr->map_page_to_guest(0, GCPhys | RT_BIT_32(20),  prot_none);
+		PPGMPAGE page = nullptr;
+		pgmPhysGetPageEx(pVM, GCPhys, &page);
+
+		nem_ptr->map_page_to_guest(addr_t(PGM_PAGE_GET_HCPHYS(page)), GCPhys, prot);
 	}
 }
 
