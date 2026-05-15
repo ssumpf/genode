@@ -630,15 +630,6 @@ RTDECL(int) RTDvmVolumeQueryRange(RTDVMVOLUME, uint64_t *, uint64_t *) STOP
 RTDECL(uint32_t) RTDvmVolumeGetIndex(RTDVMVOLUME, RTDVMVOLIDX) STOP
 
 
-/* GCMAll.cpp */
-#include <VBox/vmm/gcm.h>
-
-VMM_INT_DECL(VBOXSTRICTRC) GCMInterceptedIOPortRead(PVMCPUCC, PCPUMCTX, uint16_t, uint8_t) STOP
-VMM_INT_DECL(bool) GCMIsInterceptingXcptDE(PVMCPUCC) STOP
-VMM_INT_DECL(bool) GCMIsInterceptingIOPortReadSlow(PVMCPUCC, uint16_t, uint8_t) STOP
-VMM_INT_DECL(int) GCMXcptDE(PVMCPUCC, PCPUMCTX) STOP
-
-
 /* DBGFAllBp.cpp */
 #include <VBox/vmm/dbgf.h>
 

@@ -490,7 +490,11 @@ int NEMR3NotifyPhysMmioExUnmap(PVM pVM, RTGCPHYS GCPhys, RTGCPHYS cb, ::uint32_t
 
 
 int NEMR3NotifyPhysMmioExUnmap(PVM pVM, RTGCPHYS GCPhys, RTGCPHYS cb, uint32_t fFlags, void *pvRam,
-                               void *pvMmio2, ::uint8_t *pu2State, ::uint32_t *puNemRange) STOP
+                               void *pvMmio2, ::uint8_t *pu2State, ::uint32_t *puNemRange)
+{
+	if (pu2State) *pu2State = UINT8_MAX;
+	return VINF_SUCCESS;
+}
 
 
 int NEMR3PhysMmio2QueryAndResetDirtyBitmap(PVM pVM, RTGCPHYS GCPhys, RTGCPHYS cb, ::uint32_t uNemRange,
