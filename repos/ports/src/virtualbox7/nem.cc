@@ -547,7 +547,7 @@ void NEMR3NotifySetA20(PVMCPU pVCpu, bool fEnabled)
 		.executable = fEnabled,
 	};
 
-	for (RTGCPHYS GCPhys = _1M; GCPhys < _1M + _64K; GCPhys += X86_PAGE_SIZE) {
+	for (RTGCPHYS GCPhys = _1M; GCPhys < _1M + _1M; GCPhys += X86_PAGE_SIZE) {
 
 		PPGMPAGE page = nullptr;
 		pgmPhysGetPageEx(pVM, GCPhys, &page);
